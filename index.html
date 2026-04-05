@@ -3352,6 +3352,16 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
             <div class="stat-value" id="ow-count-adv">0</div>
             <div class="stat-sub">69,99€/mes</div>
           </div>
+          <div class="stat-card">
+            <div class="stat-label">Cobros por entregas</div>
+            <div class="stat-value" id="ow-delivery-total" style="font-size:22px;margin-top:4px;">0€</div>
+            <div class="stat-sub">Pagos únicos webs entregadas</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Clientes web activos</div>
+            <div class="stat-value" id="ow-web-count">0</div>
+            <div class="stat-sub">Con mantenimiento</div>
+          </div>
         </div>
         <!-- TABLA CLIENTES CHATBOT -->
         <div class="config-card" style="padding:0;overflow:hidden;margin-bottom:32px;">
@@ -5871,7 +5881,10 @@ async function renderOwnerDashboard() {
     const wr = webRows || [];
     _owWebRows = wr;
 
-    const webMrr = wr.reduce((acc, r) => acc + (parseFloat(r.web_maintenance) || 0), 0);
+    const webMrr      = wr.reduce((acc, r) => acc + (parseFloat(r.web_maintenance) || 0), 0);
+    const deliveryTotal = wr.reduce((acc, r) => acc + (parseFloat(r.web_delivery_price) || 0), 0);
+    const webWithMaint = wr.filter(r => (parseFloat(r.web_maintenance) || 0) > 0).length;
+
     const mrrEl = document.getElementById('ow-web-mrr');
     if (mrrEl) mrrEl.textContent = webMrr.toFixed(2) + '€';
 
@@ -5879,8 +5892,10 @@ async function renderOwnerDashboard() {
     const botMrrEl = document.getElementById('ow-mrr-bot');
     const botMrr = parseFloat((botMrrEl?.textContent || '0').replace('€','')) || 0;
     const set2 = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
-    set2('ow-mrr-web-stat', webMrr.toFixed(2) + '€');
-    set2('ow-mrr', (botMrr + webMrr).toFixed(2) + '€');
+    set2('ow-mrr-web-stat',    webMrr.toFixed(2) + '€');
+    set2('ow-mrr',             (botMrr + webMrr).toFixed(2) + '€');
+    set2('ow-delivery-total',  deliveryTotal.toFixed(2) + '€');
+    set2('ow-web-count',       webWithMaint);
 
     const statusLabel = { pending: 'Pendiente', in_progress: 'En proceso', done: 'Entregada' };
     const statusPill  = { pending: 'pill-orange', in_progress: 'pill-blue', done: 'pill-green' };
