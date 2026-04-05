@@ -3976,7 +3976,7 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
 </div>
 
 <!-- CHAT WIDGET FLOTANTE — AIRMATE -->
-<div id="airmate-widget">
+<div id="airmate-widget" style="display:none;">
   <div id="airmate-panel">
     <div class="chat-header" id="chat-header-bar">
       <!-- Avatar verde con icono de asistente -->
@@ -4208,6 +4208,12 @@ function switchPage(p) {
   if (p === 'admin') { refreshAdmin(); if (!authState.isOwner && authState.currentUser) renderAccountSection(); }
   if (p === 'landing') { _betaSpotsLoaded = false; ensureBetaSpots(); }
   if (p === 'inicio') { triggerReveal(); }
+  /* Mostrar widget demo solo en página del bot */
+  const botWidget = document.getElementById('airmate-widget');
+  if (botWidget) botWidget.style.display = (p === 'landing') ? 'block' : 'none';
+  /* Mostrar advisor en inicio y webs, no en admin ni landing (no solapar) */
+  const advWidget = document.getElementById('advisor-widget');
+  if (advWidget) advWidget.style.display = (p === 'inicio' || p === 'webs') ? 'flex' : 'none';
 }
 function showAdminSection(id, btn) {
   document.querySelectorAll('.admin-section').forEach(x=>x.classList.remove('active'));
@@ -6917,29 +6923,37 @@ async function submitWebRequest() {
   if (!business || !phone || !email) { showToast('⚠️ Rellena nombre, teléfono y email'); return; }
   const btn = document.querySelector('.webs-submit-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
-  const payload = {
-    business_name: business,
-    business_type: type || null,
-    instagram: document.getElementById('wf-instagram')?.value.trim() || null,
-    google_maps: document.getElementById('wf-gmaps')?.value.trim() || null,
+  const extraData = {
+    business_type: type || '',
+    instagram: document.getElementById('wf-instagram')?.value.trim() || '',
+    google_maps: document.getElementById('wf-gmaps')?.value.trim() || '',
     phone,
-    email,
-    description: document.getElementById('wf-desc')?.value.trim() || null,
-    created_at: new Date().toISOString(),
-    status: 'pending'
+    description: document.getElementById('wf-desc')?.value.trim() || '',
+    status: 'pending',
+    submitted_at: new Date().toISOString()
   };
   try {
-    const { error } = await _SB.from('web_requests').insert([payload]);
-    if (error) {
-      /* Si falla (tabla no existe aún / RLS), guardamos en clients table como fallback */
-      console.warn('web_requests insert failed, using fallback:', error.message);
-      await _SB.from('clients').insert([{
-        name: business,
+    /* Primero intentar web_requests (si tiene columnas) */
+    let saved = false;
+    try {
+      const { error: e1 } = await _SB.from('web_requests').insert([{
+        business_name: business, business_type: type||null,
+        instagram: extraData.instagram||null, google_maps: extraData.google_maps||null,
+        phone, email, description: extraData.description||null, status:'pending'
+      }]);
+      if (!e1) saved = true;
+    } catch(_) {}
+
+    /* Fallback: guardar en clients con plan='web_request' */
+    if (!saved) {
+      const { error } = await _SB.from('clients').insert([{
+        name: business + ' | ' + phone,
         email: email,
         plan: 'web_request',
         active: false,
-        notes: JSON.stringify(payload)
-      }]).then(() => {});
+        password: JSON.stringify(extraData)
+      }]);
+      if (error) throw error;
     }
     showToast('✅ ¡Solicitud enviada! Te contactamos en menos de 24h.');
     ['wf-business','wf-type','wf-instagram','wf-gmaps','wf-phone','wf-email','wf-desc'].forEach(id => {
@@ -6967,38 +6981,78 @@ async function loadWebRequests() {
   if (!list) return;
   list.innerHTML = '<p style="color:var(--gray-500);font-size:14px;">Cargando...</p>';
   try {
-    const { data, error } = await _SB.from('web_requests').select('*').order('created_at',{ascending:false});
-    if (error) throw error;
-    if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--gray-500);font-size:14px;">No hay solicitudes aún.</p>'; return; }
-    list.innerHTML = data.map(r => `
+    let rows = [];
+
+    /* 1 — intentar leer de web_requests (si tiene columnas propias) */
+    try {
+      const { data: wr } = await _SB.from('web_requests').select('*').order('created_at',{ascending:false});
+      if (wr && wr.length && wr[0].business_name !== undefined) rows = wr;
+    } catch(_) {}
+
+    /* 2 — leer de clients donde plan='web_request' (fallback) */
+    const { data: cr } = await _SB.from('clients').select('*').eq('plan','web_request').order('created_at',{ascending:false});
+    if (cr && cr.length) {
+      const mapped = cr.map(c => {
+        let extra = {};
+        try { extra = JSON.parse(c.password || '{}'); } catch(_) {}
+        const nameParts = (c.name || '').split(' | ');
+        return {
+          id: c.id, _source: 'clients',
+          business_name: nameParts[0] || c.name,
+          phone: nameParts[1] || extra.phone || '',
+          email: c.email,
+          business_type: extra.business_type || '',
+          instagram: extra.instagram || '',
+          google_maps: extra.google_maps || '',
+          description: extra.description || '',
+          status: extra.status || 'pending',
+          created_at: c.created_at
+        };
+      });
+      rows = [...rows, ...mapped].sort((a,b) => new Date(b.created_at)-new Date(a.created_at));
+    }
+
+    if (!rows.length) { list.innerHTML = '<p style="color:var(--gray-500);font-size:14px;">No hay solicitudes aún.</p>'; return; }
+
+    list.innerHTML = rows.map(r => `
       <div style="background:#fff;border-radius:14px;padding:22px 26px;box-shadow:var(--shadow-sm);border:1px solid var(--gray-100);">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
           <div>
-            <div style="font-weight:700;font-size:16px;color:var(--al-navy);">${r.business_name}</div>
+            <div style="font-weight:700;font-size:16px;color:var(--al-navy);">${r.business_name||'—'}</div>
             <div style="font-size:13px;color:var(--gray-500);margin-top:2px;">${r.business_type||''}</div>
           </div>
           <div style="font-size:12px;color:var(--gray-300);">${new Date(r.created_at).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'})}</div>
         </div>
-        <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;font-size:13px;color:var(--gray-700);">
-          <div>📞 ${r.phone}</div>
-          <div>✉️ ${r.email}</div>
+        <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;font-size:13px;color:var(--gray-700);">
+          ${r.phone ? `<div>📞 ${r.phone}</div>` : ''}
+          ${r.email ? `<div>✉️ ${r.email}</div>` : ''}
           ${r.instagram ? `<div>📸 ${r.instagram}</div>` : ''}
           ${r.google_maps ? `<div>📍 <a href="${r.google_maps}" target="_blank" style="color:var(--accent);">Ver en Maps</a></div>` : ''}
         </div>
         ${r.description ? `<div style="margin-top:12px;font-size:13px;color:var(--gray-500);border-top:1px solid var(--gray-100);padding-top:12px;">${r.description}</div>` : ''}
         <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
           <span style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px;background:${r.status==='done'?'var(--success-light)':'var(--accent-light)'};color:${r.status==='done'?'var(--success)':'var(--accent)'};">${r.status==='done'?'✅ Gestionada':'⏳ Pendiente'}</span>
-          ${r.status!=='done' ? `<button onclick="markWebRequestDone('${r.id}')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px;background:var(--success-light);color:var(--success);border:none;cursor:pointer;">Marcar gestionada</button>` : ''}
+          ${r.status!=='done' ? `<button onclick="markWebRequestDone('${r.id}','${r._source||'web_requests'}')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px;background:var(--success-light);color:var(--success);border:none;cursor:pointer;">Marcar gestionada</button>` : ''}
         </div>
       </div>
     `).join('');
   } catch(e) {
     list.innerHTML = '<p style="color:var(--danger);font-size:14px;">Error al cargar solicitudes.</p>';
+    console.error(e);
   }
 }
 
-async function markWebRequestDone(id) {
-  await _SB.from('web_requests').update({status:'done'}).eq('id',id);
+async function markWebRequestDone(id, source) {
+  if (source === 'clients') {
+    /* Actualizar el JSON dentro del campo password */
+    const { data } = await _SB.from('clients').select('password').eq('id',id).single();
+    let extra = {};
+    try { extra = JSON.parse(data?.password || '{}'); } catch(_) {}
+    extra.status = 'done';
+    await _SB.from('clients').update({ password: JSON.stringify(extra) }).eq('id',id);
+  } else {
+    await _SB.from('web_requests').update({status:'done'}).eq('id',id);
+  }
   loadWebRequests();
 }
 
