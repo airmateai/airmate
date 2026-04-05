@@ -3672,11 +3672,46 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
 
       <!-- SOLICITUDES WEB — solo owner -->
       <div id="admin-web-requests" class="admin-section">
-        <div class="admin-header">
+        <div class="admin-header" style="margin-bottom:24px;">
           <h2>Solicitudes Web</h2>
           <p>Solicitudes de diseño web recibidas desde AIRMATE Webs</p>
         </div>
-        <div id="web-requests-list" style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Stats rápidas -->
+        <div id="wr-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;">
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-label">Total</div>
+            <div class="stat-value" id="wr-total" style="font-size:28px;">—</div>
+          </div>
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-label">Pendientes</div>
+            <div class="stat-value" id="wr-pending" style="font-size:28px;color:#f59e0b;">—</div>
+          </div>
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-label">Gestionadas</div>
+            <div class="stat-value" id="wr-done" style="font-size:28px;color:var(--success);">—</div>
+          </div>
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-label">Esta semana</div>
+            <div class="stat-value" id="wr-week" style="font-size:28px;color:var(--accent);">—</div>
+          </div>
+        </div>
+
+        <!-- Filtros + búsqueda -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center;">
+          <input id="wr-search" type="text" placeholder="🔍 Buscar negocio, email, teléfono..." oninput="filterWebRequests()"
+            style="flex:1;min-width:200px;padding:10px 14px;border:1.5px solid var(--gray-100);border-radius:10px;font-size:13px;font-family:var(--font-body);outline:none;">
+          <select id="wr-filter" onchange="filterWebRequests()"
+            style="padding:10px 14px;border:1.5px solid var(--gray-100);border-radius:10px;font-size:13px;font-family:var(--font-body);outline:none;background:#fff;cursor:pointer;">
+            <option value="all">Todas</option>
+            <option value="pending">Pendientes</option>
+            <option value="done">Gestionadas</option>
+          </select>
+          <button onclick="loadWebRequests()" style="padding:10px 16px;border-radius:10px;border:1.5px solid var(--gray-100);background:#fff;font-size:13px;cursor:pointer;font-weight:600;color:var(--gray-700);">↺ Actualizar</button>
+        </div>
+
+        <!-- Lista de solicitudes -->
+        <div id="web-requests-list" style="display:flex;flex-direction:column;gap:12px;">
           <p style="color:var(--gray-500);font-size:14px;">Cargando solicitudes...</p>
         </div>
       </div>
@@ -6687,28 +6722,29 @@ async function submitWebRequest() {
   }
 }
 
+let _wrAllRows = [];
+
 async function loadWebRequests() {
   const list = document.getElementById('web-requests-list');
   if (!list) return;
-  list.innerHTML = '<p style="color:var(--gray-500);font-size:14px;">Cargando...</p>';
+  list.innerHTML = `<div style="display:flex;align-items:center;gap:10px;color:var(--gray-400);font-size:14px;padding:24px 0;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-dasharray="40" stroke-dashoffset="10"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur=".8s" repeatCount="indefinite"/></circle></svg>
+    Cargando solicitudes…
+  </div>`;
   try {
     let rows = [];
-
-    /* 1 — intentar leer de web_requests (si tiene columnas propias) */
     try {
       const { data: wr } = await _SB.from('web_requests').select('*').order('created_at',{ascending:false});
       if (wr && wr.length && wr[0].business_name !== undefined) rows = wr;
     } catch(_) {}
 
-    /* 2 — leer de clients donde plan='web_request' (fallback) */
     const { data: cr } = await _SB.from('clients').select('*').eq('plan','web_request').order('created_at',{ascending:false});
     if (cr && cr.length) {
       const mapped = cr.map(c => {
         let extra = {};
         try { extra = JSON.parse(c.password || '{}'); } catch(_) {}
         const nameParts = (c.name || '').split(' | ');
-        return {
-          id: c.id, _source: 'clients',
+        return { id: c.id, _source:'clients',
           business_name: nameParts[0] || c.name,
           phone: nameParts[1] || extra.phone || '',
           email: c.email,
@@ -6723,39 +6759,124 @@ async function loadWebRequests() {
       rows = [...rows, ...mapped].sort((a,b) => new Date(b.created_at)-new Date(a.created_at));
     }
 
-    if (!rows.length) { list.innerHTML = '<p style="color:var(--gray-500);font-size:14px;">No hay solicitudes aún.</p>'; return; }
+    _wrAllRows = rows;
 
-    list.innerHTML = rows.map(r => `
-      <div style="background:#fff;border-radius:14px;padding:22px 26px;box-shadow:var(--shadow-sm);border:1px solid var(--gray-100);">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
-          <div>
-            <div style="font-weight:700;font-size:16px;color:var(--al-navy);">${r.business_name||'—'}</div>
-            <div style="font-size:13px;color:var(--gray-500);margin-top:2px;">${r.business_type||''}</div>
-          </div>
-          <div style="font-size:12px;color:var(--gray-300);">${new Date(r.created_at).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'})}</div>
-        </div>
-        <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;font-size:13px;color:var(--gray-700);">
-          ${r.phone ? `<div>📞 ${r.phone}</div>` : ''}
-          ${r.email ? `<div>✉️ ${r.email}</div>` : ''}
-          ${r.instagram ? `<div>📸 ${r.instagram}</div>` : ''}
-          ${r.google_maps ? `<div>📍 <a href="${r.google_maps}" target="_blank" style="color:var(--accent);">Ver en Maps</a></div>` : ''}
-        </div>
-        ${r.description ? `<div style="margin-top:12px;font-size:13px;color:var(--gray-500);border-top:1px solid var(--gray-100);padding-top:12px;">${r.description}</div>` : ''}
-        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
-          <span style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px;background:${r.status==='done'?'var(--success-light)':'var(--accent-light)'};color:${r.status==='done'?'var(--success)':'var(--accent)'};">${r.status==='done'?'✅ Gestionada':'⏳ Pendiente'}</span>
-          ${r.status!=='done' ? `<button onclick="markWebRequestDone('${r.id}','${r._source||'web_requests'}')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px;background:var(--success-light);color:var(--success);border:none;cursor:pointer;">Marcar gestionada</button>` : ''}
-        </div>
-      </div>
-    `).join('');
+    /* Stats */
+    const total   = rows.length;
+    const pending = rows.filter(r => r.status !== 'done').length;
+    const done    = rows.filter(r => r.status === 'done').length;
+    const weekAgo = Date.now() - 7*24*3600*1000;
+    const week    = rows.filter(r => new Date(r.created_at).getTime() > weekAgo).length;
+    const s = id => document.getElementById(id);
+    if(s('wr-total'))   s('wr-total').textContent   = total;
+    if(s('wr-pending')) s('wr-pending').textContent = pending;
+    if(s('wr-done'))    s('wr-done').textContent    = done;
+    if(s('wr-week'))    s('wr-week').textContent    = week;
+
+    renderWebRequests(rows);
   } catch(e) {
-    list.innerHTML = '<p style="color:var(--danger);font-size:14px;">Error al cargar solicitudes.</p>';
+    list.innerHTML = `<div style="background:var(--danger-light);border-radius:12px;padding:18px;color:var(--danger);font-size:14px;">⚠️ Error al cargar solicitudes.</div>`;
     console.error(e);
   }
 }
 
+function filterWebRequests() {
+  const q      = (document.getElementById('wr-search')?.value || '').toLowerCase();
+  const filter = document.getElementById('wr-filter')?.value || 'all';
+  let rows = _wrAllRows;
+  if (filter === 'pending') rows = rows.filter(r => r.status !== 'done');
+  if (filter === 'done')    rows = rows.filter(r => r.status === 'done');
+  if (q) rows = rows.filter(r =>
+    (r.business_name||'').toLowerCase().includes(q) ||
+    (r.email||'').toLowerCase().includes(q) ||
+    (r.phone||'').toLowerCase().includes(q) ||
+    (r.business_type||'').toLowerCase().includes(q) ||
+    (r.description||'').toLowerCase().includes(q)
+  );
+  renderWebRequests(rows);
+}
+
+function renderWebRequests(rows) {
+  const list = document.getElementById('web-requests-list');
+  if (!list) return;
+
+  if (!rows.length) {
+    list.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gray-400);">
+      <div style="font-size:2.5rem;margin-bottom:12px;">📭</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Sin solicitudes</div>
+      <div style="font-size:13px;">Todavía no has recibido ninguna solicitud de diseño web.</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = rows.map((r,i) => {
+    const isDone   = r.status === 'done';
+    const dateStr  = new Date(r.created_at).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const initials = (r.business_name||'?').slice(0,2).toUpperCase();
+    const colors   = ['#4f46e5','#0891b2','#059669','#d97706','#dc2626','#7c3aed'];
+    const color    = colors[i % colors.length];
+
+    return `
+    <div id="wr-card-${r.id}" style="background:#fff;border-radius:16px;border:1.5px solid ${isDone?'var(--gray-100)':'#e8efff'};box-shadow:${isDone?'none':'0 2px 12px rgba(42,92,255,.06)'};overflow:hidden;transition:box-shadow .2s;">
+      <!-- Header -->
+      <div style="padding:18px 22px;display:flex;align-items:flex-start;gap:14px;cursor:pointer;" onclick="toggleWrCard('${r.id}')">
+        <div style="width:42px;height:42px;border-radius:12px;background:${color};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;">${initials}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="font-weight:700;font-size:15px;color:var(--al-navy);">${r.business_name||'—'}</span>
+            ${r.business_type ? `<span style="font-size:11px;font-weight:600;color:var(--gray-500);background:var(--gray-50);padding:2px 10px;border-radius:99px;">${r.business_type}</span>` : ''}
+            <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:${isDone?'var(--success-light)':'#fff3cd'};color:${isDone?'var(--success)':'#92400e'};border:1px solid ${isDone?'#bbf7d0':'#fde68a'};">${isDone?'✅ Gestionada':'⏳ Pendiente'}</span>
+          </div>
+          <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--gray-400);">
+            ${r.phone ? `<span>📞 ${r.phone}</span>` : ''}
+            ${r.email ? `<span>✉️ ${r.email}</span>` : ''}
+            <span>🕐 ${dateStr}</span>
+          </div>
+        </div>
+        <div style="font-size:18px;color:var(--gray-300);transition:transform .2s;" id="wr-chevron-${r.id}">›</div>
+      </div>
+
+      <!-- Detalle expandible -->
+      <div id="wr-detail-${r.id}" style="display:none;padding:0 22px 18px;border-top:1px solid var(--gray-100);">
+        <div style="padding-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px;">
+          ${r.instagram ? `<a href="${r.instagram.startsWith('http')?r.instagram:'https://instagram.com/'+r.instagram.replace('@','')}" target="_blank" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#fdf2f8;border-radius:10px;text-decoration:none;font-size:13px;font-weight:600;color:#9d174d;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            Instagram
+          </a>` : ''}
+          ${r.google_maps ? `<a href="${r.google_maps}" target="_blank" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#f0fdf4;border-radius:10px;text-decoration:none;font-size:13px;font-weight:600;color:#166534;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            Google Maps
+          </a>` : ''}
+          <a href="tel:${r.phone}" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#eff6ff;border-radius:10px;text-decoration:none;font-size:13px;font-weight:600;color:#1d4ed8;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z"/></svg>
+            Llamar
+          </a>
+          <a href="https://wa.me/${(r.phone||'').replace(/[^0-9]/g,'')}" target="_blank" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#f0fdf4;border-radius:10px;text-decoration:none;font-size:13px;font-weight:600;color:#15803d;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            WhatsApp
+          </a>
+        </div>
+        ${r.description ? `<div style="background:var(--gray-50);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--gray-700);line-height:1.6;margin-bottom:14px;">"${r.description}"</div>` : ''}
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          ${!isDone ? `<button onclick="markWebRequestDone('${r.id}','${r._source||'web_requests'}')" style="padding:9px 20px;background:var(--success);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:opacity .15s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">✅ Marcar gestionada</button>` : ''}
+          <a href="mailto:${r.email}" style="padding:9px 20px;background:var(--accent-light);color:var(--accent);border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:6px;">✉️ Enviar email</a>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleWrCard(id) {
+  const detail  = document.getElementById('wr-detail-' + id);
+  const chevron = document.getElementById('wr-chevron-' + id);
+  if (!detail) return;
+  const open = detail.style.display === 'block';
+  detail.style.display  = open ? 'none' : 'block';
+  if (chevron) chevron.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
+}
+
 async function markWebRequestDone(id, source) {
   if (source === 'clients') {
-    /* Actualizar el JSON dentro del campo password */
     const { data } = await _SB.from('clients').select('password').eq('id',id).single();
     let extra = {};
     try { extra = JSON.parse(data?.password || '{}'); } catch(_) {}
