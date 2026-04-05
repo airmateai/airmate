@@ -1913,14 +1913,16 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
     </div>
     <div class="topnav-logo-name">
       <span>AIRMATE</span>
-      <span>Chatbot para negocios</span>
+      <span>Webs · Chatbots · IA</span>
     </div>
   </a>
 
   <!-- Tab buttons principales -->
   <div class="topnav-tabs" id="nav-tabs">
-    <button class="topnav-tab active" onclick="switchPage('landing')">🤖 Demo &amp; Chat</button>
-    <button class="topnav-tab" onclick="switchPage('admin')">⚙️ Mi Panel</button>
+    <button class="topnav-tab active" id="tab-landing" onclick="switchPage('landing')">Inicio</button>
+    <button class="topnav-tab" id="tab-webs" onclick="switchPage('webs')">🌐 AIRMATE Webs</button>
+    <button class="topnav-tab" id="tab-bot" onclick="switchPage('landing');setTimeout(()=>{if(!state.chatOpen)toggleChat();},300)">🤖 AIRMATE Bot</button>
+    <button class="topnav-tab" id="tab-admin" onclick="switchPage('admin')">⚙️ Mi Panel</button>
   </div>
 
   <!-- Acciones públicas -->
@@ -2463,6 +2465,166 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
 
 </div>
 
+<!-- WEBS PAGE -->
+<div id="page-webs" class="page">
+<style>
+.webs-hero{background:linear-gradient(160deg,#060d1a 0%,#0c1e3d 55%,#0d2744 100%);padding:90px 24px 80px;text-align:center;position:relative;overflow:hidden;}
+.webs-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(34,197,94,.12) 0%,transparent 70%);pointer-events:none;}
+.webs-hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(34,197,94,.4),transparent);}
+.webs-hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--al-green);background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);border-radius:99px;padding:6px 16px;margin-bottom:28px;}
+.webs-hero h1{font-family:var(--font-display);font-size:clamp(2.2rem,5vw,3.8rem);font-weight:400;color:#fff;line-height:1.12;margin-bottom:20px;max-width:760px;margin-left:auto;margin-right:auto;}
+.webs-hero h1 em{font-style:italic;color:var(--al-green);}
+.webs-hero p{font-size:1.1rem;color:rgba(255,255,255,.65);max-width:560px;margin:0 auto 36px;}
+.webs-hero-cta{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--al-green),var(--al-green-dark));color:#fff;font-size:1rem;font-weight:700;padding:14px 34px;border-radius:12px;text-decoration:none;cursor:pointer;border:none;box-shadow:0 6px 24px rgba(34,197,94,.4);transition:all .2s;}
+.webs-hero-cta:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(34,197,94,.55);}
+.webs-section{max-width:1100px;margin:0 auto;padding:60px 32px;}
+.webs-section-title{font-family:var(--font-display);font-size:2rem;font-weight:400;color:var(--al-navy);text-align:center;margin-bottom:8px;}
+.webs-section-sub{text-align:center;color:var(--gray-500);font-size:1rem;margin-bottom:48px;}
+.portfolio-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;margin-bottom:24px;}
+.portfolio-card{border-radius:16px;overflow:hidden;box-shadow:var(--shadow-md);background:#fff;transition:transform .2s,box-shadow .2s;text-decoration:none;display:block;}
+.portfolio-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg);}
+.portfolio-card-img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#e8e8e3;}
+.portfolio-card-img-placeholder{width:100%;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;font-size:2.5rem;}
+.portfolio-card-body{padding:18px 20px;}
+.portfolio-card-name{font-weight:700;font-size:15px;color:var(--al-navy);margin-bottom:4px;}
+.portfolio-card-type{font-size:12px;color:var(--gray-500);}
+.portfolio-card-location{font-size:12px;color:var(--gray-400);margin-top:2px;}
+.webs-social-proof{text-align:center;padding:32px;background:linear-gradient(135deg,#0c1e3d,#162d58);border-radius:20px;color:#fff;margin-bottom:60px;}
+.webs-social-proof h3{font-size:2rem;font-weight:800;color:var(--al-green);}
+.webs-social-proof p{color:rgba(255,255,255,.65);margin-top:8px;}
+.webs-props{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-bottom:60px;}
+.webs-prop-card{background:#fff;border-radius:14px;padding:24px;box-shadow:var(--shadow-sm);border:1px solid var(--gray-100);}
+.webs-prop-icon{width:42px;height:42px;border-radius:10px;background:var(--al-green-light);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:14px;}
+.webs-prop-title{font-weight:700;color:var(--al-navy);margin-bottom:6px;}
+.webs-prop-desc{font-size:13px;color:var(--gray-500);line-height:1.5;}
+.webs-form-wrap{background:#fff;border-radius:20px;box-shadow:var(--shadow-md);padding:40px;max-width:680px;margin:0 auto 80px;}
+.webs-form-wrap h2{font-family:var(--font-display);font-size:1.8rem;color:var(--al-navy);margin-bottom:8px;}
+.webs-form-wrap p{color:var(--gray-500);font-size:14px;margin-bottom:28px;}
+.webs-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:600px){.webs-form-grid{grid-template-columns:1fr;}}
+.webs-form-group{display:flex;flex-direction:column;gap:6px;}
+.webs-form-group.full{grid-column:1/-1;}
+.webs-form-label{font-size:13px;font-weight:600;color:var(--gray-700);}
+.webs-form-input,.webs-form-textarea{padding:11px 14px;border:1.5px solid var(--gray-100);border-radius:10px;font-size:14px;font-family:var(--font-body);color:var(--al-navy);outline:none;transition:border-color .15s;background:#fafaf8;}
+.webs-form-input:focus,.webs-form-textarea:focus{border-color:var(--al-green);}
+.webs-form-textarea{resize:vertical;min-height:90px;}
+.webs-submit-btn{width:100%;margin-top:24px;padding:14px;background:linear-gradient(135deg,var(--al-green),var(--al-green-dark));color:#fff;font-size:15px;font-weight:700;border:none;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(34,197,94,.35);}
+.webs-submit-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(34,197,94,.5);}
+</style>
+
+<div class="webs-hero">
+  <div class="webs-hero-eyebrow">🌐 AIRMATE Webs</div>
+  <h1>Tu negocio merece una web<br><em>que venda de verdad</em></h1>
+  <p>Diseñamos webs profesionales para negocios locales. Diseño gratis, dominio incluido 1 año, precio único negociado contigo.</p>
+  <button class="webs-hero-cta" onclick="document.getElementById('webs-form-section').scrollIntoView({behavior:'smooth'})">Solicitar diseño gratis →</button>
+</div>
+
+<div class="webs-section">
+  <h2 class="webs-section-title">Webs que hemos creado</h2>
+  <p class="webs-section-sub">Cada web es única, diseñada a medida para el negocio y su identidad de marca.</p>
+
+  <div class="portfolio-grid">
+    <a class="portfolio-card" href="https://airmateai.github.io/AmaEs/" target="_blank">
+      <div class="portfolio-card-img-placeholder" style="background:linear-gradient(135deg,#f5efe6,#e8d5c0);">🧴</div>
+      <div class="portfolio-card-body">
+        <div class="portfolio-card-name">AMA Essentials</div>
+        <div class="portfolio-card-type">Skincare · Beige/Marrón</div>
+        <div class="portfolio-card-location">📍 Tenerife</div>
+      </div>
+    </a>
+    <a class="portfolio-card" href="https://airmateai.github.io/cecilia-rubez/" target="_blank">
+      <div class="portfolio-card-img-placeholder" style="background:linear-gradient(135deg,#1a1a1a,#2d2d2d);">📷</div>
+      <div class="portfolio-card-body">
+        <div class="portfolio-card-name">Cecilia Rubez</div>
+        <div class="portfolio-card-type">Fotografía de bodas · Oro/Negro</div>
+        <div class="portfolio-card-location">📍 Madrid</div>
+      </div>
+    </a>
+    <a class="portfolio-card" href="https://airmateai.github.io/KULUKULU/" target="_blank">
+      <div class="portfolio-card-img-placeholder" style="background:linear-gradient(135deg,#1a2e1a,#2d4a2d);">🍽️</div>
+      <div class="portfolio-card-body">
+        <div class="portfolio-card-name">KuluKulu</div>
+        <div class="portfolio-card-type">Catering premium · Verde/Oro</div>
+        <div class="portfolio-card-location">📍 Málaga</div>
+      </div>
+    </a>
+    <a class="portfolio-card" href="https://olmocabreragomez.github.io/peluqieria-josep/" target="_blank">
+      <div class="portfolio-card-img-placeholder" style="background:linear-gradient(135deg,#0a0a0a,#1a1a1a);">✂️</div>
+      <div class="portfolio-card-body">
+        <div class="portfolio-card-name">Peluquería Josep</div>
+        <div class="portfolio-card-type">Peluquería de lujo · Negro/Oro</div>
+        <div class="portfolio-card-location">📍 Tenerife</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="webs-social-proof">
+    <h3>+150 negocios</h3>
+    <p>confían en AIRMATE para su presencia digital en España</p>
+  </div>
+
+  <div class="webs-props">
+    <div class="webs-prop-card">
+      <div class="webs-prop-icon">🎁</div>
+      <div class="webs-prop-title">Diseño 100% gratis</div>
+      <div class="webs-prop-desc">Creamos el diseño completo de tu web sin ningún coste inicial. Solo pagas si te gusta.</div>
+    </div>
+    <div class="webs-prop-card">
+      <div class="webs-prop-icon">🌐</div>
+      <div class="webs-prop-title">Dominio incluido 1 año</div>
+      <div class="webs-prop-desc">Tu dominio .es o .com incluido el primer año. Sin costes ocultos ni sorpresas.</div>
+    </div>
+    <div class="webs-prop-card">
+      <div class="webs-prop-icon">💬</div>
+      <div class="webs-prop-title">Precio negociado contigo</div>
+      <div class="webs-prop-desc">Precio único acordado personalmente. Sin mensualidades ni contratos eternos.</div>
+    </div>
+    <div class="webs-prop-card">
+      <div class="webs-prop-icon">🛠️</div>
+      <div class="webs-prop-title">Mantenimiento opcional</div>
+      <div class="webs-prop-desc">Puedes añadir mantenimiento mensual si lo necesitas. Totalmente opcional.</div>
+    </div>
+  </div>
+
+  <div class="webs-form-wrap" id="webs-form-section">
+    <h2>Solicita tu diseño gratis</h2>
+    <p>Rellena el formulario y nos ponemos en contacto contigo para mostrarte el diseño de tu web sin compromiso.</p>
+    <div class="webs-form-grid">
+      <div class="webs-form-group">
+        <label class="webs-form-label">Nombre del negocio *</label>
+        <input class="webs-form-input" id="wf-business" type="text" placeholder="Ej: Peluquería María">
+      </div>
+      <div class="webs-form-group">
+        <label class="webs-form-label">Tipo de negocio *</label>
+        <input class="webs-form-input" id="wf-type" type="text" placeholder="Ej: Restaurante, Clínica...">
+      </div>
+      <div class="webs-form-group">
+        <label class="webs-form-label">Instagram (si tienes)</label>
+        <input class="webs-form-input" id="wf-instagram" type="text" placeholder="@tunegocio o link">
+      </div>
+      <div class="webs-form-group">
+        <label class="webs-form-label">Google Maps (si tienes)</label>
+        <input class="webs-form-input" id="wf-gmaps" type="text" placeholder="Link de tu negocio en Maps">
+      </div>
+      <div class="webs-form-group">
+        <label class="webs-form-label">Teléfono *</label>
+        <input class="webs-form-input" id="wf-phone" type="tel" placeholder="+34 600 000 000">
+      </div>
+      <div class="webs-form-group">
+        <label class="webs-form-label">Email *</label>
+        <input class="webs-form-input" id="wf-email" type="email" placeholder="tu@email.com">
+      </div>
+      <div class="webs-form-group full">
+        <label class="webs-form-label">Cuéntanos sobre tu negocio</label>
+        <textarea class="webs-form-textarea" id="wf-desc" placeholder="¿Qué ofreces? ¿Qué estilo de web te gusta? ¿Hay algo especial que quieras destacar?"></textarea>
+      </div>
+    </div>
+    <button class="webs-submit-btn" onclick="submitWebRequest()">Solicitar diseño gratis →</button>
+    <p style="text-align:center;font-size:12px;color:var(--gray-300);margin-top:16px;">Te contactamos en menos de 24h. Sin compromiso.</p>
+  </div>
+</div>
+</div>
+
 <!-- ADMIN PANEL -->
 <div id="page-admin" class="page">
   <div class="admin">
@@ -2510,6 +2672,10 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
         <button class="sidebar-item" onclick="showAdminSection('owner-dashboard',this)">
           <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
           Panel Owner
+        </button>
+        <button class="sidebar-item" onclick="showAdminSection('web-requests',this);loadWebRequests()">
+          <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="11" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M1 6h14" stroke="currentColor" stroke-width="1.3"/><path d="M5 10h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Solicitudes Web
         </button>
       </div>
     </aside>
@@ -3067,6 +3233,17 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
         </div>
       </div>
 
+      <!-- SOLICITUDES WEB — solo owner -->
+      <div id="admin-web-requests" class="admin-section">
+        <div class="admin-header">
+          <h2>Solicitudes Web</h2>
+          <p>Solicitudes de diseño web recibidas desde AIRMATE Webs</p>
+        </div>
+        <div id="web-requests-list" style="display:flex;flex-direction:column;gap:16px;">
+          <p style="color:var(--gray-500);font-size:14px;">Cargando solicitudes...</p>
+        </div>
+      </div>
+
       <!-- MI CUENTA — solo clientes -->
       <div id="admin-account" class="admin-section">
         <div class="admin-header">
@@ -3173,6 +3350,13 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
             </div>
 
           </div>
+        </div>
+
+        <!-- Cancelar suscripción -->
+        <div id="acc-cancel-block" class="config-card" style="margin-bottom:20px;border:1.5px solid var(--danger-light);">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:6px;color:var(--danger);">Cancelar suscripción</h3>
+          <p style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">Al cancelar perderás acceso al chatbot al finalizar el período de facturación actual. Esta acción no puede deshacerse.</p>
+          <button onclick="cancelSubscription()" style="padding:10px 22px;background:transparent;color:var(--danger);border:1.5px solid var(--danger);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;" onmouseover="this.style.background='var(--danger)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--danger)'">Cancelar suscripción</button>
         </div>
       </div>
 
@@ -3403,9 +3587,13 @@ function switchPage(p) {
   if (authScreen) authScreen.classList.add('hidden');
   document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
   document.getElementById('page-'+p)?.classList.add('active');
+  /* Actualizar tab activo en nav */
+  document.querySelectorAll('.topnav-tab').forEach(t => t.classList.remove('active'));
+  const tabMap = { landing:'tab-landing', webs:'tab-webs', admin:'tab-admin' };
+  if (tabMap[p]) document.getElementById(tabMap[p])?.classList.add('active');
   /* Mostrar/ocultar nav links según página */
   const navLinks = document.getElementById('nav-links-public');
-  if (navLinks) navLinks.style.display = (p === 'landing') ? 'flex' : 'none';
+  if (navLinks) navLinks.style.display = (p === 'landing' || p === 'webs') ? 'flex' : 'none';
   if (p === 'admin') { refreshAdmin(); if (!authState.isOwner && authState.currentUser) renderAccountSection(); }
   if (p === 'landing') { _betaSpotsLoaded = false; ensureBetaSpots(); }
 }
@@ -5594,6 +5782,9 @@ async function renderAccountSection() {
   const isPaidActive = user.active && user.plan !== 'beta';
   const upg = document.getElementById('acc-upgrade-block');
   if (upg) upg.style.display = (authState.isOwner || isPaidActive || user.plan === 'plus') ? 'none' : 'block';
+  /* Mostrar cancelar solo si tiene suscripción activa de pago */
+  const cancelBlock = document.getElementById('acc-cancel-block');
+  if (cancelBlock) cancelBlock.style.display = (!authState.isOwner && isPaidActive) ? 'block' : 'none';
   /* Ocultar tarjetas de planes ya activos o inferiores (beta ve todos los planes) */
   const planOrder = ['starter','lan','plus'];
   const currentIdx = user.plan === 'beta' ? -1 : planOrder.indexOf(user.plan || 'starter');
@@ -6026,6 +6217,97 @@ window.addEventListener('load', function() {
   }
   if(document.readyState==='complete') initGlobe(); else window.addEventListener('load',initGlobe);
 })();
+
+/* ════ AIRMATE WEBS — Solicitud de diseño ════ */
+async function submitWebRequest() {
+  const business = document.getElementById('wf-business')?.value.trim();
+  const type     = document.getElementById('wf-type')?.value.trim();
+  const phone    = document.getElementById('wf-phone')?.value.trim();
+  const email    = document.getElementById('wf-email')?.value.trim();
+  if (!business || !phone || !email) { showToast('⚠️ Rellena nombre, teléfono y email'); return; }
+  const btn = document.querySelector('.webs-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+  try {
+    const { error } = await _SB.from('web_requests').insert([{
+      business_name: business,
+      business_type: type || null,
+      instagram: document.getElementById('wf-instagram')?.value.trim() || null,
+      google_maps: document.getElementById('wf-gmaps')?.value.trim() || null,
+      phone,
+      email,
+      description: document.getElementById('wf-desc')?.value.trim() || null,
+      created_at: new Date().toISOString(),
+      status: 'pending'
+    }]);
+    if (error) throw error;
+    showToast('✅ ¡Solicitud enviada! Te contactamos en menos de 24h.');
+    ['wf-business','wf-type','wf-instagram','wf-gmaps','wf-phone','wf-email','wf-desc'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+  } catch(e) {
+    showToast('⚠️ Error al enviar. Escríbenos por WhatsApp.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Solicitar diseño gratis →'; }
+  }
+}
+
+async function loadWebRequests() {
+  const list = document.getElementById('web-requests-list');
+  if (!list) return;
+  list.innerHTML = '<p style="color:var(--gray-500);font-size:14px;">Cargando...</p>';
+  try {
+    const { data, error } = await _SB.from('web_requests').select('*').order('created_at',{ascending:false});
+    if (error) throw error;
+    if (!data || data.length === 0) { list.innerHTML = '<p style="color:var(--gray-500);font-size:14px;">No hay solicitudes aún.</p>'; return; }
+    list.innerHTML = data.map(r => `
+      <div style="background:#fff;border-radius:14px;padding:22px 26px;box-shadow:var(--shadow-sm);border:1px solid var(--gray-100);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-weight:700;font-size:16px;color:var(--al-navy);">${r.business_name}</div>
+            <div style="font-size:13px;color:var(--gray-500);margin-top:2px;">${r.business_type||''}</div>
+          </div>
+          <div style="font-size:12px;color:var(--gray-300);">${new Date(r.created_at).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'})}</div>
+        </div>
+        <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;font-size:13px;color:var(--gray-700);">
+          <div>📞 ${r.phone}</div>
+          <div>✉️ ${r.email}</div>
+          ${r.instagram ? `<div>📸 ${r.instagram}</div>` : ''}
+          ${r.google_maps ? `<div>📍 <a href="${r.google_maps}" target="_blank" style="color:var(--accent);">Ver en Maps</a></div>` : ''}
+        </div>
+        ${r.description ? `<div style="margin-top:12px;font-size:13px;color:var(--gray-500);border-top:1px solid var(--gray-100);padding-top:12px;">${r.description}</div>` : ''}
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+          <span style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px;background:${r.status==='done'?'var(--success-light)':'var(--accent-light)'};color:${r.status==='done'?'var(--success)':'var(--accent)'};">${r.status==='done'?'✅ Gestionada':'⏳ Pendiente'}</span>
+          ${r.status!=='done' ? `<button onclick="markWebRequestDone('${r.id}')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px;background:var(--success-light);color:var(--success);border:none;cursor:pointer;">Marcar gestionada</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = '<p style="color:var(--danger);font-size:14px;">Error al cargar solicitudes.</p>';
+  }
+}
+
+async function markWebRequestDone(id) {
+  await _SB.from('web_requests').update({status:'done'}).eq('id',id);
+  loadWebRequests();
+}
+
+/* ════ CANCELAR SUSCRIPCIÓN ════ */
+async function cancelSubscription() {
+  const user = authState.currentUser;
+  if (!user) return;
+  if (!confirm('¿Estás seguro de que quieres cancelar tu suscripción? Perderás el acceso al chatbot al finalizar el período actual.')) return;
+  try {
+    showToast('⏳ Procesando cancelación...');
+    /* Marcar como inactivo en Supabase */
+    const { error } = await _SB.from('clients').update({ active: false, cancelled_at: new Date().toISOString() }).eq('id', user.id);
+    if (error) throw error;
+    authState.currentUser.active = false;
+    showToast('✅ Suscripción cancelada. Si tienes dudas escríbenos por WhatsApp.');
+    renderAccountSection();
+  } catch(e) {
+    showToast('⚠️ Error al cancelar. Contacta con soporte en WhatsApp.');
+  }
+}
 </script>
 </body>
 </html>
