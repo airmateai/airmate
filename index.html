@@ -5915,7 +5915,10 @@ async function renderOwnerDashboard() {
             <td style="padding:10px 16px;text-align:center;color:#8a97b0;font-size:12px">${new Date(r.created_at).toLocaleDateString('es-ES')}</td>
             <td style="padding:10px 16px;font-size:12px;color:#64748b;max-width:180px;">${r.notes?`<span title="${escHtml(r.notes)}" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(r.notes)}</span>`:'<span style="color:#c4cdd8;">—</span>'}</td>
             <td style="padding:10px 16px;">
-              <button class="ow-btn ow-btn-edit" onclick="owOpenWebModalById('${r.id}')">Editar</button>
+              <div class="ow-actions">
+                <button class="ow-btn ow-btn-edit" onclick="owOpenWebModalById('${r.id}')">Editar</button>
+                <button class="ow-btn ow-btn-delete" onclick="owDeleteWebClient('${r.id}','${escHtml(r.business_name||'?')}')">Eliminar</button>
+              </div>
             </td>
           </tr>`).join('');
     }
@@ -5940,6 +5943,14 @@ function owOpenWebModalById(id) {
 
 function owCloseWebModal() {
   document.getElementById('ow-web-edit-modal').style.display = 'none';
+}
+
+async function owDeleteWebClient(id, name) {
+  if (!confirm(`¿Eliminar la solicitud de "${name}"? Esta acción no se puede deshacer.`)) return;
+  const { error } = await _SB.from('web_requests').delete().eq('id', id);
+  if (error) { showToast('⚠️ Error al eliminar'); return; }
+  showToast('🗑️ Solicitud eliminada');
+  renderOwnerDashboard();
 }
 
 async function owSaveWebEdit() {
