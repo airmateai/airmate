@@ -3335,7 +3335,7 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
           <div class="stat-card">
             <div class="stat-label">Ingresos mensuales</div>
             <div class="stat-value" id="ow-mrr" style="font-size:22px;margin-top:4px;">0€</div>
-            <div class="stat-sub">MRR estimado</div>
+            <div class="stat-sub">Chatbot <span id="ow-mrr-bot" style="color:#64748b;">0€</span> + Web <span id="ow-mrr-web-stat" style="color:#1d4ed8;">0€</span></div>
           </div>
           <div class="stat-card">
             <div class="stat-label">Plan ULTIMATE</div>
@@ -5824,7 +5824,7 @@ async function renderOwnerDashboard() {
 
     const set = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
     set('ow-total-clients', all.length);
-    set('ow-mrr',           mrr.toFixed(2) + '€');
+    set('ow-mrr-bot',       mrr.toFixed(2) + '€');
     const starterCount = document.getElementById('ow-count-starter');
     if (starterCount) starterCount.textContent = starter.length;
     set('ow-count-pro',     pro.length);
@@ -5872,6 +5872,13 @@ async function renderOwnerDashboard() {
     const webMrr = wr.reduce((acc, r) => acc + (parseFloat(r.web_maintenance) || 0), 0);
     const mrrEl = document.getElementById('ow-web-mrr');
     if (mrrEl) mrrEl.textContent = webMrr.toFixed(2) + '€';
+
+    /* Actualizar MRR global (chatbot + web) */
+    const botMrrEl = document.getElementById('ow-mrr-bot');
+    const botMrr = parseFloat((botMrrEl?.textContent || '0').replace('€','')) || 0;
+    const set2 = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+    set2('ow-mrr-web-stat', webMrr.toFixed(2) + '€');
+    set2('ow-mrr', (botMrr + webMrr).toFixed(2) + '€');
 
     const statusLabel = { pending: 'Pendiente', in_progress: 'En proceso', done: 'Entregada' };
     const statusPill  = { pending: 'pill-orange', in_progress: 'pill-blue', done: 'pill-green' };
