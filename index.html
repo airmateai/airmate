@@ -7189,5 +7189,35 @@ async function cancelSubscription() {
   }
 }
 </script>
+<script>
+/* ══ SAFETY-NET OWNER PANEL ══ */
+window.addEventListener('load', function() {
+  try {
+    const raw = localStorage.getItem('airmate_session');
+    if (!raw) return;
+    const sess = JSON.parse(raw);
+    if (!sess || !sess.user || sess.user.role !== 'owner') return;
+    setTimeout(function() {
+      const pageAdmin = document.getElementById('page-admin');
+      const ownerDash = document.getElementById('admin-owner-dashboard');
+      if (!pageAdmin || !ownerDash) return;
+      if (!pageAdmin.classList.contains('active')) {
+        document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+        pageAdmin.classList.add('active');
+      }
+      if (!ownerDash.classList.contains('active')) {
+        document.querySelectorAll('.admin-section').forEach(function(x){ x.classList.remove('active'); });
+        ownerDash.classList.add('active');
+      }
+      const ownerSection = document.getElementById('owner-sidebar-section');
+      if (ownerSection) ownerSection.style.display = 'block';
+      document.querySelectorAll('.topnav-tab').forEach(function(t){ t.classList.remove('active'); });
+      document.getElementById('tab-admin')?.classList.add('active');
+      if (typeof renderOwnerDashboard === 'function') renderOwnerDashboard();
+      if (typeof refreshAdmin === 'function') refreshAdmin();
+    }, 800);
+  } catch(e) {}
+});
+</script>
 </body>
 </html>
