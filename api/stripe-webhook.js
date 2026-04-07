@@ -9,23 +9,18 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Mapeo: importe en céntimos → plan
-// Solo Agente (recurrente)
-// 29,99€ = 2999 | 39,99€ = 3999 | 69,99€ = 6999
-// Mantenimiento web (recurrente)
-// 39€ = 3900 | 59€ = 5900 | 99€ = 9900
-// Setup web (único)
-// 250€ = 25000 | 400€ = 40000 | 800€ = 80000
-const AMOUNT_TO_PLAN = {
-  2999:  'start',
-  3999:  'growth',
-  6999:  'pro',
-  3900:  'start',
-  5900:  'growth',
-  9900:  'pro',
-  25000: 'start',
-  40000: 'growth',
-  80000: 'pro',
+// Mapeo importe (céntimos) → { plan, type }
+// type: 'agent' = Solo Agente | 'setup' = pago único web | 'maintenance' = mensualidad web
+const AMOUNT_MAP = {
+  2999:  { plan: 'start',  type: 'agent' },
+  3999:  { plan: 'growth', type: 'agent' },
+  6999:  { plan: 'pro',    type: 'agent' },
+  3900:  { plan: 'start',  type: 'maintenance' },
+  5900:  { plan: 'growth', type: 'maintenance' },
+  9900:  { plan: 'pro',    type: 'maintenance' },
+  25000: { plan: 'start',  type: 'setup' },
+  40000: { plan: 'growth', type: 'setup' },
+  80000: { plan: 'pro',    type: 'setup' },
 };
 
 async function getRawBody(req) {
@@ -51,31 +46,59 @@ export default async function handler(req, res) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // ── Pago completado ──────────────────────────────────────
+  // ── Pago completado ─────────────────────────────────────────────
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const email  = session.customer_details?.email?.toLowerCase();
-    const amount = session.amount_total;
-    const plan   = AMOUNT_TO_PLAN[amount];
+    const session  = event.data.object;
+    const email    = session.customer_details?.email?.toLowerCase();
+    const name     = session.customer_details?.name || '';
+    const phone    = session.customer_details?.phone || null;
+    const amount   = session.amount_total;
+    const info     = AMOUNT_MAP[amount];
 
-    console.log(`✅ Pago: email=${email} amount=${amount} plan=${plan}`);
+    console.log(`💳 Pago: email=${email} amount=${amount} plan=${info?.plan} type=${info?.type}`);
 
-    if (email && plan) {
-      const { error } = await supabase
-        .from('clients')
-        .update({ active: true, plan })
-        .eq('email', email);
+    if (!email || !info) {
+      console.log('⚠️ No se pudo mapear el pago.');
+      return res.status(200).json({ received: true });
+    }
 
-      if (error) console.error('Supabase error:', error);
-      else console.log(`✅ Plan ${plan} activado para ${email}`);
+    const { plan, type } = info;
+
+    // 1. Activar plan en Supabase (siempre)
+    const { error: clientError } = await supabase
+      .from('clients')
+      .update({ active: true, plan })
+      .eq('email', email);
+
+    if (clientError) console.error('❌ Error activando cliente:', clientError);
+    else console.log(`✅ Plan ${plan} (${type}) activado para ${email}`);
+
+    // 2. Si es setup de web → crear solicitud en web_requests para que aparezca en el panel Owner
+    if (type === 'setup') {
+      const planLabels = { start: 'START', growth: 'GROWTH', pro: 'PRO' };
+      const setupPrices = { start: '250€', growth: '400€', pro: '800€' };
+
+      const { error: wrError } = await supabase
+        .from('web_requests')
+        .insert([{
+          business_name: name || email,
+          business_type: null,
+          phone,
+          email,
+          description: `🔔 PAGO RECIBIDO — Plan ${planLabels[plan]} · Setup ${setupPrices[plan]}\nCliente registrado automáticamente desde Stripe.\nActivar agente en el panel tras entregar la web.`,
+          status: 'pending',
+        }]);
+
+      if (wrError) console.error('❌ Error creando web_request:', wrError);
+      else console.log(`📋 Solicitud web creada para ${email} (${plan})`);
     }
   }
 
-  // ── Suscripción cancelada ────────────────────────────────
+  // ── Suscripción cancelada ────────────────────────────────────────
   if (event.type === 'customer.subscription.deleted') {
-    const sub = event.data.object;
+    const sub      = event.data.object;
     const customer = await stripe.customers.retrieve(sub.customer);
-    const email = customer.email?.toLowerCase();
+    const email    = customer.email?.toLowerCase();
 
     if (email) {
       await supabase
