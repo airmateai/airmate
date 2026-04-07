@@ -7588,5 +7588,42 @@ window.addEventListener('load', function() {
   } catch(e) {}
 });
 </script>
+<script>
+/* ══ POST-PAYMENT HANDLER ══
+   Detecta ?setup_ok=plan&pay=URL al volver de Stripe setup
+   y abre automáticamente el link de mensualidad
+*/
+window.addEventListener('load', function() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const setupOk = params.get('setup_ok');
+    const payUrl  = params.get('pay');
+
+    if (!setupOk) return;
+
+    // Limpiar URL sin recargar
+    window.history.replaceState({}, '', window.location.pathname);
+
+    // Pequeño delay para que la app cargue
+    setTimeout(function() {
+      if (payUrl) {
+        // Abrir mensualidad en nueva pestaña automáticamente
+        window.open(decodeURIComponent(payUrl), '_blank');
+      }
+
+      // Mostrar toast informativo
+      const planLabel = { start:'START', growth:'GROWTH', pro:'PRO' }[setupOk] || setupOk.toUpperCase();
+      if (typeof showToast === 'function') {
+        showToast('✅ Setup ' + planLabel + ' completado — se ha abierto el pago mensual');
+      }
+
+      // Ir al panel de admin
+      if (typeof switchPage === 'function') {
+        switchPage('admin');
+      }
+    }, 1200);
+  } catch(e) {}
+});
+</script>
 </body>
 </html>
