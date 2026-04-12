@@ -291,11 +291,13 @@
   }
 
   // ── Selección de prompt según plan ──────────────────────────────
+  // spark  → asistente comercial (igual que growth, sin web propia)
+  // growth → asistente comercial
+  // pro    → vendedor/closer con preguntas estratégicas
   function _buildPrompt() {
     const plan = (cfg.plan || 'growth').toLowerCase();
-    if (plan === 'pro')    return _proPrompt();
-    if (plan === 'growth') return _growthPrompt();
-    return _growthPrompt(); // fallback seguro
+    if (plan === 'pro') return _proPrompt();
+    return _growthPrompt(); // spark + growth + fallback
   }
 
   // ── Helpers compartidos ──────────────────────────────────────────
