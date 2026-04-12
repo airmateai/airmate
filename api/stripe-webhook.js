@@ -10,17 +10,17 @@ const supabase = createClient(
 );
 
 // Mapeo importe (céntimos) → { plan, type }
-// type: 'agent' = Solo Agente | 'setup' = pago único web | 'maintenance' = mensualidad web
+// type: 'setup' = pago único web | 'maintenance' = mensualidad mensual
+// Planes: START (web sin agente) | GROWTH (web + asistente IA) | PRO (web + vendedor IA)
 const AMOUNT_MAP = {
-  2999:  { plan: 'start',  type: 'agent' },
-  3999:  { plan: 'growth', type: 'agent' },
-  6999:  { plan: 'pro',    type: 'agent' },
-  3900:  { plan: 'start',  type: 'maintenance' },
-  5900:  { plan: 'growth', type: 'maintenance' },
-  9900:  { plan: 'pro',    type: 'maintenance' },
-  25000: { plan: 'start',  type: 'setup' },
-  40000: { plan: 'growth', type: 'setup' },
-  80000: { plan: 'pro',    type: 'setup' },
+  // ── Setup único ──────────────────────────────────────────
+  25000: { plan: 'start',  type: 'setup' },   // 250€
+  40000: { plan: 'growth', type: 'setup' },   // 400€
+  80000: { plan: 'pro',    type: 'setup' },   // 800€
+  // ── Mensualidad ──────────────────────────────────────────
+  3900:  { plan: 'start',  type: 'maintenance' },  // 39€/mes
+  5900:  { plan: 'growth', type: 'maintenance' },  // 59€/mes
+  9900:  { plan: 'pro',    type: 'maintenance' },  // 99€/mes
 };
 
 async function getRawBody(req) {
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     const amount   = session.amount_total;
     const info     = AMOUNT_MAP[amount];
 
-    console.log(`💳 Pago: email=${email} amount=${amount} plan=${info?.plan} type=${info?.type}`);
+    console.log(`💳 Pago recibido: email=${email} importe=${amount}c plan=${info?.plan} tipo=${info?.type}`);
 
     if (!email || !info) {
       console.log('⚠️ No se pudo mapear el pago.');

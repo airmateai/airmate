@@ -5586,6 +5586,28 @@ function renderInstallSection() {
   const container=document.getElementById('install-content');
   if (!container) return;
 
+  /* ── PLAN START: sin agente ── */
+  const activePlan = (state.activePlan || authState.currentUser?.plan || 'growth').toLowerCase();
+  if (activePlan === 'start' && state.paymentDone) {
+    container.innerHTML=`
+      <div class="install-locked" style="background:linear-gradient(135deg,#f8fafc,#edf5ff);border:2px solid #e4e9f2;">
+        <div class="install-lock-icon">🌐</div>
+        <h3 style="-webkit-text-fill-color:#0c1e3d;">Tu plan START no incluye<br><em style="color:var(--al-green);">agente IA</em>.</h3>
+        <p style="color:#6b7d96;">Tu web está siendo preparada. El agente conversacional está disponible a partir del plan GROWTH.</p>
+        <div class="install-locked-features">
+          <div class="install-locked-feat"><span class="install-locked-feat-dot">✓</span>Web profesional en preparación</div>
+          <div class="install-locked-feat"><span class="install-locked-feat-dot">✓</span>Dominio .es incluido</div>
+          <div class="install-locked-feat"><span class="install-locked-feat-dot">✓</span>SEO básico configurado</div>
+        </div>
+        <button class="btn-unlock" onclick="showAdminSection('plan',null)" style="background:linear-gradient(135deg,#22c55e,#16a34a);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Mejorar a GROWTH y añadir agente IA
+        </button>
+        <div class="install-locked-note" style="color:#8a97b0;">Tu web estará lista en menos de 24h · Te avisaremos por email</div>
+      </div>`;
+    return;
+  }
+
   /* ── MODO BLOQUEADO: sin pago ── */
   if (!state.paymentDone) {
     container.innerHTML=`
@@ -5698,6 +5720,8 @@ function renderInstallSection() {
 
   /* ── Snippet para el bot seleccionado ── */
   const bizId = (sel.biz||'mi-negocio').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const snippetPlan = activePlan === 'pro' ? 'pro' : 'growth';
+  const planLabel   = snippetPlan === 'pro' ? 'PRO — Vendedor IA' : 'GROWTH — Asistente IA';
 
   container.innerHTML = `
     <div class="alert-success" style="margin-bottom:20px;">✅ Pago confirmado — Tu código de instalación está listo. Cópialo y pégalo en tu web.</div>
@@ -5707,6 +5731,7 @@ function renderInstallSection() {
     <div class="config-card">
       <h3>📋 Código de instalación — <em style="font-weight:400;color:#8a97b0;">${escHtml(sel.name)}</em>
         <span style="font-size:11px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;padding:2px 10px;border-radius:99px;font-weight:600;margin-left:8px;vertical-align:middle;">${escHtml(sel.biz)}</span>
+        <span style="font-size:11px;background:#ede9fe;color:#7c3aed;border:1px solid #ddd6fe;padding:2px 10px;border-radius:99px;font-weight:600;margin-left:4px;vertical-align:middle;">${planLabel}</span>
       </h3>
       <p style="font-size:13px;color:#8a97b0;margin-bottom:16px;">
         Pega estas líneas justo antes de
@@ -5722,6 +5747,9 @@ window.AIRMATE_CONFIG = {<br>
 &nbsp;&nbsp;<span class="cm">/* ── Proxy seguro ── */</span><br>
 &nbsp;&nbsp;proxy_url:&nbsp;&nbsp;&nbsp;<span class="str">"${escHtml(proxyUrl)}"</span>,<br>
 ${proxyToken?`&nbsp;&nbsp;proxy_token:&nbsp;<span class="str">"${escHtml(proxyToken)}"</span>,<br>`:''}
+<br>
+&nbsp;&nbsp;<span class="cm">/* ── Plan (define comportamiento del agente) ── */</span><br>
+&nbsp;&nbsp;plan:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"${snippetPlan}"</span>,<br>
 <br>
 &nbsp;&nbsp;<span class="cm">/* ── Identidad ── */</span><br>
 &nbsp;&nbsp;business_id: <span class="str">"${escHtml(bizId)}"</span>,<br>
@@ -5767,6 +5795,7 @@ function copyRealSnippet() {
   try { JSON.parse(localStorage.getItem('airmate_extra_bots')||'[]').forEach(b=>allBotsC.push(b)); } catch(e){}
   const sel = allBotsC.find(b=>b.id===_installBotId) || allBotsC[0];
   const bizId=(sel.biz||'mi-negocio').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const copyPlan=(state.activePlan||authState.currentUser?.plan||'growth').toLowerCase()==='pro'?'pro':'growth';
   const code=
 `<!-- AIRMATE — ${sel.biz} -->
 <script>
@@ -5774,6 +5803,9 @@ window.AIRMATE_CONFIG = {
 
   /* ── Proxy seguro (API key en el Worker, no aquí) ── */
   proxy_url:    "${jsEsc(proxyUrl)}",${tokenLine}
+
+  /* ── Plan (define el comportamiento del agente) ── */
+  plan:         "${copyPlan}",
 
   /* ── Identidad ── */
   business_id:  "${bizId}",
