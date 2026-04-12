@@ -12,13 +12,13 @@ const supabase = createClient(
 // Mapeo importe (céntimos) → { plan, type }
 // type: 'setup' = pago único web | 'maintenance' = mensualidad mensual
 // Planes:
-//   SPARK  — solo agente, para web existente, sin setup
+//   AIRMATE — solo agente, para web existente, sin setup
 //   START  — web sin agente
 //   GROWTH — web + asistente IA
 //   PRO    — web + vendedor IA (closer)
 const AMOUNT_MAP = {
-  // ── SPARK: solo mensualidad (sin setup) ──────────────────
-  3999:  { plan: 'spark',  type: 'maintenance' },  // 39,99€/mes
+  // ── AIRMATE: solo mensualidad (sin setup) ──────────────────
+  3999:  { plan: 'airmate',  type: 'maintenance' },  // 39,99€/mes
 
   // ── Setup único web ──────────────────────────────────────
   25000: { plan: 'start',  type: 'setup' },   // 250€
