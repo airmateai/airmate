@@ -2164,12 +2164,9 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
   #admin-plan [id^="plan-msgs-"] { display:none !important; }
   #admin-plan [id^="plan-pct-"] { display:none !important; }
 
-  /* ── Planes upgrade Mi cuenta — columna única ── */
-  #acc-upgrade-block [style*="grid-template-columns"] {
+  /* ── Planes upgrade Mi cuenta — columna única en móvil ── */
+  #acc-upgrade-block .upgrade-grid {
     grid-template-columns:1fr !important;
-  }
-  #acc-upgrade-starter, #acc-upgrade-lan, #acc-upgrade-plus {
-    width:100% !important; min-width:0 !important;
   }
 
   /* ── Admin mobile ── */
@@ -3455,11 +3452,17 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
           <div id="upgrade-banner-title" style="font-size:17px;font-weight:900;color:#fff;margin-bottom:5px;">Tu acceso ha llegado al límite</div>
           <div id="upgrade-banner-sub" style="font-size:13px;color:rgba(255,255,255,.55);">Elige un plan para seguir usando tu chatbot sin interrupciones.</div>
         </div>
-        <a onclick="showAdminSection('account',document.getElementById('btn-account'));renderAccountSection();setTimeout(()=>{const el=document.getElementById('acc-upgrade-block');if(el)el.scrollIntoView({behavior:'smooth'});},300)"
-           style="cursor:pointer;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-size:14px;font-weight:800;padding:14px 28px;border-radius:12px;text-decoration:none;white-space:nowrap;box-shadow:0 6px 20px rgba(34,197,94,.35);transition:all .2s;position:relative;"
-           onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 10px 28px rgba(34,197,94,.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(34,197,94,.35)'">
-          Ver planes →
-        </a>
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
+          <a id="upgrade-banner-btn" onclick="showAdminSection('account',document.getElementById('btn-account'));renderAccountSection();setTimeout(()=>{const el=document.getElementById('acc-upgrade-block');if(el)el.scrollIntoView({behavior:'smooth'});},300)"
+             style="cursor:pointer;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-size:14px;font-weight:800;padding:14px 28px;border-radius:12px;text-decoration:none;white-space:nowrap;box-shadow:0 6px 20px rgba(34,197,94,.35);transition:all .2s;position:relative;"
+             onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 10px 28px rgba(34,197,94,.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(34,197,94,.35)'">
+            Ver planes →
+          </a>
+          <a id="upgrade-verify-btn" onclick="verifyPaymentNow()" style="cursor:pointer;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);font-size:12px;font-weight:700;padding:8px 18px;border-radius:10px;text-decoration:none;white-space:nowrap;transition:all .2s;"
+             onmouseover="this.style.background='rgba(255,255,255,.15)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.7)'">
+            Ya pagué — verificar activación
+          </a>
+        </div>
       </div>
 
       <!-- DASHBOARD -->
@@ -3954,6 +3957,10 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
                 <option value="pro">PLAN PRO — 800€ setup + 99€/mes</option>
               </select>
             </div>
+            <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:8px;">
+              <input type="checkbox" id="ow-edit-active" style="width:18px;height:18px;cursor:pointer;accent-color:#22c55e;">
+              <label for="ow-edit-active" class="form-label" style="margin:0;cursor:pointer;">Suscripción activa (cuenta en MRR)</label>
+            </div>
           </div>
           <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;">
             <button class="ow-btn ow-btn-delete" onclick="ownerCloseModal()">Cancelar</button>
@@ -4335,67 +4342,13 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
           <button class="btn-save" onclick="saveAccountChanges()">Guardar cambios</button>
         </div>
 
-        <!-- Cambiar plan -->
-        <div class="config-card" id="acc-upgrade-block">
-          <h3 style="font-size:15px;font-weight:700;margin-bottom:4px;">Cambiar de plan</h3>
-          <p style="font-size:13px;color:var(--gray-500);margin-bottom:20px;">AIRMATE instala el agente en tu web actual (sin nueva web). START es web sin agente. GROWTH y PRO incluyen web + agente — la diferencia es que PRO actúa como vendedor y cierra ventas solo.</p>
-
-          <!-- AIRMATE -->
-          <div id="acc-upgrade-airmate" style="margin-bottom:14px;">
-            <div style="background:linear-gradient(135deg,#fff7ed,#fff);border:1.5px solid rgba(251,146,60,.4);border-radius:12px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-              <div style="display:flex;flex-direction:column;gap:4px;">
-                <div style="font-size:12px;font-weight:800;color:#f97316;letter-spacing:.08em;">AIRMATE</div>
-                <div style="font-size:11px;color:#8a97b0;">Para tu web actual · Agente IA 24/7 · Sin setup · Activo en 5 minutos</div>
-              </div>
-              <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-                <div style="font-size:20px;font-weight:800;color:#f97316;white-space:nowrap;">39,99€<span style="font-size:11px;font-weight:400;color:#8a97b0;">/mes</span></div>
-                <a href="https://buy.stripe.com/3cI14n6dhcGo1EGeal2Ry0c" target="_blank" onclick="handleStripeClick(event,'airmate');return false;" style="display:inline-block;font-size:12px;font-weight:700;padding:9px 18px;background:linear-gradient(90deg,#f97316,#ef4444);color:#fff;border-radius:8px;text-decoration:none;white-space:nowrap;">Activar →</a>
-              </div>
-            </div>
+        <!-- Enlace a planes -->
+        <div id="acc-upgrade-block" class="config-card" style="padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#0c1e3d;margin-bottom:3px;">¿Quieres cambiar de plan?</div>
+            <div style="font-size:12px;color:#8a97b0;">Consulta todos los planes disponibles y sus precios.</div>
           </div>
-
-          <!-- START -->
-          <div id="acc-upgrade-start" style="margin-bottom:14px;">
-            <div style="background:#f8fafc;border:1.5px solid #edf0f7;border-radius:12px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-              <div style="display:flex;flex-direction:column;gap:4px;">
-                <div style="font-size:12px;font-weight:800;color:#3a4a6b;letter-spacing:.08em;">START</div>
-                <div style="font-size:11px;color:#8a97b0;">Web profesional · SEO básico · Hosting · Dominio .es gratis</div>
-              </div>
-              <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-                <div style="font-size:20px;font-weight:800;color:#0c1e3d;white-space:nowrap;">250€<span style="font-size:11px;font-weight:400;color:#8a97b0;"> setup</span> + 39€<span style="font-size:11px;font-weight:400;color:#8a97b0;">/mes</span></div>
-                <a href="https://buy.stripe.com/cNidR9dFJ6i0bfg6HT2Ry0d" target="_blank" onclick="handleStripeClick(event,'start');return false;" class="btn-stripe" style="font-size:12px;padding:9px 18px;white-space:nowrap;">Activar →</a>
-              </div>
-            </div>
-          </div>
-
-          <!-- GROWTH -->
-          <div id="acc-upgrade-growth" style="margin-bottom:14px;background:linear-gradient(135deg,#0c1e3d,#162d58);border:2px solid #22c55e;border-radius:12px;padding:16px 18px;position:relative;">
-            <div style="position:absolute;top:-10px;left:16px;background:linear-gradient(90deg,#22c55e,#16a34a);color:#fff;font-size:9px;font-weight:800;padding:2px 10px;border-radius:99px;">MÁS POPULAR</div>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:6px;">
-              <div style="display:flex;flex-direction:column;gap:4px;">
-                <div style="font-size:12px;font-weight:800;color:#22c55e;letter-spacing:.08em;">GROWTH</div>
-                <div style="font-size:11px;color:rgba(255,255,255,.5);">Todo lo de START · Agente IA · Detecta interés · Deriva a WhatsApp</div>
-              </div>
-              <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-                <div style="font-size:20px;font-weight:800;color:#fff;white-space:nowrap;">400€<span style="font-size:11px;font-weight:400;color:rgba(255,255,255,.4);"> setup</span> + 59€<span style="font-size:11px;font-weight:400;color:rgba(255,255,255,.4);">/mes</span></div>
-                <a href="https://buy.stripe.com/9B65kD6dhbCkgzA1nz2Ry0e" target="_blank" onclick="handleStripeClick(event,'growth');return false;" style="display:inline-block;font-size:12px;font-weight:700;padding:9px 18px;background:linear-gradient(90deg,#22c55e,#16a34a);color:#fff;border-radius:8px;text-decoration:none;white-space:nowrap;">Activar →</a>
-              </div>
-            </div>
-          </div>
-
-          <!-- PRO -->
-          <div id="acc-upgrade-pro">
-            <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1.5px solid #c4b5fd;border-radius:12px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-              <div style="display:flex;flex-direction:column;gap:4px;">
-                <div style="font-size:12px;font-weight:800;color:#7c3aed;letter-spacing:.08em;">PRO</div>
-                <div style="font-size:11px;color:#8a97b0;">Todo lo de GROWTH · Memoria avanzada · Closer IA · Cierra ventas solo</div>
-              </div>
-              <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-                <div style="font-size:20px;font-weight:800;color:#0c1e3d;white-space:nowrap;">800€<span style="font-size:11px;font-weight:400;color:#8a97b0;"> setup</span> + 99€<span style="font-size:11px;font-weight:400;color:#8a97b0;">/mes</span></div>
-                <a href="https://buy.stripe.com/8x2aEX6dhfSA3MOaY92Ry0f" target="_blank" onclick="handleStripeClick(event,'pro');return false;" style="display:inline-block;font-size:12px;font-weight:700;padding:9px 18px;background:linear-gradient(90deg,#7c3aed,#6d28d9);color:#fff;border-radius:8px;text-decoration:none;white-space:nowrap;">Activar →</a>
-              </div>
-            </div>
-          </div>
+          <a onclick="showAdminSection('plan',document.querySelector('.sidebar-item[onclick*=\'plan\']'))" style="cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;padding:10px 20px;background:linear-gradient(135deg,#4a6cf7,#3a5ce5);color:#fff;border-radius:10px;text-decoration:none;white-space:nowrap;box-shadow:0 3px 12px rgba(74,108,247,.3);">Ver planes →</a>
         </div>
 
         <!-- Gestionar facturación -->
@@ -4494,8 +4447,8 @@ const PLANS = {
              features:['Todo lo de GROWTH','Memoria avanzada del agente','Recuerda el contexto del cliente','Hace preguntas estratégicas para guiar','Detecta intención de compra con precisión','Actúa como vendedor — cierra ventas solo','5.000 conversaciones/mes','Revisión y optimización mensual'] }
 };
 /* Compatibilidad con claves antiguas de BD */
-const PLAN_ALIAS = { starter:'start', lan:'growth', plus:'pro' };
-function resolvePlan(p) { return PLAN_ALIAS[p] || p || 'start'; }
+const PLAN_ALIAS = { starter:'start', lan:'growth', plus:'pro', __owner__:'pro' };
+function resolvePlan(p) { return PLAN_ALIAS[p] || p || 'beta'; }
 const BETA_MAX = 5; /* Máximo de usuarios beta */
 
 /* ════════════════════════════════════════════
@@ -4581,7 +4534,7 @@ var _botItemsState  = {};     // items de productos/servicios/extras por bot id
 
 const state = {
   /* ── Plan y contadores ── */
-  activePlan:  localStorage.getItem('am_plan')         || 'lan',
+  activePlan:  localStorage.getItem('am_plan')         || 'beta',
   msgCount:    parseInt(localStorage.getItem('am_msgs') || '0'),
   conversations: JSON.parse(localStorage.getItem('am_convs') || '[]'),
 
@@ -4689,8 +4642,10 @@ function showAdminSection(id, btn) {
 function renderConfigPlanSections() {
   const user = authState.currentUser;
   if (!user && !authState.isOwner) return;
-  const plan = authState.isOwner ? 'pro' : resolvePlan(user?.plan || 'start');
+  /* Usar state.activePlan como fuente de verdad (se sincroniza desde Supabase al login) */
+  const plan = authState.isOwner ? 'pro' : resolvePlan(state.activePlan || user?.plan || 'beta');
   const planMeta = {
+    airmate:{ icon:'', title:'Plan AIRMATE', desc:'Tu agente IA está instalado en tu web actual y responde a tus clientes 24/7 sin que tengas que hacer nada.' },
     start:  { icon:'', title:'Plan START',  desc:'Rellena los datos de tu negocio y el asistente empieza a responder a tus clientes.' },
     growth: { icon:'', title:'Plan GROWTH', desc:'Tu asistente capta leads activamente: hace preguntas, detecta interés y manda al cliente a tu WhatsApp en el momento exacto.' },
     pro:    { icon:'', title:'Plan PRO',    desc:'Tu asistente está configurado para máxima conversión. Además, cada mes revisamos los resultados contigo y ajustamos lo que haga falta.' },
@@ -4705,7 +4660,7 @@ function renderConfigPlanSections() {
     /* Cambiar color del badge según plan */
     const badge = document.getElementById('cfg-plan-badge');
     const btn   = badge?.querySelector('button');
-    const colors = { start:'#f0fdf4,#bbf7d0,#166534', growth:'#f0fdf4,#86efac,#15803d', pro:'#eff6ff,#bfdbfe,#1d4ed8', beta:'#f8fafc,#e2e8f0,#475569' };
+    const colors = { airmate:'#fff7ed,#fed7aa,#c2410c', start:'#f0fdf4,#bbf7d0,#166534', growth:'#f0fdf4,#86efac,#15803d', pro:'#eff6ff,#bfdbfe,#1d4ed8', beta:'#f8fafc,#e2e8f0,#475569' };
     const [bg,brd,clr] = (colors[plan]||colors['start']).split(',');
     if (badge) { badge.style.background=bg; badge.style.borderColor=brd; }
     if (title) title.style.color=clr;
@@ -5253,6 +5208,39 @@ function saveConversation() {
   const conv={sessionId:state.sessionId,business:state.currentBiz.name,messages:state.history.length,date:new Date().toISOString()};
   if (idx>=0) state.conversations[idx]=conv; else state.conversations.unshift(conv);
   localStorage.setItem('am_convs',JSON.stringify(state.conversations));
+  /* Guardar también en Supabase si hay cliente logueado */
+  const clientId = authState.currentUser?.id;
+  if (clientId && typeof _SB !== 'undefined') {
+    _SB.from('conversations').upsert({
+      session_id:   state.sessionId,
+      client_id:    clientId,
+      business:     state.currentBiz.name || '',
+      messages:     state.history.length,
+      last_updated: new Date().toISOString()
+    }, { onConflict: 'session_id' }).then(() => {});
+  }
+}
+
+async function loadConversationsFromSupabase(clientId) {
+  if (!clientId || typeof _SB === 'undefined') return;
+  try {
+    const { data } = await _SB.from('conversations')
+      .select('session_id,business,messages,last_updated')
+      .eq('client_id', clientId)
+      .order('last_updated', { ascending: false })
+      .limit(50);
+    if (data && data.length > 0) {
+      state.conversations = data.map(r => ({
+        sessionId: r.session_id,
+        business:  r.business,
+        messages:  r.messages,
+        date:      r.last_updated
+      }));
+      state.msgCount = data.reduce((sum, r) => sum + (r.messages || 0), 0);
+      localStorage.setItem('am_convs', JSON.stringify(state.conversations));
+      refreshAdmin();
+    }
+  } catch(e) {}
 }
 
 /* ════════════════════════════════════════════
@@ -5600,14 +5588,11 @@ async function loadBotConfigFromSupabase(clientId) {
       } catch(e) {}
       if (clientRow.plan) { state.activePlan = clientRow.plan; state.selectedPlan = clientRow.plan; }
       /* Si el cliente está viendo "Mi cuenta", actualizar la vista con los datos frescos */
-      if (document.getElementById('admin-account')?.classList.contains('active-section') ||
-          document.getElementById('admin-account')?.style.display !== 'none') {
+      if (document.getElementById('admin-account')?.classList.contains('active')) {
         const accs = document.getElementById('acc-paid-status');
         const acca = document.getElementById('acc-active-since');
         if (accs) accs.textContent = isPaid ? 'Pago realizado' : 'Pendiente de pago';
         if (acca) acca.textContent = isPaid ? 'Suscripción activa' : 'Suscripción inactiva — completa el pago para activarla';
-        const upg = document.getElementById('acc-upgrade-block');
-        if (upg) upg.style.display = (resolvePlan(clientRow.plan) === 'pro' || isPaid) ? 'none' : 'block';
       }
     }
 
@@ -6048,23 +6033,28 @@ function refreshUpgradeBanner() {
   if (show) {
     const title = document.getElementById('upgrade-banner-title');
     const sub   = document.getElementById('upgrade-banner-sub');
-    const btnEl = banner.querySelector('a');
+    const btnEl   = document.getElementById('upgrade-banner-btn');
+    const verifyEl = document.getElementById('upgrade-verify-btn');
     if (pendingPayment && !msgsExhausted && !betaExp) {
       if (title) title.textContent = 'Activa tu plan para empezar';
       if (sub)   sub.innerHTML = `Cuenta creada con <strong style="color:#fff;">${user.email}</strong>. Elige un plan, paga con ese email y tu acceso se activa automáticamente.`;
       if (btnEl) { btnEl.textContent = 'Elegir plan y pagar →'; btnEl.onclick = (e)=>{ e.preventDefault(); showPostRegisterPayModal(user.email); }; }
+      if (verifyEl) verifyEl.style.display = 'block';
     } else if (betaExp && !msgsExhausted) {
       if (title) title.textContent = 'Tu prueba de 7 días ha terminado';
       if (sub)   sub.textContent   = 'Activa un plan y sigue usando tu chatbot sin perder la configuración.';
       if (btnEl) { btnEl.textContent = 'Ver planes →'; btnEl.onclick = null; }
+      if (verifyEl) verifyEl.style.display = 'block';
     } else if (msgsExhausted && !betaExp) {
       if (title) title.textContent = 'Has llegado al límite de mensajes';
       if (sub)   sub.textContent   = 'Actualiza tu plan para que tu bot vuelva a responder este mes.';
       if (btnEl) { btnEl.textContent = 'Ver planes →'; btnEl.onclick = null; }
+      if (verifyEl) verifyEl.style.display = 'none';
     } else {
       if (title) title.textContent = 'Tu acceso ha expirado';
       if (sub)   sub.textContent   = 'Elige un plan para reactivar tu chatbot.';
       if (btnEl) { btnEl.textContent = 'Ver planes →'; btnEl.onclick = null; }
+      if (verifyEl) verifyEl.style.display = 'block';
     }
   }
 }
@@ -6073,6 +6063,7 @@ function ownerSimulatePlan(planKey) {
   if (planKey === 'owner') {
     authState.currentUser.plan = '__owner__';
     authState.isOwner = true;
+    state.activePlan = 'pro'; // owner ve la vista PRO
     localStorage.removeItem('am_owner_sim_plan');
     showToast('Modo owner restaurado');
   } else {
@@ -6598,6 +6589,37 @@ async function checkActivationStatus(email) {
   }
 }
 
+/* ── Verificar activación desde banner ── */
+async function verifyPaymentNow() {
+  const user = authState.currentUser;
+  if (!user?.email) return;
+  const verifyEl = document.getElementById('upgrade-verify-btn');
+  if (verifyEl) { verifyEl.textContent = 'Verificando…'; verifyEl.style.pointerEvents = 'none'; }
+  try {
+    const { data } = await _SB.from('clients').select('plan,active').eq('email', user.email).maybeSingle();
+    if (data && data.active && data.plan && data.plan !== 'beta') {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (raw) {
+        const sess = JSON.parse(raw);
+        sess.user.plan = data.plan;
+        sess.user.active = true;
+        localStorage.setItem(SESSION_KEY, JSON.stringify(sess));
+      }
+      authState.currentUser.plan = data.plan;
+      authState.currentUser.active = true;
+      state.activePlan = data.plan;
+      showToast('Plan ' + data.plan.toUpperCase() + ' activado — ¡bienvenido!');
+      refreshAdmin();
+    } else {
+      showToast('Pago no detectado aún. Usa el mismo email al pagar: ' + user.email);
+      if (verifyEl) { verifyEl.textContent = 'Ya pagué — verificar activación'; verifyEl.style.pointerEvents = ''; }
+    }
+  } catch(e) {
+    showToast('Error de conexión. Inténtalo de nuevo.');
+    if (verifyEl) { verifyEl.textContent = 'Ya pagué — verificar activación'; verifyEl.style.pointerEvents = ''; }
+  }
+}
+
 /* ── Logout ── */
 function logout() {
   localStorage.removeItem(SESSION_KEY);
@@ -6701,33 +6723,35 @@ function enterPrivateMode(user) {
   const userPlan = resolvePlan(user.plan || 'growth');
   const planMaxBots = 1;
 
-  /* Ocultar secciones de panel que solo son para el owner */
-  const ownerOnlySections = ['dashboard','conversations'];
+  /* Para clientes: mostrar dashboard y conversaciones */
   if (!authState.isOwner) {
-    ownerOnlySections.forEach(s => {
-      const btn = document.querySelector(`.sidebar-item[onclick*="'${s}'"]`);
-      if (btn) btn.style.display = 'none';
-    });
-    /* Ir directo a Mi cuenta cuando es cliente */
-    showAdminSection('account', null);
+    /* Clientes van al dashboard primero — ven su plan, mensajes y conversaciones */
+    showAdminSection('dashboard', null);
     document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
-    const accBtn = document.getElementById('btn-account');
-    if (accBtn) accBtn.classList.add('active');
-    renderAccountSection();
+    /* Marcar activo el botón de dashboard si existe, si no el de cuenta */
+    const dashBtn = document.querySelector(`.sidebar-item[onclick*="'dashboard'"]`);
+    if (dashBtn) { dashBtn.style.removeProperty('display'); dashBtn.classList.add('active'); }
   } else {
     /* Owner: mostrar todo */
     document.querySelectorAll('.sidebar-item').forEach(b => b.style.removeProperty('display'));
   }
 
-  /* Si es owner, instalación siempre desbloqueada */
+  /* Si es owner, instalación siempre desbloqueada y plan en PRO */
   if (authState.isOwner) {
     state.paymentDone = true;
+    state.activePlan  = 'pro';
+    state.selectedPlan = 'pro';
+    localStorage.setItem('am_plan', 'pro');
   }
 
   /* Si es cliente, cargar su plan y sincronizar desde Supabase */
   if (!authState.isOwner) {
-    state.activePlan   = user.plan || 'beta';
-    state.selectedPlan = user.plan || 'beta';
+    /* Limpiar cualquier plan viejo de localStorage que no corresponda */
+    const cachedPlan = localStorage.getItem('am_plan');
+    const validPlans = ['airmate','start','growth','pro','beta'];
+    const safePlan   = validPlans.includes(cachedPlan) ? cachedPlan : (user.plan || 'beta');
+    state.activePlan   = safePlan;
+    state.selectedPlan = safePlan;
     state.paymentDone  = user.active === true || (user.plan === 'beta' && !isBetaExpired(user));
     localStorage.setItem('am_plan', state.activePlan);
 
@@ -6738,27 +6762,32 @@ function enterPrivateMode(user) {
         if (!data) return;
         /* Actualizar ID si faltaba */
         if (data.id) user.id = data.id;
-        /* Si el plan cambió (ej: beta → airmate tras pago) actualizar sesión */
-        if (data.plan && data.plan !== user.plan) {
+        const planChanged = data.plan && data.plan !== user.plan;
+        /* Siempre sincronizar plan y active con Supabase (fuente de verdad) */
+        if (data.plan) {
           user.plan   = data.plan;
           user.active = data.active === true;
           state.activePlan   = data.plan;
           state.selectedPlan = data.plan;
-          state.paymentDone  = data.active === true;
+          state.paymentDone  = data.active === true || (data.plan === 'beta' && !isBetaExpired(user));
+          localStorage.setItem('am_plan', data.plan);
           /* Guardar sesión actualizada */
-          const raw = localStorage.getItem(SESSION_KEY);
-          if (raw) {
-            const sess = JSON.parse(raw);
-            sess.user.plan   = data.plan;
-            sess.user.active = data.active === true;
-            localStorage.setItem(SESSION_KEY, JSON.stringify(sess));
-          }
+          try {
+            const raw = localStorage.getItem(SESSION_KEY);
+            if (raw) {
+              const sess = JSON.parse(raw);
+              sess.user.plan   = data.plan;
+              sess.user.active = data.active === true;
+              localStorage.setItem(SESSION_KEY, JSON.stringify(sess));
+            }
+          } catch(e) {}
           refreshAdmin();
-          if (data.active && data.plan !== 'beta') {
+          if (planChanged && data.active && data.plan !== 'beta') {
             showToast('Plan ' + data.plan.toUpperCase() + ' activo');
           }
         }
         loadBotConfigFromSupabase(data.id);
+        loadConversationsFromSupabase(data.id);
       });
     }
   }
@@ -6805,22 +6834,23 @@ async function renderOwnerDashboard() {
     const { data: clients } = await _SB.from('clients').select('*').order('created_at', { ascending: false });
     const all    = clients || [];
     const active = all.filter(c => c.active);
-    const startC  = active.filter(c => resolvePlan(c.plan) === 'start');
-    const growthC = active.filter(c => resolvePlan(c.plan) === 'growth');
-    const proC    = active.filter(c => resolvePlan(c.plan) === 'pro');
-    const mrr     = startC.length * 29.99 + growthC.length * 39.99 + proC.length * 69.99;
+    const airmateC = active.filter(c => resolvePlan(c.plan) === 'airmate');
+    const startC   = active.filter(c => resolvePlan(c.plan) === 'start');
+    const growthC  = active.filter(c => resolvePlan(c.plan) === 'growth');
+    const proC     = active.filter(c => resolvePlan(c.plan) === 'pro');
+    const mrr      = airmateC.length * 39.99 + startC.length * 39 + growthC.length * 59 + proC.length * 99;
 
     const set = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
-    set('ow-total-clients', all.length);
-    set('ow-mrr-bot',       mrr.toFixed(2) + '€');
-    const starterCount = document.getElementById('ow-count-starter');
-    if (starterCount) starterCount.textContent = startC.length;
-    set('ow-count-pro',     growthC.length);
-    set('ow-count-adv',     proC.length);
+    set('ow-total-clients',  active.length);
+    set('ow-mrr-bot',        mrr.toFixed(2) + '€');
+    set('ow-count-airmate',  airmateC.length);
+    set('ow-count-starter',  startC.length);
+    set('ow-count-pro',      growthC.length);
+    set('ow-count-adv',      proC.length);
 
-    const planPrice = { start: 29.99, growth: 39.99, pro: 69.99, beta: 0, starter: 29.99, lan: 39.99, plus: 69.99 };
+    const planPrice = { airmate: 39.99, start: 39, growth: 59, pro: 99, beta: 0, starter: 39, lan: 59, plus: 99 };
     const planLabel = { airmate: 'AIRMATE', start: 'START', growth: 'GROWTH', pro: 'PRO', beta: 'BETA', starter: 'START', lan: 'GROWTH', plus: 'PRO' };
-    const planPill  = { start: 'pill-green', growth: 'pill-blue', pro: 'pill-orange', beta: 'pill-gray', starter: 'pill-green', lan: 'pill-blue', plus: 'pill-orange' };
+    const planPill  = { airmate: 'pill-orange', start: 'pill-green', growth: 'pill-blue', pro: 'pill-orange', beta: 'pill-gray', starter: 'pill-green', lan: 'pill-blue', plus: 'pill-orange' };
 
     const tbody = document.getElementById('ow-clients-tbody');
     if (tbody) {
@@ -6838,7 +6868,7 @@ async function renderOwnerDashboard() {
             <td style="padding:10px 16px;text-align:center;color:#8a97b0;font-size:12px">${new Date(c.created_at).toLocaleDateString('es-ES')}</td>
             <td style="padding:10px 16px;">
               <div class="ow-actions">
-                <button class="ow-btn ow-btn-edit" onclick="ownerEditClient('${c.id}','${escHtml(c.name||'')}','${c.plan}')">Editar</button>
+                <button class="ow-btn ow-btn-edit" onclick="ownerEditClient('${c.id}','${escHtml(c.name||'')}','${c.plan}',${c.active})">Editar</button>
                 <button class="ow-btn ow-btn-delete" onclick="ownerDeleteClient('${c.id}','${escHtml(c.name||'?')}')">Eliminar</button>
               </div>
             </td>
@@ -6865,12 +6895,10 @@ async function renderOwnerDashboard() {
     const mrrEl = document.getElementById('ow-web-mrr');
     if (mrrEl) mrrEl.textContent = webMrr.toFixed(2) + '€';
 
-    /* Actualizar MRR global (chatbot + web) */
-    const botMrrEl = document.getElementById('ow-mrr-bot');
-    const botMrr = parseFloat((botMrrEl?.textContent || '0').replace('€','')) || 0;
+    /* Actualizar MRR global (chatbot + web) — mrr viene del scope de arriba */
     const set2 = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
     set2('ow-mrr-web-stat',    webMrr.toFixed(2) + '€');
-    set2('ow-mrr',             (botMrr + webMrr).toFixed(2) + '€');
+    set2('ow-mrr',             (mrr + webMrr).toFixed(2) + '€');
     set2('ow-delivery-total',  deliveryTotal.toFixed(2) + '€');
     set2('ow-web-count',       webWithMaint);
 
@@ -6975,23 +7003,25 @@ async function ownerCreateClient() {
 }
 
 /* ── Owner: acciones sobre clientes ── */
-function ownerEditClient(id, name, plan) {
-  document.getElementById('ow-edit-id').value   = id;
-  document.getElementById('ow-edit-name').value = name;
-  document.getElementById('ow-edit-plan').value = plan;
-  document.getElementById('ow-edit-pass').value = '';
+function ownerEditClient(id, name, plan, active) {
+  document.getElementById('ow-edit-id').value      = id;
+  document.getElementById('ow-edit-name').value    = name;
+  document.getElementById('ow-edit-plan').value    = plan;
+  document.getElementById('ow-edit-pass').value    = '';
+  document.getElementById('ow-edit-active').checked = active === true || active === 'true';
   document.getElementById('ow-edit-modal').style.display = 'flex';
 }
 function ownerCloseModal() {
   document.getElementById('ow-edit-modal').style.display = 'none';
 }
 async function ownerSaveEdit() {
-  const id   = document.getElementById('ow-edit-id').value;
-  const name = document.getElementById('ow-edit-name').value.trim();
-  const pass = document.getElementById('ow-edit-pass').value.trim();
-  const plan = document.getElementById('ow-edit-plan').value;
+  const id     = document.getElementById('ow-edit-id').value;
+  const name   = document.getElementById('ow-edit-name').value.trim();
+  const pass   = document.getElementById('ow-edit-pass').value.trim();
+  const plan   = document.getElementById('ow-edit-plan').value;
+  const active = document.getElementById('ow-edit-active').checked;
   if (!name) { showToast('El nombre es obligatorio'); return; }
-  const updates = { name, plan };
+  const updates = { name, plan, active };
   if (pass) updates.password = pass;
   const { error } = await _SB.from('clients').update(updates).eq('id', id);
   if (error) { showToast('' + (error.message||'Error al guardar')); return; }
@@ -7420,21 +7450,21 @@ async function renderAccountSection() {
   if (nameEl)     nameEl.value     = user.name || '';
   if (usernameEl) usernameEl.value = user.name || '';
 
-  /* Ocultar bloque upgrade si es owner o ya está en el plan más alto con suscripción de pago */
-  const isPaidActive = user.active && user.plan !== 'beta';
+  const resolvedPlan = resolvePlan(user.plan || state.activePlan || 'beta');
+  /* Bloque upgrade: visible para todos salvo owner o PRO activo */
   const upg = document.getElementById('acc-upgrade-block');
-  const resolvedPlan = resolvePlan(user.plan);
-  if (upg) upg.style.display = (authState.isOwner || isPaidActive || resolvedPlan === 'pro') ? 'none' : 'block';
-  /* Mostrar cancelar solo si tiene suscripción activa de pago */
-  const cancelBlock = document.getElementById('acc-cancel-block');
-  if (cancelBlock) cancelBlock.style.display = 'block';
-  /* Ocultar tarjetas de planes ya activos o inferiores (beta ve todos los planes) */
-  const planOrder = ['start','growth','pro'];
-  const currentIdx = (user.plan === 'beta' || !user.plan) ? -1 : planOrder.indexOf(resolvedPlan);
+  /* Cambiar de plan: siempre visible para todos los usuarios */
+  if (upg) upg.style.display = 'block';
+  /* Ocultar solo la tarjeta del plan que ya tiene activo */
+  const planOrder = ['airmate','start','growth','pro'];
+  const currentIdx = (user.active && resolvedPlan !== 'beta') ? planOrder.indexOf(resolvedPlan) : -1;
   planOrder.forEach((k, i) => {
     const card = document.getElementById('acc-upgrade-'+k);
-    if (card) card.style.display = i <= currentIdx ? 'none' : 'flex';
+    if (card) card.style.display = (i === currentIdx) ? 'none' : 'flex';
   });
+  /* Cancelar: visible si tiene plan activo de pago */
+  const cancelBlock = document.getElementById('acc-cancel-block');
+  if (cancelBlock) cancelBlock.style.display = (user.active && resolvedPlan !== 'beta') ? 'block' : 'none';
 }
 
 async function saveAccountChanges() {

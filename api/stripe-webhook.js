@@ -75,13 +75,26 @@ export default async function handler(req, res) {
   // ── Pago completado ─────────────────────────────────────────────
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    const email   = session.customer_details?.email?.toLowerCase();
-    const name    = session.customer_details?.name || '';
-    const phone   = session.customer_details?.phone || null;
     const amount  = session.amount_total;
 
+    // Obtener email: varios sitios donde puede estar (especialmente en cupones 100%)
+    let email = session.customer_details?.email?.toLowerCase()
+      || session.customer_email?.toLowerCase()
+      || null;
+
+    // Si aún no hay email, intentar recuperarlo del objeto Customer de Stripe
+    if (!email && session.customer) {
+      try {
+        const customer = await stripe.customers.retrieve(session.customer);
+        email = customer.email?.toLowerCase() || null;
+      } catch (_) {}
+    }
+
+    const name  = session.customer_details?.name || '';
+    const phone = session.customer_details?.phone || null;
+
     if (!email) {
-      console.log('No email in session, skipping.');
+      console.log('No email found in session, skipping.');
       return res.status(200).json({ received: true });
     }
 
@@ -145,6 +158,45 @@ export default async function handler(req, res) {
 
       if (wrError) console.error('Error creando web_request:', wrError);
       else console.log(`Solicitud web creada para ${email} (${plan})`);
+    }
+  }
+
+  // ── Suscripción creada/activada (cubre cupones 100% y trials) ───
+  if (event.type === 'customer.subscription.created' || event.type === 'invoice.payment_succeeded') {
+    try {
+      const obj = event.data.object;
+      const customerId = obj.customer;
+      if (!customerId) return res.status(200).json({ received: true });
+
+      const customer = await stripe.customers.retrieve(customerId);
+      const email    = customer.email?.toLowerCase();
+      if (!email) return res.status(200).json({ received: true });
+
+      // Obtener el plan desde los items de la suscripción
+      const subId  = obj.subscription || obj.id;
+      let plan = null;
+      if (subId) {
+        const sub = await stripe.subscriptions.retrieve(subId, { expand: ['items.data.price.product'] });
+        for (const item of sub.items.data) {
+          const productName = (item.price?.product?.name || '').toLowerCase();
+          for (const entry of PRODUCT_PLAN_MAP) {
+            if (entry.keywords.some(k => productName.includes(k))) {
+              plan = entry.plan; break;
+            }
+          }
+          if (plan) break;
+        }
+      }
+
+      if (!plan) return res.status(200).json({ received: true });
+
+      const { data: existing } = await supabase.from('clients').select('id').eq('email', email).maybeSingle();
+      if (existing) {
+        await supabase.from('clients').update({ active: true, plan }).eq('email', email);
+        console.log(`Suscripcion activa: ${email} → plan ${plan}`);
+      }
+    } catch (err) {
+      console.error('Error procesando subscription event:', err.message);
     }
   }
 
