@@ -298,8 +298,11 @@ body{font-family:var(--font-body);background:#f0f2f7;color:var(--al-navy);min-he
 .admin-main{padding:36px 40px;background:#f4f6fb;overflow-y:auto;}
 .admin-section{display:none;} .admin-section.active{display:block;}
 
-/* ── Plan theme sidebar ── */
+/* ── Plan theme sidebar + main ── */
 .admin-sidebar{position:relative;overflow:hidden;}
+.admin-main{position:relative;overflow:hidden;}
+
+/* Orbs animados — sidebar */
 .plan-orb{
   position:absolute;border-radius:50%;filter:blur(48px);
   opacity:0;pointer-events:none;transition:opacity 1.2s ease;
@@ -319,6 +322,19 @@ body{font-family:var(--font-body);background:#f0f2f7;color:var(--al-navy);min-he
   50%{transform:translate(-50%,-62%) scale(1.1);}
 }
 .admin-sidebar.plan-active .plan-orb{opacity:.55;}
+
+/* Orbs animados — main content */
+.plan-main-orb{
+  position:fixed;border-radius:50%;filter:blur(90px);
+  opacity:0;pointer-events:none;transition:opacity 1.4s ease;
+  z-index:0;
+}
+.plan-main-orb.morb1{width:500px;height:500px;top:-100px;right:-150px;animation:mainOrb1 12s ease-in-out infinite;}
+.plan-main-orb.morb2{width:350px;height:350px;bottom:-80px;left:100px;animation:mainOrb2 15s ease-in-out infinite;}
+@keyframes mainOrb1{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-40px,30px) scale(1.08);}}
+@keyframes mainOrb2{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(30px,-25px) scale(.92);}}
+.admin-main.plan-active .plan-main-orb{opacity:.07;}
+.admin-main > *{position:relative;z-index:1;}
 
 /* Plan badge en sidebar */
 #sidebar-plan-badge{
@@ -3486,7 +3502,9 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
       </div>
     </aside>
 
-    <main class="admin-main">
+    <main class="admin-main" id="admin-main">
+      <div class="plan-main-orb morb1" id="plan-morb1"></div>
+      <div class="plan-main-orb morb2" id="plan-morb2"></div>
 
       <!-- BANNER UPGRADE -->
       <div id="upgrade-banner" style="display:none;margin-bottom:24px;background:linear-gradient(135deg,#0c1e3d 0%,#162d58 60%,#1e3a70 100%);border:1px solid rgba(74,108,247,.4);border-radius:18px;padding:24px 28px;align-items:center;gap:20px;flex-wrap:wrap;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(12,30,61,.2);">
@@ -3791,9 +3809,14 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
 
       <!-- PANEL OWNER — solo OWNER -->
       <div id="admin-owner-dashboard" class="admin-section">
-        <div class="admin-header">
-          <h2>Panel Owner</h2>
-          <p>Vista global de todos tus clientes, suscripciones y actividad</p>
+        <div class="admin-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;">
+          <div>
+            <h2>Panel Owner</h2>
+            <p>Vista global de todos tus clientes, suscripciones y actividad</p>
+          </div>
+          <button onclick="ownerOpenContractModal('','','')" style="display:flex;align-items:center;gap:8px;padding:10px 18px;background:linear-gradient(135deg,#2a5cff,#1e40af);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(42,92,255,.35);white-space:nowrap;flex-shrink:0;">
+            📄 Generar contrato
+          </button>
         </div>
         <div class="stats-grid" style="margin-bottom:28px;">
           <div class="stat-card">
@@ -4164,11 +4187,11 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;padding:8px 0 16px;">
 
           <!-- AIRMATE -->
-          <div class="adm-plan-card" id="plan-card-airmate" onclick="selectPlan('airmate')" style="border-color:rgba(251,146,60,.4);">
-            <div class="adm-plan-emoji"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M16 3L7 16h9l-4 9 11-13h-9l4-9z" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <div class="adm-plan-name" style="color:#f97316;">AIRMATE</div>
+          <div class="adm-plan-card" id="plan-card-airmate" onclick="selectPlan('airmate')" style="border-color:rgba(42,92,255,.4);">
+            <div class="adm-plan-emoji"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M16 3L7 16h9l-4 9 11-13h-9l4-9z" stroke="#2a5cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="adm-plan-name" style="color:#2a5cff;">AIRMATE</div>
             <div class="adm-plan-tagline">Para tu web actual</div>
-            <div class="adm-plan-price" style="color:#f97316;">39,99€<span>/mes</span></div>
+            <div class="adm-plan-price" style="color:#2a5cff;">39,99€<span>/mes</span></div>
             <ul class="adm-plan-feats">
               <li>Sin setup · Activo en 5 min</li>
               <li>Agente IA en tu web actual</li>
@@ -4179,19 +4202,19 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
               <div style="display:flex;justify-content:space-between;font-size:11px;color:#8a97b0;margin-bottom:5px;">
                 <span id="plan-msgs-airmate">0 / 1.000</span><span id="plan-pct-airmate">0%</span>
               </div>
-              <div class="prog-bar"><div class="prog-fill" id="plan-msgs-bar-airmate" style="width:0%;background:linear-gradient(90deg,#f97316,#ef4444);"></div></div>
+              <div class="prog-bar"><div class="prog-fill" id="plan-msgs-bar-airmate" style="width:0%;background:linear-gradient(90deg,#2a5cff,#6ea0ff);"></div></div>
             </div>
-            <a id="stripe-btn-airmate" href="https://buy.stripe.com/3cI14n6dhcGo1EGeal2Ry0c" onclick="handleStripeClick(event,'airmate');return false;" class="adm-plan-btn" style="background:linear-gradient(90deg,#f97316,#ef4444);color:#fff;box-shadow:0 4px 16px rgba(249,115,22,.35);">
+            <a id="stripe-btn-airmate" href="https://buy.stripe.com/3cI14n6dhcGo1EGeal2Ry0c" onclick="handleStripeClick(event,'airmate');return false;" class="adm-plan-btn adm-btn-airmate">
               Activar AIRMATE
             </a>
           </div>
 
           <!-- START -->
-          <div class="adm-plan-card" id="plan-card-start" onclick="selectPlan('start')">
-            <div class="adm-plan-emoji"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 24V14M14 14C14 8 8 4 4 6c0 6 4 10 10 8M14 14c0-5 6-8 10-6-1 6-5 9-10 8" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <div class="adm-plan-name">START</div>
+          <div class="adm-plan-card" id="plan-card-start" onclick="selectPlan('start')" style="border-color:rgba(6,182,212,.4);">
+            <div class="adm-plan-emoji"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 24V14M14 14C14 8 8 4 4 6c0 6 4 10 10 8M14 14c0-5 6-8 10-6-1 6-5 9-10 8" stroke="#06b6d4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="adm-plan-name" style="color:#06b6d4;">START</div>
             <div class="adm-plan-tagline">Presencia profesional</div>
-            <div class="adm-plan-price">250€<span> setup + 39€/mes</span></div>
+            <div class="adm-plan-price" style="color:#06b6d4;">250€<span> setup + 39€/mes</span></div>
             <ul class="adm-plan-feats">
               <li>Web profesional rápida y moderna</li>
               <li>SEO básico (Google)</li>
@@ -4269,7 +4292,7 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
         <style>
         .adm-plan-card{background:#fff;border:1.5px solid #e4e9f2;border-radius:18px;padding:24px 20px;display:flex;flex-direction:column;cursor:pointer;transition:transform .25s,box-shadow .25s,border-color .25s;position:relative;overflow:hidden;}
         .adm-plan-card:hover{transform:translateY(-6px);box-shadow:0 16px 40px rgba(42,92,255,.14);border-color:#b8c8ff;}
-        .adm-plan-featured{background:linear-gradient(160deg,#0c1e3d,#162d58);border-color:#22c55e !important;}
+        .adm-plan-featured{background:linear-gradient(160deg,#052e0e,#0a4d1c);border-color:#22c55e !important;}
         .adm-plan-featured:hover{box-shadow:0 16px 48px rgba(34,197,94,.3) !important;border-color:#22c55e !important;}
         .adm-plan-hot{position:absolute;top:0;left:0;right:0;text-align:center;background:linear-gradient(90deg,#22c55e,#16a34a);color:#fff;font-size:10px;font-weight:800;letter-spacing:.1em;padding:5px 0;}
         .adm-plan-emoji{font-size:26px;margin-bottom:10px;margin-top:4px;}
@@ -4285,12 +4308,14 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
         .adm-plan-featured .adm-plan-feats li{color:rgba(255,255,255,.7);}
         .adm-plan-usage{margin-bottom:14px;}
         .adm-plan-btn{display:block;text-align:center;padding:11px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;transition:all .22s;}
-        .adm-btn-start{background:#f0f4ff;color:#2a5cff;border:1.5px solid #d8e2ff;}
-        .adm-btn-start:hover{background:#2a5cff;color:#fff;border-color:#2a5cff;box-shadow:0 6px 20px rgba(42,92,255,.3);}
+        .adm-btn-airmate{background:linear-gradient(90deg,#2a5cff,#6ea0ff);color:#fff;box-shadow:0 4px 16px rgba(42,92,255,.4);}
+        .adm-btn-airmate:hover{box-shadow:0 8px 28px rgba(42,92,255,.6);}
+        .adm-btn-start{background:linear-gradient(90deg,#06b6d4,#0891b2);color:#fff;box-shadow:0 4px 16px rgba(6,182,212,.4);}
+        .adm-btn-start:hover{box-shadow:0 8px 28px rgba(6,182,212,.6);}
         .adm-btn-growth{background:linear-gradient(90deg,#22c55e,#16a34a);color:#fff;box-shadow:0 4px 16px rgba(34,197,94,.4);}
         .adm-btn-growth:hover{box-shadow:0 8px 28px rgba(34,197,94,.6);}
-        .adm-btn-pro{background:#f3f0ff;color:#7c3aed;border:1.5px solid #ddd6fe;}
-        .adm-btn-pro:hover{background:#7c3aed;color:#fff;border-color:#7c3aed;box-shadow:0 6px 20px rgba(124,58,237,.3);}
+        .adm-btn-pro{background:linear-gradient(90deg,#7c3aed,#a855f7);color:#fff;box-shadow:0 4px 16px rgba(124,58,237,.4);}
+        .adm-btn-pro:hover{box-shadow:0 8px 28px rgba(124,58,237,.6);}
         </style>
 
         <!-- BOTÓN DE PAGO STRIPE -->
@@ -4773,7 +4798,7 @@ function renderConfigPlanSections() {
     /* Cambiar color del badge según plan */
     const badge = document.getElementById('cfg-plan-badge');
     const btn   = badge?.querySelector('button');
-    const colors = { airmate:'#fff7ed,#fed7aa,#c2410c', start:'#f0fdf4,#bbf7d0,#166534', growth:'#f0fdf4,#86efac,#15803d', pro:'#eff6ff,#bfdbfe,#1d4ed8', beta:'#f8fafc,#e2e8f0,#475569' };
+    const colors = { airmate:'#eff6ff,#bfdbfe,#2a5cff', start:'#ecfeff,#a5f3fc,#0891b2', growth:'#f0fdf4,#86efac,#15803d', pro:'#f5f3ff,#ddd6fe,#6d28d9', beta:'#f8fafc,#e2e8f0,#475569' };
     const [bg,brd,clr] = (colors[plan]||colors['start']).split(',');
     if (badge) { badge.style.background=bg; badge.style.borderColor=brd; }
     if (title) title.style.color=clr;
@@ -6241,41 +6266,48 @@ function refreshAdmin() {
   const activePlanKey=state.selectedPlan||state.activePlan;
   if (sb && PLANS[activePlanKey]) sb.href=PLANS[activePlanKey].stripeUrl;
 
-  /* ── Plan theme sidebar ── */
+  /* ── Plan theme sidebar + main ── */
   if (!authState.isOwner) {
     const PLAN_THEME = {
-      airmate: { c1:'#2a5cff', c2:'#6ea0ff', c3:'#1a3a8f', label:'Plan AIRMATE', emoji:'🤖' },
-      start:   { c1:'#16a34a', c2:'#4ade80', c3:'#14532d', label:'Plan START',   emoji:'🌱' },
-      growth:  { c1:'#22c55e', c2:'#86efac', c3:'#166534', label:'Plan GROWTH',  emoji:'🚀' },
-      pro:     { c1:'#7c3aed', c2:'#c4b5fd', c3:'#4c1d95', label:'Plan PRO',     emoji:'⚡' },
-      beta:    { c1:'#64748b', c2:'#94a3b8', c3:'#1e293b', label:'Acceso BETA',  emoji:'🔬' },
+      airmate: { c1:'#2a5cff', c2:'#6ea0ff', c3:'#1a3a8f', sidebar:'linear-gradient(180deg,#071a4a 0%,#0d2560 100%)', label:'Plan AIRMATE', emoji:'🤖' },
+      start:   { c1:'#06b6d4', c2:'#67e8f9', c3:'#164e63', sidebar:'linear-gradient(180deg,#042030 0%,#083344 100%)', label:'Plan START',   emoji:'🌱' },
+      growth:  { c1:'#22c55e', c2:'#86efac', c3:'#14532d', sidebar:'linear-gradient(180deg,#032010 0%,#052e16 100%)', label:'Plan GROWTH',  emoji:'🚀' },
+      pro:     { c1:'#7c3aed', c2:'#c4b5fd', c3:'#3b0764', sidebar:'linear-gradient(180deg,#150a2e 0%,#220f45 100%)', label:'Plan PRO',     emoji:'⚡' },
+      beta:    { c1:'#64748b', c2:'#94a3b8', c3:'#1e293b', sidebar:'linear-gradient(180deg,#0a1628 0%,#0f2040 100%)', label:'Acceso BETA',  emoji:'🔬' },
     };
     const rp = resolvePlan(state.activePlan) || 'beta';
     const theme = PLAN_THEME[rp] || PLAN_THEME.beta;
     const sidebar = document.getElementById('admin-sidebar');
+    const mainEl  = document.getElementById('admin-main');
     const badge   = document.getElementById('sidebar-plan-badge');
     const orb1    = document.getElementById('plan-orb1');
     const orb2    = document.getElementById('plan-orb2');
     const orb3    = document.getElementById('plan-orb3');
+    const morb1   = document.getElementById('plan-morb1');
+    const morb2   = document.getElementById('plan-morb2');
     if (sidebar && state.paymentDone) {
       sidebar.classList.add('plan-active');
-      sidebar.style.background = `linear-gradient(180deg, color-mix(in srgb, ${theme.c1} 22%, #0a1628) 0%, color-mix(in srgb, ${theme.c3} 30%, #0f2040) 100%)`;
-      sidebar.style.borderRight = `1px solid ${theme.c1}33`;
+      sidebar.style.background  = theme.sidebar;
+      sidebar.style.borderRight = `1px solid ${theme.c1}44`;
       if (orb1) orb1.style.background = theme.c1;
       if (orb2) orb2.style.background = theme.c2;
       if (orb3) orb3.style.background = theme.c3;
-      // active item color
       const styleId = 'plan-sidebar-style';
       let styleEl = document.getElementById(styleId);
       if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = styleId; document.head.appendChild(styleEl); }
       styleEl.textContent = `.sidebar-item.active{background:linear-gradient(135deg,${theme.c1}40,${theme.c1}20)!important;color:${theme.c2}!important;border:1px solid ${theme.c1}55!important;}`;
     }
+    if (mainEl && state.paymentDone) {
+      mainEl.classList.add('plan-active');
+      if (morb1) morb1.style.background = theme.c1;
+      if (morb2) morb2.style.background = theme.c2;
+    }
     if (badge) {
       badge.style.display = state.paymentDone ? 'block' : 'none';
       if (state.paymentDone) {
-        badge.style.background = `linear-gradient(135deg,${theme.c1}22,${theme.c1}0a)`;
-        badge.style.borderColor = `${theme.c1}44`;
-        badge.style.color = theme.c2;
+        badge.style.background  = `linear-gradient(135deg,${theme.c1}25,${theme.c1}0a)`;
+        badge.style.borderColor = `${theme.c1}55`;
+        badge.style.color       = theme.c2;
         badge.innerHTML = `<span style="margin-right:5px;">${theme.emoji}</span>${theme.label}`;
       }
     }
