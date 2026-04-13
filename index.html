@@ -3917,6 +3917,39 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
             </table>
           </div>
         </div>
+        <!-- REGISTRO DE CONTRATOS -->
+        <div class="config-card" style="margin-top:24px;padding:0;overflow:hidden;">
+          <div onclick="owToggleContracts()" style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;cursor:pointer;user-select:none;background:#f8faff;border-bottom:1px solid #eef1f8;" id="ow-contracts-header">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:18px;">📋</span>
+              <div>
+                <div style="font-size:14px;font-weight:700;color:#0d1b3e;">Registro de contratos</div>
+                <div style="font-size:11px;color:#8a97b0;" id="ow-contracts-count">Cargando…</div>
+              </div>
+            </div>
+            <span id="ow-contracts-arrow" style="font-size:18px;color:#8a97b0;transition:transform .25s;">▼</span>
+          </div>
+          <div id="ow-contracts-body" style="display:none;">
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead>
+                  <tr style="background:#f8faff;">
+                    <th style="padding:10px 16px;text-align:left;color:#7a8ea8;font-weight:600;">Cliente</th>
+                    <th style="padding:10px 16px;text-align:left;color:#7a8ea8;font-weight:600;">Plan</th>
+                    <th style="padding:10px 16px;text-align:left;color:#7a8ea8;font-weight:600;">Dominio</th>
+                    <th style="padding:10px 16px;text-align:center;color:#7a8ea8;font-weight:600;">Fecha</th>
+                    <th style="padding:10px 16px;text-align:center;color:#7a8ea8;font-weight:600;">Firmado</th>
+                    <th style="padding:10px 16px;text-align:center;color:#7a8ea8;font-weight:600;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="ow-contracts-tbody">
+                  <tr><td colspan="6" style="text-align:center;color:#8a97b0;padding:24px">Cargando…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <div id="ow-new-client-form" style="display:none;margin-top:24px;">
           <div class="config-card">
             <h3>Crear nuevo cliente</h3>
@@ -7441,6 +7474,76 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#f4f6fa;color:#1a2
   URL.revokeObjectURL(url);
   document.getElementById('ow-contract-modal').style.display = 'none';
   showToast('Contrato generado · Ábrelo en el navegador y usa Cmd+P para imprimir o guardar PDF');
+
+  /* Guardar en Supabase */
+  if (typeof _SB !== 'undefined') {
+    _SB.from('contracts').insert([{
+      client_name: name,
+      client_email: email,
+      plan,
+      domain,
+      contract_num: num,
+      contract_date: date || new Date().toISOString().split('T')[0],
+      signed: false
+    }]).then(() => owLoadContracts());
+  }
+}
+
+/* ── Contratos: toggle tabla ── */
+function owToggleContracts() {
+  const body  = document.getElementById('ow-contracts-body');
+  const arrow = document.getElementById('ow-contracts-arrow');
+  const open  = body.style.display === 'block';
+  body.style.display  = open ? 'none' : 'block';
+  arrow.style.transform = open ? '' : 'rotate(180deg)';
+  if (!open) owLoadContracts();
+}
+
+async function owLoadContracts() {
+  const tbody = document.getElementById('ow-contracts-tbody');
+  const count = document.getElementById('ow-contracts-count');
+  if (!tbody || typeof _SB === 'undefined') return;
+  const { data } = await _SB.from('contracts').select('*').order('created_at', { ascending: false });
+  const rows = data || [];
+  const signed = rows.filter(r => r.signed).length;
+  if (count) count.textContent = `${rows.length} contratos · ${signed} firmados · ${rows.length - signed} pendientes`;
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#8a97b0;padding:24px;">Aún no hay contratos generados</td></tr>';
+    return;
+  }
+  const planPill = { airmate:'#2a5cff', start:'#06b6d4', growth:'#22c55e', pro:'#7c3aed', beta:'#64748b' };
+  tbody.innerHTML = rows.map(r => {
+    const c = planPill[r.plan] || '#64748b';
+    const d = r.contract_date ? new Date(r.contract_date).toLocaleDateString('es-ES') : '—';
+    return `<tr style="border-bottom:1px solid #f0f3f8;">
+      <td style="padding:10px 16px;">
+        <div style="font-weight:600;color:#0d1b3e;">${escHtml(r.client_name||'—')}</div>
+        <div style="font-size:11px;color:#8a97b0;">${escHtml(r.client_email||'')}</div>
+      </td>
+      <td style="padding:10px 16px;"><span style="background:${c}18;color:${c};border:1px solid ${c}44;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;">${(r.plan||'').toUpperCase()}</span></td>
+      <td style="padding:10px 16px;font-size:12px;color:#5a6a85;">${escHtml(r.domain||'—')}</td>
+      <td style="padding:10px 16px;text-align:center;font-size:12px;color:#8a97b0;">${d}<br><span style="font-size:10px;">Nº ${escHtml(r.contract_num||'—')}</span></td>
+      <td style="padding:10px 16px;text-align:center;">
+        <button onclick="owToggleSigned('${r.id}',${r.signed})" style="padding:4px 12px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;${r.signed ? 'background:#dcfce7;color:#16a34a;' : 'background:#fef9c3;color:#92400e;'}">
+          ${r.signed ? '✓ Firmado' : '⏳ Pendiente'}
+        </button>
+      </td>
+      <td style="padding:10px 16px;text-align:center;">
+        <button onclick="owDeleteContract('${r.id}')" style="padding:4px 10px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;font-size:11px;cursor:pointer;">Eliminar</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function owToggleSigned(id, current) {
+  await _SB.from('contracts').update({ signed: !current }).eq('id', id);
+  owLoadContracts();
+}
+
+async function owDeleteContract(id) {
+  if (!confirm('¿Eliminar este contrato del registro?')) return;
+  await _SB.from('contracts').delete().eq('id', id);
+  owLoadContracts();
 }
 
 /* ── Owner: acciones sobre clientes ── */
