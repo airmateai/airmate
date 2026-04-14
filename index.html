@@ -9270,20 +9270,20 @@ function agRenderMain(){
     const days=new Date(y,m+1,0).getDate();
     const prevDays=new Date(y,m,0).getDate();
     const today=new Date();
-    for(let i=0;i<startDow;i++){
-      const pd=prevDays-startDow+1+i;
-      const evs=agItems.filter(i=>{ if(!i.date) return false; const d=new Date(i.date); return d.getFullYear()===y&&d.getMonth()===m-1&&d.getDate()===pd; });
+    for(let pi=0;pi<startDow;pi++){
+      const pd=prevDays-startDow+1+pi;
+      const evs=agItems.filter(ev=>{ if(!ev.date) return false; const dd=new Date(ev.date); return dd.getFullYear()===y&&dd.getMonth()===m-1&&dd.getDate()===pd; });
       html+=`<div class="ag-cal-cell other-month" onclick="agSelectDay(${y},${m-1},${pd})"><div class="ag-cal-num">${pd}</div>${evs.slice(0,2).map(e=>`<div class="ag-cal-ev ${e.type}${e.done?' done-ev':''}" onclick="event.stopPropagation();agToggleDoneEv(${e.id})">${e.title}</div>`).join('')}</div>`;
     }
     for(let d=1;d<=days;d++){
       const isToday=today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===d;
       const isSel=agSelectedDay&&agSelectedDay.getFullYear()===y&&agSelectedDay.getMonth()===m&&agSelectedDay.getDate()===d;
-      const evs=agItems.filter(i=>{ if(!i.date) return false; const dt=new Date(i.date); return dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d; });
+      const evs=agItems.filter(ev=>{ if(!ev.date) return false; const dt=new Date(ev.date); return dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d; });
       const sorted=evs.sort((a,b)=>new Date(a.date)-new Date(b.date));
       const shown=sorted.slice(0,3);
       const more=sorted.length-3;
-      html+=`<div class="ag-cal-cell${isToday?' today':''}${isSel?' selected':''}" onclick="agSelectDay(${y},${m},${d})">
-        <div class="ag-cal-num">${d}</div>
+      html+=`<div class="ag-cal-cell${isToday?' today':''}${isSel?' selected':''}" onclick="agOpenModal(${y},${m},${d})">
+        <div class="ag-cal-num" style="display:flex;align-items:center;justify-content:space-between;width:100%;"><span>${d}</span><span style="font-size:9px;opacity:0;transition:opacity .2s;" class="ag-add-hint">+</span></div>
         ${shown.map(e=>`<div class="ag-cal-ev ${e.type}${e.done?' done-ev':''}" title="${e.title}" onclick="event.stopPropagation();agToggleDoneEv(${e.id})">${e.title}</div>`).join('')}
         ${more>0?`<div class="ag-cal-more">+${more} más</div>`:''}
       </div>`;
