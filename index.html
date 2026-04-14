@@ -4675,6 +4675,8 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
           .ag-cal-ev.tarea{background:rgba(124,58,237,.25);color:#c4b5fd;}
           .ag-cal-ev.llamada{background:rgba(34,197,94,.25);color:#6ee7a0;}
           .ag-cal-ev.nota{background:rgba(245,158,11,.25);color:#fcd34d;}
+          .ag-cal-ev.cobro{background:rgba(16,185,129,.25);color:#6ee7b7;}
+          .ag-cal-ev.entrega{background:rgba(239,68,68,.25);color:#fca5a5;}
           .ag-cal-ev.done-ev{opacity:.4;text-decoration:line-through;}
           .ag-cal-more{font-size:9px;color:rgba(255,255,255,.3);font-weight:700;padding:1px 4px;}
 
@@ -4702,6 +4704,23 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
           .ag-ev-badge.tarea{background:rgba(124,58,237,.15);color:#c4b5fd;}
           .ag-ev-badge.llamada{background:rgba(34,197,94,.15);color:#4ade80;}
           .ag-ev-badge.nota{background:rgba(245,158,11,.15);color:#fbbf24;}
+          .ag-ev-badge.cobro{background:rgba(16,185,129,.15);color:#6ee7b7;}
+          .ag-ev-badge.entrega{background:rgba(239,68,68,.15);color:#fca5a5;}
+          /* Próximos */
+          .ag-upcoming{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px;}
+          .ag-upcoming-title{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:10px;}
+          .ag-up-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+          .ag-up-item:last-child{border-bottom:none;padding-bottom:0;}
+          .ag-up-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+          .ag-up-dot.reunion{background:#6ea0ff;}
+          .ag-up-dot.tarea{background:#c4b5fd;}
+          .ag-up-dot.llamada{background:#4ade80;}
+          .ag-up-dot.nota{background:#fbbf24;}
+          .ag-up-dot.cobro{background:#6ee7b7;}
+          .ag-up-dot.entrega{background:#fca5a5;}
+          .ag-up-title{font-size:12px;font-weight:700;color:#fff;line-height:1.3;}
+          .ag-up-date{font-size:10px;color:rgba(255,255,255,.25);margin-top:2px;}
+          .ag-up-empty{font-size:12px;color:rgba(255,255,255,.2);text-align:center;padding:12px 0;}
           .ag-ev-note{font-size:11px;color:rgba(255,255,255,.3);margin-top:4px;line-height:1.4;}
           .ag-ev-del{background:transparent;border:none;color:rgba(255,255,255,.12);cursor:pointer;font-size:15px;padding:2px;transition:color .2s;flex-shrink:0;}
           .ag-ev-del:hover{color:#ef4444;}
@@ -4734,13 +4753,21 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
               <div class="ag-quick-title">Añadir rápido</div>
               <input class="ag-q-input" id="ag-q-title" placeholder="Título del evento...">
               <input class="ag-q-input" id="ag-q-date" type="datetime-local">
-              <div class="ag-q-row">
-                <div class="ag-q-type sel" data-type="reunion" onclick="agQType(this)">📅</div>
-                <div class="ag-q-type" data-type="tarea" onclick="agQType(this)">✅</div>
-                <div class="ag-q-type" data-type="llamada" onclick="agQType(this)">📞</div>
-                <div class="ag-q-type" data-type="nota" onclick="agQType(this)">📝</div>
+              <div class="ag-q-row" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+                <div class="ag-q-type sel" data-type="reunion" onclick="agQType(this)" style="font-size:10px;padding:6px 4px;text-align:center;">📅 Reunión</div>
+                <div class="ag-q-type" data-type="tarea" onclick="agQType(this)" style="font-size:10px;padding:6px 4px;text-align:center;">✅ Tarea</div>
+                <div class="ag-q-type" data-type="llamada" onclick="agQType(this)" style="font-size:10px;padding:6px 4px;text-align:center;">📞 Llamada</div>
+                <div class="ag-q-type" data-type="nota" onclick="agQType(this)" style="font-size:10px;padding:6px 4px;text-align:center;">📝 Nota</div>
+                <div class="ag-q-type" data-type="cobro" onclick="agQType(this)" style="font-size:10px;padding:6px 4px;text-align:center;">💰 Cobro</div>
+                <div class="ag-q-type" data-type="entrega" onclick="agQType(this)" style="font-size:10px;padding:6px 4px;text-align:center;">🚀 Entrega</div>
               </div>
               <button class="ag-q-add" onclick="agQuickAdd()">+ Añadir</button>
+            </div>
+
+            <!-- Próximos eventos -->
+            <div class="ag-upcoming">
+              <div class="ag-upcoming-title">Próximos</div>
+              <div id="ag-upcoming-list"><div class="ag-up-empty">Sin eventos próximos</div></div>
             </div>
 
             <!-- Stats -->
@@ -4808,11 +4835,13 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
 
             <!-- Tipo -->
             <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:8px;">Tipo</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:14px;">
-              <div class="ag-q-type sel" data-type="reunion" onclick="agMType(this)" style="padding:8px 4px;border-radius:9px;font-size:10px;">📅<br>Reunión</div>
-              <div class="ag-q-type" data-type="tarea" onclick="agMType(this)" style="padding:8px 4px;border-radius:9px;font-size:10px;">✅<br>Tarea</div>
-              <div class="ag-q-type" data-type="llamada" onclick="agMType(this)" style="padding:8px 4px;border-radius:9px;font-size:10px;">📞<br>Llamada</div>
-              <div class="ag-q-type" data-type="nota" onclick="agMType(this)" style="padding:8px 4px;border-radius:9px;font-size:10px;">📝<br>Nota</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px;">
+              <div class="ag-q-type sel" data-type="reunion" onclick="agMType(this)" style="padding:8px 4px;border-radius:9px;font-size:10px;text-align:center;">📅<br>Reunión</div>
+              <div class="ag-q-type" data-type="tarea" onclick="agMType(this)" style="padding:8px 4px;border-radius:9px;font-size:10px;text-align:center;">✅<br>Tarea</div>
+              <div class="ag-q-type" data-type="llamada" onclick="agMType(this)" style="padding:8px 4px;border-radius:9px;font-size:10px;text-align:center;">📞<br>Llamada</div>
+              <div class="ag-q-type" data-type="nota" onclick="agMType(this)" style="padding:8px 4px;border-radius:9px;font-size:10px;text-align:center;">📝<br>Nota</div>
+              <div class="ag-q-type" data-type="cobro" onclick="agMType(this)" style="padding:8px 4px;border-radius:9px;font-size:10px;text-align:center;">💰<br>Cobro</div>
+              <div class="ag-q-type" data-type="entrega" onclick="agMType(this)" style="padding:8px 4px;border-radius:9px;font-size:10px;text-align:center;">🚀<br>Entrega</div>
             </div>
 
             <textarea class="ag-q-input" id="ag-m-note" placeholder="Notas..." style="min-height:56px;resize:none;margin-bottom:14px;padding:10px 14px;font-size:12px;border-radius:10px;"></textarea>
@@ -9321,15 +9350,35 @@ function agRenderMain(){
 }
 
 function agUpdateStats(){
-  const today=new Date().toDateString();
+  const todayStr=new Date().toDateString();
+  const now=new Date();
   const total=agItems.length;
   const pend=agItems.filter(i=>!i.done).length;
   const done=agItems.filter(i=>i.done).length;
-  const hoy=agItems.filter(i=>i.date&&new Date(i.date).toDateString()===today).length;
+  const hoy=agItems.filter(i=>i.date&&new Date(i.date).toDateString()===todayStr).length;
   document.getElementById('ag-stat-total')&&(document.getElementById('ag-stat-total').textContent=total);
   document.getElementById('ag-stat-pend')&&(document.getElementById('ag-stat-pend').textContent=pend);
   document.getElementById('ag-stat-done')&&(document.getElementById('ag-stat-done').textContent=done);
   document.getElementById('ag-stat-hoy')&&(document.getElementById('ag-stat-hoy').textContent=hoy);
+  // Próximos eventos (los 4 más cercanos futuros sin hacer)
+  const upList=document.getElementById('ag-upcoming-list');
+  if(upList){
+    const upcoming=agItems.filter(i=>i.date&&!i.done&&new Date(i.date)>=now).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,4);
+    if(!upcoming.length){ upList.innerHTML='<div class="ag-up-empty">Sin eventos próximos</div>'; }
+    else {
+      upList.innerHTML=upcoming.map(e=>{
+        const d=new Date(e.date);
+        const isToday=d.toDateString()===todayStr;
+        const isTomorrow=d.toDateString()===new Date(now.getTime()+86400000).toDateString();
+        const dayLabel=isToday?'Hoy':isTomorrow?'Mañana':d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+        const timeLabel=d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        return `<div class="ag-up-item" onclick="agSelectDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})" style="cursor:pointer;">
+          <div class="ag-up-dot ${e.type}"></div>
+          <div><div class="ag-up-title">${e.title}</div><div class="ag-up-date">${dayLabel} · ${timeLabel}</div></div>
+        </div>`;
+      }).join('');
+    }
+  }
 }
 
 function agToggleDoneEv(id){
