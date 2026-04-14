@@ -4680,18 +4680,34 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
         .agv4-stat-l{font-size:9px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
 
         /* Big countdown */
-        .agv4-bigcd{background:linear-gradient(135deg,rgba(42,92,255,.08),rgba(110,160,255,.04));border:1px solid rgba(42,92,255,.18);border-radius:18px;padding:18px 24px 16px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
-        .agv4-bigcd-left{min-width:0;}
-        .agv4-bigcd-tag{font-size:8px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:rgba(42,92,255,.7);margin-bottom:4px;}
-        .agv4-bigcd-name{font-size:14px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;}
-        .agv4-bigcd-when{font-size:10px;color:rgba(255,255,255,.25);margin-top:3px;}
-        .agv4-bigcd-right{text-align:right;flex-shrink:0;}
-        .agv4-bigcd-timer{font-size:36px;font-weight:900;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums;}
-        .agv4-bigcd-timer.urgente{color:#ef4444;}
-        .agv4-bigcd-timer.pronto{color:#f59e0b;}
-        .agv4-bigcd-timer.ok{color:#22c55e;}
-        .agv4-bigcd-timer-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;}
-        .agv4-bigcd-empty{font-size:13px;color:rgba(255,255,255,.15);text-align:center;width:100%;padding:6px 0;}
+        /* Upcoming events strip */
+        .agv4-bigcd{margin-bottom:22px;}
+        .agv4-bigcd-lbl{font-size:8px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:rgba(42,92,255,.55);margin-bottom:10px;}
+        .agv4-bigcd-strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent;}
+        .agv4-bigcd-strip::-webkit-scrollbar{height:3px;}
+        .agv4-bigcd-strip::-webkit-scrollbar-track{background:transparent;}
+        .agv4-bigcd-strip::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px;}
+        .agv4-bigcd-card{flex:0 0 auto;width:200px;background:linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+        .agv4-bigcd-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;}
+        .agv4-bigcd-card.urgente::before{background:#ef4444;}
+        .agv4-bigcd-card.pronto::before{background:#f59e0b;}
+        .agv4-bigcd-card.ok::before{background:#22c55e;}
+        .agv4-bigcd-card:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12);transform:translateY(-2px);}
+        .agv4-bigcd-card-name{font-size:12px;font-weight:800;color:#fff;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .agv4-bigcd-card-when{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:10px;}
+        .agv4-bigcd-card-timer{font-size:22px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1;}
+        .agv4-bigcd-card-timer.urgente{color:#ef4444;text-shadow:0 0 12px rgba(239,68,68,.4);}
+        .agv4-bigcd-card-timer.pronto{color:#f59e0b;text-shadow:0 0 12px rgba(245,158,11,.35);}
+        .agv4-bigcd-card-timer.ok{color:#22c55e;text-shadow:0 0 12px rgba(34,197,94,.35);}
+        .agv4-bigcd-card-lbl{font-size:8px;font-weight:700;color:rgba(255,255,255,.18);text-transform:uppercase;letter-spacing:.1em;margin-top:3px;}
+        .agv4-bigcd-card-type{position:absolute;top:10px;right:10px;font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:20px;}
+        .agv4-bigcd-card-type.reunion{background:rgba(42,92,255,.15);color:#7ab0ff;}
+        .agv4-bigcd-card-type.tarea{background:rgba(124,58,237,.15);color:#c4b5fd;}
+        .agv4-bigcd-card-type.llamada{background:rgba(34,197,94,.15);color:#4ade80;}
+        .agv4-bigcd-card-type.nota{background:rgba(245,158,11,.15);color:#fbbf24;}
+        .agv4-bigcd-card-type.cobro{background:rgba(16,185,129,.15);color:#6ee7b7;}
+        .agv4-bigcd-card-type.entrega{background:rgba(239,68,68,.15);color:#fca5a5;}
+        .agv4-bigcd-empty{font-size:13px;color:rgba(255,255,255,.15);text-align:center;padding:24px 0;}
 
         /* MAIN */
         .agv4-main{overflow-y:auto;padding:28px 28px 60px;display:flex;flex-direction:column;gap:0;}
@@ -9577,39 +9593,34 @@ function agRenderBigCountdown(){
   const box=document.getElementById('agv4-bigcd');
   if(!box) return;
   const now=new Date();
-  const next=agItems.filter(function(i){ return i.date&&!i.done&&new Date(i.date)>now; }).sort(function(a,b){ return new Date(a.date)-new Date(b.date); })[0];
-  if(!next){ box.innerHTML='<div class="agv4-bigcd-empty">Sin próximos eventos</div>'; return; }
-  const d=new Date(next.date);
-  const diff=d-now;
-  const totalMins=Math.floor(diff/60000);
-  const hrs=Math.floor(diff/3600000);
-  const days=Math.floor(diff/86400000);
-  const mins=totalMins%60;
-  const secs=Math.floor((diff%60000)/1000);
-  let timerTxt, cls;
-  if(totalMins<60){
-    timerTxt=(totalMins<10?'0':'')+totalMins+'m '+(secs<10?'0':'')+secs+'s';
-    cls='urgente';
-  } else if(hrs<24){
-    timerTxt=(hrs<10?'0':'')+hrs+'h '+(mins<10?'0':'')+mins+'m';
-    cls='pronto';
-  } else {
-    timerTxt=days+'d '+(hrs%24)+'h '+(mins<10?'0':'')+mins+'m';
-    cls='ok';
-  }
+  const upcoming=agItems.filter(function(i){ return i.date&&!i.done&&new Date(i.date)>now; }).sort(function(a,b){ return new Date(a.date)-new Date(b.date); });
+  if(!upcoming.length){ box.innerHTML='<div class="agv4-bigcd-empty">Sin próximos eventos</div>'; return; }
   const todayStr=now.toDateString();
   const tomorrowStr=new Date(now.getTime()+86400000).toDateString();
-  const dayLabel=d.toDateString()===todayStr?'Hoy':d.toDateString()===tomorrowStr?'Mañana':d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
-  const timeLabel=d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-  box.innerHTML='<div class="agv4-bigcd-left">'
-    +'<div class="agv4-bigcd-tag">Próximo evento</div>'
-    +'<div class="agv4-bigcd-name">'+next.title+'</div>'
-    +'<div class="agv4-bigcd-when">'+dayLabel+' · '+timeLabel+'</div>'
-    +'</div>'
-    +'<div class="agv4-bigcd-right">'
-    +'<div class="agv4-bigcd-timer '+cls+'" id="agv4-bigcd-timer">'+timerTxt+'</div>'
-    +'<div class="agv4-bigcd-timer-lbl">tiempo restante</div>'
-    +'</div>';
+  const cards=upcoming.map(function(ev){
+    const d=new Date(ev.date);
+    const diff=d-now;
+    const totalMins=Math.floor(diff/60000);
+    const hrs=Math.floor(diff/3600000);
+    const days=Math.floor(diff/86400000);
+    const mins=totalMins%60;
+    const secs=Math.floor((diff%60000)/1000);
+    let timerTxt,cls;
+    if(totalMins<60){ timerTxt=(totalMins<10?'0':'')+totalMins+'m '+(secs<10?'0':'')+secs+'s'; cls='urgente'; }
+    else if(hrs<24){ timerTxt=(hrs<10?'0':'')+hrs+'h '+(mins<10?'0':'')+mins+'m'; cls='pronto'; }
+    else { timerTxt=days+'d '+(hrs%24)+'h '+(mins<10?'0':'')+mins+'m'; cls='ok'; }
+    const dayLabel=d.toDateString()===todayStr?'Hoy':d.toDateString()===tomorrowStr?'Mañana':d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+    const timeLabel=d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    return '<div class="agv4-bigcd-card '+cls+'" onclick="agSelectDay('+d.getFullYear()+','+d.getMonth()+','+d.getDate()+')">'
+      +'<span class="agv4-bigcd-card-type '+ev.type+'">'+ev.type+'</span>'
+      +'<div class="agv4-bigcd-card-name">'+ev.title+'</div>'
+      +'<div class="agv4-bigcd-card-when">'+dayLabel+' · '+timeLabel+'</div>'
+      +'<div class="agv4-bigcd-card-timer '+cls+'">'+timerTxt+'</div>'
+      +'<div class="agv4-bigcd-card-lbl">tiempo restante</div>'
+      +'</div>';
+  }).join('');
+  box.innerHTML='<div class="agv4-bigcd-lbl">Próximos eventos — '+upcoming.length+' pendiente'+(upcoming.length>1?'s':'')+'</div>'
+    +'<div class="agv4-bigcd-strip">'+cards+'</div>';
 }
 
 function agToggleDoneEv(id){
