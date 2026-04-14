@@ -3514,6 +3514,10 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
           <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="11" rx="2" stroke="rgba(255,255,255,0.55)" stroke-width="1.3"/><path d="M1 6h14" stroke="rgba(255,255,255,0.55)" stroke-width="1.3"/><path d="M5 10h6" stroke="rgba(255,255,255,0.55)" stroke-width="1.2" stroke-linecap="round"/></svg>
           Solicitudes Web
         </button>
+        <button class="sidebar-item" onclick="showAdminSection('owner-agenda',this);renderAgenda()">
+          <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="rgba(255,255,255,0.55)" stroke-width="1.3"/><path d="M5 1v2M11 1v2" stroke="rgba(255,255,255,0.55)" stroke-width="1.3" stroke-linecap="round"/><path d="M2 6h12" stroke="rgba(255,255,255,0.55)" stroke-width="1.3"/><path d="M5 9h2M9 9h2M5 12h2" stroke="rgba(255,255,255,0.55)" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Agenda
+        </button>
         <!-- Selector plan para probar config como cliente -->
         <div style="margin:12px 12px 0;padding:10px 12px;background:#f8fafc;border:1px solid #e4e9f2;border-radius:10px;">
           <div style="font-size:10px;font-weight:700;color:#8a97b0;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">Simular plan cliente</div>
@@ -4600,6 +4604,143 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
       </div>
 
       <!-- SOLICITUDES WEB — solo owner -->
+      <!-- ══════════════ AGENDA OWNER ══════════════ -->
+      <div id="admin-owner-agenda" class="admin-section">
+        <style>
+          #admin-owner-agenda { background: linear-gradient(135deg,#060c1a,#08112a); min-height:100vh; }
+          .ag-wrap { max-width:900px; margin:0 auto; padding:40px 32px; }
+          .ag-hero { margin-bottom:40px; }
+          .ag-eyebrow { font-size:10px; font-weight:800; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,.3); margin-bottom:10px; }
+          .ag-title { font-size:28px; font-weight:900; color:#fff; letter-spacing:-.5px; margin-bottom:4px; }
+          .ag-subtitle { font-size:13px; color:rgba(255,255,255,.35); }
+          .ag-cols { display:grid; grid-template-columns:1fr 340px; gap:28px; align-items:start; }
+          @media(max-width:780px){ .ag-cols { grid-template-columns:1fr; } }
+
+          /* Formulario */
+          .ag-form-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:28px; }
+          .ag-form-title { font-size:13px; font-weight:800; color:#fff; letter-spacing:.05em; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+          .ag-form-title svg { opacity:.6; }
+          .ag-field { margin-bottom:14px; }
+          .ag-label { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:rgba(255,255,255,.3); margin-bottom:6px; display:block; }
+          .ag-input { width:100%; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:10px 14px; font-size:13px; color:#fff; font-family:inherit; outline:none; transition:border .2s; }
+          .ag-input:focus { border-color:rgba(42,92,255,.6); background:rgba(42,92,255,.06); }
+          .ag-input::placeholder { color:rgba(255,255,255,.2); }
+          .ag-textarea { min-height:72px; resize:vertical; }
+          .ag-type-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+          .ag-type-btn { padding:9px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.04); color:rgba(255,255,255,.45); font-size:11px; font-weight:700; cursor:pointer; transition:all .2s; text-align:center; }
+          .ag-type-btn.selected { background:rgba(42,92,255,.2); border-color:rgba(42,92,255,.5); color:#6ea0ff; }
+          .ag-priority-row { display:flex; gap:8px; margin-bottom:14px; }
+          .ag-prio-btn { flex:1; padding:7px; border-radius:8px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03); color:rgba(255,255,255,.35); font-size:10px; font-weight:800; cursor:pointer; transition:all .2s; text-align:center; letter-spacing:.05em; }
+          .ag-prio-btn[data-p="alta"].sel { background:rgba(239,68,68,.15); border-color:rgba(239,68,68,.4); color:#f87171; }
+          .ag-prio-btn[data-p="media"].sel { background:rgba(245,158,11,.15); border-color:rgba(245,158,11,.4); color:#fbbf24; }
+          .ag-prio-btn[data-p="baja"].sel { background:rgba(34,197,94,.15); border-color:rgba(34,197,94,.4); color:#4ade80; }
+          .ag-add-btn { width:100%; padding:12px; border-radius:12px; border:none; background:linear-gradient(135deg,#2a5cff,#6ea0ff); color:#fff; font-size:13px; font-weight:800; cursor:pointer; transition:opacity .2s; letter-spacing:.03em; }
+          .ag-add-btn:hover { opacity:.85; }
+
+          /* Lista */
+          .ag-list-wrap { }
+          .ag-filters { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+          .ag-filter-btn { padding:6px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:transparent; color:rgba(255,255,255,.35); font-size:11px; font-weight:700; cursor:pointer; transition:all .2s; }
+          .ag-filter-btn.active { background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.2); color:#fff; }
+          .ag-empty { text-align:center; padding:60px 20px; color:rgba(255,255,255,.2); font-size:13px; }
+          .ag-empty-icon { font-size:36px; margin-bottom:12px; opacity:.3; }
+
+          /* Tarjeta evento */
+          .ag-item { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:18px 20px; margin-bottom:10px; transition:all .25s; position:relative; overflow:hidden; }
+          .ag-item::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; border-radius:3px 0 0 3px; }
+          .ag-item[data-p="alta"]::before { background:#ef4444; }
+          .ag-item[data-p="media"]::before { background:#f59e0b; }
+          .ag-item[data-p="baja"]::before { background:#22c55e; }
+          .ag-item.done { opacity:.45; }
+          .ag-item.done .ag-item-title { text-decoration:line-through; }
+          .ag-item-top { display:flex; align-items:flex-start; gap:12px; }
+          .ag-check { width:20px; height:20px; border-radius:50%; border:1.5px solid rgba(255,255,255,.2); background:transparent; cursor:pointer; flex-shrink:0; margin-top:1px; transition:all .2s; display:flex; align-items:center; justify-content:center; }
+          .ag-check.checked { background:#22c55e; border-color:#22c55e; }
+          .ag-check.checked::after { content:'✓'; font-size:11px; color:#fff; font-weight:900; }
+          .ag-item-body { flex:1; min-width:0; }
+          .ag-item-title { font-size:14px; font-weight:700; color:#fff; margin-bottom:4px; }
+          .ag-item-note { font-size:12px; color:rgba(255,255,255,.4); line-height:1.5; margin-bottom:8px; }
+          .ag-item-meta { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+          .ag-item-date { font-size:11px; color:rgba(255,255,255,.3); display:flex; align-items:center; gap:4px; }
+          .ag-item-type { font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; padding:3px 8px; border-radius:999px; }
+          .ag-item-type.reunion { background:rgba(42,92,255,.15); color:#6ea0ff; }
+          .ag-item-type.tarea { background:rgba(124,58,237,.15); color:#c4b5fd; }
+          .ag-item-type.nota { background:rgba(245,158,11,.15); color:#fbbf24; }
+          .ag-item-type.llamada { background:rgba(34,197,94,.15); color:#4ade80; }
+          .ag-del-btn { background:transparent; border:none; color:rgba(255,255,255,.15); cursor:pointer; font-size:16px; padding:4px; transition:color .2s; flex-shrink:0; margin-top:-2px; }
+          .ag-del-btn:hover { color:#ef4444; }
+          .ag-section-date { font-size:10px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.2); margin:24px 0 10px; padding-left:2px; display:flex; align-items:center; gap:10px; }
+          .ag-section-date::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.05); }
+        </style>
+
+        <div class="ag-wrap">
+          <div class="ag-hero">
+            <div class="ag-eyebrow">Owner · Organización</div>
+            <div class="ag-title">Agenda</div>
+            <div class="ag-subtitle">Reuniones, tareas y notas del negocio</div>
+          </div>
+
+          <div class="ag-cols">
+            <!-- Lista -->
+            <div class="ag-list-wrap">
+              <div class="ag-filters">
+                <button class="ag-filter-btn active" onclick="agFilter('todos',this)">Todos</button>
+                <button class="ag-filter-btn" onclick="agFilter('pendientes',this)">Pendientes</button>
+                <button class="ag-filter-btn" onclick="agFilter('finalizados',this)">Finalizados</button>
+                <button class="ag-filter-btn" onclick="agFilter('reunion',this)">Reuniones</button>
+                <button class="ag-filter-btn" onclick="agFilter('tarea',this)">Tareas</button>
+              </div>
+              <div id="ag-list"></div>
+            </div>
+
+            <!-- Formulario -->
+            <div class="ag-form-card">
+              <div class="ag-form-title">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="white" stroke-width="1.3"/><path d="M7 4v3l2 2" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg>
+                Nuevo evento
+              </div>
+
+              <div class="ag-field">
+                <label class="ag-label">Título</label>
+                <input class="ag-input" id="ag-title" placeholder="Reunión con cliente, llamada...">
+              </div>
+
+              <div class="ag-field">
+                <label class="ag-label">Tipo</label>
+                <div class="ag-type-row">
+                  <div class="ag-type-btn selected" data-type="reunion" onclick="agSelectType(this)">📅 Reunión</div>
+                  <div class="ag-type-btn" data-type="tarea" onclick="agSelectType(this)">✅ Tarea</div>
+                  <div class="ag-type-btn" data-type="llamada" onclick="agSelectType(this)">📞 Llamada</div>
+                  <div class="ag-type-btn" data-type="nota" onclick="agSelectType(this)">📝 Nota</div>
+                </div>
+              </div>
+
+              <div class="ag-field">
+                <label class="ag-label">Prioridad</label>
+                <div class="ag-priority-row">
+                  <button class="ag-prio-btn sel" data-p="alta" onclick="agSelectPrio(this)">ALTA</button>
+                  <button class="ag-prio-btn" data-p="media" onclick="agSelectPrio(this)">MEDIA</button>
+                  <button class="ag-prio-btn" data-p="baja" onclick="agSelectPrio(this)">BAJA</button>
+                </div>
+              </div>
+
+              <div class="ag-field">
+                <label class="ag-label">Fecha y hora</label>
+                <input class="ag-input" id="ag-date" type="datetime-local">
+              </div>
+
+              <div class="ag-field">
+                <label class="ag-label">Notas</label>
+                <textarea class="ag-input ag-textarea" id="ag-note" placeholder="Detalles, contexto, cliente..."></textarea>
+              </div>
+
+              <button class="ag-add-btn" onclick="agAdd()">Añadir a la agenda</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ══════════════ FIN AGENDA ══════════════ -->
+
       <div id="admin-web-requests" class="admin-section">
         <div class="admin-header" style="margin-bottom:24px;">
           <h2>Solicitudes Web</h2>
@@ -5000,7 +5141,7 @@ function showAdminSection(id, btn) {
   /* Fondo oscuro para secciones owner */
   const mainEl = document.getElementById('admin-main');
   if (mainEl) {
-    const ownerSections = ['owner-dashboard','owner-web'];
+    const ownerSections = ['owner-dashboard','owner-web','owner-agenda'];
     mainEl.style.background = ownerSections.includes(id) ? 'linear-gradient(135deg,#060c1a,#08112a)' : '';
   }
   refreshAdmin();
@@ -8917,6 +9058,129 @@ window.addEventListener('load', function() {
     }, 1200);
   } catch(e) {}
 });
+</script>
+
+<script>
+/* ══════════════════════════════════════════
+   AGENDA OWNER — localStorage persistence
+══════════════════════════════════════════ */
+const AG_KEY = 'airmate_agenda_v1';
+let agItems = [];
+let agCurrentFilter = 'todos';
+let agCurrentType = 'reunion';
+let agCurrentPrio = 'alta';
+
+function agLoad() {
+  try { agItems = JSON.parse(localStorage.getItem(AG_KEY)) || []; } catch { agItems = []; }
+}
+function agSave() {
+  localStorage.setItem(AG_KEY, JSON.stringify(agItems));
+}
+
+function agSelectType(el) {
+  document.querySelectorAll('.ag-type-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  agCurrentType = el.dataset.type;
+}
+function agSelectPrio(el) {
+  document.querySelectorAll('.ag-prio-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  agCurrentPrio = el.dataset.p;
+}
+
+function agAdd() {
+  const title = document.getElementById('ag-title').value.trim();
+  if (!title) { showToast('Escribe un título'); return; }
+  const item = {
+    id: Date.now(),
+    title,
+    type: agCurrentType,
+    priority: agCurrentPrio,
+    date: document.getElementById('ag-date').value || null,
+    note: document.getElementById('ag-note').value.trim(),
+    done: false,
+    created: new Date().toISOString()
+  };
+  agItems.unshift(item);
+  agSave();
+  // reset form
+  document.getElementById('ag-title').value = '';
+  document.getElementById('ag-date').value = '';
+  document.getElementById('ag-note').value = '';
+  renderAgendaList();
+  showToast('Añadido a la agenda');
+}
+
+function agToggleDone(id) {
+  const item = agItems.find(i => i.id === id);
+  if (item) { item.done = !item.done; agSave(); renderAgendaList(); }
+}
+
+function agDelete(id) {
+  agItems = agItems.filter(i => i.id !== id);
+  agSave();
+  renderAgendaList();
+}
+
+function agFilter(f, btn) {
+  agCurrentFilter = f;
+  document.querySelectorAll('.ag-filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderAgendaList();
+}
+
+function renderAgenda() {
+  agLoad();
+  renderAgendaList();
+}
+
+function renderAgendaList() {
+  const list = document.getElementById('ag-list');
+  if (!list) return;
+
+  let items = [...agItems];
+  if (agCurrentFilter === 'pendientes') items = items.filter(i => !i.done);
+  else if (agCurrentFilter === 'finalizados') items = items.filter(i => i.done);
+  else if (['reunion','tarea','nota','llamada'].includes(agCurrentFilter)) items = items.filter(i => i.type === agCurrentFilter);
+
+  if (!items.length) {
+    list.innerHTML = `<div class="ag-empty"><div class="ag-empty-icon">📋</div>Sin eventos en esta categoría</div>`;
+    return;
+  }
+
+  // Agrupar por fecha
+  const groups = {};
+  items.forEach(item => {
+    const key = item.date ? new Date(item.date).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}) : 'Sin fecha';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(item);
+  });
+
+  const typeEmoji = { reunion:'📅', tarea:'✅', llamada:'📞', nota:'📝' };
+  let html = '';
+  Object.entries(groups).forEach(([date, its]) => {
+    html += `<div class="ag-section-date">${date}</div>`;
+    its.forEach(item => {
+      const timeStr = item.date ? new Date(item.date).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) : '';
+      html += `
+      <div class="ag-item${item.done?' done':''}" data-p="${item.priority}">
+        <div class="ag-item-top">
+          <div class="ag-check${item.done?' checked':''}" onclick="agToggleDone(${item.id})"></div>
+          <div class="ag-item-body">
+            <div class="ag-item-title">${item.title}</div>
+            ${item.note ? `<div class="ag-item-note">${item.note}</div>` : ''}
+            <div class="ag-item-meta">
+              <span class="ag-item-type ${item.type}">${typeEmoji[item.type]||''} ${item.type}</span>
+              ${timeStr ? `<span class="ag-item-date"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1"/><path d="M5.5 3v2.5l1.5 1.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>${timeStr}</span>` : ''}
+            </div>
+          </div>
+          <button class="ag-del-btn" onclick="agDelete(${item.id})">×</button>
+        </div>
+      </div>`;
+    });
+  });
+  list.innerHTML = html;
+}
 </script>
 </body>
 </html>
