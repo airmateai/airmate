@@ -9176,7 +9176,7 @@ window.addEventListener('load', function() {
 
 <script>
 /* ══════════════════════════════════════════
-   AGENDA OWNER v2 — Calendar view
+   AGENDA OWNER v3 — Calendar view (clean)
 ══════════════════════════════════════════ */
 const AG_KEY = 'airmate_agenda_v2';
 let agItems = [];
@@ -9367,15 +9367,12 @@ function agUpdateStats(){
     if(!upcoming.length){ upList.innerHTML='<div class="ag-up-empty">Sin eventos próximos</div>'; }
     else {
       upList.innerHTML=upcoming.map(e=>{
-        const d=new Date(e.date);
-        const isToday=d.toDateString()===todayStr;
-        const isTomorrow=d.toDateString()===new Date(now.getTime()+86400000).toDateString();
-        const dayLabel=isToday?'Hoy':isTomorrow?'Mañana':d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
-        const timeLabel=d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-        return `<div class="ag-up-item" onclick="agSelectDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})" style="cursor:pointer;">
-          <div class="ag-up-dot ${e.type}"></div>
-          <div><div class="ag-up-title">${e.title}</div><div class="ag-up-date">${dayLabel} · ${timeLabel}</div></div>
-        </div>`;
+        const upD=new Date(e.date);
+        const isToday=upD.toDateString()===todayStr;
+        const isTomorrow=upD.toDateString()===new Date(now.getTime()+86400000).toDateString();
+        const dayLabel=isToday?'Hoy':isTomorrow?'Mañana':upD.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+        const timeLabel=upD.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        return '<div class="ag-up-item" onclick="agSelectDay('+upD.getFullYear()+','+upD.getMonth()+','+upD.getDate()+')" style="cursor:pointer;"><div class="ag-up-dot '+e.type+'"></div><div><div class="ag-up-title">'+e.title+'</div><div class="ag-up-date">'+dayLabel+' · '+timeLabel+'</div></div></div>';
       }).join('');
     }
   }
@@ -9392,7 +9389,7 @@ function agDeleteEv(id){
 
 /* ── Quick add ── */
 function agQType(el){
-  document.querySelectorAll('.ag-q-type').forEach(b=>b.classList.remove('sel'));
+  el.closest('.ag-q-row').querySelectorAll('.ag-q-type').forEach(b=>b.classList.remove('sel'));
   el.classList.add('sel'); agQCurrentType=el.dataset.type;
 }
 function agQuickAdd(){
@@ -9419,7 +9416,7 @@ function agOpenModal(y,m,d){
   document.querySelector('#ag-modal .ag-q-type[data-type="reunion"]')?.classList.add('sel');
   agModalType='reunion';
   const label=document.getElementById('ag-modal-date-label');
-  if(label){ const d=new Date(y,m,d); label.textContent=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
+  if(label){ const dateObj=new Date(y,m,d); label.textContent=dateObj.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
   modal.style.display='flex';
   setTimeout(()=>document.getElementById('ag-m-title')?.focus(),100);
 }
