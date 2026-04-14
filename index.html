@@ -4762,6 +4762,26 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
         .agv4-card-note{font-size:11px;color:rgba(255,255,255,.28);margin-top:5px;line-height:1.5;}
         .agv4-del{background:none;border:none;color:rgba(255,255,255,.1);cursor:pointer;font-size:16px;padding:2px;transition:color .2s;flex-shrink:0;}
         .agv4-del:hover{color:#ef4444;}
+        .agv4-edit{background:none;border:none;color:rgba(255,255,255,.1);cursor:pointer;font-size:13px;padding:2px 4px;transition:color .2s;flex-shrink:0;}
+        .agv4-edit:hover{color:#6ea0ff;}
+        /* Sticky reminder bar */
+        #agv4-sticky{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:8000;min-width:320px;max-width:560px;width:calc(100% - 40px);background:linear-gradient(135deg,#0d1530,#0a1228);border:1px solid rgba(42,92,255,.3);border-radius:16px;padding:14px 18px;box-shadow:0 8px 40px rgba(0,0,0,.7),0 0 0 1px rgba(42,92,255,.1);display:flex;align-items:center;gap:14px;animation:agv4-slidein .3s ease;}
+        #agv4-sticky.hidden{display:none;}
+        @keyframes agv4-slidein{from{opacity:0;transform:translateX(-50%) translateY(20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+        .agv4-sticky-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;animation:agv4-pulse 1.5s infinite;}
+        .agv4-sticky-dot.urgente{background:#ef4444;}
+        .agv4-sticky-dot.pronto{background:#f59e0b;}
+        .agv4-sticky-dot.ok{background:#22c55e;}
+        @keyframes agv4-pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
+        .agv4-sticky-body{flex:1;min-width:0;}
+        .agv4-sticky-title{font-size:13px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .agv4-sticky-sub{font-size:10px;color:rgba(255,255,255,.35);margin-top:2px;}
+        .agv4-sticky-timer{font-size:22px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums;flex-shrink:0;white-space:nowrap;}
+        .agv4-sticky-timer.urgente{color:#ef4444;}
+        .agv4-sticky-timer.pronto{color:#f59e0b;}
+        .agv4-sticky-timer.ok{color:#22c55e;}
+        .agv4-sticky-close{background:none;border:none;color:rgba(255,255,255,.25);cursor:pointer;font-size:18px;padding:0 0 0 8px;transition:color .2s;flex-shrink:0;line-height:1;}
+        .agv4-sticky-close:hover{color:#fff;}
         .agv4-empty{text-align:center;padding:52px 20px;color:rgba(255,255,255,.18);font-size:13px;}
         .agv4-empty-ico{font-size:36px;margin-bottom:12px;opacity:.2;}
         .agv4-add-btn{display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:9px 20px;border-radius:10px;border:1px solid rgba(42,92,255,.25);background:rgba(42,92,255,.08);color:#6ea0ff;font-size:12px;font-weight:800;cursor:pointer;transition:all .2s;}
@@ -4853,11 +4873,23 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
           </div>
         </div>
 
+        <!-- STICKY REMINDER -->
+        <div id="agv4-sticky" class="hidden">
+          <div class="agv4-sticky-dot ok" id="agv4-sticky-dot"></div>
+          <div class="agv4-sticky-body">
+            <div class="agv4-sticky-title" id="agv4-sticky-title">—</div>
+            <div class="agv4-sticky-sub" id="agv4-sticky-sub"></div>
+          </div>
+          <div class="agv4-sticky-timer ok" id="agv4-sticky-timer">—</div>
+          <button class="agv4-sticky-close" onclick="agStickyDismiss()" title="Cerrar recordatorio">✕</button>
+        </div>
+
         <!-- MODAL EVENTO -->
         <div id="ag-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;align-items:center;justify-content:center;">
           <div style="background:linear-gradient(145deg,#0d1530,#080f22);border:1px solid rgba(255,255,255,.09);border-radius:22px;padding:28px;width:100%;max-width:400px;margin:16px;box-shadow:0 24px 80px rgba(0,0,0,.6);">
             <div id="ag-modal-date-label" style="font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:rgba(42,92,255,.6);margin-bottom:4px;"></div>
-            <div style="font-size:17px;font-weight:900;color:#fff;margin-bottom:20px;">Nuevo evento</div>
+            <input type="hidden" id="ag-m-edit-id" value="">
+            <div style="font-size:17px;font-weight:900;color:#fff;margin-bottom:20px;" id="ag-modal-title-lbl">Nuevo evento</div>
 
             <input id="ag-m-title" placeholder="¿Qué tienes?" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:11px 14px;font-size:13px;color:#fff;font-family:inherit;outline:none;margin-bottom:12px;" onkeydown="if(event.key==='Enter')document.getElementById('ag-m-hour').focus()">
 
@@ -4903,7 +4935,7 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
             <textarea id="ag-m-note" placeholder="Notas opcionales..." style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:10px 14px;font-size:12px;color:#fff;font-family:inherit;outline:none;min-height:52px;resize:none;margin-bottom:16px;"></textarea>
 
             <div style="display:flex;gap:8px;">
-              <button onclick="agModalSave()" style="flex:1;padding:12px;border-radius:11px;border:none;background:linear-gradient(135deg,#2a5cff,#5a8aff);color:#fff;font-size:13px;font-weight:900;cursor:pointer;letter-spacing:.02em;">Guardar evento</button>
+              <button onclick="agModalSave()" id="ag-modal-save-btn" style="flex:1;padding:12px;border-radius:11px;border:none;background:linear-gradient(135deg,#2a5cff,#5a8aff);color:#fff;font-size:13px;font-weight:900;cursor:pointer;letter-spacing:.02em;">Guardar evento</button>
               <button onclick="agModalClose()" style="padding:12px 16px;border-radius:11px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03);color:rgba(255,255,255,.4);font-size:13px;cursor:pointer;">✕</button>
             </div>
           </div>
@@ -9330,6 +9362,7 @@ function renderAgenda(){
   agRenderDaily();
   agInitNotifState();
   agRenderBigCountdown();
+  agRenderSticky();
 }
 
 /* ── Mini calendario ── */
@@ -9485,7 +9518,10 @@ function agRenderMain(){
           +(cd&&!e.done?'<div class="agv4-card-countdown '+cd.cls+'">⏱ '+cd.text+'</div>':'')
           +(e.note?'<div class="agv4-card-note">'+e.note+'</div>':'')
           +'</div>'
-          +'<button class="agv4-del" onclick="agDeleteEv('+e.id+')">×</button>'
+          +'<div style="display:flex;flex-direction:column;gap:4px;">'
+          +'<button class="agv4-edit" onclick="event.stopPropagation();agEditEv('+e.id+')" title="Editar">✏️</button>'
+          +'<button class="agv4-del" onclick="agDeleteEv('+e.id+')" title="Eliminar">×</button>'
+          +'</div>'
           +'</div>';
       });
       if(filterDay) html+='<div style="margin-top:12px;"><button class="agv4-add-btn" onclick="agOpenModal('+filterDay.getFullYear()+','+filterDay.getMonth()+','+filterDay.getDate()+')">+ Añadir evento</button></div>';
@@ -9624,6 +9660,9 @@ function agDailyDelete(id){
 /* ── Modal ── */
 function agOpenModal(y,m,d){
   agModalDate={y:y,m:m,d:d};
+  document.getElementById('ag-m-edit-id').value='';
+  document.getElementById('ag-modal-title-lbl').textContent='Nuevo evento';
+  document.getElementById('ag-modal-save-btn').textContent='Guardar evento';
   const modal=document.getElementById('ag-modal');
   if(!modal) return;
   document.getElementById('ag-m-title').value='';
@@ -9641,6 +9680,35 @@ function agOpenModal(y,m,d){
   const label=document.getElementById('ag-modal-date-label');
   if(label){ const dateObj=new Date(y,m,d); label.textContent=dateObj.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
   modal.style.display='flex';
+  setTimeout(function(){ const t=document.getElementById('ag-m-title'); if(t) t.focus(); },100);
+}
+function agEditEv(id){
+  const ev=agItems.find(function(x){ return x.id===id; });
+  if(!ev) return;
+  document.getElementById('ag-m-edit-id').value=id;
+  document.getElementById('ag-modal-title-lbl').textContent='Editar evento';
+  document.getElementById('ag-modal-save-btn').textContent='Guardar cambios';
+  document.getElementById('ag-m-title').value=ev.title;
+  document.getElementById('ag-m-note').value=ev.note||'';
+  let evHour='', evMin='00';
+  if(ev.date){
+    const dd=new Date(ev.date);
+    evHour=String(dd.getHours()).padStart(2,'0');
+    evMin=String(dd.getMinutes()).padStart(2,'0');
+    const dObj=dd;
+    agModalDate={y:dObj.getFullYear(),m:dObj.getMonth(),d:dObj.getDate()};
+    const label=document.getElementById('ag-modal-date-label');
+    if(label) label.textContent=dObj.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  }
+  document.getElementById('ag-m-hour').value=evHour;
+  document.getElementById('ag-m-min').value=evMin||'00';
+  document.querySelectorAll('#ag-m-types .agv4-mtype').forEach(function(b){ b.classList.remove('sel'); });
+  const tBtn=document.querySelector('#ag-m-types .agv4-mtype[data-type="'+ev.type+'"]');
+  if(tBtn){ tBtn.classList.add('sel'); agModalType=ev.type; }
+  document.querySelectorAll('#ag-m-prios .agv4-mprio').forEach(function(b){ b.classList.remove('sel'); });
+  const pBtn=document.querySelector('#ag-m-prios .agv4-mprio[data-prio="'+(ev.priority||'media')+'"]');
+  if(pBtn){ pBtn.classList.add('sel'); agModalPrio=ev.priority||'media'; }
+  document.getElementById('ag-modal').style.display='flex';
   setTimeout(function(){ const t=document.getElementById('ag-m-title'); if(t) t.focus(); },100);
 }
 function agMType(el){
@@ -9661,21 +9729,79 @@ function agModalSave(){
   const mm=String(md.m+1).padStart(2,'0');
   const dd=String(md.d).padStart(2,'0');
   const dateStr=hour?(md.y+'-'+mm+'-'+dd+'T'+hour+':'+min):null;
-  agItems.unshift({ id:Date.now(), title:title, type:agModalType, priority:agModalPrio, date:dateStr, note:document.getElementById('ag-m-note').value.trim(), done:false });
-  agSave(); agModalClose(); agRenderMain(); agRenderMini(); agUpdateStats();
-  showToast('Evento añadido');
+  const editId=document.getElementById('ag-m-edit-id').value;
+  if(editId){
+    const ev=agItems.find(function(x){ return x.id===Number(editId); });
+    if(ev){
+      ev.title=title; ev.type=agModalType; ev.priority=agModalPrio;
+      ev.date=dateStr; ev.note=document.getElementById('ag-m-note').value.trim();
+    }
+    agSave(); agModalClose(); agRenderMain(); agRenderMini(); agUpdateStats();
+    showToast('Evento actualizado');
+  } else {
+    agItems.unshift({ id:Date.now(), title:title, type:agModalType, priority:agModalPrio, date:dateStr, note:document.getElementById('ag-m-note').value.trim(), done:false });
+    agSave(); agModalClose(); agRenderMain(); agRenderMini(); agUpdateStats();
+    showToast('Evento añadido');
+  }
 }
 // Cerrar modal al click fuera
 document.addEventListener('click',function(e){ const modal=document.getElementById('ag-modal'); if(modal&&modal.style.display==='flex'&&e.target===modal) agModalClose(); });
+
+/* ── Sticky reminder ── */
+let agStickyDismissedId = null;
+function agStickyDismiss(){
+  const bar=document.getElementById('agv4-sticky');
+  if(!bar) return;
+  // dismiss this event id so it doesn't re-show until a different next event
+  const now=new Date();
+  const next=agItems.filter(function(i){ return i.date&&!i.done&&new Date(i.date)>now; }).sort(function(a,b){ return new Date(a.date)-new Date(b.date); })[0];
+  if(next) agStickyDismissedId=next.id;
+  bar.classList.add('hidden');
+}
+function agRenderSticky(){
+  const bar=document.getElementById('agv4-sticky');
+  if(!bar) return;
+  const now=new Date();
+  const next=agItems.filter(function(i){ return i.date&&!i.done&&new Date(i.date)>now; }).sort(function(a,b){ return new Date(a.date)-new Date(b.date); })[0];
+  if(!next){ bar.classList.add('hidden'); return; }
+  // if user dismissed and same event, keep hidden; if new event, re-show
+  if(agStickyDismissedId===next.id){ return; }
+  agStickyDismissedId=null;
+  const d=new Date(next.date);
+  const diff=d-now;
+  const totalMins=Math.floor(diff/60000);
+  const hrs=Math.floor(diff/3600000);
+  const days=Math.floor(diff/86400000);
+  const mins=totalMins%60;
+  const secs=Math.floor((diff%60000)/1000);
+  let timerTxt, cls;
+  if(totalMins<60){ timerTxt=(totalMins<10?'0':'')+totalMins+'m '+(secs<10?'0':'')+secs+'s'; cls='urgente'; }
+  else if(hrs<24){ timerTxt=(hrs<10?'0':'')+hrs+'h '+(mins<10?'0':'')+mins+'m'; cls='pronto'; }
+  else { timerTxt=days+'d '+(hrs%24<10?'0':'')+(hrs%24)+'h '+(mins<10?'0':'')+mins+'m'; cls='ok'; }
+  const todayStr=now.toDateString();
+  const tomorrowStr=new Date(now.getTime()+86400000).toDateString();
+  const dayLabel=d.toDateString()===todayStr?'Hoy':d.toDateString()===tomorrowStr?'Mañana':d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+  const timeLabel=d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  const dot=document.getElementById('agv4-sticky-dot');
+  const titleEl=document.getElementById('agv4-sticky-title');
+  const subEl=document.getElementById('agv4-sticky-sub');
+  const timerEl=document.getElementById('agv4-sticky-timer');
+  if(dot){ dot.className='agv4-sticky-dot '+cls; }
+  if(titleEl) titleEl.textContent=next.title;
+  if(subEl) subEl.textContent=dayLabel+' · '+timeLabel;
+  if(timerEl){ timerEl.textContent=timerTxt; timerEl.className='agv4-sticky-timer '+cls; }
+  bar.classList.remove('hidden');
+}
 
 // Refresh stats cada minuto
 setInterval(function(){
   if(document.getElementById('ag-cal-container')) agUpdateStats();
   if(agView==='lista') agRenderMain();
 }, 60000);
-// Refresh big countdown cada segundo
+// Refresh big countdown y sticky cada segundo
 setInterval(function(){
   if(document.getElementById('agv4-bigcd')) agRenderBigCountdown();
+  agRenderSticky();
 }, 1000);
 </script>
 </body>
