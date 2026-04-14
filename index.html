@@ -4764,24 +4764,7 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
         .agv4-del:hover{color:#ef4444;}
         .agv4-edit{background:none;border:none;color:rgba(255,255,255,.1);cursor:pointer;font-size:13px;padding:2px 4px;transition:color .2s;flex-shrink:0;}
         .agv4-edit:hover{color:#6ea0ff;}
-        /* Sticky reminder bar */
-        #agv4-sticky{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:8000;min-width:320px;max-width:560px;width:calc(100% - 40px);background:linear-gradient(135deg,#0d1530,#0a1228);border:1px solid rgba(42,92,255,.3);border-radius:16px;padding:14px 18px;box-shadow:0 8px 40px rgba(0,0,0,.7),0 0 0 1px rgba(42,92,255,.1);display:flex;align-items:center;gap:14px;animation:agv4-slidein .3s ease;}
-        #agv4-sticky.hidden{display:none;}
-        @keyframes agv4-slidein{from{opacity:0;transform:translateX(-50%) translateY(20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
-        .agv4-sticky-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;animation:agv4-pulse 1.5s infinite;}
-        .agv4-sticky-dot.urgente{background:#ef4444;}
-        .agv4-sticky-dot.pronto{background:#f59e0b;}
-        .agv4-sticky-dot.ok{background:#22c55e;}
-        @keyframes agv4-pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
-        .agv4-sticky-body{flex:1;min-width:0;}
-        .agv4-sticky-title{font-size:13px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-        .agv4-sticky-sub{font-size:10px;color:rgba(255,255,255,.35);margin-top:2px;}
-        .agv4-sticky-timer{font-size:22px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums;flex-shrink:0;white-space:nowrap;}
-        .agv4-sticky-timer.urgente{color:#ef4444;}
-        .agv4-sticky-timer.pronto{color:#f59e0b;}
-        .agv4-sticky-timer.ok{color:#22c55e;}
-        .agv4-sticky-close{background:none;border:none;color:rgba(255,255,255,.25);cursor:pointer;font-size:18px;padding:0 0 0 8px;transition:color .2s;flex-shrink:0;line-height:1;}
-        .agv4-sticky-close:hover{color:#fff;}
+        /* (sticky moved to global) */
         .agv4-empty{text-align:center;padding:52px 20px;color:rgba(255,255,255,.18);font-size:13px;}
         .agv4-empty-ico{font-size:36px;margin-bottom:12px;opacity:.2;}
         .agv4-add-btn{display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:9px 20px;border-radius:10px;border:1px solid rgba(42,92,255,.25);background:rgba(42,92,255,.08);color:#6ea0ff;font-size:12px;font-weight:800;cursor:pointer;transition:all .2s;}
@@ -4871,17 +4854,6 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
 
             <div id="ag-cal-container"></div>
           </div>
-        </div>
-
-        <!-- STICKY REMINDER -->
-        <div id="agv4-sticky" class="hidden">
-          <div class="agv4-sticky-dot ok" id="agv4-sticky-dot"></div>
-          <div class="agv4-sticky-body">
-            <div class="agv4-sticky-title" id="agv4-sticky-title">—</div>
-            <div class="agv4-sticky-sub" id="agv4-sticky-sub"></div>
-          </div>
-          <div class="agv4-sticky-timer ok" id="agv4-sticky-timer">—</div>
-          <button class="agv4-sticky-close" onclick="agStickyDismiss()" title="Cerrar recordatorio">✕</button>
         </div>
 
         <!-- MODAL EVENTO -->
@@ -9803,6 +9775,225 @@ setInterval(function(){
   if(document.getElementById('agv4-bigcd')) agRenderBigCountdown();
   agRenderSticky();
 }, 1000);
+</script>
+
+<!-- ═══════════════════════════════════════════════════
+     GLOBAL FLOATING WIDGETS (agenda notifs + daily)
+═══════════════════════════════════════════════════ -->
+<style>
+/* ── Notification stack ── */
+#ag-notif-stack{position:fixed;bottom:20px;right:20px;z-index:9500;display:flex;flex-direction:column-reverse;gap:8px;pointer-events:none;cursor:grab;}
+#ag-notif-stack.dragging{cursor:grabbing;}
+.ag-ncard{pointer-events:all;width:290px;background:linear-gradient(135deg,#0d1530,#0a1228);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 6px 30px rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.07);animation:ag-nslide .25s ease;overflow:hidden;position:relative;}
+.ag-ncard::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(42,92,255,.18),rgba(110,160,255,.06),rgba(124,58,237,.12),rgba(42,92,255,.18));background-size:300% 300%;animation:ag-nbg 4s ease infinite;border-radius:14px;z-index:0;}
+@keyframes ag-nbg{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+.ag-ncard>*{position:relative;z-index:1;}
+@keyframes ag-nslide{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
+.ag-ndot{width:9px;height:9px;border-radius:50%;flex-shrink:0;animation:ag-npulse 1.5s infinite;}
+.ag-ndot.urgente{background:#ef4444;}
+.ag-ndot.pronto{background:#f59e0b;}
+.ag-ndot.ok{background:#22c55e;}
+@keyframes ag-npulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.45;transform:scale(1.4);}}
+.ag-nbody{flex:1;min-width:0;}
+.ag-ntitle{font-size:12px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ag-nsub{font-size:9px;color:rgba(255,255,255,.3);margin-top:1px;}
+.ag-ntimer{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;flex-shrink:0;white-space:nowrap;}
+.ag-ntimer.urgente{color:#ef4444;}
+.ag-ntimer.pronto{color:#f59e0b;}
+.ag-ntimer.ok{color:#22c55e;}
+.ag-nclose{background:none;border:none;color:rgba(255,255,255,.2);cursor:pointer;font-size:15px;padding:0 0 0 6px;transition:color .2s;flex-shrink:0;line-height:1;}
+.ag-nclose:hover{color:#fff;}
+.ag-nstack-handle{pointer-events:all;width:290px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:7px 14px;display:flex;align-items:center;justify-content:space-between;cursor:grab;user-select:none;}
+.ag-nstack-handle:active{cursor:grabbing;}
+.ag-nstack-lbl{font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.25);}
+.ag-nstack-count{font-size:9px;font-weight:900;color:rgba(42,92,255,.7);background:rgba(42,92,255,.1);padding:2px 8px;border-radius:20px;}
+
+/* ── Daily widget ── */
+#ag-daily-widget{position:fixed;right:20px;top:80px;z-index:9400;width:260px;background:linear-gradient(145deg,#0d1530,#080f22);border-radius:16px;border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 40px rgba(0,0,0,.6);overflow:hidden;user-select:none;}
+#ag-daily-widget .ag-dw-bar{background:linear-gradient(90deg,rgba(42,92,255,.15),rgba(124,58,237,.12),rgba(42,92,255,.15));background-size:300% 100%;animation:ag-dwbg 3s ease infinite;height:3px;}
+@keyframes ag-dwbg{0%{background-position:0%;}50%{background-position:100%;}100%{background-position:0%;}}
+#ag-daily-widget .ag-dw-bar-fill{height:100%;background:linear-gradient(90deg,#2a5cff,#7c3aed,#22c55e);background-size:200% 100%;animation:ag-dwfill 2s ease infinite;border-radius:3px;transition:width .5s;}
+@keyframes ag-dwfill{0%{background-position:0%;}100%{background-position:200%;}}
+.ag-dw-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 8px;cursor:grab;background:rgba(255,255,255,.02);}
+.ag-dw-head:active{cursor:grabbing;}
+.ag-dw-title{font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);}
+.ag-dw-score{font-size:11px;font-weight:900;color:#6ea0ff;}
+.ag-dw-body{padding:8px 12px 12px;max-height:280px;overflow-y:auto;}
+.ag-dw-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.ag-dw-item:last-child{border:none;}
+.ag-dw-chk{width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(255,255,255,.15);flex-shrink:0;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.02);}
+.ag-dw-chk.on{background:#22c55e;border-color:#22c55e;}
+.ag-dw-chk.on::after{content:'✓';font-size:8px;color:#fff;font-weight:900;}
+.ag-dw-txt{font-size:11px;color:rgba(255,255,255,.75);flex:1;line-height:1.3;}
+.ag-dw-txt.done{text-decoration:line-through;color:rgba(255,255,255,.2);}
+.ag-dw-empty{font-size:11px;color:rgba(255,255,255,.15);text-align:center;padding:12px 0;}
+.ag-dw-prog{font-size:9px;color:rgba(255,255,255,.18);text-align:center;padding:4px 0 0;}
+</style>
+
+<!-- Notification stack container -->
+<div id="ag-notif-stack">
+  <div class="ag-nstack-handle" id="ag-nstack-handle">
+    <span class="ag-nstack-lbl">Recordatorios</span>
+    <span class="ag-nstack-count" id="ag-nstack-count">0</span>
+  </div>
+</div>
+
+<!-- Daily tasks widget -->
+<div id="ag-daily-widget">
+  <div class="ag-dw-bar"><div class="ag-dw-bar-fill" id="ag-dw-bar-fill" style="width:0%"></div></div>
+  <div class="ag-dw-head" id="ag-dw-head">
+    <span class="ag-dw-title">Tareas del día</span>
+    <span class="ag-dw-score" id="ag-dw-score">0/0</span>
+  </div>
+  <div class="ag-dw-body" id="ag-dw-body">
+    <div class="ag-dw-empty">Sin tareas hoy</div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   GLOBAL FLOATING WIDGETS
+══════════════════════════════════════ */
+
+/* ── draggable helper ── */
+function makeDraggable(el, handle){
+  var ox=0,oy=0,mx=0,my=0;
+  handle.addEventListener('mousedown',function(e){
+    e.preventDefault();
+    mx=e.clientX; my=e.clientY;
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',onUp);
+    el.style.transition='none';
+  });
+  function onMove(e){
+    var dx=e.clientX-mx, dy=e.clientY-my;
+    mx=e.clientX; my=e.clientY;
+    var rect=el.getBoundingClientRect();
+    var nx=rect.left+dx, ny=rect.top+dy;
+    nx=Math.max(0,Math.min(window.innerWidth-rect.width,nx));
+    ny=Math.max(0,Math.min(window.innerHeight-rect.height,ny));
+    el.style.right='auto'; el.style.bottom='auto';
+    el.style.left=nx+'px'; el.style.top=ny+'px';
+  }
+  function onUp(){ document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp); }
+}
+makeDraggable(document.getElementById('ag-notif-stack'), document.getElementById('ag-nstack-handle'));
+makeDraggable(document.getElementById('ag-daily-widget'), document.getElementById('ag-dw-head'));
+
+/* ── Notification stack ── */
+var agDismissed = {};
+
+function agFormatTimer(diff){
+  var totalMins=Math.floor(diff/60000);
+  var hrs=Math.floor(diff/3600000);
+  var days=Math.floor(diff/86400000);
+  var mins=totalMins%60;
+  var secs=Math.floor((diff%60000)/1000);
+  var txt,cls;
+  if(totalMins<60){ txt=(totalMins<10?'0':'')+totalMins+'m '+(secs<10?'0':'')+secs+'s'; cls='urgente'; }
+  else if(hrs<24){ txt=(hrs<10?'0':'')+hrs+'h '+(mins<10?'0':'')+mins+'m'; cls='pronto'; }
+  else { txt=days+'d '+(hrs%24<10?'0':'')+(hrs%24)+'h '+(mins<10?'0':'')+mins+'m'; cls='ok'; }
+  return {txt:txt,cls:cls};
+}
+
+function agRenderSticky(){
+  var stack=document.getElementById('ag-notif-stack');
+  if(!stack) return;
+  var agItemsG=[];
+  try{ agItemsG=JSON.parse(localStorage.getItem('airmate_agenda_v2'))||[]; }catch(e){}
+  var now=new Date();
+  var upcoming=agItemsG.filter(function(i){ return i.date&&!i.done&&new Date(i.date)>now; })
+    .sort(function(a,b){ return new Date(a.date)-new Date(b.date); }).slice(0,5);
+
+  // Remove dismissed that no longer match
+  var upIds=upcoming.map(function(i){ return i.id; });
+  Object.keys(agDismissed).forEach(function(k){ if(upIds.indexOf(Number(k))<0) delete agDismissed[k]; });
+
+  var visible=upcoming.filter(function(i){ return !agDismissed[i.id]; });
+  var countEl=document.getElementById('ag-nstack-count');
+  if(countEl) countEl.textContent=visible.length;
+
+  // Update or create cards
+  var existing={};
+  stack.querySelectorAll('.ag-ncard').forEach(function(c){ existing[c.dataset.id]=c; });
+
+  // Remove cards no longer visible
+  Object.keys(existing).forEach(function(id){
+    if(!visible.find(function(i){ return i.id===Number(id); })){
+      existing[id].remove();
+    }
+  });
+
+  // Add/update cards
+  visible.forEach(function(ev){
+    var d=new Date(ev.date);
+    var diff=d-now;
+    var t=agFormatTimer(diff);
+    var todayStr=now.toDateString();
+    var tomorrowStr=new Date(now.getTime()+86400000).toDateString();
+    var dayLabel=d.toDateString()===todayStr?'Hoy':d.toDateString()===tomorrowStr?'Mañana':d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+    var timeLabel=d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    var card=existing[ev.id];
+    if(!card){
+      card=document.createElement('div');
+      card.className='ag-ncard';
+      card.dataset.id=ev.id;
+      card.innerHTML='<div class="ag-ndot '+t.cls+'" id="ag-ndot-'+ev.id+'"></div>'
+        +'<div class="ag-nbody">'
+        +'<div class="ag-ntitle">'+ev.title+'</div>'
+        +'<div class="ag-nsub" id="ag-nsub-'+ev.id+'">'+dayLabel+' · '+timeLabel+'</div>'
+        +'</div>'
+        +'<div class="ag-ntimer '+t.cls+'" id="ag-ntimer-'+ev.id+'">'+t.txt+'</div>'
+        +'<button class="ag-nclose" onclick="agNotifDismiss('+ev.id+')">✕</button>';
+      // insert before handle
+      stack.insertBefore(card,document.getElementById('ag-nstack-handle'));
+    } else {
+      var dot=document.getElementById('ag-ndot-'+ev.id);
+      var timer=document.getElementById('ag-ntimer-'+ev.id);
+      if(dot) dot.className='ag-ndot '+t.cls;
+      if(timer){ timer.textContent=t.txt; timer.className='ag-ntimer '+t.cls; }
+    }
+  });
+}
+
+function agNotifDismiss(id){
+  agDismissed[id]=true;
+  var card=document.querySelector('.ag-ncard[data-id="'+id+'"]');
+  if(card){ card.style.transition='all .2s'; card.style.opacity='0'; card.style.transform='translateX(30px)'; setTimeout(function(){ card.remove(); agRenderSticky(); },200); }
+}
+
+/* ── Daily widget ── */
+function agRenderDailyWidget(){
+  var agDailyG=[];
+  try{ agDailyG=JSON.parse(localStorage.getItem('airmate_daily_v1'))||[]; }catch(e){}
+  var total=agDailyG.length;
+  var done=agDailyG.filter(function(t){ return t.done; }).length;
+  var fill=document.getElementById('ag-dw-bar-fill');
+  var score=document.getElementById('ag-dw-score');
+  var body=document.getElementById('ag-dw-body');
+  if(fill) fill.style.width=(total?Math.round(done/total*100):0)+'%';
+  if(score) score.textContent=done+'/'+total;
+  if(!body) return;
+  if(!total){ body.innerHTML='<div class="ag-dw-empty">Sin tareas hoy</div>'; return; }
+  body.innerHTML=agDailyG.map(function(t){
+    return '<div class="ag-dw-item">'
+      +'<div class="ag-dw-chk'+(t.done?' on':'')+'" onclick="agDWToggle('+t.id+')"></div>'
+      +'<div class="ag-dw-txt'+(t.done?' done':'')+'" >'+t.text+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function agDWToggle(id){
+  var agDailyG=[];
+  try{ agDailyG=JSON.parse(localStorage.getItem('airmate_daily_v1'))||[]; }catch(e){}
+  var t=agDailyG.find(function(x){ return x.id===id; });
+  if(t){ t.done=!t.done; localStorage.setItem('airmate_daily_v1',JSON.stringify(agDailyG)); agRenderDailyWidget(); if(typeof agRenderDaily==='function') agRenderDaily(); }
+}
+
+/* ── Init & intervals ── */
+agRenderSticky();
+agRenderDailyWidget();
+setInterval(function(){ agRenderSticky(); agRenderDailyWidget(); }, 1000);
 </script>
 </body>
 </html>
