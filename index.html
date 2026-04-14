@@ -10242,6 +10242,211 @@ function agDWToggle(id){
 agRenderSticky();
 agRenderDailyWidget();
 setInterval(function(){ agRenderSticky(); agRenderDailyWidget(); }, 1000);
+
+/* ══════════════════════════════════════════════════
+   WOW EFFECTS
+══════════════════════════════════════════════════ */
+
+/* ── 1. HOLOGRAPHIC SHIMMER on notification cards ──
+   Follows mouse like a holographic trading card      */
+(function(){
+  var style=document.createElement('style');
+  style.textContent=`
+  .ag-ncard-holo{
+    position:absolute;inset:0;border-radius:20px;z-index:10;
+    pointer-events:none;opacity:0;transition:opacity .3s;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent 0%, transparent 4%,
+        rgba(255,0,128,.04) 4%, rgba(255,0,128,.04) 5%,
+        transparent 5%, transparent 9%,
+        rgba(255,165,0,.04) 9%, rgba(255,165,0,.04) 10%
+      ),
+      linear-gradient(
+        133deg,
+        rgba(255,0,128,0) 0%,
+        rgba(255,0,128,.15) 15%,
+        rgba(255,165,0,.15) 30%,
+        rgba(0,255,128,.12) 45%,
+        rgba(0,200,255,.15) 60%,
+        rgba(128,0,255,.15) 75%,
+        rgba(255,0,128,.1) 90%
+      );
+    background-size:100% 100%, 300% 300%;
+    mix-blend-mode:color-dodge;
+  }
+  .ag-ncard:hover .ag-ncard-holo{ opacity:1; }
+  .ag-ncard-holo-glare{
+    position:absolute;inset:0;border-radius:20px;z-index:11;
+    pointer-events:none;opacity:0;transition:opacity .3s;
+    background:radial-gradient(circle at 50% 50%, rgba(255,255,255,.25) 0%, rgba(255,255,255,.05) 40%, transparent 70%);
+  }
+  .ag-ncard:hover .ag-ncard-holo-glare{ opacity:1; }
+  `;
+  document.head.appendChild(style);
+
+  document.addEventListener('mousemove',function(e){
+    document.querySelectorAll('.ag-ncard').forEach(function(card){
+      var rect=card.getBoundingClientRect();
+      var mx=(e.clientX-rect.left)/rect.width;
+      var my=(e.clientY-rect.top)/rect.height;
+      if(mx<0||mx>1||my<0||my>1) return;
+      var holo=card.querySelector('.ag-ncard-holo');
+      var glare=card.querySelector('.ag-ncard-holo-glare');
+      var angle=Math.atan2(my-.5,mx-.5)*(180/Math.PI)+90;
+      var dist=Math.sqrt((mx-.5)*(mx-.5)+(my-.5)*(my-.5));
+      if(holo){
+        holo.style.backgroundPosition='50% 50%, '+(mx*100)+'% '+(my*100)+'%';
+        holo.style.transform='rotate('+angle+'deg)';
+        holo.style.opacity=0.4+dist*0.6;
+      }
+      if(glare){
+        glare.style.background='radial-gradient(circle at '+(mx*100)+'% '+(my*100)+'%, rgba(255,255,255,.3) 0%, rgba(255,255,255,.06) 35%, transparent 65%)';
+      }
+    });
+  });
+})();
+
+/* ── 2. Inject holo layers into each new card ── */
+var _origMakeCard = agMakeCardDraggable;
+var _holoInjected = {};
+function agInjectHolo(card){
+  var id=card.dataset.id;
+  if(_holoInjected[id]) return;
+  _holoInjected[id]=true;
+  var h=document.createElement('div'); h.className='ag-ncard-holo';
+  var g=document.createElement('div'); g.className='ag-ncard-holo-glare';
+  var shell=card.querySelector('.ag-ncard-shell');
+  if(shell){ shell.appendChild(h); shell.appendChild(g); }
+}
+
+/* ── 3. PARTICLE EXPLOSION on dismiss ── */
+function agParticleBurst(card){
+  var rect=card.getBoundingClientRect();
+  var cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+  var colors=['#2a5cff','#7c3aed','#06b6d4','#f59e0b','#ef4444','#22c55e','#fff','#e879f9'];
+  for(var i=0;i<28;i++){
+    var p=document.createElement('div');
+    var color=colors[Math.floor(Math.random()*colors.length)];
+    var size=Math.random()*6+3;
+    var angle=Math.random()*360;
+    var speed=Math.random()*180+60;
+    var isRect=Math.random()>.5;
+    p.style.cssText='position:fixed;z-index:99999;pointer-events:none;'
+      +(isRect?'width:'+size+'px;height:'+(size*0.4)+'px;border-radius:2px;'
+              :'width:'+size+'px;height:'+size+'px;border-radius:50%;')
+      +'background:'+color+';'
+      +'left:'+(cx-size/2)+'px;top:'+(cy-size/2)+'px;'
+      +'box-shadow:0 0 '+(size*2)+'px '+color+';'
+      +'transition:none;';
+    document.body.appendChild(p);
+    var rad=angle*Math.PI/180;
+    var tx=Math.cos(rad)*speed, ty=Math.sin(rad)*speed;
+    requestAnimationFrame(function(pp,ttx,tty){ return function(){
+      pp.style.transition='transform .7s cubic-bezier(.25,.46,.45,.94), opacity .7s ease';
+      pp.style.transform='translate('+ttx+'px,'+tty+'px) rotate('+(Math.random()*720-360)+'deg) scale(0)';
+      pp.style.opacity='0';
+      setTimeout(function(){ pp.remove(); },750);
+    };}(p,tx,ty));
+  }
+}
+
+/* patch dismiss to trigger burst */
+var _origDismiss=agNotifDismiss;
+agNotifDismiss=function(id){
+  var card=document.querySelector('.ag-ncard[data-id="'+id+'"]');
+  if(card) agParticleBurst(card);
+  _origDismiss(id);
+};
+
+/* patch render to inject holo after creation */
+var _origRender=agRenderSticky;
+agRenderSticky=function(){
+  _origRender();
+  document.querySelectorAll('.ag-ncard').forEach(agInjectHolo);
+};
+
+/* ── 4. CONFETTI RAIN when all daily tasks done ── */
+var _lastDailyPct=0;
+function agMaybeConfetti(){
+  var agDailyG=[];
+  try{ agDailyG=JSON.parse(localStorage.getItem('airmate_daily_v1'))||[]; }catch(e){}
+  var total=agDailyG.length;
+  if(!total) return;
+  var done=agDailyG.filter(function(t){ return t.done; }).length;
+  var pct=Math.round(done/total*100);
+  if(pct===100 && _lastDailyPct<100) agConfetti();
+  _lastDailyPct=pct;
+}
+
+function agConfetti(){
+  var colors=['#2a5cff','#7c3aed','#f59e0b','#22c55e','#ef4444','#06b6d4','#e879f9','#fff','#fbbf24'];
+  for(var i=0;i<80;i++){
+    (function(delay){
+      setTimeout(function(){
+        var p=document.createElement('div');
+        var color=colors[Math.floor(Math.random()*colors.length)];
+        var size=Math.random()*10+4;
+        var isRect=Math.random()>.4;
+        var startX=Math.random()*window.innerWidth;
+        p.style.cssText='position:fixed;z-index:99999;pointer-events:none;'
+          +(isRect?'width:'+size+'px;height:'+(size*0.4)+'px;border-radius:2px;'
+                  :'width:'+size+'px;height:'+size+'px;border-radius:50%;')
+          +'background:'+color+';'
+          +'left:'+startX+'px;top:-20px;'
+          +'opacity:1;';
+        document.body.appendChild(p);
+        var dur=Math.random()*1800+1200;
+        var tx=(Math.random()-0.5)*300;
+        requestAnimationFrame(function(){
+          p.style.transition='transform '+dur+'ms cubic-bezier(.25,.46,.45,.94), opacity '+dur+'ms ease';
+          p.style.transform='translate('+tx+'px,'+(window.innerHeight+60)+'px) rotate('+(Math.random()*1440)+'deg)';
+          p.style.opacity='0';
+          setTimeout(function(){ p.remove(); },dur+100);
+        });
+      },delay);
+    })(i*30);
+  }
+}
+
+/* patch daily widget render to check confetti */
+var _origDailyWidget=agRenderDailyWidget;
+agRenderDailyWidget=function(){
+  _origDailyWidget();
+  agMaybeConfetti();
+};
+
+/* ── 5. GLITCH PULSE on urgent cards ── */
+(function(){
+  var s=document.createElement('style');
+  s.textContent=`
+  @keyframes ag-glitch{
+    0%,92%,100%{transform:perspective(600px) rotateX(4deg) rotateY(-6deg);}
+    93%{transform:perspective(600px) rotateX(4deg) rotateY(-6deg) translate(-2px,1px);filter:hue-rotate(30deg);}
+    94%{transform:perspective(600px) rotateX(4deg) rotateY(-6deg) translate(2px,-1px);filter:hue-rotate(-30deg);}
+    95%{transform:perspective(600px) rotateX(4deg) rotateY(-6deg) translate(-1px,2px);}
+    96%{transform:perspective(600px) rotateX(4deg) rotateY(-6deg) translate(1px,-2px);filter:hue-rotate(20deg);}
+    97%{transform:perspective(600px) rotateX(4deg) rotateY(-6deg);}
+  }
+  .ag-ncard.glitch-on{ animation:ag-glitch 3s infinite; }
+  `;
+  document.head.appendChild(s);
+
+  setInterval(function(){
+    document.querySelectorAll('.ag-ncard').forEach(function(c){
+      var dot=c.querySelector('.ag-ndot');
+      if(dot&&dot.classList.contains('urgente')){
+        c.classList.add('glitch-on');
+      } else {
+        c.classList.remove('glitch-on');
+      }
+    });
+  },2000);
+})();
+
+/* re-run to inject holo on already-rendered cards */
+setTimeout(function(){ document.querySelectorAll('.ag-ncard').forEach(agInjectHolo); },500);
 </script>
 </body>
 </html>
