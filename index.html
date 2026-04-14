@@ -4679,6 +4679,20 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
         .agv4-stat-n{font-size:20px;font-weight:900;color:#fff;}
         .agv4-stat-l{font-size:9px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
 
+        /* Big countdown */
+        .agv4-bigcd{background:linear-gradient(135deg,rgba(42,92,255,.08),rgba(110,160,255,.04));border:1px solid rgba(42,92,255,.18);border-radius:18px;padding:18px 24px 16px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+        .agv4-bigcd-left{min-width:0;}
+        .agv4-bigcd-tag{font-size:8px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:rgba(42,92,255,.7);margin-bottom:4px;}
+        .agv4-bigcd-name{font-size:14px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;}
+        .agv4-bigcd-when{font-size:10px;color:rgba(255,255,255,.25);margin-top:3px;}
+        .agv4-bigcd-right{text-align:right;flex-shrink:0;}
+        .agv4-bigcd-timer{font-size:36px;font-weight:900;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums;}
+        .agv4-bigcd-timer.urgente{color:#ef4444;}
+        .agv4-bigcd-timer.pronto{color:#f59e0b;}
+        .agv4-bigcd-timer.ok{color:#22c55e;}
+        .agv4-bigcd-timer-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;}
+        .agv4-bigcd-empty{font-size:13px;color:rgba(255,255,255,.15);text-align:center;width:100%;padding:6px 0;}
+
         /* MAIN */
         .agv4-main{overflow-y:auto;padding:28px 28px 60px;display:flex;flex-direction:column;gap:0;}
         .agv4-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
@@ -4830,6 +4844,11 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
                 </div>
               </div>
             </div>
+            <!-- Big countdown -->
+            <div class="agv4-bigcd" id="agv4-bigcd">
+              <div class="agv4-bigcd-empty">Sin próximos eventos</div>
+            </div>
+
             <div id="ag-cal-container"></div>
           </div>
         </div>
@@ -4847,11 +4866,14 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
               <select id="ag-m-hour" style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:10px;font-size:14px;font-weight:700;color:#fff;font-family:inherit;outline:none;cursor:pointer;">
                 <option value="">Sin hora</option>
-                <option value="07">07:00</option><option value="08">08:00</option><option value="09" selected>09:00</option>
-                <option value="10">10:00</option><option value="11">11:00</option><option value="12">12:00</option>
-                <option value="13">13:00</option><option value="14">14:00</option><option value="15">15:00</option>
-                <option value="16">16:00</option><option value="17">17:00</option><option value="18">18:00</option>
-                <option value="19">19:00</option><option value="20">20:00</option><option value="21">21:00</option>
+                <option value="00">00:00</option><option value="01">01:00</option><option value="02">02:00</option>
+                <option value="03">03:00</option><option value="04">04:00</option><option value="05">05:00</option>
+                <option value="06">06:00</option><option value="07">07:00</option><option value="08">08:00</option>
+                <option value="09" selected>09:00</option><option value="10">10:00</option><option value="11">11:00</option>
+                <option value="12">12:00</option><option value="13">13:00</option><option value="14">14:00</option>
+                <option value="15">15:00</option><option value="16">16:00</option><option value="17">17:00</option>
+                <option value="18">18:00</option><option value="19">19:00</option><option value="20">20:00</option>
+                <option value="21">21:00</option><option value="22">22:00</option><option value="23">23:00</option>
               </select>
               <span style="color:rgba(255,255,255,.25);font-weight:900;font-size:16px;">:</span>
               <select id="ag-m-min" style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:10px;font-size:14px;font-weight:700;color:#fff;font-family:inherit;outline:none;cursor:pointer;">
@@ -9307,6 +9329,7 @@ function renderAgenda(){
   agUpdateStats();
   agRenderDaily();
   agInitNotifState();
+  agRenderBigCountdown();
 }
 
 /* ── Mini calendario ── */
@@ -9505,6 +9528,47 @@ function agUpdateStats(){
     }
   }
   agCheckNotifs();
+  agRenderBigCountdown();
+}
+
+/* ── Big countdown ── */
+function agRenderBigCountdown(){
+  const box=document.getElementById('agv4-bigcd');
+  if(!box) return;
+  const now=new Date();
+  const next=agItems.filter(function(i){ return i.date&&!i.done&&new Date(i.date)>now; }).sort(function(a,b){ return new Date(a.date)-new Date(b.date); })[0];
+  if(!next){ box.innerHTML='<div class="agv4-bigcd-empty">Sin próximos eventos</div>'; return; }
+  const d=new Date(next.date);
+  const diff=d-now;
+  const totalMins=Math.floor(diff/60000);
+  const hrs=Math.floor(diff/3600000);
+  const days=Math.floor(diff/86400000);
+  const mins=totalMins%60;
+  const secs=Math.floor((diff%60000)/1000);
+  let timerTxt, cls;
+  if(totalMins<60){
+    timerTxt=(totalMins<10?'0':'')+totalMins+'m '+(secs<10?'0':'')+secs+'s';
+    cls='urgente';
+  } else if(hrs<24){
+    timerTxt=(hrs<10?'0':'')+hrs+'h '+(mins<10?'0':'')+mins+'m';
+    cls='pronto';
+  } else {
+    timerTxt=days+'d '+(hrs%24)+'h '+(mins<10?'0':'')+mins+'m';
+    cls='ok';
+  }
+  const todayStr=now.toDateString();
+  const tomorrowStr=new Date(now.getTime()+86400000).toDateString();
+  const dayLabel=d.toDateString()===todayStr?'Hoy':d.toDateString()===tomorrowStr?'Mañana':d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+  const timeLabel=d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  box.innerHTML='<div class="agv4-bigcd-left">'
+    +'<div class="agv4-bigcd-tag">Próximo evento</div>'
+    +'<div class="agv4-bigcd-name">'+next.title+'</div>'
+    +'<div class="agv4-bigcd-when">'+dayLabel+' · '+timeLabel+'</div>'
+    +'</div>'
+    +'<div class="agv4-bigcd-right">'
+    +'<div class="agv4-bigcd-timer '+cls+'" id="agv4-bigcd-timer">'+timerTxt+'</div>'
+    +'<div class="agv4-bigcd-timer-lbl">tiempo restante</div>'
+    +'</div>';
 }
 
 function agToggleDoneEv(id){
@@ -9604,11 +9668,15 @@ function agModalSave(){
 // Cerrar modal al click fuera
 document.addEventListener('click',function(e){ const modal=document.getElementById('ag-modal'); if(modal&&modal.style.display==='flex'&&e.target===modal) agModalClose(); });
 
-// Refresh countdowns cada minuto
+// Refresh stats cada minuto
 setInterval(function(){
   if(document.getElementById('ag-cal-container')) agUpdateStats();
   if(agView==='lista') agRenderMain();
 }, 60000);
+// Refresh big countdown cada segundo
+setInterval(function(){
+  if(document.getElementById('agv4-bigcd')) agRenderBigCountdown();
+}, 1000);
 </script>
 </body>
 </html>
