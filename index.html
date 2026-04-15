@@ -9357,30 +9357,49 @@ function agDailySave(){
 }
 
 /* ── Notificaciones ── */
-function agRequestNotif(){
-  if(!('Notification' in window)){ showToast('Tu navegador no soporta notificaciones'); return; }
-  Notification.requestPermission().then(function(perm){
-    const btn=document.getElementById('agv4-notif-btn');
-    const lbl=document.getElementById('agv4-notif-lbl');
-    if(perm==='granted'){
-      if(btn) btn.classList.add('on');
-      if(lbl) lbl.textContent='Notificaciones activas';
-      showToast('Notificaciones activadas');
-    } else {
-      if(btn) btn.classList.remove('on');
-      if(lbl) lbl.textContent='Activar notificaciones';
-      showToast('Permiso denegado');
-    }
-  });
-}
-function agInitNotifState(){
-  if(!('Notification' in window)) return;
-  const btn=document.getElementById('agv4-notif-btn');
-  const lbl=document.getElementById('agv4-notif-lbl');
-  if(Notification.permission==='granted'){
-    if(btn) btn.classList.add('on');
-    if(lbl) lbl.textContent='Notificaciones activas';
+var agNotifsEnabled = localStorage.getItem('ag_notifs_enabled') !== 'false'; // true por defecto
+
+function agApplyNotifState(){
+  var btn=document.getElementById('agv4-notif-btn');
+  var lbl=document.getElementById('agv4-notif-lbl');
+  if(btn){ if(agNotifsEnabled) btn.classList.add('on'); else btn.classList.remove('on'); }
+  if(lbl) lbl.textContent=agNotifsEnabled ? 'Notificaciones activas' : 'Activar notificaciones';
+  // mostrar/ocultar tarjetas volantes según estado
+  document.querySelectorAll('.ag-ncard').forEach(function(c){ c.style.display=agNotifsEnabled?'':'none'; });
+  var dw=document.getElementById('ag-daily-widget');
+  if(dw && typeof authState!=='undefined' && authState.isOwner){
+    dw.style.display=agNotifsEnabled?'':'none';
   }
+}
+
+function agRequestNotif(){
+  // Toggle: si están activas las desactiva, si no las activa
+  if(agNotifsEnabled){
+    agNotifsEnabled=false;
+    localStorage.setItem('ag_notifs_enabled','false');
+    agApplyNotifState();
+    showToast('Notificaciones desactivadas');
+  } else {
+    if(!('Notification' in window)){
+      agNotifsEnabled=true;
+      localStorage.setItem('ag_notifs_enabled','true');
+      agApplyNotifState();
+      showToast('Notificaciones activadas');
+      return;
+    }
+    Notification.requestPermission().then(function(perm){
+      agNotifsEnabled=true;
+      localStorage.setItem('ag_notifs_enabled','true');
+      agApplyNotifState();
+      if(perm==='granted') showToast('Notificaciones activadas');
+      else showToast('Tarjetas activadas (permiso del navegador denegado)');
+    });
+  }
+}
+
+function agInitNotifState(){
+  agNotifsEnabled = localStorage.getItem('ag_notifs_enabled') !== 'false';
+  agApplyNotifState();
 }
 function agCheckNotifs(){
   if(!('Notification' in window)||Notification.permission!=='granted') return;
@@ -10080,9 +10099,10 @@ setInterval(function(){
 (function(){
   function applyOwnerVisibility(){
     var isOwner=(typeof authState!=='undefined'&&authState.isOwner);
+    var notifsOn=(typeof agNotifsEnabled==='undefined')||agNotifsEnabled;
     var dw=document.getElementById('ag-daily-widget');
-    if(dw) dw.style.display=isOwner?'':'none';
-    document.querySelectorAll('.ag-ncard').forEach(function(c){ c.style.display=isOwner?'':'none'; });
+    if(dw) dw.style.display=(isOwner&&notifsOn)?'':'none';
+    document.querySelectorAll('.ag-ncard').forEach(function(c){ c.style.display=(isOwner&&notifsOn)?'':'none'; });
   }
   applyOwnerVisibility();
   setInterval(applyOwnerVisibility,2000);
@@ -10221,6 +10241,11 @@ function agMakeCardDraggable(card){
 }
 
 function agRenderSticky(){
+  // Si notificaciones desactivadas, quitar todas las tarjetas y salir
+  if(typeof agNotifsEnabled!=='undefined' && !agNotifsEnabled){
+    document.querySelectorAll('.ag-ncard').forEach(function(c){ c.remove(); });
+    return;
+  }
   var agItemsG=agItems||[];
   var now=new Date();
   var upcoming=agItemsG.filter(function(i){ return i.date&&!i.done&&new Date(i.date)>now; })
