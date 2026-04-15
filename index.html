@@ -9665,7 +9665,7 @@ function agDailyAdd(){
 function agDailyToggle(id){
   agDailyLoad();
   const t=agDaily.find(function(x){ return x.id===id; });
-  if(t){ t.done=!t.done; agDailySave(); agRenderDaily(); }
+  if(t){ t.done=!t.done; agDailySave(); if(t.done && typeof agConfetti==='function') agConfetti(); agRenderDaily(); }
 }
 function agDailyDelete(id){
   agDailyLoad();
@@ -10031,26 +10031,40 @@ setInterval(function(){
    GLOBAL FLOATING WIDGETS — 3D v2
 ══════════════════════════════════════ */
 
-/* ── Generic draggable ── */
+/* ── Owner-only: hide widgets for clients ── */
+(function(){
+  function applyOwnerVisibility(){
+    var isOwner=(typeof authState!=='undefined'&&authState.isOwner);
+    var dw=document.getElementById('ag-daily-widget');
+    if(dw) dw.style.display=isOwner?'':'none';
+    document.querySelectorAll('.ag-ncard').forEach(function(c){ c.style.display=isOwner?'':'none'; });
+  }
+  applyOwnerVisibility();
+  setInterval(applyOwnerVisibility,2000);
+})();
+
+/* ── Generic draggable (fixed: anchored to start, no drift) ── */
 function makeDraggable(el, handle){
-  var mx=0,my=0;
+  var startMX,startMY,startL,startT;
   handle.addEventListener('mousedown',function(e){
     e.preventDefault();
-    mx=e.clientX; my=e.clientY;
+    var rect=el.getBoundingClientRect();
+    startMX=e.clientX; startMY=e.clientY;
+    startL=rect.left;  startT=rect.top;
+    el.style.transition='none';
+    el.style.right='auto'; el.style.bottom='auto';
+    el.style.left=startL+'px'; el.style.top=startT+'px';
     document.addEventListener('mousemove',onMove);
     document.addEventListener('mouseup',onUp);
-    el.style.transition='none';
   });
   function onMove(e){
-    var dx=e.clientX-mx, dy=e.clientY-my;
-    mx=e.clientX; my=e.clientY;
-    var rect=el.getBoundingClientRect();
-    var nx=Math.max(0,Math.min(window.innerWidth-rect.width,rect.left+dx));
-    var ny=Math.max(0,Math.min(window.innerHeight-rect.height,rect.top+dy));
-    el.style.right='auto';el.style.bottom='auto';
-    el.style.left=nx+'px';el.style.top=ny+'px';
+    var nx=startL+(e.clientX-startMX);
+    var ny=startT+(e.clientY-startMY);
+    nx=Math.max(0,Math.min(window.innerWidth-el.offsetWidth,nx));
+    ny=Math.max(0,Math.min(window.innerHeight-el.offsetHeight,ny));
+    el.style.left=nx+'px'; el.style.top=ny+'px';
   }
-  function onUp(){ document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp); }
+  function onUp(){ document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp); }
 }
 makeDraggable(document.getElementById('ag-daily-widget'), document.getElementById('ag-dw-head'));
 
@@ -10088,35 +10102,41 @@ function agFormatTimer(diff){
 }
 
 function agMakeCardDraggable(card){
-  var mx=0,my=0,dragged=false;
+  var startMX,startMY,startL,startT,isDragging=false;
   card.addEventListener('mousedown',function(e){
     if(e.target.classList.contains('ag-nclose')) return;
     e.preventDefault();
-    mx=e.clientX; my=e.clientY; dragged=false;
+    isDragging=false;
+    // snapshot start
+    var rect=card.getBoundingClientRect();
+    startMX=e.clientX; startMY=e.clientY;
+    startL=rect.left;  startT=rect.top;
     card.style.transition='none';
+    card.style.right='auto'; card.style.bottom='auto';
+    card.style.left=startL+'px'; card.style.top=startT+'px';
     card.style.zIndex=9600;
     document.addEventListener('mousemove',onMove);
     document.addEventListener('mouseup',onUp);
   });
   function onMove(e){
-    var dx=e.clientX-mx, dy=e.clientY-my;
-    if(Math.abs(dx)+Math.abs(dy)>3) dragged=true;
-    mx=e.clientX; my=e.clientY;
-    var rect=card.getBoundingClientRect();
-    var nx=Math.max(0,Math.min(window.innerWidth-rect.width,rect.left+dx));
-    var ny=Math.max(0,Math.min(window.innerHeight-rect.height,rect.top+dy));
-    card.style.right='auto';card.style.bottom='auto';
-    card.style.left=nx+'px';card.style.top=ny+'px';
+    isDragging=true;
+    var nx=startL+(e.clientX-startMX);
+    var ny=startT+(e.clientY-startMY);
+    nx=Math.max(0,Math.min(window.innerWidth-card.offsetWidth,nx));
+    ny=Math.max(0,Math.min(window.innerHeight-card.offsetHeight,ny));
+    card.style.left=nx+'px'; card.style.top=ny+'px';
     agCardPositions[card.dataset.id]={left:nx,top:ny};
-    // tilt while dragging
-    var tilt=Math.min(Math.max(dx*0.3,-15),15);
-    card.style.transform='perspective(600px) rotateX(2deg) rotateY('+tilt+'deg) rotateZ('+(tilt*0.2)+'deg)';
+    // subtle tilt based on velocity direction
+    var velX=e.clientX-startMX;
+    var tilt=Math.min(Math.max(velX*0.04,-12),12);
+    card.style.transform='perspective(600px) rotateX(2deg) rotateY('+tilt+'deg) rotateZ('+(tilt*0.15)+'deg)';
   }
   function onUp(){
     document.removeEventListener('mousemove',onMove);
     document.removeEventListener('mouseup',onUp);
     card.style.zIndex=9500;
     card.style.transform='perspective(600px) rotateX(4deg) rotateY(-6deg)';
+    isDragging=false;
   }
   // hover tilt
   card.addEventListener('mousemove',function(e){
@@ -10246,7 +10266,13 @@ function agDWToggle(id){
   var agDailyG=[];
   try{ agDailyG=JSON.parse(localStorage.getItem('airmate_daily_v1'))||[]; }catch(e){}
   var t=agDailyG.find(function(x){ return x.id===id; });
-  if(t){ t.done=!t.done; localStorage.setItem('airmate_daily_v1',JSON.stringify(agDailyG)); agRenderDailyWidget(); if(typeof agRenderDaily==='function') agRenderDaily(); }
+  if(t){
+    t.done=!t.done;
+    localStorage.setItem('airmate_daily_v1',JSON.stringify(agDailyG));
+    if(t.done && typeof agConfetti==='function') agConfetti();
+    agRenderDailyWidget();
+    if(typeof agRenderDaily==='function') agRenderDaily();
+  }
 }
 
 /* ── Init & tick ── */
@@ -10379,17 +10405,7 @@ agRenderSticky=function(){
 };
 
 /* ── 4. CONFETTI RAIN when all daily tasks done ── */
-var _lastDailyPct=0;
-function agMaybeConfetti(){
-  var agDailyG=[];
-  try{ agDailyG=JSON.parse(localStorage.getItem('airmate_daily_v1'))||[]; }catch(e){}
-  var total=agDailyG.length;
-  if(!total) return;
-  var done=agDailyG.filter(function(t){ return t.done; }).length;
-  var pct=Math.round(done/total*100);
-  if(pct===100 && _lastDailyPct<100) agConfetti();
-  _lastDailyPct=pct;
-}
+function agMaybeConfetti(){ /* no-op: confetti now fires directly on check */ }
 
 function agConfetti(){
   var colors=['#2a5cff','#7c3aed','#f59e0b','#22c55e','#ef4444','#06b6d4','#e879f9','#fff','#fbbf24'];
