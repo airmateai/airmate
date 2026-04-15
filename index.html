@@ -9306,10 +9306,55 @@ let agModalType = 'reunion';
 let agModalPrio = 'media';
 let agModalDate = null;
 
-function agLoad(){ try{ agItems=JSON.parse(localStorage.getItem(AG_KEY))||[]; }catch{ agItems=[]; } }
-function agSave(){ localStorage.setItem(AG_KEY,JSON.stringify(agItems)); }
-function agDailyLoad(){ try{ agDaily=JSON.parse(localStorage.getItem(AG_DAILY_KEY))||[]; }catch{ agDaily=[]; } }
-function agDailySave(){ localStorage.setItem(AG_DAILY_KEY,JSON.stringify(agDaily)); }
+/* ── Sync helpers: localStorage (instant) + Supabase (cross-device) ── */
+function agSbUpsert(key, value){
+  try{
+    _SB.from('owner_data').upsert({key, value, updated_at: new Date().toISOString()},{onConflict:'key'}).then(function(r){
+      if(r.error) console.warn('agSbUpsert error:',r.error.message);
+    });
+  }catch(e){}
+}
+async function agSbLoad(key, fallbackLocal){
+  try{
+    const {data,error}=await _SB.from('owner_data').select('value').eq('key',key).maybeSingle();
+    if(!error && data && Array.isArray(data.value)) return data.value;
+  }catch(e){}
+  // fallback to localStorage
+  try{ return JSON.parse(localStorage.getItem(fallbackLocal))||[]; }catch(e){ return []; }
+}
+
+function agLoad(){
+  try{ agItems=JSON.parse(localStorage.getItem(AG_KEY))||[]; }catch{ agItems=[]; }
+  agSbLoad(AG_KEY, AG_KEY).then(function(remote){
+    if(remote.length>0 || agItems.length===0){
+      agItems=remote;
+      localStorage.setItem(AG_KEY,JSON.stringify(agItems));
+      agRenderCalendar && agRenderCalendar();
+      agRenderMini && agRenderMini();
+      agRenderBigCountdown && agRenderBigCountdown();
+      agRenderNotifCards && agRenderNotifCards();
+    }
+  });
+}
+function agSave(){
+  localStorage.setItem(AG_KEY,JSON.stringify(agItems));
+  agSbUpsert(AG_KEY, agItems);
+}
+function agDailyLoad(){
+  try{ agDaily=JSON.parse(localStorage.getItem(AG_DAILY_KEY))||[]; }catch{ agDaily=[]; }
+  agSbLoad(AG_DAILY_KEY, AG_DAILY_KEY).then(function(remote){
+    if(remote.length>0 || agDaily.length===0){
+      agDaily=remote;
+      localStorage.setItem(AG_DAILY_KEY,JSON.stringify(agDaily));
+      agRenderDaily && agRenderDaily();
+      agRenderDailyWidget && agRenderDailyWidget();
+    }
+  });
+}
+function agDailySave(){
+  localStorage.setItem(AG_DAILY_KEY,JSON.stringify(agDaily));
+  agSbUpsert(AG_DAILY_KEY, agDaily);
+}
 
 /* ── Notificaciones ── */
 function agRequestNotif(){
@@ -10176,8 +10221,7 @@ function agMakeCardDraggable(card){
 }
 
 function agRenderSticky(){
-  var agItemsG=[];
-  try{ agItemsG=JSON.parse(localStorage.getItem('airmate_agenda_v2'))||[]; }catch(e){}
+  var agItemsG=agItems||[];
   var now=new Date();
   var upcoming=agItemsG.filter(function(i){ return i.date&&!i.done&&new Date(i.date)>now; })
     .sort(function(a,b){ return new Date(a.date)-new Date(b.date); }).slice(0,5);
@@ -10262,8 +10306,7 @@ function agNotifDismiss(id){
 
 /* ── Daily widget ── */
 function agRenderDailyWidget(){
-  var agDailyG=[];
-  try{ agDailyG=JSON.parse(localStorage.getItem('airmate_daily_v1'))||[]; }catch(e){}
+  var agDailyG=agDaily||[];
   var total=agDailyG.length, done=agDailyG.filter(function(t){ return t.done; }).length;
   var pct=total?Math.round(done/total*100):0;
   var fill=document.getElementById('ag-dw-bar-fill');
@@ -10284,12 +10327,10 @@ function agRenderDailyWidget(){
 }
 
 function agDWToggle(id){
-  var agDailyG=[];
-  try{ agDailyG=JSON.parse(localStorage.getItem('airmate_daily_v1'))||[]; }catch(e){}
-  var t=agDailyG.find(function(x){ return x.id===id; });
+  var t=(agDaily||[]).find(function(x){ return x.id===id; });
   if(t){
     t.done=!t.done;
-    localStorage.setItem('airmate_daily_v1',JSON.stringify(agDailyG));
+    agDailySave();
     if(t.done && typeof agConfetti==='function') agConfetti();
     agRenderDailyWidget();
     if(typeof agRenderDaily==='function') agRenderDaily();
