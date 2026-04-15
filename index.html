@@ -10045,7 +10045,10 @@ setInterval(function(){
 
 /* ── Generic draggable (fixed: anchored to start, no drift) ── */
 function makeDraggable(el, handle){
-  var startMX,startMY,startL,startT;
+  var startMX,startMY,startL,startT,raf=null;
+  var pendingX=0,pendingY=0;
+  el.style.willChange='transform';
+  handle.style.cursor='grab';
   handle.addEventListener('mousedown',function(e){
     e.preventDefault();
     var rect=el.getBoundingClientRect();
@@ -10054,17 +10057,29 @@ function makeDraggable(el, handle){
     el.style.transition='none';
     el.style.right='auto'; el.style.bottom='auto';
     el.style.left=startL+'px'; el.style.top=startT+'px';
+    el.style.transform='perspective(700px) rotateX(0deg) rotateY(0deg) scale(1.03)';
+    handle.style.cursor='grabbing';
+    document.body.style.userSelect='none';
     document.addEventListener('mousemove',onMove);
     document.addEventListener('mouseup',onUp);
   });
   function onMove(e){
-    var nx=startL+(e.clientX-startMX);
-    var ny=startT+(e.clientY-startMY);
-    nx=Math.max(0,Math.min(window.innerWidth-el.offsetWidth,nx));
-    ny=Math.max(0,Math.min(window.innerHeight-el.offsetHeight,ny));
-    el.style.left=nx+'px'; el.style.top=ny+'px';
+    pendingX=startL+(e.clientX-startMX);
+    pendingY=startT+(e.clientY-startMY);
+    pendingX=Math.max(0,Math.min(window.innerWidth-el.offsetWidth,pendingX));
+    pendingY=Math.max(0,Math.min(window.innerHeight-el.offsetHeight,pendingY));
+    if(!raf) raf=requestAnimationFrame(function(){
+      raf=null;
+      el.style.left=pendingX+'px'; el.style.top=pendingY+'px';
+    });
   }
-  function onUp(){ document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp); }
+  function onUp(){
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+    document.body.style.userSelect='';
+    handle.style.cursor='grab';
+    el.style.transform='perspective(700px) rotateX(4deg) rotateY(-8deg)';
+  }
 }
 makeDraggable(document.getElementById('ag-daily-widget'), document.getElementById('ag-dw-head'));
 
@@ -10102,41 +10117,47 @@ function agFormatTimer(diff){
 }
 
 function agMakeCardDraggable(card){
-  var startMX,startMY,startL,startT,isDragging=false;
+  var startMX,startMY,startL,startT,raf=null;
+  var pendingX=0,pendingY=0,prevMX=0;
+  card.style.willChange='transform';
+  card.style.cursor='grab';
   card.addEventListener('mousedown',function(e){
     if(e.target.classList.contains('ag-nclose')) return;
     e.preventDefault();
-    isDragging=false;
-    // snapshot start
     var rect=card.getBoundingClientRect();
-    startMX=e.clientX; startMY=e.clientY;
+    startMX=e.clientX; startMY=e.clientY; prevMX=e.clientX;
     startL=rect.left;  startT=rect.top;
     card.style.transition='none';
     card.style.right='auto'; card.style.bottom='auto';
     card.style.left=startL+'px'; card.style.top=startT+'px';
     card.style.zIndex=9600;
+    card.style.cursor='grabbing';
+    document.body.style.userSelect='none';
     document.addEventListener('mousemove',onMove);
     document.addEventListener('mouseup',onUp);
   });
   function onMove(e){
-    isDragging=true;
-    var nx=startL+(e.clientX-startMX);
-    var ny=startT+(e.clientY-startMY);
-    nx=Math.max(0,Math.min(window.innerWidth-card.offsetWidth,nx));
-    ny=Math.max(0,Math.min(window.innerHeight-card.offsetHeight,ny));
-    card.style.left=nx+'px'; card.style.top=ny+'px';
-    agCardPositions[card.dataset.id]={left:nx,top:ny};
-    // subtle tilt based on velocity direction
-    var velX=e.clientX-startMX;
-    var tilt=Math.min(Math.max(velX*0.04,-12),12);
-    card.style.transform='perspective(600px) rotateX(2deg) rotateY('+tilt+'deg) rotateZ('+(tilt*0.15)+'deg)';
+    pendingX=startL+(e.clientX-startMX);
+    pendingY=startT+(e.clientY-startMY);
+    pendingX=Math.max(0,Math.min(window.innerWidth-card.offsetWidth,pendingX));
+    pendingY=Math.max(0,Math.min(window.innerHeight-card.offsetHeight,pendingY));
+    var velX=e.clientX-prevMX; prevMX=e.clientX;
+    var tilt=Math.min(Math.max(velX*0.6,-14),14);
+    if(!raf) raf=requestAnimationFrame(function(){
+      raf=null;
+      card.style.left=pendingX+'px'; card.style.top=pendingY+'px';
+      agCardPositions[card.dataset.id]={left:pendingX,top:pendingY};
+      card.style.transform='perspective(600px) rotateX(2deg) rotateY('+tilt+'deg) rotateZ('+(tilt*0.12)+'deg) scale(1.04)';
+    });
   }
   function onUp(){
     document.removeEventListener('mousemove',onMove);
     document.removeEventListener('mouseup',onUp);
+    document.body.style.userSelect='';
+    card.style.cursor='grab';
     card.style.zIndex=9500;
+    card.style.transition='transform 0.25s ease';
     card.style.transform='perspective(600px) rotateX(4deg) rotateY(-6deg)';
-    isDragging=false;
   }
   // hover tilt
   card.addEventListener('mousemove',function(e){
