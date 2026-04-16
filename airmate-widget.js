@@ -5,16 +5,33 @@
   const ROOT = document.getElementById('airmate-root');
   if (!ROOT) return;
 
-  const SLUG     = ROOT.dataset.slug    || 'negocio';
-  const WA       = ROOT.dataset.wa      || '';
-  const WORKERS  = parseInt(ROOT.dataset.workers || '1', 10);
-  const BOT_NAME = ROOT.dataset.name    || 'Asistente';
-  const EMOJI    = ROOT.dataset.emoji   || '💬';
-  const GREETING = ROOT.dataset.greeting|| '¡Hola! ¿En qué puedo ayudarte hoy?';
-  const COLOR    = ROOT.dataset.color   || '#0c1e3d';
-  const SVCS     = (ROOT.dataset.svcs || '').split(',').map(s => {
-    const [name, price, dur] = s.trim().split('|');
-    return name ? { name: name.trim(), price: (price||'').trim(), duration: parseInt(dur||'60') } : null;
+  const SLUG      = ROOT.dataset.slug     || 'negocio';
+  const WA        = ROOT.dataset.wa       || '';
+  const BOT_NAME  = ROOT.dataset.name     || 'Asistente';
+  const EMOJI     = ROOT.dataset.emoji    || '💬';
+  const GREETING  = ROOT.dataset.greeting || '¡Hola! ¿En qué puedo ayudarte hoy?';
+  const COLOR     = ROOT.dataset.color    || '#0c1e3d';
+
+  /* Horario: data-open="09:00" data-close="20:00" data-days="1,2,3,4,5,6" data-slot="30" */
+  const OPEN_H    = parseInt((ROOT.dataset.open  || '09:00').split(':')[0], 10);
+  const OPEN_M    = parseInt((ROOT.dataset.open  || '09:00').split(':')[1] || 0, 10);
+  const CLOSE_H   = parseInt((ROOT.dataset.close || '19:00').split(':')[0], 10);
+  const CLOSE_M   = parseInt((ROOT.dataset.close || '19:00').split(':')[1] || 0, 10);
+  const SLOT_MIN  = parseInt(ROOT.dataset.slot   || '30', 10);
+  /* Días abiertos: 0=Dom,1=Lun,...,6=Sab. Por defecto Lun-Vie */
+  const OPEN_DAYS = new Set((ROOT.dataset.days || '1,2,3,4,5').split(',').map(d => parseInt(d.trim(), 10)));
+
+  /* Servicios: "Nombre|Precio|Duración|Trabajadores" — el 4º campo es capacidad simultánea */
+  const WORKERS_DEFAULT = parseInt(ROOT.dataset.workers || '1', 10);
+  const SVCS = (ROOT.dataset.svcs || '').split(',').map(s => {
+    const parts = s.trim().split('|');
+    if (!parts[0]?.trim()) return null;
+    return {
+      name:     parts[0].trim(),
+      price:    (parts[1] || '').trim(),
+      duration: parseInt(parts[2] || '60'),
+      workers:  parseInt(parts[3] || WORKERS_DEFAULT, 10) /* trabajadores para este servicio */
+    };
   }).filter(Boolean);
 
   /* ─── CONSTANTES AIRMATE ────────────────────────────────────────── */
@@ -94,7 +111,8 @@
     .am-btn-g:hover{filter:brightness(1.05);}
     .am-days{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px;}
     .am-day{flex-shrink:0;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;text-align:center;font-family:var(--am-f);transition:.15s;}
-    .am-day:hover,.am-day.sel{border-color:var(--am-g);background:#f0fdf4;}
+    .am-day:hover:not(.closed),.am-day.sel{border-color:var(--am-g);background:#f0fdf4;}
+    .am-day.closed{opacity:.3;cursor:not-allowed;background:#f1f3f5;}
     .am-day-n{font-size:13px;font-weight:800;color:#0c1e3d;display:block;}
     .am-day-l{font-size:10px;color:#8a97b0;text-transform:uppercase;}
     /* INPUT ROW */
@@ -210,26 +228,29 @@
 
   function showDatePicker(svc) {
     st.flow = 'cita';
+    /* Mostrar los próximos 14 días naturales */
     const days = [];
     const now = new Date();
-    for (let i = 1; i <= 14; i++) {
+    for (let i = 1; i <= 21; i++) {
       const d = new Date(now); d.setDate(now.getDate() + i);
-      if (d.getDay() !== 0) days.push(d); /* excluir domingos */
-      if (days.length >= 7) break;
+      days.push(d);
+      if (days.length >= 14) break;
     }
     const card = el('div', { className: 'am-msg b' });
     const svcTxt = svc ? ` — ${svc.name}` : '';
     card.innerHTML = `<div class="am-card">
       <h4>📅 Elige el día${esc(svcTxt)}</h4>
-      <div class="am-days">${days.map((d,i) => {
-        const dStr = fmtLocalDate(d);
-        const label = d.toLocaleDateString('es-ES',{weekday:'short'}).toUpperCase();
-        const num   = d.getDate();
-        const mon   = d.toLocaleDateString('es-ES',{month:'short'});
-        return `<div class="am-day" onclick="window._amPickDay('${dStr}',this)">
+      <div class="am-days">${days.map(d => {
+        const dStr    = fmtLocalDate(d);
+        const closed  = !OPEN_DAYS.has(d.getDay());
+        const label   = d.toLocaleDateString('es-ES',{weekday:'short'}).toUpperCase();
+        const num     = d.getDate();
+        const mon     = d.toLocaleDateString('es-ES',{month:'short'});
+        const click   = closed ? '' : `onclick="window._amPickDay('${dStr}',this)"`;
+        return `<div class="am-day${closed?' closed':''}" ${click}>
           <span class="am-day-l">${label}</span>
           <span class="am-day-n">${num}</span>
-          <span class="am-day-l">${mon}</span>
+          <span class="am-day-l">${closed?'cerrado':mon}</span>
         </div>`;
       }).join('')}
       </div>
@@ -241,41 +262,60 @@
       card.querySelectorAll('.am-day').forEach(d => d.classList.remove('sel'));
       dayEl.classList.add('sel');
       st.selDate = dStr;
-      await showTimeSlots(dStr, svc?.duration || 60);
+      await showTimeSlots(dStr, svc);
     };
   }
 
-  async function showTimeSlots(dStr, durationMin) {
+  async function showTimeSlots(dStr, svc) {
     const wrap = document.getElementById('am-slots-wrap');
     if (!wrap) return;
     wrap.innerHTML = '<div style="font-size:12px;color:#8a97b0;padding:8px 0;">Cargando horarios…</div>';
 
-    /* Cargar citas existentes de ese día */
+    /* Capacidad de este servicio */
+    const capacity = svc?.workers || WORKERS_DEFAULT;
+
+    /* Citas existentes ese día PARA ESTE SERVICIO */
     const dayStart = dStr + 'T00:00:00';
     const dayEnd   = dStr + 'T23:59:59';
-    const { data: existing } = await sbFetch(`appointments?business_slug=eq.${SLUG}&starts_at=gte.${dayStart}&starts_at=lte.${dayEnd}&status=neq.cancelled&select=starts_at`);
+    const svcFilter = svc ? `&service=eq.${encodeURIComponent(svc.name)}` : '';
+    const { data: existing } = await sbFetch(
+      `appointments?business_slug=eq.${SLUG}${svcFilter}&starts_at=gte.${dayStart}&starts_at=lte.${dayEnd}&status=neq.cancelled&select=starts_at`
+    );
 
-    /* Horas disponibles 9-19 cada 30 min */
+    /* Generar slots según horario del negocio */
     const slots = [];
-    for (let h = 9; h < 19; h++) {
-      for (let m = 0; m < 60; m += 30) {
-        slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
-      }
+    let cur = OPEN_H * 60 + OPEN_M;
+    const end = CLOSE_H * 60 + CLOSE_M;
+    while (cur < end) {
+      const hh = String(Math.floor(cur / 60)).padStart(2, '0');
+      const mm = String(cur % 60).padStart(2, '0');
+      slots.push(`${hh}:${mm}`);
+      cur += SLOT_MIN;
     }
 
-    /* Contar ocupación por slot */
+    /* Contar ocupación por slot para este servicio */
     const occupied = {};
     (existing || []).forEach(a => {
-      const t = new Date(a.starts_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false});
+      const d = new Date(a.starts_at);
+      const t = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
       occupied[t] = (occupied[t] || 0) + 1;
     });
 
+    if (!slots.length) {
+      wrap.innerHTML = '<div style="font-size:12px;color:#e53e3e;padding:8px 0;">No hay horarios disponibles este día.</div>';
+      return;
+    }
+
     wrap.innerHTML = `<div class="am-slots">${slots.map(t => {
-      const full = (occupied[t] || 0) >= WORKERS;
-      return `<div class="am-slot${full?' full':''}" onclick="${full?'':'window._amPickTime(\''+t+'\')'}">
-        ${t}${full?' 🔴':''}
+      const count = occupied[t] || 0;
+      const full  = count >= capacity;
+      const left  = capacity - count;
+      const title = full ? 'Completo' : left < capacity ? `${left} plaza${left>1?'s':''} libre${left>1?'s':''}` : '';
+      return `<div class="am-slot${full?' full':''}" title="${title}" onclick="${full?'':'window._amPickTime(\''+t+'\')'}">
+        ${t}${full?' ✖':''}
       </div>`;
-    }).join('')}</div>`;
+    }).join('')}</div>
+    <div style="font-size:10px;color:#8a97b0;margin-top:6px;">Horario: ${ROOT.dataset.open||'09:00'}–${ROOT.dataset.close||'19:00'}</div>`;
     scrollBot();
 
     window._amPickTime = t => {
@@ -432,21 +472,31 @@
 
   /* ─── SYSTEM PROMPT ─────────────────────────────────────────────── */
   function buildPrompt() {
-    const svcsText = SVCS.map(s => `- ${s.name}${s.price?' ('+s.price+')':''}${s.duration?' — '+s.duration+' min':''}`).join('\n') || '- Consultar disponibilidad';
-    return `Eres el asistente IA de este negocio. Tu objetivo es responder dudas, ayudar a reservar citas y capturar contactos interesados.
+    const svcsText = SVCS.map(s =>
+      `- ${s.name}${s.price?' ('+s.price+')':''}${s.duration?' — '+s.duration+' min':''}${s.workers>1?' · '+s.workers+' profesionales':''}`
+    ).join('\n') || '- Consultar disponibilidad';
+
+    const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const openDaysText = [...OPEN_DAYS].sort().map(d => dayNames[d]).join(', ');
+    const scheduleText = `${openDaysText} de ${ROOT.dataset.open||'09:00'} a ${ROOT.dataset.close||'19:00'}`;
+
+    return `Eres el asistente IA de este negocio llamado "${BOT_NAME}". Tu objetivo es responder dudas, gestionar reservas y capturar contactos interesados.
 
 SERVICIOS DISPONIBLES:
 ${svcsText}
 
+HORARIO: ${scheduleText}
+
 CÓMO ACTÚAS:
 - Responde de forma natural, breve y amable.
-- Si el cliente quiere reservar una cita, pedir hora o disponibilidad → responde con MOSTRAR_RESERVA al inicio.
-- Si el cliente quiere que le contacten, dejar sus datos o pedir más info personalizada → responde con MOSTRAR_CONTACTO al inicio.
-- Si solo tiene dudas, respóndelas directamente.
+- Si el cliente quiere reservar una cita, pedir hora o disponibilidad → responde SOLO con MOSTRAR_RESERVA al inicio del mensaje.
+- Si el cliente quiere que le contacten o pedir más info personalizada → responde SOLO con MOSTRAR_CONTACTO al inicio.
+- Si solo tiene dudas generales, respóndelas directamente sin usar señales.
 - Nunca inventes precios ni datos que no tengas.
-${WA?`- Si el cliente quiere hablar con una persona, indícale WhatsApp: ${WA}`:''}
+- El sistema detecta automáticamente la disponibilidad real por servicio y número de profesionales.
+${WA?`- Si el cliente quiere hablar con una persona directamente, indícale WhatsApp: ${WA}`:''}
 
-IDIOMA: Siempre responde en el idioma en que escribe el cliente.`;
+IDIOMA: Responde siempre en el idioma en que escribe el cliente.`;
   }
 
   /* ─── UI HELPERS ────────────────────────────────────────────────── */
