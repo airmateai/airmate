@@ -11169,6 +11169,7 @@ async function loadPresupuestos() {
           : `<button onclick="updatePresupuesto(${p.id},'pending')" style="background:#fef3c7;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:#92400e;cursor:pointer;">↩ Marcar pendiente</button>`}
         ${p.email?`<a href="mailto:${escHtml(p.email)}?subject=Presupuesto Airmate — ${escHtml(plan)}" style="background:#ede9fe;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:#7c3aed;text-decoration:none;">📧 Responder</a>`:''}
         ${p.phone?`<a href="https://wa.me/${p.phone.replace(/\D/g,'')}" target="_blank" style="background:#dcfce7;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:#16a34a;text-decoration:none;">💬 WhatsApp</a>`:''}
+        <button onclick="deletePresupuesto(${p.id})" style="background:#fee2e2;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:#ef4444;cursor:pointer;margin-left:auto;">🗑 Eliminar</button>
       </div>
     </div>`;
   }).join('');
@@ -11181,6 +11182,17 @@ async function updatePresupuesto(id, status) {
     method: 'PATCH',
     headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({ status })
+  });
+  loadPresupuestos();
+}
+
+async function deletePresupuesto(id) {
+  if (!confirm('¿Eliminar esta solicitud de presupuesto? No se puede deshacer.')) return;
+  const SB_URL = 'https://vjofxmfwdybktpwiuanc.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDQ3NTk0NiwiZXhwIjoyMDkwMDUxOTQ2fQ.08g-CtdJ0BvgE3U4v9JppA_114EN24KBs7iBpUaw9cs';
+  await fetch(`${SB_URL}/rest/v1/web_requests?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
   });
   loadPresupuestos();
 }
