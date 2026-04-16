@@ -3825,23 +3825,53 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:linear-gradient(135deg,#eef1ff,#dbe4ff);border-radius:10px;border:1px solid #c7d2fe;">
             <span style="font-size:18px;">📅</span>
             <div style="font-size:13px;font-weight:800;color:#3730a3;">Agente de Reservas y Leads</div>
-            <div style="font-size:11px;color:#6366f1;margin-left:4px;">Configura los servicios que el agente puede reservar</div>
+            <div style="font-size:11px;color:#6366f1;margin-left:4px;">Configura el agente de reservas automáticas</div>
           </div>
 
-          <!-- Capacidad del negocio -->
+          <!-- Contacto -->
           <div class="config-card" style="margin-bottom:14px;">
-            <h3 style="font-size:13px;font-weight:800;margin-bottom:14px;color:#0c1e3d;">⚙️ Capacidad del negocio</h3>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <h3 style="font-size:13px;font-weight:800;margin-bottom:14px;color:#0c1e3d;">📱 Contacto</h3>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Número WhatsApp (sin +)</label>
+              <input class="form-input" id="cfg-agent-wa" type="text" placeholder="34600000000" oninput="saveAgentConfig()">
+              <div class="form-hint">Para derivar clientes a WhatsApp cuando quieran hablar con una persona</div>
+            </div>
+          </div>
+
+          <!-- Horario -->
+          <div class="config-card" style="margin-bottom:14px;">
+            <h3 style="font-size:13px;font-weight:800;margin-bottom:14px;color:#0c1e3d;">🕐 Horario del negocio</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
               <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label">Trabajadores / Cabinas simultáneas</label>
-                <input class="form-input" id="cfg-workers" type="number" min="1" max="20" value="1" style="max-width:120px;" oninput="saveAgentConfig()">
-                <div class="form-hint">Cuántas citas pueden coincidir a la vez</div>
+                <label class="form-label">Apertura</label>
+                <input class="form-input" id="cfg-open" type="time" value="09:00" oninput="saveAgentConfig()">
               </div>
               <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label">Número WhatsApp (sin +)</label>
-                <input class="form-input" id="cfg-agent-wa" type="text" placeholder="34600000000" oninput="saveAgentConfig()">
-                <div class="form-hint">Para derivar clientes a WhatsApp</div>
+                <label class="form-label">Cierre</label>
+                <input class="form-input" id="cfg-close" type="time" value="19:00" oninput="saveAgentConfig()">
               </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Intervalo citas</label>
+                <select class="form-input" id="cfg-slot" onchange="saveAgentConfig()">
+                  <option value="15">15 min</option>
+                  <option value="30" selected>30 min</option>
+                  <option value="45">45 min</option>
+                  <option value="60">60 min</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Días abiertos</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;" id="cfg-days-row">
+                <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;"><input type="checkbox" value="1" onchange="saveAgentConfig()"> Lun</label>
+                <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;"><input type="checkbox" value="2" onchange="saveAgentConfig()"> Mar</label>
+                <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;"><input type="checkbox" value="3" onchange="saveAgentConfig()"> Mié</label>
+                <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;"><input type="checkbox" value="4" onchange="saveAgentConfig()"> Jue</label>
+                <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;"><input type="checkbox" value="5" onchange="saveAgentConfig()"> Vie</label>
+                <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;"><input type="checkbox" value="6" onchange="saveAgentConfig()"> Sáb</label>
+                <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;"><input type="checkbox" value="0" onchange="saveAgentConfig()"> Dom</label>
+              </div>
+              <div class="form-hint">Días que el agente mostrará disponibilidad</div>
             </div>
           </div>
 
@@ -3850,7 +3880,7 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
             <div class="items-card-header">
               <div>
                 <div class="items-card-title">Servicios para reservar</div>
-                <div class="items-card-sub">El agente mostrará estos servicios cuando el cliente quiera reservar</div>
+                <div class="items-card-sub">Cada servicio tiene su precio, duración y nº de profesionales que lo pueden realizar a la vez</div>
               </div>
               <span class="items-count-badge" id="agent-svcs-count">0</span>
             </div>
@@ -5449,12 +5479,20 @@ function renderConfigPlanSections() {
   if (!user && !authState.isOwner) return;
   /* Inicializar servicios del agente y campos guardados */
   renderAgentSvcs();
-  const savedWa = localStorage.getItem('am_agent_wa') || '';
-  const savedWorkers = localStorage.getItem('am_agent_workers') || '1';
-  const elWa = document.getElementById('cfg-agent-wa');
-  const elW  = document.getElementById('cfg-workers');
-  if (elWa && !elWa.value) elWa.value = savedWa;
-  if (elW  && elW.value==='1') elW.value = savedWorkers;
+  /* Restaurar campos guardados del agente */
+  const elWa    = document.getElementById('cfg-agent-wa');
+  const elOpen  = document.getElementById('cfg-open');
+  const elClose = document.getElementById('cfg-close');
+  const elSlot  = document.getElementById('cfg-slot');
+  if (elWa)    elWa.value    = localStorage.getItem('am_agent_wa')    || '';
+  if (elOpen)  elOpen.value  = localStorage.getItem('am_agent_open')  || '09:00';
+  if (elClose) elClose.value = localStorage.getItem('am_agent_close') || '19:00';
+  if (elSlot)  elSlot.value  = localStorage.getItem('am_agent_slot')  || '30';
+  /* Restaurar días abiertos */
+  const savedDays = (localStorage.getItem('am_agent_days') || '1,2,3,4,5').split(',');
+  document.querySelectorAll('#cfg-days-row input[type=checkbox]').forEach(c => {
+    c.checked = savedDays.includes(c.value);
+  });
   /* Usar state.activePlan como fuente de verdad (se sincroniza desde Supabase al login) */
   const plan = authState.isOwner ? 'pro' : resolvePlan(state.activePlan || user?.plan || 'beta');
   const planMeta = {
@@ -6559,15 +6597,19 @@ let agentSvcs = JSON.parse(localStorage.getItem('am_agent_svcs') || '[]');
 
 function saveAgentConfig() {
   localStorage.setItem('am_agent_svcs', JSON.stringify(agentSvcs));
-  const wa = document.getElementById('cfg-agent-wa')?.value||'';
-  const workers = document.getElementById('cfg-workers')?.value||'1';
-  localStorage.setItem('am_agent_wa', wa);
-  localStorage.setItem('am_agent_workers', workers);
-  renderInstallSection(); /* actualizar snippet */
+  localStorage.setItem('am_agent_wa',    document.getElementById('cfg-agent-wa')?.value  || '');
+  localStorage.setItem('am_agent_open',  document.getElementById('cfg-open')?.value       || '09:00');
+  localStorage.setItem('am_agent_close', document.getElementById('cfg-close')?.value      || '19:00');
+  localStorage.setItem('am_agent_slot',  document.getElementById('cfg-slot')?.value       || '30');
+  /* Días: recoger checkboxes marcados */
+  const checks = document.querySelectorAll('#cfg-days-row input[type=checkbox]:checked');
+  const days = Array.from(checks).map(c => c.value).join(',');
+  localStorage.setItem('am_agent_days', days || '1,2,3,4,5');
+  renderInstallSection();
 }
 
 function addAgentSvc() {
-  agentSvcs.push({ id: Date.now(), name:'', price:'', duration:30 });
+  agentSvcs.push({ id: Date.now(), name:'', price:'', duration:30, workers:1 });
   renderAgentSvcs();
 }
 
@@ -6586,38 +6628,54 @@ function renderAgentSvcs() {
     el.innerHTML = '<div style="font-size:13px;color:#b0bac8;padding:6px 0;">Sin servicios aún. Añade los que ofrece tu negocio.</div>';
     return;
   }
-  el.innerHTML = agentSvcs.map(s => `
-    <div style="display:grid;grid-template-columns:1fr 110px 90px auto;gap:8px;align-items:center;margin-bottom:8px;">
-      <input class="form-input" style="margin:0;padding:8px 10px;font-size:13px;" placeholder="Nombre del servicio" value="${escHtml(s.name||'')}"
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 100px 80px 70px auto;gap:6px;align-items:center;margin-bottom:4px;padding:0 2px;">
+      <span style="font-size:11px;color:#8a97b0;font-weight:600;">SERVICIO</span>
+      <span style="font-size:11px;color:#8a97b0;font-weight:600;">PRECIO</span>
+      <span style="font-size:11px;color:#8a97b0;font-weight:600;">MIN</span>
+      <span style="font-size:11px;color:#8a97b0;font-weight:600;">PROF.</span>
+      <span></span>
+    </div>` +
+  agentSvcs.map(s => `
+    <div style="display:grid;grid-template-columns:1fr 100px 80px 70px auto;gap:6px;align-items:center;margin-bottom:6px;">
+      <input class="form-input" style="margin:0;padding:7px 10px;font-size:13px;" placeholder="Nombre del servicio" value="${escHtml(s.name||'')}"
         oninput="agentSvcs.find(x=>x.id===${s.id}).name=this.value;saveAgentConfig()">
-      <input class="form-input" style="margin:0;padding:8px 10px;font-size:13px;" placeholder="Precio (ej:40€)" value="${escHtml(s.price||'')}"
+      <input class="form-input" style="margin:0;padding:7px 10px;font-size:13px;" placeholder="40€" value="${escHtml(s.price||'')}"
         oninput="agentSvcs.find(x=>x.id===${s.id}).price=this.value;saveAgentConfig()">
-      <input class="form-input" style="margin:0;padding:8px 10px;font-size:13px;" type="number" min="15" step="15" title="Duración en minutos" value="${s.duration||30}"
+      <input class="form-input" style="margin:0;padding:7px 10px;font-size:13px;" type="number" min="15" step="15" title="Duración (min)" value="${s.duration||30}"
         oninput="agentSvcs.find(x=>x.id===${s.id}).duration=+this.value;saveAgentConfig()">
-      <button onclick="removeAgentSvc(${s.id})" style="background:#fee2e2;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;color:#ef4444;font-size:13px;">✕</button>
+      <input class="form-input" style="margin:0;padding:7px 10px;font-size:13px;" type="number" min="1" max="20" title="Profesionales que pueden hacer este servicio a la vez" value="${s.workers||1}"
+        oninput="agentSvcs.find(x=>x.id===${s.id}).workers=+this.value;saveAgentConfig()">
+      <button onclick="removeAgentSvc(${s.id})" style="background:#fee2e2;border:none;border-radius:8px;padding:7px 10px;cursor:pointer;color:#ef4444;font-size:13px;">✕</button>
     </div>`).join('');
 }
 
 function generateWidgetSnippet() {
   const user = authState.currentUser;
   if (!user) return;
-  const slug = (user.biz_slug || user.name || 'mi-negocio').toLowerCase().replace(/\s+/g,'-');
-  const wa = localStorage.getItem('am_agent_wa') || '';
-  const workers = localStorage.getItem('am_agent_workers') || '1';
-  const svcs = agentSvcs.filter(s=>s.name).map(s=>`${s.name}|${s.price}|${s.duration}min`).join(', ');
+  const slug  = (user.biz_slug || user.name || 'mi-negocio').toLowerCase().replace(/\s+/g,'-');
+  const wa    = localStorage.getItem('am_agent_wa')    || '';
+  const open  = localStorage.getItem('am_agent_open')  || '09:00';
+  const close = localStorage.getItem('am_agent_close') || '19:00';
+  const slot  = localStorage.getItem('am_agent_slot')  || '30';
+  const days  = localStorage.getItem('am_agent_days')  || '1,2,3,4,5';
+  const svcs  = agentSvcs.filter(s=>s.name).map(s=>`${s.name}|${s.price}|${s.duration}min|${s.workers||1}`).join(', ');
 
   const snip = `<!-- Agente IA Airmate — ${slug} -->
 <div id="airmate-root"
   data-slug="${slug}"
   data-wa="${wa}"
-  data-workers="${workers}"
+  data-open="${open}"
+  data-close="${close}"
+  data-slot="${slot}"
+  data-days="${days}"
   data-svcs="${svcs.replace(/"/g,'&quot;')}">
 </div>
 <script src="https://airmateai.github.io/airmate/airmate-widget.js"><\/script>`;
 
-  const pre = document.getElementById('widget-snippet-code');
+  const pre   = document.getElementById('widget-snippet-code');
   const block = document.getElementById('widget-snippet-block');
-  if (pre) pre.textContent = snip;
+  if (pre)   pre.textContent = snip;
   if (block) block.style.display = 'block';
 }
 
