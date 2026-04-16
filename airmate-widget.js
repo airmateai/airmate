@@ -30,9 +30,13 @@
       name:     parts[0].trim(),
       price:    (parts[1] || '').trim(),
       duration: parseInt(parts[2] || '60'),
-      workers:  parseInt(parts[3] || WORKERS_DEFAULT, 10) /* trabajadores para este servicio */
+      workers:  parseInt(parts[3] || WORKERS_DEFAULT, 10)
     };
   }).filter(Boolean);
+
+  /* Trabajadores individuales: [{name:'Ana', svcs:['Masaje','Facial']}, ...] */
+  let WORKERS_CFG = [];
+  try { WORKERS_CFG = JSON.parse(ROOT.dataset.workersConfig || '[]'); } catch {};
 
   /* ─── CONSTANTES AIRMATE ────────────────────────────────────────── */
   const PROXY    = 'https://bot-airmate-1.vercel.app/api/chat';
@@ -46,7 +50,7 @@
   /* ─── ESTADO ────────────────────────────────────────────────────── */
   const st = {
     open: false, history: [], flow: null, /* 'cita' | 'lead' */
-    selSvc: null, selDate: null, selTime: null,
+    selSvc: null, selDate: null, selTime: null, selWorker: null,
   };
 
   /* ─── CSS ───────────────────────────────────────────────────────── */
@@ -271,35 +275,61 @@
     if (!wrap) return;
     wrap.innerHTML = '<div style="font-size:12px;color:#8a97b0;padding:8px 0;">Cargando horarios…</div>';
 
-    /* Capacidad de este servicio */
-    const capacity = svc?.workers || WORKERS_DEFAULT;
+    /* Trabajadores que pueden hacer este servicio */
+    const svcWorkers = WORKERS_CFG.length
+      ? WORKERS_CFG.filter(w => w.svcs && w.svcs.includes(svc?.name))
+      : [];
+    const useWorkerMode = svcWorkers.length > 0;
+    const capacity = useWorkerMode ? svcWorkers.length : (svc?.workers || WORKERS_DEFAULT);
 
-    /* Citas existentes ese día PARA ESTE SERVICIO */
+    /* Traer todas las citas del día (necesitamos notes para saber trabajador) */
     const dayStart = dStr + 'T00:00:00';
     const dayEnd   = dStr + 'T23:59:59';
-    const svcFilter = svc ? `&service=eq.${encodeURIComponent(svc.name)}` : '';
     const { data: existing } = await sbFetch(
-      `appointments?business_slug=eq.${SLUG}${svcFilter}&starts_at=gte.${dayStart}&starts_at=lte.${dayEnd}&status=neq.cancelled&select=starts_at`
+      `appointments?business_slug=eq.${SLUG}&starts_at=gte.${dayStart}&starts_at=lte.${dayEnd}&status=neq.cancelled&select=starts_at,service,notes`
     );
 
-    /* Generar slots según horario del negocio */
+    /* Generar slots según horario */
     const slots = [];
     let cur = OPEN_H * 60 + OPEN_M;
     const end = CLOSE_H * 60 + CLOSE_M;
     while (cur < end) {
-      const hh = String(Math.floor(cur / 60)).padStart(2, '0');
-      const mm = String(cur % 60).padStart(2, '0');
-      slots.push(`${hh}:${mm}`);
+      slots.push(`${String(Math.floor(cur/60)).padStart(2,'0')}:${String(cur%60).padStart(2,'0')}`);
       cur += SLOT_MIN;
     }
 
-    /* Contar ocupación por slot para este servicio */
-    const occupied = {};
+    /* Construir mapa de ocupación por slot */
+    /* workerBusy: { 'Ana': Set{'10:00','11:00'}, ... } */
+    const workerBusy = {};
+    const svcCount   = {}; /* fallback sin trabajadores: cuenta por servicio */
     (existing || []).forEach(a => {
-      const d = new Date(a.starts_at);
-      const t = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-      occupied[t] = (occupied[t] || 0) + 1;
+      const d  = new Date(a.starts_at);
+      const t  = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+      /* Extraer trabajador del campo notes (guardado como JSON) */
+      let worker = null;
+      try { worker = JSON.parse(a.notes || '{}').worker || null; } catch {}
+      if (worker) {
+        if (!workerBusy[worker]) workerBusy[worker] = new Set();
+        workerBusy[worker].add(t);
+      }
+      /* Fallback: contar por servicio */
+      if (a.service === svc?.name) svcCount[t] = (svcCount[t] || 0) + 1;
     });
+
+    /* Determinar disponibilidad por slot */
+    function slotAvailable(t) {
+      if (useWorkerMode) {
+        /* Disponible si algún trabajador de este servicio está libre */
+        return svcWorkers.some(w => !workerBusy[w.name]?.has(t));
+      }
+      /* Sin trabajadores: usar capacidad por servicio */
+      return (svcCount[t] || 0) < capacity;
+    }
+
+    function freeWorkerAt(t) {
+      if (!useWorkerMode) return null;
+      return svcWorkers.find(w => !workerBusy[w.name]?.has(t)) || null;
+    }
 
     if (!slots.length) {
       wrap.innerHTML = '<div style="font-size:12px;color:#e53e3e;padding:8px 0;">No hay horarios disponibles este día.</div>';
@@ -307,19 +337,17 @@
     }
 
     wrap.innerHTML = `<div class="am-slots">${slots.map(t => {
-      const count = occupied[t] || 0;
-      const full  = count >= capacity;
-      const left  = capacity - count;
-      const title = full ? 'Completo' : left < capacity ? `${left} plaza${left>1?'s':''} libre${left>1?'s':''}` : '';
-      return `<div class="am-slot${full?' full':''}" title="${title}" onclick="${full?'':'window._amPickTime(\''+t+'\')'}">
-        ${t}${full?' ✖':''}
+      const avail = slotAvailable(t);
+      return `<div class="am-slot${avail?'':' full'}" onclick="${avail?`window._amPickTime('${t}')`:''}">
+        ${t}${avail?'':' ✖'}
       </div>`;
     }).join('')}</div>
     <div style="font-size:10px;color:#8a97b0;margin-top:6px;">Horario: ${ROOT.dataset.open||'09:00'}–${ROOT.dataset.close||'19:00'}</div>`;
     scrollBot();
 
     window._amPickTime = t => {
-      st.selTime = t;
+      st.selTime   = t;
+      st.selWorker = freeWorkerAt(t); /* guardar trabajador asignado */
       document.querySelector('.am-card')?.remove();
       showBookingForm();
     };
@@ -360,7 +388,7 @@
         ends_at:          endsAt,
         duration_minutes: svc?.duration || 60,
         status:           'pending',
-        notes:            'Web · ' + (EMOJI || ''),
+        notes:            JSON.stringify({ worker: st.selWorker?.name || null, source: 'web', emoji: EMOJI }),
         created_at:       new Date().toISOString()
       };
 
@@ -369,7 +397,8 @@
       st.flow = null;
 
       if (ok) {
-        addBot(`✅ ¡Reserva confirmada, ${esc(name)}!\n\n📅 ${svc?.name||'Servicio'}\n📆 ${st.selDate} a las ${st.selTime}\n\nTe esperamos. Si necesitas cambiar algo, contáctanos.`);
+        const workerLine = st.selWorker ? `\n👤 Con: ${st.selWorker.name}` : '';
+        addBot(`✅ ¡Reserva confirmada, ${esc(name)}!\n\n📅 ${svc?.name||'Servicio'}\n📆 ${st.selDate} a las ${st.selTime}${workerLine}\n\nTe esperamos. Si necesitas cambiar algo, contáctanos.`);
         st.history.push({ role:'assistant', content:'Reserva confirmada correctamente.' });
         /* Email de confirmación al cliente */
         if (email) sendConfirmEmail({ name, email, phone, svc, date: st.selDate, time: st.selTime });

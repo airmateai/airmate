@@ -3876,11 +3876,11 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
           </div>
 
           <!-- Servicios del agente -->
-          <div class="config-card items-card" style="margin-bottom:0;">
+          <div class="config-card items-card" style="margin-bottom:14px;">
             <div class="items-card-header">
               <div>
-                <div class="items-card-title">Servicios para reservar</div>
-                <div class="items-card-sub">Cada servicio tiene su precio, duración y nº de profesionales que lo pueden realizar a la vez</div>
+                <div class="items-card-title">Servicios</div>
+                <div class="items-card-sub">Define los servicios que ofrece el negocio</div>
               </div>
               <span class="items-count-badge" id="agent-svcs-count">0</span>
             </div>
@@ -3889,6 +3889,23 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="#4a6cf7" stroke-width="2" stroke-linecap="round"/></svg>
               Añadir servicio
             </button>
+          </div>
+
+          <!-- Trabajadores del agente -->
+          <div class="config-card items-card" style="margin-bottom:0;">
+            <div class="items-card-header">
+              <div>
+                <div class="items-card-title">👥 Trabajadores</div>
+                <div class="items-card-sub">Define cada profesional y los servicios que puede realizar. El agente bloqueará su agenda individualmente.</div>
+              </div>
+              <span class="items-count-badge" id="agent-workers-count">0</span>
+            </div>
+            <div id="agent-workers-list" style="margin-bottom:12px;"></div>
+            <button class="btn-add-item" onclick="addAgentWorker()">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="#4a6cf7" stroke-width="2" stroke-linecap="round"/></svg>
+              Añadir trabajador
+            </button>
+            <div class="form-hint" style="margin-top:10px;">💡 Si no añades trabajadores, el agente usará la capacidad por servicio. Con trabajadores, bloquea agendas individuales.</div>
           </div>
         </div>
 
@@ -5479,6 +5496,7 @@ function renderConfigPlanSections() {
   if (!user && !authState.isOwner) return;
   /* Inicializar servicios del agente y campos guardados */
   renderAgentSvcs();
+  renderAgentWorkers();
   /* Restaurar campos guardados del agente */
   const elWa    = document.getElementById('cfg-agent-wa');
   const elOpen  = document.getElementById('cfg-open');
@@ -5488,7 +5506,6 @@ function renderConfigPlanSections() {
   if (elOpen)  elOpen.value  = localStorage.getItem('am_agent_open')  || '09:00';
   if (elClose) elClose.value = localStorage.getItem('am_agent_close') || '19:00';
   if (elSlot)  elSlot.value  = localStorage.getItem('am_agent_slot')  || '30';
-  /* Restaurar días abiertos */
   const savedDays = (localStorage.getItem('am_agent_days') || '1,2,3,4,5').split(',');
   document.querySelectorAll('#cfg-days-row input[type=checkbox]').forEach(c => {
     c.checked = savedDays.includes(c.value);
@@ -6593,15 +6610,16 @@ function showSetupStep2Modal(planKey) {
 ════════════════════════════════════════════ */
 
 /* ═══ AGENTE DE RESERVAS — servicios y snippet ═══ */
-let agentSvcs = JSON.parse(localStorage.getItem('am_agent_svcs') || '[]');
+let agentSvcs    = JSON.parse(localStorage.getItem('am_agent_svcs')    || '[]');
+let agentWorkers = JSON.parse(localStorage.getItem('am_agent_workers_list') || '[]');
 
 function saveAgentConfig() {
-  localStorage.setItem('am_agent_svcs', JSON.stringify(agentSvcs));
-  localStorage.setItem('am_agent_wa',    document.getElementById('cfg-agent-wa')?.value  || '');
-  localStorage.setItem('am_agent_open',  document.getElementById('cfg-open')?.value       || '09:00');
-  localStorage.setItem('am_agent_close', document.getElementById('cfg-close')?.value      || '19:00');
-  localStorage.setItem('am_agent_slot',  document.getElementById('cfg-slot')?.value       || '30');
-  /* Días: recoger checkboxes marcados */
+  localStorage.setItem('am_agent_svcs',         JSON.stringify(agentSvcs));
+  localStorage.setItem('am_agent_workers_list',  JSON.stringify(agentWorkers));
+  localStorage.setItem('am_agent_wa',    document.getElementById('cfg-agent-wa')?.value || '');
+  localStorage.setItem('am_agent_open',  document.getElementById('cfg-open')?.value     || '09:00');
+  localStorage.setItem('am_agent_close', document.getElementById('cfg-close')?.value    || '19:00');
+  localStorage.setItem('am_agent_slot',  document.getElementById('cfg-slot')?.value     || '30');
   const checks = document.querySelectorAll('#cfg-days-row input[type=checkbox]:checked');
   const days = Array.from(checks).map(c => c.value).join(',');
   localStorage.setItem('am_agent_days', days || '1,2,3,4,5');
@@ -6609,13 +6627,15 @@ function saveAgentConfig() {
 }
 
 function addAgentSvc() {
-  agentSvcs.push({ id: Date.now(), name:'', price:'', duration:30, workers:1 });
+  agentSvcs.push({ id: Date.now(), name:'', price:'', duration:30 });
   renderAgentSvcs();
+  renderAgentWorkers(); /* actualizar checkboxes de servicios en trabajadores */
 }
 
 function removeAgentSvc(id) {
   agentSvcs = agentSvcs.filter(s => s.id !== id);
   renderAgentSvcs();
+  renderAgentWorkers();
   saveAgentConfig();
 }
 
@@ -6629,37 +6649,98 @@ function renderAgentSvcs() {
     return;
   }
   el.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 100px 80px 70px auto;gap:6px;align-items:center;margin-bottom:4px;padding:0 2px;">
+    <div style="display:grid;grid-template-columns:1fr 100px 80px auto;gap:6px;align-items:center;margin-bottom:4px;padding:0 2px;">
       <span style="font-size:11px;color:#8a97b0;font-weight:600;">SERVICIO</span>
       <span style="font-size:11px;color:#8a97b0;font-weight:600;">PRECIO</span>
-      <span style="font-size:11px;color:#8a97b0;font-weight:600;">MIN</span>
-      <span style="font-size:11px;color:#8a97b0;font-weight:600;">PROF.</span>
+      <span style="font-size:11px;color:#8a97b0;font-weight:600;">DURACIÓN</span>
       <span></span>
     </div>` +
   agentSvcs.map(s => `
-    <div style="display:grid;grid-template-columns:1fr 100px 80px 70px auto;gap:6px;align-items:center;margin-bottom:6px;">
+    <div style="display:grid;grid-template-columns:1fr 100px 80px auto;gap:6px;align-items:center;margin-bottom:6px;">
       <input class="form-input" style="margin:0;padding:7px 10px;font-size:13px;" placeholder="Nombre del servicio" value="${escHtml(s.name||'')}"
-        oninput="agentSvcs.find(x=>x.id===${s.id}).name=this.value;saveAgentConfig()">
+        oninput="agentSvcs.find(x=>x.id===${s.id}).name=this.value;renderAgentWorkers();saveAgentConfig()">
       <input class="form-input" style="margin:0;padding:7px 10px;font-size:13px;" placeholder="40€" value="${escHtml(s.price||'')}"
         oninput="agentSvcs.find(x=>x.id===${s.id}).price=this.value;saveAgentConfig()">
-      <input class="form-input" style="margin:0;padding:7px 10px;font-size:13px;" type="number" min="15" step="15" title="Duración (min)" value="${s.duration||30}"
+      <input class="form-input" style="margin:0;padding:7px 10px;font-size:13px;" type="number" min="15" step="15" placeholder="min" value="${s.duration||30}"
         oninput="agentSvcs.find(x=>x.id===${s.id}).duration=+this.value;saveAgentConfig()">
-      <input class="form-input" style="margin:0;padding:7px 10px;font-size:13px;" type="number" min="1" max="20" title="Profesionales que pueden hacer este servicio a la vez" value="${s.workers||1}"
-        oninput="agentSvcs.find(x=>x.id===${s.id}).workers=+this.value;saveAgentConfig()">
       <button onclick="removeAgentSvc(${s.id})" style="background:#fee2e2;border:none;border-radius:8px;padding:7px 10px;cursor:pointer;color:#ef4444;font-size:13px;">✕</button>
+    </div>`).join('');
+}
+
+/* ── TRABAJADORES ── */
+function addAgentWorker() {
+  agentWorkers.push({ id: Date.now(), name:'', svcs:[] });
+  renderAgentWorkers();
+}
+
+function removeAgentWorker(id) {
+  agentWorkers = agentWorkers.filter(w => w.id !== id);
+  renderAgentWorkers();
+  saveAgentConfig();
+}
+
+function toggleWorkerSvc(workerId, svcName, checked) {
+  const w = agentWorkers.find(x => x.id === workerId);
+  if (!w) return;
+  if (checked) { if (!w.svcs.includes(svcName)) w.svcs.push(svcName); }
+  else         { w.svcs = w.svcs.filter(s => s !== svcName); }
+  saveAgentConfig();
+}
+
+function renderAgentWorkers() {
+  const el  = document.getElementById('agent-workers-list');
+  const cnt = document.getElementById('agent-workers-count');
+  if (!el) return;
+  if (cnt) cnt.textContent = agentWorkers.length;
+  if (!agentWorkers.length) {
+    el.innerHTML = '<div style="font-size:13px;color:#b0bac8;padding:6px 0;">Sin trabajadores definidos. Si el negocio tiene varios empleados, añádelos aquí.</div>';
+    return;
+  }
+  const svcNames = agentSvcs.filter(s=>s.name).map(s=>s.name);
+  el.innerHTML = agentWorkers.map(w => `
+    <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <input class="form-input" style="margin:0;padding:7px 10px;font-size:13px;flex:1;" placeholder="Nombre del trabajador (ej: Ana)" value="${escHtml(w.name||'')}"
+          oninput="agentWorkers.find(x=>x.id===${w.id}).name=this.value;saveAgentConfig()">
+        <button onclick="removeAgentWorker(${w.id})" style="background:#fee2e2;border:none;border-radius:8px;padding:7px 10px;cursor:pointer;color:#ef4444;font-size:13px;flex-shrink:0;">✕</button>
+      </div>
+      ${svcNames.length ? `
+        <div style="font-size:11px;color:#8a97b0;font-weight:600;margin-bottom:6px;">SERVICIOS QUE PUEDE REALIZAR:</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          ${svcNames.map(sn => `
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:4px 10px;">
+              <input type="checkbox" ${w.svcs.includes(sn)?'checked':''} onchange="toggleWorkerSvc(${w.id},'${escHtml(sn)}',this.checked)">
+              ${escHtml(sn)}
+            </label>`).join('')}
+        </div>` : '<div style="font-size:12px;color:#b0bac8;">Añade servicios primero para asignarlos al trabajador.</div>'}
     </div>`).join('');
 }
 
 function generateWidgetSnippet() {
   const user = authState.currentUser;
   if (!user) return;
-  const slug  = (user.biz_slug || user.name || 'mi-negocio').toLowerCase().replace(/\s+/g,'-');
-  const wa    = localStorage.getItem('am_agent_wa')    || '';
-  const open  = localStorage.getItem('am_agent_open')  || '09:00';
-  const close = localStorage.getItem('am_agent_close') || '19:00';
-  const slot  = localStorage.getItem('am_agent_slot')  || '30';
-  const days  = localStorage.getItem('am_agent_days')  || '1,2,3,4,5';
-  const svcs  = agentSvcs.filter(s=>s.name).map(s=>`${s.name}|${s.price}|${s.duration}min|${s.workers||1}`).join(', ');
+  const slug    = (user.biz_slug || user.name || 'mi-negocio').toLowerCase().replace(/\s+/g,'-');
+  const wa      = localStorage.getItem('am_agent_wa')    || '';
+  const open    = localStorage.getItem('am_agent_open')  || '09:00';
+  const close   = localStorage.getItem('am_agent_close') || '19:00';
+  const slot    = localStorage.getItem('am_agent_slot')  || '30';
+  const days    = localStorage.getItem('am_agent_days')  || '1,2,3,4,5';
+
+  /* Calcular capacidad por servicio desde trabajadores (si los hay) */
+  let svcs;
+  if (agentWorkers.length) {
+    svcs = agentSvcs.filter(s=>s.name).map(s => {
+      const cap = agentWorkers.filter(w => w.svcs.includes(s.name)).length || 1;
+      return `${s.name}|${s.price}|${s.duration}min|${cap}`;
+    }).join(', ');
+  } else {
+    svcs = agentSvcs.filter(s=>s.name).map(s=>`${s.name}|${s.price}|${s.duration}min|1`).join(', ');
+  }
+
+  /* Workers config para el widget (gestión por trabajador individual) */
+  const workersJson = agentWorkers.length
+    ? JSON.stringify(agentWorkers.filter(w=>w.name).map(w=>({name:w.name, svcs:w.svcs})))
+    : '';
 
   const snip = `<!-- Agente IA Airmate — ${slug} -->
 <div id="airmate-root"
@@ -6669,8 +6750,8 @@ function generateWidgetSnippet() {
   data-close="${close}"
   data-slot="${slot}"
   data-days="${days}"
-  data-svcs="${svcs.replace(/"/g,'&quot;')}">
-</div>
+  data-svcs="${svcs.replace(/"/g,'&quot;')}"${workersJson?`
+  data-workers-config='${workersJson}'`:''}></div>
 <script src="https://airmateai.github.io/airmate/airmate-widget.js"><\/script>`;
 
   const pre   = document.getElementById('widget-snippet-code');
