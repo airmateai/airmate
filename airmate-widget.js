@@ -127,7 +127,14 @@
     #am-send{width:36px;height:36px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,var(--am-g),var(--am-g2));
       border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;}
     .am-footer{text-align:center;padding:5px 0 9px;font-size:10px;color:rgba(0,0,0,.28);font-family:var(--am-f);flex-shrink:0;}
-    @media(max-width:480px){#am-panel{width:calc(100vw - 16px);right:8px;bottom:78px;max-height:75vh;}#am-btn{right:12px;bottom:12px;}}
+    @media(max-width:480px){
+      #am-panel{width:calc(100vw - 16px);left:8px;right:8px;bottom:78px;max-height:80vh;border-radius:16px;}
+      #am-btn{right:12px;bottom:12px;}
+      .am-svc-grid{grid-template-columns:1fr 1fr;}
+      .am-slots{grid-template-columns:repeat(3,1fr);}
+      #am-msgs{padding:10px;}
+      .am-bbl{max-width:92%;}
+    }
   `);
 
   /* ─── DOM ───────────────────────────────────────────────────────── */
@@ -316,11 +323,25 @@
       if (a.service === svc?.name) svcCount[t] = (svcCount[t] || 0) + 1;
     });
 
+    /* Helper: ¿el trabajador tiene este slot dentro de su propio horario? */
+    function workerHasSlot(w, t) {
+      if (!w.open && !w.close && !w.days) return true; /* sin horario propio → hereda el del negocio */
+      const [wH, wM] = (w.open || ROOT.dataset.open || '09:00').split(':').map(Number);
+      const [cH, cM] = (w.close || ROOT.dataset.close || '19:00').split(':').map(Number);
+      const workerDays = w.days ? new Set(w.days.map(Number)) : OPEN_DAYS;
+      /* Día de la semana del slot seleccionado */
+      const dayOfWeek = new Date(dStr + 'T12:00:00').getDay();
+      if (!workerDays.has(dayOfWeek)) return false;
+      const [tH, tM] = t.split(':').map(Number);
+      const tMin = tH * 60 + tM;
+      return tMin >= wH * 60 + wM && tMin < cH * 60 + cM;
+    }
+
     /* Determinar disponibilidad por slot */
     function slotAvailable(t) {
       if (useWorkerMode) {
-        /* Disponible si algún trabajador de este servicio está libre */
-        return svcWorkers.some(w => !workerBusy[w.name]?.has(t));
+        /* Disponible si algún trabajador de este servicio está libre Y trabaja en ese slot */
+        return svcWorkers.some(w => workerHasSlot(w, t) && !workerBusy[w.name]?.has(t));
       }
       /* Sin trabajadores: usar capacidad por servicio */
       return (svcCount[t] || 0) < capacity;
@@ -328,7 +349,7 @@
 
     function freeWorkerAt(t) {
       if (!useWorkerMode) return null;
-      return svcWorkers.find(w => !workerBusy[w.name]?.has(t)) || null;
+      return svcWorkers.find(w => workerHasSlot(w, t) && !workerBusy[w.name]?.has(t)) || null;
     }
 
     if (!slots.length) {
