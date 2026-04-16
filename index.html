@@ -3820,6 +3820,48 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
           </div>
         </div>
 
+        <!-- ══ AGENTE DE RESERVAS — sección nueva ══ -->
+        <div id="cfg-agent-reservas-block" style="margin-bottom:18px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:linear-gradient(135deg,#eef1ff,#dbe4ff);border-radius:10px;border:1px solid #c7d2fe;">
+            <span style="font-size:18px;">📅</span>
+            <div style="font-size:13px;font-weight:800;color:#3730a3;">Agente de Reservas y Leads</div>
+            <div style="font-size:11px;color:#6366f1;margin-left:4px;">Configura los servicios que el agente puede reservar</div>
+          </div>
+
+          <!-- Capacidad del negocio -->
+          <div class="config-card" style="margin-bottom:14px;">
+            <h3 style="font-size:13px;font-weight:800;margin-bottom:14px;color:#0c1e3d;">⚙️ Capacidad del negocio</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Trabajadores / Cabinas simultáneas</label>
+                <input class="form-input" id="cfg-workers" type="number" min="1" max="20" value="1" style="max-width:120px;" oninput="saveAgentConfig()">
+                <div class="form-hint">Cuántas citas pueden coincidir a la vez</div>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Número WhatsApp (sin +)</label>
+                <input class="form-input" id="cfg-agent-wa" type="text" placeholder="34600000000" oninput="saveAgentConfig()">
+                <div class="form-hint">Para derivar clientes a WhatsApp</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Servicios del agente -->
+          <div class="config-card items-card" style="margin-bottom:0;">
+            <div class="items-card-header">
+              <div>
+                <div class="items-card-title">Servicios para reservar</div>
+                <div class="items-card-sub">El agente mostrará estos servicios cuando el cliente quiera reservar</div>
+              </div>
+              <span class="items-count-badge" id="agent-svcs-count">0</span>
+            </div>
+            <div id="agent-svcs-list" style="margin-bottom:12px;"></div>
+            <button class="btn-add-item" onclick="addAgentSvc()">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="#4a6cf7" stroke-width="2" stroke-linecap="round"/></svg>
+              Añadir servicio
+            </button>
+          </div>
+        </div>
+
         <!-- ══ BANNER INFORMATIVO DEL PLAN (visible) ══ -->
         <div id="cfg-plan-info-banner" style="display:none;margin-bottom:18px;padding:16px 20px;border-radius:12px;background:#f0fdf4;border:1px solid #bbf7d0;">
           <div id="cfg-plan-info-text" style="font-size:13px;color:#166534;line-height:1.6;"></div>
@@ -4416,6 +4458,15 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
         </div>
         <!-- Contenedor que muestra snippet O bloqueo según estado de pago -->
         <div id="install-content"></div>
+        <!-- Widget snippet del nuevo agente de reservas -->
+        <div id="widget-snippet-block" style="display:none;margin-top:24px;">
+          <div style="background:#fff;border:1px solid #e8edf5;border-radius:16px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,.04);">
+            <div style="font-size:14px;font-weight:800;color:#0c1e3d;margin-bottom:4px;">🔌 Widget de Reservas</div>
+            <div style="font-size:12px;color:#8a97b0;margin-bottom:16px;">Pega este código antes de <code style="background:#f1f5f9;padding:2px 5px;border-radius:4px;">&lt;/body&gt;</code> en tu web</div>
+            <pre id="widget-snippet-code" style="background:#0c1e3d;color:#7eb3ff;padding:18px;border-radius:10px;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre-wrap;word-break:break-all;margin-bottom:14px;"></pre>
+            <button onclick="copyWidgetSnippet()" style="background:linear-gradient(135deg,#2a5cff,#6ea0ff);color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;">📋 Copiar código</button>
+          </div>
+        </div>
       </div>
 
       <!-- PLAN Y PAGO -->
@@ -5396,6 +5447,14 @@ function showAdminSection(id, btn) {
 function renderConfigPlanSections() {
   const user = authState.currentUser;
   if (!user && !authState.isOwner) return;
+  /* Inicializar servicios del agente y campos guardados */
+  renderAgentSvcs();
+  const savedWa = localStorage.getItem('am_agent_wa') || '';
+  const savedWorkers = localStorage.getItem('am_agent_workers') || '1';
+  const elWa = document.getElementById('cfg-agent-wa');
+  const elW  = document.getElementById('cfg-workers');
+  if (elWa && !elWa.value) elWa.value = savedWa;
+  if (elW  && elW.value==='1') elW.value = savedWorkers;
   /* Usar state.activePlan como fuente de verdad (se sincroniza desde Supabase al login) */
   const plan = authState.isOwner ? 'pro' : resolvePlan(state.activePlan || user?.plan || 'beta');
   const planMeta = {
@@ -6494,6 +6553,80 @@ function showSetupStep2Modal(planKey) {
    DESBLOQUEADA con el snippet actualizado con la
    configuración actual del bot.
 ════════════════════════════════════════════ */
+
+/* ═══ AGENTE DE RESERVAS — servicios y snippet ═══ */
+let agentSvcs = JSON.parse(localStorage.getItem('am_agent_svcs') || '[]');
+
+function saveAgentConfig() {
+  localStorage.setItem('am_agent_svcs', JSON.stringify(agentSvcs));
+  const wa = document.getElementById('cfg-agent-wa')?.value||'';
+  const workers = document.getElementById('cfg-workers')?.value||'1';
+  localStorage.setItem('am_agent_wa', wa);
+  localStorage.setItem('am_agent_workers', workers);
+  renderInstallSection(); /* actualizar snippet */
+}
+
+function addAgentSvc() {
+  agentSvcs.push({ id: Date.now(), name:'', price:'', duration:30 });
+  renderAgentSvcs();
+}
+
+function removeAgentSvc(id) {
+  agentSvcs = agentSvcs.filter(s => s.id !== id);
+  renderAgentSvcs();
+  saveAgentConfig();
+}
+
+function renderAgentSvcs() {
+  const el = document.getElementById('agent-svcs-list');
+  if (!el) return;
+  const cnt = document.getElementById('agent-svcs-count');
+  if (cnt) cnt.textContent = agentSvcs.length;
+  if (!agentSvcs.length) {
+    el.innerHTML = '<div style="font-size:13px;color:#b0bac8;padding:6px 0;">Sin servicios aún. Añade los que ofrece tu negocio.</div>';
+    return;
+  }
+  el.innerHTML = agentSvcs.map(s => `
+    <div style="display:grid;grid-template-columns:1fr 110px 90px auto;gap:8px;align-items:center;margin-bottom:8px;">
+      <input class="form-input" style="margin:0;padding:8px 10px;font-size:13px;" placeholder="Nombre del servicio" value="${escHtml(s.name||'')}"
+        oninput="agentSvcs.find(x=>x.id===${s.id}).name=this.value;saveAgentConfig()">
+      <input class="form-input" style="margin:0;padding:8px 10px;font-size:13px;" placeholder="Precio (ej:40€)" value="${escHtml(s.price||'')}"
+        oninput="agentSvcs.find(x=>x.id===${s.id}).price=this.value;saveAgentConfig()">
+      <input class="form-input" style="margin:0;padding:8px 10px;font-size:13px;" type="number" min="15" step="15" title="Duración en minutos" value="${s.duration||30}"
+        oninput="agentSvcs.find(x=>x.id===${s.id}).duration=+this.value;saveAgentConfig()">
+      <button onclick="removeAgentSvc(${s.id})" style="background:#fee2e2;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;color:#ef4444;font-size:13px;">✕</button>
+    </div>`).join('');
+}
+
+function generateWidgetSnippet() {
+  const user = authState.currentUser;
+  if (!user) return;
+  const slug = (user.biz_slug || user.name || 'mi-negocio').toLowerCase().replace(/\s+/g,'-');
+  const wa = localStorage.getItem('am_agent_wa') || '';
+  const workers = localStorage.getItem('am_agent_workers') || '1';
+  const svcs = agentSvcs.filter(s=>s.name).map(s=>`${s.name}|${s.price}|${s.duration}min`).join(', ');
+
+  const snip = `<!-- Agente IA Airmate — ${slug} -->
+<div id="airmate-root"
+  data-slug="${slug}"
+  data-wa="${wa}"
+  data-workers="${workers}"
+  data-svcs="${svcs.replace(/"/g,'&quot;')}">
+</div>
+<script src="https://t6227351-debug.github.io/bot-airmate-1-/airmate-widget.js"></script>`;
+
+  const pre = document.getElementById('widget-snippet-code');
+  const block = document.getElementById('widget-snippet-block');
+  if (pre) pre.textContent = snip;
+  if (block) block.style.display = 'block';
+}
+
+function copyWidgetSnippet() {
+  const pre = document.getElementById('widget-snippet-code');
+  if (!pre) return;
+  navigator.clipboard.writeText(pre.textContent).then(() => showToast('✅ Código copiado'));
+}
+
 function renderInstallSection() {
   const container=document.getElementById('install-content');
   if (!container) return;
@@ -6565,6 +6698,8 @@ function renderInstallSection() {
 
   /* ── MODO DESBLOQUEADO ── */
   applyConfigToState();
+  /* Mostrar también el snippet del widget de reservas */
+  generateWidgetSnippet();
   const jsEsc = s => (s||'').replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\n/g,'\\n');
   const proxyUrl   = state.proxyUrl  || 'https://divine-cloud-bd1e.t6227351.workers.dev';
   const proxyToken = state.proxyToken || '';
