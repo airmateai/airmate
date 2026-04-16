@@ -250,7 +250,7 @@
     /* Cargar citas existentes de ese día */
     const dayStart = dStr + 'T00:00:00';
     const dayEnd   = dStr + 'T23:59:59';
-    const { data: existing } = await sbFetch(`appointments?biz_slug=eq.${SLUG}&starts_at=gte.${dayStart}&starts_at=lte.${dayEnd}&status=neq.cancelled&select=starts_at`);
+    const { data: existing } = await sbFetch(`appointments?business_slug=eq.${SLUG}&starts_at=gte.${dayStart}&starts_at=lte.${dayEnd}&status=neq.cancelled&select=starts_at`);
 
     /* Horas disponibles 9-19 cada 30 min */
     const slots = [];
@@ -308,18 +308,17 @@
       const endsAt   = new Date(new Date(startsAt).getTime() + (svc?.duration||60)*60000).toISOString();
 
       const body = {
-        biz_slug:      SLUG,
-        client_name:   name,
-        client_phone:  phone,
-        client_email:  email || null,
-        service_name:  svc?.name || 'Servicio',
-        service:       svc?.name || 'Servicio',
-        starts_at:     startsAt,
-        ends_at:       endsAt,
+        business_slug:    SLUG,
+        client_name:      name,
+        client_phone:     phone,
+        client_email:     email || null,
+        service:          svc?.name || 'Servicio',
+        starts_at:        startsAt,
+        ends_at:          endsAt,
         duration_minutes: svc?.duration || 60,
-        status:        'pending',
-        created_at:    new Date().toISOString(),
-        updated_at:    new Date().toISOString()
+        status:           'pending',
+        notes:            'Web · ' + (EMOJI || ''),
+        created_at:       new Date().toISOString()
       };
 
       const ok = await sbInsert('appointments', body);
@@ -331,10 +330,10 @@
         st.history.push({ role:'assistant', content:'Reserva confirmada correctamente.' });
         /* Guardar lead asociado */
         sbInsert('leads', {
-          biz_slug:     SLUG, name, phone, email: email||null,
-          interest:     svc?.name||'Reserva', intent: 'new',
-          temperature:  'warm', status: 'new',
-          created_at:   new Date().toISOString(), updated_at: new Date().toISOString()
+          business_slug: SLUG, name, phone, email: email||null,
+          interest:      svc?.name||'Reserva', intent_level: 'new',
+          status:        'new', source: 'web',
+          created_at:    new Date().toISOString()
         });
       } else {
         addBot('Ha ocurrido un error al guardar la reserva. Por favor escríbenos por WhatsApp y lo gestionamos enseguida.');
@@ -362,9 +361,9 @@
       if (!name || !phone) { alert('Por favor rellena nombre y teléfono.'); return; }
       card.innerHTML = '<div class="am-card" style="padding:16px;color:#8a97b0;">Guardando…</div>';
       await sbInsert('leads', {
-        biz_slug: SLUG, name, phone, interest: interest||'Consulta general',
-        intent: 'new', temperature: 'warm', status: 'new',
-        created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+        business_slug: SLUG, name, phone, interest: interest||'Consulta general',
+        intent_level: 'new', status: 'new', source: 'web',
+        created_at: new Date().toISOString()
       });
       card.remove();
       st.flow = null;
@@ -390,8 +389,12 @@
         headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
         body: JSON.stringify(body)
       });
+      if (!r.ok) {
+        const txt = await r.text();
+        console.error('[Airmate] sbInsert error', r.status, txt, JSON.stringify(body));
+      }
       return r.ok;
-    } catch { return false; }
+    } catch(e) { console.error('[Airmate] sbInsert exception', e); return false; }
   }
 
   /* ─── SYSTEM PROMPT ─────────────────────────────────────────────── */
