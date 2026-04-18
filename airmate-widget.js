@@ -31,10 +31,11 @@
     if (cfg.bot_emoji)    ROOT.dataset.emoji          = cfg.bot_emoji;
     if (cfg.bot_color)    ROOT.dataset.color          = cfg.bot_color;
     if (cfg.agent_wa)     ROOT.dataset.wa             = cfg.agent_wa;
-    if (cfg.open_time)    ROOT.dataset.open           = cfg.open_time;
-    if (cfg.close_time)   ROOT.dataset.close          = cfg.close_time;
-    if (cfg.slot_min)     ROOT.dataset.slot           = String(cfg.slot_min);
-    if (cfg.open_days)    ROOT.dataset.days           = cfg.open_days;
+    if (cfg.open_time)      ROOT.dataset.open           = cfg.open_time;
+    if (cfg.close_time)     ROOT.dataset.close          = cfg.close_time;
+    if (cfg.slot_min)       ROOT.dataset.slot           = String(cfg.slot_min);
+    if (cfg.open_days)      ROOT.dataset.days           = cfg.open_days;
+    if (cfg.schedule_text)  ROOT.dataset.scheduleText   = cfg.schedule_text;
     if (cfg.greeting)     ROOT.dataset.greeting       = cfg.greeting;
     /* svcs_json: array [{name,price,duration}] → formato "Nombre|Precio|Dur|Cap" */
     if (cfg.svcs_json) {
@@ -371,15 +372,25 @@
 
     /* Helper: ¿el trabajador tiene este slot dentro de su propio horario? */
     function workerHasSlot(w, t) {
-      if (!w.open && !w.close && !w.days) return true; /* sin horario propio → hereda el del negocio */
+      const dayOfWeek = new Date(dStr + 'T12:00:00').getDay();
+      const [tH, tM] = t.split(':').map(Number);
+      const tMin = tH * 60 + tM;
+      /* Turno partido: shifts:[{open,close,days?}] — el slot debe caer en alguna franja */
+      if (w.shifts && w.shifts.length) {
+        return w.shifts.some(sh => {
+          const shDays = sh.days ? new Set(sh.days.map(Number)) : (w.days ? new Set(w.days.map(Number)) : OPEN_DAYS);
+          if (!shDays.has(dayOfWeek)) return false;
+          const [sH, sM] = sh.open.split(':').map(Number);
+          const [eH, eM] = sh.close.split(':').map(Number);
+          return tMin >= sH * 60 + sM && tMin < eH * 60 + eM;
+        });
+      }
+      /* Sin horario propio → hereda el del negocio */
+      if (!w.open && !w.close && !w.days) return true;
       const [wH, wM] = (w.open || ROOT.dataset.open || '09:00').split(':').map(Number);
       const [cH, cM] = (w.close || ROOT.dataset.close || '19:00').split(':').map(Number);
       const workerDays = w.days ? new Set(w.days.map(Number)) : OPEN_DAYS;
-      /* Día de la semana del slot seleccionado */
-      const dayOfWeek = new Date(dStr + 'T12:00:00').getDay();
       if (!workerDays.has(dayOfWeek)) return false;
-      const [tH, tM] = t.split(':').map(Number);
-      const tMin = tH * 60 + tM;
       return tMin >= wH * 60 + wM && tMin < cH * 60 + cM;
     }
 
@@ -583,7 +594,8 @@
 
     const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
     const openDaysText = [...OPEN_DAYS].sort().map(d => dayNames[d]).join(', ');
-    const scheduleText = `${openDaysText} de ${ROOT.dataset.open||'09:00'} a ${ROOT.dataset.close||'19:00'}`;
+    const scheduleText = ROOT.dataset.scheduleText ||
+      `${openDaysText} de ${ROOT.dataset.open||'09:00'} a ${ROOT.dataset.close||'19:00'}`;
 
     return `Eres el asistente IA de este negocio llamado "${BOT_NAME}". Tu objetivo es responder dudas, gestionar reservas y capturar contactos interesados.
 
@@ -637,3 +649,4 @@ IDIOMA: Responde siempre en el idioma en que escribe el cliente.`;
   } /* fin boot() */
 
 })();
+
