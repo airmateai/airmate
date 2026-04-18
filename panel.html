@@ -329,7 +329,7 @@ td .sub{font-size:11px;color:var(--txt3);margin-top:2px;}
       <p class="login-box-sub">Introduce tus credenciales para acceder</p>
       <div class="field-group">
         <label class="field-label">Email</label>
-        <input class="field-input" type="email" id="login-email" placeholder="tu@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+        <input class="field-input" type="text" id="login-email" placeholder="tu@email.com o «owner»" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
       <div class="field-group">
         <label class="field-label">Contraseña</label>
@@ -503,7 +503,7 @@ const SB_URL = 'https://vjofxmfwdybktpwiuanc.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
 const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-let BIZ_SLUG = '', BIZ_NAME = '';
+let BIZ_SLUG = '', BIZ_NAME = '', IS_OWNER = false;
 let allCitas = [], allLeads = [];
 let citasDate = new Date(); citasDate.setHours(0,0,0,0);
 let citasView = 'week', leadsView = 'pipeline';
@@ -514,20 +514,30 @@ function svcColor(name){ let h=0; for(const c of (name||'')) h=(h*31+c.charCodeA
 
 // ── LOGIN ─────────────────────────────────────────────
 async function doLogin(){
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const pass  = document.getElementById('login-pass').value;
-  const err   = document.getElementById('login-err');
-  const btn   = document.getElementById('login-btn');
-  err.style.display = 'none';
-  if(!email||!pass){ err.textContent='Introduce tu email y contraseña'; err.style.display='block'; return; }
+  const raw  = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const err  = document.getElementById('login-err');
+  const btn  = document.getElementById('login-btn');
+  err.style.display='none';
+  if(!raw||!pass){ err.textContent='Introduce tu usuario y contraseña'; err.style.display='block'; return; }
   btn.disabled=true; btn.textContent='Accediendo…';
   try {
+    /* ── Acceso owner ── */
+    if(raw.toLowerCase()==='owner' && pass==='airmate2024owner'){
+      IS_OWNER=true;
+      BIZ_SLUG=''; BIZ_NAME='Airmate Owner';
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({email:'owner',pass,slug:'',name:'Airmate Owner',isOwner:true}));
+      enterApp('Owner');
+      return;
+    }
+    /* ── Acceso cliente normal ── */
+    const email=raw.toLowerCase();
     const {data,error} = await _sb.from('clients').select('*').eq('email',email).eq('password',pass).single();
     if(error||!data){ err.textContent='Email o contraseña incorrectos'; err.style.display='block'; return; }
     const {data:cfg} = await _sb.from('bot_configs').select('slug,bot_name').eq('client_id',data.id).single();
     BIZ_SLUG = cfg?.slug || data.name?.toLowerCase().replace(/\s+/g,'-') || 'mi-negocio';
     BIZ_NAME = cfg?.bot_name || data.name || 'Mi Negocio';
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({email,pass,slug:BIZ_SLUG,name:BIZ_NAME}));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({email,pass,slug:BIZ_SLUG,name:BIZ_NAME,isOwner:false}));
     enterApp(data.name||BIZ_NAME);
   } catch(e) {
     err.textContent='Error de conexión. Inténtalo de nuevo.'; err.style.display='block';
@@ -551,14 +561,14 @@ function enterApp(userName=''){
 }
 
 const saved = sessionStorage.getItem(SESSION_KEY);
-if(saved){ try{ const s=JSON.parse(saved); BIZ_SLUG=s.slug; BIZ_NAME=s.name; enterApp(s.name); } catch(e){ sessionStorage.removeItem(SESSION_KEY); } }
+if(saved){ try{ const s=JSON.parse(saved); BIZ_SLUG=s.slug; BIZ_NAME=s.name; IS_OWNER=!!s.isOwner; enterApp(s.name); } catch(e){ sessionStorage.removeItem(SESSION_KEY); } }
 
 // ── DATOS ─────────────────────────────────────────────
 async function loadAll(){
-  const [c,l] = await Promise.all([
-    _sb.from('appointments').select('*').eq('business_slug',BIZ_SLUG).order('starts_at',{ascending:true}),
-    _sb.from('leads').select('*').eq('business_slug',BIZ_SLUG).order('created_at',{ascending:false})
-  ]);
+  let cQ = _sb.from('appointments').select('*').order('starts_at',{ascending:true});
+  let lQ = _sb.from('leads').select('*').order('created_at',{ascending:false});
+  if(!IS_OWNER){ cQ=cQ.eq('business_slug',BIZ_SLUG); lQ=lQ.eq('business_slug',BIZ_SLUG); }
+  const [c,l] = await Promise.all([cQ, lQ]);
   allCitas=c.data||[]; allLeads=l.data||[];
   renderActive(); checkNotifications();
 }
