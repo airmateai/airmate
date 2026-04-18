@@ -23,8 +23,11 @@
     boot();
   }
 
+  let _ownerEmail = '';
+
   function applyRemoteToRoot(cfg) {
-    if (cfg.bot_name)     ROOT.dataset.name          = cfg.bot_name;
+    if (cfg.owner_email)  _ownerEmail                 = cfg.owner_email;
+    if (cfg.bot_name)     ROOT.dataset.name           = cfg.bot_name;
     if (cfg.bot_emoji)    ROOT.dataset.emoji          = cfg.bot_emoji;
     if (cfg.bot_color)    ROOT.dataset.color          = cfg.bot_color;
     if (cfg.agent_wa)     ROOT.dataset.wa             = cfg.agent_wa;
@@ -531,6 +534,7 @@
         fecha:            fechaFmt,
         hora:             time,
         reply_to:         email,
+        owner_email:      _ownerEmail || email,
       };
       console.log('[Airmate] Enviando email a', email, params);
       const result = await window.emailjs.send(EJ_SVC, EJ_TPL, params, EJ_KEY);
