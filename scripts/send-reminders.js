@@ -43,15 +43,15 @@ async function main() {
     const windowEnd   = new Date(now.getTime() + (hours + 0.5) * 3600000).toISOString();
 
     const apts = await sbGet(
-      `appointments?business_slug=eq.${encodeURIComponent(cfg.slug)}&starts_at=gte.${windowStart}&starts_at=lte.${windowEnd}&status=in.(pending,confirmed)&client_email=not.is.null`
+      `appointments?business_slug=eq.${encodeURIComponent(cfg.slug)}&starts_at=gte.${windowStart}&starts_at=lte.${windowEnd}&status=eq.confirmed&client_email=not.is.null`
     );
 
     for (const apt of apts) {
       const fecha = new Date(apt.starts_at).toLocaleDateString('es-ES', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Atlantic/Canary'
       });
       const hora = new Date(apt.starts_at).toLocaleTimeString('es-ES', {
-        hour: '2-digit', minute: '2-digit'
+        hour: '2-digit', minute: '2-digit', timeZone: 'Atlantic/Canary'
       });
 
       const ok = await sendEmail({
