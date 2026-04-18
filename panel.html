@@ -845,7 +845,38 @@ function renderMonthView(todayStr){
 
 async function quickCita(id,status){
   await _sb.from('appointments').update({status}).eq('id',id);
-  await loadAll(); toast(status==='confirmed'?'Cita confirmada':'Cita cancelada');
+  if(status==='confirmed'){
+    const c=allCitas.find(x=>x.id===id);
+    if(c?.client_email) await sendConfirmEmailPanel(c);
+  }
+  await loadAll(); toast(status==='confirmed'?'Cita confirmada — email enviado al cliente':'Cita cancelada');
+}
+
+async function sendConfirmEmailPanel(c){
+  try{
+    if(!window.emailjs){
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+      await new Promise((res,rej)=>{s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+      await new Promise(r=>setTimeout(r,300));
+    }
+    const dt=new Date(c.starts_at);
+    const fecha=dt.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Atlantic/Canary'});
+    const hora=dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Atlantic/Canary'});
+    await window.emailjs.send('service_npmjvvf','template_qnip0mc',{
+      cliente_nombre:   c.client_name,
+      cliente_email:    c.client_email,
+      cliente_telefono: c.client_phone||'—',
+      negocio_nombre:   BIZ_NAME,
+      servicio:         c.service||'Servicio',
+      duracion:         (c.duration_minutes||60)+' min',
+      precio:           '—',
+      fecha, hora,
+      reply_to:         c.client_email,
+      owner_email:      c.client_email,
+      cancel_url:       `https://airmateai.github.io/airmate/cancel.html?id=${c.id}`
+    },'i4iBVVP-BkUOOwBE9');
+  }catch(e){console.error('[Panel] EmailJS error:',e);}
 }
 
 function openCitaModal(id){
