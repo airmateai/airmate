@@ -341,9 +341,9 @@
     const useWorkerMode = svcWorkers.length > 0;
     const capacity = useWorkerMode ? svcWorkers.length : (svc?.workers || WORKERS_DEFAULT);
 
-    /* Traer todas las citas del día (necesitamos notes para saber trabajador) */
-    const dayStart = dStr + 'T00:00:00';
-    const dayEnd   = dStr + 'T23:59:59';
+    /* Traer todas las citas del día — convertir a UTC para que Supabase (timestamptz) compare bien */
+    const dayStart = new Date(dStr + 'T00:00:00').toISOString();
+    const dayEnd   = new Date(dStr + 'T23:59:59').toISOString();
     const { data: existing } = await sbFetch(
       `appointments?business_slug=eq.${SLUG}&starts_at=gte.${dayStart}&starts_at=lte.${dayEnd}&status=neq.cancelled&select=starts_at,service,notes`
     );
@@ -458,7 +458,7 @@
       card.innerHTML = '<div class="am-card" style="text-align:center;padding:20px;color:#8a97b0;">Guardando reserva…</div>';
 
       const svc = st.selSvc;
-      const startsAt = `${st.selDate}T${st.selTime}:00`;
+      const startsAt = new Date(`${st.selDate}T${st.selTime}:00`).toISOString();
       const endsAt   = new Date(new Date(startsAt).getTime() + (svc?.duration||60)*60000).toISOString();
 
       const body = {
