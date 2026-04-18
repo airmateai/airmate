@@ -3940,6 +3940,18 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
           <!-- Contacto -->
           <div class="config-card" style="margin-bottom:14px;">
             <h3 style="font-size:13px;font-weight:800;margin-bottom:14px;color:#0c1e3d;">📱 Contacto</h3>
+            <div class="form-group" style="margin-bottom:12px;">
+              <label class="form-label">Recordatorio automático</label>
+              <select class="form-input" id="cfg-reminder-hours" onchange="saveAgentConfig()">
+                <option value="1">1 hora antes</option>
+                <option value="2">2 horas antes</option>
+                <option value="4">4 horas antes</option>
+                <option value="12">12 horas antes</option>
+                <option value="24" selected>24 horas antes (recomendado)</option>
+                <option value="48">48 horas antes</option>
+              </select>
+              <div class="form-hint">El cliente recibirá un email de recordatorio automático</div>
+            </div>
             <div class="form-group" style="margin-bottom:0;">
               <label class="form-label">Número WhatsApp (sin +)</label>
               <input class="form-input" id="cfg-agent-wa" type="text" placeholder="34600000000" oninput="saveAgentConfig()">
@@ -6653,6 +6665,7 @@ async function loadBotConfigFromSupabase(clientId) {
     setField('cfg-pro-urgency',   data.pro_urgency);
     setField('cfg-pro-followup',  data.pro_followup);
     /* Cargar config de reservas (horarios, servicios, trabajadores) */
+    if (data.reminder_hours) { const el = document.getElementById('cfg-reminder-hours'); if (el) el.value = String(data.reminder_hours); }
     if (data.agent_wa !== undefined)  { const el = document.getElementById('cfg-agent-wa'); if (el) el.value = data.agent_wa || ''; }
     if (data.open_time)  { const el = document.getElementById('cfg-open');  if (el) el.value = data.open_time; }
     if (data.close_time) { const el = document.getElementById('cfg-close'); if (el) el.value = data.close_time; }
@@ -6787,10 +6800,11 @@ let agentSvcs    = JSON.parse(localStorage.getItem('am_agent_svcs')    || '[]');
 let agentWorkers = JSON.parse(localStorage.getItem('am_agent_workers_list') || '[]');
 
 function saveAgentConfig() {
-  const wa    = document.getElementById('cfg-agent-wa')?.value || '';
-  const open  = document.getElementById('cfg-open')?.value     || '09:00';
-  const close = document.getElementById('cfg-close')?.value    || '19:00';
-  const slot  = document.getElementById('cfg-slot')?.value     || '30';
+  const wa            = document.getElementById('cfg-agent-wa')?.value       || '';
+  const open          = document.getElementById('cfg-open')?.value           || '09:00';
+  const close         = document.getElementById('cfg-close')?.value          || '19:00';
+  const slot          = document.getElementById('cfg-slot')?.value           || '30';
+  const reminderHours = parseInt(document.getElementById('cfg-reminder-hours')?.value || '24', 10);
   const checks = document.querySelectorAll('#cfg-days-row input[type=checkbox]:checked');
   const days = Array.from(checks).map(c => c.value).join(',') || '1,2,3,4,5';
 
@@ -6812,9 +6826,10 @@ function saveAgentConfig() {
       close_time:   close,
       slot_min:     parseInt(slot, 10),
       open_days:    days,
-      svcs_json:    JSON.stringify(agentSvcs),
-      workers_json: JSON.stringify(agentWorkers),
-      updated_at:   new Date().toISOString()
+      svcs_json:      JSON.stringify(agentSvcs),
+      workers_json:   JSON.stringify(agentWorkers),
+      reminder_hours: reminderHours,
+      updated_at:     new Date().toISOString()
     }, { onConflict: 'client_id' }).then(({ error }) => {
       if (error) console.warn('[Airmate] saveAgentConfig Supabase error:', error);
     });
