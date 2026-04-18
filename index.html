@@ -6624,6 +6624,8 @@ async function loadBotConfigFromSupabase(clientId) {
       .eq('client_id', clientId)
       .single();
     if (!data) return;
+    /* Guardar slug en el usuario activo para el snippet */
+    if (data.slug && authState.currentUser) authState.currentUser.biz_slug = data.slug;
     /* Aplicar la config guardada al estado */
     if (data.biz_name)  { document.getElementById('cfg-biz') && (document.getElementById('cfg-biz').value = data.biz_name); }
     if (data.bot_name)  { document.getElementById('cfg-name') && (document.getElementById('cfg-name').value = data.bot_name); state.botName = data.bot_name; }
@@ -6650,6 +6652,23 @@ async function loadBotConfigFromSupabase(clientId) {
     setField('cfg-pro-guarantee', data.pro_guarantee);
     setField('cfg-pro-urgency',   data.pro_urgency);
     setField('cfg-pro-followup',  data.pro_followup);
+    /* Cargar config de reservas (horarios, servicios, trabajadores) */
+    if (data.agent_wa !== undefined)  { const el = document.getElementById('cfg-agent-wa'); if (el) el.value = data.agent_wa || ''; }
+    if (data.open_time)  { const el = document.getElementById('cfg-open');  if (el) el.value = data.open_time; }
+    if (data.close_time) { const el = document.getElementById('cfg-close'); if (el) el.value = data.close_time; }
+    if (data.slot_min)   { const el = document.getElementById('cfg-slot');  if (el) el.value = String(data.slot_min); }
+    if (data.open_days) {
+      const savedDays = data.open_days.split(',');
+      document.querySelectorAll('#cfg-days-row input[type=checkbox]').forEach(c => { c.checked = savedDays.includes(c.value); });
+      localStorage.setItem('am_agent_days', data.open_days);
+    }
+    if (data.svcs_json) {
+      try { agentSvcs = JSON.parse(data.svcs_json); renderAgentSvcs(); localStorage.setItem('am_agent_svcs', data.svcs_json); } catch(e) {}
+    }
+    if (data.workers_json) {
+      try { agentWorkers = JSON.parse(data.workers_json); renderAgentWorkers(); localStorage.setItem('am_agent_workers_list', data.workers_json); } catch(e) {}
+    }
+
     /* Marcar config como guardada */
     state.configSaved = true;
     localStorage.setItem('am_configured','true');
@@ -6768,15 +6787,39 @@ let agentSvcs    = JSON.parse(localStorage.getItem('am_agent_svcs')    || '[]');
 let agentWorkers = JSON.parse(localStorage.getItem('am_agent_workers_list') || '[]');
 
 function saveAgentConfig() {
+  const wa    = document.getElementById('cfg-agent-wa')?.value || '';
+  const open  = document.getElementById('cfg-open')?.value     || '09:00';
+  const close = document.getElementById('cfg-close')?.value    || '19:00';
+  const slot  = document.getElementById('cfg-slot')?.value     || '30';
+  const checks = document.querySelectorAll('#cfg-days-row input[type=checkbox]:checked');
+  const days = Array.from(checks).map(c => c.value).join(',') || '1,2,3,4,5';
+
   localStorage.setItem('am_agent_svcs',         JSON.stringify(agentSvcs));
   localStorage.setItem('am_agent_workers_list',  JSON.stringify(agentWorkers));
-  localStorage.setItem('am_agent_wa',    document.getElementById('cfg-agent-wa')?.value || '');
-  localStorage.setItem('am_agent_open',  document.getElementById('cfg-open')?.value     || '09:00');
-  localStorage.setItem('am_agent_close', document.getElementById('cfg-close')?.value    || '19:00');
-  localStorage.setItem('am_agent_slot',  document.getElementById('cfg-slot')?.value     || '30');
-  const checks = document.querySelectorAll('#cfg-days-row input[type=checkbox]:checked');
-  const days = Array.from(checks).map(c => c.value).join(',');
-  localStorage.setItem('am_agent_days', days || '1,2,3,4,5');
+  localStorage.setItem('am_agent_wa',    wa);
+  localStorage.setItem('am_agent_open',  open);
+  localStorage.setItem('am_agent_close', close);
+  localStorage.setItem('am_agent_slot',  slot);
+  localStorage.setItem('am_agent_days',  days);
+
+  /* Guardar también en Supabase para que el widget lo lea por slug */
+  const clientId = authState.currentUser?.id;
+  if (clientId && typeof _SB !== 'undefined') {
+    _SB.from('bot_configs').upsert({
+      client_id:    clientId,
+      agent_wa:     wa,
+      open_time:    open,
+      close_time:   close,
+      slot_min:     parseInt(slot, 10),
+      open_days:    days,
+      svcs_json:    JSON.stringify(agentSvcs),
+      workers_json: JSON.stringify(agentWorkers),
+      updated_at:   new Date().toISOString()
+    }, { onConflict: 'client_id' }).then(({ error }) => {
+      if (error) console.warn('[Airmate] saveAgentConfig Supabase error:', error);
+    });
+  }
+
   renderInstallSection();
 }
 
@@ -6921,38 +6964,8 @@ function generateWidgetSnippet() {
   const slot    = localStorage.getItem('am_agent_slot')  || '30';
   const days    = localStorage.getItem('am_agent_days')  || '1,2,3,4,5';
 
-  /* Calcular capacidad por servicio desde trabajadores (si los hay) */
-  let svcs;
-  if (agentWorkers.length) {
-    svcs = agentSvcs.filter(s=>s.name).map(s => {
-      const cap = agentWorkers.filter(w => w.svcs.includes(s.name)).length || 1;
-      return `${s.name}|${s.price}|${s.duration}min|${cap}`;
-    }).join(', ');
-  } else {
-    svcs = agentSvcs.filter(s=>s.name).map(s=>`${s.name}|${s.price}|${s.duration}min|1`).join(', ');
-  }
-
-  /* Workers config para el widget (gestión por trabajador individual) */
-  const workersJson = agentWorkers.length
-    ? JSON.stringify(agentWorkers.filter(w=>w.name).map(w=>{
-        const obj = { name: w.name, svcs: w.svcs };
-        if (w.open)  obj.open  = w.open;
-        if (w.close) obj.close = w.close;
-        if (w.days && w.days.length) obj.days = w.days;
-        return obj;
-      }))
-    : '';
-
   const snip = `<!-- Agente IA Airmate — ${slug} -->
-<div id="airmate-root"
-  data-slug="${slug}"
-  data-wa="${wa}"
-  data-open="${open}"
-  data-close="${close}"
-  data-slot="${slot}"
-  data-days="${days}"
-  data-svcs="${svcs.replace(/"/g,'&quot;')}"${workersJson?`
-  data-workers-config='${workersJson}'`:''}></div>
+<div id="airmate-root" data-slug="${slug}"></div>
 <script src="https://airmateai.github.io/airmate/airmate-widget.js"><\/script>`;
 
   const pre   = document.getElementById('widget-snippet-code');
@@ -7697,7 +7710,14 @@ async function attemptRegister() {
     }).select().single();
     if (error) { showAuthRegError('Error al crear la cuenta. Inténtalo de nuevo.'); return; }
 
-    const user = { id: data.id, email: data.email, role:'user', name: data.name, plan: data.plan, active: data.active===true, created_at: data.created_at };
+    /* Generar slug único para el widget y crear fila en bot_configs */
+    const slugBase = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const slug = slugBase + '-' + Math.random().toString(36).slice(2, 6);
+    await _SB.from('bot_configs').upsert({
+      client_id: data.id, slug, bot_name: name, updated_at: new Date().toISOString()
+    }, { onConflict: 'client_id' });
+
+    const user = { id: data.id, email: data.email, role:'user', name: data.name, plan: data.plan, active: data.active===true, created_at: data.created_at, biz_slug: slug };
     const session = { user, token: genId(), createdAt: Date.now() };
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     const authScreen = document.getElementById('auth-screen');

@@ -5,7 +5,52 @@
   const ROOT = document.getElementById('airmate-root');
   if (!ROOT) return;
 
-  const SLUG      = ROOT.dataset.slug     || 'negocio';
+  const SLUG   = ROOT.dataset.slug || 'negocio';
+  const SB_URL = 'https://vjofxmfwdybktpwiuanc.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+
+  /* Si solo tiene data-slug (sin data-name ni data-svcs) → carga config de Supabase */
+  const IS_REMOTE = !ROOT.dataset.name && !ROOT.dataset.svcs;
+
+  if (IS_REMOTE) {
+    fetch(`${SB_URL}/rest/v1/bot_configs?slug=eq.${encodeURIComponent(SLUG)}&select=*&limit=1`, {
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    })
+    .then(r => r.json())
+    .then(rows => { if (rows && rows[0]) applyRemoteToRoot(rows[0]); boot(); })
+    .catch(() => boot());
+  } else {
+    boot();
+  }
+
+  function applyRemoteToRoot(cfg) {
+    if (cfg.bot_name)     ROOT.dataset.name          = cfg.bot_name;
+    if (cfg.bot_emoji)    ROOT.dataset.emoji          = cfg.bot_emoji;
+    if (cfg.bot_color)    ROOT.dataset.color          = cfg.bot_color;
+    if (cfg.agent_wa)     ROOT.dataset.wa             = cfg.agent_wa;
+    if (cfg.open_time)    ROOT.dataset.open           = cfg.open_time;
+    if (cfg.close_time)   ROOT.dataset.close          = cfg.close_time;
+    if (cfg.slot_min)     ROOT.dataset.slot           = String(cfg.slot_min);
+    if (cfg.open_days)    ROOT.dataset.days           = cfg.open_days;
+    if (cfg.greeting)     ROOT.dataset.greeting       = cfg.greeting;
+    /* svcs_json: array [{name,price,duration}] → formato "Nombre|Precio|Dur|Cap" */
+    if (cfg.svcs_json) {
+      try {
+        const svcs = typeof cfg.svcs_json === 'string' ? JSON.parse(cfg.svcs_json) : cfg.svcs_json;
+        ROOT.dataset.svcs = svcs.map(s => `${s.name}|${s.price||''}|${s.duration||60}|1`).join(',');
+      } catch(e) {}
+    }
+    /* workers_json: array [{name,svcs,open,close,days}] */
+    if (cfg.workers_json) {
+      try {
+        const w = typeof cfg.workers_json === 'string' ? cfg.workers_json : JSON.stringify(cfg.workers_json);
+        ROOT.dataset.workersConfig = w;
+      } catch(e) {}
+    }
+  }
+
+  function boot() {
+
   const WA        = ROOT.dataset.wa       || '';
   const BOT_NAME  = ROOT.dataset.name     || 'Asistente';
   const EMOJI     = ROOT.dataset.emoji    || '💬';
@@ -40,8 +85,6 @@
 
   /* ─── CONSTANTES AIRMATE ────────────────────────────────────────── */
   const PROXY    = 'https://bot-airmate-1.vercel.app/api/chat';
-  const SB_URL   = 'https://vjofxmfwdybktpwiuanc.supabase.co';
-  const SB_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
   const EJ_KEY   = 'i4iBVVP-BkUOOwBE9';
   const EJ_SVC   = 'service_npmjvvf';
   const EJ_TPL   = 'template_qnip0mc';
@@ -578,5 +621,7 @@ IDIOMA: Responde siempre en el idioma en que escribe el cliente.`;
     try { const n=parseInt(hex.replace('#',''),16); const r=Math.max(0,(n>>16)-40),g=Math.max(0,((n>>8)&0xff)-40),b=Math.max(0,(n&0xff)-40); return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join(''); } catch{return hex;}
   }
   function injectCSS(css) { const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); }
+
+  } /* fin boot() */
 
 })();
