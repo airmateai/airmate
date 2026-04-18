@@ -226,7 +226,12 @@
   async function send() {
     const inp  = document.getElementById('am-input');
     const text = inp?.value.trim();
-    if (!text || st.flow) return;
+    if (!text) return;
+    /* Si el usuario escribe mientras hay un flujo abierto, lo cancelamos */
+    if (st.flow) {
+      st.flow = null;
+      document.querySelector('.am-card')?.remove();
+    }
     inp.value = '';
     addUser(text);
     st.history.push({ role: 'user', content: text });
@@ -597,23 +602,23 @@
     const scheduleText = ROOT.dataset.scheduleText ||
       `${openDaysText} de ${ROOT.dataset.open||'09:00'} a ${ROOT.dataset.close||'19:00'}`;
 
-    return `Eres el asistente IA de este negocio llamado "${BOT_NAME}". Tu objetivo es responder dudas, gestionar reservas y capturar contactos interesados.
+    return `Eres el asistente de "${BOT_NAME}". Actúas como un dependiente experto y cercano: informas, asesoras y cuando el cliente está listo, gestionas la reserva.
 
-SERVICIOS DISPONIBLES:
+SERVICIOS:
 ${svcsText}
 
 HORARIO: ${scheduleText}
 
 CÓMO ACTÚAS:
-- Responde de forma natural, breve y amable.
-- Si el cliente quiere reservar una cita, pedir hora o disponibilidad → responde SOLO con MOSTRAR_RESERVA al inicio del mensaje.
-- Si el cliente quiere que le contacten o pedir más info personalizada → responde SOLO con MOSTRAR_CONTACTO al inicio.
-- Si solo tiene dudas generales, respóndelas directamente sin usar señales.
-- Nunca inventes precios ni datos que no tengas.
-- El sistema detecta automáticamente la disponibilidad real por servicio y número de profesionales.
-${WA?`- Si el cliente quiere hablar con una persona directamente, indícale WhatsApp: ${WA}`:''}
+- Conversa de forma natural y amable. Responde preguntas, informa sobre servicios, asesora sin prisa.
+- NO lances el formulario de reserva a la primera. Primero responde, informa y genera confianza.
+- Solo cuando el cliente diga claramente que quiere reservar, pedir cita o ver disponibilidad → escribe MOSTRAR_RESERVA al inicio de tu respuesta.
+- Si el cliente quiere que le llamen o contacten → escribe MOSTRAR_CONTACTO al inicio.
+- Nunca inventes precios, duraciones ni datos que no tengas. Di que se lo confirmarán en el negocio.
+- Mantén respuestas cortas (2-4 frases). No uses listas largas.
+${WA?`- Si quiere hablar con una persona ya: WhatsApp ${WA}`:''}
 
-IDIOMA: Responde siempre en el idioma en que escribe el cliente.`;
+IDIOMA: Responde siempre en el idioma del cliente.`;
   }
 
   /* ─── UI HELPERS ────────────────────────────────────────────────── */
