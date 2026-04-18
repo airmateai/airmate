@@ -627,6 +627,19 @@ function enterApp(userName=''){
 const saved = sessionStorage.getItem(SESSION_KEY);
 if(saved){ try{ const s=JSON.parse(saved); BIZ_SLUG=s.slug; BIZ_NAME=s.name; IS_OWNER=!!s.isOwner; _bizOwnerEmail=s.ownerEmail||''; enterApp(s.name); } catch(e){ sessionStorage.removeItem(SESSION_KEY); } }
 
+/* Auto-login por URL: panel.html?c=jose-acosta */
+(async()=>{
+  const autoSlug = new URLSearchParams(window.location.search).get('c');
+  if(!autoSlug || saved) return;
+  const {data:cfg} = await _sb.from('bot_configs').select('slug,bot_name,owner_email,client_id').eq('slug',autoSlug).single();
+  if(!cfg) return;
+  const {data:client} = await _sb.from('clients').select('*').eq('id',cfg.client_id).single();
+  if(!client) return;
+  BIZ_SLUG = cfg.slug; BIZ_NAME = cfg.bot_name || client.name; _bizOwnerEmail = cfg.owner_email || '';
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({email:client.email,pass:client.password,slug:BIZ_SLUG,name:BIZ_NAME,isOwner:false,ownerEmail:_bizOwnerEmail}));
+  enterApp(client.name || BIZ_NAME);
+})();
+
 // ── DATOS ─────────────────────────────────────────────
 async function loadAll(){
   let cQ = _sb.from('appointments').select('*').order('starts_at',{ascending:true});
