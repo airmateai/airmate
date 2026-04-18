@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cancelar cita — Airmate</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f7;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .card{background:#fff;border-radius:20px;box-shadow:0 8px 32px rgba(0,0,0,.12);padding:40px 32px;max-width:420px;width:100%;text-align:center;}
+  .logo{font-size:11px;font-weight:800;letter-spacing:.12em;color:#22c55e;margin-bottom:24px;}
+  .icon{font-size:48px;margin-bottom:16px;}
+  h1{font-size:20px;font-weight:800;color:#0c1e3d;margin-bottom:8px;}
+  p{font-size:14px;color:#6b7d96;line-height:1.6;margin-bottom:4px;}
+  .details{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:16px;margin:20px 0;text-align:left;}
+  .details .row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;}
+  .details .row span:first-child{color:#8a97b0;}
+  .details .row span:last-child{font-weight:600;color:#0c1e3d;}
+  .btn-cancel{width:100%;padding:14px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:.15s;}
+  .btn-cancel:hover{filter:brightness(1.1);}
+  .btn-cancel:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-back{width:100%;padding:12px;background:#f1f5f9;color:#0c1e3d;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;}
+  .success{color:#16a34a;font-weight:700;font-size:16px;margin-top:16px;}
+  .error-msg{color:#dc2626;font-size:13px;margin-top:12px;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">AIRMATE</div>
+  <div id="content">
+    <div class="icon">⏳</div>
+    <h1>Cargando tu cita…</h1>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://vjofxmfwdybktpwiuanc.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+
+const id = new URLSearchParams(location.search).get('id');
+const content = document.getElementById('content');
+
+async function sbGet(path) {
+  const r = await fetch(`${SB_URL}/rest/v1/${path}`, {
+    headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
+  });
+  return r.json();
+}
+
+async function sbPatch(table, id, body) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify(body)
+  });
+  return r.ok;
+}
+
+async function load() {
+  if (!id) { showError('Enlace no válido.'); return; }
+
+  const data = await sbGet(`appointments?id=eq.${id}&select=*`);
+  const apt = data[0];
+
+  if (!apt) { showError('No se encontró la cita.'); return; }
+
+  if (apt.status === 'cancelled') {
+    content.innerHTML = `
+      <div class="icon">✅</div>
+      <h1>Cita ya cancelada</h1>
+      <p>Esta cita ya fue cancelada anteriormente.</p>`;
+    return;
+  }
+
+  const fecha = new Date(apt.starts_at).toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const hora  = new Date(apt.starts_at).toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+
+  content.innerHTML = `
+    <div class="icon">📅</div>
+    <h1>¿Cancelar tu cita?</h1>
+    <p>Estás a punto de cancelar la siguiente reserva:</p>
+    <div class="details">
+      <div class="row"><span>Negocio</span><span>${apt.business_slug}</span></div>
+      <div class="row"><span>Servicio</span><span>${apt.service}</span></div>
+      <div class="row"><span>Fecha</span><span>${fecha}</span></div>
+      <div class="row"><span>Hora</span><span>${hora}</span></div>
+      <div class="row"><span>Nombre</span><span>${apt.client_name}</span></div>
+    </div>
+    <button class="btn-cancel" id="btn-cancel" onclick="cancelar()">Cancelar esta cita</button>
+    <button class="btn-back" onclick="history.back()">← Volver</button>
+    <div id="msg"></div>`;
+}
+
+async function cancelar() {
+  const btn = document.getElementById('btn-cancel');
+  const msg = document.getElementById('msg');
+  btn.disabled = true;
+  btn.textContent = 'Cancelando…';
+
+  const ok = await sbPatch('appointments', id, { status: 'cancelled' });
+
+  if (ok) {
+    content.innerHTML = `
+      <div class="icon">✅</div>
+      <h1>Cita cancelada</h1>
+      <p class="success">Tu cita ha sido cancelada correctamente.</p>
+      <p style="margin-top:12px;">Si quieres volver a reservar, visita la web del negocio.</p>`;
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'Cancelar esta cita';
+    msg.innerHTML = '<p class="error-msg">Error al cancelar. Inténtalo de nuevo.</p>';
+  }
+}
+
+load();
+</script>
+</body>
+</html>

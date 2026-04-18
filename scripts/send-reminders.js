@@ -66,6 +66,7 @@ async function main() {
         horas_antes:      String(hours),
         reply_to:         cfg.owner_email || apt.client_email,
         owner_email:      cfg.owner_email || apt.client_email,
+        cancel_url:       `https://airmateai.github.io/airmate/cancel.html?id=${apt.id}`,
       });
 
       if (ok) {

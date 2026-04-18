@@ -459,7 +459,7 @@
         created_at:       new Date().toISOString()
       };
 
-      const ok = await sbInsert('appointments', body);
+      const { ok, id: aptId } = await sbInsertReturn('appointments', body);
       card.remove();
       st.flow = null;
 
@@ -468,7 +468,7 @@
         addBot(`✅ ¡Reserva confirmada, ${esc(name)}!\n\n📅 ${svc?.name||'Servicio'}\n📆 ${st.selDate} a las ${st.selTime}${workerLine}\n\nTe esperamos. Si necesitas cambiar algo, contáctanos.`);
         st.history.push({ role:'assistant', content:'Reserva confirmada correctamente.' });
         /* Email de confirmación al cliente */
-        if (email) sendConfirmEmail({ name, email, phone, svc, date: st.selDate, time: st.selTime });
+        if (email) sendConfirmEmail({ name, email, phone, svc, date: st.selDate, time: st.selTime, aptId });
         /* Guardar lead asociado */
         sbInsert('leads', {
           business_slug: SLUG, name, phone, email: email||null,
@@ -514,7 +514,7 @@
   }
 
   /* ─── EMAIL CONFIRMACIÓN ───────────────────────────────────────── */
-  async function sendConfirmEmail({ name, email, phone, svc, date, time }) {
+  async function sendConfirmEmail({ name, email, phone, svc, date, time, aptId }) {
     try {
       if (!window.emailjs) {
         const s = document.createElement('script');
@@ -535,6 +535,7 @@
         hora:             time,
         reply_to:         email,
         owner_email:      _ownerEmail || email,
+        cancel_url:       aptId ? `https://airmateai.github.io/airmate/cancel.html?id=${aptId}` : '',
       };
       console.log('[Airmate] Enviando email a', email, params);
       const result = await window.emailjs.send(EJ_SVC, EJ_TPL, params, EJ_KEY);
@@ -553,18 +554,25 @@
   }
 
   async function sbInsert(table, body) {
+    const { ok } = await sbInsertReturn(table, body);
+    return ok;
+  }
+
+  async function sbInsertReturn(table, body) {
     try {
       const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
         method: 'POST',
-        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
         body: JSON.stringify(body)
       });
       if (!r.ok) {
         const txt = await r.text();
-        console.error('[Airmate] sbInsert error', r.status, txt, JSON.stringify(body));
+        console.error('[Airmate] sbInsert error', r.status, txt);
+        return { ok: false, id: null };
       }
-      return r.ok;
-    } catch(e) { console.error('[Airmate] sbInsert exception', e); return false; }
+      const data = await r.json();
+      return { ok: true, id: data[0]?.id || null };
+    } catch(e) { console.error('[Airmate] sbInsert exception', e); return { ok: false, id: null }; }
   }
 
   /* ─── SYSTEM PROMPT ─────────────────────────────────────────────── */
