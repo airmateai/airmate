@@ -358,21 +358,20 @@
     }
 
     /* Construir mapa de ocupación por slot */
-    /* workerBusy: { 'Ana': Set{'10:00','11:00'}, ... } */
     const workerBusy = {};
-    const svcCount   = {}; /* fallback sin trabajadores: cuenta por servicio */
+    const totalCount = {}; /* total de citas por slot, independiente de servicio/trabajador */
     (existing || []).forEach(a => {
-      const d  = new Date(a.starts_at);
-      const t  = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-      /* Extraer trabajador del campo notes (guardado como JSON) */
+      const d = new Date(a.starts_at);
+      const t = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
       let worker = null;
       try { worker = JSON.parse(a.notes || '{}').worker || null; } catch {}
+      /* Si no hay worker en notes pero solo hay 1 trabajador, asignárselo */
+      if (!worker && WORKERS_CFG.length === 1) worker = WORKERS_CFG[0].name;
       if (worker) {
         if (!workerBusy[worker]) workerBusy[worker] = new Set();
         workerBusy[worker].add(t);
       }
-      /* Fallback: contar por servicio */
-      if (a.service === svc?.name) svcCount[t] = (svcCount[t] || 0) + 1;
+      totalCount[t] = (totalCount[t] || 0) + 1;
     });
 
     /* Helper: ¿el trabajador tiene este slot dentro de su propio horario? */
@@ -401,12 +400,13 @@
 
     /* Determinar disponibilidad por slot */
     function slotAvailable(t) {
+      const maxCap = WORKERS_CFG.length || capacity;
+      /* Hard cap: si ya hay tantas citas como trabajadores, slot lleno */
+      if ((totalCount[t] || 0) >= maxCap) return false;
       if (useWorkerMode) {
-        /* Disponible si algún trabajador de este servicio está libre Y trabaja en ese slot */
         return svcWorkers.some(w => workerHasSlot(w, t) && !workerBusy[w.name]?.has(t));
       }
-      /* Sin trabajadores: usar capacidad por servicio */
-      return (svcCount[t] || 0) < capacity;
+      return (totalCount[t] || 0) < capacity;
     }
 
     function freeWorkerAt(t) {
@@ -471,7 +471,7 @@
         ends_at:          endsAt,
         duration_minutes: svc?.duration || 60,
         status:           'pending',
-        notes:            JSON.stringify({ worker: st.selWorker?.name || null, source: 'web', emoji: EMOJI }),
+        notes:            JSON.stringify({ worker: st.selWorker?.name || (WORKERS_CFG.length === 1 ? WORKERS_CFG[0].name : null), source: 'web', emoji: EMOJI }),
         created_at:       new Date().toISOString()
       };
 
