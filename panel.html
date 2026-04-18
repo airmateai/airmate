@@ -756,19 +756,53 @@ function renderCitas(){
   }
   const gridH=(DAY_END-DAY_START)*HOUR_H;
   const makeDayBlocks=(dStr,isToday)=>{
-    const dayCitas=allCitas.filter(c=>apptLocalDate(c.starts_at)===dStr);
-    let blocks=dayCitas.map(c=>{
-      if(!c.starts_at) return '';
-      const s=new Date(c.starts_at),e=c.ends_at?new Date(c.ends_at):new Date(s.getTime()+3600000);
+    const dayCitas=allCitas.filter(c=>apptLocalDate(c.starts_at)===dStr&&c.status!=='cancelled');
+
+    /* ── Detectar solapamientos y asignar columnas ── */
+    const items=dayCitas.map(c=>{
+      const s=new Date(c.starts_at);
+      const e=c.ends_at?new Date(c.ends_at):new Date(s.getTime()+(c.duration_minutes||60)*60000);
+      return {c, s, e, col:0, cols:1};
+    }).sort((a,b)=>a.s-b.s);
+
+    /* Algoritmo greedy: asignar columna a cada cita */
+    const groups=[];
+    for(const item of items){
+      let placed=false;
+      for(const g of groups){
+        /* ¿Solapa con alguna cita del grupo? */
+        const overlaps=g.some(x=>item.s<x.e && item.e>x.s);
+        if(overlaps){
+          /* Buscar columna libre dentro del grupo */
+          const usedCols=new Set(g.map(x=>x.col));
+          let freeCol=0; while(usedCols.has(freeCol)) freeCol++;
+          item.col=freeCol;
+          g.push(item);
+          /* Actualizar total de columnas para todo el grupo */
+          const maxCol=Math.max(...g.map(x=>x.col))+1;
+          g.forEach(x=>x.cols=maxCol);
+          placed=true; break;
+        }
+      }
+      if(!placed){ item.col=0; item.cols=1; groups.push([item]); }
+    }
+
+    let blocks=items.map(({c,s,e,col,cols})=>{
       const top=(s.getHours()+s.getMinutes()/60-DAY_START)*HOUR_H;
       const h2=(e-s)/3600000*HOUR_H;
-      const col=svcColor(c.service);
-      return `<div class="appt-block" style="top:${top}px;height:${Math.max(h2,26)}px;background:${col}18;color:${col};border-left-color:${col};" onclick="openCitaModal('${c.id}')">
+      const color=svcColor(c.service);
+      const GAP=2;
+      const pct=100/cols;
+      const left=`calc(${col*pct}% + ${GAP}px)`;
+      const width=`calc(${pct}% - ${GAP*2}px)`;
+      let worker=''; try{worker=JSON.parse(c.notes||'{}').worker||'';}catch(e){}
+      return `<div class="appt-block" style="top:${top}px;height:${Math.max(h2,26)}px;left:${left};width:${width};right:auto;background:${color}18;color:${color};border-left-color:${color};" onclick="openCitaModal('${c.id}')">
         <div class="appt-name">${esc(c.client_name||'Sin nombre')}</div>
-        <div class="appt-svc">${esc(c.service||'')}</div>
+        <div class="appt-svc">${esc(c.service||'')}${worker?' · '+esc(worker):''}</div>
         <div class="appt-hour">${fmtTime(c.starts_at)}</div>
       </div>`;
     }).join('');
+
     let nowLine='';
     if(isToday){const n=new Date();const top=(n.getHours()+n.getMinutes()/60-DAY_START)*HOUR_H;if(top>=0)nowLine=`<div class="now-line" style="top:${top}px;"></div>`;}
     return `<div class="grid-body" style="height:${gridH}px;">${rows}${nowLine}${blocks}</div>`;
