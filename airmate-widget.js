@@ -414,18 +414,22 @@
       return svcWorkers.find(w => workerHasSlot(w, t) && !workerBusy[w.name]?.has(t)) || null;
     }
 
-    if (!slots.length) {
+    /* Solo mostrar slots dentro del turno de algún trabajador — sin slots de descanso tachados */
+    const visibleSlots = useWorkerMode
+      ? slots.filter(t => svcWorkers.some(w => workerHasSlot(w, t)))
+      : slots;
+
+    if (!visibleSlots.length) {
       wrap.innerHTML = '<div style="font-size:12px;color:#e53e3e;padding:8px 0;">No hay horarios disponibles este día.</div>';
       return;
     }
 
-    wrap.innerHTML = `<div class="am-slots">${slots.map(t => {
+    wrap.innerHTML = `<div class="am-slots">${visibleSlots.map(t => {
       const avail = slotAvailable(t);
       return `<div class="am-slot${avail?'':' full'}" onclick="${avail?`window._amPickTime('${t}')`:''}">
         ${t}${avail?'':' ✖'}
       </div>`;
-    }).join('')}</div>
-    <div style="font-size:10px;color:#8a97b0;margin-top:6px;">Horario: ${ROOT.dataset.open||'09:00'}–${ROOT.dataset.close||'19:00'}</div>`;
+    }).join('')}</div>`;
     scrollBot();
 
     window._amPickTime = t => {
@@ -481,10 +485,8 @@
 
       if (ok) {
         const workerLine = st.selWorker ? `\n👤 Con: ${st.selWorker.name}` : '';
-        addBot(`✅ ¡Reserva confirmada, ${esc(name)}!\n\n📅 ${svc?.name||'Servicio'}\n📆 ${st.selDate} a las ${st.selTime}${workerLine}\n\nTe esperamos. Si necesitas cambiar algo, contáctanos.`);
-        st.history.push({ role:'assistant', content:'Reserva confirmada correctamente.' });
-        /* Email de confirmación al cliente */
-        if (email) sendConfirmEmail({ name, email, phone, svc, date: st.selDate, time: st.selTime, aptId });
+        addBot(`📋 ¡Solicitud recibida, ${esc(name)}!\n\n📅 ${svc?.name||'Servicio'}\n📆 ${st.selDate} a las ${st.selTime}${workerLine}\n\nEl negocio confirmará tu cita en breve y recibirás un email de confirmación.`);
+        st.history.push({ role:'assistant', content:'Solicitud de cita recibida, pendiente de confirmación.' });
         /* Guardar lead asociado */
         sbInsert('leads', {
           business_slug: SLUG, name, phone, email: email||null,
