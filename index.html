@@ -4634,6 +4634,13 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
             <pre id="widget-snippet-code" style="background:#0c1e3d;color:#7eb3ff;padding:18px;border-radius:10px;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre-wrap;word-break:break-all;margin-bottom:14px;"></pre>
             <button onclick="copyWidgetSnippet()" style="background:linear-gradient(135deg,#2a5cff,#6ea0ff);color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;">📋 Copiar código</button>
           </div>
+          <!-- Panel de gestión -->
+          <div id="panel-link-block" style="background:#f0fdf4;border:2px solid #22c55e;border-radius:16px;padding:24px;margin-top:16px;display:none;">
+            <div style="font-size:14px;font-weight:800;color:#0c1e3d;margin-bottom:4px;">📊 Tu panel de gestión de reservas</div>
+            <div style="font-size:12px;color:#6b7d96;margin-bottom:14px;">Guarda este link — desde aquí confirmas, cancelas y ves todas tus citas.</div>
+            <div style="background:#fff;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px;font-family:monospace;font-size:13px;color:#16a34a;word-break:break-all;margin-bottom:12px;position:relative" id="panel-link-code"></div>
+            <button onclick="copyPanelLink()" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;">📋 Copiar link del panel</button>
+          </div>
         </div>
       </div>
 
@@ -6987,6 +6994,20 @@ function generateWidgetSnippet() {
   const block = document.getElementById('widget-snippet-block');
   if (pre)   pre.textContent = snip;
   if (block) block.style.display = 'block';
+
+  /* Panel de gestión */
+  const panelBlock = document.getElementById('panel-link-block');
+  const panelCode  = document.getElementById('panel-link-code');
+  if (panelBlock && panelCode && slug) {
+    const panelUrl = `https://airmateai.github.io/airmate/panel.html?c=${slug}`;
+    panelCode.textContent = panelUrl;
+    panelBlock.style.display = 'block';
+  }
+}
+
+function copyPanelLink() {
+  const code = document.getElementById('panel-link-code');
+  if (code) navigator.clipboard.writeText(code.textContent).then(() => showToast('✅ Link del panel copiado'));
 }
 
 function copyWidgetSnippet() {
