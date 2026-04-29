@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Airmate Admin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f7;color:#0c1e3d;min-height:100vh}
+.topbar{background:#0c1e3d;padding:0 32px;display:flex;align-items:center;gap:12px;height:56px;border-bottom:1px solid rgba(255,255,255,.1)}
+.logo{font-size:18px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.logo span{color:#22c55e}
+.badge{background:#22c55e;color:#fff;font-size:10px;padding:2px 8px;border-radius:99px;font-weight:700;letter-spacing:.05em}
+.main{max-width:860px;margin:0 auto;padding:32px 20px}
+h2{font-size:22px;font-weight:800;margin-bottom:6px;color:#0c1e3d}
+.subtitle{font-size:14px;color:#6b7d96;margin-bottom:28px}
+.card{background:#fff;border:1.5px solid #e4e9f2;border-radius:14px;padding:24px;margin-bottom:20px}
+.card-title{font-size:11px;font-weight:700;color:#8a97b0;text-transform:uppercase;letter-spacing:.08em;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.field{margin-bottom:14px}
+label{display:block;font-size:12px;font-weight:600;color:#4a5568;margin-bottom:5px}
+.form-input{width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;color:#0c1e3d;font-size:13px;outline:none;transition:border .2s;background:#fff}
+.form-input:focus{border-color:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.1)}
+textarea.form-input{resize:vertical;min-height:70px}
+.days-row{display:flex;gap:6px;flex-wrap:wrap}
+.day-lbl{display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;background:#fff;border:1.5px solid #e2e8f0;border-radius:6px;padding:5px 10px;transition:all .15s;user-select:none}
+.day-lbl input{display:none}
+.day-lbl.on{background:#f0fdf4;border-color:#22c55e;color:#16a34a;font-weight:600}
+
+/* Servicios */
+.svc-row{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:8px}
+.svc-row-top{display:grid;grid-template-columns:1fr 90px 72px 36px 28px;gap:8px;align-items:center}
+.svc-color-dot{width:28px;height:28px;border-radius:50%;border:2px solid #e2e8f0;cursor:pointer;padding:0;-webkit-appearance:none;background:none}
+.btn-rm{background:#fee2e2;border:none;border-radius:6px;padding:0;width:28px;height:28px;cursor:pointer;color:#ef4444;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.btn-add{background:none;border:1.5px dashed #e2e8f0;color:#8a97b0;padding:10px;border-radius:10px;cursor:pointer;width:100%;font-size:13px;transition:all .2s}
+.btn-add:hover{border-color:#22c55e;color:#22c55e}
+
+/* Trabajadores */
+.worker-card{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:10px}
+.worker-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.worker-name-input{flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:13px;color:#0c1e3d;outline:none}
+.worker-name-input:focus{border-color:#22c55e}
+.section-label{font-size:11px;font-weight:700;color:#8a97b0;letter-spacing:.05em;margin-bottom:6px}
+.shift-row{display:grid;grid-template-columns:auto auto 1fr 28px;gap:8px;align-items:center;margin-bottom:6px;font-size:12px}
+.shift-time{border:1.5px solid #e2e8f0;border-radius:6px;padding:5px 8px;font-size:12px;color:#0c1e3d;outline:none}
+.shift-time:focus{border-color:#22c55e}
+.svc-tag{display:inline-flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;background:#fff;border:1.5px solid #e2e8f0;border-radius:6px;padding:4px 10px;transition:all .15s;margin:0 4px 4px 0}
+.svc-tag input{display:none}
+.svc-tag.on{background:#f0fdf4;border-color:#22c55e;color:#16a34a;font-weight:600}
+
+/* Botón crear */
+.btn-primary{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;padding:14px 32px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:opacity .2s;box-shadow:0 4px 16px rgba(34,197,94,.3)}
+.btn-primary:hover{opacity:.9}
+.btn-primary:disabled{background:#e2e8f0;color:#8a97b0;box-shadow:none;cursor:not-allowed}
+
+/* Result */
+.result{background:#f0fdf4;border:2px solid #22c55e;border-radius:14px;padding:24px;margin-top:20px;display:none}
+.result h3{color:#16a34a;font-size:16px;font-weight:700;margin-bottom:16px}
+.code-box{background:#0c1e3d;border-radius:8px;padding:14px 16px;font-family:monospace;font-size:12px;color:#a5f3fc;word-break:break-all;position:relative;margin-bottom:10px}
+.copy-btn{position:absolute;top:8px;right:8px;background:#1e3a5f;border:none;color:#94a3b8;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px}
+.copy-btn:hover{background:#22c55e;color:#fff}
+.res-link{font-size:13px;color:#16a34a;margin-bottom:6px}
+.res-link a{color:#16a34a}
+
+/* Login */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login-box{background:#fff;border:1.5px solid #e4e9f2;border-radius:16px;padding:40px;width:360px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+.login-box h2{margin-bottom:6px}
+.login-box p{color:#6b7d96;font-size:14px;margin-bottom:24px}
+
+.toast{position:fixed;bottom:24px;right:24px;background:#22c55e;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+.toast.err{background:#ef4444}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginScreen">
+  <div class="login-box">
+    <div style="font-size:40px;margin-bottom:10px">⚡</div>
+    <h2>Airmate Admin</h2>
+    <p>Panel interno de gestión de clientes</p>
+    <div class="field"><input class="form-input" type="password" id="loginPass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-primary" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <div class="topbar">
+    <span class="logo">Air<span>mate</span></span>
+    <span class="badge">ADMIN</span>
+    <span style="margin-left:auto;font-size:12px;color:rgba(255,255,255,.4)" id="clientCount"></span>
+  </div>
+
+  <div class="main">
+    <h2>Nuevo Cliente</h2>
+    <p class="subtitle">Rellena los datos y pulsa Crear — el bot_config se crea automáticamente en Supabase.</p>
+
+    <!-- DATOS BÁSICOS -->
+    <div class="card">
+      <div class="card-title">🏢 Datos del negocio</div>
+      <div class="grid2">
+        <div class="field">
+          <label>Nombre del negocio *</label>
+          <input class="form-input" id="botName" placeholder="Clínica Estética Lucía" oninput="autoSlug()">
+        </div>
+        <div class="field">
+          <label>Slug único *</label>
+          <input class="form-input" id="slug" placeholder="clinica-lucia">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>Email del propietario *</label>
+          <input class="form-input" id="ownerEmail" type="email" placeholder="info@negocio.es">
+        </div>
+        <div class="field">
+          <label>WhatsApp del negocio</label>
+          <input class="form-input" id="agentWa" placeholder="34600000000">
+        </div>
+      </div>
+      <div class="field">
+        <label>Saludo del bot</label>
+        <input class="form-input" id="greeting" placeholder="¡Hola! Soy el asistente de [negocio]. ¿En qué puedo ayudarte?">
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>Color principal del bot</label>
+          <input class="form-input" id="botColor" type="color" value="#0c1e3d" style="height:40px;padding:4px 8px">
+        </div>
+        <div class="field">
+          <label>Emoji del negocio</label>
+          <input class="form-input" id="botEmoji" placeholder="💆" maxlength="4">
+        </div>
+      </div>
+    </div>
+
+    <!-- HORARIO -->
+    <div class="card">
+      <div class="card-title">🕐 Horario</div>
+      <div class="field">
+        <label>Texto descriptivo del horario (para el bot)</label>
+        <input class="form-input" id="scheduleText" placeholder="Lun–Vie: 10:00–14:00 y 17:00–20:00 | Sáb: 10:00–14:00 | Dom: cerrado">
+      </div>
+      <div class="grid3">
+        <div class="field">
+          <label>Apertura general</label>
+          <input class="form-input" id="openTime" type="time" value="09:00">
+        </div>
+        <div class="field">
+          <label>Cierre general</label>
+          <input class="form-input" id="closeTime" type="time" value="18:00">
+        </div>
+        <div class="field">
+          <label>Slot reservas (min)</label>
+          <input class="form-input" id="slotMin" type="number" value="60" min="15" step="15">
+        </div>
+      </div>
+      <div class="field">
+        <label>Días abiertos</label>
+        <div class="days-row" id="daysRow">
+          <label class="day-lbl on" data-day="1"><input type="checkbox" checked value="1">Lun</label>
+          <label class="day-lbl on" data-day="2"><input type="checkbox" checked value="2">Mar</label>
+          <label class="day-lbl on" data-day="3"><input type="checkbox" checked value="3">Mié</label>
+          <label class="day-lbl on" data-day="4"><input type="checkbox" checked value="4">Jue</label>
+          <label class="day-lbl on" data-day="5"><input type="checkbox" checked value="5">Vie</label>
+          <label class="day-lbl" data-day="6"><input type="checkbox" value="6">Sáb</label>
+          <label class="day-lbl" data-day="0"><input type="checkbox" value="0">Dom</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- SERVICIOS -->
+    <div class="card">
+      <div class="card-title">✂️ Servicios <span id="svcsCount" style="background:#f0fdf4;color:#16a34a;padding:1px 8px;border-radius:99px;font-size:11px;margin-left:4px">0</span></div>
+      <div style="display:grid;grid-template-columns:1fr 90px 72px 36px 28px;gap:8px;padding:0 2px;margin-bottom:6px">
+        <span style="font-size:11px;color:#8a97b0;font-weight:700">SERVICIO</span>
+        <span style="font-size:11px;color:#8a97b0;font-weight:700">PRECIO</span>
+        <span style="font-size:11px;color:#8a97b0;font-weight:700">DURACIÓN</span>
+        <span style="font-size:11px;color:#8a97b0;font-weight:700">COLOR</span>
+        <span></span>
+      </div>
+      <div id="svcsContainer"></div>
+      <button class="btn-add" onclick="addSvc()">+ Añadir servicio</button>
+    </div>
+
+    <!-- TRABAJADORES -->
+    <div class="card">
+      <div class="card-title">👤 Trabajadores <span id="workersCount" style="background:#f0fdf4;color:#16a34a;padding:1px 8px;border-radius:99px;font-size:11px;margin-left:4px">0</span></div>
+      <div id="workersContainer"></div>
+      <button class="btn-add" onclick="addWorker()">+ Añadir trabajador</button>
+    </div>
+
+    <button class="btn-primary" id="createBtn" onclick="createClient()">⚡ Crear cliente</button>
+
+    <!-- RESULTADO -->
+    <div class="result" id="resultBox">
+      <h3>✅ Cliente creado correctamente</h3>
+      <div class="res-link">🔗 Panel: <a id="resPanel" href="#" target="_blank"></a></div>
+      <p style="font-size:12px;color:#4a5568;margin-bottom:8px">Código widget para el cliente:</p>
+      <div class="code-box">
+        <button class="copy-btn" onclick="copyWidget()">Copiar</button>
+        <span id="resWidgetCode"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL = 'https://vjofxmfwdybktpwiuanc.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+const ADMIN_PASS = 'airmate2024';
+const SB_H = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
+
+let agentSvcs = [];
+let agentWorkers = [];
+
+/* ── LOGIN ── */
+function doLogin() {
+  if (document.getElementById('loginPass').value === ADMIN_PASS) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadClientCount();
+  } else { toast('Contraseña incorrecta', true); }
+}
+
+async function loadClientCount() {
+  const r = await fetch(`${SB_URL}/rest/v1/bot_configs?select=id`, { headers: SB_H });
+  const d = await r.json();
+  document.getElementById('clientCount').textContent = `${d.length} clientes`;
+}
+
+/* ── AUTO SLUG ── */
+function autoSlug() {
+  const v = document.getElementById('botName').value;
+  document.getElementById('slug').value = v.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+}
+
+/* ── DÍAS ── */
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.day-lbl').forEach(lbl => {
+    lbl.addEventListener('click', () => {
+      const cb = lbl.querySelector('input');
+      cb.checked = !cb.checked;
+      lbl.classList.toggle('on', cb.checked);
+    });
+  });
+});
+
+function getActiveDays() {
+  return [...document.querySelectorAll('#daysRow input:checked')].map(c => parseInt(c.value));
+}
+
+/* ── SERVICIOS ── */
+const SVC_COLORS = ['#22c55e','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
+let svcIdx = 0;
+
+function addSvc() {
+  const id = Date.now();
+  const color = SVC_COLORS[svcIdx % SVC_COLORS.length];
+  svcIdx++;
+  agentSvcs.push({ id, name:'', price:'', duration:60, color });
+  renderSvcs();
+}
+
+function removeSvc(id) {
+  agentSvcs = agentSvcs.filter(s => s.id !== id);
+  renderSvcs();
+  renderWorkers();
+}
+
+function renderSvcs() {
+  const el = document.getElementById('svcsContainer');
+  document.getElementById('svcsCount').textContent = agentSvcs.length;
+  if (!agentSvcs.length) { el.innerHTML = ''; return; }
+  el.innerHTML = agentSvcs.map(s => `
+    <div class="svc-row" id="svcrow-${s.id}">
+      <div class="svc-row-top">
+        <input class="form-input" style="margin:0;padding:7px 10px;font-size:13px" placeholder="Nombre del servicio" value="${esc(s.name)}"
+          oninput="agentSvcs.find(x=>x.id===${s.id}).name=this.value;renderWorkers()">
+        <input class="form-input" style="margin:0;padding:7px 10px;font-size:13px" placeholder="40€" value="${esc(s.price)}"
+          oninput="agentSvcs.find(x=>x.id===${s.id}).price=this.value">
+        <input class="form-input" type="number" min="15" step="15" style="margin:0;padding:7px 10px;font-size:13px" placeholder="min" value="${s.duration}"
+          oninput="agentSvcs.find(x=>x.id===${s.id}).duration=+this.value">
+        <input type="color" value="${s.color}" class="svc-color-dot" title="Color del servicio"
+          oninput="agentSvcs.find(x=>x.id===${s.id}).color=this.value">
+        <button class="btn-rm" onclick="removeSvc(${s.id})">×</button>
+      </div>
+    </div>`).join('');
+}
+
+/* ── TRABAJADORES ── */
+function addWorker() {
+  agentWorkers.push({ id: Date.now(), name:'', svcs:[], days:[], shifts:[] });
+  renderWorkers();
+}
+
+function removeWorker(id) {
+  agentWorkers = agentWorkers.filter(w => w.id !== id);
+  renderWorkers();
+}
+
+function toggleWorkerSvc(wid, sname, checked) {
+  const w = agentWorkers.find(x=>x.id===wid);
+  if (!w) return;
+  if (checked) { if (!w.svcs.includes(sname)) w.svcs.push(sname); }
+  else w.svcs = w.svcs.filter(s=>s!==sname);
+  renderWorkers();
+}
+
+function toggleWorkerDay(wid, day, checked) {
+  const w = agentWorkers.find(x=>x.id===wid);
+  if (!w) return;
+  if (checked) { if (!w.days.includes(day)) w.days.push(day); }
+  else w.days = w.days.filter(d=>d!==day);
+  renderWorkers();
+}
+
+function addShift(wid) {
+  const w = agentWorkers.find(x=>x.id===wid);
+  if (!w) return;
+  if (!w.shifts) w.shifts = [];
+  w.shifts.push({ open:'09:00', close:'14:00', days: [...(w.days||[])] });
+  renderWorkers();
+}
+
+function removeShift(wid, idx) {
+  const w = agentWorkers.find(x=>x.id===wid);
+  if (w && w.shifts) { w.shifts.splice(idx,1); renderWorkers(); }
+}
+
+function updateShift(wid, idx, field, val) {
+  const w = agentWorkers.find(x=>x.id===wid);
+  if (w && w.shifts && w.shifts[idx]) { w.shifts[idx][field] = val; }
+}
+
+function renderWorkers() {
+  const el = document.getElementById('workersContainer');
+  document.getElementById('workersCount').textContent = agentWorkers.length;
+  if (!agentWorkers.length) { el.innerHTML = ''; return; }
+  const svcNames = agentSvcs.filter(s=>s.name).map(s=>s.name);
+  const dayLabels = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  el.innerHTML = agentWorkers.map(w => `
+    <div class="worker-card">
+      <div class="worker-header">
+        <span style="font-size:18px">👤</span>
+        <input class="worker-name-input" placeholder="Nombre del trabajador (ej: Ana)" value="${esc(w.name)}"
+          oninput="agentWorkers.find(x=>x.id===${w.id}).name=this.value">
+        <button class="btn-rm" onclick="removeWorker(${w.id})">×</button>
+      </div>
+
+      <div class="section-label">🕐 DÍAS QUE TRABAJA</div>
+      <div class="days-row" style="margin-bottom:12px">
+        ${dayLabels.map((dl,di) => {
+          const on = w.days&&w.days.includes(di);
+          return `<label class="day-lbl ${on?'on':''}" onclick="toggleWorkerDay(${w.id},${di},!${on});event.preventDefault()">
+            ${dl}
+          </label>`;
+        }).join('')}
+      </div>
+
+      <div class="section-label" style="margin-bottom:6px">⏱️ TURNOS (deja vacío para usar horario general del negocio)</div>
+      ${(w.shifts||[]).map((sh,si) => `
+        <div class="shift-row">
+          <label style="color:#4a5568">Entrada</label>
+          <input type="time" class="shift-time" value="${sh.open}" onchange="updateShift(${w.id},${si},'open',this.value)">
+          <input type="time" class="shift-time" value="${sh.close}" onchange="updateShift(${w.id},${si},'close',this.value)" style="margin-left:8px">
+          <button class="btn-rm" onclick="removeShift(${w.id},${si})">×</button>
+        </div>`).join('')}
+      <button class="btn-add" style="padding:6px;font-size:12px;margin-bottom:12px" onclick="addShift(${w.id})">+ Añadir turno</button>
+
+      ${svcNames.length ? `
+        <div class="section-label">✂️ SERVICIOS QUE REALIZA</div>
+        <div style="display:flex;flex-wrap:wrap;margin-top:6px">
+          ${svcNames.map(sn => {
+            const on = w.svcs&&w.svcs.includes(sn);
+            const svc = agentSvcs.find(s=>s.name===sn);
+            return `<label class="svc-tag ${on?'on':''}" onclick="toggleWorkerSvc(${w.id},'${sn}',${!on});event.preventDefault()">
+              ${svc ? `<span style="width:8px;height:8px;border-radius:50%;background:${svc.color};display:inline-block"></span>` : ''}
+              ${esc(sn)}
+            </label>`;
+          }).join('')}
+        </div>` : '<div style="font-size:12px;color:#8a97b0">Añade servicios primero para asignarlos.</div>'}
+    </div>`).join('');
+}
+
+/* ── CREAR CLIENTE ── */
+async function createClient() {
+  const btn = document.getElementById('createBtn');
+  const botName = document.getElementById('botName').value.trim();
+  const slug = document.getElementById('slug').value.trim();
+  const ownerEmail = document.getElementById('ownerEmail').value.trim();
+
+  if (!botName || !slug || !ownerEmail) return toast('Rellena nombre, slug y email', true);
+  const svcs = agentSvcs.filter(s=>s.name);
+  if (!svcs.length) return toast('Añade al menos un servicio', true);
+
+  btn.disabled = true; btn.textContent = 'Creando...';
+
+  try {
+    const check = await fetch(`${SB_URL}/rest/v1/bot_configs?slug=eq.${encodeURIComponent(slug)}&select=id`, { headers: SB_H });
+    const existing = await check.json();
+    if (existing.length) { toast('Slug ya existe', true); btn.disabled=false; btn.textContent='⚡ Crear cliente'; return; }
+
+    const days = getActiveDays();
+    const workers = agentWorkers.map(w => ({
+      name: w.name || 'Trabajador',
+      svcs: w.svcs,
+      days: w.days.length ? w.days : days,
+      ...(w.shifts && w.shifts.length ? { shifts: w.shifts.map(sh => ({ open:sh.open, close:sh.close, days: w.days.length ? w.days : days })) } : {})
+    }));
+
+    const payload = {
+      slug,
+      bot_name: botName,
+      owner_email: ownerEmail,
+      bot_color: document.getElementById('botColor').value,
+      bot_emoji: document.getElementById('botEmoji').value || '🤖',
+      greeting: document.getElementById('greeting').value.trim() || `¡Hola! Soy el asistente de ${botName}. ¿En qué puedo ayudarte?`,
+      agent_wa: document.getElementById('agentWa').value.trim() || null,
+      open_time: document.getElementById('openTime').value,
+      close_time: document.getElementById('closeTime').value,
+      slot_min: parseInt(document.getElementById('slotMin').value) || 60,
+      open_days: days.join(','),
+      schedule_text: document.getElementById('scheduleText').value.trim() || null,
+      svcs_json: JSON.stringify(svcs.map(s => ({ name:s.name, price:s.price, duration:s.duration, color:s.color }))),
+      workers_json: workers.length ? JSON.stringify(workers) : null,
+      reminder_hours: 24,
+      updated_at: new Date().toISOString()
+    };
+
+    const r = await fetch(`${SB_URL}/rest/v1/bot_configs`, {
+      method: 'POST',
+      headers: { ...SB_H, Prefer: 'return=minimal' },
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) throw new Error(await r.text());
+
+    const panelUrl = `https://airmateai.github.io/airmate/panel.html?c=${slug}`;
+    const widgetCode = `<div id="airmate-root" data-slug="${slug}"></div>\n<script src="https://airmateai.github.io/airmate/airmate-widget.js"><\/script>`;
+
+    document.getElementById('resPanel').href = panelUrl;
+    document.getElementById('resPanel').textContent = panelUrl;
+    document.getElementById('resWidgetCode').textContent = widgetCode;
+    document.getElementById('resultBox').style.display = 'block';
+    document.getElementById('resultBox').scrollIntoView({ behavior:'smooth' });
+    toast('✅ Cliente creado');
+    loadClientCount();
+  } catch(e) { toast('Error: ' + e.message, true); }
+
+  btn.disabled = false; btn.textContent = '⚡ Crear cliente';
+}
+
+function copyWidget() {
+  navigator.clipboard.writeText(document.getElementById('resWidgetCode').textContent).then(()=>toast('Copiado ✅'));
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function toast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (err?' err':'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Configurador de Traje · José Acosta Sastre</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#0f172a;color:#f8fafc;min-height:100vh;font-size:14px;}
+
+/* HEADER */
+.header{background:rgba(15,23,42,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.07);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.header-brand{display:flex;align-items:center;gap:10px;}
+.header-icon{width:36px;height:36px;background:#22c55e;border-radius:9px;display:grid;place-items:center;flex-shrink:0;}
+.header-name{font-size:17px;font-weight:700;color:#fff;}
+.header-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:1px;}
+.header-cta{display:flex;align-items:center;gap:10px;}
+.cta-btn{padding:9px 18px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;transition:background .15s;}
+.cta-btn:hover{background:#16a34a;}
+.cta-secondary{padding:9px 16px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.1);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;transition:all .15s;}
+.cta-secondary:hover{background:rgba(255,255,255,.12);color:#fff;}
+
+/* HERO */
+.hero{padding:48px 24px 32px;text-align:center;max-width:680px;margin:0 auto;}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);color:#22c55e;font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;margin-bottom:20px;text-transform:uppercase;letter-spacing:.06em;}
+.hero h1{font-size:clamp(28px,5vw,46px);font-weight:700;line-height:1.2;color:#fff;margin-bottom:14px;}
+.hero h1 span{color:#22c55e;}
+.hero p{font-size:15px;color:rgba(255,255,255,.5);line-height:1.6;max-width:520px;margin:0 auto;}
+
+/* LAYOUT */
+.configurador{display:flex;gap:0;max-width:1200px;margin:0 auto;padding:0 16px 60px;}
+
+/* PREVIEW */
+.preview-col{flex:0 0 340px;position:sticky;top:70px;height:calc(100vh - 70px);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px 16px;}
+.preview-frame{background:linear-gradient(160deg,#1e293b 0%,#0f172a 100%);border-radius:20px;width:100%;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.06);position:relative;overflow:hidden;min-height:480px;}
+.preview-frame::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 50% at 50% 30%, rgba(34,197,94,.04), transparent);}
+.suit-photo-wrap{position:relative;width:220px;border-radius:16px;overflow:hidden;box-shadow:0 28px 72px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.07);isolation:isolate;z-index:1;}
+.suit-photo-wrap img{width:100%;display:block;vertical-align:top;}
+#cfg-color-layer{position:absolute;inset:0;mix-blend-mode:color;transition:background .4s ease;pointer-events:none;}
+.photo-credit{font-size:9px;color:rgba(255,255,255,.15);margin-top:8px;text-align:center;}
+.preview-label{margin-top:14px;font-size:11px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.06em;}
+.preview-name{margin-top:4px;font-size:14px;font-weight:600;color:rgba(255,255,255,.7);text-align:center;}
+
+/* OPTIONS */
+.options-col{flex:1;padding:24px 0 0 32px;min-width:0;}
+
+.section{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:20px;margin-bottom:16px;}
+.section-title{font-size:11px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;}
+
+/* Swatches */
+.swatches{display:flex;flex-wrap:wrap;gap:10px;}
+.swatch{width:40px;height:40px;border-radius:10px;cursor:pointer;border:3px solid transparent;transition:all .15s;position:relative;}
+.swatch.active{border-color:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.4);}
+.swatch:hover{transform:scale(1.12);}
+.swatch-label{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:9px;color:rgba(255,255,255,.4);opacity:0;pointer-events:none;transition:opacity .15s;}
+.swatch:hover .swatch-label{opacity:1;}
+
+/* Lapel options */
+.lapel-grid{display:flex;gap:10px;}
+.lapel-opt{flex:1;padding:12px 8px;background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;text-align:center;transition:all .15s;color:rgba(255,255,255,.5);font-size:11px;font-weight:600;}
+.lapel-opt.active{border-color:#22c55e;background:rgba(34,197,94,.08);color:#22c55e;}
+.lapel-opt:hover{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.8);}
+.lapel-icon{display:block;margin:0 auto 6px;width:34px;height:42px;}
+
+/* Button count/color */
+.btn-count-row{display:flex;gap:10px;}
+.cnt-opt{flex:1;padding:10px 8px;background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;text-align:center;transition:all .15s;color:rgba(255,255,255,.5);font-size:13px;font-weight:700;}
+.cnt-opt.active{border-color:#22c55e;background:rgba(34,197,94,.08);color:#22c55e;}
+.cnt-opt:hover{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.8);}
+
+/* Checkboxes */
+.check-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;}
+.check-row:last-child{border-bottom:none;}
+.check-row input{width:18px;height:18px;accent-color:#22c55e;cursor:pointer;}
+.check-text{flex:1;}
+.check-name{font-size:13px;font-weight:500;color:#f8fafc;}
+.check-sub{font-size:11px;color:rgba(255,255,255,.35);margin-top:1px;}
+
+/* Summary card */
+.summary{background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(34,197,94,.03));border:1px solid rgba(34,197,94,.2);border-radius:14px;padding:20px;}
+.summary-title{font-size:14px;font-weight:700;color:#22c55e;margin-bottom:14px;}
+.summary-line{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;}
+.summary-line:last-child{border-bottom:none;}
+.summary-key{color:rgba(255,255,255,.4);}
+.summary-val{color:#f8fafc;font-weight:600;}
+
+/* CTA Card */
+.cta-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:22px;text-align:center;}
+.cta-card-emoji{font-size:32px;margin-bottom:10px;}
+.cta-card h3{font-size:17px;font-weight:700;color:#fff;margin-bottom:8px;}
+.cta-card p{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:20px;line-height:1.6;}
+.cta-big{display:block;width:100%;padding:14px;background:#22c55e;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;transition:background .15s;margin-bottom:10px;}
+.cta-big:hover{background:#16a34a;}
+.cta-wa{display:block;width:100%;padding:13px;background:#25d366;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;transition:background .15s;}
+.cta-wa:hover{background:#1ebe5d;}
+.cta-note{font-size:11px;color:rgba(255,255,255,.3);margin-top:12px;line-height:1.5;}
+
+/* BOOKING MODAL */
+.bk-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;}
+.bk-overlay.open{display:flex;}
+.bk-modal{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:28px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;}
+.bk-modal h3{font-size:20px;font-weight:700;color:#fff;margin-bottom:4px;}
+.bk-modal .bk-sub{font-size:13px;color:rgba(255,255,255,.4);margin-bottom:22px;}
+.bk-design-badge{display:flex;align-items:center;gap:10px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 14px;margin-bottom:20px;font-size:12px;color:rgba(255,255,255,.7);}
+.bk-design-badge strong{color:#22c55e;}
+.bk-field{margin-bottom:14px;}
+.bk-field label{display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+.bk-field input,.bk-field textarea,.bk-field select{width:100%;padding:10px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:9px;color:#f8fafc;font-size:14px;font-family:inherit;outline:none;transition:border .15s;}
+.bk-field input:focus,.bk-field textarea:focus,.bk-field select:focus{border-color:#22c55e;}
+.bk-field select option{background:#1e293b;}
+.bk-row{display:flex;gap:10px;}
+.bk-row .bk-field{flex:1;}
+.bk-actions{display:flex;gap:10px;margin-top:20px;}
+.bk-submit{flex:1;padding:13px;background:#22c55e;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;}
+.bk-submit:hover{background:#16a34a;}
+.bk-submit:disabled{background:#166534;cursor:not-allowed;}
+.bk-cancel{padding:13px 18px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);border-radius:10px;font-size:14px;cursor:pointer;font-family:inherit;}
+.bk-success{text-align:center;padding:20px 0;}
+.bk-success .bk-check{font-size:48px;margin-bottom:12px;}
+.bk-success h4{font-size:20px;font-weight:700;color:#22c55e;margin-bottom:8px;}
+.bk-success p{font-size:13px;color:rgba(255,255,255,.5);line-height:1.6;}
+
+/* FOOTER */
+.footer{text-align:center;padding:32px 24px;border-top:1px solid rgba(255,255,255,.06);}
+.footer p{font-size:12px;color:rgba(255,255,255,.25);}
+.footer a{color:rgba(255,255,255,.35);text-decoration:none;}
+.footer a:hover{color:rgba(255,255,255,.6);}
+
+/* Powered by */
+.powered{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:11px;color:rgba(255,255,255,.2);}
+.powered-dot{width:5px;height:5px;border-radius:50%;background:#22c55e;}
+
+/* MOBILE */
+@media(max-width:768px){
+  .configurador{flex-direction:column;padding:0 12px 40px;}
+  .preview-col{position:relative;top:auto;height:auto;padding:16px 12px;}
+  .preview-frame{min-height:300px;height:340px;}
+  .suit-photo-wrap{width:160px;}
+  .options-col{padding:0;}
+  .header-sub,.cta-secondary{display:none;}
+}
+@media(max-width:480px){
+  .hero{padding:32px 16px 20px;}
+  .lapel-grid{flex-wrap:wrap;}
+  .lapel-opt{min-width:calc(33.33% - 8px);}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-brand">
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    </div>
+    <div>
+      <div class="header-name">José Acosta · Sastre</div>
+      <div class="header-sub">Confección a medida · La Laguna, Tenerife</div>
+    </div>
+  </div>
+  <div class="header-cta">
+    <a href="tel:+34600000000" class="cta-secondary">📞 Llamar</a>
+    <a href="https://wa.me/34600000000" target="_blank" class="cta-btn">Reservar consulta</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">✦ Configurador interactivo</div>
+  <h1>Diseña tu <span>traje a medida</span></h1>
+  <p>Explora combinaciones de tela, solapas y detalles. Cuando tengas tu diseño, contacta con José para una consulta personalizada.</p>
+</div>
+
+<!-- CONFIGURADOR -->
+<div class="configurador">
+
+  <!-- PREVIEW -->
+  <div class="preview-col">
+    <div class="preview-frame">
+      <div class="suit-photo-wrap">
+        <img id="suit-base-photo" src="https://images.unsplash.com/photo-1639040538847-a47ef0dc004e?w=700&q=85&auto=format&fit=crop" alt="Traje a medida José Acosta"/>
+        <div id="cfg-color-layer"></div>
+      </div>
+      <div class="photo-credit">© Unsplash · referencia visual</div>
+    </div>
+    <div class="preview-label">Vista previa</div>
+    <div class="preview-name" id="cfg-preview-name">Traje clásico</div>
+  </div>
+
+  <!-- OPTIONS -->
+  <div class="options-col">
+
+    <!-- COLOR TELA -->
+    <div class="section">
+      <div class="section-title">Color de Tela</div>
+      <div class="swatches" id="cfg-color-swatches">
+        <div class="swatch active" data-val="#1a2744" style="background:#1a2744"><span class="swatch-label">Azul marino</span></div>
+        <div class="swatch" data-val="#1a1a1a" style="background:#1a1a1a;border-color:rgba(255,255,255,.08)"><span class="swatch-label">Negro</span></div>
+        <div class="swatch" data-val="#3d3d3d" style="background:#3d3d3d"><span class="swatch-label">Carbón</span></div>
+        <div class="swatch" data-val="#4a4a5a" style="background:#4a4a5a"><span class="swatch-label">Gris oscuro</span></div>
+        <div class="swatch" data-val="#7a7a8a" style="background:#7a7a8a"><span class="swatch-label">Gris medio</span></div>
+        <div class="swatch" data-val="#c4a882" style="background:#c4a882"><span class="swatch-label">Camel</span></div>
+        <div class="swatch" data-val="#6b4423" style="background:#6b4423"><span class="swatch-label">Marrón</span></div>
+        <div class="swatch" data-val="#1e2d5a" style="background:#1e2d5a"><span class="swatch-label">Medianoche</span></div>
+      </div>
+    </div>
+
+    <!-- SOLAPAS -->
+    <div class="section">
+      <div class="section-title">Estilo de Solapa</div>
+      <div class="lapel-grid">
+        <div class="lapel-opt active" data-key="lapel" data-val="notch" onclick="setCfgOpt(this)">
+          <svg class="lapel-icon" viewBox="0 0 34 44" fill="none">
+            <path d="M9 0 L17 5 L17 20 L9 0Z" fill="rgba(255,255,255,.6)"/>
+            <path d="M25 0 L17 5 L17 20 L25 0Z" fill="rgba(255,255,255,.35)"/>
+            <path d="M7 0 L17 5 L9 13 L17 20 L17 44 L3 44 L0 24Z" fill="rgba(255,255,255,.15)"/>
+          </svg>
+          Muesca
+        </div>
+        <div class="lapel-opt" data-key="lapel" data-val="peak" onclick="setCfgOpt(this)">
+          <svg class="lapel-icon" viewBox="0 0 34 44" fill="none">
+            <path d="M2 0 L17 7 L17 22 L2 0Z" fill="rgba(255,255,255,.6)"/>
+            <path d="M32 0 L17 7 L17 22 L32 0Z" fill="rgba(255,255,255,.35)"/>
+            <path d="M2 0 L17 7 L17 44 L2 44Z" fill="rgba(255,255,255,.15)"/>
+          </svg>
+          Pico
+        </div>
+        <div class="lapel-opt" data-key="lapel" data-val="shawl" onclick="setCfgOpt(this)">
+          <svg class="lapel-icon" viewBox="0 0 34 44" fill="none">
+            <path d="M9 0 Q17 5 17 22 Q11 12 9 0Z" fill="rgba(255,255,255,.6)"/>
+            <path d="M25 0 Q17 5 17 22 Q23 12 25 0Z" fill="rgba(255,255,255,.35)"/>
+            <path d="M9 0 Q3 14 4 44 L17 44 L17 22 Q17 5 9 0Z" fill="rgba(255,255,255,.15)"/>
+          </svg>
+          Chal
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTONES -->
+    <div class="section">
+      <div class="section-title">Botones</div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap">
+        <div style="flex:1;min-width:140px">
+          <div style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:8px">Número de botones</div>
+          <div class="btn-count-row">
+            <div class="cnt-opt" data-key="buttons" data-val="1" onclick="setCfgOpt(this)">1</div>
+            <div class="cnt-opt active" data-key="buttons" data-val="2" onclick="setCfgOpt(this)">2</div>
+            <div class="cnt-opt" data-key="buttons" data-val="3" onclick="setCfgOpt(this)">3</div>
+          </div>
+        </div>
+        <div style="flex:1.4;min-width:160px">
+          <div style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:8px">Color de botones</div>
+          <div class="swatches" id="cfg-btncolor-swatches">
+            <div class="swatch active" data-val="#c9a227" style="background:#c9a227;border-radius:50%"><span class="swatch-label">Dorado</span></div>
+            <div class="swatch" data-val="#b0b8c1" style="background:#b0b8c1;border-radius:50%"><span class="swatch-label">Plateado</span></div>
+            <div class="swatch" data-val="#1a1a1a" style="background:#1a1a1a;border-radius:50%;border-color:rgba(255,255,255,.15)"><span class="swatch-label">Negro</span></div>
+            <div class="swatch" data-val="#e8ddd0" style="background:radial-gradient(circle,#f5ede0,#c9b8a8);border-radius:50%"><span class="swatch-label">Nácar</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CORBATA -->
+    <div class="section">
+      <div class="section-title">Color de Corbata</div>
+      <div class="swatches" id="cfg-tie-swatches">
+        <div class="swatch active" data-val="#8b1a1a" style="background:#8b1a1a"><span class="swatch-label">Burdeos</span></div>
+        <div class="swatch" data-val="#1a3a8b" style="background:#1a3a8b"><span class="swatch-label">Azul</span></div>
+        <div class="swatch" data-val="#1a6b2a" style="background:#1a6b2a"><span class="swatch-label">Verde</span></div>
+        <div class="swatch" data-val="#555" style="background:#555"><span class="swatch-label">Gris</span></div>
+        <div class="swatch" data-val="#c9a227" style="background:#c9a227"><span class="swatch-label">Dorado</span></div>
+        <div class="swatch" data-val="#1a1a1a" style="background:#1a1a1a;border-color:rgba(255,255,255,.15)"><span class="swatch-label">Negro</span></div>
+      </div>
+    </div>
+
+    <!-- ESTILO CORBATA -->
+    <div class="section">
+      <div class="section-title">Estilo de Corbata</div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <label style="flex:1;display:flex;align-items:center;gap:6px;cursor:pointer;padding:10px 12px;border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;font-size:13px;color:rgba(255,255,255,0.85)">
+          <input type="radio" name="cfgTieStyle" value="regular" checked onchange="updateCfgPreview()"> Corbata
+        </label>
+        <label style="flex:1;display:flex;align-items:center;gap:6px;cursor:pointer;padding:10px 12px;border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;font-size:13px;color:rgba(255,255,255,0.85)">
+          <input type="radio" name="cfgTieStyle" value="bow" onchange="updateCfgPreview()"> Pajarita
+        </label>
+      </div>
+    </div>
+
+    <!-- DETALLES -->
+    <div class="section">
+      <div class="section-title">Detalles</div>
+      <label class="check-row">
+        <input type="checkbox" id="cfg-pinzas" onchange="updateCfgPreview()">
+        <div class="check-text">
+          <div class="check-name">Pinzas en pantalón</div>
+          <div class="check-sub">Pliegue frontal clásico</div>
+        </div>
+      </label>
+      <label class="check-row">
+        <input type="checkbox" id="cfg-pqs" onchange="updateCfgPreview()">
+        <div class="check-text">
+          <div class="check-name">Pañuelo de bolsillo</div>
+          <div class="check-sub">Bolsillo del pecho</div>
+        </div>
+      </label>
+    </div>
+
+    <!-- RESUMEN -->
+    <div class="summary" id="cfg-summary">
+      <div class="summary-title">✦ Tu diseño</div>
+      <div id="cfg-summary-lines"></div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-card" style="margin-top:16px">
+      <div class="cta-card-emoji">✂️</div>
+      <h3>¿Te gusta lo que ves?</h3>
+      <p>Reserva tu consulta gratuita. José recibirá tu diseño directamente y podrá preparar telas y opciones antes de que llegues.</p>
+      <button class="cta-big" onclick="openBooking()">📅 Reservar consulta gratuita</button>
+      <a href="https://wa.me/34600000000?text=Hola%20José%2C%20me%20gustaría%20información%20sobre%20un%20traje%20a%20medida." target="_blank" class="cta-wa">💬 WhatsApp</a>
+      <div class="cta-note">Consulta gratuita y sin compromiso · La Laguna, Tenerife<br>Lunes a viernes 10h–14h y 17h–20h.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="bk-overlay" id="bk-overlay" onclick="if(event.target===this)closeBooking()">
+  <div class="bk-modal" id="bk-modal">
+    <div id="bk-content">
+      <h3>Reservar consulta</h3>
+      <div class="bk-sub">Consulta gratuita · José recibirá tu diseño</div>
+      <div class="bk-design-badge">
+        🎨 <span>Diseño adjunto: <strong id="bk-design-label">Azul marino · Solapa muesca</strong></span>
+      </div>
+      <div class="bk-field">
+        <label>Nombre completo *</label>
+        <input id="bk-name" type="text" placeholder="Tu nombre"/>
+      </div>
+      <div class="bk-field">
+        <label>Email * <span style="font-weight:400;text-transform:none;letter-spacing:0">(recibirás confirmación aquí)</span></label>
+        <input id="bk-email" type="email" placeholder="tu@email.com"/>
+      </div>
+      <div class="bk-field">
+        <label>Teléfono *</label>
+        <input id="bk-phone" type="tel" placeholder="+34 600 000 000"/>
+      </div>
+      <div class="bk-row">
+        <div class="bk-field">
+          <label>Fecha preferida *</label>
+          <input id="bk-date" type="date"/>
+        </div>
+        <div class="bk-field">
+          <label>Hora preferida *</label>
+          <select id="bk-time">
+            <option value="10:00">10:00</option>
+            <option value="10:30">10:30</option>
+            <option value="11:00">11:00</option>
+            <option value="11:30">11:30</option>
+            <option value="12:00">12:00</option>
+            <option value="12:30">12:30</option>
+            <option value="13:00">13:00</option>
+            <option value="13:30">13:30</option>
+            <option value="17:00">17:00</option>
+            <option value="17:30">17:30</option>
+            <option value="18:00">18:00</option>
+            <option value="18:30">18:30</option>
+            <option value="19:00">19:00</option>
+            <option value="19:30">19:30</option>
+          </select>
+        </div>
+      </div>
+      <div class="bk-field">
+        <label>Notas adicionales</label>
+        <textarea id="bk-notes" rows="2" placeholder="Ocasión, preferencias especiales..."></textarea>
+      </div>
+      <div class="bk-actions">
+        <button class="bk-cancel" onclick="closeBooking()">Cancelar</button>
+        <button class="bk-submit" id="bk-submit-btn" onclick="submitBooking()">Confirmar reserva</button>
+      </div>
+    </div>
+    <div id="bk-success" style="display:none" class="bk-success">
+      <div class="bk-check">✅</div>
+      <h4>¡Reserva enviada!</h4>
+      <p>José ha recibido tu diseño y se pondrá en contacto contigo para confirmar la cita.<br><br>Te esperamos en el taller de La Laguna.</p>
+      <button class="bk-submit" style="margin-top:16px" onclick="closeBooking()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>José Acosta · Sastre a medida · La Laguna, Tenerife</p>
+  <div class="powered">
+    <div class="powered-dot"></div>
+    Gestionado con <a href="https://airmate.es" style="color:rgba(255,255,255,.35);margin-left:4px">Airmate</a>
+  </div>
+</footer>
+
+<script>
+const COLOR_NAMES={'#1a2744':'Azul marino','#1a1a1a':'Negro','#3d3d3d':'Carbón','#4a4a5a':'Gris oscuro','#7a7a8a':'Gris medio','#c4a882':'Camel / Beige','#6b4423':'Marrón','#1e2d5a':'Azul medianoche'};
+const LAPEL_NAMES={notch:'Solapa muesca',peak:'Solapa pico',shawl:'Solapa chal'};
+const BCOLOR_NAMES={'#c9a227':'Dorados','#b0b8c1':'Plateados','#1a1a1a':'Negros','#e8ddd0':'Nácar'};
+const TIE_NAMES={'#8b1a1a':'Burdeos','#1a3a8b':'Azul','#1a6b2a':'Verde','#555':'Gris','#c9a227':'Dorado','#1a1a1a':'Negro'};
+
+let cfg={color:'#1a2744',lapel:'notch',buttons:2,btnColor:'#c9a227',tieColor:'#8b1a1a',tieStyle:'regular',pinzas:false,pocketSquare:false};
+
+function updateCfgPreview(){
+  cfg.pinzas=document.getElementById('cfg-pinzas').checked;
+  cfg.pocketSquare=document.getElementById('cfg-pqs').checked;
+  const tsR=document.querySelector('input[name="cfgTieStyle"]:checked');
+  if(tsR)cfg.tieStyle=tsR.value;
+  // Apply color via CSS blend mode over the real photo
+  document.getElementById('cfg-color-layer').style.background=cfg.color;
+  updateSummary();
+}
+
+function setCfgOpt(el){
+  const key=el.dataset.key, val=el.dataset.val;
+  cfg[key]=key==='buttons'?parseInt(val):val;
+  el.closest('.lapel-grid,.btn-count-row').querySelectorAll('[data-key]').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  updateCfgPreview();
+}
+
+document.addEventListener('click',e=>{
+  const sw=e.target.closest('#cfg-color-swatches .swatch, #cfg-btncolor-swatches .swatch, #cfg-tie-swatches .swatch');
+  if(!sw)return;
+  const parent=sw.closest('[id$="-swatches"]');
+  parent.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
+  sw.classList.add('active');
+  if(parent.id==='cfg-color-swatches')cfg.color=sw.dataset.val;
+  else if(parent.id==='cfg-btncolor-swatches')cfg.btnColor=sw.dataset.val;
+  else if(parent.id==='cfg-tie-swatches')cfg.tieColor=sw.dataset.val;
+  updateCfgPreview();
+});
+
+function updateSummary(){
+  const details=[];
+  if(cfg.pinzas)details.push('Pinzas');
+  if(cfg.pocketSquare)details.push('Pañuelo');
+  document.getElementById('cfg-summary-lines').innerHTML=`
+    <div class="summary-line"><span class="summary-key">Tela</span><span class="summary-val">${COLOR_NAMES[cfg.color]||'Personalizado'}</span></div>
+    <div class="summary-line"><span class="summary-key">Solapa</span><span class="summary-val">${LAPEL_NAMES[cfg.lapel]||cfg.lapel}</span></div>
+    <div class="summary-line"><span class="summary-key">Botones</span><span class="summary-val">${cfg.buttons} botón${cfg.buttons!==1?'es':''} · ${BCOLOR_NAMES[cfg.btnColor]||''}</span></div>
+    <div class="summary-line"><span class="summary-key">Corbata</span><span class="summary-val">${cfg.tieStyle==='bow'?'Pajarita':'Corbata'} · ${TIE_NAMES[cfg.tieColor]||''}</span></div>
+    <div class="summary-line"><span class="summary-key">Detalles</span><span class="summary-val">${details.length?details.join(' + '):'Estándar'}</span></div>
+  `;
+  // Preview name
+  const name=`${COLOR_NAMES[cfg.color]||''} · ${LAPEL_NAMES[cfg.lapel]||''}`;
+  document.getElementById('cfg-preview-name').textContent=name;
+}
+
+// EmailJS
+emailjs.init('i4iBVVP-BkUOOwBE9');
+
+// Supabase
+const _sb=supabase.createClient(
+  'https://vjofxmfwdybktpwiuanc.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE'
+);
+
+function openBooking(){
+  // Set min date to today
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('bk-date').min=today;
+  document.getElementById('bk-date').value=today;
+  // Update design label in badge
+  const designLabel=`${COLOR_NAMES[cfg.color]||cfg.color} · ${LAPEL_NAMES[cfg.lapel]||cfg.lapel} · ${cfg.buttons} botón${cfg.buttons!==1?'es':''}`;
+  document.getElementById('bk-design-label').textContent=designLabel;
+  // Show modal
+  document.getElementById('bk-content').style.display='';
+  document.getElementById('bk-success').style.display='none';
+  document.getElementById('bk-overlay').classList.add('open');
+}
+function closeBooking(){
+  document.getElementById('bk-overlay').classList.remove('open');
+}
+async function submitBooking(){
+  const name=document.getElementById('bk-name').value.trim();
+  const email=document.getElementById('bk-email').value.trim();
+  const phone=document.getElementById('bk-phone').value.trim();
+  const date=document.getElementById('bk-date').value;
+  const time=document.getElementById('bk-time').value;
+  if(!name||!email||!phone||!date){alert('Por favor rellena nombre, email, teléfono y fecha.');return;}
+  const btn=document.getElementById('bk-submit-btn');
+  btn.disabled=true;btn.textContent='Enviando...';
+  const starts_at=new Date(`${date}T${time}`).toISOString();
+  const ends_at=new Date(new Date(`${date}T${time}`).getTime()+60*60000).toISOString();
+  const userNotes=document.getElementById('bk-notes').value.trim();
+  const designJson=JSON.stringify(cfg);
+  const notes=`[DISEÑO]${designJson}${userNotes?'\n\n'+userNotes:''}`;
+  const {error}=await _sb.from('appointments').insert({
+    business_slug:'jose-acosta',
+    client_name:name,
+    client_phone:phone,
+    client_email:email,
+    service:'Consulta traje a medida',
+    starts_at,ends_at,
+    duration_minutes:60,
+    status:'pending',
+    notes
+  });
+  if(error){alert('Error al enviar. Por favor contacta por WhatsApp.');btn.disabled=false;btn.textContent='Confirmar reserva';return;}
+  // Send confirmation email via EmailJS
+  const dateLabel=new Date(`${date}T${time}`).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const designLabel=`${COLOR_NAMES[cfg.color]||cfg.color} · Solapa ${LAPEL_NAMES[cfg.lapel]||cfg.lapel} · ${cfg.buttons} botón${cfg.buttons!==1?'es':''} · Corbata ${cfg.tieStyle==='bow'?'pajarita':'regular'}`;
+  emailjs.send('service_npmjvvf','template_qnip0mc',{
+    cliente_nombre:   name,
+    cliente_email:    email,
+    cliente_telefono: phone,
+    negocio_nombre:   'José Acosta · Sastre a medida',
+    servicio:         'Consulta traje a medida',
+    duracion:         '60 min',
+    precio:           'Gratuita',
+    fecha:            dateLabel,
+    hora:             time,
+    reply_to:         'airmateai@gmail.com',
+    design_summary:   designLabel,
+    notes:            userNotes||'—'
+  }).then(()=>console.log('✅ Email enviado')).catch(e=>console.error('❌ EmailJS error:',e));
+  document.getElementById('bk-content').style.display='none';
+  document.getElementById('bk-success').style.display='';
+  btn.disabled=false;btn.textContent='Confirmar reserva';
+}
+
+// Init
+updateCfgPreview();
+</script>
+</body>
+</html>

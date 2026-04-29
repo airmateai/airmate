@@ -416,6 +416,25 @@ td .sub{font-size:11px;color:var(--txt3);margin-top:2px;}
             <span class="nav-badge" id="badge-seg" style="display:none"></span>
           </button>
         </div>
+        <div class="nav-section">
+          <div class="nav-section-label">CRM Pro</div>
+          <button class="nav-item" id="tab-crm-clientes" onclick="showTab('crm-clientes',this)">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Clientes</span>
+          </button>
+          <button class="nav-item" id="tab-crm-encargos" onclick="showTab('crm-encargos',this)">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Encargos</span>
+          </button>
+          <button class="nav-item" id="tab-crm-taller" onclick="showTab('crm-taller',this)">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M5.34 18.66l-1.41 1.41M20 12h-2M6 12H4M19.07 19.07l-1.41-1.41M5.34 5.34L3.93 3.93M12 20v-2M12 6V4"/></svg>
+            <span>Taller</span>
+          </button>
+          <button class="nav-item" id="tab-crm-facturacion" onclick="showTab('crm-facturacion',this)">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>Facturación</span>
+          </button>
+        </div>
       </nav>
 
       <div class="sidebar-bottom">
@@ -551,6 +570,80 @@ td .sub{font-size:11px;color:var(--txt3);margin-top:2px;}
           </div>
           <div id="seg-view"></div>
         </div>
+
+        <!-- CRM: CLIENTES -->
+        <div id="pane-crm-clientes" class="tab-pane">
+          <div class="page-hd" style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div class="page-title">Clientes</div><div class="page-sub">Agenda de clientes del negocio</div></div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <div style="position:relative">
+                <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#94a3b8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="search-input" style="padding-left:32px;width:240px" placeholder="Buscar cliente..." oninput="crmFilterClientes(this.value)" />
+              </div>
+              <button class="btn btn-accent" onclick="crmOpenClienteModal()">+ Nuevo cliente</button>
+            </div>
+          </div>
+          <div class="card"><div class="table-wrap">
+            <table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Notas</th><th>Acciones</th></tr></thead>
+            <tbody id="crm-clientes-tbody"><tr><td colspan="5" style="text-align:center;padding:40px"><div class="crm-spinner"></div></td></tr></tbody></table>
+          </div></div>
+        </div>
+
+        <!-- CRM: ENCARGOS -->
+        <div id="pane-crm-encargos" class="tab-pane">
+          <div class="page-hd" style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div class="page-title">Encargos</div><div class="page-sub">Tablero de seguimiento</div></div>
+            <button class="btn btn-accent" onclick="crmOpenEncargosModal()">+ Nuevo encargo</button>
+          </div>
+          <div style="display:flex;gap:14px;overflow-x:auto;padding-bottom:16px;min-height:500px">
+            <div class="crm-kcol" id="kcrm-presupuesto">
+              <div class="crm-kcol-hd" style="background:#fef9c3;color:#92400e">Presupuesto <span id="kcrm-cnt-presupuesto" class="tag tag-pending" style="margin-left:auto">0</span></div>
+              <div class="crm-kcol-body" id="kcrm-body-presupuesto"></div>
+            </div>
+            <div class="crm-kcol" id="kcrm-taller">
+              <div class="crm-kcol-hd" style="background:#dbeafe;color:#1e40af">En Taller <span id="kcrm-cnt-taller" class="tag tag-completed" style="margin-left:auto">0</span></div>
+              <div class="crm-kcol-body" id="kcrm-body-taller"></div>
+            </div>
+            <div class="crm-kcol" id="kcrm-prueba">
+              <div class="crm-kcol-hd" style="background:#ede9fe;color:#5b21b6">En Prueba <span id="kcrm-cnt-prueba" class="tag" style="background:#ede9fe;color:#5b21b6;margin-left:auto">0</span></div>
+              <div class="crm-kcol-body" id="kcrm-body-prueba"></div>
+            </div>
+            <div class="crm-kcol" id="kcrm-listo">
+              <div class="crm-kcol-hd" style="background:#dcfce7;color:#14532d">Listo <span id="kcrm-cnt-listo" class="tag tag-confirmed" style="margin-left:auto">0</span></div>
+              <div class="crm-kcol-body" id="kcrm-body-listo"></div>
+            </div>
+            <div class="crm-kcol" id="kcrm-entregado">
+              <div class="crm-kcol-hd" style="background:#f1f5f9;color:#475569">Entregado <span id="kcrm-cnt-entregado" class="tag" style="margin-left:auto">0</span></div>
+              <div class="crm-kcol-body" id="kcrm-body-entregado"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CRM: TALLER -->
+        <div id="pane-crm-taller" class="tab-pane">
+          <div class="page-hd" style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div class="page-title">Taller</div><div class="page-sub">Inventario de materiales</div></div>
+            <button class="btn btn-accent" onclick="crmOpenInventarioModal()">+ Añadir material</button>
+          </div>
+          <div id="crm-stock-alert" style="display:none;background:#fee2e2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin-bottom:16px;color:#b91c1c;font-size:13px;font-weight:500"></div>
+          <div class="card"><div class="table-wrap">
+            <table><thead><tr><th>Material</th><th>Categoría</th><th>Stock</th><th>Mínimo</th><th>Unidad</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="crm-inventario-tbody"><tr><td colspan="7" style="text-align:center;padding:40px"><div class="crm-spinner"></div></td></tr></tbody></table>
+          </div></div>
+        </div>
+
+        <!-- CRM: FACTURACIÓN -->
+        <div id="pane-crm-facturacion" class="tab-pane">
+          <div class="page-hd" style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div class="page-title">Facturación</div><div class="page-sub">Presupuestos y facturas</div></div>
+            <button class="btn btn-accent" onclick="crmOpenFacturaModal()">+ Nuevo documento</button>
+          </div>
+          <div class="card"><div class="table-wrap">
+            <table><thead><tr><th>Nº</th><th>Cliente</th><th>Tipo</th><th>Estado</th><th>Total</th><th>Fecha</th><th>Acciones</th></tr></thead>
+            <tbody id="crm-facturas-tbody"><tr><td colspan="7" style="text-align:center;padding:40px"><div class="crm-spinner"></div></td></tr></tbody></table>
+          </div></div>
+        </div>
+
       </div>
     </main>
   </div>
@@ -559,6 +652,34 @@ td .sub{font-size:11px;color:var(--txt3);margin-top:2px;}
 <div id="modal-overlay" onclick="if(event.target===this)closeModal()">
   <div class="modal" id="modal-box"></div>
 </div>
+
+<!-- CRM MODALES -->
+<div id="crm-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:600;align-items:center;justify-content:center" onclick="if(event.target===this)crmCloseModal()">
+  <div id="crm-modal-box" style="background:#fff;border-radius:14px;width:580px;max-width:95vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,.25)">
+    <div id="crm-modal-hd" style="padding:22px 26px 18px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
+      <div id="crm-modal-title" style="font-size:17px;font-weight:700;color:#0f172a"></div>
+      <button onclick="crmCloseModal()" style="background:none;border:none;font-size:20px;color:#94a3b8;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <div id="crm-modal-body" style="padding:22px 26px;overflow-y:auto;flex:1"></div>
+    <div id="crm-modal-footer" style="padding:14px 26px;border-top:1px solid #f1f5f9;display:flex;gap:10px;justify-content:flex-end"></div>
+  </div>
+</div>
+
+<!-- VISTA FACTURA PARA IMPRIMIR -->
+<div id="crm-print-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:700;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#fff;border-radius:14px;width:680px;max-width:95vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,.25)">
+    <div style="padding:20px 26px 16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:16px;font-weight:700">Ver documento</div>
+      <button onclick="document.getElementById('crm-print-overlay').style.display='none'" style="background:none;border:none;font-size:20px;color:#94a3b8;cursor:pointer">✕</button>
+    </div>
+    <div id="crm-print-body" style="padding:28px;overflow-y:auto;flex:1"></div>
+    <div style="padding:14px 26px;border-top:1px solid #f1f5f9;display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="document.getElementById('crm-print-overlay').style.display='none'">Cerrar</button>
+      <button class="btn btn-accent" onclick="window.print()">🖨 Imprimir / PDF</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -1219,6 +1340,429 @@ function intentLabel(l){return l==='hot'?'Caliente':l==='warm'?'Tibio':'Frío';}
 function statusCita(s){return {pending:'Pendiente',confirmed:'Confirmada',cancelled:'Cancelada',completed:'Completada'}[s]||s;}
 function statusLead(s){return {new:'Nuevo',contacted:'Contactado',qualified:'Cualificado',converted:'Convertido',lost:'Perdido'}[s]||s;}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ══════════════════════════════════════════════════════════
+//  CRM PRO
+// ══════════════════════════════════════════════════════════
+let _crmClientes=[], _crmInventario=[], _crmFacturas=[], _crmInvoiceLines=[], _crmEditingId=null;
+const CRM_STATUSES=['presupuesto','taller','prueba','listo','entregado'];
+
+// Estilos kanban inline
+(()=>{
+  const s=document.createElement('style');
+  s.textContent=`
+    .crm-kcol{min-width:220px;width:220px;flex-shrink:0;}
+    .crm-kcol-hd{padding:11px 14px;border-radius:8px 8px 0 0;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
+    .crm-kcol-body{background:#f1f5f9;border-radius:0 0 8px 8px;min-height:300px;padding:8px;}
+    .crm-kcard{background:#fff;border-radius:8px;padding:13px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07);transition:box-shadow .15s;border-left:3px solid #e2e8f0;}
+    .crm-kcard:hover{box-shadow:0 4px 12px rgba(0,0,0,.12);}
+    .crm-kcard-title{font-size:13px;font-weight:700;margin-bottom:3px;color:#0f172a;}
+    .crm-kcard-client{font-size:11px;color:#64748b;margin-bottom:6px;}
+    .crm-kcard-price{font-size:12px;font-weight:700;color:#22c55e;}
+    #kcrm-presupuesto .crm-kcard{border-left-color:#f59e0b;}
+    #kcrm-taller .crm-kcard{border-left-color:#3b82f6;}
+    #kcrm-prueba .crm-kcard{border-left-color:#8b5cf6;}
+    #kcrm-listo .crm-kcard{border-left-color:#22c55e;}
+    #kcrm-entregado .crm-kcard{border-left-color:#94a3b8;}
+    .crm-spinner{display:inline-block;width:20px;height:20px;border:2px solid #e2e8f0;border-top-color:#22c55e;border-radius:50%;animation:spin .6s linear infinite;}
+    .crm-form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .crm-form-group{margin-bottom:16px;}
+    .crm-form-label{display:block;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+    .crm-form-ctrl{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;background:#fff;}
+    .crm-form-ctrl:focus{border-color:#22c55e;}
+    textarea.crm-form-ctrl{resize:vertical;min-height:72px;}
+    .crm-inv-line{display:grid;grid-template-columns:1fr 72px 96px 30px;gap:8px;align-items:center;margin-bottom:8px;}
+    .stock-low{color:#dc2626;font-weight:700;}
+    .stock-ok{color:#16a34a;}
+    @media print{#crm-print-overlay{position:static!important;background:none!important;display:block!important;}.crm-no-print{display:none!important;}}
+  `;
+  document.head.appendChild(s);
+})();
+
+// Patch showTab para cargar datos CRM
+const _origShowTab = showTab;
+showTab = function(id, btn) {
+  _origShowTab(id, btn);
+  const titles2 = {'crm-clientes':'Clientes','crm-encargos':'Encargos','crm-taller':'Taller','crm-facturacion':'Facturación'};
+  if (titles2[id]) document.getElementById('topbar-title').textContent = titles2[id];
+  if (id==='crm-clientes') crmLoadClientes();
+  else if (id==='crm-encargos') crmLoadEncargos();
+  else if (id==='crm-taller') crmLoadInventario();
+  else if (id==='crm-facturacion') crmLoadFacturas();
+};
+
+// ── MODAL helpers ──────────────────────────────────────
+function crmOpenModal(title, bodyHtml, footerHtml){
+  document.getElementById('crm-modal-title').textContent = title;
+  document.getElementById('crm-modal-body').innerHTML = bodyHtml;
+  document.getElementById('crm-modal-footer').innerHTML = footerHtml;
+  document.getElementById('crm-overlay').style.display = 'flex';
+}
+function crmCloseModal(){
+  document.getElementById('crm-overlay').style.display = 'none';
+  _crmEditingId = null;
+}
+function crmV(id){ return document.getElementById(id)?.value || ''; }
+function crmSet(id,v){ const el=document.getElementById(id); if(el) el.value=v||''; }
+
+// ── CLIENTES ──────────────────────────────────────────
+async function crmLoadClientes(){
+  const {data}=await _sb.from('crm_clients').select('*').eq('business_slug',BIZ_SLUG).order('created_at',{ascending:false});
+  _crmClientes=data||[];
+  crmRenderClientes(_crmClientes);
+}
+function crmRenderClientes(list){
+  const tb=document.getElementById('crm-clientes-tbody');
+  if(!list.length){tb.innerHTML='<tr><td colspan="5" class="empty-state" style="padding:40px;text-align:center;color:#94a3b8">Sin clientes todavía</td></tr>';return;}
+  tb.innerHTML=list.map(c=>`<tr>
+    <td><strong>${esc(c.name)}</strong></td>
+    <td>${esc(c.phone||'—')}</td>
+    <td>${esc(c.email||'—')}</td>
+    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.notes||'—')}</td>
+    <td><button class="btn btn-ghost btn-sm" onclick="crmEditCliente('${c.id}')">✏</button>
+        <button class="btn btn-danger btn-sm" onclick="crmDeleteCliente('${c.id}')">🗑</button></td>
+  </tr>`).join('');
+}
+function crmFilterClientes(q){
+  const lq=q.toLowerCase();
+  crmRenderClientes(_crmClientes.filter(c=>c.name.toLowerCase().includes(lq)||(c.phone||'').includes(q)||(c.email||'').toLowerCase().includes(lq)));
+}
+function crmClienteFormHtml(c={}){
+  const m=c.measurements||{};
+  return `<div class="crm-form-row">
+    <div class="crm-form-group"><label class="crm-form-label">Nombre *</label><input class="crm-form-ctrl" id="cf-name" value="${esc(c.name)}" /></div>
+    <div class="crm-form-group"><label class="crm-form-label">Teléfono</label><input class="crm-form-ctrl" id="cf-phone" value="${esc(c.phone)}" /></div>
+  </div>
+  <div class="crm-form-group"><label class="crm-form-label">Email</label><input type="email" class="crm-form-ctrl" id="cf-email" value="${esc(c.email)}" /></div>
+  <div class="crm-form-group"><label class="crm-form-label">Notas</label><textarea class="crm-form-ctrl" id="cf-notes">${esc(c.notes)}</textarea></div>
+  <div class="crm-form-group"><label class="crm-form-label">Medidas (cm)</label>
+    <div class="crm-form-row" style="margin-bottom:8px">
+      <div><label class="crm-form-label">Talla</label><input class="crm-form-ctrl" id="cf-talla" value="${esc(m.talla)}" /></div>
+      <div><label class="crm-form-label">Pecho</label><input type="number" class="crm-form-ctrl" id="cf-pecho" value="${m.pecho||''}" /></div>
+    </div>
+    <div class="crm-form-row" style="margin-bottom:8px">
+      <div><label class="crm-form-label">Cintura</label><input type="number" class="crm-form-ctrl" id="cf-cintura" value="${m.cintura||''}" /></div>
+      <div><label class="crm-form-label">Cadera</label><input type="number" class="crm-form-ctrl" id="cf-cadera" value="${m.cadera||''}" /></div>
+    </div>
+    <div class="crm-form-row">
+      <div><label class="crm-form-label">Largo pantalón</label><input type="number" class="crm-form-ctrl" id="cf-lpant" value="${m.largo_pantalon||''}" /></div>
+      <div><label class="crm-form-label">Largo chaqueta</label><input type="number" class="crm-form-ctrl" id="cf-lchaq" value="${m.largo_chaqueta||''}" /></div>
+    </div>
+  </div>`;
+}
+function crmOpenClienteModal(){
+  _crmEditingId=null;
+  crmOpenModal('Nuevo cliente', crmClienteFormHtml(),
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="crmSaveCliente()">Guardar</button>`);
+}
+function crmEditCliente(id){
+  const c=_crmClientes.find(x=>x.id===id); if(!c)return;
+  _crmEditingId=id;
+  crmOpenModal('Editar cliente', crmClienteFormHtml(c),
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="crmSaveCliente()">Guardar</button>`);
+}
+async function crmSaveCliente(){
+  const name=crmV('cf-name').trim(); if(!name){alert('El nombre es obligatorio');return;}
+  const m={};
+  const t=crmV('cf-talla'); if(t)m.talla=t;
+  ['pecho','cintura','cadera'].forEach(f=>{const v=crmV('cf-'+f);if(v)m[f]=Number(v);});
+  const lp=crmV('cf-lpant'); if(lp)m.largo_pantalon=Number(lp);
+  const lc=crmV('cf-lchaq'); if(lc)m.largo_chaqueta=Number(lc);
+  const payload={business_slug:BIZ_SLUG,name,phone:crmV('cf-phone')||null,email:crmV('cf-email')||null,notes:crmV('cf-notes')||null,measurements:Object.keys(m).length?m:null};
+  if(_crmEditingId) await _sb.from('crm_clients').update(payload).eq('id',_crmEditingId);
+  else await _sb.from('crm_clients').insert(payload);
+  crmCloseModal(); crmLoadClientes();
+}
+async function crmDeleteCliente(id){
+  if(!confirm('¿Eliminar este cliente?'))return;
+  await _sb.from('crm_clients').delete().eq('id',id);
+  crmLoadClientes();
+}
+
+// ── ENCARGOS ──────────────────────────────────────────
+async function crmLoadEncargos(){
+  const {data}=await _sb.from('crm_orders').select('*').eq('business_slug',BIZ_SLUG).order('created_at',{ascending:false});
+  const orders=data||[];
+  CRM_STATUSES.forEach(s=>{
+    const items=orders.filter(o=>o.status===s);
+    document.getElementById('kcrm-cnt-'+s).textContent=items.length;
+    document.getElementById('kcrm-body-'+s).innerHTML=items.map(o=>`
+      <div class="crm-kcard" onclick="crmEditEncargo('${o.id}')">
+        <div class="crm-kcard-title">${esc(o.title)}</div>
+        <div class="crm-kcard-client">👤 ${esc(o.client_name||'Sin cliente')}</div>
+        ${o.price?`<div class="crm-kcard-price">${crmFmt(o.price)}</div>`:''}
+      </div>`).join('');
+  });
+}
+async function crmEncargosClienteOptions(selectedId=null){
+  const {data}=await _sb.from('crm_clients').select('id,name').eq('business_slug',BIZ_SLUG).order('name');
+  return '<option value="">Sin cliente</option>'+(data||[]).map(c=>`<option value="${c.id}"${c.id===selectedId?' selected':''}>${esc(c.name)}</option>`).join('');
+}
+async function crmOpenEncargosModal(){
+  _crmEditingId=null;
+  const opts=await crmEncargosClienteOptions();
+  crmOpenModal('Nuevo encargo',`
+    <div class="crm-form-row">
+      <div class="crm-form-group"><label class="crm-form-label">Cliente</label><select class="crm-form-ctrl" id="ef-client">${opts}</select></div>
+      <div class="crm-form-group"><label class="crm-form-label">Estado</label>
+        <select class="crm-form-ctrl" id="ef-status">
+          <option value="presupuesto">Presupuesto</option><option value="taller">En Taller</option>
+          <option value="prueba">En Prueba</option><option value="listo">Listo</option><option value="entregado">Entregado</option>
+        </select>
+      </div>
+    </div>
+    <div class="crm-form-group"><label class="crm-form-label">Título *</label><input class="crm-form-ctrl" id="ef-title" /></div>
+    <div class="crm-form-row">
+      <div class="crm-form-group"><label class="crm-form-label">Precio (€)</label><input type="number" class="crm-form-ctrl" id="ef-price" step="0.01" min="0" /></div>
+    </div>
+    <div class="crm-form-group"><label class="crm-form-label">Notas</label><textarea class="crm-form-ctrl" id="ef-notes"></textarea></div>`,
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="crmSaveEncargo()">Guardar</button>`);
+}
+async function crmEditEncargo(id){
+  const {data:o}=await _sb.from('crm_orders').select('*').eq('id',id).single(); if(!o)return;
+  _crmEditingId=id;
+  const opts=await crmEncargosClienteOptions(o.client_id);
+  crmOpenModal('Editar encargo',`
+    <div class="crm-form-row">
+      <div class="crm-form-group"><label class="crm-form-label">Cliente</label><select class="crm-form-ctrl" id="ef-client">${opts}</select></div>
+      <div class="crm-form-group"><label class="crm-form-label">Estado</label>
+        <select class="crm-form-ctrl" id="ef-status">
+          <option value="presupuesto"${o.status==='presupuesto'?' selected':''}>Presupuesto</option>
+          <option value="taller"${o.status==='taller'?' selected':''}>En Taller</option>
+          <option value="prueba"${o.status==='prueba'?' selected':''}>En Prueba</option>
+          <option value="listo"${o.status==='listo'?' selected':''}>Listo</option>
+          <option value="entregado"${o.status==='entregado'?' selected':''}>Entregado</option>
+        </select>
+      </div>
+    </div>
+    <div class="crm-form-group"><label class="crm-form-label">Título *</label><input class="crm-form-ctrl" id="ef-title" value="${esc(o.title)}" /></div>
+    <div class="crm-form-row">
+      <div class="crm-form-group"><label class="crm-form-label">Precio (€)</label><input type="number" class="crm-form-ctrl" id="ef-price" step="0.01" min="0" value="${o.price||''}" /></div>
+    </div>
+    <div class="crm-form-group"><label class="crm-form-label">Notas</label><textarea class="crm-form-ctrl" id="ef-notes">${esc(o.notes)}</textarea></div>`,
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="crmSaveEncargo()">Guardar</button>`);
+}
+async function crmSaveEncargo(){
+  const title=crmV('ef-title').trim(); if(!title){alert('El título es obligatorio');return;}
+  const sel=document.getElementById('ef-client');
+  const clientId=sel.value||null;
+  const clientName=clientId?sel.options[sel.selectedIndex].text:null;
+  const payload={business_slug:BIZ_SLUG,title,client_id:clientId,client_name:clientName,
+    status:crmV('ef-status'),price:parseFloat(crmV('ef-price'))||null,notes:crmV('ef-notes')||null,updated_at:new Date().toISOString()};
+  if(_crmEditingId) await _sb.from('crm_orders').update(payload).eq('id',_crmEditingId);
+  else await _sb.from('crm_orders').insert(payload);
+  crmCloseModal(); crmLoadEncargos();
+}
+
+// ── INVENTARIO ────────────────────────────────────────
+async function crmLoadInventario(){
+  const {data}=await _sb.from('crm_inventory').select('*').eq('business_slug',BIZ_SLUG).order('name');
+  _crmInventario=data||[];
+  const low=_crmInventario.filter(i=>i.min_stock!==null&&i.stock<=i.min_stock);
+  const al=document.getElementById('crm-stock-alert');
+  if(low.length){al.style.display='block';al.innerHTML='⚠️ Stock bajo en: '+low.map(i=>'<strong>'+esc(i.name)+'</strong>').join(', ');}
+  else al.style.display='none';
+  const tb=document.getElementById('crm-inventario-tbody');
+  if(!_crmInventario.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8">Sin materiales registrados</td></tr>';return;}
+  tb.innerHTML=_crmInventario.map(i=>{
+    const low=i.min_stock!==null&&i.stock<=i.min_stock;
+    return `<tr>
+      <td><strong>${esc(i.name)}</strong></td><td>${esc(i.category||'—')}</td>
+      <td class="${low?'stock-low':'stock-ok'}">${i.stock}</td>
+      <td>${i.min_stock!==null?i.min_stock:'—'}</td><td>${esc(i.unit||'ud')}</td>
+      <td>${low?'<span class="tag tag-hot">⚠ Bajo</span>':'<span class="tag tag-confirmed">OK</span>'}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="crmEditInventario('${i.id}')">✏</button>
+          <button class="btn btn-danger btn-sm" onclick="crmDeleteInventario('${i.id}')">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+function crmInvFormHtml(i={}){
+  return `<div class="crm-form-row">
+    <div class="crm-form-group"><label class="crm-form-label">Nombre *</label><input class="crm-form-ctrl" id="if-name" value="${esc(i.name)}" /></div>
+    <div class="crm-form-group"><label class="crm-form-label">Categoría</label><input class="crm-form-ctrl" id="if-cat" value="${esc(i.category)}" /></div>
+  </div>
+  <div class="crm-form-row">
+    <div class="crm-form-group"><label class="crm-form-label">Stock actual *</label><input type="number" class="crm-form-ctrl" id="if-stock" step="0.01" value="${i.stock??''}" /></div>
+    <div class="crm-form-group"><label class="crm-form-label">Stock mínimo</label><input type="number" class="crm-form-ctrl" id="if-minstock" step="0.01" value="${i.min_stock??''}" /></div>
+  </div>
+  <div class="crm-form-group"><label class="crm-form-label">Unidad</label><input class="crm-form-ctrl" id="if-unit" placeholder="ud" value="${esc(i.unit)}" /></div>`;
+}
+function crmOpenInventarioModal(){
+  _crmEditingId=null;
+  crmOpenModal('Nuevo material',crmInvFormHtml(),
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="crmSaveInventario()">Guardar</button>`);
+}
+function crmEditInventario(id){
+  const i=_crmInventario.find(x=>x.id===id); if(!i)return;
+  _crmEditingId=id;
+  crmOpenModal('Editar material',crmInvFormHtml(i),
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="crmSaveInventario()">Guardar</button>`);
+}
+async function crmSaveInventario(){
+  const name=crmV('if-name').trim(); if(!name){alert('El nombre es obligatorio');return;}
+  const stock=parseFloat(crmV('if-stock')); if(isNaN(stock)){alert('El stock es obligatorio');return;}
+  const minR=crmV('if-minstock');
+  const payload={business_slug:BIZ_SLUG,name,category:crmV('if-cat')||null,stock,
+    min_stock:minR!==''?parseFloat(minR):null,unit:crmV('if-unit')||'ud'};
+  if(_crmEditingId) await _sb.from('crm_inventory').update(payload).eq('id',_crmEditingId);
+  else await _sb.from('crm_inventory').insert(payload);
+  crmCloseModal(); crmLoadInventario();
+}
+async function crmDeleteInventario(id){
+  if(!confirm('¿Eliminar este material?'))return;
+  await _sb.from('crm_inventory').delete().eq('id',id);
+  crmLoadInventario();
+}
+
+// ── FACTURACIÓN ───────────────────────────────────────
+async function crmLoadFacturas(){
+  const {data}=await _sb.from('crm_invoices').select('*').eq('business_slug',BIZ_SLUG).order('created_at',{ascending:false});
+  _crmFacturas=data||[];
+  const tb=document.getElementById('crm-facturas-tbody');
+  if(!_crmFacturas.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8">Sin documentos todavía</td></tr>';return;}
+  tb.innerHTML=_crmFacturas.map((f,i)=>{
+    const sb2={borrador:'tag-cold',enviado:'tag-completed',pagado:'tag-confirmed',cancelado:'tag-cancelled'}[f.status]||'tag-cold';
+    const tb2=f.type==='factura'?'tag-hot':'tag-pending';
+    return `<tr>
+      <td>#${String(i+1).padStart(3,'0')}</td>
+      <td>${esc(f.client_name||'—')}</td>
+      <td><span class="tag ${tb2}">${f.type}</span></td>
+      <td><span class="tag ${sb2}">${f.status}</span></td>
+      <td><strong>${crmFmt(f.total)}</strong></td>
+      <td>${f.issue_date?new Date(f.issue_date).toLocaleDateString('es-ES'):'—'}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="crmViewFactura('${f.id}')">👁</button>
+        <button class="btn btn-ghost btn-sm" onclick="crmEditFactura('${f.id}')">✏</button>
+        <button class="btn btn-danger btn-sm" onclick="crmDeleteFactura('${f.id}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function crmRenderLines(){
+  document.getElementById('crm-inv-lines').innerHTML=_crmInvoiceLines.map((l,i)=>`
+    <div class="crm-inv-line">
+      <input class="crm-form-ctrl" placeholder="Descripción" value="${esc(l.desc)}" oninput="_crmInvoiceLines[${i}].desc=this.value" />
+      <input type="number" class="crm-form-ctrl" placeholder="Cant." value="${l.qty}" min="0.01" step="0.01" oninput="_crmInvoiceLines[${i}].qty=parseFloat(this.value)||1;crmUpdateTotal()" />
+      <input type="number" class="crm-form-ctrl" placeholder="€" value="${l.price}" step="0.01" min="0" oninput="_crmInvoiceLines[${i}].price=parseFloat(this.value)||0;crmUpdateTotal()" />
+      <button class="btn btn-danger btn-xs" onclick="_crmInvoiceLines.splice(${i},1);crmRenderLines()">✕</button>
+    </div>`).join('');
+  crmUpdateTotal();
+}
+function crmUpdateTotal(){
+  const t=_crmInvoiceLines.reduce((s,l)=>s+(parseFloat(l.qty)*parseFloat(l.price)),0);
+  const el=document.getElementById('crm-inv-total'); if(el)el.textContent=crmFmt(t);
+}
+function crmAddLine(){_crmInvoiceLines.push({desc:'',qty:1,price:0});crmRenderLines();}
+
+async function crmFacturaFormHtml(f={}){
+  const {data}=await _sb.from('crm_clients').select('id,name').eq('business_slug',BIZ_SLUG).order('name');
+  const opts='<option value="">Sin cliente</option>'+(data||[]).map(c=>`<option value="${c.id}"${c.id===f.client_id?' selected':''}>${esc(c.name)}</option>`).join('');
+  _crmInvoiceLines=Array.isArray(f.items)&&f.items.length?f.items:[{desc:'',qty:1,price:0}];
+  return `<div class="crm-form-row">
+    <div class="crm-form-group"><label class="crm-form-label">Cliente</label><select class="crm-form-ctrl" id="ff-client">${opts}</select></div>
+    <div class="crm-form-group"><label class="crm-form-label">Tipo</label>
+      <select class="crm-form-ctrl" id="ff-type">
+        <option value="presupuesto"${f.type==='presupuesto'||!f.type?' selected':''}>Presupuesto</option>
+        <option value="factura"${f.type==='factura'?' selected':''}>Factura</option>
+      </select>
+    </div>
+  </div>
+  <div class="crm-form-row">
+    <div class="crm-form-group"><label class="crm-form-label">Estado</label>
+      <select class="crm-form-ctrl" id="ff-status">
+        <option value="borrador"${f.status==='borrador'||!f.status?' selected':''}>Borrador</option>
+        <option value="enviado"${f.status==='enviado'?' selected':''}>Enviado</option>
+        <option value="pagado"${f.status==='pagado'?' selected':''}>Pagado</option>
+        <option value="cancelado"${f.status==='cancelado'?' selected':''}>Cancelado</option>
+      </select>
+    </div>
+    <div class="crm-form-group"><label class="crm-form-label">Fecha emisión</label>
+      <input type="date" class="crm-form-ctrl" id="ff-date" value="${f.issue_date||new Date().toISOString().split('T')[0]}" />
+    </div>
+  </div>
+  <div class="crm-form-group"><label class="crm-form-label">Líneas</label>
+    <div id="crm-inv-lines"></div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:4px" onclick="crmAddLine()">+ Añadir línea</button>
+  </div>
+  <div style="text-align:right;font-size:16px;font-weight:700;margin-top:8px">Total: <span id="crm-inv-total">0,00 €</span></div>
+  <div class="crm-form-group" style="margin-top:14px"><label class="crm-form-label">Notas</label><textarea class="crm-form-ctrl" id="ff-notes">${esc(f.notes)}</textarea></div>`;
+}
+async function crmOpenFacturaModal(){
+  _crmEditingId=null;
+  const body=await crmFacturaFormHtml();
+  crmOpenModal('Nuevo documento',body,
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="crmSaveFactura()">Guardar</button>`);
+  crmRenderLines();
+}
+async function crmEditFactura(id){
+  const f=_crmFacturas.find(x=>x.id===id); if(!f)return;
+  _crmEditingId=id;
+  const body=await crmFacturaFormHtml(f);
+  crmOpenModal('Editar documento',body,
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="crmSaveFactura()">Guardar</button>`);
+  crmRenderLines();
+}
+async function crmSaveFactura(){
+  const sel=document.getElementById('ff-client');
+  const clientId=sel.value||null;
+  const clientName=clientId?sel.options[sel.selectedIndex].text:null;
+  const total=_crmInvoiceLines.reduce((s,l)=>s+(parseFloat(l.qty)*parseFloat(l.price)),0);
+  const payload={business_slug:BIZ_SLUG,client_id:clientId,client_name:clientName,
+    type:crmV('ff-type'),status:crmV('ff-status'),issue_date:crmV('ff-date')||null,
+    items:_crmInvoiceLines,total,notes:crmV('ff-notes')||null};
+  if(_crmEditingId) await _sb.from('crm_invoices').update(payload).eq('id',_crmEditingId);
+  else await _sb.from('crm_invoices').insert(payload);
+  crmCloseModal(); crmLoadFacturas();
+}
+async function crmDeleteFactura(id){
+  if(!confirm('¿Eliminar este documento?'))return;
+  await _sb.from('crm_invoices').delete().eq('id',id);
+  crmLoadFacturas();
+}
+function crmViewFactura(id){
+  const f=_crmFacturas.find(x=>x.id===id); if(!f)return;
+  const items=Array.isArray(f.items)?f.items:[];
+  const total=items.reduce((s,l)=>s+(parseFloat(l.qty)*parseFloat(l.price)),0);
+  document.getElementById('crm-print-body').innerHTML=`
+    <div style="max-width:540px;margin:0 auto;font-family:Inter,sans-serif">
+      <div style="display:flex;justify-content:space-between;margin-bottom:28px;align-items:flex-start">
+        <div style="font-size:20px;font-weight:700;color:#22c55e">✦ ${esc(BIZ_NAME)}</div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:700;text-transform:capitalize">${esc(f.type)}</div>
+          <div style="color:#64748b;font-size:12px">${f.issue_date?new Date(f.issue_date).toLocaleDateString('es-ES'):''}</div>
+        </div>
+      </div>
+      <div style="margin-bottom:20px;font-size:13px"><strong>Cliente:</strong> ${esc(f.client_name||'—')}</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:14px">
+        <thead><tr style="background:#f8fafc">
+          <th style="padding:9px;text-align:left;font-size:11px;color:#64748b;border-bottom:1px solid #e2e8f0;text-transform:uppercase">Descripción</th>
+          <th style="padding:9px;text-align:right;font-size:11px;color:#64748b;border-bottom:1px solid #e2e8f0">Cant.</th>
+          <th style="padding:9px;text-align:right;font-size:11px;color:#64748b;border-bottom:1px solid #e2e8f0">Precio</th>
+          <th style="padding:9px;text-align:right;font-size:11px;color:#64748b;border-bottom:1px solid #e2e8f0">Total</th>
+        </tr></thead>
+        <tbody>${items.map(l=>`<tr>
+          <td style="padding:9px;font-size:13px;border-bottom:1px solid #f1f5f9">${esc(l.desc)}</td>
+          <td style="padding:9px;text-align:right;font-size:13px;border-bottom:1px solid #f1f5f9">${l.qty}</td>
+          <td style="padding:9px;text-align:right;font-size:13px;border-bottom:1px solid #f1f5f9">${crmFmt(l.price)}</td>
+          <td style="padding:9px;text-align:right;font-size:13px;border-bottom:1px solid #f1f5f9">${crmFmt(parseFloat(l.qty)*parseFloat(l.price))}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+      <div style="text-align:right;font-size:18px;font-weight:700;padding:6px 9px">TOTAL: ${crmFmt(total)}</div>
+      ${f.notes?`<div style="margin-top:16px;color:#64748b;font-size:12px;border-top:1px solid #f1f5f9;padding-top:14px">${esc(f.notes)}</div>`:''}
+    </div>`;
+  document.getElementById('crm-print-overlay').style.display='flex';
+}
+
+function crmFmt(n){return Number(n||0).toLocaleString('es-ES',{style:'currency',currency:'EUR'});}
 </script>
 </body>
 </html>
