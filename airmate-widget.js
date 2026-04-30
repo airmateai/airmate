@@ -487,6 +487,8 @@
         const workerLine = st.selWorker ? `\n👤 Con: ${st.selWorker.name}` : '';
         addBot(`📋 ¡Solicitud recibida, ${esc(name)}!\n\n📅 ${svc?.name||'Servicio'}\n📆 ${st.selDate} a las ${st.selTime}${workerLine}\n\nEl negocio confirmará tu cita en breve y recibirás un email de confirmación.`);
         st.history.push({ role:'assistant', content:'Solicitud de cita recibida, pendiente de confirmación.' });
+        /* Email de confirmación inmediata */
+        sendConfirmEmail({ name, email, phone, svc, date: st.selDate, time: st.selTime, aptId });
         /* Guardar lead asociado */
         sbInsert('leads', {
           business_slug: SLUG, name, phone, email: email||null,
