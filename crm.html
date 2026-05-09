@@ -659,82 +659,47 @@ function logActivity(text, color='#c9a84c'){
   save('actividad');
 }
 
+// ── RESET v2 (limpia datos demo anteriores) ────────
+if(localStorage.getItem('crm_version')!=='2'){
+  ['clientes','deals','tareas','propuestas','actividad','ingresos'].forEach(k=>localStorage.removeItem('crm_'+k));
+  localStorage.setItem('crm_version','2');
+  location.reload();
+}
+
 // ── SEED DATA ─────────────────────────────────────
 if(DB.clientes.length===0){
   const seed = [
-    {id:uid(),biz:'Jose Acosta Sastre',sector:'Sastrería a medida',nombre:'Jose Acosta',tel:'+34 622 000 001',email:'jose@joseacosta.com',ciudad:'Las Palmas',plan:'CRM MEDIDA',mrr:149,setup:997,estado:'activo',desde:'2025-01-15',notas:'Panel PRO personalizado con configurador, Holded sync, Verifactu'},
-    {id:uid(),biz:'Barbería Ricardo',sector:'Barbería',nombre:'Ricardo Plasencia',tel:'+34 622 000 002',email:'ricardo@barberia.com',ciudad:'Las Palmas',plan:'CRM+IA',mrr:79,setup:597,estado:'activo',desde:'2025-02-20',notas:'Sistema de citas con agente IA 24/7'},
-    {id:uid(),biz:'Clínica Dental Viva',sector:'Clínica dental',nombre:'Dra. Martínez',tel:'+34 622 000 003',email:'info@clinicaviva.com',ciudad:'Madrid',plan:'GROWTH',mrr:59,setup:400,estado:'activo',desde:'2025-03-01',notas:'Agente IA deriva citas por WhatsApp'},
-    {id:uid(),biz:'Fisio Sport Tenerife',sector:'Fisioterapia',nombre:'Carlos Ruiz',tel:'+34 622 000 004',email:'carlos@fisiosport.com',ciudad:'Tenerife',plan:'START',mrr:39,setup:250,estado:'activo',desde:'2025-03-15',notas:'Primera web, agente básico'},
-    {id:uid(),biz:'Spa Luna',sector:'Spa & Bienestar',nombre:'Ana Torres',tel:'+34 622 000 005',email:'ana@spaluna.com',ciudad:'Barcelona',plan:'CRM BÁSICO',mrr:49,setup:397,estado:'entrega',desde:'2025-04-10',notas:'En proceso de entrega, panel kanban'},
-    {id:uid(),biz:'Academia Oxford Canarias',sector:'Academia de inglés',nombre:'Mark Williams',tel:'+34 622 000 006',email:'mark@oxfordcanarias.com',ciudad:'Las Palmas',plan:'PRO',mrr:99,setup:800,estado:'activo',desde:'2025-02-01',notas:'Agente vendedor cerrando matrículas'},
-    {id:uid(),biz:'Consultoría Nexo',sector:'Consultoría empresarial',nombre:'Isabel Moreno',tel:'+34 622 000 007',email:'isabel@nexo.es',ciudad:'Sevilla',plan:'AIRMATE',mrr:40,setup:0,estado:'activo',desde:'2025-04-01',notas:'Solo agente IA en su web existente'},
-    {id:uid(),biz:'Peluquería Glamour',sector:'Peluquería',nombre:'Sofía Reyes',tel:'+34 622 000 008',email:'sofia@glamour.com',ciudad:'Valencia',plan:'START',mrr:39,setup:250,estado:'pausa',desde:'2025-01-20',notas:'Pausa por reformas del local'},
+    {id:uid(),biz:'Jose Acosta Sastre',sector:'Sastrería a medida',nombre:'Jose Acosta',tel:'',email:'',ciudad:'Las Palmas',plan:'CRM MEDIDA',mrr:149,setup:997,estado:'activo',desde:'2025-01-15',notas:'Panel PRO personalizado con configurador, Holded sync, Verifactu'},
+    {id:uid(),biz:'Josep',sector:'',nombre:'Josep',tel:'',email:'',ciudad:'',plan:'START',mrr:39,setup:250,estado:'activo',desde:'2025-01-01',notas:''},
+    {id:uid(),biz:'Solarium Torrelavega',sector:'Solarium / Bronceado',nombre:'',tel:'',email:'',ciudad:'Torrelavega',plan:'START',mrr:39,setup:250,estado:'activo',desde:'2025-01-01',notas:''},
   ];
   DB.clientes = seed;
   save('clientes');
 }
 
 if(DB.deals.length===0){
-  const deals=[
-    {id:uid(),biz:'Restaurante El Rincón',contacto:'Paco Hernández',plan:'CRM+IA',valor:676,etapa:'interes',accion:'Demo el martes',notas:'Muy interesado, tiene 3 locales',ts:new Date().toISOString()},
-    {id:uid(),biz:'Estudio Yoga Zen',contacto:'Laura Gómez',plan:'START',valor:289,etapa:'propuesta',accion:'Seguimiento pendiente',notas:'Propuesta enviada hace 3 días',ts:new Date().toISOString()},
-    {id:uid(),biz:'Clínica Bienestar Sur',contacto:'Dr. Fernández',plan:'PRO',valor:899,etapa:'negociacion',accion:'Revisar precio mensual',notas:'Quiere descuento en el setup',ts:new Date().toISOString()},
-    {id:uid(),biz:'Abogados Lex',contacto:'Marta Castillo',plan:'CRM BÁSICO',valor:446,etapa:'contacto',accion:'Primera llamada pendiente',notas:'DM en Instagram',ts:new Date().toISOString()},
-    {id:uid(),biz:'Centro Estético Élite',contacto:'Patricia Vega',plan:'GROWTH',valor:459,etapa:'cierre',accion:'Enviar contrato',notas:'Todo cerrado, pendiente pago setup',ts:new Date().toISOString()},
-    {id:uid(),biz:'Taller MotoSur',contacto:'Rafa Morales',plan:'AIRMATE',valor:40,etapa:'interes',accion:'Enviar propuesta',notas:'Le interesa el agente de WhatsApp',ts:new Date().toISOString()},
-    {id:uid(),biz:'Inmobiliaria Costa',contacto:'Javier Torres',plan:'PRO',valor:899,etapa:'propuesta',accion:'Demo personalizada',notas:'Quiere ver el agente en acción',ts:new Date().toISOString()},
-  ];
-  DB.deals=deals; save('deals');
+  DB.deals=[]; save('deals');
 }
 
 if(DB.tareas.length===0){
-  const today=new Date().toISOString().slice(0,10);
-  const tareas=[
-    {id:uid(),titulo:'Enviar propuesta a Clínica Bienestar Sur',cliente:'Clínica Bienestar Sur',fecha:today,prioridad:'alta',done:false,ts:new Date().toISOString()},
-    {id:uid(),titulo:'Llamar a Estudio Yoga Zen (seguimiento)',cliente:'Estudio Yoga Zen',fecha:today,prioridad:'alta',done:false,ts:new Date().toISOString()},
-    {id:uid(),titulo:'Configurar agente IA para Spa Luna',cliente:'Spa Luna',fecha:today,prioridad:'media',done:false,ts:new Date().toISOString()},
-    {id:uid(),titulo:'Revisar panel Jose Acosta — Verifactu',cliente:'Jose Acosta',fecha:today,prioridad:'media',done:true,ts:new Date().toISOString()},
-    {id:uid(),titulo:'Publicar reel Dubai en Instagram',cliente:'',fecha:today,prioridad:'baja',done:true,ts:new Date().toISOString()},
-  ];
-  DB.tareas=tareas; save('tareas');
+  DB.tareas=[]; save('tareas');
 }
 
 if(DB.propuestas.length===0){
-  const props=[
-    {id:uid(),num:'P-001',biz:'Estudio Yoga Zen',contacto:'Laura Gómez',plan:'START',setup:250,mensual:39,estado:'enviada',fecha:'2025-05-06'},
-    {id:uid(),num:'P-002',biz:'Clínica Bienestar Sur',contacto:'Dr. Fernández',plan:'PRO',setup:800,mensual:99,estado:'negociacion',fecha:'2025-05-05'},
-    {id:uid(),num:'P-003',biz:'Centro Estético Élite',contacto:'Patricia Vega',plan:'GROWTH',setup:400,mensual:59,estado:'aceptada',fecha:'2025-05-03'},
-    {id:uid(),num:'P-004',biz:'Taller MotoSur',contacto:'Rafa Morales',plan:'AIRMATE',setup:0,mensual:40,estado:'enviada',fecha:'2025-05-07'},
-    {id:uid(),num:'P-005',biz:'Inmobiliaria Costa',contacto:'Javier Torres',plan:'PRO',setup:800,mensual:99,estado:'borrador',fecha:'2025-05-08'},
-  ];
-  DB.propuestas=props; save('propuestas');
+  DB.propuestas=[]; save('propuestas');
 }
 
 if(DB.ingresos.length===0){
   const ing=[
     {id:uid(),fecha:'2025-05-01',cliente:'Jose Acosta Sastre',concepto:'Mensualidad CRM Medida',importe:149,metodo:'Transferencia',estado:'cobrado'},
-    {id:uid(),fecha:'2025-05-01',cliente:'Academia Oxford Canarias',concepto:'Mensualidad PRO',importe:99,metodo:'Transferencia',estado:'cobrado'},
-    {id:uid(),fecha:'2025-05-01',cliente:'Barbería Ricardo',concepto:'Mensualidad CRM+IA',importe:79,metodo:'Stripe',estado:'cobrado'},
-    {id:uid(),fecha:'2025-04-10',cliente:'Spa Luna',concepto:'Setup CRM Básico',importe:397,metodo:'Transferencia',estado:'cobrado'},
     {id:uid(),fecha:'2025-04-15',cliente:'Clínica Dental Viva',concepto:'Mensualidad GROWTH',importe:59,metodo:'Stripe',estado:'cobrado'},
     {id:uid(),fecha:'2025-05-08',cliente:'Centro Estético Élite',concepto:'Setup GROWTH',importe:400,metodo:'Pendiente',estado:'pendiente'},
-    {id:uid(),fecha:'2025-03-01',cliente:'Fisio Sport Tenerife',concepto:'Setup START',importe:250,metodo:'Bizum',estado:'cobrado'},
-    {id:uid(),fecha:'2025-04-01',cliente:'Consultoría Nexo',concepto:'Alta AIRMATE',importe:0,metodo:'—',estado:'cobrado'},
   ];
   DB.ingresos=ing; save('ingresos');
 }
 
 if(DB.actividad.length===0){
-  const acts=[
-    {id:uid(),text:'Centro Estético Élite aceptó propuesta GROWTH',color:'#2ecc71',ts:'2025-05-09T10:30:00'},
-    {id:uid(),text:'Propuesta P-005 creada para Inmobiliaria Costa',color:'#c9a84c',ts:'2025-05-08T16:20:00'},
-    {id:uid(),text:'Taller MotoSur añadido al pipeline',color:'#c9a84c',ts:'2025-05-07T12:00:00'},
-    {id:uid(),text:'Spa Luna — entrega en curso',color:'#3498db',ts:'2025-05-06T09:15:00'},
-    {id:uid(),text:'Jose Acosta — Verifactu integrado',color:'#2ecc71',ts:'2025-05-05T18:00:00'},
-    {id:uid(),text:'Propuesta P-001 enviada a Estudio Yoga Zen',color:'#c9a84c',ts:'2025-05-06T11:00:00'},
-  ];
-  DB.actividad=acts; save('actividad');
+  DB.actividad=[]; save('actividad');
 }
 
 // ── UTILS ─────────────────────────────────────────
