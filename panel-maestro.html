@@ -134,6 +134,34 @@ tr:hover td{background:rgba(201,168,76,0.025)}
 .ingreso-track{flex:1;height:6px;background:var(--bg4);border-radius:99px;overflow:hidden}
 .ingreso-fill{height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold));border-radius:99px}
 .ingreso-val{font-size:12px;font-weight:600;color:var(--gold2);width:50px;text-align:right;flex-shrink:0}
+
+/* ── MOBILE ── */
+@media(max-width:640px){
+  body{flex-direction:column;height:auto;overflow:auto}
+  .sidebar{width:100%;height:auto;border-right:none;border-bottom:1px solid var(--border);flex-shrink:0}
+  .sidebar-brand{padding:14px 16px}
+  .sidebar-nav{display:none}
+  .sidebar-bottom{display:none}
+  .main{min-height:0}
+  .topbar{padding:0 14px;gap:8px;height:50px}
+  .topbar-badge{display:none}
+  .topbar-date{display:none}
+  .topbar-title{font-size:13px}
+  .content{padding:14px}
+  .stats-grid{grid-template-columns:1fr 1fr!important;gap:10px}
+  .stat-value{font-size:22px}
+  .grid2,.grid3{grid-template-columns:1fr!important}
+  .card{margin-bottom:12px}
+  table{font-size:11px}
+  th,td{padding:8px 10px}
+  .ingreso-label{width:80px;font-size:11px}
+  .cita-time{display:none}
+  .chat-msgs{max-height:200px}
+}
+@media(max-width:400px){
+  .stats-grid{grid-template-columns:1fr 1fr!important}
+  .stat-value{font-size:20px}
+}
 </style>
 </head>
 <body>
@@ -146,6 +174,14 @@ tr:hover td{background:rgba(201,168,76,0.025)}
       <div class="brand-name">El Maestro</div>
       <div class="brand-sub">Centro Esotérico Arcano Mayor</div>
     </div>
+  </div>
+  <!-- Mobile bottom nav -->
+  <div id="mobile-nav" style="display:none;padding:8px 12px;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+    <button onclick="showSectionMobile('dashboard')" style="background:rgba(201,168,76,0.1);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-size:11px;padding:7px 12px;white-space:nowrap;font-family:'Inter',sans-serif;cursor:pointer;">📊 Dashboard</button>
+    <button onclick="showSectionMobile('citas')" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-size:11px;padding:7px 12px;white-space:nowrap;font-family:'Inter',sans-serif;cursor:pointer;">📅 Citas</button>
+    <button onclick="showSectionMobile('clientes')" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-size:11px;padding:7px 12px;white-space:nowrap;font-family:'Inter',sans-serif;cursor:pointer;">👤 Clientes</button>
+    <button onclick="showSectionMobile('ia')" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-size:11px;padding:7px 12px;white-space:nowrap;font-family:'Inter',sans-serif;cursor:pointer;">💬 Agente IA</button>
+    <button onclick="showSectionMobile('ingresos')" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-size:11px;padding:7px 12px;white-space:nowrap;font-family:'Inter',sans-serif;cursor:pointer;">💰 Ingresos</button>
   </div>
   <div class="sidebar-nav">
     <div class="nav-section">Principal</div>
@@ -506,6 +542,21 @@ tr:hover td{background:rgba(201,168,76,0.025)}
 </div>
 
 <script>
+// Mobile nav
+if(window.innerWidth<=640){
+  var mn=document.getElementById('mobile-nav');
+  if(mn)mn.style.display='flex';
+}
+function showSectionMobile(id){
+  ['dashboard','citas','clientes','ia','ingresos','servicios','actividad'].forEach(s=>{
+    document.getElementById('sec-'+s).style.display=s===id?'block':'none';
+  });
+  document.getElementById('topbar-title').textContent={dashboard:'Dashboard',citas:'Citas',clientes:'Clientes',ia:'Agente IA',ingresos:'Ingresos',servicios:'Servicios',actividad:'Actividad'}[id]||id;
+  document.querySelectorAll('#mobile-nav button').forEach(b=>b.style.background='var(--bg3)');
+  event.currentTarget.style.background='rgba(201,168,76,0.1)';
+  window.scrollTo(0,200);
+}
+
 // Fecha
 var d=new Date();
 document.getElementById('topbar-date').textContent=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
