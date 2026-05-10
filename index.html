@@ -6636,18 +6636,15 @@ document.addEventListener('click', e => {
 document.addEventListener('DOMContentLoaded', detectLang);
 
 function irAReserva(){
-  // Asegurarse de que page-inicio está visible
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-inicio').classList.add('active');
-  // Actualizar nav activo
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  const tabInicio=document.getElementById('tab-inicio');
-  if(tabInicio) tabInicio.classList.add('active');
-  // Scroll a la sección
+  switchPage('inicio');
   setTimeout(()=>{
     const el=document.getElementById('reserva-llamada');
-    if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
-  },80);
+    if(!el) return;
+    // Calcular posición relativa al documento
+    const rect=el.getBoundingClientRect();
+    const top=rect.top+window.pageYOffset-80;
+    window.scrollTo({top,behavior:'smooth'});
+  },200);
 }
 </script>
 
