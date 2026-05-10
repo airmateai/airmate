@@ -576,20 +576,90 @@ footer{padding:32px 24px;border-top:1px solid rgba(201,160,80,0.06);text-align:c
 </footer>
 
 <!-- AIRMATE WIDGET -->
+<style>
+#am-btn{position:fixed;bottom:24px;right:24px;z-index:99999;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#7a5c14,#c9a050,#e8c97a);border:none;cursor:pointer;box-shadow:0 4px 24px rgba(201,160,80,0.5);display:flex;align-items:center;justify-content:center;font-size:26px;transition:all .3s}
+#am-btn:hover{transform:scale(1.1);box-shadow:0 6px 32px rgba(201,160,80,0.7)}
+#am-box{position:fixed;bottom:96px;right:24px;z-index:99999;width:340px;height:480px;background:#04030a;border:1px solid rgba(201,160,80,0.25);border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.8);display:none;flex-direction:column}
+#am-head{background:linear-gradient(135deg,#0a0812,#100d1c);padding:16px 18px;border-bottom:1px solid rgba(201,160,80,0.15);display:flex;align-items:center;gap:10px}
+#am-head-icon{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7a5c14,#c9a050);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+#am-head-name{font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:0.1em;color:#fff}
+#am-head-sub{font-size:10px;color:rgba(255,255,255,0.35);font-style:italic;display:flex;align-items:center;gap:5px}
+#am-dot{width:6px;height:6px;border-radius:50%;background:#6ed4a0;animation:blink 1.5s infinite}
+#am-close{margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.4);font-size:18px;cursor:pointer;padding:4px;line-height:1}
+#am-close:hover{color:#fff}
+#am-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+#am-msgs::-webkit-scrollbar{width:4px}
+#am-msgs::-webkit-scrollbar-thumb{background:rgba(201,160,80,0.2);border-radius:2px}
+.am-msg{max-width:80%;font-size:13px;font-family:'Cormorant Garamond',serif;font-style:italic;padding:10px 13px;border-radius:12px;line-height:1.55}
+.am-bot{background:rgba(201,160,80,0.07);border:1px solid rgba(201,160,80,0.12);color:rgba(255,255,255,0.75);border-radius:4px 12px 12px 12px;align-self:flex-start}
+.am-user{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);border-radius:12px 4px 12px 12px;align-self:flex-end}
+.am-typing{display:flex;gap:4px;align-items:center;padding:10px 13px}
+.am-typing span{width:6px;height:6px;border-radius:50%;background:rgba(201,160,80,0.5);animation:typing 1.2s infinite}
+.am-typing span:nth-child(2){animation-delay:.2s}
+.am-typing span:nth-child(3){animation-delay:.4s}
+@keyframes typing{0%,100%{opacity:0.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+#am-input-row{padding:10px 12px;border-top:1px solid rgba(201,160,80,0.1);display:flex;gap:8px}
+#am-input{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(201,160,80,0.15);border-radius:99px;padding:9px 14px;color:#fff;font-family:'Cormorant Garamond',serif;font-size:13px;outline:none}
+#am-input::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+#am-send{background:linear-gradient(135deg,#7a5c14,#c9a050);border:none;border-radius:50%;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:all .2s}
+#am-send:hover{transform:scale(1.1)}
+</style>
+
+<button id="am-btn" onclick="toggleWidget()">🔮</button>
+<div id="am-box">
+  <div id="am-head">
+    <div id="am-head-icon">🔮</div>
+    <div>
+      <div id="am-head-name">Asistente del Maestro</div>
+      <div id="am-head-sub"><div id="am-dot"></div> En línea ahora</div>
+    </div>
+    <button id="am-close" onclick="toggleWidget()">×</button>
+  </div>
+  <div id="am-msgs">
+    <div class="am-msg am-bot">Hola 🔮 Soy el asistente del Maestro Eduardo. ¿Buscas una consulta de tarot, videncia o trabajos esotéricos?</div>
+  </div>
+  <div id="am-input-row">
+    <input id="am-input" type="text" placeholder="Escribe tu consulta..." onkeydown="if(event.key==='Enter')sendMsg()"/>
+    <button id="am-send" onclick="sendMsg()">➤</button>
+  </div>
+</div>
+
 <script>
-window.AIRMATE_CONFIG = {
-  businessName: "Centro Esotérico Arcano Mayor — El Maestro Eduardo Enrique",
-  greeting: "Hola 🔮 Soy el asistente del Maestro Eduardo. ¿Buscas una consulta de tarot, videncia o trabajos esotéricos? Puedo ayudarte a reservar.",
-  primaryColor: "#c9a050",
-  secondaryColor: "#04030a",
-  phone: "+34687554784",
-  whatsappText: "Hola Maestro Eduardo, quiero reservar una consulta",
-  services: ["Lectura de Tarot","Videncia","Astrología y carta natal","Trabajos esotéricos","Consulta de negocios","Amarre y endiosamiento"],
-  location: "Ángel Guimerá 24, Santa Cruz de Tenerife",
-  apiUrl: "https://bot-airmate-1.vercel.app/api/chat"
-};
+function toggleWidget(){
+  var b=document.getElementById('am-box');
+  b.style.display=b.style.display==='flex'?'none':'flex';
+}
+async function sendMsg(){
+  var input=document.getElementById('am-input');
+  var msgs=document.getElementById('am-msgs');
+  var text=input.value.trim();
+  if(!text)return;
+  input.value='';
+  msgs.innerHTML+=`<div class="am-msg am-user">${text}</div>`;
+  var typing=document.createElement('div');
+  typing.className='am-msg am-bot am-typing';
+  typing.innerHTML='<span></span><span></span><span></span>';
+  msgs.appendChild(typing);
+  msgs.scrollTop=msgs.scrollHeight;
+  var reply=await getReply(text);
+  typing.remove();
+  msgs.innerHTML+=`<div class="am-msg am-bot">${reply}</div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+}
+async function getReply(msg){
+  try{
+    var r=await fetch('https://bot-airmate-1.vercel.app/api/chat',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:msg,context:'Eres el asistente virtual del Centro Esotérico Arcano Mayor del Maestro Eduardo Enrique en Santa Cruz de Tenerife. Ofrece: Lectura de Tarot, Videncia, Astrología, Trabajos Esotéricos, Consultas de Negocios, Amarre y Endiosamiento. Teléfono: 687554784. Habla en español, tono cálido y misterioso. Anima a reservar por WhatsApp.'})
+    });
+    var d=await r.json();
+    return d.reply||d.message||d.response||'Para reservar tu consulta escríbenos al WhatsApp: +34 687 554 784 🔮';
+  }catch(e){
+    var fallbacks=['Por supuesto, el Maestro Eduardo puede ayudarte. ¿Prefieres consulta presencial en Tenerife u online? 🔮','El Maestro tiene disponibilidad esta semana. Escríbenos al WhatsApp +34 687 554 784 para reservar tu consulta 🙏','Para una lectura de tarot o videncia puedes reservar directamente por WhatsApp: +34 687 554 784'];
+    return fallbacks[Math.floor(Math.random()*fallbacks.length)];
+  }
+}
 </script>
-<script src="https://t6227351-debug.github.io/bot-airmate-1-/airmate-widget.js" async></script>
 
 </body>
 </html>
