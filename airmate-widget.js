@@ -454,7 +454,7 @@
     msgs().appendChild(card); scrollBot();
 
     window._amConfirmBooking = async () => {
-      const name  = document.getElementById('am-bk-name')?.value.trim();
+      const name  = parseName(document.getElementById('am-bk-name')?.value.trim());
       const phone = document.getElementById('am-bk-phone')?.value.trim();
       const email = document.getElementById('am-bk-email')?.value.trim();
       if (!name || !phone || !email) { alert('Por favor rellena nombre, teléfono y email.'); return; }
@@ -514,7 +514,7 @@
     msgs().appendChild(card); scrollBot();
 
     window._amSaveLead = async () => {
-      const name     = document.getElementById('am-ld-name')?.value.trim();
+      const name     = parseName(document.getElementById('am-ld-name')?.value.trim());
       const phone    = document.getElementById('am-ld-phone')?.value.trim();
       const interest = document.getElementById('am-ld-interest')?.value.trim();
       if (!name || !phone) { alert('Por favor rellena nombre y teléfono.'); return; }
@@ -593,6 +593,18 @@
     } catch(e) { console.error('[Airmate] sbInsert exception', e); return { ok: false, id: null }; }
   }
 
+  /* ─── NAME EXTRACTOR ────────────────────────────────────────────── */
+  function parseName(raw) {
+    if (!raw) return raw;
+    // Strip common intro phrases in ES/EN/AR
+    const cleaned = raw
+      .replace(/^(me llamo|mi nombre es|soy|i'm|i am|my name is|my name's|اسمي|أنا)\s+/i, '')
+      .replace(/^(hola[,\s]+)?(me llamo|soy)\s+/i, '')
+      .trim();
+    // Capitalize each word
+    return cleaned.replace(/\b\w/g, c => c.toUpperCase());
+  }
+
   /* ─── SYSTEM PROMPT ─────────────────────────────────────────────── */
   function buildPrompt() {
     const svcsText = SVCS.map(s =>
@@ -604,23 +616,27 @@
     const scheduleText = ROOT.dataset.scheduleText ||
       `${openDaysText} de ${ROOT.dataset.open||'09:00'} a ${ROOT.dataset.close||'19:00'}`;
 
-    return `Eres el asistente de "${BOT_NAME}". Actúas como un dependiente experto y cercano: informas, asesoras y cuando el cliente está listo, gestionas la reserva.
+    return `Eres el asistente de "${BOT_NAME}". Eres cercano, natural y directo — como un buen empleado que conoce el negocio de memoria.
 
-SERVICIOS:
+SERVICIOS DISPONIBLES:
 ${svcsText}
 
 HORARIO: ${scheduleText}
 
-CÓMO ACTÚAS:
-- Conversa de forma natural y amable. Responde preguntas, informa sobre servicios, asesora sin prisa.
-- NO lances el formulario de reserva a la primera. Primero responde, informa y genera confianza.
-- Solo cuando el cliente diga claramente que quiere reservar, pedir cita o ver disponibilidad → escribe MOSTRAR_RESERVA al inicio de tu respuesta.
-- Si el cliente quiere que le llamen o contacten → escribe MOSTRAR_CONTACTO al inicio.
-- Nunca inventes precios, duraciones ni datos que no tengas. Di que se lo confirmarán en el negocio.
-- Mantén respuestas cortas (2-4 frases). No uses listas largas.
-${WA?`- Si quiere hablar con una persona ya: WhatsApp ${WA}`:''}
+CÓMO HABLAS:
+- Tono cálido y humano. Nada de listas largas ni respuestas de robot.
+- Respuestas cortas: 1-3 frases máximo. Si hay más info, la vas soltando poco a poco según pregunta el cliente.
+- Usa el nombre del cliente si lo sabes. Haz que se sienta atendido, no procesado.
+- Si el cliente saluda, saluda de vuelta brevemente y pregunta en qué le puedes ayudar. No des toda la info de golpe.
+- Si pregunta algo que no sabes con certeza, di que se lo confirman en el negocio. No inventes precios ni horarios.
 
-IDIOMA: Responde siempre en el idioma del cliente.`;
+CUÁNDO MOSTRAR FORMULARIOS:
+- Solo escribe MOSTRAR_RESERVA (al inicio de tu respuesta) cuando el cliente diga claramente que quiere reservar, pedir cita o ver disponibilidad.
+- Solo escribe MOSTRAR_CONTACTO cuando quiera que le llamen o le contacten.
+- No lances el formulario a la primera. Primero resuelve su duda, luego si encaja, propones la cita.
+${WA?`- Si insiste en hablar con una persona ahora mismo: WhatsApp ${WA}`:''}
+
+IDIOMA: Responde siempre en el mismo idioma que use el cliente.`;
   }
 
   /* ─── UI HELPERS ────────────────────────────────────────────────── */
