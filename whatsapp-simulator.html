@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp Simulator — House of Tailors</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#111b21;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.phone{width:375px;height:720px;background:#0b141a;border-radius:40px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 40px 80px rgba(0,0,0,.6);border:6px solid #222e35;}
+.header{background:#202c33;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.avatar{width:40px;height:40px;border-radius:50%;background:#c9a84c;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#111;flex-shrink:0;}
+.header-info{flex:1;}
+.header-name{font-size:15px;font-weight:600;color:#e9edef;}
+.header-status{font-size:12px;color:#8696a0;margin-top:1px;}
+.messages{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:6px;background:#0b141a;}
+.messages::-webkit-scrollbar{width:4px;}
+.messages::-webkit-scrollbar-track{background:transparent;}
+.messages::-webkit-scrollbar-thumb{background:#2a3942;border-radius:2px;}
+.msg{max-width:80%;padding:8px 12px;border-radius:12px;font-size:14px;line-height:1.5;word-break:break-word;position:relative;}
+.msg-time{font-size:10px;margin-top:4px;display:block;text-align:right;}
+.msg.user{background:#005c4b;color:#e9edef;align-self:flex-end;border-bottom-right-radius:4px;}
+.msg.user .msg-time{color:#8bc4b8;}
+.msg.bot{background:#202c33;color:#e9edef;align-self:flex-start;border-bottom-left-radius:4px;}
+.msg.bot .msg-time{color:#8696a0;}
+.msg.system{background:rgba(255,255,255,.05);color:#8696a0;font-size:11px;text-align:center;align-self:center;border-radius:8px;padding:4px 12px;}
+.typing{background:#202c33;align-self:flex-start;border-bottom-left-radius:4px;padding:12px 16px;}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#8696a0;margin:0 2px;animation:bounce .9s infinite;}
+.dot:nth-child(2){animation-delay:.15s;}
+.dot:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
+.input-area{background:#202c33;padding:10px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.input-wrap{flex:1;background:#2a3942;border-radius:24px;padding:10px 16px;display:flex;align-items:center;}
+#msg-input{background:none;border:none;outline:none;color:#e9edef;font-size:15px;width:100%;resize:none;max-height:80px;font-family:inherit;}
+#msg-input::placeholder{color:#8696a0;}
+.send-btn{width:44px;height:44px;border-radius:50%;background:#00a884;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}
+.send-btn:hover{background:#00c49a;}
+.send-btn:disabled{background:#2a3942;cursor:not-allowed;}
+.send-btn svg{width:20px;height:20px;}
+/* Quick replies */
+.quick-replies{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px 0;flex-shrink:0;}
+.qr-btn{background:rgba(0,168,132,.15);border:1px solid #00a884;color:#00a884;border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.qr-btn:hover{background:#00a884;color:#111;}
+/* Top bar */
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 20px 0;width:375px;}
+.top-label{color:#8696a0;font-size:12px;}
+.reset-btn{background:none;border:1px solid #2a3942;color:#8696a0;border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;}
+.reset-btn:hover{border-color:#8696a0;color:#e9edef;}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="top-label">WhatsApp Simulator — House of Tailors AI</span>
+  <button class="reset-btn" onclick="resetChat()">Reset chat</button>
+</div>
+
+<div class="phone">
+  <div class="header">
+    <div class="avatar">HT</div>
+    <div class="header-info">
+      <div class="header-name">House of Tailors</div>
+      <div class="header-status" id="status-text">AI Receptionist · Online</div>
+    </div>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="msg system">🔒 Messages are end-to-end encrypted</div>
+  </div>
+
+  <div class="quick-replies" id="quick-replies">
+    <button class="qr-btn" onclick="sendQuick('Hi, I\'m interested in a bespoke suit')">Bespoke suit</button>
+    <button class="qr-btn" onclick="sendQuick('What are your prices?')">Prices</button>
+    <button class="qr-btn" onclick="sendQuick('Where are you located?')">Location</button>
+    <button class="qr-btn" onclick="sendQuick('I need a kandura')">Kandura</button>
+    <button class="qr-btn" onclick="sendQuick('Can I book an appointment?')">Book appt</button>
+    <button class="qr-btn" onclick="sendQuick('كم سعر البدلة؟')">بالعربي</button>
+  </div>
+
+  <div class="input-area">
+    <div class="input-wrap">
+      <textarea id="msg-input" placeholder="Message" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    </div>
+    <button class="send-btn" id="send-btn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+const PROXY = 'https://bot-airmate-1.vercel.app/api/chat';
+const SYSTEM_PROMPT = `You are the AI receptionist for House of Tailors, a luxury bespoke tailoring atelier with locations in Business Bay, DSO, and Sharjah (Dubai, UAE).
+
+You represent the brand: refined, professional, warm. You speak like a knowledgeable tailor's assistant — not a chatbot.
+
+SERVICES & PRICING (approximate):
+- Bespoke Suit: from AED 4,500
+- Made-to-Measure Suit: from AED 2,800
+- Kandura / Dishdasha: from AED 1,200
+- Abaya (embroidered): from AED 1,800
+- Tuxedo: from AED 5,200
+- Bespoke Shirt: from AED 450
+- Alterations: from AED 150
+
+LOCATIONS & HOURS:
+- Business Bay: Sun–Thu 10:00–20:00, Fri–Sat 11:00–21:00
+- DSO (Dubai Silicon Oasis): Sun–Thu 10:00–19:00
+- Sharjah: Sat–Thu 10:00–20:00
+
+HOW YOU BEHAVE:
+- Warm and professional. Short replies — 2-3 sentences max on WhatsApp.
+- Use the client's name once you know it.
+- Answer questions about services, pricing, fabrics, and locations.
+- If they want to book an appointment, ask which branch they prefer and suggest calling or visiting.
+- If they want to speak to someone: "I'll make sure a member of our team contacts you shortly."
+- Never invent prices, delivery times, or availability you are not sure about.
+- If the message is in Arabic, reply in Arabic. Otherwise reply in English.`;
+
+let history = [];
+let isTyping = false;
+
+function time() {
+  return new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+
+function addMsg(text, type) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `msg ${type}`;
+  div.innerHTML = `${text.replace(/\n/g,'<br>')}<span class="msg-time">${type==='user'?'✓✓ ':''} ${time()}</span>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg typing';
+  div.id = 'typing-indicator';
+  div.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  document.getElementById('status-text').textContent = 'typing...';
+}
+
+function removeTyping() {
+  document.getElementById('typing-indicator')?.remove();
+  document.getElementById('status-text').textContent = 'AI Receptionist · Online';
+}
+
+async function sendMessage() {
+  const input = document.getElementById('msg-input');
+  const text = input.value.trim();
+  if (!text || isTyping) return;
+  input.value = '';
+  autoResize(input);
+  doSend(text);
+}
+
+function sendQuick(text) {
+  if (isTyping) return;
+  doSend(text);
+}
+
+async function doSend(text) {
+  isTyping = true;
+  document.getElementById('send-btn').disabled = true;
+  document.getElementById('quick-replies').style.display = 'none';
+
+  addMsg(text, 'user');
+  history.push({role:'user', content: text});
+
+  showTyping();
+
+  try {
+    const resp = await fetch(PROXY, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({system_prompt: SYSTEM_PROMPT, messages: history.slice(-10)})
+    });
+    const data = await resp.json();
+    const reply = data.reply || 'Sorry, something went wrong. Please try again.';
+    removeTyping();
+    addMsg(reply, 'bot');
+    history.push({role:'assistant', content: reply});
+  } catch(e) {
+    removeTyping();
+    addMsg('Connection error. Make sure the Vercel proxy is running.', 'system');
+  }
+
+  isTyping = false;
+  document.getElementById('send-btn').disabled = false;
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 80) + 'px';
+}
+
+function resetChat() {
+  history = [];
+  const msgs = document.getElementById('messages');
+  msgs.innerHTML = '<div class="msg system">🔒 Messages are end-to-end encrypted</div>';
+  document.getElementById('quick-replies').style.display = 'flex';
+}
+</script>
+</body>
+</html>
