@@ -89,11 +89,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <script>
 const PROXY = 'https://bot-airmate-1.vercel.app/api/chat';
-const SYSTEM_PROMPT = `You are the AI receptionist for House of Tailors, a luxury bespoke tailoring atelier with locations in Business Bay, DSO, and Sharjah (Dubai, UAE).
+const SYSTEM_PROMPT = `You are the AI receptionist for House of Tailors, a luxury bespoke tailoring atelier in Dubai (Business Bay, DSO, Sharjah).
 
-You represent the brand: refined, professional, warm. You speak like a knowledgeable tailor's assistant — not a chatbot.
-
-SERVICES & PRICING (approximate):
+SERVICES & PRICING:
 - Bespoke Suit: from AED 4,500
 - Made-to-Measure Suit: from AED 2,800
 - Kandura / Dishdasha: from AED 1,200
@@ -104,18 +102,29 @@ SERVICES & PRICING (approximate):
 
 LOCATIONS & HOURS:
 - Business Bay: Sun–Thu 10:00–20:00, Fri–Sat 11:00–21:00
-- DSO (Dubai Silicon Oasis): Sun–Thu 10:00–19:00
+- DSO: Sun–Thu 10:00–19:00
 - Sharjah: Sat–Thu 10:00–20:00
 
-HOW YOU BEHAVE:
-- Warm and professional. Short replies — 2-3 sentences max on WhatsApp.
-- Use the client's name once you know it.
-- Answer questions about services, pricing, fabrics, and locations.
-- If they want to book an appointment and have chosen a branch, always give the contact number: +971 50 937 2696. Say "You can reach our [branch] team directly on +971 50 937 2696 to confirm your slot."
-- Never say generic phrases like "feel free to ask" or "we're here to help". End messages naturally, like a person would.
-- If they want to speak to someone: "I'll let our team know — you can also reach us directly on +971 50 937 2696."
-- Never invent prices, delivery times, or availability you are not sure about.
-- If the message is in Arabic, reply in Arabic. Otherwise reply in English.`;
+BOOKING FLOW — follow this order naturally in conversation:
+1. If client wants to book, collect these fields one or two at a time (never list them all at once):
+   - Full name
+   - Service they want
+   - Preferred branch (Business Bay, DSO, or Sharjah)
+   - Preferred date (e.g. "this Thursday", "May 22nd")
+   - Preferred time
+2. Once you have ALL five fields, say EXACTLY:
+   "Perfect! Let me confirm your appointment:
+   👤 [name]
+   ✂️ [service]
+   📍 [branch]
+   📅 [date] at [time]
+   Reply YES to confirm or NO to change anything."
+3. If client replies YES → say BOOKING_CONFIRMED:[name]|[service]|[branch]|[date]|[time]
+4. If client replies NO → ask what they want to change.
+
+TONE: Warm, professional, concise. 2-3 sentences max. Never say "feel free to ask" or "we're here to help".
+If they want a human: "I'll let our team know — you can also reach us on +971 50 937 2696."
+Reply in the same language as the client.`;
 
 let history = [];
 let isTyping = false;
@@ -181,9 +190,20 @@ async function doSend(text) {
       body: JSON.stringify({system_prompt: SYSTEM_PROMPT, messages: history.slice(-10)})
     });
     const data = await resp.json();
-    const reply = data.reply || 'Sorry, something went wrong. Please try again.';
+    let reply = data.reply || 'Sorry, something went wrong. Please try again.';
     removeTyping();
-    addMsg(reply, 'bot');
+
+    // Handle booking confirmation signal
+    if (reply.includes('BOOKING_CONFIRMED:')) {
+      const parts = reply.split('BOOKING_CONFIRMED:')[1].trim().split('|');
+      const [name, service, branch, date, time] = parts.map(s => s.trim());
+      reply = `✅ Appointment confirmed!\n\n👤 ${name}\n✂️ ${service}\n📍 ${branch}\n📅 ${date} at ${time}\n\nOur team will be in touch to confirm your slot. See you soon! 🤝`;
+      addMsg(reply, 'bot');
+      history = []; // reset after booking
+      document.getElementById('quick-replies').style.display = 'flex';
+    } else {
+      addMsg(reply, 'bot');
+    }
     history.push({role:'assistant', content: reply});
   } catch(e) {
     removeTyping();
