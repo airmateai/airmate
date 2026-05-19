@@ -1106,9 +1106,16 @@ function openCitaModal(id){
  ${c.status==='pending'?`<button class="btn btn-accent" onclick="quickCita('${c.id}','confirmed');closeModal()">Confirmar cita</button>`:''}
  ${c.status!=='cancelled'?`<button class="btn btn-danger" onclick="quickCita('${c.id}','cancelled');closeModal()">Cancelar cita</button>`:''}
  ${c.client_phone?`<a href="https://wa.me/${c.client_phone.replace(/\D/g,'')}" target="_blank" class="btn" style="background:#25d366;color:#fff;">WhatsApp</a>`:''}
+ <button class="btn btn-danger btn-sm" style="margin-left:auto;" onclick="deleteCita('${c.id}')">Eliminar</button>
  </div>
  </div>`;
  document.getElementById('modal-overlay').classList.add('open');
+}
+
+async function deleteCita(id){
+ if(!confirm('¿Eliminar esta cita? Esta acción no se puede deshacer.'))return;
+ await _sb.from('appointments').delete().eq('id',id);
+ closeModal(); await loadAll(); toast('Cita eliminada');
 }
 
 // ── LEADS ─────────────────────────────────────────────
@@ -1154,6 +1161,7 @@ function renderLeads(){
  <div class="lead-card-actions">
  ${l.phone?`<a href="https://wa.me/${l.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-sm" style="background:#25d366;color:#fff;">WA</a>`:''}
  <button class="btn btn-ghost btn-sm" onclick="quickSeguimiento('${l.id}')">Seguimiento</button>
+ <button class="btn btn-danger btn-sm" onclick="deleteLead('${l.id}')">🗑</button>
  </div>
  </div>`).join('')}
  </div>
@@ -1173,6 +1181,7 @@ function renderLeads(){
  <td><div style="display:flex;gap:6px;">
  <button class="btn btn-ghost btn-xs" onclick="openLeadModal('${l.id}')">Ver</button>
  <button class="btn btn-accent btn-xs" onclick="quickLead('${l.id}','contacted')">Contactar</button>
+ <button class="btn btn-danger btn-xs" onclick="deleteLead('${l.id}')">Eliminar</button>
  </div></td>
  </tr>`).join('')}
  </tbody></table></div></div>`;
@@ -1182,6 +1191,12 @@ function renderLeads(){
 async function quickLead(id,status){
  await _sb.from('leads').update({status,updated_at:new Date().toISOString()}).eq('id',id);
  await loadAll(); toast('Estado actualizado');
+}
+
+async function deleteLead(id){
+ if(!confirm('¿Eliminar este lead? Esta acción no se puede deshacer.'))return;
+ await _sb.from('leads').delete().eq('id',id);
+ await loadAll(); toast('Lead eliminado');
 }
 
 function quickSeguimiento(id){
@@ -1489,10 +1504,15 @@ async function crmLoadEncargos(){
  const items=orders.filter(o=>o.status===s);
  document.getElementById('kcrm-cnt-'+s).textContent=items.length;
  document.getElementById('kcrm-body-'+s).innerHTML=items.map(o=>`
- <div class="crm-kcard" onclick="crmEditEncargo('${o.id}')">
+ <div class="crm-kcard">
+ <div onclick="crmEditEncargo('${o.id}')">
  <div class="crm-kcard-title">${esc(o.title)}</div>
  <div class="crm-kcard-client"> ${esc(o.client_name||'Sin cliente')}</div>
  ${o.price?`<div class="crm-kcard-price">${crmFmt(o.price)}</div>`:''}
+ </div>
+ <div style="text-align:right;margin-top:6px;">
+ <button class="btn btn-danger btn-xs" onclick="event.stopPropagation();crmDeleteEncargo('${o.id}')">Eliminar</button>
+ </div>
  </div>`).join('');
  });
 }
@@ -1556,6 +1576,12 @@ async function crmSaveEncargo(){
  if(_crmEditingId) await _sb.from('crm_orders').update(payload).eq('id',_crmEditingId);
  else await _sb.from('crm_orders').insert(payload);
  crmCloseModal(); crmLoadEncargos();
+}
+
+async function crmDeleteEncargo(id){
+ if(!confirm('¿Eliminar este encargo? Esta acción no se puede deshacer.'))return;
+ await _sb.from('crm_orders').delete().eq('id',id);
+ crmLoadEncargos(); toast('Encargo eliminado');
 }
 
 // ── INVENTARIO ────────────────────────────────────────
