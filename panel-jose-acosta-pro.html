@@ -829,22 +829,32 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
               <div class="search-wrap">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input class="search-input" style="width:200px" placeholder="Buscar cliente..." oninput="crmFilterClientes(this.value)" id="cli-search">
+                <input class="search-input" style="width:200px" placeholder="Buscar..." oninput="crmFilterClientes(this.value)" id="cli-search">
               </div>
-              <select id="cli-tipo-filter" onchange="crmFilterClientes(document.getElementById('cli-search').value)" style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;color:#1e293b">
-                <option value="">Todos</option>
-                <option value="particular">Particulares</option>
-                <option value="corporativo">Corporativos</option>
-              </select>
-              <button class="btn btn-ghost" onclick="exportClientesCSV()">⬇ CSV</button>
-              <button class="btn btn-accent" onclick="crmOpenClienteModal()">+ Nuevo cliente</button>
+              <button class="btn btn-ghost" onclick="exportClientesCSV()" id="cli-btn-csv">⬇ CSV</button>
+              <button class="btn btn-accent" id="cli-btn-new" onclick="crmOpenClienteModal()">+ Nuevo cliente</button>
             </div>
           </div>
-          <div class="card"><div class="table-wrap">
-            <table><thead><tr><th>Nombre</th><th>Tipo</th><th>Teléfono</th><th>Email</th><th>Medidas</th><th>Notas</th><th>Acciones</th></tr></thead>
-            <tbody id="crm-clientes-tbody"><tr><td colspan="7" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr></tbody>
-            </table>
-          </div></div>
+
+          <!-- Tabs particulares / corporativos -->
+          <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid #f1f5f9">
+            <button id="cli-tab-part" onclick="cliSetTab('particular')" style="padding:10px 22px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--acc);border-bottom:2px solid var(--acc);margin-bottom:-2px">👤 Particulares</button>
+            <button id="cli-tab-corp" onclick="cliSetTab('corporativo')" style="padding:10px 22px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px">🏢 Corporativos</button>
+          </div>
+
+          <!-- Vista particulares -->
+          <div id="cli-view-particular">
+            <div class="card"><div class="table-wrap">
+              <table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Medidas</th><th>Notas</th><th>Acciones</th></tr></thead>
+              <tbody id="crm-clientes-tbody"><tr><td colspan="6" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr></tbody>
+              </table>
+            </div></div>
+          </div>
+
+          <!-- Vista corporativos -->
+          <div id="cli-view-corporativo" style="display:none">
+            <div id="corp-groups-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px"></div>
+          </div>
         </div>
 
         <!-- CRM: ENCARGOS -->
@@ -2131,19 +2141,30 @@ async function crmLoadClientes(){
   const {data}=await _sb.from('crm_clients').select('*').eq('business_slug',BIZ_SLUG).order('created_at',{ascending:false});
   _crmClientes=data||[];crmRenderClientes(_crmClientes);
 }
+let _cliTab='particular';
+function cliSetTab(tab){
+  _cliTab=tab;
+  const isP=tab==='particular';
+  document.getElementById('cli-view-particular').style.display=isP?'block':'none';
+  document.getElementById('cli-view-corporativo').style.display=isP?'none':'block';
+  document.getElementById('cli-tab-part').style.color=isP?'var(--acc)':'#94a3b8';
+  document.getElementById('cli-tab-part').style.borderBottomColor=isP?'var(--acc)':'transparent';
+  document.getElementById('cli-tab-corp').style.color=!isP?'var(--acc)':'#94a3b8';
+  document.getElementById('cli-tab-corp').style.borderBottomColor=!isP?'var(--acc)':'transparent';
+  document.getElementById('cli-btn-new').textContent=isP?'+ Nuevo cliente':'+ Nuevo grupo';
+  document.getElementById('cli-btn-new').onclick=isP?crmOpenClienteModal:corpOpenGroupModal;
+  document.getElementById('cli-btn-csv').style.display=isP?'':'none';
+  if(!isP)corpLoadGroups();
+}
 function crmRenderClientes(list){
   const tb=document.getElementById('crm-clientes-tbody');
-  if(!list.length){tb.innerHTML='<tr><td colspan="7" class="empty-state">Sin clientes todavía</td></tr>';return;}
-  tb.innerHTML=list.map(c=>{
+  const part=list.filter(c=>c.tipo!=='corporativo');
+  if(!part.length){tb.innerHTML='<tr><td colspan="6" class="empty-state">Sin clientes particulares todavía</td></tr>';return;}
+  tb.innerHTML=part.map(c=>{
     const m=c.measurements||{};
     const medShort=Object.keys(m).length?`T${m.talla||'—'} · P${m.pecho||'—'} · C${m.cintura||'—'}`:'—';
-    const esCorp=c.tipo==='corporativo';
-    const tipoTag=esCorp
-      ?`<span class="tag" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:10px">🏢 Corporativo</span>`
-      :`<span class="tag" style="background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;font-size:10px">👤 Particular</span>`;
     return `<tr>
       <td><button class="btn btn-ghost btn-xs" style="font-weight:700;text-align:left" onclick="crmVerCliente('${c.id}')">${esc(c.name)}</button></td>
-      <td>${tipoTag}</td>
       <td>${esc(c.phone||'—')}</td>
       <td>${esc(c.email||'—')}</td>
       <td style="font-size:11px;color:var(--txt3)">${medShort}</td>
@@ -2233,6 +2254,200 @@ async function crmSaveCliente(){
   crmCloseModal();crmLoadClientes();showToast('✓ Cliente guardado');
 }
 async function crmDeleteCliente(id){if(!confirm('¿Eliminar cliente?'))return;await _sb.from('crm_clients').delete().eq('id',id);crmLoadClientes();}
+
+// ── CORPORATIVOS ────────────────────────────────────────────────────────────
+let _corpGroups=[];
+
+async function corpLoadGroups(){
+  const {data}=await _sb.from('crm_corporate_groups').select('*').eq('business_slug',BIZ_SLUG).order('nombre');
+  _corpGroups=data||[];
+  corpRenderGroups();
+}
+
+async function corpRenderGroups(){
+  const el=document.getElementById('corp-groups-grid');
+  if(!_corpGroups.length){
+    el.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#94a3b8">
+      <div style="font-size:40px;margin-bottom:12px">🏢</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:6px">Sin grupos corporativos</div>
+      <div style="font-size:13px">Añade tu primer cliente corporativo (empresa, equipo, restaurante...)</div>
+    </div>`;return;
+  }
+  // Cargar miembros de todos los grupos
+  const ids=_corpGroups.map(g=>g.id);
+  const {data:members}=await _sb.from('crm_corporate_members').select('*').in('group_id',ids).order('cargo');
+  const membersByGroup={};
+  (members||[]).forEach(m=>{if(!membersByGroup[m.group_id])membersByGroup[m.group_id]=[];membersByGroup[m.group_id].push(m);});
+
+  el.innerHTML=_corpGroups.map(g=>{
+    const mems=membersByGroup[g.id]||[];
+    const memList=mems.length
+      ?mems.map(m=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f8fafc">
+          <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#f1f5f9,#e2e8f0);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">👤</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:#1e293b">${esc(m.nombre)}</div>
+            <div style="font-size:11px;color:#94a3b8">${esc(m.cargo||'Sin cargo')}</div>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-ghost btn-xs" onclick="corpVerMiembro('${m.id}')" title="Ver medidas">📐</button>
+            <button class="btn btn-ghost btn-xs" onclick="corpEditMiembro('${m.id}')">✏</button>
+            <button class="btn btn-danger btn-xs" onclick="corpDeleteMiembro('${m.id}','${g.id}')">🗑</button>
+          </div>
+        </div>`).join('')
+      :`<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px">Sin miembros todavía</div>`;
+    return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+      <div style="background:linear-gradient(135deg,#0f172a,#1e293b);padding:16px 18px;display:flex;align-items:center;gap:12px">
+        <div style="width:42px;height:42px;border-radius:10px;background:var(--acc);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏢</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.nombre)}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5)">${esc(g.sector||'')}${g.contacto?' · '+esc(g.contacto):''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-xs" style="background:rgba(255,255,255,.12);color:#fff;border:none" onclick="corpEditGroup('${g.id}')">✏</button>
+          <button class="btn btn-xs" style="background:rgba(255,0,0,.2);color:#fca5a5;border:none" onclick="corpDeleteGroup('${g.id}')">🗑</button>
+        </div>
+      </div>
+      <div style="padding:0 14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 8px">
+          <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em">Equipo · ${mems.length} persona${mems.length!==1?'s':''}</span>
+          <button class="btn btn-accent btn-xs" onclick="corpOpenMiembroModal('${g.id}')">+ Añadir</button>
+        </div>
+        ${memList}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function corpOpenGroupModal(g={}){
+  _crmEditId=g.id||null;
+  crmOpenModal(g.id?'Editar grupo corporativo':'Nuevo grupo corporativo',`
+    <div class="crm-form-group"><label class="crm-form-label">Nombre del negocio / grupo *</label>
+      <input class="crm-form-ctrl" id="cg-nombre" value="${esc(g.nombre||'')}" placeholder="Ej: Restaurante El Bulli, Real Madrid FC"/></div>
+    <div class="crm-form-row">
+      <div class="crm-form-group"><label class="crm-form-label">Sector</label>
+        <input class="crm-form-ctrl" id="cg-sector" value="${esc(g.sector||'')}" placeholder="Restauración, Deporte, Empresa..."/></div>
+      <div class="crm-form-group"><label class="crm-form-label">Contacto principal</label>
+        <input class="crm-form-ctrl" id="cg-contacto" value="${esc(g.contacto||'')}" placeholder="Nombre del responsable"/></div>
+    </div>
+    <div class="crm-form-row">
+      <div class="crm-form-group"><label class="crm-form-label">Teléfono</label>
+        <input class="crm-form-ctrl" id="cg-tel" value="${esc(g.telefono||'')}"/></div>
+      <div class="crm-form-group"><label class="crm-form-label">Email</label>
+        <input type="email" class="crm-form-ctrl" id="cg-email" value="${esc(g.email||'')}"/></div>
+    </div>
+    <div class="crm-form-group"><label class="crm-form-label">Notas</label>
+      <textarea class="crm-form-ctrl" id="cg-notes">${esc(g.notes||'')}</textarea></div>`,
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="corpSaveGroup()">Guardar</button>`);
+}
+
+async function corpSaveGroup(){
+  const nombre=cv('cg-nombre').trim();if(!nombre){alert('Nombre obligatorio');return;}
+  const payload={business_slug:BIZ_SLUG,nombre,sector:cv('cg-sector')||null,contacto:cv('cg-contacto')||null,telefono:cv('cg-tel')||null,email:cv('cg-email')||null,notes:cv('cg-notes')||null};
+  if(_crmEditId)await _sb.from('crm_corporate_groups').update(payload).eq('id',_crmEditId);
+  else await _sb.from('crm_corporate_groups').insert(payload);
+  crmCloseModal();corpLoadGroups();showToast('✓ Grupo guardado');
+}
+
+function corpEditGroup(id){
+  const g=_corpGroups.find(x=>x.id===id);if(!g)return;
+  corpOpenGroupModal(g);
+}
+
+async function corpDeleteGroup(id){
+  if(!confirm('¿Eliminar este grupo y todos sus miembros?'))return;
+  await _sb.from('crm_corporate_members').delete().eq('group_id',id);
+  await _sb.from('crm_corporate_groups').delete().eq('id',id);
+  corpLoadGroups();showToast('✓ Grupo eliminado');
+}
+
+function corpMiembroForm(m={}){
+  const ms=m.measurements||{};
+  return `
+    <div class="crm-form-row">
+      <div class="crm-form-group"><label class="crm-form-label">Nombre *</label>
+        <input class="crm-form-ctrl" id="cm-nombre" value="${esc(m.nombre||'')}" placeholder="Nombre completo"/></div>
+      <div class="crm-form-group"><label class="crm-form-label">Cargo / Rol</label>
+        <input class="crm-form-ctrl" id="cm-cargo" value="${esc(m.cargo||'')}" placeholder="Ej: Manager, Chef, Entrenador, Fisio..."/></div>
+    </div>
+    <div class="crm-form-row">
+      <div class="crm-form-group"><label class="crm-form-label">Teléfono</label>
+        <input class="crm-form-ctrl" id="cm-tel" value="${esc(m.telefono||'')}"/></div>
+      <div class="crm-form-group"><label class="crm-form-label">Email</label>
+        <input type="email" class="crm-form-ctrl" id="cm-email" value="${esc(m.email||'')}"/></div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin:14px 0 8px">📐 Medidas</div>
+    <div class="crm-form-row" style="margin-bottom:8px">
+      <div><label class="crm-form-label">Talla chaqueta</label><input class="crm-form-ctrl" id="cm-talla" value="${esc(ms.talla||'')}" placeholder="Ej: 48"/></div>
+      <div><label class="crm-form-label">Pecho (cm)</label><input type="number" class="crm-form-ctrl" id="cm-pecho" value="${ms.pecho||''}"/></div>
+    </div>
+    <div class="crm-form-row" style="margin-bottom:8px">
+      <div><label class="crm-form-label">Cintura (cm)</label><input type="number" class="crm-form-ctrl" id="cm-cintura" value="${ms.cintura||''}"/></div>
+      <div><label class="crm-form-label">Cadera (cm)</label><input type="number" class="crm-form-ctrl" id="cm-cadera" value="${ms.cadera||''}"/></div>
+    </div>
+    <div class="crm-form-row" style="margin-bottom:8px">
+      <div><label class="crm-form-label">Largo pantalón</label><input type="number" class="crm-form-ctrl" id="cm-lpant" value="${ms.largo_pantalon||''}"/></div>
+      <div><label class="crm-form-label">Largo chaqueta</label><input type="number" class="crm-form-ctrl" id="cm-lchaq" value="${ms.largo_chaqueta||''}"/></div>
+    </div>
+    <div class="crm-form-row">
+      <div><label class="crm-form-label">Talla zapato</label><input class="crm-form-ctrl" id="cm-zapato" value="${esc(ms.zapato||'')}" placeholder="Ej: 43"/></div>
+      <div><label class="crm-form-label">Talla corbata</label><input class="crm-form-ctrl" id="cm-corbata" value="${esc(ms.corbata||'')}" placeholder="Ej: Estándar"/></div>
+    </div>
+    <div class="crm-form-group" style="margin-top:8px"><label class="crm-form-label">Notas</label>
+      <textarea class="crm-form-ctrl" id="cm-notes">${esc(m.notes||'')}</textarea></div>`;
+}
+
+let _corpEditMembId=null,_corpEditGroupId=null;
+function corpOpenMiembroModal(groupId,m={}){
+  _corpEditMembId=m.id||null;
+  _corpEditGroupId=groupId;
+  crmOpenModal(m.id?'Editar miembro':'Añadir miembro',corpMiembroForm(m),
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="corpSaveMiembro()">Guardar</button>`);
+}
+
+async function corpSaveMiembro(){
+  const nombre=cv('cm-nombre').trim();if(!nombre){alert('Nombre obligatorio');return;}
+  const ms={};
+  const t=cv('cm-talla');if(t)ms.talla=t;
+  ['pecho','cintura','cadera'].forEach(f=>{const v=cv('cm-'+f);if(v)ms[f]=Number(v);});
+  const lp=cv('cm-lpant');if(lp)ms.largo_pantalon=Number(lp);
+  const lc=cv('cm-lchaq');if(lc)ms.largo_chaqueta=Number(lc);
+  const zp=cv('cm-zapato');if(zp)ms.zapato=zp;
+  const cr=cv('cm-corbata');if(cr)ms.corbata=cr;
+  const payload={group_id:_corpEditGroupId,business_slug:BIZ_SLUG,nombre,cargo:cv('cm-cargo')||null,telefono:cv('cm-tel')||null,email:cv('cm-email')||null,measurements:Object.keys(ms).length?ms:null,notes:cv('cm-notes')||null};
+  if(_corpEditMembId)await _sb.from('crm_corporate_members').update(payload).eq('id',_corpEditMembId);
+  else await _sb.from('crm_corporate_members').insert(payload);
+  crmCloseModal();corpLoadGroups();showToast('✓ Miembro guardado');
+}
+
+async function corpEditMiembro(id){
+  const {data:m}=await _sb.from('crm_corporate_members').select('*').eq('id',id).single();
+  if(!m)return;
+  corpOpenMiembroModal(m.group_id,m);
+}
+
+async function corpVerMiembro(id){
+  const {data:m}=await _sb.from('crm_corporate_members').select('*').eq('id',id).single();
+  if(!m)return;
+  const ms=m.measurements||{};
+  const medKeys={talla:'Talla chaqueta',pecho:'Pecho',cintura:'Cintura',cadera:'Cadera',largo_pantalon:'L.Pantalón',largo_chaqueta:'L.Chaqueta',zapato:'Talla zapato',corbata:'Corbata'};
+  const medHtml=Object.keys(ms).length
+    ?`<div style="display:flex;flex-wrap:wrap;gap:8px">`+
+      Object.entries(medKeys).filter(([k])=>ms[k]).map(([k,label])=>`<div style="text-align:center;padding:8px 12px;background:#f8fafc;border-radius:8px;min-width:80px"><div style="font-size:10px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px">${label}</div><div style="font-weight:700;font-size:15px">${ms[k]}${['pecho','cintura','cadera','largo_pantalon','largo_chaqueta'].includes(k)?' cm':''}</div></div>`).join('')+`</div>`
+    :`<div style="color:#94a3b8;font-size:13px">Sin medidas registradas</div>`;
+  crmOpenModal(`📐 ${esc(m.nombre)}`,
+    `<div style="font-size:13px;color:#64748b;margin-bottom:14px">${esc(m.cargo||'')}${m.telefono?' · '+esc(m.telefono):''}${m.email?' · '+esc(m.email):''}</div>`+
+    `<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:10px">Medidas</div>`+medHtml+
+    (m.notes?`<div style="margin-top:14px;font-size:13px;color:#64748b">${esc(m.notes)}</div>`:''),
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cerrar</button><button class="btn btn-accent" onclick="crmCloseModal();corpEditMiembro('${id}')">✏ Editar</button>`);
+}
+
+async function corpDeleteMiembro(id,groupId){
+  if(!confirm('¿Eliminar este miembro?'))return;
+  await _sb.from('crm_corporate_members').delete().eq('id',id);
+  corpLoadGroups();showToast('✓ Miembro eliminado');
+}
 
 // ── CRM ENCARGOS ───────────────────────────────────────────────────────────
 let _encMatsList=[];
