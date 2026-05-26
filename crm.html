@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airmate CRM — Interno</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+ --bg:#08080f;--bg2:#0e0e1a;--bg3:#141420;--bg4:#1a1a28;
+ --gold:#c9a84c;--gold2:#f0d878;--gold3:#7a5c18;
+ --white:#fdf8f0;--muted:rgba(253,248,240,0.45);--muted2:rgba(253,248,240,0.2);
+ --border:rgba(201,168,76,0.18);--border2:rgba(201,168,76,0.08);
+ --green:#2ecc71;--red:#e74c3c;--blue:#3498db;--orange:#f39c12;--purple:#9b59b6;
+}
+body{background:var(--bg);color:var(--white);font-family:'Inter',sans-serif;display:flex;height:100vh;overflow:hidden}
+
+/* LOGIN */
+.login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--gold);border-radius:16px;padding:40px 44px;width:380px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.login-logo{width:160px;filter:brightness(0) invert(1);opacity:0.9;margin-bottom:4px}
+.login-title{font-size:13px;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase}
+.login-form{width:100%;display:flex;flex-direction:column;gap:12px}
+.login-error{color:var(--red);font-size:12px;text-align:center;display:none}
+
+/* SIDEBAR */
+.sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border2)}
+.sidebar-logo img{width:130px;filter:brightness(0) invert(1);opacity:0.9}
+.sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-section{padding:6px 16px 4px;font-size:9px;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-top:8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;font-size:13px;color:var(--muted);transition:all 0.15s;border-left:2px solid transparent;user-select:none}
+.nav-item:hover{color:var(--white);background:rgba(201,168,76,0.06)}
+.nav-item.active{color:var(--gold);background:rgba(201,168,76,0.08);border-left-color:var(--gold)}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.sidebar-bottom{padding:16px;border-top:1px solid var(--border2)}
+.sidebar-user{display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold3),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#000;flex-shrink:0}
+.user-name{font-size:13px;font-weight:500}
+.user-role{font-size:11px;color:var(--muted)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:58px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16;flex-shrink:0}
+.topbar-title{font-size:16px;font-weight:600;flex:1}
+.topbar-badge{background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.08em}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;letter-spacing:0.04em}
+.btn-gold{background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000}
+.btn-gold:hover{filter:brightness(1.1)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-sm{padding:6px 12px;font-size:11px}
+.btn-danger{background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.3);color:var(--red)}
+
+.content{flex:1;overflow-y:auto;padding:24px}
+
+/* CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--gold);border-radius:12px;padding:18px 20px}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:6px}
+.stat-value{font-size:28px;font-weight:700;color:var(--gold2);letter-spacing:-0.02em}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.stat-up{color:var(--green)}
+.stat-down{color:var(--red)}
+
+/* TABLES */
+.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.table-title{font-size:14px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 16px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;text-align:left;border-bottom:1px solid var(--border2);font-weight:500}
+td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border2)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(201,168,76,0.03)}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:0.06em}
+.badge-green{background:rgba(46,204,113,0.12);color:var(--green);border:1px solid rgba(46,204,113,0.2)}
+.badge-orange{background:rgba(243,156,18,0.12);color:var(--orange);border:1px solid rgba(243,156,18,0.2)}
+.badge-red{background:rgba(231,76,60,0.12);color:var(--red);border:1px solid rgba(231,76,60,0.2)}
+.badge-blue{background:rgba(52,152,219,0.12);color:var(--blue);border:1px solid rgba(52,152,219,0.2)}
+.badge-purple{background:rgba(155,89,182,0.12);color:var(--purple);border:1px solid rgba(155,89,182,0.2)}
+.badge-gold{background:rgba(201,168,76,0.12);color:var(--gold2);border:1px solid rgba(201,168,76,0.2)}
+.badge-muted{background:rgba(253,248,240,0.06);color:var(--muted);border:1px solid var(--border)}
+
+/* SECTIONS */
+.section{display:none}
+.section.active{display:block}
+
+/* PIPELINE */
+.pipeline{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px}
+.pipeline-col{min-width:220px;flex-shrink:0}
+.pipeline-col-header{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;padding:10px 14px;background:var(--bg3);border-radius:10px 10px 0 0;border:1px solid var(--border);border-bottom:none;display:flex;align-items:center;justify-content:space-between}
+.pipeline-col-count{background:var(--bg4);color:var(--muted);border-radius:20px;padding:2px 8px;font-size:10px}
+.pipeline-body{background:var(--bg3);border:1px solid var(--border);border-radius:0 0 10px 10px;padding:8px;min-height:200px;display:flex;flex-direction:column;gap:8px}
+.deal-card{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:8px;padding:12px 14px;cursor:pointer;transition:all 0.15s}
+.deal-card:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,0.4)}
+.deal-name{font-size:13px;font-weight:500;margin-bottom:4px}
+.deal-biz{font-size:11px;color:var(--muted);margin-bottom:8px}
+.deal-meta{display:flex;justify-content:space-between;align-items:center}
+.deal-value{font-size:12px;font-weight:600;color:var(--gold)}
+.deal-date{font-size:10px;color:var(--muted)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:560px;max-height:90vh;overflow-y:auto}
+.modal-head{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:600}
+.modal-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px}
+.modal-body{padding:24px}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+label{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:0.05em}
+input,select,textarea{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--white);font-size:13px;font-family:inherit;outline:none;transition:border 0.15s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+select option{background:var(--bg3)}
+textarea{resize:vertical;min-height:80px}
+
+/* SEARCH */
+.search-bar{display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-bottom:16px}
+.search-bar input{background:none;border:none;padding:10px 0;flex:1}
+.search-icon{color:var(--muted);font-size:14px}
+
+/* ACTIVITY */
+.activity-list{display:flex;flex-direction:column;gap:2px}
+.activity-item{display:flex;gap:12px;padding:10px 14px;border-radius:8px;font-size:12px}
+.activity-item:hover{background:var(--bg3)}
+.activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.activity-text{color:var(--white);line-height:1.5}
+.activity-time{color:var(--muted);font-size:11px;margin-top:2px}
+
+/* DASHBOARD GRID */
+.dash-grid{display:grid;grid-template-columns:1fr 380px;gap:18px}
+.dash-left{display:flex;flex-direction:column;gap:18px}
+.dash-right{display:flex;flex-direction:column;gap:18px}
+
+/* PROGRESS */
+.progress-bar{height:5px;background:var(--bg4);border-radius:3px;margin-top:8px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold));border-radius:3px}
+
+/* TAGS */
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{background:var(--bg4);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--muted);cursor:pointer}
+.tag.active{background:rgba(201,168,76,0.12);border-color:var(--gold);color:var(--gold)}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty-icon{font-size:36px;margin-bottom:12px;opacity:0.4}
+.empty-text{font-size:13px}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* TWO COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+ <div class="login-box">
+ <img src="logo.png" class="login-logo" alt="Airmate">
+ <div class="login-title">CRM Interno</div>
+ <div class="login-form">
+ <input type="text" id="login-user" placeholder="Usuario" autocomplete="username"
+ style="text-align:center;letter-spacing:0.05em" onkeydown="if(event.key==='Enter')doLogin()">
+ <input type="password" id="login-pass" placeholder="Contraseña" autocomplete="current-password"
+ style="text-align:center" onkeydown="if(event.key==='Enter')doLogin()">
+ <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
+ <button class="btn btn-gold" onclick="doLogin()" style="width:100%;padding:12px;font-size:14px;margin-top:4px">Entrar →</button>
+ </div>
+ </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+ <div class="sidebar-logo">
+ <img src="logo.png" alt="Airmate">
+ </div>
+ <nav class="sidebar-nav">
+ <div class="nav-section">Principal</div>
+ <div class="nav-item active" onclick="showSection('dashboard')">
+ <span class="nav-icon"></span> Dashboard
+ </div>
+ <div class="nav-item" onclick="showSection('pipeline')">
+ <span class="nav-icon"></span> Pipeline
+ </div>
+ <div class="nav-item" onclick="showSection('clientes')">
+ <span class="nav-icon"></span> Clientes
+ </div>
+ <div class="nav-item" onclick="showSection('tareas')">
+ <span class="nav-icon"></span> Tareas
+ </div>
+ <div class="nav-section">Ventas</div>
+ <div class="nav-item" onclick="showSection('propuestas')">
+ <span class="nav-icon"></span> Propuestas
+ </div>
+ <div class="nav-item" onclick="showSection('ingresos')">
+ <span class="nav-icon"></span> Ingresos
+ </div>
+ <div class="nav-section">Equipo</div>
+ <div class="nav-item" onclick="showSection('actividad')">
+ <span class="nav-icon"></span> Actividad
+ </div>
+ </nav>
+ <div class="sidebar-bottom">
+ <div class="sidebar-user">
+ <div class="avatar">F</div>
+ <div>
+ <div class="user-name">Fabio</div>
+ <div class="user-role">CEO · Airmate</div>
+ </div>
+ </div>
+ </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+ <!-- TOPBAR -->
+ <div class="topbar">
+ <div class="topbar-title" id="topbar-title">Dashboard</div>
+ <div style="flex:1"></div>
+ <span class="topbar-badge">AIRMATE CRM</span>
+ <div class="topbar-actions">
+ <button class="btn btn-gold btn-sm" onclick="openModal('modal-lead')">+ Nuevo cliente</button>
+ </div>
+ </div>
+
+ <!-- CONTENT -->
+ <div class="content">
+
+ <!-- ── DASHBOARD ────────────────────────────────── -->
+ <div id="section-dashboard" class="section active">
+
+ <div class="stats-grid">
+ <div class="stat-card">
+ <div class="stat-label">MRR</div>
+ <div class="stat-value">956€</div>
+ <div class="stat-sub stat-up">↑ +2 clientes este mes</div>
+ </div>
+ <div class="stat-card">
+ <div class="stat-label">Clientes activos</div>
+ <div class="stat-value">12</div>
+ <div class="stat-sub">3 en proceso de entrega</div>
+ </div>
+ <div class="stat-card">
+ <div class="stat-label">Pipeline (valor)</div>
+ <div class="stat-value">4.250€</div>
+ <div class="stat-sub">7 oportunidades abiertas</div>
+ </div>
+ <div class="stat-card">
+ <div class="stat-label">Tasa cierre</div>
+ <div class="stat-value">68%</div>
+ <div class="stat-sub stat-up">↑ +8pp vs mes anterior</div>
+ </div>
+ </div>
+
+ <div class="dash-grid">
+ <div class="dash-left">
+
+ <!-- Clientes recientes -->
+ <div class="table-card">
+ <div class="table-header">
+ <div class="table-title">Clientes recientes</div>
+ <button class="btn btn-outline btn-sm" onclick="showSection('clientes')">Ver todos</button>
+ </div>
+ <table>
+ <thead>
+ <tr>
+ <th>Negocio</th>
+ <th>Plan</th>
+ <th>MRR</th>
+ <th>Estado</th>
+ <th>Desde</th>
+ </tr>
+ </thead>
+ <tbody id="dash-clientes"></tbody>
+ </table>
+ </div>
+
+ <!-- Pipeline resumen -->
+ <div class="table-card">
+ <div class="table-header">
+ <div class="table-title">Oportunidades calientes</div>
+ <button class="btn btn-outline btn-sm" onclick="showSection('pipeline')">Pipeline completo</button>
+ </div>
+ <table>
+ <thead>
+ <tr>
+ <th>Negocio</th>
+ <th>Etapa</th>
+ <th>Valor</th>
+ <th>Próxima acción</th>
+ </tr>
+ </thead>
+ <tbody id="dash-pipeline"></tbody>
+ </table>
+ </div>
+ </div>
+
+ <div class="dash-right">
+ <!-- MRR por plan -->
+ <div class="table-card">
+ <div class="table-header">
+ <div class="table-title">MRR por plan</div>
+ </div>
+ <div style="padding:16px;display:flex;flex-direction:column;gap:12px" id="mrr-planes"></div>
+ </div>
+
+ <!-- Actividad reciente -->
+ <div class="table-card">
+ <div class="table-header">
+ <div class="table-title">Actividad reciente</div>
+ </div>
+ <div class="activity-list" style="padding:8px" id="dash-actividad"></div>
+ </div>
+ </div>
+ </div>
+
+ </div><!-- /dashboard -->
+
+ <!-- ── PIPELINE ─────────────────────────────────── -->
+ <div id="section-pipeline" class="section">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+ <div style="font-size:13px;color:var(--muted)">Gestiona tus oportunidades de venta</div>
+ <button class="btn btn-gold btn-sm" onclick="openModal('modal-deal')">+ Nueva oportunidad</button>
+ </div>
+ <div class="pipeline" id="pipeline-board"></div>
+ </div>
+
+ <!-- ── CLIENTES ─────────────────────────────────── -->
+ <div id="section-clientes" class="section">
+ <div class="search-bar" style="margin-bottom:16px">
+ <span class="search-icon"></span>
+ <input type="text" placeholder="Buscar cliente, negocio o contacto..." oninput="filterClientes(this.value)">
+ </div>
+ <div style="display:flex;gap:8px;margin-bottom:16px" id="filter-tags">
+ <span class="tag active" onclick="filterByTag('')">Todos</span>
+ <span class="tag" onclick="filterByTag('activo')">Activos</span>
+ <span class="tag" onclick="filterByTag('entrega')">En entrega</span>
+ <span class="tag" onclick="filterByTag('pausa')">Pausa</span>
+ </div>
+ <div class="table-card">
+ <div class="table-header">
+ <div class="table-title">Clientes Airmate</div>
+ <button class="btn btn-gold btn-sm" onclick="openModal('modal-lead')">+ Añadir</button>
+ </div>
+ <table>
+ <thead>
+ <tr>
+ <th>Negocio</th>
+ <th>Contacto</th>
+ <th>Plan</th>
+ <th>MRR</th>
+ <th>Setup</th>
+ <th>Estado</th>
+ <th>Desde</th>
+ <th></th>
+ </tr>
+ </thead>
+ <tbody id="clientes-tbody"></tbody>
+ </table>
+ </div>
+ </div>
+
+ <!-- ── TAREAS ───────────────────────────────────── -->
+ <div id="section-tareas" class="section">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+ <div style="font-size:13px;color:var(--muted)">Tareas y seguimientos pendientes</div>
+ <button class="btn btn-gold btn-sm" onclick="openModal('modal-tarea')">+ Nueva tarea</button>
+ </div>
+ <div class="two-col">
+ <div>
+ <div style="font-size:12px;color:var(--gold);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px">Pendientes</div>
+ <div id="tareas-pendientes" style="display:flex;flex-direction:column;gap:8px"></div>
+ </div>
+ <div>
+ <div style="font-size:12px;color:var(--green);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px">Completadas hoy</div>
+ <div id="tareas-completadas" style="display:flex;flex-direction:column;gap:8px"></div>
+ </div>
+ </div>
+ </div>
+
+ <!-- ── PROPUESTAS ───────────────────────────────── -->
+ <div id="section-propuestas" class="section">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+ <div style="font-size:13px;color:var(--muted)">Propuestas enviadas y en borrador</div>
+ <button class="btn btn-gold btn-sm" onclick="openModal('modal-propuesta')">+ Nueva propuesta</button>
+ </div>
+ <div class="table-card">
+ <div class="table-header"><div class="table-title">Propuestas</div></div>
+ <table>
+ <thead>
+ <tr>
+ <th>#</th>
+ <th>Negocio</th>
+ <th>Plan</th>
+ <th>Valor setup</th>
+ <th>Mensual</th>
+ <th>Estado</th>
+ <th>Enviada</th>
+ <th></th>
+ </tr>
+ </thead>
+ <tbody id="propuestas-tbody"></tbody>
+ </table>
+ </div>
+ </div>
+
+ <!-- ── INGRESOS ─────────────────────────────────── -->
+ <div id="section-ingresos" class="section">
+ <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+ <div class="stat-card">
+ <div class="stat-label">MRR total</div>
+ <div class="stat-value">956€</div>
+ <div class="stat-sub">12 clientes activos</div>
+ </div>
+ <div class="stat-card">
+ <div class="stat-label">Setup cobrado (mes)</div>
+ <div class="stat-value">1.200€</div>
+ <div class="stat-sub">3 nuevos clientes</div>
+ </div>
+ <div class="stat-card">
+ <div class="stat-label">ARR proyectado</div>
+ <div class="stat-value">11.472€</div>
+ <div class="stat-sub stat-up">↑ Bien encaminado</div>
+ </div>
+ </div>
+ <div class="table-card">
+ <div class="table-header">
+ <div class="table-title">Historial de cobros</div>
+ </div>
+ <table>
+ <thead>
+ <tr>
+ <th>Fecha</th>
+ <th>Cliente</th>
+ <th>Concepto</th>
+ <th>Importe</th>
+ <th>Método</th>
+ <th>Estado</th>
+ </tr>
+ </thead>
+ <tbody id="ingresos-tbody"></tbody>
+ </table>
+ </div>
+ </div>
+
+ <!-- ── ACTIVIDAD ────────────────────────────────── -->
+ <div id="section-actividad" class="section">
+ <div class="table-card">
+ <div class="table-header">
+ <div class="table-title">Registro de actividad</div>
+ </div>
+ <div class="activity-list" style="padding:8px" id="full-actividad"></div>
+ </div>
+ </div>
+
+ </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ── MODALS ─────────────────────────────────────── -->
+
+<!-- Modal: nuevo cliente/lead -->
+<div class="modal-overlay" id="modal-lead">
+ <div class="modal">
+ <div class="modal-head">
+ <div class="modal-title">Nuevo cliente</div>
+ <button class="modal-close" onclick="closeModal('modal-lead')">×</button>
+ </div>
+ <div class="modal-body">
+ <div class="form-grid">
+ <div class="form-group"><label>Nombre negocio *</label><input id="new-biz" placeholder="Peluquería Sol"></div>
+ <div class="form-group"><label>Tipo de negocio</label><input id="new-sector" placeholder="Peluquería, clínica, restaurante..."></div>
+ <div class="form-group"><label>Nombre contacto *</label><input id="new-nombre" placeholder="María García"></div>
+ <div class="form-group"><label>Teléfono</label><input id="new-tel" placeholder="+34 600 000 000"></div>
+ <div class="form-group"><label>Email</label><input id="new-email" placeholder="hola@negocio.com"></div>
+ <div class="form-group"><label>Ciudad</label><input id="new-ciudad" placeholder="Madrid"></div>
+ <div class="form-group"><label>Plan</label>
+ <select id="new-plan">
+ <option value="">— Seleccionar —</option>
+ <option value="AIRMATE">AIRMATE (39,99€/mes)</option>
+ <option value="START">START (250€ + 39€/mes)</option>
+ <option value="GROWTH">GROWTH (400€ + 59€/mes)</option>
+ <option value="PRO">PRO (800€ + 99€/mes)</option>
+ <option value="CRM BÁSICO">CRM Básico (397€ + 49€/mes)</option>
+ <option value="CRM+IA">CRM + IA (597€ + 79€/mes)</option>
+ <option value="CRM MEDIDA">CRM a Medida</option>
+ </select>
+ </div>
+ <div class="form-group"><label>Estado</label>
+ <select id="new-estado">
+ <option value="lead">Lead</option>
+ <option value="propuesta">Propuesta enviada</option>
+ <option value="entrega">En entrega</option>
+ <option value="activo">Activo</option>
+ <option value="pausa">Pausa</option>
+ </select>
+ </div>
+ <div class="form-group full"><label>Notas</label><textarea id="new-notas" placeholder="Canal de captación, necesidades específicas..."></textarea></div>
+ </div>
+ </div>
+ <div class="modal-foot">
+ <button class="btn btn-outline" onclick="closeModal('modal-lead')">Cancelar</button>
+ <button class="btn btn-gold" onclick="saveCliente()">Guardar cliente</button>
+ </div>
+ </div>
+</div>
+
+<!-- Modal: nueva oportunidad pipeline -->
+<div class="modal-overlay" id="modal-deal">
+ <div class="modal">
+ <div class="modal-head">
+ <div class="modal-title">Nueva oportunidad</div>
+ <button class="modal-close" onclick="closeModal('modal-deal')">×</button>
+ </div>
+ <div class="modal-body">
+ <div class="form-grid">
+ <div class="form-group"><label>Nombre negocio *</label><input id="deal-biz" placeholder="Barbería Roma"></div>
+ <div class="form-group"><label>Contacto</label><input id="deal-contacto" placeholder="Antonio Martínez"></div>
+ <div class="form-group"><label>Plan de interés</label>
+ <select id="deal-plan">
+ <option value="AIRMATE">AIRMATE</option>
+ <option value="START">START</option>
+ <option value="GROWTH">GROWTH</option>
+ <option value="PRO">PRO</option>
+ <option value="CRM BÁSICO">CRM Básico</option>
+ <option value="CRM+IA">CRM + IA</option>
+ </select>
+ </div>
+ <div class="form-group"><label>Valor estimado (€)</label><input id="deal-valor" type="number" placeholder="400"></div>
+ <div class="form-group"><label>Etapa</label>
+ <select id="deal-etapa">
+ <option value="contacto">Contacto inicial</option>
+ <option value="interes">Interés confirmado</option>
+ <option value="propuesta">Propuesta enviada</option>
+ <option value="negociacion">Negociación</option>
+ <option value="cierre">Listo para cerrar</option>
+ </select>
+ </div>
+ <div class="form-group"><label>Próxima acción</label><input id="deal-accion" placeholder="Llamada el lunes"></div>
+ <div class="form-group full"><label>Notas</label><textarea id="deal-notas" placeholder="Contexto, objeciones, canal..."></textarea></div>
+ </div>
+ </div>
+ <div class="modal-foot">
+ <button class="btn btn-outline" onclick="closeModal('modal-deal')">Cancelar</button>
+ <button class="btn btn-gold" onclick="saveDeal()">Guardar oportunidad</button>
+ </div>
+ </div>
+</div>
+
+<!-- Modal: nueva tarea -->
+<div class="modal-overlay" id="modal-tarea">
+ <div class="modal" style="width:440px">
+ <div class="modal-head">
+ <div class="modal-title">Nueva tarea</div>
+ <button class="modal-close" onclick="closeModal('modal-tarea')">×</button>
+ </div>
+ <div class="modal-body">
+ <div class="form-grid" style="grid-template-columns:1fr">
+ <div class="form-group"><label>Tarea *</label><input id="tarea-titulo" placeholder="Enviar propuesta a..."></div>
+ <div class="form-group"><label>Cliente relacionado</label><input id="tarea-cliente" placeholder="Negocio o contacto"></div>
+ <div class="form-group"><label>Fecha límite</label><input id="tarea-fecha" type="date"></div>
+ <div class="form-group"><label>Prioridad</label>
+ <select id="tarea-prioridad">
+ <option value="alta">Alta</option>
+ <option value="media">Media</option>
+ <option value="baja">Baja</option>
+ </select>
+ </div>
+ </div>
+ </div>
+ <div class="modal-foot">
+ <button class="btn btn-outline" onclick="closeModal('modal-tarea')">Cancelar</button>
+ <button class="btn btn-gold" onclick="saveTarea()">Guardar tarea</button>
+ </div>
+ </div>
+</div>
+
+<!-- Modal: propuesta -->
+<div class="modal-overlay" id="modal-propuesta">
+ <div class="modal">
+ <div class="modal-head">
+ <div class="modal-title">Nueva propuesta</div>
+ <button class="modal-close" onclick="closeModal('modal-propuesta')">×</button>
+ </div>
+ <div class="modal-body">
+ <div class="form-grid">
+ <div class="form-group"><label>Negocio *</label><input id="prop-biz" placeholder="Clínica Dental Viva"></div>
+ <div class="form-group"><label>Contacto</label><input id="prop-contacto" placeholder="Dr. López"></div>
+ <div class="form-group"><label>Plan</label>
+ <select id="prop-plan">
+ <option value="AIRMATE">AIRMATE</option>
+ <option value="START">START</option>
+ <option value="GROWTH">GROWTH</option>
+ <option value="PRO">PRO</option>
+ <option value="CRM BÁSICO">CRM Básico</option>
+ <option value="CRM+IA">CRM + IA</option>
+ </select>
+ </div>
+ <div class="form-group"><label>Valor setup (€)</label><input id="prop-setup" type="number" placeholder="400"></div>
+ <div class="form-group"><label>Mensual (€)</label><input id="prop-mensual" type="number" placeholder="59"></div>
+ <div class="form-group"><label>Estado</label>
+ <select id="prop-estado">
+ <option value="borrador">Borrador</option>
+ <option value="enviada">Enviada</option>
+ <option value="aceptada">Aceptada</option>
+ <option value="rechazada">Rechazada</option>
+ </select>
+ </div>
+ </div>
+ </div>
+ <div class="modal-foot">
+ <button class="btn btn-outline" onclick="closeModal('modal-propuesta')">Cancelar</button>
+ <button class="btn btn-gold" onclick="savePropuesta()">Guardar propuesta</button>
+ </div>
+ </div>
+</div>
+
+<!-- Modal: detalle cliente -->
+<div class="modal-overlay" id="modal-cliente-detail">
+ <div class="modal" style="width:620px">
+ <div class="modal-head">
+ <div class="modal-title" id="detail-title">Detalle cliente</div>
+ <button class="modal-close" onclick="closeModal('modal-cliente-detail')">×</button>
+ </div>
+ <div class="modal-body" id="detail-body"></div>
+ <div class="modal-foot" id="detail-foot"></div>
+ </div>
+</div>
+
+<script>
+// ── DATA ───────────────────────────────────────────
+const DB = {
+ clientes: JSON.parse(localStorage.getItem('crm_clientes')||'[]'),
+ deals: JSON.parse(localStorage.getItem('crm_deals')||'[]'),
+ tareas: JSON.parse(localStorage.getItem('crm_tareas')||'[]'),
+ propuestas: JSON.parse(localStorage.getItem('crm_propuestas')||'[]'),
+ actividad: JSON.parse(localStorage.getItem('crm_actividad')||'[]'),
+ ingresos: JSON.parse(localStorage.getItem('crm_ingresos')||'[]'),
+};
+function save(key){localStorage.setItem('crm_'+key,JSON.stringify(DB[key]))}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+
+function logActivity(text, color='#c9a84c'){
+ DB.actividad.unshift({id:uid(),text,color,ts:new Date().toISOString()});
+ if(DB.actividad.length>100) DB.actividad.pop();
+ save('actividad');
+}
+
+// ── RESET v2 (limpia datos demo anteriores) ────────
+if(localStorage.getItem('crm_version')!=='2'){
+ ['clientes','deals','tareas','propuestas','actividad','ingresos'].forEach(k=>localStorage.removeItem('crm_'+k));
+ localStorage.setItem('crm_version','2');
+ location.reload();
+}
+
+// ── SEED DATA ─────────────────────────────────────
+if(DB.clientes.length===0){
+ const seed = [
+ {id:uid(),biz:'Jose Acosta Sastre',sector:'Sastrería a medida',nombre:'Jose Acosta',tel:'',email:'',ciudad:'Las Palmas',plan:'CRM MEDIDA',mrr:149,setup:997,estado:'activo',desde:'2025-01-15',notas:'Panel PRO personalizado con configurador, Holded sync, Verifactu'},
+ {id:uid(),biz:'Josep',sector:'',nombre:'Josep',tel:'',email:'',ciudad:'',plan:'START',mrr:39,setup:250,estado:'activo',desde:'2025-01-01',notas:''},
+ {id:uid(),biz:'Solarium Torrelavega',sector:'Solarium / Bronceado',nombre:'',tel:'',email:'',ciudad:'Torrelavega',plan:'START',mrr:39,setup:250,estado:'activo',desde:'2025-01-01',notas:''},
+ ];
+ DB.clientes = seed;
+ save('clientes');
+}
+
+if(DB.deals.length===0){
+ DB.deals=[]; save('deals');
+}
+
+if(DB.tareas.length===0){
+ DB.tareas=[]; save('tareas');
+}
+
+if(DB.propuestas.length===0){
+ DB.propuestas=[]; save('propuestas');
+}
+
+if(DB.ingresos.length===0){
+ const ing=[
+ {id:uid(),fecha:'2025-05-01',cliente:'Jose Acosta Sastre',concepto:'Mensualidad CRM Medida',importe:149,metodo:'Transferencia',estado:'cobrado'},
+ {id:uid(),fecha:'2025-04-15',cliente:'Clínica Dental Viva',concepto:'Mensualidad GROWTH',importe:59,metodo:'Stripe',estado:'cobrado'},
+ {id:uid(),fecha:'2025-05-08',cliente:'Centro Estético Élite',concepto:'Setup GROWTH',importe:400,metodo:'Pendiente',estado:'pendiente'},
+ ];
+ DB.ingresos=ing; save('ingresos');
+}
+
+if(DB.actividad.length===0){
+ DB.actividad=[]; save('actividad');
+}
+
+// ── UTILS ─────────────────────────────────────────
+const planColors={
+ 'AIRMATE':'badge-blue','START':'badge-muted','GROWTH':'badge-gold','PRO':'badge-purple',
+ 'CRM BÁSICO':'badge-orange','CRM+IA':'badge-green','CRM MEDIDA':'badge-red'
+};
+const estadoColors={
+ 'activo':'badge-green','entrega':'badge-blue','pausa':'badge-muted','lead':'badge-orange','propuesta':'badge-gold'
+};
+const priorColors={'alta':'var(--red)','media':'var(--orange)','baja':'var(--muted)'};
+const etapaLabels={
+ contacto:'Contacto inicial',interes:'Interés confirmado',propuesta:'Propuesta enviada',
+ negociacion:'Negociación',cierre:'Listo para cerrar'
+};
+const etapaColors={
+ contacto:'badge-muted',interes:'badge-blue',propuesta:'badge-gold',
+ negociacion:'badge-orange',cierre:'badge-green'
+};
+
+function fDate(d){
+ if(!d)return '—';
+ const dt=new Date(d);
+ return dt.toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'});
+}
+function fTime(d){
+ if(!d)return '';
+ const dt=new Date(d);
+ const diff=Date.now()-dt.getTime();
+ if(diff<60000)return 'ahora';
+ if(diff<3600000)return Math.floor(diff/60000)+'min';
+ if(diff<86400000)return Math.floor(diff/3600000)+'h';
+ return Math.floor(diff/86400000)+'d';
+}
+
+// ── SECTIONS ──────────────────────────────────────
+function showSection(id){
+ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+ document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+ document.getElementById('section-'+id).classList.add('active');
+ const nav=document.querySelector(`[onclick="showSection('${id}')"]`);
+ if(nav)nav.classList.add('active');
+ const titles={dashboard:'Dashboard',pipeline:'Pipeline de ventas',clientes:'Clientes',
+ tareas:'Tareas & Seguimientos',propuestas:'Propuestas',ingresos:'Ingresos & Cobros',actividad:'Actividad'};
+ document.getElementById('topbar-title').textContent=titles[id]||id;
+ renderSection(id);
+}
+
+function renderSection(id){
+ if(id==='dashboard') renderDashboard();
+ else if(id==='pipeline') renderPipeline();
+ else if(id==='clientes') renderClientes();
+ else if(id==='tareas') renderTareas();
+ else if(id==='propuestas') renderPropuestas();
+ else if(id==='ingresos') renderIngresos();
+ else if(id==='actividad') renderFullActividad();
+}
+
+// ── DASHBOARD ─────────────────────────────────────
+function renderDashboard(){
+ // Clientes recientes (últimos 5)
+ const tbody=document.getElementById('dash-clientes');
+ tbody.innerHTML=DB.clientes.slice(0,5).map(c=>`
+ <tr onclick="verCliente('${c.id}')" style="cursor:pointer">
+ <td><b>${c.biz}</b><br><span style="font-size:11px;color:var(--muted)">${c.sector||''}</span></td>
+ <td><span class="badge ${planColors[c.plan]||'badge-muted'}">${c.plan}</span></td>
+ <td style="color:var(--gold2);font-weight:600">${c.mrr}€</td>
+ <td><span class="badge ${estadoColors[c.estado]||'badge-muted'}">${c.estado}</span></td>
+ <td style="color:var(--muted)">${fDate(c.desde)}</td>
+ </tr>`).join('');
+
+ // Pipeline caliente
+ const hot=DB.deals.filter(d=>d.etapa==='cierre'||d.etapa==='negociacion').slice(0,4);
+ document.getElementById('dash-pipeline').innerHTML=hot.map(d=>`
+ <tr>
+ <td><b>${d.biz}</b></td>
+ <td><span class="badge ${etapaColors[d.etapa]}">${etapaLabels[d.etapa]}</span></td>
+ <td style="color:var(--gold2);font-weight:600">${d.valor}€</td>
+ <td style="color:var(--muted);font-size:11px">${d.accion||'—'}</td>
+ </tr>`).join('');
+
+ // MRR por plan
+ const mrr={};
+ DB.clientes.filter(c=>c.estado==='activo').forEach(c=>{
+ mrr[c.plan]=(mrr[c.plan]||0)+c.mrr;
+ });
+ const total=Object.values(mrr).reduce((a,b)=>a+b,0)||1;
+ document.getElementById('mrr-planes').innerHTML=Object.entries(mrr).sort((a,b)=>b[1]-a[1]).map(([plan,val])=>`
+ <div>
+ <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+ <span style="font-size:12px"><span class="badge ${planColors[plan]||'badge-muted'}">${plan}</span></span>
+ <span style="font-size:12px;font-weight:600;color:var(--gold2)">${val}€</span>
+ </div>
+ <div class="progress-bar"><div class="progress-fill" style="width:${Math.round(val/total*100)}%"></div></div>
+ </div>`).join('');
+
+ // Actividad
+ document.getElementById('dash-actividad').innerHTML=DB.actividad.slice(0,8).map(a=>`
+ <div class="activity-item">
+ <div class="activity-dot" style="background:${a.color}"></div>
+ <div>
+ <div class="activity-text">${a.text}</div>
+ <div class="activity-time">${fTime(a.ts)}</div>
+ </div>
+ </div>`).join('');
+}
+
+// ── PIPELINE ──────────────────────────────────────
+function renderPipeline(){
+ const etapas=['contacto','interes','propuesta','negociacion','cierre'];
+ const etapaNames={contacto:' Contacto',interes:' Interés',propuesta:' Propuesta',negociacion:' Negociación',cierre:' Cierre'};
+ const board=document.getElementById('pipeline-board');
+ board.innerHTML=etapas.map(etapa=>{
+ const deals=DB.deals.filter(d=>d.etapa===etapa);
+ return `
+ <div class="pipeline-col">
+ <div class="pipeline-col-header">
+ ${etapaNames[etapa]}
+ <span class="pipeline-col-count">${deals.length}</span>
+ </div>
+ <div class="pipeline-body">
+ ${deals.length===0?`<div class="empty" style="padding:20px 12px"><div style="font-size:11px;color:var(--muted)">Sin oportunidades</div></div>`:''}
+ ${deals.map(d=>`
+ <div class="deal-card" onclick="verDeal('${d.id}')">
+ <div class="deal-name">${d.biz}</div>
+ <div class="deal-biz">${d.contacto||''}</div>
+ <div class="deal-meta">
+ <span class="deal-value">${d.valor}€</span>
+ <span class="deal-date"><span class="badge ${planColors[d.plan]||'badge-muted'}" style="font-size:9px">${d.plan}</span></span>
+ </div>
+ ${d.accion?`<div style="font-size:10px;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--border2)">→ ${d.accion}</div>`:''}
+ </div>`).join('')}
+ </div>
+ </div>`;
+ }).join('');
+}
+
+// ── CLIENTES ──────────────────────────────────────
+let clienteFilter='';
+let tagFilter='';
+
+function renderClientes(data){
+ const list=(data||DB.clientes).filter(c=>{
+ const q=clienteFilter.toLowerCase();
+ const match=!q||(c.biz+c.nombre+c.email+c.ciudad).toLowerCase().includes(q);
+ const tag=!tagFilter||c.estado===tagFilter;
+ return match&&tag;
+ });
+ document.getElementById('clientes-tbody').innerHTML=list.length===0?
+ `<tr><td colspan="8"><div class="empty"><div class="empty-icon"></div><div class="empty-text">Sin clientes</div></div></td></tr>`:
+ list.map(c=>`
+ <tr style="cursor:pointer" onclick="verCliente('${c.id}')">
+ <td>
+ <div style="font-weight:500">${c.biz}</div>
+ <div style="font-size:11px;color:var(--muted)">${c.sector||''}</div>
+ </td>
+ <td>
+ <div>${c.nombre}</div>
+ <div style="font-size:11px;color:var(--muted)">${c.tel||''}</div>
+ </td>
+ <td><span class="badge ${planColors[c.plan]||'badge-muted'}">${c.plan}</span></td>
+ <td style="color:var(--gold2);font-weight:600">${c.mrr}€<span style="color:var(--muted);font-weight:400">/mes</span></td>
+ <td style="color:var(--muted)">${c.setup?c.setup+'€':'—'}</td>
+ <td><span class="badge ${estadoColors[c.estado]||'badge-muted'}">${c.estado}</span></td>
+ <td style="color:var(--muted);font-size:12px">${fDate(c.desde)}</td>
+ <td>
+ <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();verCliente('${c.id}')">Ver</button>
+ </td>
+ </tr>`).join('');
+}
+
+function filterClientes(v){clienteFilter=v;renderClientes();}
+function filterByTag(tag){
+ tagFilter=tag;
+ document.querySelectorAll('#filter-tags .tag').forEach(t=>t.classList.remove('active'));
+ event.target.classList.add('active');
+ renderClientes();
+}
+
+// ── TAREAS ────────────────────────────────────────
+function renderTareas(){
+ const pend=DB.tareas.filter(t=>!t.done);
+ const done=DB.tareas.filter(t=>t.done);
+ const tCard=(t,done)=>`
+ <div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid ${done?'var(--green)':priorColors[t.prioridad]};border-radius:8px;padding:12px 14px;display:flex;align-items:flex-start;gap:12px">
+ <input type="checkbox" ${done?'checked':''} onclick="toggleTarea('${t.id}')"
+ style="margin-top:2px;accent-color:var(--gold);cursor:pointer;width:15px;height:15px">
+ <div style="flex:1">
+ <div style="font-size:13px;${done?'text-decoration:line-through;opacity:0.5':''}">${t.titulo}</div>
+ ${t.cliente?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${t.cliente}</div>`:''}
+ <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+ ${t.fecha?`<span style="font-size:10px;color:var(--muted)">${fDate(t.fecha)}</span>`:''}
+ <span class="badge ${t.prioridad==='alta'?'badge-red':t.prioridad==='media'?'badge-orange':'badge-muted'}" style="font-size:9px">${t.prioridad}</span>
+ </div>
+ </div>
+ <button onclick="deleteTarea('${t.id}')" class="btn btn-danger btn-sm" style="font-size:11px;padding:4px 8px">×</button>
+ </div>`;
+ document.getElementById('tareas-pendientes').innerHTML=pend.length===0?
+ `<div class="empty"><div class="empty-icon"></div><div class="empty-text">Sin tareas pendientes</div></div>`:
+ pend.map(t=>tCard(t,false)).join('');
+ document.getElementById('tareas-completadas').innerHTML=done.length===0?
+ `<div style="color:var(--muted);font-size:12px;padding:12px">Nada completado aún</div>`:
+ done.map(t=>tCard(t,true)).join('');
+}
+
+function toggleTarea(id){
+ const t=DB.tareas.find(t=>t.id===id);
+ if(t){t.done=!t.done;save('tareas');renderTareas();}
+}
+function deleteTarea(id){
+ DB.tareas=DB.tareas.filter(t=>t.id!==id);
+ save('tareas');renderTareas();
+}
+
+// ── PROPUESTAS ────────────────────────────────────
+function renderPropuestas(){
+ const estColors={borrador:'badge-muted',enviada:'badge-blue',aceptada:'badge-green',rechazada:'badge-red',negociacion:'badge-orange'};
+ document.getElementById('propuestas-tbody').innerHTML=DB.propuestas.map(p=>`
+ <tr>
+ <td style="color:var(--muted);font-size:11px">${p.num}</td>
+ <td><b>${p.biz}</b><br><span style="font-size:11px;color:var(--muted)">${p.contacto}</span></td>
+ <td><span class="badge ${planColors[p.plan]||'badge-muted'}">${p.plan}</span></td>
+ <td style="color:var(--white)">${p.setup?p.setup+'€':'—'}</td>
+ <td style="color:var(--gold2);font-weight:600">${p.mensual}€/mes</td>
+ <td><span class="badge ${estColors[p.estado]||'badge-muted'}">${p.estado}</span></td>
+ <td style="color:var(--muted)">${fDate(p.fecha)}</td>
+ <td>
+ ${p.estado==='enviada'||p.estado==='negociacion'?
+ `<button class="btn btn-gold btn-sm" onclick="aceptarPropuesta('${p.id}')">Aceptar</button>`:''}
+ </td>
+ </tr>`).join('');
+}
+
+function aceptarPropuesta(id){
+ const p=DB.propuestas.find(x=>x.id===id);
+ if(!p)return;
+ p.estado='aceptada';
+ save('propuestas');
+ logActivity(`Propuesta ${p.num} aceptada — ${p.biz}`,'#2ecc71');
+ renderPropuestas();
+}
+
+// ── INGRESOS ──────────────────────────────────────
+function renderIngresos(){
+ document.getElementById('ingresos-tbody').innerHTML=DB.ingresos.map(i=>`
+ <tr>
+ <td style="color:var(--muted)">${fDate(i.fecha)}</td>
+ <td><b>${i.cliente}</b></td>
+ <td style="color:var(--muted)">${i.concepto}</td>
+ <td style="color:var(--gold2);font-weight:600">${i.importe?i.importe+'€':'—'}</td>
+ <td style="color:var(--muted)">${i.metodo}</td>
+ <td><span class="badge ${i.estado==='cobrado'?'badge-green':'badge-orange'}">${i.estado}</span></td>
+ </tr>`).join('');
+}
+
+// ── ACTIVIDAD ─────────────────────────────────────
+function renderFullActividad(){
+ document.getElementById('full-actividad').innerHTML=DB.actividad.map(a=>`
+ <div class="activity-item">
+ <div class="activity-dot" style="background:${a.color}"></div>
+ <div style="flex:1">
+ <div class="activity-text">${a.text}</div>
+ <div class="activity-time">${fDate(a.ts)} — ${fTime(a.ts)}</div>
+ </div>
+ </div>`).join('');
+}
+
+// ── DETALLE CLIENTE ───────────────────────────────
+function verCliente(id){
+ const c=DB.clientes.find(x=>x.id===id);
+ if(!c)return;
+ document.getElementById('detail-title').textContent=c.biz;
+ document.getElementById('detail-body').innerHTML=`
+ <div class="form-grid">
+ <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:0.1em;text-transform:uppercase">Plan</div>
+ <span class="badge ${planColors[c.plan]||'badge-muted'}" style="font-size:12px">${c.plan}</span></div>
+ <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:0.1em;text-transform:uppercase">Estado</div>
+ <span class="badge ${estadoColors[c.estado]||'badge-muted'}" style="font-size:12px">${c.estado}</span></div>
+ <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:0.1em;text-transform:uppercase">MRR</div>
+ <span style="font-size:20px;font-weight:700;color:var(--gold2)">${c.mrr}€</span></div>
+ <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:0.1em;text-transform:uppercase">Setup cobrado</div>
+ <span style="font-size:20px;font-weight:700;color:var(--white)">${c.setup||0}€</span></div>
+ </div>
+ <div style="margin:20px 0;border-top:1px solid var(--border)"></div>
+ <div class="form-grid">
+ <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">Contacto</div><div>${c.nombre}</div></div>
+ <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">Teléfono</div><div>${c.tel||'—'}</div></div>
+ <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">Email</div><div style="color:var(--gold)">${c.email||'—'}</div></div>
+ <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">Ciudad</div><div>${c.ciudad||'—'}</div></div>
+ <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">Sector</div><div>${c.sector||'—'}</div></div>
+ <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">Cliente desde</div><div>${fDate(c.desde)}</div></div>
+ </div>
+ ${c.notas?`<div style="margin-top:16px;background:var(--bg3);border-radius:8px;padding:12px;font-size:13px;color:var(--muted)">${c.notas}</div>`:''}
+ `;
+ document.getElementById('detail-foot').innerHTML=`
+ <button class="btn btn-danger btn-sm" onclick="deleteCliente('${c.id}')">Eliminar</button>
+ <div style="flex:1"></div>
+ <button class="btn btn-outline" onclick="closeModal('modal-cliente-detail')">Cerrar</button>
+ <button class="btn btn-gold" onclick="editCliente('${c.id}')">Editar</button>
+ `;
+ openModal('modal-cliente-detail');
+}
+
+function verDeal(id){
+ const d=DB.deals.find(x=>x.id===id);
+ if(!d)return;
+ // Mover a siguiente etapa
+ const etapas=['contacto','interes','propuesta','negociacion','cierre'];
+ const idx=etapas.indexOf(d.etapa);
+ const next=etapas[idx+1];
+ document.getElementById('detail-title').textContent=d.biz;
+ document.getElementById('detail-body').innerHTML=`
+ <div class="form-grid">
+ <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">Etapa</div>
+ <span class="badge ${etapaColors[d.etapa]}">${etapaLabels[d.etapa]}</span></div>
+ <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">Valor</div>
+ <span style="font-size:20px;font-weight:700;color:var(--gold2)">${d.valor}€</span></div>
+ <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">Contacto</div><div>${d.contacto}</div></div>
+ <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">Plan</div>
+ <span class="badge ${planColors[d.plan]||'badge-muted'}">${d.plan}</span></div>
+ </div>
+ ${d.accion?`<div style="margin-top:16px;background:var(--bg3);border-radius:8px;padding:12px;font-size:13px">
+ <span style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Próxima acción</span><br>
+ <span style="color:var(--gold)">${d.accion}</span></div>`:''}
+ ${d.notas?`<div style="margin-top:10px;background:var(--bg3);border-radius:8px;padding:12px;font-size:13px;color:var(--muted)">${d.notas}</div>`:''}
+ `;
+ document.getElementById('detail-foot').innerHTML=`
+ <button class="btn btn-danger btn-sm" onclick="deleteDeal('${d.id}')">Eliminar</button>
+ <div style="flex:1"></div>
+ <button class="btn btn-outline" onclick="closeModal('modal-cliente-detail')">Cerrar</button>
+ ${next?`<button class="btn btn-gold" onclick="avanzarDeal('${d.id}','${next}')">Avanzar → ${etapaLabels[next]}</button>`:'<span class="badge badge-green" style="padding:8px 16px"> Listo para cerrar</span>'}
+ `;
+ openModal('modal-cliente-detail');
+}
+
+function avanzarDeal(id,etapa){
+ const d=DB.deals.find(x=>x.id===id);
+ if(!d)return;
+ d.etapa=etapa;
+ save('deals');
+ logActivity(`${d.biz} avanzó a "${etapaLabels[etapa]}"`,etapa==='cierre'?'#2ecc71':'#c9a84c');
+ closeModal('modal-cliente-detail');
+ renderPipeline();
+}
+
+function deleteCliente(id){
+ if(!confirm('¿Eliminar este cliente?'))return;
+ DB.clientes=DB.clientes.filter(c=>c.id!==id);
+ save('clientes');
+ closeModal('modal-cliente-detail');
+ renderClientes();
+ logActivity('Cliente eliminado','#e74c3c');
+}
+
+function deleteDeal(id){
+ if(!confirm('¿Eliminar esta oportunidad?'))return;
+ DB.deals=DB.deals.filter(d=>d.id!==id);
+ save('deals');
+ closeModal('modal-cliente-detail');
+ renderPipeline();
+}
+
+function editCliente(id){
+ // Por simplicidad, cierra el modal de detalle (edición inline en futuras versiones)
+ closeModal('modal-cliente-detail');
+ alert('Edición directa próximamente. Por ahora elimina y crea de nuevo.');
+}
+
+// ── GUARDAR ───────────────────────────────────────
+function saveCliente(){
+ const biz=document.getElementById('new-biz').value.trim();
+ if(!biz)return alert('El nombre del negocio es obligatorio');
+ const c={
+ id:uid(),
+ biz,
+ sector:document.getElementById('new-sector').value.trim(),
+ nombre:document.getElementById('new-nombre').value.trim(),
+ tel:document.getElementById('new-tel').value.trim(),
+ email:document.getElementById('new-email').value.trim(),
+ ciudad:document.getElementById('new-ciudad').value.trim(),
+ plan:document.getElementById('new-plan').value||'START',
+ estado:document.getElementById('new-estado').value||'lead',
+ notas:document.getElementById('new-notas').value.trim(),
+ mrr:{'AIRMATE':40,'START':39,'GROWTH':59,'PRO':99,'CRM BÁSICO':49,'CRM+IA':79,'CRM MEDIDA':149}[document.getElementById('new-plan').value]||0,
+ setup:{'AIRMATE':0,'START':250,'GROWTH':400,'PRO':800,'CRM BÁSICO':397,'CRM+IA':597,'CRM MEDIDA':997}[document.getElementById('new-plan').value]||0,
+ desde:new Date().toISOString().slice(0,10),
+ };
+ DB.clientes.unshift(c);
+ save('clientes');
+ logActivity(`Nuevo cliente: ${biz} (${c.plan})`,'#2ecc71');
+ closeModal('modal-lead');
+ renderSection('clientes');
+ showSection('clientes');
+}
+
+function saveDeal(){
+ const biz=document.getElementById('deal-biz').value.trim();
+ if(!biz)return alert('El nombre del negocio es obligatorio');
+ const d={
+ id:uid(),
+ biz,
+ contacto:document.getElementById('deal-contacto').value.trim(),
+ plan:document.getElementById('deal-plan').value,
+ valor:parseFloat(document.getElementById('deal-valor').value)||0,
+ etapa:document.getElementById('deal-etapa').value,
+ accion:document.getElementById('deal-accion').value.trim(),
+ notas:document.getElementById('deal-notas').value.trim(),
+ ts:new Date().toISOString(),
+ };
+ DB.deals.unshift(d);
+ save('deals');
+ logActivity(`Nueva oportunidad: ${biz} — ${d.plan}`,'#c9a84c');
+ closeModal('modal-deal');
+ renderPipeline();
+}
+
+function saveTarea(){
+ const titulo=document.getElementById('tarea-titulo').value.trim();
+ if(!titulo)return alert('La tarea es obligatoria');
+ const t={
+ id:uid(),
+ titulo,
+ cliente:document.getElementById('tarea-cliente').value.trim(),
+ fecha:document.getElementById('tarea-fecha').value,
+ prioridad:document.getElementById('tarea-prioridad').value,
+ done:false,
+ ts:new Date().toISOString(),
+ };
+ DB.tareas.unshift(t);
+ save('tareas');
+ closeModal('modal-tarea');
+ renderTareas();
+}
+
+function savePropuesta(){
+ const biz=document.getElementById('prop-biz').value.trim();
+ if(!biz)return alert('El negocio es obligatorio');
+ const num='P-'+String(DB.propuestas.length+1).padStart(3,'0');
+ const p={
+ id:uid(),num,
+ biz,
+ contacto:document.getElementById('prop-contacto').value.trim(),
+ plan:document.getElementById('prop-plan').value,
+ setup:parseFloat(document.getElementById('prop-setup').value)||0,
+ mensual:parseFloat(document.getElementById('prop-mensual').value)||0,
+ estado:document.getElementById('prop-estado').value,
+ fecha:new Date().toISOString().slice(0,10),
+ };
+ DB.propuestas.unshift(p);
+ save('propuestas');
+ logActivity(`Propuesta ${num} creada para ${biz}`,'#c9a84c');
+ closeModal('modal-propuesta');
+ renderPropuestas();
+}
+
+// ── MODALS ────────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+ m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')});
+});
+
+// ── LOGIN ─────────────────────────────────────────
+function doLogin(){
+ const u=document.getElementById('login-user').value.trim().toLowerCase();
+ const p=document.getElementById('login-pass').value;
+ if(u==='airmate'&&p==='airmate2024owner'){
+ sessionStorage.setItem('crm_auth','1');
+ document.getElementById('login-screen').style.display='none';
+ } else {
+ document.getElementById('login-error').style.display='block';
+ document.getElementById('login-pass').value='';
+ }
+}
+
+// ── INIT ──────────────────────────────────────────
+if(sessionStorage.getItem('crm_auth')!=='1'){
+ // login screen visible by default
+} else {
+ document.getElementById('login-screen').style.display='none';
+}
+renderDashboard();
+</script>
+</body>
+</html>

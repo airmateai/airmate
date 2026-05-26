@@ -1,0 +1,23 @@
+name: Recordatorios de citas
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # cada hora
+  workflow_dispatch:        # permite lanzarlo a mano desde GitHub
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node scripts/send-reminders.js
+        env:
+          SB_URL: https://vjofxmfwdybktpwiuanc.supabase.co
+          SB_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          EJ_SVC: service_npmjvvf
+          EJ_TPL: template_recordatorio
+          EJ_PUB_KEY: i4iBVVP-BkUOOwBE9
+          EJ_PRIV_KEY: ${{ secrets.EMAILJS_PRIVATE_KEY }}

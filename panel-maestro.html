@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel — El Maestro Eduardo Enrique</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080f;--bg2:#0e0e1a;--bg3:#141420;--bg4:#1a1a28;
+  --gold:#c9a84c;--gold2:#f0d878;--gold3:#7a5c18;
+  --white:#fdf8f0;--muted:rgba(253,248,240,0.45);--muted2:rgba(253,248,240,0.2);
+  --border:rgba(201,168,76,0.18);--border2:rgba(201,168,76,0.08);
+  --green:#2ecc71;--red:#e74c3c;--blue:#3498db;--purple:#9b59b6;
+}
+body{background:var(--bg);color:var(--white);font-family:'Inter',sans-serif;display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:230px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-brand{padding:20px 18px 16px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:10px}
+.brand-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--gold3),var(--gold));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.brand-name{font-size:12px;font-weight:700;letter-spacing:0.05em;color:var(--white)}
+.brand-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.sidebar-nav{flex:1;padding:10px 0;overflow-y:auto}
+.nav-section{padding:8px 16px 4px;font-size:9px;color:var(--muted2);letter-spacing:0.15em;text-transform:uppercase;margin-top:6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;font-size:13px;color:var(--muted);transition:all 0.15s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--white);background:rgba(201,168,76,0.05)}
+.nav-item.active{color:var(--gold);background:rgba(201,168,76,0.08);border-left-color:var(--gold)}
+.nav-icon{font-size:15px;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:rgba(201,168,76,0.15);color:var(--gold);font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px}
+.sidebar-bottom{padding:14px 16px;border-top:1px solid var(--border2)}
+.sidebar-user{display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold3),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#000;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600}
+.user-role{font-size:10px;color:var(--muted)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);margin-left:auto;flex-shrink:0}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:56px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:12px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600;flex:1}
+.topbar-badge{background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000;font-size:9px;font-weight:700;padding:3px 10px;border-radius:99px;letter-spacing:0.08em;text-transform:uppercase}
+.topbar-date{font-size:12px;color:var(--muted)}
+.content{flex:1;overflow-y:auto;padding:22px}
+.content::-webkit-scrollbar{width:5px}
+.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* BOTONES */
+.btn{padding:7px 14px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;letter-spacing:0.03em;font-family:'Inter',sans-serif}
+.btn-gold{background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000}
+.btn-gold:hover{filter:brightness(1.1)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--gold);border-radius:12px;padding:16px 18px}
+.stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:6px}
+.stat-value{font-size:26px;font-weight:700;color:var(--gold2);letter-spacing:-0.02em}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.stat-up{color:var(--green)}
+
+/* GRID 2 cols */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.grid3{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:600}
+.card-sub{font-size:11px;color:var(--muted)}
+.card-body{padding:16px 18px}
+
+/* TABLA */
+table{width:100%;border-collapse:collapse}
+th{padding:8px 14px;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;text-align:left;border-bottom:1px solid var(--border2);font-weight:500}
+td{padding:11px 14px;font-size:12px;border-bottom:1px solid var(--border2)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(201,168,76,0.025)}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:600;letter-spacing:0.04em}
+.bg-green{background:rgba(46,204,113,0.1);color:var(--green);border:1px solid rgba(46,204,113,0.18)}
+.bg-gold{background:rgba(201,168,76,0.1);color:var(--gold);border:1px solid rgba(201,168,76,0.2)}
+.bg-blue{background:rgba(52,152,219,0.1);color:var(--blue);border:1px solid rgba(52,152,219,0.18)}
+.bg-purple{background:rgba(155,89,182,0.1);color:var(--purple);border:1px solid rgba(155,89,182,0.18)}
+.bg-red{background:rgba(231,76,60,0.1);color:var(--red);border:1px solid rgba(231,76,60,0.18)}
+
+/* CHAT IA */
+.chat-msgs{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;padding:4px 0}
+.chat-msgs::-webkit-scrollbar{width:3px}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.chat-row{display:flex;gap:8px;align-items:flex-start}
+.chat-row.user{flex-direction:row-reverse}
+.chat-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:2px}
+.chat-av.bot{background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000}
+.chat-av.usr{background:var(--bg4);border:1px solid var(--border);color:var(--muted);font-size:9px}
+.chat-bubble{padding:8px 11px;border-radius:10px;font-size:12px;line-height:1.5;max-width:82%}
+.bubble-bot{background:var(--bg3);border:1px solid var(--border2);color:var(--muted);border-radius:3px 10px 10px 10px}
+.bubble-usr{background:rgba(201,168,76,0.07);border:1px solid var(--border);color:rgba(253,248,240,0.6);border-radius:10px 3px 10px 10px}
+.chat-time{font-size:9px;color:var(--muted2);margin-top:3px;flex-shrink:0;align-self:flex-end}
+.chat-input-row{display:flex;gap:8px;margin-top:12px;border-top:1px solid var(--border2);padding-top:12px}
+.chat-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--white);font-size:12px;font-family:'Inter',sans-serif;outline:none}
+.chat-input::placeholder{color:var(--muted2)}
+.chat-input:focus{border-color:var(--gold)}
+.chat-send{background:linear-gradient(135deg,var(--gold3),var(--gold));border:none;border-radius:8px;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+
+/* CITA ROW */
+.cita-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border2)}
+.cita-row:last-child{border-bottom:none}
+.cita-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#000;flex-shrink:0}
+.cita-info{flex:1;min-width:0}
+.cita-name{font-size:13px;font-weight:500}
+.cita-svc{font-size:11px;color:var(--muted);margin-top:1px}
+.cita-time{font-size:11px;color:var(--muted);text-align:right;flex-shrink:0}
+
+/* ACTIVIDAD */
+.act-row{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border2)}
+.act-row:last-child{border-bottom:none}
+.act-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:1px}
+.act-text{font-size:12px;color:var(--muted);line-height:1.5;flex:1}
+.act-text strong{color:var(--white);font-weight:500}
+.act-ago{font-size:10px;color:var(--muted2);flex-shrink:0;margin-top:2px}
+
+/* LIVE DOT */
+.live{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--green)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* INGRESO */
+.ingreso-bar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ingreso-label{font-size:12px;color:var(--muted);width:110px;flex-shrink:0}
+.ingreso-track{flex:1;height:6px;background:var(--bg4);border-radius:99px;overflow:hidden}
+.ingreso-fill{height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold));border-radius:99px}
+.ingreso-val{font-size:12px;font-weight:600;color:var(--gold2);width:50px;text-align:right;flex-shrink:0}
+
+/* ── MOBILE ── */
+@media(max-width:640px){
+  body{flex-direction:column;height:auto;overflow:auto}
+  .sidebar{width:100%;height:auto;border-right:none;border-bottom:1px solid var(--border);flex-shrink:0}
+  .sidebar-brand{padding:14px 16px}
+  .sidebar-nav{display:none}
+  .sidebar-bottom{display:none}
+  .main{min-height:0}
+  .topbar{padding:0 14px;gap:8px;height:50px}
+  .topbar-badge{display:none}
+  .topbar-date{display:none}
+  .topbar-title{font-size:13px}
+  .content{padding:14px}
+  .stats-grid{grid-template-columns:1fr 1fr!important;gap:10px}
+  .stat-value{font-size:22px}
+  .grid2,.grid3{grid-template-columns:1fr!important}
+  .card{margin-bottom:12px}
+  table{font-size:11px}
+  th,td{padding:8px 10px}
+  .ingreso-label{width:80px;font-size:11px}
+  .cita-time{display:none}
+  .chat-msgs{max-height:200px}
+}
+@media(max-width:400px){
+  .stats-grid{grid-template-columns:1fr 1fr!important}
+  .stat-value{font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🔮</div>
+    <div>
+      <div class="brand-name">El Maestro</div>
+      <div class="brand-sub">Centro Esotérico Arcano Mayor</div>
+    </div>
+  </div>
+  <!-- Mobile bottom nav -->
+  <div id="mobile-nav" style="display:none;padding:8px 12px;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+    <button onclick="showSectionMobile('dashboard')" style="background:rgba(201,168,76,0.1);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-size:11px;padding:7px 12px;white-space:nowrap;font-family:'Inter',sans-serif;cursor:pointer;">📊 Dashboard</button>
+    <button onclick="showSectionMobile('citas')" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-size:11px;padding:7px 12px;white-space:nowrap;font-family:'Inter',sans-serif;cursor:pointer;">📅 Citas</button>
+    <button onclick="showSectionMobile('clientes')" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-size:11px;padding:7px 12px;white-space:nowrap;font-family:'Inter',sans-serif;cursor:pointer;">👤 Clientes</button>
+    <button onclick="showSectionMobile('ia')" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-size:11px;padding:7px 12px;white-space:nowrap;font-family:'Inter',sans-serif;cursor:pointer;">💬 Agente IA</button>
+    <button onclick="showSectionMobile('ingresos')" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-size:11px;padding:7px 12px;white-space:nowrap;font-family:'Inter',sans-serif;cursor:pointer;">💰 Ingresos</button>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="showSection('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
+    <div class="nav-item" onclick="showSection('citas')"><span class="nav-icon">📅</span> Citas <span class="nav-badge">7</span></div>
+    <div class="nav-item" onclick="showSection('clientes')"><span class="nav-icon">👤</span> Clientes</div>
+    <div class="nav-item" onclick="showSection('ia')"><span class="nav-icon">💬</span> Agente IA <span class="nav-badge" style="background:rgba(46,204,113,0.15);color:var(--green);">24</span></div>
+    <div class="nav-section">Negocio</div>
+    <div class="nav-item" onclick="showSection('ingresos')"><span class="nav-icon">💰</span> Ingresos</div>
+    <div class="nav-item" onclick="showSection('servicios')"><span class="nav-icon">✦</span> Servicios</div>
+    <div class="nav-item" onclick="showSection('actividad')"><span class="nav-icon">🕐</span> Actividad</div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="sidebar-user">
+      <div class="avatar">M</div>
+      <div>
+        <div class="user-name">El Maestro</div>
+        <div class="user-role">Eduardo Enrique</div>
+      </div>
+      <div class="status-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-badge">Arcano Mayor</div>
+    <div class="topbar-date" id="topbar-date"></div>
+    <button class="btn btn-gold btn-sm" onclick="showSection('ia')">💬 Abrir Agente IA</button>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div id="sec-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Citas esta semana</div>
+          <div class="stat-value">7</div>
+          <div class="stat-sub stat-up">↑ 3 más que la semana pasada</div>
+        </div>
+        <div class="stat-card" style="border-top-color:var(--green)">
+          <div class="stat-label">Nuevos clientes</div>
+          <div class="stat-value" style="color:var(--green)">4</div>
+          <div class="stat-sub stat-up">↑ Este mes</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#3498db">
+          <div class="stat-label">Consultas IA hoy</div>
+          <div class="stat-value" style="color:#7eb8f7">24</div>
+          <div class="stat-sub"><span class="live"><span class="live-dot"></span>En vivo</span></div>
+        </div>
+        <div class="stat-card" style="border-top-color:var(--purple)">
+          <div class="stat-label">Ingresos del mes</div>
+          <div class="stat-value" style="color:#c4a0ff">1.240€</div>
+          <div class="stat-sub stat-up">↑ 18% vs mes anterior</div>
+        </div>
+      </div>
+
+      <div class="grid3">
+        <!-- Próximas citas -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📅 Próximas citas</div>
+            <button class="btn btn-outline" style="font-size:10px;padding:5px 10px;" onclick="showSection('citas')">Ver todas</button>
+          </div>
+          <div class="card-body">
+            <div class="cita-row">
+              <div class="cita-av" style="background:linear-gradient(135deg,#7a5c14,#c9a84c)">M</div>
+              <div class="cita-info">
+                <div class="cita-name">María González</div>
+                <div class="cita-svc">🃏 Lectura de Tarot</div>
+              </div>
+              <div class="cita-time"><div>Hoy</div><div style="color:var(--gold)">17:00</div></div>
+              <span class="badge bg-gold">Hoy</span>
+            </div>
+            <div class="cita-row">
+              <div class="cita-av" style="background:linear-gradient(135deg,#1a3a5c,#4a8ab8)">C</div>
+              <div class="cita-info">
+                <div class="cita-name">Carmen Delgado</div>
+                <div class="cita-svc">🔮 Videncia</div>
+              </div>
+              <div class="cita-time"><div>Mañana</div><div>11:00</div></div>
+              <span class="badge bg-blue">Mañana</span>
+            </div>
+            <div class="cita-row">
+              <div class="cita-av" style="background:linear-gradient(135deg,#1a4a1a,#3a8a3a)">R</div>
+              <div class="cita-info">
+                <div class="cita-name">Roberto Suárez</div>
+                <div class="cita-svc">💼 Consulta Negocios</div>
+              </div>
+              <div class="cita-time"><div>Jue</div><div>16:30</div></div>
+              <span class="badge bg-green">Nuevo</span>
+            </div>
+            <div class="cita-row">
+              <div class="cita-av" style="background:linear-gradient(135deg,#4a1a4a,#8a3a8a)">L</div>
+              <div class="cita-info">
+                <div class="cita-name">Lucía Hernández</div>
+                <div class="cita-svc">💫 Amarre espiritual</div>
+              </div>
+              <div class="cita-time"><div>Vie</div><div>10:00</div></div>
+              <span class="badge bg-purple">Vie</span>
+            </div>
+            <div class="cita-row">
+              <div class="cita-av" style="background:linear-gradient(135deg,#5c3a14,#a06030)">A</div>
+              <div class="cita-info">
+                <div class="cita-name">Antonio Vega</div>
+                <div class="cita-svc">⭐ Carta Natal</div>
+              </div>
+              <div class="cita-time"><div>Sáb</div><div>12:00</div></div>
+              <span class="badge bg-gold">Sáb</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actividad reciente -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🕐 Actividad reciente</div>
+          </div>
+          <div class="card-body" style="padding:12px 16px">
+            <div class="act-row">
+              <div class="act-icon" style="background:rgba(46,204,113,0.1)">💬</div>
+              <div class="act-text"><strong>Nueva consulta IA</strong> — alguien preguntó por tarot de amor</div>
+              <div class="act-ago">hace 5m</div>
+            </div>
+            <div class="act-row">
+              <div class="act-icon" style="background:rgba(201,168,76,0.1)">📅</div>
+              <div class="act-text"><strong>Roberto Suárez</strong> reservó consulta de negocios via web</div>
+              <div class="act-ago">hace 23m</div>
+            </div>
+            <div class="act-row">
+              <div class="act-icon" style="background:rgba(52,152,219,0.1)">👤</div>
+              <div class="act-text"><strong>Nuevo cliente</strong> — Patricia Romero se registró desde Instagram</div>
+              <div class="act-ago">hace 1h</div>
+            </div>
+            <div class="act-row">
+              <div class="act-icon" style="background:rgba(155,89,182,0.1)">💰</div>
+              <div class="act-text"><strong>Pago recibido</strong> — 80€ por consulta de videncia (Carmen D.)</div>
+              <div class="act-ago">hace 2h</div>
+            </div>
+            <div class="act-row">
+              <div class="act-icon" style="background:rgba(201,168,76,0.1)">⭐</div>
+              <div class="act-text"><strong>Nueva reseña 5★</strong> — "El Maestro acertó todo sin que yo dijera nada"</div>
+              <div class="act-ago">hace 3h</div>
+            </div>
+            <div class="act-row">
+              <div class="act-icon" style="background:rgba(46,204,113,0.1)">💬</div>
+              <div class="act-text"><strong>18 consultas IA</strong> respondidas automáticamente anoche</div>
+              <div class="act-ago">ayer</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ingresos por servicio -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💰 Ingresos por servicio — Mayo 2026</div>
+          <div class="card-sub">Total: <strong style="color:var(--gold2)">1.240€</strong></div>
+        </div>
+        <div class="card-body">
+          <div class="ingreso-bar"><div class="ingreso-label">Lectura Tarot</div><div class="ingreso-track"><div class="ingreso-fill" style="width:72%"></div></div><div class="ingreso-val">450€</div></div>
+          <div class="ingreso-bar"><div class="ingreso-label">Videncia</div><div class="ingreso-track"><div class="ingreso-fill" style="width:52%"></div></div><div class="ingreso-val">320€</div></div>
+          <div class="ingreso-bar"><div class="ingreso-label">Trab. Esotéricos</div><div class="ingreso-track"><div class="ingreso-fill" style="width:38%"></div></div><div class="ingreso-val">240€</div></div>
+          <div class="ingreso-bar"><div class="ingreso-label">Consulta Negocios</div><div class="ingreso-track"><div class="ingreso-fill" style="width:26%"></div></div><div class="ingreso-val">160€</div></div>
+          <div class="ingreso-bar"><div class="ingreso-label">Astrología</div><div class="ingreso-track"><div class="ingreso-fill" style="width:11%"></div></div><div class="ingreso-val">70€</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CITAS ══ -->
+    <div id="sec-citas" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📅 Todas las citas</div>
+          <button class="btn btn-gold">+ Nueva cita</button>
+        </div>
+        <table>
+          <thead><tr><th>Cliente</th><th>Servicio</th><th>Fecha</th><th>Hora</th><th>Modalidad</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td><b>María González</b></td><td>🃏 Tarot</td><td>Hoy, 10 mayo</td><td>17:00</td><td>Presencial</td><td><span class="badge bg-gold">Confirmada</span></td></tr>
+            <tr><td><b>Carmen Delgado</b></td><td>🔮 Videncia</td><td>Mañana, 11 mayo</td><td>11:00</td><td>Online</td><td><span class="badge bg-blue">Confirmada</span></td></tr>
+            <tr><td><b>Roberto Suárez</b></td><td>💼 Negocios</td><td>Jue, 13 mayo</td><td>16:30</td><td>Presencial</td><td><span class="badge bg-green">Nuevo</span></td></tr>
+            <tr><td><b>Lucía Hernández</b></td><td>💫 Amarre</td><td>Vie, 14 mayo</td><td>10:00</td><td>Presencial</td><td><span class="badge bg-gold">Confirmada</span></td></tr>
+            <tr><td><b>Antonio Vega</b></td><td>⭐ Carta Natal</td><td>Sáb, 15 mayo</td><td>12:00</td><td>Online</td><td><span class="badge bg-purple">Pendiente</span></td></tr>
+            <tr><td><b>Patricia Romero</b></td><td>🃏 Tarot</td><td>Lun, 17 mayo</td><td>18:00</td><td>Online</td><td><span class="badge bg-green">Nuevo</span></td></tr>
+            <tr><td><b>Jorge Mendoza</b></td><td>🔮 Videncia</td><td>Mar, 18 mayo</td><td>10:30</td><td>Presencial</td><td><span class="badge bg-blue">Confirmada</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ CLIENTES ══ -->
+    <div id="sec-clientes" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">👤 Clientes</div>
+          <div style="display:flex;gap:8px">
+            <input placeholder="Buscar cliente..." style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--white);font-size:12px;font-family:'Inter',sans-serif;outline:none;width:180px"/>
+            <button class="btn btn-gold">+ Nuevo</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Nombre</th><th>Teléfono</th><th>Último servicio</th><th>Total consultas</th><th>Captado vía</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td><b>María González</b></td><td>+34 612 345 678</td><td>🃏 Tarot amor</td><td>8</td><td>Instagram</td><td><span class="badge bg-green">Activo</span></td></tr>
+            <tr><td><b>Carmen Delgado</b></td><td>+34 623 456 789</td><td>🔮 Videncia pareja</td><td>5</td><td>Web</td><td><span class="badge bg-green">Activo</span></td></tr>
+            <tr><td><b>Roberto Suárez</b></td><td>+34 634 567 890</td><td>💼 Negocios</td><td>1</td><td>Web IA</td><td><span class="badge bg-gold">Nuevo</span></td></tr>
+            <tr><td><b>Lucía Hernández</b></td><td>+34 645 678 901</td><td>💫 Amarre</td><td>3</td><td>WhatsApp</td><td><span class="badge bg-green">Activo</span></td></tr>
+            <tr><td><b>Antonio Vega</b></td><td>+34 656 789 012</td><td>⭐ Astrología</td><td>2</td><td>Instagram</td><td><span class="badge bg-blue">Pendiente</span></td></tr>
+            <tr><td><b>Patricia Romero</b></td><td>+34 667 890 123</td><td>🃏 Tarot</td><td>1</td><td>Instagram</td><td><span class="badge bg-gold">Nuevo</span></td></tr>
+            <tr><td><b>Jorge Mendoza</b></td><td>+34 678 901 234</td><td>🔮 Videncia</td><td>4</td><td>Google</td><td><span class="badge bg-green">Activo</span></td></tr>
+            <tr><td><b>Isabel Fuentes</b></td><td>+34 689 012 345</td><td>🕯️ Trab. Esotérico</td><td>6</td><td>Referido</td><td><span class="badge bg-green">Activo</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ AGENTE IA ══ -->
+    <div id="sec-ia" style="display:none">
+      <div class="stats-grid">
+        <div class="stat-card" style="border-top-color:var(--green)">
+          <div class="stat-label">Consultas hoy</div>
+          <div class="stat-value" style="color:var(--green)">24</div>
+          <div class="stat-sub"><span class="live"><span class="live-dot"></span> En vivo</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Leads captados hoy</div>
+          <div class="stat-value">8</div>
+          <div class="stat-sub stat-up">↑ 3 más que ayer</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Tasa de conversión</div>
+          <div class="stat-value">33%</div>
+          <div class="stat-sub">Consultas → citas</div>
+        </div>
+        <div class="stat-card" style="border-top-color:var(--green)">
+          <div class="stat-label">Respondidas auto.</div>
+          <div class="stat-value" style="color:var(--green)">100%</div>
+          <div class="stat-sub">Sin intervención</div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">💬 Chat en vivo — Agente IA</div>
+            <span class="live"><span class="live-dot"></span> Activo</span>
+          </div>
+          <div class="card-body">
+            <div class="chat-msgs" id="chat-msgs">
+              <div class="chat-row">
+                <div class="chat-av bot">🔮</div>
+                <div><div class="chat-bubble bubble-bot">Hola, soy el asistente del Maestro Eduardo. ¿Buscas una consulta de tarot, videncia o trabajos esotéricos?</div><div class="chat-time">14:32</div></div>
+              </div>
+              <div class="chat-row user">
+                <div class="chat-av usr">U</div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end"><div class="chat-bubble bubble-usr">Quiero saber si mi ex volverá conmigo</div><div class="chat-time">14:33</div></div>
+              </div>
+              <div class="chat-row">
+                <div class="chat-av bot">🔮</div>
+                <div><div class="chat-bubble bubble-bot">El Maestro Eduardo puede ayudarte con una consulta de videncia o tarot de amor. ¿Prefieres consulta presencial en Tenerife u online?</div><div class="chat-time">14:33</div></div>
+              </div>
+              <div class="chat-row user">
+                <div class="chat-av usr">U</div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end"><div class="chat-bubble bubble-usr">Online, estoy en Madrid</div><div class="chat-time">14:34</div></div>
+              </div>
+              <div class="chat-row">
+                <div class="chat-av bot">🔮</div>
+                <div><div class="chat-bubble bubble-bot">Perfecto. El Maestro tiene disponibilidad esta semana. Te paso el contacto directo: WhatsApp +34 687 554 784 🙏</div><div class="chat-time">14:34</div></div>
+              </div>
+            </div>
+            <div class="chat-input-row">
+              <input class="chat-input" id="chat-input" placeholder="Simula una pregunta de cliente..." onkeydown="if(event.key==='Enter')sendChat()"/>
+              <button class="chat-send" onclick="sendChat()">➤</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📋 Últimas conversaciones</div></div>
+          <table>
+            <thead><tr><th>Usuario</th><th>Consulta</th><th>Hora</th><th>Resultado</th></tr></thead>
+            <tbody>
+              <tr><td>Anónimo</td><td>Tarot de amor</td><td>14:32</td><td><span class="badge bg-gold">Lead</span></td></tr>
+              <tr><td>+34 612***</td><td>Precio videncia</td><td>13:58</td><td><span class="badge bg-green">Cita</span></td></tr>
+              <tr><td>Anónimo</td><td>Trabajos esotéricos</td><td>13:21</td><td><span class="badge bg-gold">Lead</span></td></tr>
+              <tr><td>+34 634***</td><td>Consulta negocios</td><td>12:44</td><td><span class="badge bg-green">Cita</span></td></tr>
+              <tr><td>Anónimo</td><td>Amarre pareja</td><td>11:30</td><td><span class="badge bg-blue">Info</span></td></tr>
+              <tr><td>+34 645***</td><td>Carta natal</td><td>10:15</td><td><span class="badge bg-green">Cita</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ INGRESOS ══ -->
+    <div id="sec-ingresos" style="display:none">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Ingresos mayo</div><div class="stat-value">1.240€</div><div class="stat-sub stat-up">↑ 18% vs abril</div></div>
+        <div class="stat-card"><div class="stat-label">Ingresos abril</div><div class="stat-value" style="color:var(--muted)">1.050€</div><div class="stat-sub">Mes anterior</div></div>
+        <div class="stat-card"><div class="stat-label">Ticket medio</div><div class="stat-value">177€</div><div class="stat-sub">Por consulta</div></div>
+        <div class="stat-card" style="border-top-color:var(--green)"><div class="stat-label">Consultas pagas</div><div class="stat-value" style="color:var(--green)">7</div><div class="stat-sub">Este mes</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">💰 Desglose por servicio — Mayo 2026</div></div>
+        <table>
+          <thead><tr><th>Servicio</th><th>Consultas</th><th>Precio unitario</th><th>Total</th><th>% del total</th></tr></thead>
+          <tbody>
+            <tr><td>🃏 Lectura de Tarot</td><td>5</td><td>90€</td><td><b style="color:var(--gold2)">450€</b></td><td><span class="badge bg-gold">36%</span></td></tr>
+            <tr><td>🔮 Videncia</td><td>4</td><td>80€</td><td><b style="color:var(--gold2)">320€</b></td><td><span class="badge bg-gold">26%</span></td></tr>
+            <tr><td>🕯️ Trabajos Esotéricos</td><td>2</td><td>120€</td><td><b style="color:var(--gold2)">240€</b></td><td><span class="badge bg-gold">19%</span></td></tr>
+            <tr><td>💼 Consulta Negocios</td><td>2</td><td>80€</td><td><b style="color:var(--gold2)">160€</b></td><td><span class="badge bg-gold">13%</span></td></tr>
+            <tr><td>⭐ Astrología</td><td>1</td><td>70€</td><td><b style="color:var(--gold2)">70€</b></td><td><span class="badge bg-gold">6%</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ SERVICIOS ══ -->
+    <div id="sec-servicios" style="display:none">
+      <div class="card">
+        <div class="card-header"><div class="card-title">✦ Catálogo de servicios</div><button class="btn btn-gold">+ Añadir servicio</button></div>
+        <table>
+          <thead><tr><th>Servicio</th><th>Descripción</th><th>Duración</th><th>Precio</th><th>Modalidad</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td><b>🃏 Lectura de Tarot</b></td><td>Lectura completa de cartas con interpretación</td><td>45 min</td><td>90€</td><td>Presencial / Online</td><td><span class="badge bg-green">Activo</span></td></tr>
+            <tr><td><b>🔮 Videncia</b></td><td>Percepción extrasensorial y consulta personal</td><td>60 min</td><td>80€</td><td>Presencial / Online</td><td><span class="badge bg-green">Activo</span></td></tr>
+            <tr><td><b>⭐ Carta Natal</b></td><td>Astrología completa con tránsitos planetarios</td><td>90 min</td><td>70€</td><td>Online</td><td><span class="badge bg-green">Activo</span></td></tr>
+            <tr><td><b>🕯️ Trabajos Esotéricos</b></td><td>Limpieza, protección y rituales personalizados</td><td>Variable</td><td>120€</td><td>Presencial</td><td><span class="badge bg-green">Activo</span></td></tr>
+            <tr><td><b>💼 Consulta Negocios</b></td><td>Consultoría esotérica para decisiones empresariales</td><td>60 min</td><td>80€</td><td>Presencial / Online</td><td><span class="badge bg-green">Activo</span></td></tr>
+            <tr><td><b>💫 Amarre · Endiosamiento</b></td><td>Trabajos de unión espiritual y elevación</td><td>Variable</td><td>Consultar</td><td>Presencial</td><td><span class="badge bg-green">Activo</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ ACTIVIDAD ══ -->
+    <div id="sec-actividad" style="display:none">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🕐 Registro de actividad</div></div>
+        <div class="card-body" style="padding:12px 16px">
+          <div class="act-row"><div class="act-icon" style="background:rgba(46,204,113,0.1)">💬</div><div class="act-text"><strong>Consulta IA</strong> — Pregunta sobre tarot de amor respondida automáticamente</div><div class="act-ago">hace 5m</div></div>
+          <div class="act-row"><div class="act-icon" style="background:rgba(201,168,76,0.1)">📅</div><div class="act-text"><strong>Nueva cita</strong> — Roberto Suárez reservó consulta de negocios vía web</div><div class="act-ago">hace 23m</div></div>
+          <div class="act-row"><div class="act-icon" style="background:rgba(52,152,219,0.1)">👤</div><div class="act-text"><strong>Nuevo cliente</strong> — Patricia Romero captada desde Instagram</div><div class="act-ago">hace 1h</div></div>
+          <div class="act-row"><div class="act-icon" style="background:rgba(155,89,182,0.1)">💰</div><div class="act-text"><strong>Pago recibido</strong> — 80€ por consulta de videncia (Carmen Delgado)</div><div class="act-ago">hace 2h</div></div>
+          <div class="act-row"><div class="act-icon" style="background:rgba(201,168,76,0.1)">⭐</div><div class="act-text"><strong>Reseña 5★</strong> — "El Maestro acertó todo sin que yo dijera nada" — Ana T.</div><div class="act-ago">hace 3h</div></div>
+          <div class="act-row"><div class="act-icon" style="background:rgba(46,204,113,0.1)">💬</div><div class="act-text"><strong>18 consultas IA</strong> — respondidas automáticamente durante la noche</div><div class="act-ago">ayer 02:00</div></div>
+          <div class="act-row"><div class="act-icon" style="background:rgba(201,168,76,0.1)">📅</div><div class="act-text"><strong>Cita completada</strong> — Lucía Hernández, amarre espiritual (120€)</div><div class="act-ago">ayer 10:00</div></div>
+          <div class="act-row"><div class="act-icon" style="background:rgba(52,152,219,0.1)">💬</div><div class="act-text"><strong>Consulta IA</strong> — Pregunta sobre endiosamiento resuelta y lead captado</div><div class="act-ago">ayer 09:30</div></div>
+          <div class="act-row"><div class="act-icon" style="background:rgba(155,89,182,0.1)">📅</div><div class="act-text"><strong>Cita completada</strong> — Jorge Mendoza, videncia (80€)</div><div class="act-ago">hace 2 días</div></div>
+          <div class="act-row"><div class="act-icon" style="background:rgba(201,168,76,0.1)">👤</div><div class="act-text"><strong>Nuevo cliente</strong> — Jorge Mendoza captado desde Google</div><div class="act-ago">hace 3 días</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Mobile nav
+if(window.innerWidth<=640){
+  var mn=document.getElementById('mobile-nav');
+  if(mn)mn.style.display='flex';
+}
+function showSectionMobile(id){
+  ['dashboard','citas','clientes','ia','ingresos','servicios','actividad'].forEach(s=>{
+    document.getElementById('sec-'+s).style.display=s===id?'block':'none';
+  });
+  document.getElementById('topbar-title').textContent={dashboard:'Dashboard',citas:'Citas',clientes:'Clientes',ia:'Agente IA',ingresos:'Ingresos',servicios:'Servicios',actividad:'Actividad'}[id]||id;
+  document.querySelectorAll('#mobile-nav button').forEach(b=>b.style.background='var(--bg3)');
+  event.currentTarget.style.background='rgba(201,168,76,0.1)';
+  window.scrollTo(0,200);
+}
+
+// Fecha
+var d=new Date();
+document.getElementById('topbar-date').textContent=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+
+// Navegación
+var titles={dashboard:'Dashboard',citas:'Citas',clientes:'Clientes',ia:'Agente IA',ingresos:'Ingresos',servicios:'Servicios',actividad:'Actividad'};
+function showSection(id){
+  ['dashboard','citas','clientes','ia','ingresos','servicios','actividad'].forEach(s=>{
+    document.getElementById('sec-'+s).style.display=s===id?'block':'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  event.currentTarget&&event.currentTarget.classList.add('active');
+  document.getElementById('topbar-title').textContent=titles[id]||id;
+}
+
+// Chat IA
+async function sendChat(){
+  var input=document.getElementById('chat-input');
+  var msgs=document.getElementById('chat-msgs');
+  var text=input.value.trim();
+  if(!text)return;
+  input.value='';
+  var now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  msgs.innerHTML+=`<div class="chat-row user"><div class="chat-av usr">U</div><div style="display:flex;flex-direction:column;align-items:flex-end"><div class="chat-bubble bubble-usr">${text}</div><div class="chat-time">${now}</div></div></div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+  // Typing
+  var tid='t'+Date.now();
+  msgs.innerHTML+=`<div id="${tid}" class="chat-row"><div class="chat-av bot">🔮</div><div class="chat-bubble bubble-bot" style="opacity:0.5">...</div></div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+  var reply=await getReply(text);
+  document.getElementById(tid).remove();
+  msgs.innerHTML+=`<div class="chat-row"><div class="chat-av bot">🔮</div><div><div class="chat-bubble bubble-bot">${reply}</div><div class="chat-time">${now}</div></div></div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+}
+async function getReply(msg){
+  try{
+    var r=await fetch('https://bot-airmate-1.vercel.app/api/chat',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:msg,context:'Eres el asistente virtual del Centro Esotérico Arcano Mayor del Maestro Eduardo Enrique en Santa Cruz de Tenerife. Servicios: Lectura de Tarot (90€), Videncia (80€), Astrología/Carta Natal (70€), Trabajos Esotéricos (120€), Consulta de Negocios (80€), Amarre y Endiosamiento. Teléfono y WhatsApp: +34 687 554 784. Habla en español, tono cálido y misterioso. Anima siempre a reservar por WhatsApp.'})
+    });
+    var d=await r.json();
+    return d.reply||d.message||d.response||'Para reservar con el Maestro Eduardo escríbenos al WhatsApp: +34 687 554 784 🔮';
+  }catch(e){
+    var r=['El Maestro Eduardo puede ayudarte con eso. ¿Prefieres consulta presencial en Tenerife u online? 🔮','Por supuesto, es una de las consultas más habituales. Escríbenos al WhatsApp +34 687 554 784 para reservar 🙏','El Maestro tiene disponibilidad esta semana. Contacta por WhatsApp: +34 687 554 784'];
+    return r[Math.floor(Math.random()*r.length)];
+  }
+}
+</script>
+</body>
+</html>
+ 

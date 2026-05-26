@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>El Maestro Eduardo Enrique — Tarot · Videncia · Espiritualismo · Tenerife</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorativa:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Spectral:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap" rel="stylesheet"/>
+<style>
+@property --aura-y{syntax:'<percentage>';inherits:false;initial-value:30%}
+@property --aura-s{syntax:'<percentage>';inherits:false;initial-value:40%}
+</style>
+</head>
+<body>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs>
+    <filter id="heat" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.018 0.012" numOctaves="3" seed="4" result="noise">
+        <animate attributeName="baseFrequency" values="0.018 0.012;0.022 0.016;0.018 0.012" dur="9s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:oklch(6% 0.012 280);--ink2:oklch(9% 0.014 275);--ink3:oklch(13% 0.016 270);
+  --gold:oklch(72% 0.12 70);--gold-b:oklch(85% 0.14 75);--gold-d:oklch(44% 0.09 65);
+  --snow:oklch(95% 0.008 80);--mist:oklch(70% 0.006 80);--fog:oklch(55% 0.005 80);
+  --green:#25D366;--r:cubic-bezier(.16,1,.3,1)
+}
+html{scroll-behavior:smooth;scroll-padding-top:68px}
+body{background:var(--ink);color:var(--snow);font-family:'Spectral',serif;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+
+/* PARTICLES */
+#PX{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:500;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,56px);height:68px;transition:background .4s,border-color .4s}
+nav.inked{background:oklch(6% 0.012 280/.94);backdrop-filter:blur(20px);border-bottom:1px solid oklch(72% 0.12 70/.1)}
+.n-logo{text-decoration:none;display:flex;align-items:center;gap:10px}
+.n-logo img{height:44px;width:44px;object-fit:cover;border-radius:50%;clip-path:circle(48% at 50% 50%)}
+.n-logo span{font-family:'Cinzel Decorativa',serif;font-size:14px;font-weight:700;color:var(--gold)}
+.n-links{display:flex;gap:clamp(16px,3vw,36px)}
+.n-links a{font-family:'Cinzel',serif;font-size:9px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--fog);text-decoration:none;transition:color .25s}
+.n-links a:hover{color:var(--gold)}
+.n-cta{font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;background:var(--gold);color:var(--ink);padding:10px 24px;text-decoration:none;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);transition:opacity .2s}
+.n-cta:hover{opacity:.82}
+@media(max-width:640px){.n-links{display:none}.n-logo span{display:none}}
+
+/* HERO */
+.hero{position:relative;height:100svh;min-height:580px;overflow:hidden;display:grid;place-items:center}
+.hero-aura{position:absolute;inset:0;z-index:1;--aura-y:30%;--aura-s:40%;background:radial-gradient(ellipse var(--aura-s) 50% at 50% var(--aura-y),oklch(72% 0.12 70/.09),transparent 70%);animation:aura 8s ease-in-out infinite}
+@keyframes aura{0%,100%{--aura-y:30%;--aura-s:40%}50%{--aura-y:45%;--aura-s:55%}}
+.hero-photo{position:absolute;inset:-4%;z-index:0;background:url('m1.jpg') center top/cover no-repeat;filter:url(#heat) brightness(.3) saturate(.45);will-change:transform}
+.hero-vig{position:absolute;inset:0;z-index:2;background:linear-gradient(180deg,oklch(6% 0.012 280/.35) 0%,transparent 20%,transparent 50%,oklch(6% 0.012 280/.88) 78%,var(--ink) 100%),linear-gradient(90deg,oklch(6% 0.012 280/.45),transparent 30%,transparent 70%,oklch(6% 0.012 280/.45))}
+.hero-ring{position:absolute;border-radius:50%;border:1px solid oklch(72% 0.12 70/.06);pointer-events:none;z-index:2;top:50%;left:50%;transform:translate(-50%,-50%)}
+.r1{width:clamp(400px,70vw,800px);height:clamp(400px,70vw,800px);animation:rspin 70s linear infinite}
+.r2{width:clamp(280px,50vw,580px);height:clamp(280px,50vw,580px);animation:rspin 45s linear infinite reverse;border-color:oklch(72% 0.12 70/.04)}
+@keyframes rspin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+/* Scroll-driven fade */
+.hero-content{position:relative;z-index:3;text-align:center;padding:0 clamp(20px,6vw,80px);max-width:960px;display:flex;flex-direction:column;align-items:center}
+@supports(animation-timeline:scroll()){
+  .hero-content{animation:hero-out linear both;animation-timeline:scroll();animation-range:0px 380px}
+  @keyframes hero-out{to{opacity:0;scale:.88;translate:0 -40px}}
+}
+.h-pre{font-family:'Cinzel',serif;font-size:9px;font-weight:600;letter-spacing:.6em;text-transform:uppercase;color:var(--gold);margin-bottom:clamp(14px,3vh,24px);animation:rise .8s .2s var(--r) both}
+.h-title{font-family:'Cinzel Decorativa',serif;line-height:.88;letter-spacing:.01em;margin-bottom:clamp(14px,2.5vh,24px)}
+.h-t1{display:block;font-size:clamp(72px,18vw,180px);font-weight:400;color:var(--snow);animation:rise 1s .35s var(--r) both;text-shadow:0 0 80px oklch(72% 0.12 70/.15)}
+.h-t2{display:block;font-size:clamp(62px,16vw,160px);font-weight:900;color:var(--gold);animation:rise 1s .5s var(--r) both;text-shadow:0 0 60px oklch(72% 0.12 70/.4),0 0 120px oklch(72% 0.12 70/.15)}
+.h-rule{display:flex;align-items:center;gap:14px;margin-bottom:clamp(12px,2vh,20px);animation:fadein .8s .85s both;width:min(480px,90vw)}
+.h-rl{flex:1;height:1px;background:linear-gradient(90deg,transparent,oklch(72% 0.12 70/.5))}
+.h-rr{flex:1;height:1px;background:linear-gradient(90deg,oklch(72% 0.12 70/.5),transparent)}
+.h-gem{width:7px;height:7px;background:var(--gold);transform:rotate(45deg);flex-shrink:0;box-shadow:0 0 16px var(--gold)}
+
+/* HERO copy — dolor real */
+.h-pain{font-size:clamp(15px,2.2vw,20px);font-weight:400;color:oklch(80% 0.007 80);letter-spacing:.04em;line-height:1.5;margin-bottom:8px;animation:rise .8s .75s var(--r) both}
+.h-pain strong{color:var(--gold);font-weight:600}
+.h-sub{font-size:clamp(14px,1.8vw,18px);font-weight:300;font-style:italic;color:var(--mist);letter-spacing:.05em;line-height:1.6;max-width:560px;margin-bottom:clamp(20px,3.5vh,36px);animation:rise .8s .9s var(--r) both}
+
+/* Urgencia badge */
+.h-urgencia{display:flex;align-items:center;gap:8px;background:oklch(72% 0.12 70/.1);border:1px solid oklch(72% 0.12 70/.25);padding:8px 18px;margin-bottom:clamp(18px,3vh,28px);animation:rise .8s 1s var(--r) both}
+.h-urg-dot{width:8px;height:8px;background:#f87171;border-radius:50%;flex-shrink:0;animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.h-urg-text{font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--snow)}
+.h-urg-text span{color:#f87171}
+
+.h-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;animation:rise .8s 1.1s var(--r) both}
+.btn-g{font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;background:var(--gold);color:var(--ink);padding:16px 38px;text-decoration:none;display:inline-block;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);position:relative;overflow:hidden;box-shadow:0 0 40px oklch(72% 0.12 70/.25);transition:box-shadow .3s}
+.btn-g:hover{box-shadow:0 0 60px oklch(72% 0.12 70/.5)}
+.btn-g::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,.22);transform:translateX(-110%) skewX(-18deg);transition:transform .45s}
+.btn-g:hover::before{transform:translateX(110%) skewX(-18deg)}
+.btn-o{font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);padding:15px 34px;text-decoration:none;display:inline-block;border:1px solid oklch(72% 0.12 70/.35);clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:background .25s,border-color .25s}
+.btn-o:hover{background:oklch(72% 0.12 70/.07);border-color:var(--gold)}
+
+.h-scroll{position:absolute;bottom:clamp(20px,4vh,38px);left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;animation:fadein .8s 1.8s both}
+.h-scroll span{font-family:'Cinzel',serif;font-size:8px;letter-spacing:.45em;text-transform:uppercase;color:var(--fog)}
+.h-sline{width:1px;height:44px;background:linear-gradient(180deg,var(--gold),transparent);animation:scrollp 2.2s ease-in-out infinite}
+@keyframes scrollp{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+.h-stats{position:absolute;bottom:0;left:0;right:0;z-index:3;display:flex;justify-content:center;border-top:1px solid oklch(72% 0.12 70/.08);animation:fadein .8s 1.5s both}
+.h-stat{flex:1;max-width:180px;padding:clamp(12px,2.5vh,20px) 16px;text-align:center;border-right:1px solid oklch(72% 0.12 70/.08)}
+.h-stat:last-child{border-right:none}
+.h-sn{font-family:'Cinzel Decorativa',serif;font-size:clamp(24px,4vw,36px);font-weight:700;color:var(--gold);text-shadow:0 0 30px oklch(72% 0.12 70/.4)}
+.h-sl{font-family:'Cinzel',serif;font-size:8px;letter-spacing:.28em;text-transform:uppercase;color:var(--fog);margin-top:5px}
+
+@keyframes rise{from{opacity:0;translate:0 32px}to{opacity:1;translate:0 0}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+
+/* MARQUEE */
+.marquee{background:var(--gold);padding:13px 0;overflow:hidden;position:relative;z-index:1}
+.mq-track{display:flex;width:max-content;animation:mqs 22s linear infinite}
+@keyframes mqs{to{translate:-50% 0}}
+.mq-item{font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.35em;text-transform:uppercase;color:var(--ink);padding:0 28px;white-space:nowrap}
+.mq-dot{opacity:.35;margin:0 4px}
+
+/* REVEAL */
+.rv{opacity:0;translate:0 36px;transition:opacity .85s var(--r),translate .85s var(--r)}
+.rv.on{opacity:1;translate:0 0}
+.rv.d1{transition-delay:.1s}.rv.d2{transition-delay:.2s}.rv.d3{transition-delay:.3s}.rv.d4{transition-delay:.4s}.rv.d5{transition-delay:.5s}
+.rvf{opacity:0;transition:opacity .9s .15s}.rvf.on{opacity:1}
+
+/* SECTION BASE */
+section{padding:clamp(80px,12vh,140px) clamp(20px,5vw,60px);position:relative}
+.wrap{max-width:1160px;margin:0 auto}
+.ey{font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.55em;text-transform:uppercase;color:var(--gold)}
+.st{font-family:'Cinzel Decorativa',serif;font-size:clamp(30px,5.5vw,60px);font-weight:700;line-height:1.05;letter-spacing:.02em}
+.sl{font-size:clamp(15px,1.8vw,20px);font-style:italic;font-weight:300;color:var(--mist);line-height:1.75;letter-spacing:.04em}
+.gem-r{display:flex;align-items:center;gap:12px}
+.gem-r::before,.gem-r::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,oklch(72% 0.12 70/.3))}
+.gem-r::after{background:linear-gradient(90deg,oklch(72% 0.12 70/.3),transparent)}
+.gem{width:7px;height:7px;background:var(--gold);transform:rotate(45deg);box-shadow:0 0 14px oklch(72% 0.12 70/.5)}
+
+/* SOBRE */
+.sobre{background:linear-gradient(155deg,var(--ink) 0%,var(--ink3) 50%,var(--ink) 100%);padding:0}
+.sobre-split{display:grid;grid-template-columns:55% 1fr;min-height:90vh}
+.sobre-photo-col{position:relative;overflow:hidden;min-height:400px}
+.sobre-photo{width:100%;height:100%;object-fit:cover;object-position:center top;filter:saturate(.65) brightness(.82);display:block;transition:transform 7s ease-out}
+.sobre-photo-col:hover .sobre-photo{transform:scale(1.03)}
+@supports(animation-timeline:view()){
+  .sobre-photo{animation:photo-rev linear both;animation-timeline:view();animation-range:entry 0% entry 60%}
+  @keyframes photo-rev{from{clip-path:inset(0 0 30% 0);filter:saturate(0) brightness(.5)}to{clip-path:inset(0 0 0% 0);filter:saturate(.65) brightness(.82)}}
+}
+.sobre-photo-over{position:absolute;inset:0;background:linear-gradient(90deg,transparent 55%,var(--ink3) 100%),linear-gradient(0deg,var(--ink3) 0%,transparent 20%)}
+.sobre-badge{position:absolute;bottom:clamp(24px,5vh,48px);left:clamp(24px,5vw,48px);background:oklch(72% 0.12 70/.09);backdrop-filter:blur(16px);border:1px solid oklch(72% 0.12 70/.22);padding:clamp(14px,2.5vw,24px) clamp(18px,3vw,32px)}
+.sobre-badge-n{font-family:'Cinzel Decorativa',serif;font-size:clamp(28px,5vw,44px);font-weight:700;color:var(--gold);line-height:1;text-shadow:0 0 40px oklch(72% 0.12 70/.4)}
+.sobre-badge-l{font-family:'Cinzel',serif;font-size:8px;letter-spacing:.32em;text-transform:uppercase;color:var(--mist);margin-top:6px}
+.sobre-text-col{padding:clamp(60px,10vh,100px) clamp(32px,5vw,72px);display:flex;flex-direction:column;justify-content:center;gap:clamp(16px,2.5vh,24px);background:var(--ink3)}
+.sobre-text-col .ey{display:block;margin-bottom:8px}
+.sobre-text-col .st{font-size:clamp(24px,4vw,46px);margin-bottom:6px}
+.sobre-body{font-size:clamp(15px,1.5vw,17px);font-weight:300;color:oklch(70% 0.006 80/.72);line-height:1.95;letter-spacing:.015em;max-width:54ch}
+.s-tags{display:flex;flex-wrap:wrap;gap:9px;margin-top:4px}
+.s-tag{font-family:'Cinzel',serif;font-size:8px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);border:1px solid oklch(72% 0.12 70/.22);padding:7px 16px;transition:background .25s,border-color .25s}
+.s-tag:hover{background:oklch(72% 0.12 70/.07);border-color:oklch(72% 0.12 70/.5)}
+@media(max-width:860px){.sobre-split{grid-template-columns:1fr;min-height:auto}.sobre-photo-col{height:55vw}.sobre-text-col{align-items:center;text-align:center}.sobre-body{max-width:none}.s-tags{justify-content:center}.sobre-text-col .btn-g{align-self:center}}
+
+/* RESULTADOS — casos reales */
+.resultados{background:var(--ink2)}
+.res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:oklch(72% 0.12 70/.06)}
+.res-card{background:var(--ink3);padding:clamp(28px,4vw,44px) clamp(22px,3vw,36px);display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden;transition:background .3s}
+.res-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold-d),var(--gold),var(--gold-b));transform:scaleX(0);transition:transform .45s;transform-origin:left}
+.res-card:hover{background:oklch(11% 0.015 272/.98)}
+.res-card:hover::before{transform:scaleX(1)}
+.res-situation{font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--gold)}
+.res-result{font-size:clamp(16px,1.8vw,20px);font-weight:600;color:var(--snow);line-height:1.4}
+.res-story{font-size:14px;font-weight:300;color:var(--fog);line-height:1.75;font-style:italic}
+.res-tag{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:8px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:oklch(60% 0.18 150);margin-top:4px}
+.res-tag::before{content:'✓';font-size:10px}
+@media(max-width:768px){.res-grid{grid-template-columns:1fr}}
+
+/* SERVICIOS */
+.servicios{background:var(--ink2);padding:clamp(80px,12vh,140px) 0}
+.svc-head{padding:0 clamp(20px,5vw,60px);max-width:1160px;margin:0 auto;margin-bottom:clamp(40px,7vh,72px)}
+.svc-head .ey{display:block;margin-bottom:12px}
+.svc-list{display:flex;flex-direction:column;border-top:1px solid oklch(72% 0.12 70/.1);max-width:1160px;margin:0 auto;padding:0 clamp(20px,5vw,60px)}
+.svc-row{display:grid;grid-template-columns:80px 1fr auto;align-items:center;gap:clamp(16px,4vw,48px);padding:clamp(22px,3.5vh,34px) 0;border-bottom:1px solid oklch(72% 0.12 70/.08);position:relative;overflow:hidden;transition:background .3s}
+.svc-row::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,oklch(72% 0.12 70/.04),transparent);transform:translateX(-100%);transition:transform .45s var(--r)}
+.svc-row:hover::before{transform:translateX(0)}
+.svc-row:hover .svc-name{color:var(--gold)}
+.svc-num{font-family:'Cinzel Decorativa',serif;font-size:clamp(26px,4vw,40px);font-weight:700;color:oklch(72% 0.12 70/.15);line-height:1;flex-shrink:0;text-align:right}
+.svc-name{font-family:'Cinzel',serif;font-size:clamp(13px,1.8vw,17px);font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--snow);margin-bottom:7px;transition:color .25s}
+.svc-desc{font-size:clamp(13px,1.4vw,15px);font-weight:300;color:var(--fog);line-height:1.75;max-width:58ch}
+.svc-cta{font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);text-decoration:none;white-space:nowrap;flex-shrink:0;opacity:0;translate:-8px 0;transition:opacity .3s,translate .3s}
+.svc-row:hover .svc-cta{opacity:1;translate:0 0}
+@media(max-width:680px){.svc-row{grid-template-columns:48px 1fr;gap:14px}.svc-cta{display:none}.svc-num{font-size:22px}}
+
+/* PARALLAX */
+.pq{position:relative;height:clamp(360px,60vh,560px);overflow:hidden;display:grid;place-items:center}
+.pq-bg{position:absolute;inset:-8%;background-size:cover;background-position:center;filter:brightness(.22) saturate(.4);will-change:transform}
+.pq-over{position:absolute;inset:0;background:linear-gradient(135deg,oklch(6% 0.012 280/.65),oklch(72% 0.12 70/.04) 50%,oklch(6% 0.012 280/.65))}
+.pq-body{position:relative;z-index:1;text-align:center;padding:0 clamp(24px,7vw,100px);max-width:860px}
+.pq-quote{font-family:'Spectral',serif;font-size:clamp(20px,4vw,44px);font-style:italic;font-weight:300;line-height:1.45;letter-spacing:.03em}
+.pq-quote strong{font-style:normal;font-weight:600;color:var(--gold)}
+.pq-attr{display:block;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.45em;text-transform:uppercase;color:var(--gold);margin-top:clamp(16px,3vh,24px)}
+.pq-btns{display:flex;gap:14px;justify-content:center;margin-top:clamp(20px,3.5vh,32px);flex-wrap:wrap}
+
+/* GALERÍA */
+.galeria{padding:0;line-height:0}
+.gal-grid{display:grid;grid-template-columns:3fr 2fr 2fr;grid-template-rows:clamp(200px,28vw,340px) clamp(200px,28vw,340px);gap:3px}
+.g-item{position:relative;overflow:hidden}
+.g-item:first-child{grid-row:1/3}
+.g-item img{width:100%;height:100%;object-fit:cover;filter:saturate(.55) brightness(.7);transition:filter .6s,transform .6s}
+.g-item:hover img{filter:saturate(.8) brightness(.85);transform:scale(1.04)}
+.g-item::after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,oklch(6% 0.012 280/.6) 0%,transparent 50%)}
+.g-label{position:absolute;bottom:clamp(12px,2vw,18px);left:clamp(12px,2vw,18px);z-index:1;font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
+@media(max-width:640px){.gal-grid{grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,180px)}.g-item:first-child{grid-row:auto}}
+
+/* TESTIMONIOS */
+.testimonios{background:var(--ink3)}
+.test-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(12px,2vw,20px)}
+.test-card{background:var(--ink2);padding:clamp(24px,3.5vw,36px);display:flex;flex-direction:column;gap:14px;position:relative;border:1px solid oklch(72% 0.12 70/.08);transition:border-color .3s}
+.test-card:hover{border-color:oklch(72% 0.12 70/.25)}
+.test-stars{color:var(--gold);font-size:14px;letter-spacing:2px}
+.test-text{font-size:clamp(14px,1.5vw,16px);font-style:italic;font-weight:300;color:oklch(75% 0.006 80);line-height:1.8;flex:1}
+.test-author{display:flex;align-items:center;gap:12px;padding-top:14px;border-top:1px solid oklch(72% 0.12 70/.08)}
+.test-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold-d),var(--gold));display:flex;align-items:center;justify-content:center;font-family:'Cinzel Decorativa',serif;font-size:14px;font-weight:700;color:var(--ink);flex-shrink:0}
+.test-name{font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--snow)}
+.test-loc{font-size:11px;color:var(--fog);margin-top:3px}
+.test-source{position:absolute;top:16px;right:16px;font-size:10px;color:var(--fog);font-family:'Cinzel',serif;letter-spacing:.1em}
+@media(max-width:768px){.test-grid{grid-template-columns:1fr}}
+
+/* URGENCIA */
+.urgencia{background:var(--ink);padding:clamp(80px,14vh,140px) clamp(24px,6vw,80px);text-align:left}
+.urgencia-inner{max-width:900px}
+.urgencia-q{font-family:'Cinzel Decorativa',serif;font-size:clamp(26px,5.5vw,66px);font-weight:700;line-height:1.1;color:var(--snow);margin-bottom:clamp(16px,3vh,28px)}
+.urgencia-q em{font-style:normal;color:var(--gold)}
+.urgencia-sub{font-size:clamp(15px,1.8vw,21px);font-style:italic;font-weight:300;color:var(--mist);line-height:1.7;margin-bottom:clamp(16px,3vh,28px);max-width:54ch}
+.urgencia-badge{display:inline-flex;align-items:center;gap:8px;background:oklch(40% 0.15 25/.15);border:1px solid oklch(65% 0.2 25/.4);padding:10px 20px;margin-bottom:clamp(24px,4vh,36px)}
+.urgencia-badge span{font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:oklch(75% 0.15 25)}
+.urgencia-dot{width:8px;height:8px;background:#f87171;border-radius:50%;animation:blink 1.5s ease-in-out infinite}
+.urgencia-btns{display:flex;gap:14px;flex-wrap:wrap}
+
+/* CHAT */
+.chat-s{background:var(--ink2);padding:clamp(80px,12vh,140px) clamp(20px,5vw,60px)}
+.chat-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(40px,8vw,100px);align-items:center;max-width:1160px;margin:0 auto}
+.chat-left .ey{display:block;margin-bottom:12px}
+.chat-left .st{font-size:clamp(22px,4vw,44px);margin-bottom:12px}
+.chat-left .sl{margin-bottom:clamp(20px,3.5vh,36px)}
+.chat-feats{display:flex;flex-direction:column;border-top:1px solid oklch(72% 0.12 70/.08)}
+.c-feat{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid oklch(72% 0.12 70/.07);align-items:flex-start}
+.c-feat-i{font-size:20px;flex-shrink:0;margin-top:1px}
+.c-feat h4{font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+.c-feat p{font-size:14px;font-weight:300;color:var(--fog);line-height:1.65}
+.chat-box{background:linear-gradient(150deg,oklch(13% 0.016 270/.95),oklch(9% 0.014 275));border:1px solid oklch(72% 0.12 70/.15);overflow:hidden;box-shadow:0 40px 120px oklch(0% 0 0/.6)}
+.c-hdr{background:oklch(72% 0.12 70/.06);border-bottom:1px solid oklch(72% 0.12 70/.1);padding:16px 20px;display:flex;align-items:center;gap:14px}
+.c-av{width:42px;height:42px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.c-hdr-i h4{font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.c-hdr-i p{font-size:11px;color:var(--fog);display:flex;align-items:center;gap:6px}
+.live{width:6px;height:6px;background:#4ade80;border-radius:50%;animation:livep 2.2s infinite}
+@keyframes livep{0%,100%{box-shadow:0 0 0 0 oklch(60% 0.18 150/.4)}70%{box-shadow:0 0 0 8px oklch(60% 0.18 150/0)}}
+.c-msgs{padding:20px;display:flex;flex-direction:column;gap:12px;min-height:240px;max-height:320px;overflow-y:auto}
+.c-msgs::-webkit-scrollbar{width:3px}
+.c-msgs::-webkit-scrollbar-thumb{background:oklch(72% 0.12 70/.2)}
+.msg{max-width:86%;padding:12px 16px;font-size:14px;line-height:1.65;letter-spacing:.01em;animation:msgp .3s var(--r)}
+@keyframes msgp{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
+.msg.bot{background:oklch(72% 0.12 70/.07);border:1px solid oklch(72% 0.12 70/.12);border-radius:0 10px 10px 10px;align-self:flex-start}
+.msg.user{background:oklch(72% 0.12 70/.12);border:1px solid oklch(72% 0.12 70/.18);border-radius:10px 0 10px 10px;align-self:flex-end}
+.msg.typing{color:var(--fog);font-style:italic}
+.c-inp-row{border-top:1px solid oklch(72% 0.12 70/.1);display:flex;background:oklch(6% 0.012 280/.5)}
+.c-inp{flex:1;background:transparent;border:none;outline:none;padding:14px 18px;font-size:14px;color:var(--snow);font-family:'Spectral',serif;letter-spacing:.02em}
+.c-inp::placeholder{color:var(--fog)}
+.c-snd{background:var(--gold);border:none;padding:0 22px;cursor:pointer;font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--ink);transition:opacity .2s}
+.c-snd:hover{opacity:.82}
+@media(max-width:900px){.chat-grid{grid-template-columns:1fr;gap:40px}.chat-left .ey,.chat-left .st,.chat-left .sl{text-align:center}}
+
+/* PRODUCTOS */
+.productos{background:var(--ink3)}
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:oklch(72% 0.12 70/.05)}
+.prod{background:var(--ink2);padding:clamp(26px,3.5vw,38px) clamp(18px,3vw,30px);position:relative;overflow:hidden;transition:background .3s}
+.prod::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);transform:scaleX(0);transform-origin:center;transition:transform .45s}
+.prod:hover{background:oklch(10% 0.014 275/.95)}
+.prod:hover::after{transform:scaleX(1)}
+.prod-icon{font-size:28px;margin-bottom:14px;display:block;transition:scale .35s}
+.prod:hover .prod-icon{scale:1.15}
+.prod-name{font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:9px}
+.prod-desc{font-size:13px;font-weight:300;color:var(--fog);line-height:1.7}
+
+/* CTA FINAL */
+.cta-final{position:relative;padding:clamp(100px,16vh,160px) clamp(24px,6vw,80px);overflow:hidden}
+.cta-bg{position:absolute;inset:-6%;background:url('m3.jpg') center/cover;filter:brightness(.18) saturate(.35);will-change:transform}
+.cta-over{position:absolute;inset:0;background:radial-gradient(ellipse 70% 55% at 50% 50%,oklch(72% 0.12 70/.07),oklch(6% 0.012 280/.55) 60%,oklch(6% 0.012 280/.97) 100%)}
+.cta-body{position:relative;z-index:1;max-width:800px;margin:0 auto;display:flex;flex-direction:column;align-items:center;text-align:center;gap:clamp(18px,3.5vh,28px)}
+.cta-gem{font-size:36px;filter:drop-shadow(0 0 28px var(--gold));animation:float 3.5s ease-in-out infinite}
+@keyframes float{0%,100%{translate:0 0}50%{translate:0 -10px}}
+.cta-t{font-family:'Cinzel Decorativa',serif;font-size:clamp(24px,5.5vw,60px);font-weight:700;line-height:1.1}
+.cta-t em{font-style:normal;color:var(--gold)}
+.cta-sub{font-size:clamp(15px,1.8vw,20px);font-style:italic;font-weight:300;color:var(--mist);line-height:1.75;max-width:50ch}
+.cta-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.cta-note{font-size:12px;color:var(--fog);letter-spacing:.1em;font-style:italic}
+
+/* CONTACTO */
+.contacto{background:var(--ink)}
+.cont-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:oklch(72% 0.12 70/.06);max-width:960px;margin:clamp(36px,6vh,64px) auto 0}
+.cont-card{background:var(--ink3);padding:clamp(30px,5vw,44px) clamp(18px,3vw,30px);text-align:center;text-decoration:none;display:block;color:inherit;transition:background .3s}
+.cont-card:hover{background:oklch(13% 0.016 270/.95)}
+.cont-i{font-size:28px;margin-bottom:16px;display:block}
+.cont-l{font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.35em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.cont-v{font-size:clamp(14px,1.8vw,17px);color:var(--snow);font-style:italic;line-height:1.6}
+.cont-s{font-size:11px;color:var(--fog);margin-top:7px}
+@media(max-width:580px){.cont-grid{grid-template-columns:1fr;gap:1px}}
+
+/* FOOTER */
+footer{background:var(--ink2);border-top:1px solid oklch(72% 0.12 70/.07);padding:clamp(40px,7vh,60px) 24px clamp(24px,5vh,40px);display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+.ft-logo-wrap{display:flex;align-items:center;gap:12px}
+.ft-logo-img{height:48px;width:48px;object-fit:cover;border-radius:50%;clip-path:circle(48% at 50% 50%)}
+.ft-logo{font-family:'Cinzel Decorativa',serif;font-size:20px;font-weight:700;color:var(--gold)}
+.ft-tag{font-size:14px;font-style:italic;font-weight:300;color:var(--fog);letter-spacing:.1em}
+.ft-soc{display:flex;gap:24px}
+.ft-soc a{font-family:'Cinzel',serif;font-size:8px;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:oklch(55% 0.005 80/.4);text-decoration:none;transition:color .2s}
+.ft-soc a:hover{color:var(--gold)}
+.ft-by{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:oklch(72% 0.12 70/.2)}
+.ft-copy{font-size:11px;color:oklch(55% 0.005 80/.2);font-style:italic}
+
+/* WHATSAPP FLOTANTE */
+.wa-float{position:fixed;bottom:clamp(20px,4vh,32px);right:clamp(20px,4vw,32px);z-index:900;width:60px;height:60px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(37,211,102,.4);text-decoration:none;animation:wa-pulse 3s ease-in-out infinite;transition:transform .2s}
+.wa-float:hover{transform:scale(1.1)}
+@keyframes wa-pulse{0%,100%{box-shadow:0 8px 32px rgba(37,211,102,.4)}50%{box-shadow:0 8px 48px rgba(37,211,102,.65),0 0 80px rgba(37,211,102,.15)}}
+.wa-float svg{width:32px;height:32px;fill:white}
+.wa-tooltip{position:absolute;right:72px;background:var(--ink2);color:var(--snow);font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:8px 14px;white-space:nowrap;border:1px solid oklch(72% 0.12 70/.2);opacity:0;translate:8px 0;transition:all .25s;pointer-events:none}
+.wa-float:hover .wa-tooltip{opacity:1;translate:0 0}
+
+/* MOB CTA */
+.mob-cta{display:none;position:fixed;bottom:0;left:0;right:0;z-index:998;background:oklch(6% 0.012 280/.97);border-top:1px solid oklch(72% 0.12 70/.12);padding:10px 16px 14px}
+.mob-cta a{display:flex;align-items:center;justify-content:center;gap:10px;text-align:center;background:var(--green);color:white;font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:14px;text-decoration:none;border-radius:4px}
+@media(max-width:700px){.mob-cta{display:block}.wa-float{display:none}}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv,.rvf{opacity:1;translate:0 0}}
+
+/* ── MOBILE ─────────────────────────────── */
+@media(max-width:700px){
+  /* Nav: quitar botón CTA para dejar respirar */
+  .n-cta{display:none}
+  nav{padding:0 16px}
+
+  /* Hero: padding inferior para no solapar las stats */
+  .hero-content{padding-bottom:130px;padding-left:18px;padding-right:18px}
+  /* Ocultar scroll indicator en móvil (ya hay mob-cta) */
+  .h-scroll{display:none}
+  /* Stats más compactas */
+  .h-stat{padding:10px 8px}
+  .h-sn{font-size:22px!important}
+  .h-sl{font-size:7px;letter-spacing:.2em}
+  /* Urgencia badge: permitir wrap */
+  .h-urgencia{justify-content:center;text-align:center}
+
+  /* Quitar <br> artificiales en móvil */
+  .urgencia-q br,.pq-quote br{display:none}
+
+  /* Botones urgencia: columna */
+  .urgencia-btns{flex-direction:column;align-items:flex-start;gap:12px}
+
+  /* Chat: padding para que el mob-cta no tape el input */
+  .chat-s{padding-bottom:100px}
+  /* Chat grid en columna: primero el chat box */
+  .chat-grid{display:flex;flex-direction:column-reverse;gap:32px}
+  .chat-left .ey,.chat-left .st,.chat-left .sl{text-align:left}
+
+  /* PQ parallax botones en columna */
+  .pq-btns{flex-direction:column;align-items:center;gap:12px}
+  .pq-btns .btn-g,.pq-btns .btn-o{text-align:center}
+
+  /* CTA final botones en columna */
+  .cta-btns{flex-direction:column;align-items:center;gap:12px}
+
+  /* Mob CTA: safe area iOS */
+  .mob-cta{padding-bottom:max(14px,env(safe-area-inset-bottom))}
+
+  /* Galería: 1 columna en pantallas muy pequeñas */
+  .gal-grid{grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,160px)}
+  .g-item:first-child{grid-row:auto}
+
+  /* Productos: 2 columnas */
+  .prod-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+@media(max-width:480px){
+  /* Título hero: ajustar a pantallas pequeñas */
+  .h-t1{font-size:clamp(52px,14vw,70px)!important}
+  .h-t2{font-size:clamp(46px,12vw,62px)!important}
+
+  /* Botones hero: columna, ancho completo, sin clip-path para que no se corten */
+  .h-btns{flex-direction:column;align-items:stretch;width:100%;gap:10px}
+  .h-btns .btn-g,.h-btns .btn-o{clip-path:none!important;text-align:center;padding:16px 20px;font-size:10px}
+
+  /* Botones urgencia: sin clip-path */
+  .urgencia-btns .btn-g,.urgencia-btns .btn-o{clip-path:none!important;text-align:center}
+
+  /* CTA final: sin clip-path */
+  .cta-btns .btn-g,.cta-btns .btn-o{clip-path:none!important;text-align:center;padding:16px 24px}
+
+  /* Sobre btn */
+  .sobre-text-col .btn-g{clip-path:none!important;align-self:center}
+
+  /* Galería: 1 columna */
+  .gal-grid{grid-template-columns:1fr;grid-template-rows:repeat(5,160px)}
+
+  /* Productos: 1 columna */
+  .prod-grid{grid-template-columns:1fr}
+
+  /* Sección base: menos padding */
+  section{padding:clamp(60px,10vh,100px) clamp(16px,4vw,40px)}
+
+  /* Resultados: un poco de respiro en las cards */
+  .res-card{padding:22px 18px}
+
+  /* Testimonios: texto más pequeño */
+  .test-text{font-size:13px}
+}
+</style>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#inicio" class="n-logo">
+    <img src="logo-maestro.png" alt="El Maestro" />
+    <span>El Maestro</span>
+  </a>
+  <div class="n-links">
+    <a href="#sobre">Sobre Mí</a>
+    <a href="#servicios">Servicios</a>
+    <a href="#testimonios">Testimonios</a>
+    <a href="#chat">Consultar</a>
+    <a href="#contacto">Contacto</a>
+  </div>
+  <a href="https://wa.me/34687554784?text=Hola%2C%20quiero%20una%20consulta%20con%20El%20Maestro" target="_blank" class="n-cta">Consultar Ahora</a>
+</nav>
+
+<canvas id="PX"></canvas>
+
+<!-- HERO -->
+<section class="hero" id="inicio">
+  <div class="hero-photo" id="heroBg"></div>
+  <div class="hero-aura"></div>
+  <div class="hero-vig"></div>
+  <div class="hero-ring r1"></div>
+  <div class="hero-ring r2"></div>
+  <div class="hero-content">
+    <p class="h-pre">✦ Eduardo Enrique · Santa Cruz de Tenerife ✦</p>
+    <h1 class="h-title">
+      <span class="h-t1">El</span>
+      <span class="h-t2">Maestro</span>
+    </h1>
+    <div class="h-rule"><div class="h-rl"></div><div class="h-gem"></div><span style="font-family:'Cinzel',serif;font-size:9px;font-weight:600;letter-spacing:.35em;text-transform:uppercase;color:var(--mist)">Tarotista · Vidente · Parapsicólogo</span><div class="h-gem"></div><div class="h-rr"></div></div>
+    <!-- COPY CON DOLOR REAL -->
+    <p class="h-pain">¿Tu pareja se fue? ¿El dinero no llega? ¿Sientes que algo invisible te bloquea?<br/><strong>El Maestro ve lo que otros no pueden ver.</strong></p>
+    <p class="h-sub">20 años resolviendo lo que ningún psicólogo, médico ni consejero pudo.</p>
+    <!-- URGENCIA -->
+    <div class="h-urgencia">
+      <div class="h-urg-dot"></div>
+      <span class="h-urg-text">Solo <span>3 consultas disponibles</span> esta semana</span>
+    </div>
+    <div class="h-btns">
+      <a href="https://wa.me/34687554784?text=Hola%2C%20quiero%20una%20consulta%20urgente%20con%20El%20Maestro" target="_blank" class="btn-g">💬 Reservar Mi Consulta Ahora</a>
+      <a href="#servicios" class="btn-o">Ver Servicios</a>
+    </div>
+  </div>
+  <div class="h-scroll"><span>Descubrir</span><div class="h-sline"></div></div>
+  <div class="h-stats">
+    <div class="h-stat"><div class="h-sn">20+</div><div class="h-sl">Años Experiencia</div></div>
+    <div class="h-stat"><div class="h-sn">24H</div><div class="h-sl">Disponible</div></div>
+    <div class="h-stat"><div class="h-sn">2K+</div><div class="h-sl">Casos Resueltos</div></div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee">
+  <div class="mq-track">
+    <span class="mq-item">Tarot<span class="mq-dot">◆</span></span><span class="mq-item">Videncia<span class="mq-dot">◆</span></span><span class="mq-item">Numerología<span class="mq-dot">◆</span></span><span class="mq-item">Parapsicología<span class="mq-dot">◆</span></span><span class="mq-item">Limpiezas Espirituales<span class="mq-dot">◆</span></span><span class="mq-item">Amarres<span class="mq-dot">◆</span></span><span class="mq-item">Endulzamientos<span class="mq-dot">◆</span></span><span class="mq-item">Trabajos Espirituales<span class="mq-dot">◆</span></span><span class="mq-item">Tarot<span class="mq-dot">◆</span></span><span class="mq-item">Videncia<span class="mq-dot">◆</span></span><span class="mq-item">Numerología<span class="mq-dot">◆</span></span><span class="mq-item">Parapsicología<span class="mq-dot">◆</span></span><span class="mq-item">Limpiezas Espirituales<span class="mq-dot">◆</span></span><span class="mq-item">Amarres<span class="mq-dot">◆</span></span><span class="mq-item">Endulzamientos<span class="mq-dot">◆</span></span><span class="mq-item">Trabajos Espirituales<span class="mq-dot">◆</span></span>
+  </div>
+</div>
+
+<!-- SOBRE -->
+<section class="sobre" id="sobre">
+  <div class="sobre-split">
+    <div class="sobre-photo-col rvf">
+      <img src="m2.jpg" alt="El Maestro Eduardo Enrique" class="sobre-photo"/>
+      <div class="sobre-photo-over"></div>
+      <div class="sobre-badge rv">
+        <div class="sobre-badge-n">20+</div>
+        <div class="sobre-badge-l">Años de Experiencia</div>
+      </div>
+    </div>
+    <div class="sobre-text-col">
+      <span class="ey rv">Quién Soy</span>
+      <h2 class="st rv d1">Eduardo Enrique,<br/>El Maestro</h2>
+      <p class="sobre-body rv d2">Llevo más de dos décadas trabajando con personas que llegaron sin esperanza y se fueron con dirección. No soy un adivino de feria. Soy un especialista en leer lo que el universo tiene escrito para ti.</p>
+      <p class="sobre-body rv d3">Mis consultas combinan Tarot, Videncia y Parapsicología para darte respuestas concretas. Cuando la situación lo requiere, los trabajos espirituales hacen lo que ningún psicólogo puede hacer.</p>
+      <div class="s-tags rv d4"><span class="s-tag">Tarot</span><span class="s-tag">Videncia</span><span class="s-tag">Numerología</span><span class="s-tag">Parapsicología</span><span class="s-tag">Limpiezas</span><span class="s-tag">Amarres</span></div>
+      <a href="https://wa.me/34687554784?text=Quiero%20saber%20m%C3%A1s" target="_blank" class="btn-g rv d5" style="align-self:flex-start">Consultar Ahora →</a>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTADOS REALES -->
+<section class="resultados" id="resultados">
+  <div class="wrap">
+    <p class="ey rv" style="display:block;text-align:center">Casos Reales</p>
+    <h2 class="st rv d1" style="text-align:center;margin-top:12px">Lo que han conseguido<br/>con El Maestro</h2>
+    <p class="sl rv d2" style="text-align:center;margin:14px auto 56px;max-width:540px">No vendemos ilusiones. Estos son resultados de personas reales que tomaron la decisión de actuar.</p>
+    <div class="res-grid">
+      <div class="res-card rv">
+        <div class="res-situation">Problema de pareja</div>
+        <div class="res-result">"Mi pareja volvió a los 18 días de hacer el trabajo con el Maestro"</div>
+        <p class="res-story">Llevaba 6 meses sin hablarme. Lo intenté todo. Una sola consulta cambió la dirección de todo.</p>
+        <span class="res-tag">Resultado confirmado</span>
+      </div>
+      <div class="res-card rv d1">
+        <div class="res-situation">Bloqueo económico</div>
+        <div class="res-result">"Conseguí el trabajo en menos de un mes después de la limpieza espiritual"</div>
+        <p class="res-story">Llevaba 2 años sin poder estabilizarme. El Maestro identificó el bloqueo y lo eliminó.</p>
+        <span class="res-tag">Resultado confirmado</span>
+      </div>
+      <div class="res-card rv d2">
+        <div class="res-situation">Conflicto familiar</div>
+        <div class="res-result">"Mi familia se reconcilió después de años de silencio y rencor"</div>
+        <p class="res-story">No creía en esto. Mi hermana me convenció. Hoy reconozco que fue lo mejor que hice.</p>
+        <span class="res-tag">Resultado confirmado</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICIOS -->
+<section class="servicios" id="servicios">
+  <div class="svc-head">
+    <span class="ey rv">Especialidades</span>
+    <h2 class="st rv d1" style="margin-top:12px">Lo que puedo<br/>hacer por ti</h2>
+  </div>
+  <div class="svc-list">
+    <div class="svc-row rv"><div class="svc-num">01</div><div class="svc-body"><div class="svc-name">Tarot</div><p class="svc-desc">Tiradas precisas para revelar lo que el presente oculta. Amor, trabajo, decisiones importantes, sin ambigüedades.</p></div><a href="https://wa.me/34687554784?text=Quiero%20una%20consulta%20de%20Tarot" target="_blank" class="svc-cta">Consultar →</a></div>
+    <div class="svc-row rv d1"><div class="svc-num">02</div><div class="svc-body"><div class="svc-name">Videncia</div><p class="svc-desc">La capacidad de ver lo que no está a la vista. Consultas presenciales y por teléfono con absoluta confidencialidad.</p></div><a href="https://wa.me/34687554784?text=Quiero%20una%20consulta%20de%20Videncia" target="_blank" class="svc-cta">Consultar →</a></div>
+    <div class="svc-row rv d2"><div class="svc-num">03</div><div class="svc-body"><div class="svc-name">Numerología</div><p class="svc-desc">Tu nombre y fecha de nacimiento contienen el mapa de tu vida. Decisiones con certeza, no con miedo.</p></div><a href="https://wa.me/34687554784?text=Quiero%20una%20consulta%20de%20Numerolog%C3%ADa" target="_blank" class="svc-cta">Consultar →</a></div>
+    <div class="svc-row rv d1"><div class="svc-num">04</div><div class="svc-body"><div class="svc-name">Parapsicología</div><p class="svc-desc">Fenómenos que la ciencia no explica pero que afectan tu vida real. Diagnóstico y trabajo energético especializado.</p></div><a href="https://wa.me/34687554784?text=Quiero%20informaci%C3%B3n%20sobre%20Parapsicolog%C3%ADa" target="_blank" class="svc-cta">Consultar →</a></div>
+    <div class="svc-row rv d2"><div class="svc-num">05</div><div class="svc-body"><div class="svc-name">Limpiezas Espirituales</div><p class="svc-desc">Elimino bloqueos, envidias y energías negativas que frenan tu prosperidad. Rituales con décadas de práctica.</p></div><a href="https://wa.me/34687554784?text=Quiero%20una%20Limpieza%20Espiritual" target="_blank" class="svc-cta">Consultar →</a></div>
+    <div class="svc-row rv d3"><div class="svc-num">06</div><div class="svc-body"><div class="svc-name">Amarres y Endulzamientos</div><p class="svc-desc">Trabajos de amor con resultados comprobados. Reconciliaciones, atracciones, protección de pareja. Discreción absoluta.</p></div><a href="https://wa.me/34687554784?text=Quiero%20informaci%C3%B3n%20sobre%20Amarres" target="_blank" class="svc-cta">Consultar →</a></div>
+  </div>
+</section>
+
+<!-- PARALLAX 1 -->
+<div class="pq">
+  <div class="pq-bg" id="pq1" style="background-image:url('m4.jpg')"></div>
+  <div class="pq-over"></div>
+  <div class="pq-body rv">
+    <p class="pq-quote">«No vine a contarte lo que quieres escuchar.<br/>Vine a mostrarte <strong>lo que necesitas ver.</strong>»</p>
+    <span class="pq-attr">Eduardo Enrique · El Maestro</span>
+  </div>
+</div>
+
+<!-- GALERÍA -->
+<div class="galeria">
+  <div class="gal-grid">
+    <div class="g-item"><img src="m1.jpg" alt="El Maestro"/><span class="g-label">El Maestro</span></div>
+    <div class="g-item"><img src="m2.jpg" alt="Consulta Personal"/><span class="g-label">Consulta Personal</span></div>
+    <div class="g-item"><img src="m3.jpg" alt="Tarot"/><span class="g-label">Tarot</span></div>
+    <div class="g-item"><img src="m5.jpg" alt="Videncia"/><span class="g-label">Videncia</span></div>
+    <div class="g-item"><img src="m6.jpg" alt="Esoterismo"/><span class="g-label">Esoterismo</span></div>
+  </div>
+</div>
+
+<!-- TESTIMONIOS -->
+<section class="testimonios" id="testimonios">
+  <div class="wrap">
+    <p class="ey rv" style="display:block;text-align:center">Testimonios</p>
+    <h2 class="st rv d1" style="text-align:center;margin-top:12px">Lo que dicen<br/>quienes confiaron</h2>
+    <div class="gem-r rv d2" style="max-width:300px;margin:20px auto 52px"><div class="gem"></div></div>
+    <div class="test-grid">
+      <div class="test-card rv">
+        <div class="test-stars">★★★★★</div>
+        <p class="test-text">"Llevaba meses sin dormir por la situación con mi pareja. Una sesión con el Maestro y todo cambió. No solo me dio claridad, sino que actuó. Hoy estamos juntos de nuevo."</p>
+        <div class="test-author"><div class="test-avatar">M</div><div><div class="test-name">María C.</div><div class="test-loc">Las Palmas · Amor</div></div></div>
+        <span class="test-source">Facebook</span>
+      </div>
+      <div class="test-card rv d1">
+        <div class="test-stars">★★★★★</div>
+        <p class="test-text">"Era escéptico. Mi madre me insistió. Hoy le doy la razón. El Maestro Eduardo supo cosas de mi vida que nadie podía saber. El trabajo que hizo fue real y los resultados, también."</p>
+        <div class="test-author"><div class="test-avatar">R</div><div><div class="test-name">Roberto M.</div><div class="test-loc">Madrid · Economía</div></div></div>
+        <span class="test-source">Google</span>
+      </div>
+      <div class="test-card rv d2">
+        <div class="test-stars">★★★★★</div>
+        <p class="test-text">"Le consulté por mi negocio que estaba hundiéndose. Me habló de una energía que me frenaba desde hace años. La limpieza que hizo fue un antes y un después. Recomiendo sin dudar."</p>
+        <div class="test-author"><div class="test-avatar">A</div><div><div class="test-name">Ana L.</div><div class="test-loc">Tenerife · Negocio</div></div></div>
+        <span class="test-source">WhatsApp</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- URGENCIA -->
+<section class="urgencia">
+  <div class="urgencia-inner rv">
+    <h2 class="urgencia-q">¿Llevas tiempo buscando respuestas<br/>que <em>nadie te ha dado?</em></h2>
+    <p class="urgencia-sub">El Maestro atiende personalmente, sin asistentes ni intermediarios. Cada consulta es única y confidencial.</p>
+    <div class="urgencia-badge"><div class="urgencia-dot"></div><span>Agenda casi completa esta semana</span></div>
+    <div class="urgencia-btns">
+      <a href="https://wa.me/34687554784?text=Necesito%20una%20consulta%20urgente%20con%20El%20Maestro" target="_blank" class="btn-g">💬 WhatsApp — Reservar Ahora</a>
+      <a href="tel:+34922983652" class="btn-o">📞 922 983 652</a>
+    </div>
+  </div>
+</section>
+
+<!-- CHAT IA -->
+<section class="chat-s" id="chat">
+  <div class="chat-grid">
+    <div class="chat-left rv">
+      <span class="ey">Asistente Espiritual</span>
+      <h2 class="st">Consulta ahora,<br/>sin esperas</h2>
+      <p class="sl">El asistente del Maestro está disponible 24h. Cuéntale tu situación y te conecta directamente con Eduardo.</p>
+      <div class="chat-feats">
+        <div class="c-feat"><span class="c-feat-i">🕐</span><div><h4>24 Horas Disponible</h4><p>Responde al instante, cualquier día, a cualquier hora.</p></div></div>
+        <div class="c-feat"><span class="c-feat-i">🔒</span><div><h4>Total Confidencialidad</h4><p>Todo queda entre tú y el sistema. Discreción absoluta.</p></div></div>
+        <div class="c-feat"><span class="c-feat-i">📲</span><div><h4>Conexión Directa</h4><p>El Maestro recibe tu consulta y te contacta personalmente.</p></div></div>
+      </div>
+    </div>
+    <div class="chat-box rv d2">
+      <div class="c-hdr"><div class="c-av">🔮</div><div class="c-hdr-i"><h4>Asistente del Maestro</h4><p><span class="live"></span>En línea ahora</p></div></div>
+      <div class="c-msgs" id="cMsgs">
+        <div class="msg bot">Bienvenido. Soy el asistente del Maestro Eduardo Enrique. Para que pueda ayudarte mejor: ¿cuál es tu nombre y en qué área necesitas orientación, amor, trabajo o algo espiritual?</div>
+      </div>
+      <div class="c-inp-row">
+        <input class="c-inp" id="cIn" type="text" placeholder="Escribe tu pregunta…" autocomplete="off"/>
+        <button class="c-snd" onclick="sendMsg()">Enviar</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCTOS -->
+<section class="productos" id="productos">
+  <div class="wrap">
+    <p class="ey rv" style="display:block;text-align:center">Tienda Esotérica</p>
+    <h2 class="st rv d1" style="text-align:center;margin-top:12px">Productos Rituales</h2>
+    <p class="sl rv d2" style="text-align:center;margin:12px auto clamp(36px,6vh,60px);max-width:480px">Materiales seleccionados y preparados con intención. Cada producto lleva la energía correcta para tu propósito.</p>
+  </div>
+  <div class="prod-grid">
+    <div class="prod rv"><span class="prod-icon">⭐</span><div class="prod-name">Conjuros</div><p class="prod-desc">Fórmulas rituales personalizadas para situaciones específicas</p></div>
+    <div class="prod rv d1"><span class="prod-icon">🕯️</span><div class="prod-name">Velas Rituales</div><p class="prod-desc">Preparadas y cargadas energéticamente según tu necesidad</p></div>
+    <div class="prod rv d2"><span class="prod-icon">🔗</span><div class="prod-name">Amarres</div><p class="prod-desc">Trabajos de unión y atracción para el amor y los negocios</p></div>
+    <div class="prod rv d3"><span class="prod-icon">💧</span><div class="prod-name">Esencias</div><p class="prod-desc">Aceites para atraer prosperidad y protección</p></div>
+    <div class="prod rv"><span class="prod-icon">🛡️</span><div class="prod-name">Talismanes</div><p class="prod-desc">Amuletos de protección personalizados y activados</p></div>
+    <div class="prod rv d1"><span class="prod-icon">🌿</span><div class="prod-name">Baños Rituales</div><p class="prod-desc">Para limpieza energética y apertura de caminos</p></div>
+    <div class="prod rv d2"><span class="prod-icon">🌸</span><div class="prod-name">Perfumes Mágicos</div><p class="prod-desc">Fragancias energéticas para atracción y protección</p></div>
+    <div class="prod rv d3"><span class="prod-icon">🌫️</span><div class="prod-name">Inciensos</div><p class="prod-desc">Para purificar espacios y elevar tu vibración</p></div>
+  </div>
+</section>
+
+<!-- PARALLAX 2 -->
+<div class="pq">
+  <div class="pq-bg" id="pq2" style="background-image:url('m7.jpg')"></div>
+  <div class="pq-over"></div>
+  <div class="pq-body rv">
+    <p class="pq-quote">Miles de personas encontraron respuestas aquí.<br/>La tuya puede ser la <strong>próxima historia de cambio.</strong></p>
+    <div class="pq-btns">
+      <a href="https://wa.me/34687554784?text=Quiero%20reservar%20mi%20consulta" target="_blank" class="btn-g">💬 Reservar Consulta</a>
+      <a href="tel:+34687554784" class="btn-o">📞 687 554 784</a>
+    </div>
+  </div>
+</div>
+
+<!-- CTA FINAL -->
+<section class="cta-final">
+  <div class="cta-bg" id="ctaBg"></div>
+  <div class="cta-over"></div>
+  <div class="cta-body rv">
+    <span class="cta-gem">✦</span>
+    <h2 class="cta-t">Tu destino no espera.<br/>Tampoco deberías <em>tú.</em></h2>
+    <p class="cta-sub">Consultas presenciales en Santa Cruz de Tenerife o por teléfono desde cualquier lugar del mundo.</p>
+    <div class="cta-btns">
+      <a href="https://wa.me/34687554784?text=Quiero%20una%20consulta%20con%20El%20Maestro%20Eduardo%20Enrique" target="_blank" class="btn-g">💬 Reservar por WhatsApp</a>
+      <a href="tel:+34687554784" class="btn-o">📞 687 554 784</a>
+    </div>
+    <p class="cta-note">Disponible 24 horas · Santa Cruz de Tenerife · Atención personal garantizada</p>
+  </div>
+</section>
+
+<!-- CONTACTO -->
+<section class="contacto" id="contacto">
+  <div class="wrap">
+    <span class="ey rv" style="display:block;text-align:center">Encuéntrame</span>
+    <h2 class="st rv d1" style="text-align:center;margin-top:12px">Contacto Directo</h2>
+    <div class="gem-r rv d2" style="max-width:300px;margin:18px auto 0"><div class="gem"></div></div>
+    <div class="cont-grid">
+      <a href="https://wa.me/34687554784" target="_blank" class="cont-card rv"><span class="cont-i">📱</span><div class="cont-l">WhatsApp</div><div class="cont-v">+34 687 554 784</div><div class="cont-s">Disponible 24 horas</div></a>
+      <a href="tel:+34922983652" class="cont-card rv d1"><span class="cont-i">📞</span><div class="cont-l">Teléfono</div><div class="cont-v">922 983 652</div><div class="cont-s">Presencial: 8h a 20h</div></a>
+      <div class="cont-card rv d2"><span class="cont-i">📍</span><div class="cont-l">Dirección</div><div class="cont-v">Av. Ángel Guimerá 24</div><div class="cont-s">Santa Cruz de Tenerife</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-logo-wrap">
+    <img src="logo-maestro.png" alt="El Maestro" class="ft-logo-img"/>
+    <span class="ft-logo">El Maestro</span>
+  </div>
+  <p class="ft-tag">Eduardo Enrique · Tarotista · Vidente · Parapsicólogo</p>
+  <div class="ft-soc">
+    <a href="https://www.facebook.com/taroteduardoenrique" target="_blank">Facebook</a>
+    <a href="https://www.instagram.com/maestro_eduardo_enrique" target="_blank">Instagram</a>
+    <a href="mailto:puertosol16@gmail.com">Email</a>
+  </div>
+  <span class="ft-by">Demo creada por Airmate · airmate.es</span>
+  <p class="ft-copy">© 2026 El Maestro Eduardo Enrique · Santa Cruz de Tenerife</p>
+</footer>
+
+<!-- WHATSAPP FLOTANTE -->
+<a href="https://wa.me/34687554784?text=Hola%2C%20quiero%20una%20consulta%20con%20El%20Maestro" target="_blank" class="wa-float" aria-label="WhatsApp">
+  <span class="wa-tooltip">Consultar por WhatsApp</span>
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+
+<!-- MOBILE CTA -->
+<div class="mob-cta">
+  <a href="https://wa.me/34687554784?text=Hola%2C%20quiero%20una%20consulta%20con%20El%20Maestro" target="_blank">
+    <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:white;flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    Consultar Ahora — WhatsApp
+  </a>
+</div>
+
+<script>
+
+// PARTICLES
+const px=document.getElementById('PX'),pctx=px.getContext('2d');
+let W,H,pts=[];
+function rsz(){W=px.width=innerWidth;H=px.height=innerHeight}rsz();
+addEventListener('resize',rsz);
+class Pt{constructor(){this.reset()}
+  reset(){this.x=Math.random()*W;this.y=Math.random()*H;this.r=Math.random()*.7+.15;this.a=Math.random()*.7;this.da=(Math.random()-.5)*.004;this.vx=(Math.random()-.5)*.12;this.vy=-Math.random()*.18-.04}
+  tick(){this.x+=this.vx;this.y+=this.vy;this.a+=this.da;if(this.a<0||this.a>.85)this.da*=-1;if(this.y<-4||this.x<-4||this.x>W+4)this.reset()}
+  draw(){pctx.beginPath();pctx.arc(this.x,this.y,this.r,0,Math.PI*2);pctx.fillStyle=`oklch(72% 0.12 70 / ${this.a})`;pctx.fill()}
+}
+for(let i=0;i<120;i++){const p=new Pt();p.y=Math.random()*H;pts.push(p)}
+(function frame(){pctx.clearRect(0,0,W,H);pts.forEach(p=>{p.tick();p.draw()});requestAnimationFrame(frame)})();
+
+// NAV
+addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('inked',scrollY>70));
+
+// PARALLAX
+const heroBg=document.getElementById('heroBg'),pq1=document.getElementById('pq1'),pq2=document.getElementById('pq2'),ctaBg=document.getElementById('ctaBg');
+function onScroll(){
+  const y=scrollY;
+  if(heroBg)heroBg.style.transform=`translateY(${y*.38}px)`;
+  [pq1,pq2].forEach(el=>{if(!el)return;const r=el.closest('.pq').getBoundingClientRect();el.style.transform=`translateY(${-r.top*.18}px)`});
+  if(ctaBg){const r=ctaBg.closest('section').getBoundingClientRect();ctaBg.style.transform=`translateY(${-r.top*.15}px)`}
+}
+addEventListener('scroll',onScroll,{passive:true});
+
+// SMOOTH SCROLL
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    const el=document.getElementById(a.getAttribute('href').slice(1));
+    if(!el)return;e.preventDefault();el.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+});
+
+// REVEAL
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');obs.unobserve(e.target)}})},{threshold:.08});
+document.querySelectorAll('.rv,.rvf').forEach(el=>obs.observe(el));
+
+// CHAT — captura nombre y teléfono
+const API='https://bot-airmate-1.vercel.app/api/chat';
+const SYS=`Eres el asistente espiritual del Maestro Eduardo Enrique, tarotista, vidente y parapsicólogo con 20+ años de experiencia en Santa Cruz de Tenerife. Tu misión principal es capturar el nombre y teléfono del usuario para que el Maestro le contacte directamente. Flujo: 1) Pregunta el nombre y el problema. 2) Muestra empatía y di que el Maestro puede ayudar. 3) Pide el número de teléfono o WhatsApp para que el Maestro le llame. 4) Confirma que el Maestro recibirá el mensaje. Habla con calidez, misterio y autoridad espiritual. Español. Máximo 3 frases por mensaje.`;
+let hist=[{role:'system',content:SYS}];
+function addMsg(t,w){const d=document.getElementById('cMsgs');const m=document.createElement('div');m.className='msg '+w;m.textContent=t;d.appendChild(m);d.scrollTop=d.scrollHeight;return m}
+async function sendMsg(){
+  const inp=document.getElementById('cIn');const txt=inp.value.trim();if(!txt)return;
+  inp.value='';addMsg(txt,'user');hist.push({role:'user',content:txt});
+  const t=addMsg('…','bot typing');
+  try{
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist})});
+    const j=await r.json();const rep=j.reply||j.message||j.content||'El Maestro quiere hablar contigo personalmente. Escríbele al +34 687 554 784';
+    t.remove();addMsg(rep,'bot');hist.push({role:'assistant',content:rep});
+  }catch{t.remove();addMsg('El Maestro está disponible ahora. Escríbele directamente: +34 687 554 784','bot')}
+}
+document.getElementById('cIn').addEventListener('keydown',e=>{if(e.key==='Enter')sendMsg()});
+</script>
+</body>
+</html>

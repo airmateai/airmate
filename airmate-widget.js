@@ -1,0 +1,675 @@
+(function () {
+  'use strict';
+
+  /* ─── CONFIG ─── Lee data-* del div #airmate-root ─────────────── */
+  const ROOT = document.getElementById('airmate-root');
+  if (!ROOT) return;
+
+  const SLUG   = ROOT.dataset.slug || 'negocio';
+  const SB_URL = 'https://vjofxmfwdybktpwiuanc.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+
+  /* Si solo tiene data-slug (sin data-name ni data-svcs) → carga config de Supabase */
+  const IS_REMOTE = !ROOT.dataset.name && !ROOT.dataset.svcs;
+
+  if (IS_REMOTE) {
+    fetch(`${SB_URL}/rest/v1/bot_configs?slug=eq.${encodeURIComponent(SLUG)}&select=*&limit=1`, {
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    })
+    .then(r => r.json())
+    .then(rows => { if (rows && rows[0]) applyRemoteToRoot(rows[0]); boot(); })
+    .catch(() => boot());
+  } else {
+    boot();
+  }
+
+  let _ownerEmail = '';
+
+  function applyRemoteToRoot(cfg) {
+    if (cfg.owner_email)  _ownerEmail                 = cfg.owner_email;
+    if (cfg.bot_name)     ROOT.dataset.name           = cfg.bot_name;
+    if (cfg.bot_emoji)    ROOT.dataset.emoji          = cfg.bot_emoji;
+    if (cfg.bot_color)    ROOT.dataset.color          = cfg.bot_color;
+    if (cfg.agent_wa)     ROOT.dataset.wa             = cfg.agent_wa;
+    if (cfg.open_time)      ROOT.dataset.open           = cfg.open_time;
+    if (cfg.close_time)     ROOT.dataset.close          = cfg.close_time;
+    if (cfg.slot_min)       ROOT.dataset.slot           = String(cfg.slot_min);
+    if (cfg.open_days)      ROOT.dataset.days           = cfg.open_days;
+    if (cfg.schedule_text)  ROOT.dataset.scheduleText   = cfg.schedule_text;
+    if (cfg.greeting)     ROOT.dataset.greeting       = cfg.greeting;
+    /* svcs_json: array [{name,price,duration}] → formato "Nombre|Precio|Dur|Cap" */
+    if (cfg.svcs_json) {
+      try {
+        const svcs = typeof cfg.svcs_json === 'string' ? JSON.parse(cfg.svcs_json) : cfg.svcs_json;
+        ROOT.dataset.svcs = svcs.map(s => `${s.name}|${s.price||''}|${s.duration||60}|1`).join(',');
+      } catch(e) {}
+    }
+    /* workers_json: array [{name,svcs,open,close,days}] */
+    if (cfg.workers_json) {
+      try {
+        const w = typeof cfg.workers_json === 'string' ? cfg.workers_json : JSON.stringify(cfg.workers_json);
+        ROOT.dataset.workersConfig = w;
+      } catch(e) {}
+    }
+  }
+
+  function boot() {
+
+  const WA        = ROOT.dataset.wa       || '';
+  const BOT_NAME  = ROOT.dataset.name     || 'Asistente';
+  const EMOJI     = ROOT.dataset.emoji    || '💬';
+  const GREETING  = ROOT.dataset.greeting || '¡Hola! ¿En qué puedo ayudarte hoy?';
+  const COLOR     = ROOT.dataset.color    || '#0c1e3d';
+
+  /* Horario: data-open="09:00" data-close="20:00" data-days="1,2,3,4,5,6" data-slot="30" */
+  const OPEN_H    = parseInt((ROOT.dataset.open  || '09:00').split(':')[0], 10);
+  const OPEN_M    = parseInt((ROOT.dataset.open  || '09:00').split(':')[1] || 0, 10);
+  const CLOSE_H   = parseInt((ROOT.dataset.close || '19:00').split(':')[0], 10);
+  const CLOSE_M   = parseInt((ROOT.dataset.close || '19:00').split(':')[1] || 0, 10);
+  const SLOT_MIN  = parseInt(ROOT.dataset.slot   || '30', 10);
+  /* Días abiertos: 0=Dom,1=Lun,...,6=Sab. Por defecto Lun-Vie */
+  const OPEN_DAYS = new Set((ROOT.dataset.days || '1,2,3,4,5').split(',').map(d => parseInt(d.trim(), 10)));
+
+  /* Servicios: "Nombre|Precio|Duración|Trabajadores" — el 4º campo es capacidad simultánea */
+  const WORKERS_DEFAULT = parseInt(ROOT.dataset.workers || '1', 10);
+  const SVCS = (ROOT.dataset.svcs || '').split(',').map(s => {
+    const parts = s.trim().split('|');
+    if (!parts[0]?.trim()) return null;
+    return {
+      name:     parts[0].trim(),
+      price:    (parts[1] || '').trim(),
+      duration: parseInt(parts[2] || '60'),
+      workers:  parseInt(parts[3] || WORKERS_DEFAULT, 10)
+    };
+  }).filter(Boolean);
+
+  /* Trabajadores individuales: [{name:'Ana', svcs:['Masaje','Facial']}, ...] */
+  let WORKERS_CFG = [];
+  try { WORKERS_CFG = JSON.parse(ROOT.dataset.workersConfig || '[]'); } catch {};
+
+  /* ─── CONSTANTES AIRMATE ────────────────────────────────────────── */
+  const PROXY    = 'https://bot-airmate-1.vercel.app/api/chat';
+  const EJ_KEY   = 'i4iBVVP-BkUOOwBE9';
+  const EJ_SVC   = 'service_npmjvvf';
+  const EJ_TPL   = 'template_qnip0mc';
+  const COLOR2   = darken(COLOR);
+
+  /* ─── ESTADO ────────────────────────────────────────────────────── */
+  const st = {
+    open: false, history: [], flow: null, /* 'cita' | 'lead' */
+    selSvc: null, selDate: null, selTime: null, selWorker: null,
+  };
+
+  /* ─── CSS ───────────────────────────────────────────────────────── */
+  injectCSS(`
+    :root{--am-c:${COLOR};--am-c2:${COLOR2};--am-g:#22c55e;--am-g2:#16a34a;--am-f:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+    #am-btn{position:fixed;bottom:24px;right:24px;z-index:2147483647;width:auto;min-width:52px;height:52px;border-radius:26px;
+      background:linear-gradient(135deg,var(--am-c),var(--am-c2));border:none;cursor:pointer;
+      box-shadow:0 6px 24px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;gap:7px;
+      padding:0 16px 0 14px;transition:all .25s cubic-bezier(.34,1.3,.64,1);}
+    #am-btn:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 10px 32px rgba(0,0,0,.4);}
+    #am-btn .am-dot{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--am-g),var(--am-g2));
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;}
+    #am-btn .am-lbl{font-family:var(--am-f);font-size:12px;font-weight:700;color:#fff;white-space:nowrap;}
+    .am-notif{position:absolute;top:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:var(--am-g);border:2px solid #fff;animation:amPulse 2s infinite;}
+    @keyframes amPulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}50%{box-shadow:0 0 0 5px rgba(34,197,94,0)}}
+    #am-panel{position:fixed;bottom:88px;right:24px;z-index:2147483646;width:370px;max-height:620px;background:#fff;
+      border-radius:20px;box-shadow:0 24px 64px rgba(0,0,0,.18);display:flex;flex-direction:column;overflow:hidden;
+      border:1px solid rgba(0,0,0,.07);opacity:0;transform:translateY(16px) scale(.96);pointer-events:none;
+      transition:all .32s cubic-bezier(.34,1.4,.64,1);}
+    #am-panel.open{opacity:1;transform:none;pointer-events:all;}
+    .am-hd{padding:14px 16px;background:linear-gradient(135deg,var(--am-c),var(--am-c2));display:flex;align-items:center;gap:10px;flex-shrink:0;}
+    .am-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--am-g),var(--am-g2));
+      display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+    .am-hname{font-size:13px;font-weight:700;color:#fff;font-family:var(--am-f);}
+    .am-hbrand{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--am-g);text-transform:uppercase;font-family:var(--am-f);}
+    .am-hdot{width:6px;height:6px;border-radius:50%;background:var(--am-g);box-shadow:0 0 6px var(--am-g);animation:amPulse 2s infinite;display:inline-block;margin-right:4px;}
+    .am-hstatus{font-size:11px;color:rgba(255,255,255,.65);font-family:var(--am-f);margin-top:2px;}
+    .am-wa-btn{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.12);color:#fff;
+      border:1px solid rgba(255,255,255,.2);border-radius:99px;padding:5px 10px;font-size:11px;font-weight:700;
+      cursor:pointer;text-decoration:none;flex-shrink:0;margin-left:auto;font-family:var(--am-f);}
+    #am-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth;background:#fafbfd;}
+    .am-msg{display:flex;flex-direction:column;gap:3px;animation:amIn .22s ease-out both;}
+    @keyframes amIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .am-msg.u{align-items:flex-end;}.am-msg.b{align-items:flex-start;}
+    .am-bbl{max-width:86%;padding:9px 13px;border-radius:16px;font-size:13.5px;line-height:1.55;word-wrap:break-word;font-family:var(--am-f);}
+    .am-msg.b .am-bbl{background:linear-gradient(135deg,var(--am-c),var(--am-c2));color:#fff;border-bottom-left-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,.15);}
+    .am-msg.u .am-bbl{background:linear-gradient(135deg,var(--am-g),var(--am-g2));color:#fff;border-bottom-right-radius:4px;}
+    .am-time{font-size:10px;color:#aab;padding:0 4px;font-family:var(--am-f);}
+    .am-typing{display:flex;align-items:center;gap:4px;padding:10px 14px;background:linear-gradient(135deg,var(--am-c),var(--am-c2));border-radius:16px;border-bottom-left-radius:4px;width:fit-content;}
+    .am-td{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.6);animation:amB 1.2s infinite;}
+    .am-td:nth-child(2){animation-delay:.2s}.am-td:nth-child(3){animation-delay:.4s}
+    @keyframes amB{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+    /* TARJETAS DE FLUJO */
+    .am-card{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-top:4px;font-family:var(--am-f);box-shadow:0 2px 8px rgba(0,0,0,.06);}
+    .am-card h4{font-size:13px;font-weight:800;color:#0c1e3d;margin:0 0 12px;}
+    .am-svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .am-svc-btn{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px;cursor:pointer;text-align:left;transition:.15s;font-family:var(--am-f);}
+    .am-svc-btn:hover{border-color:var(--am-g);background:#f0fdf4;}
+    .am-svc-name{font-size:12.5px;font-weight:700;color:#0c1e3d;display:block;}
+    .am-svc-price{font-size:11px;color:var(--am-g2);font-weight:600;}
+    .am-svc-dur{font-size:10px;color:#8a97b0;}
+    .am-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;}
+    .am-slot{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:12px;font-weight:600;
+      color:#0c1e3d;cursor:pointer;text-align:center;transition:.15s;font-family:var(--am-f);}
+    .am-slot:hover:not(.full){border-color:var(--am-g);background:#f0fdf4;color:var(--am-g2);}
+    .am-slot.full{opacity:.35;cursor:not-allowed;text-decoration:line-through;}
+    .am-inp{width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:13px;font-family:var(--am-f);
+      outline:none;color:#0c1e3d;box-sizing:border-box;margin-bottom:8px;}
+    .am-inp:focus{border-color:var(--am-g);box-shadow:0 0 0 3px rgba(34,197,94,.1);}
+    .am-btn-g{width:100%;padding:11px;background:linear-gradient(135deg,var(--am-g),var(--am-g2));color:#fff;border:none;
+      border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:var(--am-f);margin-top:4px;}
+    .am-btn-g:hover{filter:brightness(1.05);}
+    .am-days{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px;}
+    .am-day{flex-shrink:0;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;text-align:center;font-family:var(--am-f);transition:.15s;}
+    .am-day:hover:not(.closed),.am-day.sel{border-color:var(--am-g);background:#f0fdf4;}
+    .am-day.closed{opacity:.3;cursor:not-allowed;background:#f1f3f5;}
+    .am-day-n{font-size:13px;font-weight:800;color:#0c1e3d;display:block;}
+    .am-day-l{font-size:10px;color:#8a97b0;text-transform:uppercase;}
+    /* INPUT ROW */
+    #am-input-row{padding:10px 12px;border-top:1px solid rgba(0,0,0,.07);display:flex;gap:8px;align-items:center;flex-shrink:0;background:#fff;}
+    #am-input{flex:1;border:1px solid rgba(0,0,0,.12);border-radius:10px;padding:8px 12px;font-family:var(--am-f);font-size:13px;
+      outline:none;color:#0c1e3d;background:#f8f9fc;}
+    #am-input:focus{border-color:var(--am-g);background:#fff;box-shadow:0 0 0 3px rgba(34,197,94,.12);}
+    #am-send{width:36px;height:36px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,var(--am-g),var(--am-g2));
+      border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .am-footer{text-align:center;padding:5px 0 9px;font-size:10px;color:rgba(0,0,0,.28);font-family:var(--am-f);flex-shrink:0;}
+    @media(max-width:480px){
+      #am-panel{width:calc(100vw - 16px);left:8px;right:8px;bottom:78px;max-height:80vh;border-radius:16px;}
+      #am-btn{right:12px;bottom:12px;}
+      .am-svc-grid{grid-template-columns:1fr 1fr;}
+      .am-slots{grid-template-columns:repeat(3,1fr);}
+      #am-msgs{padding:10px;}
+      .am-bbl{max-width:92%;}
+    }
+  `);
+
+  /* ─── DOM ───────────────────────────────────────────────────────── */
+  const btn   = el('button', { id: 'am-btn' });
+  const panel = el('div',   { id: 'am-panel' });
+
+  btn.innerHTML = `<span class="am-notif"></span><span class="am-dot">${EMOJI}</span><span class="am-lbl">${esc(BOT_NAME)}</span>`;
+  panel.innerHTML = `
+    <div class="am-hd">
+      <div class="am-avatar">${EMOJI}</div>
+      <div style="flex:1;min-width:0">
+        <div class="am-hbrand">AIRMATE</div>
+        <div class="am-hname">${esc(BOT_NAME)}</div>
+        <div class="am-hstatus"><span class="am-hdot"></span>En línea</div>
+      </div>
+      ${WA?`<a class="am-wa-btn" href="https://wa.me/${WA}" target="_blank" rel="noopener">💬 WhatsApp</a>`:''}
+    </div>
+    <div id="am-msgs"></div>
+    <div id="am-input-row">
+      <input id="am-input" type="text" placeholder="Escribe tu mensaje…" autocomplete="off"/>
+      <button id="am-send"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+    </div>
+    <div class="am-footer">Powered by AIRMATE</div>`;
+
+  document.body.appendChild(btn);
+  document.body.appendChild(panel);
+
+  btn.addEventListener('click', toggle);
+  document.getElementById('am-send').addEventListener('click', send);
+  document.getElementById('am-input').addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} });
+
+  /* ─── TOGGLE ────────────────────────────────────────────────────── */
+  function toggle() {
+    st.open = !st.open;
+    panel.classList.toggle('open', st.open);
+    btn.classList.toggle('open', st.open);
+    if (st.open && st.history.length === 0) setTimeout(() => addBot(GREETING), 350);
+    if (st.open) setTimeout(() => document.getElementById('am-input')?.focus(), 380);
+  }
+
+  /* ─── CHAT ──────────────────────────────────────────────────────── */
+  async function send() {
+    const inp  = document.getElementById('am-input');
+    const text = inp?.value.trim();
+    if (!text) return;
+    /* Si el usuario escribe mientras hay un flujo abierto, lo cancelamos */
+    if (st.flow) {
+      st.flow = null;
+      document.querySelector('.am-card')?.remove();
+    }
+    inp.value = '';
+    addUser(text);
+    st.history.push({ role: 'user', content: text });
+    const typ = showTyping();
+    let reply;
+    try   { reply = await callProxy(); }
+    catch { reply = '¡Perdona! Ha habido un error. ¿Puedes repetir?'; }
+    finally { removeTyping(typ); }
+
+    /* Detectar señales del agente */
+    if (reply.includes('MOSTRAR_RESERVA') || reply.includes('MOSTRAR_CITA')) {
+      addBot(reply.replace(/MOSTRAR_RESERVA|MOSTRAR_CITA/g,'').trim() || '¿Qué servicio te interesa?');
+      st.history.push({ role:'assistant', content: reply });
+      setTimeout(() => showServicePicker(), 400);
+      return;
+    }
+    if (reply.includes('MOSTRAR_CONTACTO') || reply.includes('MOSTRAR_LEAD')) {
+      addBot(reply.replace(/MOSTRAR_CONTACTO|MOSTRAR_LEAD/g,'').trim() || 'Déjame tus datos y te contactamos.');
+      st.history.push({ role:'assistant', content: reply });
+      setTimeout(() => showLeadForm(), 400);
+      return;
+    }
+    addBot(reply);
+    st.history.push({ role:'assistant', content: reply });
+  }
+
+  async function callProxy() {
+    const sysPrompt = buildPrompt();
+    const resp = await fetch(PROXY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system_prompt: sysPrompt, messages: st.history.slice(-12) })
+    });
+    if (!resp.ok) throw new Error(resp.status);
+    const d = await resp.json();
+    return d.reply || '¿Puedo ayudarte en algo más?';
+  }
+
+  /* ─── FLUJO RESERVA ─────────────────────────────────────────────── */
+  function showServicePicker() {
+    if (!SVCS.length) { showDatePicker(null); return; }
+    st.flow = 'cita';
+    const card = el('div', { className: 'am-msg b' });
+    card.innerHTML = `<div class="am-card">
+      <h4>📅 ¿Qué servicio necesitas?</h4>
+      <div class="am-svc-grid">${SVCS.map((s,i) => `
+        <button class="am-svc-btn" onclick="window._amPickSvc(${i})">
+          <span class="am-svc-name">${esc(s.name)}</span>
+          ${s.price?`<span class="am-svc-price">${esc(s.price)}</span>`:''}
+          <span class="am-svc-dur">⏱ ${s.duration} min</span>
+        </button>`).join('')}
+      </div>
+    </div>`;
+    msgs().appendChild(card); scrollBot();
+    window._amPickSvc = i => { card.remove(); st.selSvc = SVCS[i]; showDatePicker(SVCS[i]); };
+  }
+
+  function showDatePicker(svc) {
+    st.flow = 'cita';
+    /* Mostrar los próximos 14 días naturales */
+    const days = [];
+    const now = new Date();
+    for (let i = 1; i <= 21; i++) {
+      const d = new Date(now); d.setDate(now.getDate() + i);
+      days.push(d);
+      if (days.length >= 14) break;
+    }
+    const card = el('div', { className: 'am-msg b' });
+    const svcTxt = svc ? ` — ${svc.name}` : '';
+    card.innerHTML = `<div class="am-card">
+      <h4>📅 Elige el día${esc(svcTxt)}</h4>
+      <div class="am-days">${days.map(d => {
+        const dStr    = fmtLocalDate(d);
+        const closed  = !OPEN_DAYS.has(d.getDay());
+        const label   = d.toLocaleDateString('es-ES',{weekday:'short'}).toUpperCase();
+        const num     = d.getDate();
+        const mon     = d.toLocaleDateString('es-ES',{month:'short'});
+        const click   = closed ? '' : `onclick="window._amPickDay('${dStr}',this)"`;
+        return `<div class="am-day${closed?' closed':''}" ${click}>
+          <span class="am-day-l">${label}</span>
+          <span class="am-day-n">${num}</span>
+          <span class="am-day-l">${closed?'cerrado':mon}</span>
+        </div>`;
+      }).join('')}
+      </div>
+      <div id="am-slots-wrap"></div>
+    </div>`;
+    msgs().appendChild(card); scrollBot();
+
+    window._amPickDay = async (dStr, dayEl) => {
+      card.querySelectorAll('.am-day').forEach(d => d.classList.remove('sel'));
+      dayEl.classList.add('sel');
+      st.selDate = dStr;
+      await showTimeSlots(dStr, svc);
+    };
+  }
+
+  async function showTimeSlots(dStr, svc) {
+    const wrap = document.getElementById('am-slots-wrap');
+    if (!wrap) return;
+    wrap.innerHTML = '<div style="font-size:12px;color:#8a97b0;padding:8px 0;">Cargando horarios…</div>';
+
+    /* Trabajadores que pueden hacer este servicio */
+    const svcWorkers = WORKERS_CFG.length
+      ? WORKERS_CFG.filter(w => w.svcs && w.svcs.includes(svc?.name))
+      : [];
+    const useWorkerMode = svcWorkers.length > 0;
+    const capacity = useWorkerMode ? svcWorkers.length : (svc?.workers || WORKERS_DEFAULT);
+
+    /* Traer todas las citas del día — convertir a UTC para que Supabase (timestamptz) compare bien */
+    const dayStart = new Date(dStr + 'T00:00:00').toISOString();
+    const dayEnd   = new Date(dStr + 'T23:59:59').toISOString();
+    const { data: existing } = await sbFetch(
+      `appointments?business_slug=eq.${SLUG}&starts_at=gte.${dayStart}&starts_at=lte.${dayEnd}&status=neq.cancelled&select=starts_at,service,notes`
+    );
+
+    /* Generar slots según horario */
+    const slots = [];
+    let cur = OPEN_H * 60 + OPEN_M;
+    const end = CLOSE_H * 60 + CLOSE_M;
+    while (cur < end) {
+      slots.push(`${String(Math.floor(cur/60)).padStart(2,'0')}:${String(cur%60).padStart(2,'0')}`);
+      cur += SLOT_MIN;
+    }
+
+    /* Construir mapa de ocupación por slot */
+    const workerBusy = {};
+    const totalCount = {}; /* total de citas por slot, independiente de servicio/trabajador */
+    (existing || []).forEach(a => {
+      const d = new Date(a.starts_at);
+      const t = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+      let worker = null;
+      try { worker = JSON.parse(a.notes || '{}').worker || null; } catch {}
+      /* Si no hay worker en notes pero solo hay 1 trabajador, asignárselo */
+      if (!worker && WORKERS_CFG.length === 1) worker = WORKERS_CFG[0].name;
+      if (worker) {
+        if (!workerBusy[worker]) workerBusy[worker] = new Set();
+        workerBusy[worker].add(t);
+      }
+      totalCount[t] = (totalCount[t] || 0) + 1;
+    });
+
+    /* Helper: ¿el trabajador tiene este slot dentro de su propio horario? */
+    function workerHasSlot(w, t) {
+      const dayOfWeek = new Date(dStr + 'T12:00:00').getDay();
+      const [tH, tM] = t.split(':').map(Number);
+      const tMin = tH * 60 + tM;
+      /* Turno partido: shifts:[{open,close,days?}] — el slot debe caer en alguna franja */
+      if (w.shifts && w.shifts.length) {
+        return w.shifts.some(sh => {
+          const shDays = sh.days ? new Set(sh.days.map(Number)) : (w.days ? new Set(w.days.map(Number)) : OPEN_DAYS);
+          if (!shDays.has(dayOfWeek)) return false;
+          const [sH, sM] = sh.open.split(':').map(Number);
+          const [eH, eM] = sh.close.split(':').map(Number);
+          return tMin >= sH * 60 + sM && tMin < eH * 60 + eM;
+        });
+      }
+      /* Sin horario propio → hereda el del negocio */
+      if (!w.open && !w.close && !w.days) return true;
+      const [wH, wM] = (w.open || ROOT.dataset.open || '09:00').split(':').map(Number);
+      const [cH, cM] = (w.close || ROOT.dataset.close || '19:00').split(':').map(Number);
+      const workerDays = w.days ? new Set(w.days.map(Number)) : OPEN_DAYS;
+      if (!workerDays.has(dayOfWeek)) return false;
+      return tMin >= wH * 60 + wM && tMin < cH * 60 + cM;
+    }
+
+    /* Determinar disponibilidad por slot */
+    function slotAvailable(t) {
+      const maxCap = WORKERS_CFG.length || capacity;
+      /* Hard cap: si ya hay tantas citas como trabajadores, slot lleno */
+      if ((totalCount[t] || 0) >= maxCap) return false;
+      if (useWorkerMode) {
+        return svcWorkers.some(w => workerHasSlot(w, t) && !workerBusy[w.name]?.has(t));
+      }
+      return (totalCount[t] || 0) < capacity;
+    }
+
+    function freeWorkerAt(t) {
+      if (!useWorkerMode) return null;
+      return svcWorkers.find(w => workerHasSlot(w, t) && !workerBusy[w.name]?.has(t)) || null;
+    }
+
+    /* Solo mostrar slots dentro del turno de algún trabajador — sin slots de descanso tachados */
+    const visibleSlots = useWorkerMode
+      ? slots.filter(t => svcWorkers.some(w => workerHasSlot(w, t)))
+      : slots;
+
+    if (!visibleSlots.length) {
+      wrap.innerHTML = '<div style="font-size:12px;color:#e53e3e;padding:8px 0;">No hay horarios disponibles este día.</div>';
+      return;
+    }
+
+    wrap.innerHTML = `<div class="am-slots">${visibleSlots.map(t => {
+      const avail = slotAvailable(t);
+      return `<div class="am-slot${avail?'':' full'}" onclick="${avail?`window._amPickTime('${t}')`:''}">
+        ${t}${avail?'':' ✖'}
+      </div>`;
+    }).join('')}</div>`;
+    scrollBot();
+
+    window._amPickTime = t => {
+      st.selTime   = t;
+      st.selWorker = freeWorkerAt(t); /* guardar trabajador asignado */
+      document.querySelector('.am-card')?.remove();
+      showBookingForm();
+    };
+  }
+
+  function showBookingForm() {
+    const svc = st.selSvc;
+    const card = el('div', { className: 'am-msg b' });
+    card.innerHTML = `<div class="am-card">
+      <h4>📋 Tus datos para reservar</h4>
+      ${svc?`<div style="font-size:12px;color:#6b7d96;margin-bottom:10px;">📅 ${svc.name} · ${st.selDate} a las ${st.selTime}</div>`:''}
+      <input class="am-inp" id="am-bk-name"  type="text"  placeholder="Nombre completo" />
+      <input class="am-inp" id="am-bk-phone" type="tel"   placeholder="Teléfono" />
+      <input class="am-inp" id="am-bk-email" type="email" placeholder="Email" />
+      <button class="am-btn-g" onclick="window._amConfirmBooking()">✅ Confirmar reserva</button>
+    </div>`;
+    msgs().appendChild(card); scrollBot();
+
+    window._amConfirmBooking = async () => {
+      const name  = parseName(document.getElementById('am-bk-name')?.value.trim());
+      const phone = document.getElementById('am-bk-phone')?.value.trim();
+      const email = document.getElementById('am-bk-email')?.value.trim();
+      if (!name || !phone || !email) { alert('Por favor rellena nombre, teléfono y email.'); return; }
+
+      card.innerHTML = '<div class="am-card" style="text-align:center;padding:20px;color:#8a97b0;">Guardando reserva…</div>';
+
+      const svc = st.selSvc;
+      const startsAt = new Date(`${st.selDate}T${st.selTime}:00`).toISOString();
+      const endsAt   = new Date(new Date(startsAt).getTime() + (svc?.duration||60)*60000).toISOString();
+
+      const body = {
+        business_slug:    SLUG,
+        client_name:      name,
+        client_phone:     phone,
+        client_email:     email || null,
+        service:          svc?.name || 'Servicio',
+        starts_at:        startsAt,
+        ends_at:          endsAt,
+        duration_minutes: svc?.duration || 60,
+        status:           'pending',
+        notes:            JSON.stringify({ worker: st.selWorker?.name || (WORKERS_CFG.length === 1 ? WORKERS_CFG[0].name : null), source: 'web', emoji: EMOJI }),
+        created_at:       new Date().toISOString()
+      };
+
+      const { ok, id: aptId } = await sbInsertReturn('appointments', body);
+      card.remove();
+      st.flow = null;
+
+      if (ok) {
+        const workerLine = st.selWorker ? `\n👤 Con: ${st.selWorker.name}` : '';
+        addBot(`📋 ¡Solicitud recibida, ${esc(name)}!\n\n📅 ${svc?.name||'Servicio'}\n📆 ${st.selDate} a las ${st.selTime}${workerLine}\n\nEl negocio confirmará tu cita en breve y recibirás un email de confirmación.`);
+        st.history.push({ role:'assistant', content:'Solicitud de cita recibida, pendiente de confirmación.' });
+        /* Guardar lead asociado */
+        sbInsert('leads', {
+          business_slug: SLUG, name, phone, email: email||null,
+          interest:      svc?.name||'Reserva', intent_level: 'new',
+          status:        'new', source: 'web',
+          created_at:    new Date().toISOString()
+        });
+      } else {
+        addBot('Ha ocurrido un error al guardar la reserva. Por favor escríbenos por WhatsApp y lo gestionamos enseguida.');
+      }
+    };
+  }
+
+  /* ─── FLUJO LEAD ────────────────────────────────────────────────── */
+  function showLeadForm() {
+    st.flow = 'lead';
+    const card = el('div', { className: 'am-msg b' });
+    card.innerHTML = `<div class="am-card">
+      <h4>📬 ¿Cómo te contactamos?</h4>
+      <input class="am-inp" id="am-ld-name"    type="text" placeholder="Nombre completo" />
+      <input class="am-inp" id="am-ld-phone"   type="tel"  placeholder="Teléfono" />
+      <input class="am-inp" id="am-ld-interest" type="text" placeholder="¿Qué te interesa?" />
+      <button class="am-btn-g" onclick="window._amSaveLead()">Enviar →</button>
+    </div>`;
+    msgs().appendChild(card); scrollBot();
+
+    window._amSaveLead = async () => {
+      const name     = parseName(document.getElementById('am-ld-name')?.value.trim());
+      const phone    = document.getElementById('am-ld-phone')?.value.trim();
+      const interest = document.getElementById('am-ld-interest')?.value.trim();
+      if (!name || !phone) { alert('Por favor rellena nombre y teléfono.'); return; }
+      card.innerHTML = '<div class="am-card" style="padding:16px;color:#8a97b0;">Guardando…</div>';
+      await sbInsert('leads', {
+        business_slug: SLUG, name, phone, interest: interest||'Consulta general',
+        intent_level: 'new', status: 'new', source: 'web',
+        created_at: new Date().toISOString()
+      });
+      card.remove();
+      st.flow = null;
+      addBot(`¡Perfecto, ${esc(name)}! Hemos guardado tus datos y te contactaremos pronto. ${WA?`Si prefieres algo más inmediato, escríbenos por WhatsApp 💬`:''}` );
+      st.history.push({ role:'assistant', content:'Datos de contacto guardados.' });
+    };
+  }
+
+  /* ─── EMAIL CONFIRMACIÓN ───────────────────────────────────────── */
+  async function sendConfirmEmail({ name, email, phone, svc, date, time, aptId }) {
+    try {
+      if (!window.emailjs) {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+        await new Promise((res, rej) => { s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+        await new Promise(r => setTimeout(r, 300));
+      }
+      const fechaFmt = new Date(date + 'T' + time).toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+      const params = {
+        cliente_nombre:   name,
+        cliente_email:    email,
+        cliente_telefono: phone || '—',
+        negocio_nombre:   BOT_NAME,
+        servicio:         svc?.name || 'Servicio',
+        duracion:         (svc?.duration || 60) + ' min',
+        precio:           svc?.price || '—',
+        fecha:            fechaFmt,
+        hora:             time,
+        reply_to:         email,
+        owner_email:      _ownerEmail || email,
+        cancel_url:       aptId ? `https://airmateai.github.io/airmate/cancel.html?id=${aptId}` : '',
+      };
+      console.log('[Airmate] Enviando email a', email, params);
+      const result = await window.emailjs.send(EJ_SVC, EJ_TPL, params, EJ_KEY);
+      console.log('[Airmate] EmailJS result:', result);
+    } catch(e) { console.error('[Airmate] EmailJS error:', e); }
+  }
+
+  /* ─── SUPABASE HELPERS ──────────────────────────────────────────── */
+  async function sbFetch(path) {
+    try {
+      const r = await fetch(`${SB_URL}/rest/v1/${path}`, {
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+      });
+      return { data: await r.json() };
+    } catch { return { data: null }; }
+  }
+
+  async function sbInsert(table, body) {
+    const { ok } = await sbInsertReturn(table, body);
+    return ok;
+  }
+
+  async function sbInsertReturn(table, body) {
+    try {
+      const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
+        method: 'POST',
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) {
+        const txt = await r.text();
+        console.error('[Airmate] sbInsert error', r.status, txt);
+        return { ok: false, id: null };
+      }
+      const data = await r.json();
+      return { ok: true, id: data[0]?.id || null };
+    } catch(e) { console.error('[Airmate] sbInsert exception', e); return { ok: false, id: null }; }
+  }
+
+  /* ─── NAME EXTRACTOR ────────────────────────────────────────────── */
+  function parseName(raw) {
+    if (!raw) return raw;
+    // Strip common intro phrases in ES/EN/AR
+    const cleaned = raw
+      .replace(/^(me llamo|mi nombre es|soy|i'm|i am|my name is|my name's|اسمي|أنا)\s+/i, '')
+      .replace(/^(hola[,\s]+)?(me llamo|soy)\s+/i, '')
+      .trim();
+    // Capitalize each word
+    return cleaned.replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  /* ─── SYSTEM PROMPT ─────────────────────────────────────────────── */
+  function buildPrompt() {
+    const svcsText = SVCS.map(s =>
+      `- ${s.name}${s.price?' ('+s.price+')':''}${s.duration?' — '+s.duration+' min':''}${s.workers>1?' · '+s.workers+' profesionales':''}`
+    ).join('\n') || '- Consultar disponibilidad';
+
+    const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const openDaysText = [...OPEN_DAYS].sort().map(d => dayNames[d]).join(', ');
+    const scheduleText = ROOT.dataset.scheduleText ||
+      `${openDaysText} de ${ROOT.dataset.open||'09:00'} a ${ROOT.dataset.close||'19:00'}`;
+
+    return `Eres el asistente de "${BOT_NAME}". Eres cercano, natural y directo — como un buen empleado que conoce el negocio de memoria.
+
+SERVICIOS DISPONIBLES:
+${svcsText}
+
+HORARIO: ${scheduleText}
+
+CÓMO HABLAS:
+- Tono cálido y humano. Nada de listas largas ni respuestas de robot.
+- Respuestas cortas: 1-3 frases máximo. Si hay más info, la vas soltando poco a poco según pregunta el cliente.
+- Usa el nombre del cliente si lo sabes. Haz que se sienta atendido, no procesado.
+- Si el cliente saluda, saluda de vuelta brevemente y pregunta en qué le puedes ayudar. No des toda la info de golpe.
+- Si pregunta algo que no sabes con certeza, di que se lo confirman en el negocio. No inventes precios ni horarios.
+
+CUÁNDO MOSTRAR FORMULARIOS:
+- Solo escribe MOSTRAR_RESERVA (al inicio de tu respuesta) cuando el cliente diga claramente que quiere reservar, pedir cita o ver disponibilidad.
+- Solo escribe MOSTRAR_CONTACTO cuando quiera que le llamen o le contacten.
+- No lances el formulario a la primera. Primero resuelve su duda, luego si encaja, propones la cita.
+${WA?`- Si insiste en hablar con una persona ahora mismo: WhatsApp ${WA}`:''}
+
+IDIOMA: Responde siempre en el mismo idioma que use el cliente.`;
+  }
+
+  /* ─── UI HELPERS ────────────────────────────────────────────────── */
+  function addUser(t) { appendMsg('u', `<div class="am-bbl">${esc(t)}</div><div class="am-time">${time()}</div>`); }
+  function addBot(t)  { appendMsg('b', `<div class="am-bbl">${fmt(t)}</div><div class="am-time">${time()}</div>`); }
+  function appendMsg(cls, html) {
+    const d = el('div', { className: 'am-msg ' + cls }); d.innerHTML = html;
+    msgs().appendChild(d); scrollBot();
+  }
+  function showTyping() {
+    const d = el('div', { className: 'am-msg b' });
+    d.innerHTML = '<div class="am-typing"><span class="am-td"></span><span class="am-td"></span><span class="am-td"></span></div>';
+    msgs().appendChild(d); scrollBot(); return d;
+  }
+  function removeTyping(d) { d?.parentNode?.removeChild(d); }
+  function msgs()     { return document.getElementById('am-msgs'); }
+  function scrollBot(){ const m = msgs(); if (m) m.scrollTop = m.scrollHeight; }
+  function time()     { return new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
+  function fmtLocalDate(d) {
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function fmt(raw) {
+    if (!raw) return '';
+    return raw.split('\n').map(l => `<div>${esc(l)||'&nbsp;'}</div>`).join('');
+  }
+  function esc(s)  { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function el(tag, props) { const e = document.createElement(tag); Object.assign(e, props); return e; }
+  function darken(hex) {
+    try { const n=parseInt(hex.replace('#',''),16); const r=Math.max(0,(n>>16)-40),g=Math.max(0,((n>>8)&0xff)-40),b=Math.max(0,(n&0xff)-40); return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join(''); } catch{return hex;}
+  }
+  function injectCSS(css) { const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); }
+
+  } /* fin boot() */
+
+})();
+
