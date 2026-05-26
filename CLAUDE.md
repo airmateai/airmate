@@ -117,12 +117,20 @@ Carpeta con plantillas y guías operativas:
 
 ### Jose Acosta — Sastrería / Trajes a medida
 - **Slug:** `jose-acosta`
-- **Panel:** `/Desktop/Jose Acosta/panel-pro.html` (archivo local, NO en repo)
+- **Panel local:** `/Desktop/Jose Acosta/panel-pro.html`
+- **Panel público:** `airmate.es/panel-jose-acosta-pro.html`
 - **Negocio:** trajes a medida en Tenerife
-- **Funcionalidades panel:** Citas (semana/mes), Leads (pipeline kanban), Clientes (medidas), Encargos (Kanban), Stock/Inventario, Facturación, Contabilidad, Finanzas, TPV
+- **Funcionalidades panel:** Citas (semana/mes), Leads (pipeline kanban), Clientes particulares (medidas), Clientes corporativos (grupos + miembros por cargo), Encargos (Kanban), Stock/Inventario (con foto por producto), Facturación, Contabilidad, Finanzas, TPV, Multi-admin
 - **IMPORTANTE:** Los números en Facturación, Compras, Contabilidad y Finanzas están ocultados con `—` (Jose no debe ver datos financieros reales). TPV y Encargos sí muestran precios.
 - **Realtime activo:** Supabase Realtime + notificaciones Web Audio API
-- **Pendiente:** Integración Verifactu/Hacienda — Jose está configurando su cuenta en verifactuapi.es para obtener las credenciales API de su negocio
+- **Verifactu:** DESCARTADO — Jose no quiere pagarlo. Usa "Exportar Hacienda CSV" para mandar al gestor cada trimestre.
+- **Tablas extra en Supabase:** `crm_corporate_groups`, `crm_corporate_members`, `panel_admins`
+- **Columnas añadidas:** `crm_inventory.image_url`, `crm_clients.tipo`, `crm_clients.empresa`
+
+**Pendiente de Jose (nos tiene que mandar):**
+- Opciones personalizadas del configurador de trajes (diseños, telas)
+- Fotos de productos para el TPV (URLs)
+- Formato exacto de la factura para imprimir
 
 ### Ricardo Plasencia — Custom Work (Barbería)
 - **Slug:** `custom-work`
@@ -181,7 +189,7 @@ git push
 
 ## 9. PENDIENTES GLOBALES
 
-- [ ] **Jose Acosta — Verifactu:** Esperar credenciales API de verifactuapi.es para integrar facturación electrónica a Hacienda en panel-pro.html
+- [ ] **Jose Acosta — Verifactu:** API con Invocash (verifactuapi.es). Contacto: Luis. Documentación: https://drive.google.com/drive/folders/1aA_nuF2USCE_me4Pzm-Iovg4jtwcguL1 — Pendiente: hacer SET-UP/CheckPoint (certificación software) antes de producción. Sin coste hasta enviar facturas reales a la AEAT.
 - [ ] **Custom Work — Ricardo:** 3 TODOs pendientes (ver memoria)
 - [ ] **WhatsApp Business API** — en roadmap (ver memoria `project_roadmap.md`)
 - [ ] **Llamadas de voz IA** — en roadmap
@@ -200,5 +208,26 @@ git push
 - Notificaciones: `notificar(msg)` = toast + Web Audio API + Notification API
 
 ---
+
+---
+
+## 11. PLANTILLA NUEVO CLIENTE — PANEL PRO
+
+**Archivo base:** `/Users/fabiobuenogalarza/Desktop/Airmate Clientes/PLANTILLA-panel-pro.html`
+
+Para crear el panel de un nuevo cliente:
+1. Copia `PLANTILLA-panel-pro.html` → renombra a `panel-[slug].html`
+2. Edita el bloque `CFG` al inicio del JS:
+   - `slug` → slug del cliente en Supabase
+   - `nombre`, `sector`, `features` → textos visibles
+   - `mod` → pon `true/false` para activar/desactivar módulos
+3. Cambia `--acc` en `:root` si el cliente tiene otro color de marca
+4. Añade campos custom en el modal de Clientes (comentario `<!-- CAMPO EXTRA -->`)
+
+**Módulos disponibles:** dashboard · citas · leads · seguimientos · clientes · encargos (kanban) · stock · facturación
+
+**Tablas Supabase que usa:**
+- `appointments` (citas), `leads`, `crm_clients`, `crm_orders` (encargos), `crm_inventory` (stock), `crm_invoices` (facturas)
+- Siempre filtradas por `business_slug = slug`
 
 *Actualizado: 2026-05-10*
