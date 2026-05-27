@@ -12,6 +12,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Faltan campos obligatorios' });
   }
 
+  const hasImages = messages.some(m => Array.isArray(m.content) && m.content.some(c => c.type === 'image_url'));
+
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -20,8 +22,8 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 350,
+        model: hasImages ? 'gpt-4o' : 'gpt-4o-mini',
+        max_tokens: hasImages ? 400 : 350,
         temperature: 0.7,
         messages: [
           { role: 'system', content: system_prompt },
