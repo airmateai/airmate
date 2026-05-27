@@ -3454,28 +3454,31 @@ async function cpUploadImg(input){
   status.textContent='⏳ Subiendo foto…';
   const ext=file.name.split('.').pop()||'jpg';
   const path=`${BIZ_SLUG}/${Date.now()}.${ext}`;
+  // Convertir a base64 para la IA
+  const b64=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(file);});
+  // Subir a Storage
   const {data,error}=await _sbSrv.storage.from('facturas-compra').upload(path,file,{upsert:true,contentType:file.type});
   if(error){status.textContent='❌ Error al subir: '+error.message;return;}
   const url=_sbSrv.storage.from('facturas-compra').getPublicUrl(path).data.publicUrl;
   document.getElementById('cp-img-url').value=url;
   const prev=document.getElementById('cp-img-preview');
   prev.src=url;prev.style.display='block';prev.style.width='80px';prev.style.height='60px';prev.style.objectFit='cover';prev.style.borderRadius='8px';prev.style.border='1px solid #e2e8f0';
-  // Leer datos con IA
+  // Leer datos con IA usando base64
   status.textContent='🤖 Leyendo ticket con IA…';
   try{
     const resp=await fetch('https://bot-airmate-1.vercel.app/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      system_prompt:'Eres un asistente de contabilidad. Analiza la imagen de un ticket o factura y extrae los datos. Responde SOLO con JSON válido sin markdown: {"fecha":"YYYY-MM-DD o null","importe":numero o null,"proveedor":"nombre o null","concepto":"descripción breve o null","metodo":"Metálico|Transferencia|Tarjeta o null"}',
-      messages:[{role:'user',content:[{type:'image_url',image_url:{url}},{type:'text',text:'Extrae los datos de este ticket/factura'}]}]
+      system_prompt:'Eres un asistente de contabilidad español. Analiza la imagen de un ticket o factura y extrae los datos. Responde SOLO con JSON válido sin markdown ni explicaciones: {"fecha":"YYYY-MM-DD o null","importe":numero_decimal o null,"proveedor":"nombre del comercio o null","concepto":"descripcion breve de que se compro o null","metodo":"Metalico|Transferencia|Tarjeta o null"}',
+      messages:[{role:'user',content:[{type:'image_url',image_url:{url:b64,detail:'low'}},{type:'text',text:'Extrae los datos de este ticket'}]}]
     })});
     const raw=await resp.json();
     let d={};try{d=JSON.parse((raw.reply||'{}').replace(/```json|```/g,'').trim());}catch{}
-    if(d.fecha&&document.getElementById('cp-fecha'))document.getElementById('cp-fecha').value=d.fecha;
-    if(d.importe&&document.getElementById('cp-importe'))document.getElementById('cp-importe').value=d.importe;
-    if(d.proveedor&&document.getElementById('cp-proveedor'))document.getElementById('cp-proveedor').value=d.proveedor;
-    if(d.concepto&&document.getElementById('cp-concepto'))document.getElementById('cp-concepto').value=d.concepto;
-    if(d.metodo&&document.getElementById('cp-metodo')){const sel=document.getElementById('cp-metodo');[...sel.options].forEach(o=>{if(o.value===d.metodo)o.selected=true;});}
+    if(d.fecha)document.getElementById('cp-fecha').value=d.fecha;
+    if(d.importe)document.getElementById('cp-importe').value=d.importe;
+    if(d.proveedor)document.getElementById('cp-proveedor').value=d.proveedor;
+    if(d.concepto)document.getElementById('cp-concepto').value=d.concepto;
+    if(d.metodo){const sel=document.getElementById('cp-metodo');[...sel.options].forEach(o=>{if(o.value===d.metodo)o.selected=true;});}
     status.textContent='✅ Datos rellenados por IA — revisa y guarda';
-  }catch{status.textContent='✅ Foto guardada (IA no disponible)';}
+  }catch(e){status.textContent='✅ Foto guardada (IA no disponible)';}
 }
 
 function openCompraModal(){_crmEditId=null;crmOpenModal('Nueva factura de compra',compraForm(),`<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button><button class="btn btn-accent" onclick="saveCompra()">Guardar</button>`);}
