@@ -3449,16 +3449,27 @@ function compraForm(c={}){
 async function cpUploadImg(input){
   const file=input.files[0];if(!file)return;
   const status=document.getElementById('cp-img-status');
-  status.textContent='Subiendo…';
+  status.textContent='⏳ Subiendo foto…';
   const ext=file.name.split('.').pop()||'jpg';
   const path=`${BIZ_SLUG}/${Date.now()}.${ext}`;
   const {data,error}=await _sb.storage.from('facturas-compra').upload(path,file,{upsert:true,contentType:file.type});
   if(error){status.textContent='❌ Error al subir';return;}
   const url=_sb.storage.from('facturas-compra').getPublicUrl(path).data.publicUrl;
   document.getElementById('cp-img-url').value=url;
-  status.textContent='✅ Foto guardada';
   const prev=document.getElementById('cp-img-preview');
   prev.src=url;prev.style.display='block';prev.style.width='80px';prev.style.height='60px';prev.style.objectFit='cover';prev.style.borderRadius='8px';prev.style.border='1px solid #e2e8f0';
+  // Leer datos con IA
+  status.textContent='🤖 Leyendo ticket con IA…';
+  try{
+    const resp=await fetch('https://bot-airmate-1.vercel.app/api/ocr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_url:url})});
+    const d=await resp.json();
+    if(d.fecha&&document.getElementById('cp-fecha'))document.getElementById('cp-fecha').value=d.fecha;
+    if(d.importe&&document.getElementById('cp-importe'))document.getElementById('cp-importe').value=d.importe;
+    if(d.proveedor&&document.getElementById('cp-proveedor'))document.getElementById('cp-proveedor').value=d.proveedor;
+    if(d.concepto&&document.getElementById('cp-concepto'))document.getElementById('cp-concepto').value=d.concepto;
+    if(d.metodo&&document.getElementById('cp-metodo')){const sel=document.getElementById('cp-metodo');[...sel.options].forEach(o=>{if(o.value===d.metodo)o.selected=true;});}
+    status.textContent='✅ Datos rellenados por IA — revisa y guarda';
+  }catch{status.textContent='✅ Foto guardada (IA no disponible)';}
 }
 
 function openCompraModal(){_crmEditId=null;crmOpenModal('Nueva factura de compra',compraForm(),`<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button><button class="btn btn-accent" onclick="saveCompra()">Guardar</button>`);}
