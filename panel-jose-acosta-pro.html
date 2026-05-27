@@ -3463,8 +3463,12 @@ async function cpUploadImg(input){
   // Leer datos con IA
   status.textContent='🤖 Leyendo ticket con IA…';
   try{
-    const resp=await fetch('https://bot-airmate-1.vercel.app/api/ocr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_url:url})});
-    const d=await resp.json();
+    const resp=await fetch('https://bot-airmate-1.vercel.app/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      system_prompt:'Eres un asistente de contabilidad. Analiza la imagen de un ticket o factura y extrae los datos. Responde SOLO con JSON válido sin markdown: {"fecha":"YYYY-MM-DD o null","importe":numero o null,"proveedor":"nombre o null","concepto":"descripción breve o null","metodo":"Metálico|Transferencia|Tarjeta o null"}',
+      messages:[{role:'user',content:[{type:'image_url',image_url:{url}},{type:'text',text:'Extrae los datos de este ticket/factura'}]}]
+    })});
+    const raw=await resp.json();
+    let d={};try{d=JSON.parse((raw.reply||'{}').replace(/```json|```/g,'').trim());}catch{}
     if(d.fecha&&document.getElementById('cp-fecha'))document.getElementById('cp-fecha').value=d.fecha;
     if(d.importe&&document.getElementById('cp-importe'))document.getElementById('cp-importe').value=d.importe;
     if(d.proveedor&&document.getElementById('cp-proveedor'))document.getElementById('cp-proveedor').value=d.proveedor;
