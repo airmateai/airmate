@@ -1127,14 +1127,11 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
 
             <!-- Catálogo productos -->
             <div>
-              <div style="display:flex;gap:8px;margin-bottom:14px">
-                <input id="tpv-search" oninput="tpvFiltrar()" placeholder="Buscar producto..." style="flex:1;padding:9px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none">
-                <select id="tpv-cat" onchange="tpvFiltrar()" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;color:#1e293b">
-                  <option value="">Todas las categorías</option>
-                  <option>Trajes</option><option>Complementos</option><option>Telas</option><option>Accesorios</option><option>Zapatos</option>
-                </select>
+              <div style="margin-bottom:12px">
+                <input id="tpv-search" oninput="tpvFiltrar()" placeholder="🔍 Buscar producto..." style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;font-family:inherit;transition:border .15s" onfocus="this.style.borderColor='var(--acc)'" onblur="this.style.borderColor='#e2e8f0'">
               </div>
-              <div id="tpv-catalogo" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px"></div>
+              <div id="tpv-cats-bar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
+              <div id="tpv-catalogo" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px"></div>
             </div>
 
             <!-- Ticket / resumen venta -->
@@ -2219,21 +2216,77 @@ async function crmVerCliente(id){
   const m=c.measurements||{};
   const [ords,facts]=await Promise.all([
     _sb.from('crm_orders').select('id,title,status,price').eq('business_slug',BIZ_SLUG).eq('client_id',id).order('created_at',{ascending:false}),
-    _sb.from('crm_invoices').select('id,type,status,total,issue_date').eq('business_slug',BIZ_SLUG).eq('client_id',id).order('created_at',{ascending:false})
+    _sb.from('crm_invoices').select('id,invoice_number,type,status,total,issue_date').eq('business_slug',BIZ_SLUG).eq('client_id',id).order('issue_date',{ascending:false})
   ]);
   const medKeys={talla:'Talla',pecho:'Pecho',cintura:'Cintura',cadera:'Cadera',largo_pantalon:'L.Pantalón',largo_chaqueta:'L.Chaqueta'};
-  const medHtml=Object.keys(m).length?`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">`+
-    Object.entries(medKeys).filter(([k])=>m[k]).map(([k,label])=>`<div style="text-align:center;padding:6px 10px;background:#f8fafc;border-radius:6px;min-width:70px"><div style="font-size:10px;color:#94a3b8;text-transform:uppercase">${label}</div><div style="font-weight:700">${m[k]}${k!=='talla'?' cm':''}</div></div>`).join('')+`</div>`:'<p style="color:#94a3b8;font-size:13px;margin-bottom:16px">Sin medidas registradas</p>';
-  const stColor={presupuesto:'#f59e0b',stock:'#3b82f6',prueba:'#8b5cf6',listo:'#22c55e',entregado:'#94a3b8'};
-  const ordsHtml=(ords.data||[]).length?`<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:8px">Encargos</div>`+
-    (ords.data||[]).map(o=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f1f5f9"><div style="width:8px;height:8px;border-radius:50%;background:${stColor[o.status]||'#ccc'};flex-shrink:0"></div><div style="flex:1;font-size:13px">${esc(o.title)}</div>${o.price?`<div style="font-weight:700;color:#22c55e;font-size:12px">${crmFmt(o.price)}</div>`:''}</div>`).join('')+'</div>':'';
-  const factsHtml=(facts.data||[]).length?`<div><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:8px">Documentos</div>`+
-    (facts.data||[]).map(f=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f1f5f9"><span class="tag ${f.type==='factura'?'tag-purple':'tag-pending'}">${f.type}</span><span class="tag tag-${f.status==='pagado'?'confirmed':f.status==='enviado'?'completed':'cold'}">${f.status}</span><div style="margin-left:auto;font-weight:700;font-size:13px">—</div></div>`).join('')+'</div>':'';
+  const medHtml=Object.keys(m).length
+    ?`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px">`+
+      Object.entries(medKeys).filter(([k])=>m[k]).map(([k,label])=>`<div style="text-align:center;padding:8px 12px;background:var(--acc-bg);border:1px solid rgba(184,154,94,.2);border-radius:8px;min-width:72px"><div style="font-size:10px;color:var(--acc);text-transform:uppercase;font-weight:700;margin-bottom:2px">${label}</div><div style="font-weight:800;font-size:15px">${m[k]}${k!=='talla'?'<span style="font-size:10px;color:#94a3b8"> cm</span>':''}</div></div>`).join('')+`</div>`
+    :'<p style="color:#94a3b8;font-size:13px;margin-bottom:20px">Sin medidas registradas</p>';
+  // Calcular saldo
+  const factsArr=facts.data||[];
+  const totalFacturado=factsArr.filter(f=>f.type==='factura').reduce((s,f)=>s+Number(f.total||0),0);
+  const totalCobrado=factsArr.filter(f=>f.type==='factura'&&f.status==='pagado').reduce((s,f)=>s+Number(f.total||0),0);
+  const saldoPendiente=totalFacturado-totalCobrado;
+  const saldoHtml=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px">
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:10px;color:#16a34a;font-weight:700;text-transform:uppercase;margin-bottom:4px">Facturado</div>
+      <div style="font-size:16px;font-weight:800;color:#16a34a">${crmFmt(totalFacturado)}</div>
+    </div>
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:10px;color:#0284c7;font-weight:700;text-transform:uppercase;margin-bottom:4px">Cobrado</div>
+      <div style="font-size:16px;font-weight:800;color:#0284c7">${crmFmt(totalCobrado)}</div>
+    </div>
+    <div style="background:${saldoPendiente>0?'#fff7ed':'#f8fafc'};border:1px solid ${saldoPendiente>0?'#fed7aa':'#e2e8f0'};border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:10px;color:${saldoPendiente>0?'#ea580c':'#94a3b8'};font-weight:700;text-transform:uppercase;margin-bottom:4px">Pendiente</div>
+      <div style="font-size:16px;font-weight:800;color:${saldoPendiente>0?'#ea580c':'#94a3b8'}">${crmFmt(saldoPendiente)}</div>
+    </div>
+  </div>`;
+  const stColor={presupuesto:'#f59e0b',produccion:'#3b82f6',listo_prueba:'#8b5cf6',prueba:'#a855f7',ajustes:'#ec4899',listo:'#22c55e',entregado:'#94a3b8'};
+  const stLabel={presupuesto:'Presupuesto',produccion:'Producción',listo_prueba:'Listo prueba',prueba:'En prueba',ajustes:'Ajustes',listo:'Listo',entregado:'Entregado'};
+  const ordsArr=ords.data||[];
+  const ordsHtml=ordsArr.length?`<div style="margin-bottom:20px">
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">📦 Encargos (${ordsArr.length})</div>`+
+    ordsArr.map(o=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#f8fafc;border-radius:8px;margin-bottom:6px">
+      <div style="width:8px;height:8px;border-radius:50%;background:${stColor[o.status]||'#ccc'};flex-shrink:0"></div>
+      <div style="flex:1;font-size:13px;font-weight:500">${esc(o.title)}</div>
+      <span style="font-size:11px;color:#64748b;background:#e2e8f0;border-radius:4px;padding:2px 7px">${stLabel[o.status]||o.status}</span>
+      ${o.price?`<div style="font-weight:700;color:#0a0a0a;font-size:13px">${crmFmt(o.price)}</div>`:''}
+    </div>`).join('')+'</div>':'';
+  const factsHtml=factsArr.length?`<div>
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">🧾 Documentos (${factsArr.length})</div>`+
+    factsArr.map(f=>{
+      const stCls={borrador:'tag-cold',enviado:'tag-completed',pagado:'tag-confirmed',cancelado:'tag-cancelled'}[f.status]||'tag-cold';
+      const tCls=f.type==='factura'?'tag-purple':'tag-pending';
+      return`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;margin-bottom:6px">
+        <span class="tag ${tCls}" style="font-size:10px">${f.type==='factura'?'Factura':'Presupuesto'}</span>
+        <span style="font-size:12px;font-weight:600;color:#0a0a0a">${f.invoice_number||'—'}</span>
+        <span class="tag ${stCls}" style="font-size:10px">${f.status}</span>
+        <span style="font-size:11px;color:#94a3b8;margin-left:2px">${f.issue_date?new Date(f.issue_date).toLocaleDateString('es-ES'):'—'}</span>
+        <div style="margin-left:auto;font-weight:700;font-size:13px">${crmFmt(f.total||0)}</div>
+        ${f.status!=='pagado'&&f.type==='factura'?`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:10px" onclick="marcarPagada('${f.id}');crmCloseModal()">✓ Cobrar</button>`:''}
+      </div>`;}).join('')+'</div>':'<p style="color:#94a3b8;font-size:13px">Sin documentos</p>';
   crmOpenModal(`👤 ${esc(c.name)}`,
-    `<div style="font-size:13px;color:#475569;margin-bottom:14px">${esc(c.phone||'')}${c.email?' · '+esc(c.email):''}</div>`+
-    `<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:8px">Medidas</div>`+
-    medHtml+ordsHtml+factsHtml,
-    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cerrar</button><button class="btn btn-accent" onclick="crmCloseModal();crmEditCliente('${id}')">✏ Editar</button>`);
+    `<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f1f5f9">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--acc);display:grid;place-items:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0">${c.name.charAt(0).toUpperCase()}</div>
+      <div>
+        <div style="font-size:17px;font-weight:700">${esc(c.name)}</div>
+        <div style="font-size:13px;color:#64748b">${[c.phone,c.email].filter(Boolean).join(' · ')||'Sin contacto'}</div>
+      </div>
+      ${c.empresa?`<div style="margin-left:auto"><span class="tag tag-cold">🏢 ${esc(c.empresa)}</span></div>`:''}
+    </div>`+
+    `<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">📐 Medidas</div>`+
+    medHtml+saldoHtml+ordsHtml+factsHtml,
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cerrar</button>
+     <button class="btn btn-ghost" onclick="crmCloseModal();crmOpenFacturaModalForClient('${id}','${esc(c.name)}')">+ Presupuesto</button>
+     <button class="btn btn-accent" onclick="crmCloseModal();crmEditCliente('${id}')">✏ Editar</button>`);
+}
+
+async function crmOpenFacturaModalForClient(clientId, clientName){
+  _crmEditId=null;
+  const body=await crmFacturaForm({client_id:clientId,client_name:clientName});
+  crmOpenModal('Nuevo documento',body,`<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button><button class="btn btn-accent" onclick="crmSaveFactura()">Guardar</button>`);
+  crmRenderLines();
 }
 function crmFilterClientes(q){
   const lq=(q||'').toLowerCase();
@@ -3726,8 +3779,23 @@ async function deleteAdmin(id){
 }
 
 async function convertirAFactura(id){
-  await _sb.from('crm_invoices').update({type:'factura',status:'enviado'}).eq('id',id);
-  crmLoadFacturas();showToast('✓ Convertido a factura');
+  const p=_crmFacturas.find(x=>x.id===id);if(!p)return;
+  const nextNum=await _nextInvoiceNum('factura');
+  const confirmHtml=`<div style="text-align:center;padding:8px 0">
+    <div style="font-size:48px;margin-bottom:12px">📄</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px">Convertir a Factura</div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:16px">Se creará la factura <strong>${nextNum}</strong> a partir del presupuesto <strong>${p.invoice_number||'—'}</strong></div>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;font-size:13px;color:#166534;margin-bottom:4px">
+      Cliente: ${esc(p.client_name||'Sin cliente')} · Total: ${crmFmt(p.total||0)}
+    </div>
+  </div>`;
+  crmOpenModal('Convertir presupuesto a factura', confirmHtml,
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="_doConvertirFactura('${id}','${nextNum}')">✓ Confirmar y crear factura</button>`);
+}
+async function _doConvertirFactura(id, nextNum){
+  await _sb.from('crm_invoices').update({type:'factura',status:'enviado',invoice_number:nextNum}).eq('id',id);
+  crmCloseModal();crmLoadFacturas();showToast('✓ Factura '+nextNum+' creada');
 }
 
 async function marcarPagada(id){
@@ -4920,11 +4988,12 @@ function tpvEmojiCategoria(cat) {
   return m[cat] || '🧵';
 }
 
+let _tpvCatActiva='';
 async function tpvLoadProductos() {
   const {data} = await _sb.from('crm_inventory')
     .select('*').eq('business_slug', BIZ_SLUG)
     .order('category').order('name');
-  TPV_PRODUCTOS = (data||[]).map((p,i) => ({
+  TPV_PRODUCTOS = (data||[]).map(p => ({
     id: p.id,
     nombre: p.name,
     categoria: p.category || 'General',
@@ -4933,14 +5002,17 @@ async function tpvLoadProductos() {
     emoji: tpvEmojiCategoria(p.category),
     imagen: p.image_url || null
   }));
-  // Actualizar select de categorías
-  const cats = [...new Set(TPV_PRODUCTOS.map(p=>p.categoria))];
-  const sel = document.getElementById('tpv-cat');
-  if (sel) {
-    sel.innerHTML = '<option value="">Todos</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
-  }
+  tpvRenderCatBar();
   tpvRenderCatalogo();
 }
+
+function tpvRenderCatBar(){
+  const bar=document.getElementById('tpv-cats-bar');if(!bar)return;
+  const cats=[...new Set(TPV_PRODUCTOS.map(p=>p.categoria))];
+  bar.innerHTML=`<button onclick="tpvSetCat('')" style="padding:6px 14px;border-radius:20px;border:1.5px solid ${_tpvCatActiva===''?'var(--acc)':'#e2e8f0'};background:${_tpvCatActiva===''?'var(--acc-bg)':'#fff'};color:${_tpvCatActiva===''?'var(--acc)':'#475569'};font-size:12px;font-weight:600;cursor:pointer;transition:all .15s">Todos</button>`+
+    cats.map(c=>`<button onclick="tpvSetCat('${c}')" style="padding:6px 14px;border-radius:20px;border:1.5px solid ${_tpvCatActiva===c?'var(--acc)':'#e2e8f0'};background:${_tpvCatActiva===c?'var(--acc-bg)':'#fff'};color:${_tpvCatActiva===c?'var(--acc)':'#475569'};font-size:12px;font-weight:600;cursor:pointer;transition:all .15s">${tpvEmojiCategoria(c)} ${c}</button>`).join('');
+}
+function tpvSetCat(cat){_tpvCatActiva=cat;tpvRenderCatBar();tpvFiltrar();}
 
 async function tpvLoadHistorial() {
   const {data} = await _sb.from('ja_ventas')
@@ -4972,10 +5044,9 @@ function tpvVista(v) {
 }
 
 function tpvFiltrar() {
-  var q=(document.getElementById('tpv-search').value||'').toLowerCase();
-  var cat=document.getElementById('tpv-cat').value;
+  var q=(document.getElementById('tpv-search')?.value||'').toLowerCase();
   var prods=TPV_PRODUCTOS.filter(function(p){
-    return(!cat||p.categoria===cat)&&(!q||p.nombre.toLowerCase().includes(q));
+    return(!_tpvCatActiva||p.categoria===_tpvCatActiva)&&(!q||p.nombre.toLowerCase().includes(q)||p.categoria.toLowerCase().includes(q));
   });
   tpvRenderCatalogo(prods);
 }
