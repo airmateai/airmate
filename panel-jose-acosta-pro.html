@@ -3480,8 +3480,10 @@ async function saveCompra(){
   const imgUrl=document.getElementById('cp-img-url')?.value||'';
   const notasRaw=_compraStringifyNotas(cv('cp-notas'),imgUrl);
   const payload={business_slug:BIZ_SLUG,proveedor:cv('cp-proveedor')||null,concepto,importe,fecha:cv('cp-fecha')||null,metodo:cv('cp-metodo')||null,categoria:cv('cp-cat')||null,notas:notasRaw};
-  if(_crmEditId)await _sb.from('facturas_compra').update(payload).eq('id',_crmEditId);
-  else await _sb.from('facturas_compra').insert(payload);
+  let saveErr;
+  if(_crmEditId){const r=await _sb.from('facturas_compra').update(payload).eq('id',_crmEditId);saveErr=r.error;}
+  else{const r=await _sb.from('facturas_compra').insert(payload);saveErr=r.error;}
+  if(saveErr){alert('Error al guardar: '+saveErr.message);return;}
   crmCloseModal();comprasLoad();showToast('✓ Compra guardada');
 }
 async function deleteCompra(id){if(!confirm('¿Eliminar?'))return;await _sb.from('facturas_compra').delete().eq('id',id);comprasLoad();}
