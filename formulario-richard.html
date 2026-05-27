@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Formulario Facturación · Jose Acosta</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--acc:#c9a050;--bg:#06050a;--surface:#0f0e15;--border:rgba(201,160,80,.15);--txt:#e8e0d0;--txt2:#8a8070;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:20px;max-width:640px;width:100%;padding:40px 36px;box-shadow:0 32px 80px rgba(0,0,0,.6);}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:32px;}
+  .logo-mark{width:36px;height:36px;background:linear-gradient(135deg,#c9a050,#f0d080);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:#06050a;}
+  .logo-text{font-size:18px;font-weight:700;letter-spacing:.04em;color:#fff;}
+  h1{font-size:22px;font-weight:700;color:#fff;margin-bottom:6px;}
+  .subtitle{font-size:13px;color:var(--txt2);margin-bottom:32px;line-height:1.5;}
+  .group{margin-bottom:22px;}
+  label{display:block;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--acc);margin-bottom:8px;}
+  input[type=text],textarea,select{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;color:var(--txt);font-size:14px;padding:12px 14px;outline:none;transition:border .2s;font-family:inherit;}
+  input[type=text]:focus,textarea:focus,select:focus{border-color:var(--acc);}
+  textarea{resize:vertical;min-height:80px;}
+  select option{background:#0f0e15;color:#e8e0d0;}
+  .checks{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+  .check-item{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;transition:all .15s;user-select:none;font-size:13px;}
+  .check-item:hover{border-color:var(--acc);background:rgba(201,160,80,.07);}
+  .check-item input{accent-color:var(--acc);width:14px;height:14px;}
+  .check-item.selected{border-color:var(--acc);background:rgba(201,160,80,.12);}
+  .divider{height:1px;background:var(--border);margin:28px 0;}
+  .section-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt2);margin-bottom:20px;}
+  button{width:100%;background:linear-gradient(135deg,#c9a050,#e8c060);color:#06050a;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s;margin-top:8px;}
+  button:hover{opacity:.88;}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  .success{display:none;text-align:center;padding:32px 0;}
+  .success-icon{font-size:48px;margin-bottom:16px;}
+  .success h2{font-size:20px;font-weight:700;color:#fff;margin-bottom:8px;}
+  .success p{font-size:14px;color:var(--txt2);}
+  .required{color:var(--acc);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-mark">A</div>
+    <div class="logo-text">Airmate</div>
+  </div>
+
+  <div id="form-wrap">
+    <h1>Configuración de facturación</h1>
+    <p class="subtitle">Jose Acosta Sastrería · Por favor rellena este formulario para configurar correctamente el sistema de facturación.</p>
+
+    <form id="frm" onsubmit="enviar(event)">
+
+      <div class="section-title">📄 Documentos</div>
+
+      <div class="group">
+        <label>¿Qué documentos emite habitualmente? <span class="required">*</span></label>
+        <div class="checks" id="docs">
+          <label class="check-item"><input type="checkbox" value="Factura ordinaria"> Factura ordinaria</label>
+          <label class="check-item"><input type="checkbox" value="Presupuesto"> Presupuesto</label>
+          <label class="check-item"><input type="checkbox" value="Proforma"> Proforma</label>
+          <label class="check-item"><input type="checkbox" value="Factura simplificada (ticket)"> Factura simplificada</label>
+          <label class="check-item"><input type="checkbox" value="Factura en cuotas / plazos"> Factura en cuotas</label>
+        </div>
+      </div>
+
+      <div class="group">
+        <label>¿A quién factura principalmente? <span class="required">*</span></label>
+        <div class="checks" id="clientes">
+          <label class="check-item"><input type="checkbox" value="Particulares"> Particulares</label>
+          <label class="check-item"><input type="checkbox" value="Empresas (con CIF)"> Empresas (con CIF)</label>
+          <label class="check-item"><input type="checkbox" value="Ambos"> Ambos</label>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-title">🧾 Impuestos</div>
+
+      <div class="group">
+        <label>¿Aplica IGIC? <span class="required">*</span></label>
+        <select id="igic">
+          <option value="">Selecciona...</option>
+          <option>Sí, 7% (estándar Canarias)</option>
+          <option>Sí, tipo reducido 3%</option>
+          <option>No aplica IGIC</option>
+        </select>
+      </div>
+
+      <div class="group">
+        <label>¿Aplica retención de IRPF?</label>
+        <select id="irpf">
+          <option value="">Selecciona...</option>
+          <option>No</option>
+          <option>Sí, 15%</option>
+          <option>Sí, 7% (primeros años)</option>
+          <option>Depende del cliente</option>
+        </select>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-title">🔢 Numeración</div>
+
+      <div class="group">
+        <label>¿Qué formato de numeración usa?</label>
+        <input type="text" id="numeracion" placeholder="Ej: FAC-2025-001 / JA-001 / 2025-001...">
+      </div>
+
+      <div class="group">
+        <label>¿Series separadas para presupuestos y facturas?</label>
+        <select id="series">
+          <option value="">Selecciona...</option>
+          <option>Sí, series separadas</option>
+          <option>No, numeración única</option>
+        </select>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-title">📬 Entrega y formato</div>
+
+      <div class="group">
+        <label>¿Cómo entrega las facturas al cliente?</label>
+        <div class="checks">
+          <label class="check-item"><input type="checkbox" value="PDF por email"> PDF por email</label>
+          <label class="check-item"><input type="checkbox" value="En papel impreso"> En papel impreso</label>
+          <label class="check-item"><input type="checkbox" value="WhatsApp"> WhatsApp</label>
+          <label class="check-item"><input type="checkbox" value="Ambas (papel y PDF)"> Papel y PDF</label>
+        </div>
+      </div>
+
+      <div class="group">
+        <label>¿Qué datos deben aparecer en la factura?</label>
+        <div class="checks">
+          <label class="check-item"><input type="checkbox" value="NIF/CIF"> NIF/CIF</label>
+          <label class="check-item"><input type="checkbox" value="Dirección fiscal"> Dirección fiscal</label>
+          <label class="check-item"><input type="checkbox" value="IBAN/cuenta bancaria"> IBAN</label>
+          <label class="check-item"><input type="checkbox" value="Logo"> Logo</label>
+          <label class="check-item"><input type="checkbox" value="Teléfono"> Teléfono</label>
+          <label class="check-item"><input type="checkbox" value="Email"> Email</label>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-title">📊 Gestión trimestral</div>
+
+      <div class="group">
+        <label>¿Qué le entregáis a Hacienda cada trimestre? <span class="required">*</span></label>
+        <div class="checks">
+          <label class="check-item"><input type="checkbox" value="Modelo 303 (IVA/IGIC)"> Modelo 303 (IGIC)</label>
+          <label class="check-item"><input type="checkbox" value="Modelo 130 (IRPF)"> Modelo 130 (IRPF)</label>
+          <label class="check-item"><input type="checkbox" value="Libro de facturas emitidas"> Libro facturas emitidas</label>
+          <label class="check-item"><input type="checkbox" value="Libro de facturas recibidas"> Libro facturas recibidas</label>
+          <label class="check-item"><input type="checkbox" value="Resumen de ingresos y gastos"> Resumen ingresos/gastos</label>
+        </div>
+      </div>
+
+      <div class="group">
+        <label>¿Registra gastos/compras del negocio?</label>
+        <select id="gastos">
+          <option value="">Selecciona...</option>
+          <option>Sí, queremos registrarlos en el panel</option>
+          <option>No, los lleva el gestor por su cuenta</option>
+        </select>
+      </div>
+
+      <div class="group">
+        <label>¿Tenéis alguna factura actual de referencia? (pega el número o descríbela)</label>
+        <textarea id="referencia" placeholder="Ej: FAC-2024-012, con membrete, logo, IGIC 7%, sin IRPF..."></textarea>
+      </div>
+
+      <div class="group">
+        <label>Notas adicionales / observaciones</label>
+        <textarea id="notas" placeholder="Cualquier cosa que deba saber sobre la facturación de Jose..."></textarea>
+      </div>
+
+      <button type="submit" id="btn-enviar">Enviar respuestas</button>
+    </form>
+  </div>
+
+  <div class="success" id="success">
+    <div class="success-icon">✅</div>
+    <h2>Respuestas enviadas</h2>
+    <p>Fabio recibirá tus respuestas y configurará el panel en breve.<br>Gracias Richard.</p>
+  </div>
+</div>
+
+<script>
+const _sb = supabase.createClient(
+  'https://vjofxmfwdybktpwiuanc.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE'
+);
+
+// Highlight checkboxes on click
+document.querySelectorAll('.check-item').forEach(label => {
+  label.addEventListener('change', () => {
+    label.classList.toggle('selected', label.querySelector('input').checked);
+  });
+});
+
+function getChecked(containerId) {
+  return [...document.querySelectorAll(`#${containerId} input:checked`)].map(i => i.value).join(', ');
+}
+
+function getCheckedAll(groupEl) {
+  return [...groupEl.querySelectorAll('input:checked')].map(i => i.value).join(', ');
+}
+
+async function enviar(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-enviar');
+  btn.disabled = true;
+  btn.textContent = 'Enviando…';
+
+  // Collect all checkbox groups (those without a specific id container)
+  const allChecks = {};
+  document.querySelectorAll('.checks').forEach((g, i) => {
+    const label = g.previousElementSibling?.textContent?.trim() || `grupo_${i}`;
+    const vals = [...g.querySelectorAll('input:checked')].map(x => x.value);
+    if (vals.length) allChecks[label] = vals.join(', ');
+  });
+
+  const respuestas = {
+    documentos: getChecked('docs'),
+    clientes: getChecked('clientes'),
+    igic: document.getElementById('igic').value,
+    irpf: document.getElementById('irpf').value,
+    numeracion: document.getElementById('numeracion').value,
+    series: document.getElementById('series').value,
+    entrega: allChecks[Object.keys(allChecks).find(k => k.includes('entrega') || k.includes('factura'))] || '',
+    datos_factura: allChecks[Object.keys(allChecks).find(k => k.includes('datos'))] || '',
+    hacienda: allChecks[Object.keys(allChecks).find(k => k.includes('Hacienda') || k.includes('trimestre'))] || '',
+    gastos: document.getElementById('gastos').value,
+    referencia: document.getElementById('referencia').value,
+    notas: document.getElementById('notas').value,
+  };
+
+  const mensaje = Object.entries(respuestas)
+    .filter(([,v]) => v)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join('\n');
+
+  const { error } = await _sb.from('web_requests').insert({
+    name: 'Richard (Gestor Jose Acosta)',
+    email: 'gestor@jose-acosta',
+    message: mensaje,
+    created_at: new Date().toISOString()
+  });
+
+  if (error) {
+    alert('Error al enviar. Intenta de nuevo.');
+    btn.disabled = false;
+    btn.textContent = 'Enviar respuestas';
+    return;
+  }
+
+  document.getElementById('form-wrap').style.display = 'none';
+  document.getElementById('success').style.display = 'block';
+}
+</script>
+</body>
+</html>
