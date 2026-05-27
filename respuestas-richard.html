@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Respuestas Richard · Airmate</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--acc:#c9a050;--bg:#06050a;--surface:#0f0e15;--border:rgba(201,160,80,.15);--txt:#e8e0d0;--txt2:#8a8070;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;padding:32px 16px;}
+  .top{max-width:720px;margin:0 auto 32px;display:flex;align-items:center;justify-content:space-between;}
+  .logo{display:flex;align-items:center;gap:10px;}
+  .logo-mark{width:34px;height:34px;background:linear-gradient(135deg,#c9a050,#f0d080);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#06050a;}
+  .logo-text{font-size:17px;font-weight:700;color:#fff;}
+  h1{font-size:20px;font-weight:700;color:#fff;}
+  .badge{background:rgba(201,160,80,.15);color:var(--acc);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;}
+  .empty{max-width:720px;margin:80px auto;text-align:center;color:var(--txt2);}
+  .empty-icon{font-size:48px;margin-bottom:16px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:720px;margin:0 auto 20px;padding:28px 32px;}
+  .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .card-title{font-size:15px;font-weight:700;color:#fff;}
+  .card-date{font-size:12px;color:var(--txt2);}
+  .row{display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;}
+  .row-key{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--acc);min-width:160px;padding-top:1px;}
+  .row-val{font-size:13px;color:var(--txt);line-height:1.5;flex:1;}
+  .divider{height:1px;background:var(--border);margin:16px 0;}
+  .spinner{display:flex;align-items:center;justify-content:center;height:200px;}
+  .spin{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--acc);border-radius:50%;animation:sp .6s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+  .no-resp{color:var(--txt2);font-size:13px;font-style:italic;}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="logo">
+    <div class="logo-mark">A</div>
+    <div class="logo-text">Airmate</div>
+  </div>
+  <h1>Respuestas de Richard</h1>
+  <span class="badge" id="count">Cargando…</span>
+</div>
+
+<div id="content">
+  <div class="spinner"><div class="spin"></div></div>
+</div>
+
+<script>
+const _sb = supabase.createClient(
+  'https://vjofxmfwdybktpwiuanc.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE'
+);
+
+const LABELS = {
+  nombre_legal: 'Nombre legal',
+  nif: 'NIF / CIF',
+  direccion_fiscal: 'Dirección fiscal',
+  iban: 'IBAN',
+  condiciones_pago: 'Condiciones de pago',
+  documentos: 'Documentos que emite',
+  clientes: 'Tipo de clientes',
+  igic: 'IGIC',
+  irpf: 'IRPF',
+  numeracion: 'Numeración facturas',
+  series: 'Series separadas',
+  entrega: 'Entrega al cliente',
+  datos_factura: 'Datos en factura',
+  hacienda: 'Entrega a Hacienda',
+  gastos: 'Registro de gastos',
+  referencia: 'Factura de referencia',
+  notas: 'Notas adicionales',
+};
+
+async function load() {
+  const { data, error } = await _sb
+    .from('web_requests')
+    .select('*')
+    .eq('email', 'gestor@jose-acosta')
+    .order('created_at', { ascending: false });
+
+  const content = document.getElementById('content');
+  const count = document.getElementById('count');
+
+  if (error || !data) {
+    content.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><p>Error al cargar respuestas.</p></div>';
+    count.textContent = 'Error';
+    return;
+  }
+
+  count.textContent = data.length === 0 ? 'Sin respuestas aún' : `${data.length} respuesta${data.length > 1 ? 's' : ''}`;
+
+  if (!data.length) {
+    content.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>Richard aún no ha rellenado el formulario.<br>Mándale el link: <strong>airmate.es/formulario-richard.html</strong></p></div>';
+    return;
+  }
+
+  content.innerHTML = data.map(r => {
+    const fecha = new Date(r.created_at).toLocaleString('es-ES', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const lineas = (r.message || '').split('\n').filter(l => l.trim());
+    const rows = lineas.map(l => {
+      const idx = l.indexOf(': ');
+      if (idx === -1) return `<div class="row"><span class="row-val">${l}</span></div>`;
+      const key = l.slice(0, idx).trim();
+      const val = l.slice(idx + 2).trim();
+      const label = LABELS[key] || key;
+      return `<div class="row"><span class="row-key">${label}</span><span class="row-val">${val || '<span class="no-resp">No indicado</span>'}</span></div>`;
+    }).join('');
+
+    return `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📋 Respuesta de ${r.name || 'Richard'}</div>
+        <div class="card-date">${fecha}</div>
+      </div>
+      <div class="divider"></div>
+      ${rows || '<p class="no-resp">Sin contenido</p>'}
+    </div>`;
+  }).join('');
+}
+
+load();
+</script>
+</body>
+</html>
