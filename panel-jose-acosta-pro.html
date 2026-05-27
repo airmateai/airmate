@@ -1478,7 +1478,9 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
 <script>
 const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+const SB_SRV='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDQ3NTk0NiwiZXhwIjoyMDkwMDUxOTQ2fQ.08g-CtdJ0BvgE3U4v9JppA_114EN24KBs7iBpUaw9cs';
 const _sb=supabase.createClient(SB_URL,SB_KEY);
+const _sbSrv=supabase.createClient(SB_URL,SB_SRV);
 
 let BIZ_SLUG='',BIZ_NAME='';
 let allCitas=[],allLeads=[];
@@ -3452,9 +3454,9 @@ async function cpUploadImg(input){
   status.textContent='⏳ Subiendo foto…';
   const ext=file.name.split('.').pop()||'jpg';
   const path=`${BIZ_SLUG}/${Date.now()}.${ext}`;
-  const {data,error}=await _sb.storage.from('facturas-compra').upload(path,file,{upsert:true,contentType:file.type});
-  if(error){status.textContent='❌ Error al subir';return;}
-  const url=_sb.storage.from('facturas-compra').getPublicUrl(path).data.publicUrl;
+  const {data,error}=await _sbSrv.storage.from('facturas-compra').upload(path,file,{upsert:true,contentType:file.type});
+  if(error){status.textContent='❌ Error al subir: '+error.message;return;}
+  const url=_sbSrv.storage.from('facturas-compra').getPublicUrl(path).data.publicUrl;
   document.getElementById('cp-img-url').value=url;
   const prev=document.getElementById('cp-img-preview');
   prev.src=url;prev.style.display='block';prev.style.width='80px';prev.style.height='60px';prev.style.objectFit='cover';prev.style.borderRadius='8px';prev.style.border='1px solid #e2e8f0';
