@@ -3477,8 +3477,8 @@ async function cpUploadImg(input){
 function openCompraModal(){_crmEditId=null;crmOpenModal('Nueva factura de compra',compraForm(),`<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button><button class="btn btn-accent" onclick="saveCompra()">Guardar</button>`);}
 function editCompra(id){const c=_compras.find(x=>x.id===id);if(!c)return;_crmEditId=id;crmOpenModal('Editar factura de compra',compraForm(c),`<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button><button class="btn btn-accent" onclick="saveCompra()">Guardar</button>`);}
 async function saveCompra(){
-  const concepto=cv('cp-concepto').trim();if(!concepto){alert('Concepto obligatorio');return;}
-  const importe=parseFloat(cv('cp-importe'));if(isNaN(importe)||importe<0){alert('Importe inválido');return;}
+  const concepto=cv('cp-concepto').trim()||'Sin concepto';
+  const importe=parseFloat(cv('cp-importe'))||0;
   const imgUrl=document.getElementById('cp-img-url')?.value||'';
   const notasRaw=_compraStringifyNotas(cv('cp-notas'),imgUrl);
   const payload={business_slug:BIZ_SLUG,proveedor:cv('cp-proveedor')||null,concepto,importe,fecha:cv('cp-fecha')||null,metodo:cv('cp-metodo')||null,categoria:cv('cp-cat')||null,notas:notasRaw};
