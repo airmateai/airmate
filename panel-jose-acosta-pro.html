@@ -1885,10 +1885,11 @@ function openCitaModal(id){
 async function cambiarEstadoCita(id,status){
   const c=allCitas.find(x=>x.id===id);if(c)c.status=status;
   await _sb.from('appointments').update({status}).eq('id',id);
+  if(typeof closeModal==='function')closeModal();
   renderDashboard();updateBadges();
-  if(typeof renderCitas==='function')renderCitas();
+  renderCitas();
   showToast(status==='confirmed'?'✓ Cita confirmada':status==='completed'?'✔ Cita completada':status==='cancelled'?'✗ Cita cancelada':'Estado actualizado');
-  if(!c||!c.client_email)return;
+  if(!c||!c.client_email){if(status==='cancelled')showToast('⚠ Esta cita no tiene email del cliente');return;}
   const dt=new Date(c.starts_at);
   const dateLabel=dt.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const timeLabel=dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
