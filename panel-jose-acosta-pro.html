@@ -1897,13 +1897,16 @@ async function cambiarEstadoCita(id,status){
     cliente_nombre:c.client_name,cliente_email:c.client_email,
     cliente_telefono:c.client_phone||'—',
     negocio_nombre:biz.name||BIZ_NAME||'Jose Acosta · Sastre a medida',
-    servicio:c.service||'Consulta traje a medida',
+    servicio:status==='confirmed'?'✅ Cita confirmada':'❌ Tu cita ha sido cancelada',
     duracion:(c.duration_minutes||60)+' min',precio:'Gratuita',
-    fecha:dateLabel,hora:timeLabel,reply_to:biz.email||'airmateai@gmail.com',notes:''
+    fecha:dateLabel,hora:timeLabel,reply_to:biz.email||'airmateai@gmail.com',
+    notes:status==='confirmed'
+      ?'Tu cita ha sido confirmada. Te esperamos en '+( biz.address||'nuestro local')+'.'
+      :'Tu cita ha sido cancelada. Si quieres reservar una nueva cita, no dudes en contactarnos.'
   };
   let tpl=null;
   if(status==='confirmed')tpl='template_qnip0mc';
-  else if(status==='cancelled')tpl='template_cancelacion';
+  else if(status==='cancelled')tpl='template_lg1l7bi';
   if(!tpl)return;
   emailjs.send('service_npmjvvf',tpl,base)
     .then(()=>showToast('📧 Email enviado a '+c.client_email))
@@ -2632,7 +2635,7 @@ async function _encNotificarCliente(o,col){
   const email=client?.email||o.client_email||null;
   if(!email)return;
   const biz=getBizInfo();
-  emailjs.send('service_npmjvvf','template_qnip0mc',{
+  emailjs.send('service_npmjvvf','template_lg1l7bi',{
     cliente_nombre:o.client_name||'',
     cliente_email:email,
     cliente_telefono:o.client_phone||'—',
@@ -3835,7 +3838,7 @@ async function _doEnviarEmailDoc(id){
   const lineas=(f.lines||[]).map(l=>`• ${l.desc} × ${l.qty} — ${crmFmt(l.price*l.qty)}`).join('\n')||'Consulte el documento para ver el detalle.';
   const biz=getBizInfo();
   const subject=`${tipDoc} ${num} — ${biz.name||'Jose Acosta Style'}`;
-  emailjs.send('service_npmjvvf','template_documento',{
+  emailjs.send('service_npmjvvf','template_lg1l7bi',{
     cliente_nombre: f.client_name||'Cliente',
     cliente_email: toEmail,
     cliente_telefono: '—',
@@ -5258,12 +5261,12 @@ function _doTpvEnviarRecibo(ventaId){
   if(!toEmail||!toEmail.includes('@')){showToast('⚠ Introduce un email válido');return;}
   const v=TPV_HISTORIAL.find(x=>x.id===ventaId)||TPV_HISTORIAL[0];
   const biz=getBizInfo();
-  emailjs.send('service_npmjvvf','template_qnip0mc',{
+  emailjs.send('service_npmjvvf','template_lg1l7bi',{
     cliente_nombre:'Cliente',
     cliente_email:toEmail,
     cliente_telefono:'—',
     negocio_nombre:biz.name||'Jose Acosta Style',
-    servicio:'Recibo de compra',
+    servicio:'🧾 Recibo de compra',
     duracion:'',
     precio:v?v.total.toFixed(2)+' €':'—',
     fecha:v?v.fecha:new Date().toLocaleDateString('es-ES'),
