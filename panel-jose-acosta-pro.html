@@ -1884,30 +1884,30 @@ function openCitaModal(id){
 
 async function cambiarEstadoCita(id,status){
   const c=allCitas.find(x=>x.id===id);if(c)c.status=status;
-  renderDashboard();updateBadges();
   await _sb.from('appointments').update({status}).eq('id',id);
-  showToast(status==='confirmed'?'✓ Cita confirmada':status==='completed'?'✔ Cita completada':'Estado actualizado');
-  // Enviar email de confirmación al cliente cuando Jose confirma
-  if(status==='confirmed'&&c){
-    if(!c.client_email){showToast('⚠ Esta cita no tiene email del cliente');return;}
-    const dt=new Date(c.starts_at);
-    const dateLabel=dt.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    const timeLabel=dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-    emailjs.send('service_npmjvvf','template_qnip0mc',{
-      cliente_nombre:   c.client_name,
-      cliente_email:    c.client_email,
-      cliente_telefono: c.client_phone||'—',
-      negocio_nombre:   BIZ_NAME||'Jose Acosta · Sastre a medida',
-      servicio:         c.service||'Consulta traje a medida',
-      duracion:         (c.duration_minutes||60)+' min',
-      precio:           'Gratuita',
-      fecha:            dateLabel,
-      hora:             timeLabel,
-      reply_to:         'airmateai@gmail.com',
-    })
+  renderDashboard();updateBadges();
+  if(typeof renderCitas==='function')renderCitas();
+  showToast(status==='confirmed'?'✓ Cita confirmada':status==='completed'?'✔ Cita completada':status==='cancelled'?'✗ Cita cancelada':'Estado actualizado');
+  if(!c||!c.client_email)return;
+  const dt=new Date(c.starts_at);
+  const dateLabel=dt.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const timeLabel=dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  const biz=getBizInfo();
+  const base={
+    cliente_nombre:c.client_name,cliente_email:c.client_email,
+    cliente_telefono:c.client_phone||'—',
+    negocio_nombre:biz.name||BIZ_NAME||'Jose Acosta · Sastre a medida',
+    servicio:c.service||'Consulta traje a medida',
+    duracion:(c.duration_minutes||60)+' min',precio:'Gratuita',
+    fecha:dateLabel,hora:timeLabel,reply_to:biz.email||'airmateai@gmail.com',notes:''
+  };
+  let tpl=null;
+  if(status==='confirmed')tpl='template_qnip0mc';
+  else if(status==='cancelled')tpl='template_cancelacion';
+  if(!tpl)return;
+  emailjs.send('service_npmjvvf',tpl,base)
     .then(()=>showToast('📧 Email enviado a '+c.client_email))
-    .catch(e=>{console.error('EmailJS error:',e);showToast('⚠ Email error: '+JSON.stringify(e));});
-  }
+    .catch(e=>{console.error('EmailJS error:',e);showToast('⚠ Email error');});
 }
 
 function openEditCitaModal(id){
@@ -3835,7 +3835,7 @@ async function _doEnviarEmailDoc(id){
   const lineas=(f.lines||[]).map(l=>`• ${l.desc} × ${l.qty} — ${crmFmt(l.price*l.qty)}`).join('\n')||'Consulte el documento para ver el detalle.';
   const biz=getBizInfo();
   const subject=`${tipDoc} ${num} — ${biz.name||'Jose Acosta Style'}`;
-  emailjs.send('service_npmjvvf','template_qnip0mc',{
+  emailjs.send('service_npmjvvf','template_documento',{
     cliente_nombre: f.client_name||'Cliente',
     cliente_email: toEmail,
     cliente_telefono: '—',
