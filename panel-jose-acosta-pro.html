@@ -561,19 +561,21 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
 <!-- LOGIN -->
 <div id="login-screen" style="display:none">
   <div class="login-left" id="ja-login-left" style="flex:1;position:relative;overflow:hidden;background:#000;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;">
-    <!-- Visor 360 CSS 3D — fondo negro, 2 imágenes, rotación con scaleX -->
-    <div id="login360-stage" style="position:absolute;inset:0;cursor:grab;touch-action:none;overflow:hidden;display:flex;align-items:center;justify-content:center;"
+    <!-- Visor 360 CSS 3D real — perspective + rotateY + backface-visibility -->
+    <div id="login360-stage" style="position:absolute;inset:0;cursor:grab;touch-action:none;overflow:hidden;display:flex;align-items:center;justify-content:center;perspective:1200px;"
          onmousedown="login360Start(event)" ontouchstart="login360Start(event)">
-      <!-- Imagen delantera -->
-      <img id="login360-front" src="https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/front.jpeg"
-           draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none;will-change:transform,opacity;transform-origin:center center;">
-      <!-- Imagen trasera -->
-      <img id="login360-back" src="https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/back.jpeg"
-           draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none;will-change:transform,opacity;transform-origin:center center;opacity:0;">
-      <!-- Degradado inferior para texto -->
-      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.95) 0%,rgba(0,0,0,.4) 45%,transparent 70%);pointer-events:none;z-index:1"></div>
-      <!-- Degradado derecho suave -->
-      <div style="position:absolute;inset:0;background:linear-gradient(to right,transparent 55%,rgba(0,0,0,.5) 100%);pointer-events:none;z-index:1"></div>
+      <!-- Card 3D que rota en Y -->
+      <div id="login360-card" style="position:absolute;inset:0;transform-style:preserve-3d;will-change:transform;">
+        <!-- Cara delantera -->
+        <img id="login360-front" src="https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/front.jpeg"
+             draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none;backface-visibility:hidden;-webkit-backface-visibility:hidden;">
+        <!-- Cara trasera (rotada 180°) -->
+        <img id="login360-back" src="https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/back.jpeg"
+             draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg);">
+      </div>
+      <!-- Degradados encima del card -->
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.95) 0%,rgba(0,0,0,.35) 45%,transparent 70%);pointer-events:none;z-index:1"></div>
+      <div style="position:absolute;inset:0;background:linear-gradient(to right,transparent 55%,rgba(0,0,0,.45) 100%);pointer-events:none;z-index:1"></div>
     </div>
     <!-- Contenido encima del visor -->
     <div style="position:relative;z-index:2;padding:40px 48px;pointer-events:none">
@@ -5760,55 +5762,30 @@ function _iaMostrarMensaje(nombre, msg, tipo, telefono) {
   document.addEventListener('DOMContentLoaded',function(){setTimeout(_buildDots,500);});
 })();
 
-/* ── LOGIN 360° CSS 3D — 2 imágenes + scaleX ─── */
+/* ── LOGIN 360° — CSS 3D real rotateY ─────────── */
 (function(){
-  var FRONT_URL='https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/front.jpeg';
-  var BACK_URL='https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/back.jpeg';
+  new Image().src='https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/front.jpeg';
+  new Image().src='https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/back.jpeg';
 
-  // Preload
-  new Image().src=FRONT_URL; new Image().src=BACK_URL;
-
-  var _angle=0;       // 0-360
+  var _angle=0;
   var _dragging=false;
   var _lastX=0;
   var _velX=0;
   var _raf=null;
-  var _autoSpeed=0.4; // grados por frame auto-rotate
-  var _interacted=false;
   var _autoActive=true;
+  var _interacted=false;
 
   function _render(){
-    var front=document.getElementById('login360-front');
-    var back=document.getElementById('login360-back');
-    if(!front||!back)return;
-
-    var rad=_angle*Math.PI/180;
-    var sx=Math.cos(rad);
-    var absSx=Math.abs(sx);
-    var scale='scaleX('+absSx+')';
-
-    if(sx>=0){
-      // Mostrando delantera
-      front.style.transform=scale;
-      front.style.opacity='1';
-      back.style.transform=scale;
-      back.style.opacity='0';
-    } else {
-      // Mostrando trasera (espejada para que no aparezca invertida)
-      back.style.transform='scaleX('+absSx+')';
-      back.style.opacity='1';
-      front.style.transform='scaleX('+absSx+')';
-      front.style.opacity='0';
-    }
+    var card=document.getElementById('login360-card');
+    if(card) card.style.transform='rotateY('+_angle+'deg)';
   }
 
   function _loop(){
-    if(_autoActive && !_dragging){
-      _angle=(_angle+_autoSpeed)%360;
-    } else if(!_dragging && Math.abs(_velX)>0.05){
-      // Inercia al soltar
-      _angle=(_angle-_velX+360)%360;
-      _velX*=0.92;
+    if(_autoActive&&!_dragging){
+      _angle=(_angle+0.35)%360;
+    } else if(!_dragging&&Math.abs(_velX)>0.1){
+      _angle=(_angle+_velX+360)%360;
+      _velX*=0.94;
     }
     _render();
     _raf=requestAnimationFrame(_loop);
@@ -5820,9 +5797,7 @@ function _iaMostrarMensaje(nombre, msg, tipo, telefono) {
     if(h){h.style.opacity='0';setTimeout(function(){h.style.display='none';},400);}
   }
 
-  window._startLogin360=function(){
-    if(!_raf) _loop();
-  };
+  window._startLogin360=function(){if(!_raf)_loop();};
 
   window.login360Start=function(e){
     _dragging=true;_autoActive=false;_velX=0;
@@ -5840,8 +5815,8 @@ function _iaMostrarMensaje(nombre, msg, tipo, telefono) {
     if(e.cancelable)e.preventDefault();
     var x=e.touches?e.touches[0].clientX:e.clientX;
     var dx=x-_lastX;
-    _velX=dx*0.5;
-    _angle=(_angle-dx*0.4+360)%360;
+    _velX=dx*0.6;
+    _angle=(_angle+dx*0.45+360)%360;
     _lastX=x;
     _render();
   }
@@ -5853,13 +5828,10 @@ function _iaMostrarMensaje(nombre, msg, tipo, telefono) {
     document.removeEventListener('mouseup',_onEnd);
     document.removeEventListener('touchmove',_onMove);
     document.removeEventListener('touchend',_onEnd);
-    // Reanudar auto-rotate tras 4s de inactividad
-    setTimeout(function(){if(!_dragging){_autoActive=true;}},4000);
+    setTimeout(function(){if(!_dragging)_autoActive=true;},4000);
   }
 
-  document.addEventListener('DOMContentLoaded',function(){
-    setTimeout(function(){_loop();},600);
-  });
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(_loop,600);});
 })();
 
 
