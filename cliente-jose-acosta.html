@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#0a0806">
+<title>Mi cuenta · Jose Acosta Style</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#0a0806;color:#fafaf7;min-height:100vh;}
+.wrap{max-width:760px;margin:0 auto;padding:32px 20px 60px;}
+.header{text-align:center;padding:40px 20px;border-bottom:1px solid rgba(196,163,90,.2);margin-bottom:32px;}
+.logo{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;letter-spacing:.08em;color:#fff;margin-bottom:10px;}
+.tagline{font-size:10px;letter-spacing:.32em;color:#c4a35a;text-transform:uppercase;}
+.divider{width:48px;height:1px;background:#c4a35a;margin:16px auto;}
+.greet{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;color:#fafaf7;margin-bottom:6px;}
+.greet em{color:#c4a35a;font-style:italic;}
+.greet-sub{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#8a7960;margin-bottom:32px;}
+.section{margin-bottom:36px;}
+.section-title{font-size:10px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:#c4a35a;margin-bottom:14px;}
+.card{background:#161318;border:1px solid rgba(196,163,90,.12);border-radius:12px;padding:18px 20px;margin-bottom:10px;transition:border-color .2s;}
+.card:hover{border-color:rgba(196,163,90,.35);}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;margin-bottom:6px;}
+.card-sub{font-size:12px;color:rgba(255,255,255,.45);letter-spacing:.04em;}
+.card-meta{font-size:11px;color:#c4a35a;letter-spacing:.12em;text-transform:uppercase;margin-top:6px;}
+.tag{display:inline-block;background:rgba(196,163,90,.12);border:1px solid rgba(196,163,90,.3);color:#c4a35a;font-size:9px;font-weight:700;padding:3px 9px;border-radius:3px;letter-spacing:.18em;text-transform:uppercase;}
+.empty{text-align:center;padding:30px;color:rgba(255,255,255,.3);font-style:italic;font-family:'Cormorant Garamond',serif;font-size:16px;}
+.footer{text-align:center;padding:32px 20px 0;border-top:1px solid rgba(196,163,90,.1);margin-top:40px;}
+.footer-name{font-family:'Cormorant Garamond',serif;font-style:italic;color:#c4a35a;font-size:14px;margin-bottom:6px;}
+.footer-meta{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.16em;text-transform:uppercase;}
+.wa-btn{display:inline-flex;align-items:center;gap:8px;background:#25d366;color:#fff;text-decoration:none;padding:12px 22px;border-radius:30px;font-size:13px;font-weight:700;margin-top:16px;transition:transform .2s;}
+.wa-btn:hover{transform:translateY(-2px);}
+.error{text-align:center;padding:60px 20px;}
+.error-title{font-family:'Cormorant Garamond',serif;font-size:28px;color:#c4a35a;margin-bottom:10px;}
+.spinner{display:inline-block;width:28px;height:28px;border:2px solid rgba(196,163,90,.2);border-top-color:#c4a35a;border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div id="root" class="wrap">
+  <div style="text-align:center;padding:80px 20px"><div class="spinner"></div></div>
+</div>
+
+<script>
+const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+function esc(s){return (s||'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function fmt(n){return new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}).format(Number(n||0));}
+function fmtDate(s){return s?new Date(s).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'}):'—';}
+function fmtDateTime(s){return s?new Date(s).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—';}
+
+const STATUS_LABEL={presupuesto:'Presupuesto',produccion:'En producción',listo_prueba:'Listo para prueba',prueba:'En prueba',ajustes:'En ajustes',listo:'Listo entrega',entregado:'Entregado'};
+
+async function init(){
+  const params=new URLSearchParams(location.search);
+  const id=params.get('id');
+  const root=document.getElementById('root');
+  if(!id){
+    root.innerHTML=`<div class="error"><div class="error-title">Acceso restringido</div><p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.6;max-width:380px;margin:0 auto">Este portal es exclusivo. Pide a Jose Acosta el enlace personal a tu cuenta.</p></div>`;
+    return;
+  }
+
+  // Cargar datos del cliente
+  const [{data:c},{data:ords},{data:facts},{data:apts}]=await Promise.all([
+    sb.from('crm_clients').select('*').eq('id',id).eq('business_slug','jose-acosta').maybeSingle(),
+    sb.from('crm_orders').select('*').eq('business_slug','jose-acosta').eq('client_id',id).order('created_at',{ascending:false}),
+    sb.from('crm_invoices').select('*').eq('business_slug','jose-acosta').eq('client_id',id).order('issue_date',{ascending:false}),
+    sb.from('appointments').select('*').eq('business_slug','jose-acosta').or(`client_id.eq.${id},client_name.ilike.${''}`).order('starts_at',{ascending:false}).limit(20)
+  ]);
+
+  if(!c){
+    root.innerHTML=`<div class="error"><div class="error-title">Cliente no encontrado</div><p style="color:rgba(255,255,255,.5);font-size:13px">Verifica el enlace o contacta con Jose Acosta.</p></div>`;
+    return;
+  }
+
+  const totalFact=(facts||[]).filter(f=>f.type==='factura').reduce((s,f)=>s+Number(f.total||0),0);
+  const totalPag=(facts||[]).filter(f=>f.type==='factura'&&f.status==='pagado').reduce((s,f)=>s+Number(f.total||0),0);
+  const pendiente=totalFact-totalPag;
+
+  root.innerHTML=`
+    <div class="header">
+      <div class="logo">JOSE ACOSTA</div>
+      <div class="divider"></div>
+      <div class="tagline">Sastrería · Alta Confección · Tenerife</div>
+    </div>
+    <div class="greet">Bienvenido, <em>${esc(c.name.split(' ')[0])}</em>.</div>
+    <div class="greet-sub">Tu cuenta exclusiva</div>
+
+    ${pendiente>0?`<div class="card" style="background:linear-gradient(135deg,#1a1408,#0d0b07);border:1px solid rgba(196,163,90,.4);text-align:center;margin-bottom:30px">
+      <div style="font-size:10px;letter-spacing:.28em;color:#c4a35a;text-transform:uppercase;margin-bottom:6px">Saldo pendiente</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:400;color:#fff">${fmt(pendiente)}</div>
+    </div>`:''}
+
+    <div class="section">
+      <div class="section-title">🧵 Tus encargos</div>
+      ${(ords||[]).length?(ords).map(o=>`
+        <div class="card">
+          <div class="card-title">${esc(o.title)}</div>
+          <div class="card-sub">${o.fecha_entrega?'Entrega prevista: '+fmtDate(o.fecha_entrega):'Encargo activo'}</div>
+          <div class="card-meta">${esc(STATUS_LABEL[o.status]||o.status||'')}${o.price?' · '+fmt(o.price):''}</div>
+        </div>`).join(''):'<div class="empty">Aún no tienes encargos registrados</div>'}
+    </div>
+
+    <div class="section">
+      <div class="section-title">📅 Próximas citas</div>
+      ${(apts||[]).filter(a=>new Date(a.starts_at)>=new Date()&&a.status!=='cancelled').slice(0,5).length?
+        (apts).filter(a=>new Date(a.starts_at)>=new Date()&&a.status!=='cancelled').slice(0,5).map(a=>`
+          <div class="card">
+            <div class="card-title">${esc(a.service||'Cita')}</div>
+            <div class="card-sub">${fmtDateTime(a.starts_at)}</div>
+            ${a.notes?`<div class="card-meta" style="text-transform:none;letter-spacing:0;color:rgba(255,255,255,.5);font-style:italic">${esc(a.notes)}</div>`:''}
+          </div>`).join(''):'<div class="empty">Sin citas programadas</div>'}
+    </div>
+
+    <div class="section">
+      <div class="section-title">🧾 Tus documentos</div>
+      ${(facts||[]).length?(facts).slice(0,10).map(f=>`
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+            <div>
+              <div class="card-title">${esc(f.invoice_number||'—')}</div>
+              <div class="card-sub">${fmtDate(f.issue_date)} · ${esc(f.type==='factura'?'Factura':'Presupuesto')}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#c4a35a">${fmt(f.total||0)}</div>
+              ${f.status?`<span class="tag" style="margin-top:4px">${esc(f.status)}</span>`:''}
+            </div>
+          </div>
+        </div>`).join(''):'<div class="empty">Sin documentos emitidos</div>'}
+    </div>
+
+    <div class="footer">
+      <div class="footer-name">Jose Acosta Style</div>
+      <div class="footer-meta">Av. Ángel Guimerá · Santa Cruz de Tenerife</div>
+      <a class="wa-btn" href="https://wa.me/34900000000?text=${encodeURIComponent('Hola Jose, soy '+c.name)}">💬 WhatsApp directo</a>
+    </div>
+  `;
+}
+
+init();
+</script>
+</body>
+</html>

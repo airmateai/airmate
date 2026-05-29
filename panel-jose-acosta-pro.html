@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Jose Acosta">
 <title>Airmate · Jose Acosta</title>
+<link rel="manifest" href="https://airmate.es/panel-jose-acosta-manifest.json">
+<link rel="apple-touch-icon" href="https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/jose-acosta/icon-192.png">
+<link rel="icon" type="image/png" href="https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/jose-acosta/icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap" rel="stylesheet">
@@ -1332,7 +1335,7 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
     <div style="padding:16px 24px 12px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:14px 14px 0 0">
       <div style="font-size:15px;font-weight:700">Vista previa del documento</div>
       <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn btn-accent" onclick="window.print()">🖨 Descargar PDF</button>
+        <button class="btn btn-ghost" onclick="(function(){var b=document.querySelector('#crm-print-body [data-invoice-id]');var id=b?b.dataset.invoiceId:null;sigpadOpen(id,function(dataUrl){var slot=document.getElementById('sig-slot-'+id);if(slot){slot.innerHTML='<img src=\''+dataUrl+'\' style=\'max-width:200px;max-height:80px\'/><div style=\'font-size:9px;color:#8a7960;margin-top:4px;font-style:italic\'>Firmado el '+new Date().toLocaleString('es-ES')+'</div>';}});})()">✍ Capturar firma</button> <button class="btn btn-accent" onclick="window.print()">🖨 Descargar PDF</button>
         <button onclick="const _e=document.getElementById('crm-print-overlay');_e.classList.remove('open');_e.style.display='none';" style="background:none;border:none;font-size:20px;color:#94a3b8;cursor:pointer;padding:4px;position:relative;z-index:9999">✕</button>
       </div>
     </div>
@@ -2474,6 +2477,7 @@ async function crmVerCliente(id){
     `<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">📐 Medidas detalladas</div>`+
     medHtml+saldoHtml+timelineHtml+ordsHtml+factsHtml,
     `<button class="btn btn-ghost" onclick="crmCloseModal()">Cerrar</button>
+     <button class="btn btn-ghost" onclick="compartirPortalCliente('${id}','${esc(c.name)}','${esc(c.phone||'')}')">🔗 Portal cliente</button>
      <button class="btn btn-ghost" onclick="crmCloseModal();crmOpenFacturaModalForClient('${id}','${esc(c.name)}')">+ Presupuesto</button>
      <button class="btn btn-accent" onclick="crmCloseModal();crmEditCliente('${id}')">✏ Editar</button>`);
 }
@@ -3954,6 +3958,22 @@ function crmViewFactura(id,idx=0){
         <div style="font-size:10px;color:#5c4d3a;font-family:monospace;word-break:break-all;letter-spacing:.02em;">${esc(f.verifactu_csv)}</div>
       </div>
     </div>`:''}
+
+    <!-- FIRMA DEL CLIENTE -->
+    <div data-invoice-id="${esc(f.id)}" style="background:#fff;padding:24px 36px;border-top:1px solid #ede9df;display:grid;grid-template-columns:1fr 1fr;gap:32px;">
+      <div>
+        <div style="font-size:9px;font-weight:700;color:#b89a5e;text-transform:uppercase;letter-spacing:.28em;margin-bottom:14px;">Firma del cliente</div>
+        <div id="sig-slot-${esc(f.id)}" style="min-height:80px;border-bottom:1px solid #c4a35a;display:flex;align-items:flex-end;padding-bottom:6px;">
+          ${(function(){var s=typeof getSignature==='function'?getSignature(f.id):(f.signature_data||null);return s?`<div><img src="${s}" style="max-width:200px;max-height:80px"/><div style="font-size:9px;color:#8a7960;margin-top:4px;font-style:italic">Firmado${f.signed_at?' el '+new Date(f.signed_at).toLocaleString('es-ES'):''}</div></div>`:'<span style="font-size:10px;color:#a89478;font-style:italic">Sin firmar</span>';})()}
+        </div>
+      </div>
+      <div>
+        <div style="font-size:9px;font-weight:700;color:#b89a5e;text-transform:uppercase;letter-spacing:.28em;margin-bottom:14px;">Por el establecimiento</div>
+        <div style="min-height:80px;border-bottom:1px solid #c4a35a;display:flex;align-items:flex-end;padding-bottom:6px;">
+          <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:16px;color:#1a1410;letter-spacing:.04em;">${esc(biz.name||BIZ_NAME)}</div>
+        </div>
+      </div>
+    </div>
 
     <!-- FOOTER ELEGANTE -->
     <div style="background:#0d0b07;padding:22px 36px;text-align:center;position:relative;overflow:hidden;">
@@ -6264,6 +6284,25 @@ mark.gs-hl{background:rgba(196,163,90,.35);color:#fff;border-radius:2px;padding:
         out.push({type:'lead',icon:'🔥',tag:'Lead',title:l.name,sub:[l.phone,l.interest].filter(Boolean).join(' · ')+' · '+(l.intent_level||''),action:function(){gsearchClose();showTab('leads',document.getElementById('nav-leads'));}});
       }
     });
+    // ✨ ACCIONES — comandos rápidos
+    var actions=[
+      {kw:'nueva cita nuevo evento agenda',title:'Nueva cita',sub:'Abrir formulario de cita',action:function(){gsearchClose();showTab('citas',document.getElementById('nav-citas'));setTimeout(function(){if(typeof openCitaModal==='function')openCitaModal();},200);}},
+      {kw:'nuevo encargo pedido orden',title:'Nuevo encargo',sub:'Crear encargo en kanban',action:function(){gsearchClose();showTab('crm-encargos',document.getElementById('nav-crm-encargos'));setTimeout(function(){if(typeof crmOpenEncargoModal==='function')crmOpenEncargoModal();},200);}},
+      {kw:'nuevo cliente alta',title:'Nuevo cliente',sub:'Dar de alta cliente',action:function(){gsearchClose();showTab('crm-clientes',document.getElementById('nav-crm-clientes'));setTimeout(function(){if(typeof crmOpenClienteModal==='function')crmOpenClienteModal();},200);}},
+      {kw:'nueva factura',title:'Nueva factura',sub:'Crear factura/presupuesto',action:function(){gsearchClose();showTab('crm-facturacion',document.getElementById('nav-crm-facturacion'));setTimeout(function(){if(typeof crmOpenFacturaModal==='function')crmOpenFacturaModal();},200);}},
+      {kw:'nuevo lead',title:'Nuevo lead',sub:'Añadir lead al pipeline',action:function(){gsearchClose();showTab('leads',document.getElementById('nav-leads'));setTimeout(function(){if(typeof openLeadModal==='function')openLeadModal();},200);}},
+      {kw:'tpv venta caja',title:'Abrir TPV',sub:'Caja registradora',action:function(){gsearchClose();showTab('ventas',document.getElementById('nav-ventas'));}},
+      {kw:'dashboard inicio',title:'Ir al Dashboard',sub:'Vista resumen',action:function(){gsearchClose();showTab('dashboard',document.getElementById('nav-dashboard'));}},
+      {kw:'stock inventario producto',title:'Ver stock',sub:'Inventario',action:function(){gsearchClose();showTab('crm-stock',document.getElementById('nav-crm-stock'));}},
+      {kw:'igic hacienda impuesto trimestre',title:'Informe IGIC',sub:'Exportar para Hacienda',action:function(){gsearchClose();showTab('crm-facturacion',document.getElementById('nav-crm-facturacion'));setTimeout(function(){if(typeof openIGICModal==='function')openIGICModal();},200);}},
+      {kw:'compra gasto factura recibo',title:'Nueva compra',sub:'Factura de proveedor',action:function(){gsearchClose();showTab('crm-compras',document.getElementById('nav-crm-compras'));setTimeout(function(){if(typeof openCompraModal==='function')openCompraModal();},200);}},
+    ];
+    actions.forEach(function(a){
+      if(_norm(a.kw).includes(nq)||_norm(a.title).includes(nq)){
+        out.unshift({type:'accion',icon:'⚡',tag:'Acción',title:a.title,sub:a.sub,action:a.action});
+      }
+    });
+
     return out.slice(0,40);
   }
 
@@ -6284,8 +6323,8 @@ mark.gs-hl{background:rgba(196,163,90,.35);color:#fff;border-radius:2px;padding:
     if(!_results.length){box.innerHTML='<div class="gs-empty"><div class="gs-empty-emoji">🔍</div>Sin resultados para "'+_esc(q)+'"</div>';return;}
     var groups={};
     _results.forEach(function(r,i){r._i=i;if(!groups[r.type])groups[r.type]=[];groups[r.type].push(r);});
-    var labels={cliente:'Clientes',encargo:'Encargos',factura:'Facturación',producto:'Inventario',cita:'Citas',lead:'Leads'};
-    var order=['cliente','encargo','factura','producto','cita','lead'];
+    var labels={accion:'Acciones rápidas',cliente:'Clientes',encargo:'Encargos',factura:'Facturación',producto:'Inventario',cita:'Citas',lead:'Leads'};
+    var order=['accion','cliente','encargo','factura','producto','cita','lead'];
     var h='';
     order.forEach(function(k){
       if(!groups[k])return;
@@ -6591,5 +6630,167 @@ mark.gs-hl{background:rgba(196,163,90,.35);color:#fff;border-radius:2px;padding:
 })();
 </script>
 
+
+<!-- ═══════════════════════════════════════════
+     OLEADA 3 — PWA: registro SW + prompt instalar
+     ═══════════════════════════════════════════ -->
+<script>
+(function(){
+  // Registrar Service Worker
+  if('serviceWorker' in navigator && location.protocol==='https:'){
+    navigator.serviceWorker.register('/airmate/panel-jose-acosta-sw.js').catch(function(e){console.log('SW err:',e);});
+  }
+  // Capturar evento install y mostrar botón flotante
+  var _deferred=null;
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault();_deferred=e;
+    var btn=document.createElement('button');
+    btn.id='pwa-install-btn';
+    btn.innerHTML='⬇ Instalar app';
+    btn.style.cssText='position:fixed;bottom:24px;left:24px;background:linear-gradient(135deg,#c4a35a,#b89a5e);color:#fff;border:none;padding:12px 20px;border-radius:30px;font-size:13px;font-weight:700;letter-spacing:.04em;cursor:pointer;box-shadow:0 8px 24px rgba(196,163,90,.4),0 0 0 1px rgba(255,255,255,.1) inset;z-index:9997;font-family:inherit;animation:loginFadeUp .5s ease both;';
+    btn.onclick=function(){
+      _deferred.prompt();
+      _deferred.userChoice.then(function(r){if(r.outcome==='accepted'){btn.remove();if(typeof celebrate==='function')celebrate('App instalada');}});
+    };
+    document.body.appendChild(btn);
+  });
+  window.addEventListener('appinstalled',function(){
+    var b=document.getElementById('pwa-install-btn');if(b)b.remove();
+  });
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════
+     OLEADA 3 — FIRMA DIGITAL en presupuestos
+     ═══════════════════════════════════════════ -->
+<style>
+#sigpad-overlay{position:fixed;inset:0;background:rgba(8,7,10,.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:10001;display:none;align-items:center;justify-content:center;padding:20px;}
+#sigpad-overlay.open{display:flex;animation:gsFade .15s ease;}
+#sigpad-box{background:#fff;border-radius:14px;padding:24px;max-width:560px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.5),0 0 0 1px rgba(196,163,90,.2);animation:gsRise .25s cubic-bezier(.2,.9,.3,1.2);}
+#sigpad-canvas{width:100%;height:240px;border:2px dashed rgba(196,163,90,.4);border-radius:10px;background:#fafaf7;cursor:crosshair;touch-action:none;display:block;}
+</style>
+<div id="sigpad-overlay" onclick="if(event.target===this)sigpadClose()">
+  <div id="sigpad-box">
+    <div style="margin-bottom:14px">
+      <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:500;color:#1a1410;letter-spacing:.02em">Firma del cliente</div>
+      <div style="font-size:11px;color:#8a7960;letter-spacing:.18em;text-transform:uppercase;margin-top:4px">Firme con el dedo o ratón en el recuadro</div>
+    </div>
+    <canvas id="sigpad-canvas" width="600" height="240"></canvas>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="sigpadClear()">⟲ Borrar</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="sigpadClose()">Cancelar</button>
+        <button class="btn btn-accent" onclick="sigpadSave()">✓ Confirmar firma</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var _cv,_ctx,_drawing=false,_invoiceId=null,_cb=null;
+  function _init(){
+    _cv=document.getElementById('sigpad-canvas');if(!_cv)return;
+    var dpr=window.devicePixelRatio||1;
+    var rect=_cv.getBoundingClientRect();
+    _cv.width=rect.width*dpr;_cv.height=240*dpr;
+    _ctx=_cv.getContext('2d');
+    _ctx.scale(dpr,dpr);
+    _ctx.strokeStyle='#1a1410';_ctx.lineWidth=2.2;_ctx.lineCap='round';_ctx.lineJoin='round';
+  }
+  function _pos(e){
+    var r=_cv.getBoundingClientRect();
+    var x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+    var y=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+    return [x,y];
+  }
+  function _start(e){_drawing=true;e.preventDefault();var p=_pos(e);_ctx.beginPath();_ctx.moveTo(p[0],p[1]);}
+  function _move(e){if(!_drawing)return;e.preventDefault();var p=_pos(e);_ctx.lineTo(p[0],p[1]);_ctx.stroke();}
+  function _end(){_drawing=false;}
+
+  window.sigpadOpen=function(invoiceId,callback){
+    _invoiceId=invoiceId;_cb=callback||null;
+    document.getElementById('sigpad-overlay').classList.add('open');
+    setTimeout(function(){
+      _init();
+      _cv.addEventListener('mousedown',_start);_cv.addEventListener('mousemove',_move);
+      _cv.addEventListener('mouseup',_end);_cv.addEventListener('mouseleave',_end);
+      _cv.addEventListener('touchstart',_start,{passive:false});_cv.addEventListener('touchmove',_move,{passive:false});
+      _cv.addEventListener('touchend',_end);
+      // Si existe firma previa en localStorage, cargarla
+      if(_invoiceId){
+        var prev=localStorage.getItem('sig_'+_invoiceId);
+        if(prev){var img=new Image();img.onload=function(){_ctx.drawImage(img,0,0,_cv.getBoundingClientRect().width,240);};img.src=prev;}
+      }
+    },80);
+  };
+  window.sigpadClose=function(){document.getElementById('sigpad-overlay').classList.remove('open');};
+  window.sigpadClear=function(){if(_ctx)_ctx.clearRect(0,0,_cv.width,_cv.height);};
+  window.sigpadSave=function(){
+    if(!_cv)return;
+    var dataUrl=_cv.toDataURL('image/png');
+    if(_invoiceId){
+      localStorage.setItem('sig_'+_invoiceId,dataUrl);
+      localStorage.setItem('sig_'+_invoiceId+'_at',new Date().toISOString());
+      // Intentar persistir en DB (requiere columnas signature_data y signed_at)
+      try{
+        if(typeof _sb!=='undefined'){
+          _sb.from('crm_invoices').update({signature_data:dataUrl,signed_at:new Date().toISOString()}).eq('id',_invoiceId).then(function(){});
+        }
+      }catch(e){}
+    }
+    sigpadClose();
+    if(typeof celebrate==='function')celebrate('Firma capturada');
+    if(_cb)_cb(dataUrl);
+  };
+  // Helper para invocar desde el modal print
+  window.getSignature=function(invoiceId){
+    return invoiceId?localStorage.getItem('sig_'+invoiceId):null;
+  };
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════
+     OLEADA 4 — INTEGRACIONES preparadas
+     Portal cliente · WhatsApp · Stripe link
+     ═══════════════════════════════════════════ -->
+<script>
+(function(){
+  // ── PORTAL CLIENTE: copia enlace + opción WhatsApp
+  window.compartirPortalCliente=function(clientId,clientName,phone){
+    var url='https://airmate.es/cliente-jose-acosta.html?id='+clientId;
+    try{navigator.clipboard.writeText(url);}catch(e){}
+    if(typeof showToast==='function')showToast('✓ Enlace copiado: '+url);
+    if(typeof soundSuccess==='function')soundSuccess();
+    // Si tiene WhatsApp, ofrecer enviar
+    if(phone){
+      var msg='Hola '+clientName.split(' ')[0]+', te dejo tu portal exclusivo con tus encargos, citas y facturas:\n\n'+url+'\n\n— Jose Acosta Style';
+      var wa='https://wa.me/'+phone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg);
+      setTimeout(function(){
+        if(confirm('Enlace copiado.\n\n¿Enviárselo también por WhatsApp?'))window.open(wa,'_blank');
+      },300);
+    }
+  };
+
+  // ── ENLACE STRIPE PAYMENT (preparado, requiere STRIPE_PUBLIC_KEY)
+  // Genera un link directo de pago. Si no hay key, sólo muestra estado "Pendiente activar".
+  window.linkPagoStripe=function(invoiceId,amount){
+    // TODO: descomentar cuando Jose contrate Stripe:
+    // const STRIPE_KEY = 'pk_live_xxx';
+    // fetch('https://airmate.es/api/stripe-link', {body:JSON.stringify({invoiceId,amount})})
+    //   .then(r=>r.json()).then(d=>window.open(d.url,'_blank'));
+    alert('💳 Pago Stripe — pendiente de activar\n\nFactura: '+invoiceId+'\nImporte: '+amount+'€\n\nPasos para activar:\n1. Crear cuenta Stripe (gratis)\n2. Mandarme las API keys\n3. Activo el botón y los clientes pagarán con tarjeta desde el email');
+  };
+
+  // ── WHATSAPP RECORDATORIO 24h ANTES
+  // (Para automatizar requiere cron real; aquí función manual desde panel)
+  window.recordarCita=function(citaId){
+    var c=(typeof allCitas!=='undefined'?allCitas:[]).find(function(x){return x.id===citaId;});
+    if(!c||!c.client_phone)return alert('Falta teléfono del cliente');
+    var d=new Date(c.starts_at);
+    var msg='Hola '+(c.client_name||'').split(' ')[0]+'! Te recordamos tu cita en Jose Acosta Style mañana '+d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})+' a las '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})+'. ¿Confirmas?\n\n— Jose Acosta';
+    window.open('https://wa.me/'+c.client_phone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+  };
+})();
+</script>
 </body>
 </html>
