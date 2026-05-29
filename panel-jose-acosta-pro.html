@@ -1145,7 +1145,7 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
         <!-- FINANZAS -->
         <div id="pane-finanzas" class="tab-pane">
           <div class="page-hd page-hd-row">
-            <div><div class="page-title">Finanzas</div><div class="page-sub">Conectado a Holded · datos reales</div></div>
+            <div><div class="page-title">Finanzas</div><div class="page-sub">Análisis financiero · datos de ejemplo</div></div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <div id="fin-conn" style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:5px 10px;border-radius:20px;background:rgba(196,163,90,.12);color:#c4a35a;border:1px solid rgba(196,163,90,.3)">● Holded</div>
               <select id="fin-mes" onchange="finanzasAnimar()" style="font-size:12px;padding:8px 12px;border:1px solid rgba(196,163,90,.3);border-radius:8px;background:#fff;color:#1a1410;font-weight:600;font-family:inherit">
@@ -4939,24 +4939,80 @@ const _GOLD = '#c4a35a', _GOLD_DK = '#9a7f45', _GOLD_LT = '#e8c97a', _CREAM = '#
 function _finFmt(n){ return new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(Number(n||0)); }
 function _finFmt2(n){ return new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}).format(Number(n||0)); }
 
-async function _finHolded(endpoint){
-  try{
-    const r=await fetch(HOLDED_PROXY+'?slug='+BIZ_SLUG+'&endpoint='+encodeURIComponent(endpoint));
-    if(!r.ok) return null;
-    return await r.json();
-  }catch(e){ console.warn('Holded fetch fail',endpoint,e); return null; }
+// Datos demo realistas — sin tocar API real
+function _finGenDemo(){
+  const treasury=[
+    {id:'1',name:'Cuenta Negocio · Bankinter',type:'bank',balance:8420.50,accountNumber:'ES12 1234 5678 9012'},
+    {id:'2',name:'Pago Metálico',type:'cash',balance:1340.00,accountNumber:null},
+    {id:'3',name:'Reserva trimestral · La Caixa',type:'bank',balance:4280.75,accountNumber:'ES45 2100 9999 4321'},
+  ];
+  const expensesAcc=[
+    {id:'e1',name:'Tejidos y forros',color:'#c4a35a'},
+    {id:'e2',name:'Alquiler local',color:'#9a7f45'},
+    {id:'e3',name:'Suministros',color:'#b89a5e'},
+    {id:'e4',name:'Transportes',color:'#547b1c'},
+    {id:'e5',name:'Marketing',color:'#3b82f6'},
+    {id:'e6',name:'Mercería',color:'#e8c97a'},
+    {id:'e7',name:'Servicios profesionales',color:'#8b5cf6'},
+    {id:'e8',name:'Otros gastos',color:'#94a3b8'},
+  ];
+  // 200 movimientos repartidos en los últimos 12 meses
+  const payments=[];
+  const clientes=['Roberto Sánchez','Alejandro Vega','Pedro Morales','Carlos Ruiz','Manuel Hernández','Antonio López','Javier Martín','Diego Fernández','Sergio Castro','Daniel Torres','Iván Jiménez','Pablo Romero'];
+  const proveedores=['Tejidos Carrara','Mercería Central','Inmobiliaria Tenerife','Endesa','Movistar','Correos','Gestor Pérez','Tintorería Pro'];
+  const now=Date.now()/1000;
+  for(let i=0;i<240;i++){
+    const daysAgo=Math.floor(Math.random()*365);
+    const date=now-daysAgo*86400;
+    const isIncome=Math.random()>0.32;
+    const amount=isIncome
+      ?Math.round((Math.random()*1100+150)*100)/100  // 150-1250 €
+      :-Math.round((Math.random()*420+25)*100)/100;  // -25 a -445 €
+    const contact=isIncome?clientes[Math.floor(Math.random()*clientes.length)]:proveedores[Math.floor(Math.random()*proveedores.length)];
+    payments.push({
+      id:'p'+i,
+      bankId:treasury[Math.floor(Math.random()*2)].id,
+      contactId:null,
+      contactName:contact,
+      amount:amount,
+      desc:isIncome?'Cobro '+contact:'Pago a '+contact,
+      date:date,
+      documentType:isIncome?(Math.random()>0.55?'salesreceipt':'invoice'):'purchase',
+      documentId:null,
+    });
+  }
+  payments.sort((a,b)=>b.date-a.date);
+  // 60 tickets TPV con productos
+  const productos=[
+    {name:'CORBATA HECHA EN ITALIA',price:48,tax:7},
+    {name:'CORBATA HECHA EN ESPAÑA',price:35,tax:7},
+    {name:'ZAPATOS',price:189,tax:7},
+    {name:'CHALECO RTW',price:135,tax:7},
+    {name:'PAÑUELO DE BOLSILLO',price:18,tax:7},
+    {name:'Pajarita',price:24,tax:7},
+    {name:'Calcetines HILO ESCOCIA',price:14,tax:3},
+    {name:'TIRANTES',price:32,tax:7},
+    {name:'POLO HOMBRE',price:65,tax:7},
+    {name:'Calcetines ALGODÓN LISO',price:9,tax:3},
+  ];
+  const salesreceipt=[];
+  for(let i=0;i<60;i++){
+    const daysAgo=Math.floor(Math.random()*180);
+    const date=now-daysAgo*86400;
+    const numProds=1+Math.floor(Math.random()*3);
+    const prods=[];
+    for(let k=0;k<numProds;k++){
+      const p=productos[Math.floor(Math.random()*productos.length)];
+      prods.push({name:p.name,price:p.price,units:1+Math.floor(Math.random()*2),tax:p.tax});
+    }
+    salesreceipt.push({id:'sr'+i,date:date,contactName:'',desc:'Venta TPV',products:prods,tags:['accesorios']});
+  }
+  return {treasury,expensesAcc,payments,salesreceipt,creditnote:[],ts:Date.now()};
 }
 
 async function _finLoadData(force){
   if(!force && _finCache.ts && (Date.now()-_finCache.ts)<60000) return _finCache;
-  const [tre,exa,pay,sr,cn] = await Promise.all([
-    _finHolded('treasury'),
-    _finHolded('expensesaccounts'),
-    _finHolded('payments'),
-    _finHolded('documents/salesreceipt'),
-    _finHolded('documents/creditnote'),
-  ]);
-  _finCache = { treasury:tre||[], expensesAcc:exa||[], payments:pay||[], salesreceipt:sr||[], creditnote:cn||[], ts:Date.now() };
+  _finCache=_finGenDemo();
   return _finCache;
 }
 
@@ -4973,11 +5029,11 @@ async function renderFinanzas(){
 
   if(conn){
     const liveOk = (data.treasury&&data.treasury.length)||(data.payments&&data.payments.length);
-    conn.textContent = liveOk ? '● Holded · en vivo' : '○ Holded · sin datos';
+    conn.textContent = '◉ Datos demo';
     conn.style.opacity='1';
-    conn.style.background = liveOk?'rgba(74,222,128,.12)':'rgba(196,163,90,.12)';
-    conn.style.color = liveOk?'#4ade80':'#c4a35a';
-    conn.style.borderColor = liveOk?'rgba(74,222,128,.35)':'rgba(196,163,90,.3)';
+    conn.style.background = 'rgba(196,163,90,.12)';
+    conn.style.color = '#c4a35a';
+    conn.style.borderColor = 'rgba(196,163,90,.3)';
   }
 
   _finRenderTreasury(data.treasury);
