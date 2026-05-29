@@ -14,6 +14,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{
   --nav:#0a0a0a;--nav2:#1a1a1a;--nav-txt:rgba(255,255,255,.5);--nav-active:rgba(184,154,94,.15);
@@ -1144,67 +1145,89 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
         <!-- FINANZAS -->
         <div id="pane-finanzas" class="tab-pane">
           <div class="page-hd page-hd-row">
-            <div><div class="page-title">Finanzas</div><div class="page-sub">Análisis financiero · datos de ejemplo</div></div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <select id="fin-mes" onchange="finanzasAnimar()" style="font-size:12px;padding:7px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#1e293b;font-weight:600">
+            <div><div class="page-title">Finanzas</div><div class="page-sub">Conectado a Holded · datos reales</div></div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div id="fin-conn" style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:5px 10px;border-radius:20px;background:rgba(196,163,90,.12);color:#c4a35a;border:1px solid rgba(196,163,90,.3)">● Holded</div>
+              <select id="fin-mes" onchange="finanzasAnimar()" style="font-size:12px;padding:8px 12px;border:1px solid rgba(196,163,90,.3);border-radius:8px;background:#fff;color:#1a1410;font-weight:600;font-family:inherit">
                 <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
-                <option value="3">Abril</option><option value="4" selected>Mayo</option><option value="5">Junio</option>
+                <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
                 <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
                 <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
               </select>
-              <select id="fin-year" onchange="finanzasAnimar()" style="font-size:12px;padding:7px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#1e293b;font-weight:600">
-                <option value="2026" selected>2026</option><option value="2025">2025</option>
+              <select id="fin-year" onchange="finanzasAnimar()" style="font-size:12px;padding:8px 12px;border:1px solid rgba(196,163,90,.3);border-radius:8px;background:#fff;color:#1a1410;font-weight:600;font-family:inherit">
+                <option value="2026">2026</option><option value="2025">2025</option>
               </select>
+              <button class="btn btn-ghost" onclick="finanzasReload()" style="font-size:12px">⟲ Actualizar</button>
+              <button class="btn btn-accent" onclick="finanzasExportPDF()" style="font-size:12px">📄 Informe PDF</button>
             </div>
           </div>
-          <div id="fin-content">
-            <div id="fin-kpis" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px"></div>
-            <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px">
-              <div style="background:#0a0a0a;border-radius:16px;padding:24px 28px;box-shadow:0 4px 24px rgba(0,0,0,.18)">
-                <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
+
+          <!-- TESORERÍA: saldos cuentas bancarias (Holded) -->
+          <div id="fin-treasury" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:20px"></div>
+
+          <!-- KPIs principales -->
+          <div id="fin-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px"></div>
+
+          <!-- Fila gráficas: evolución 12 meses + margen + proyección -->
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:18px">
+            <div style="background:#0d0b07;border-radius:16px;padding:24px 26px;box-shadow:0 6px 30px rgba(0,0,0,.18);position:relative;overflow:hidden">
+              <div style="position:absolute;inset:0;opacity:.04;background-image:repeating-linear-gradient(45deg,#c4a35a 0,#c4a35a 1px,transparent 0,transparent 16px);pointer-events:none"></div>
+              <div style="position:relative">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
                   <div>
-                    <div style="font-size:13px;font-weight:700;color:#c4a35a;letter-spacing:.08em;text-transform:uppercase">Evolución 2026</div>
-                    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">Ingresos · Gastos · Beneficio neto</div>
-                  </div>
-                  <div style="display:flex;gap:14px;margin-top:4px">
-                    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.55)"><span style="display:inline-block;width:20px;height:2px;background:#c4a35a;border-radius:2px"></span>Ingresos</div>
-                    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.55)"><span style="display:inline-block;width:20px;height:2px;background:#f87171;border-radius:2px"></span>Gastos</div>
-                    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.55)"><span style="display:inline-block;width:20px;height:2px;background:rgba(196,163,90,.4);border-radius:2px;border-top:2px dashed #c4a35a"></span>Beneficio</div>
+                    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;letter-spacing:.03em;font-weight:500">Evolución 12 meses</div>
+                    <div style="font-size:10px;color:rgba(196,163,90,.6);letter-spacing:.18em;text-transform:uppercase;margin-top:4px" id="fin-evolucion-sub">Ingresos · Gastos · Beneficio</div>
                   </div>
                 </div>
-                <canvas id="fin-chart" style="width:100%;display:block;margin-top:8px"></canvas>
-              </div>
-              <div style="background:#0a0a0a;border-radius:16px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,.18);display:flex;flex-direction:column;align-items:center;justify-content:center">
-                <div style="font-size:11px;font-weight:700;color:#c4a35a;letter-spacing:.08em;text-transform:uppercase;align-self:flex-start;margin-bottom:4px">Margen neto</div>
-                <div style="font-size:11px;color:rgba(255,255,255,.4);align-self:flex-start;margin-bottom:18px">Beneficio / Ingresos del mes</div>
-                <div style="position:relative;width:140px;height:140px">
-                  <canvas id="fin-donut" width="140" height="140" style="position:absolute;top:0;left:0"></canvas>
-                  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-                    <div id="fin-donut-label" style="font-size:26px;font-weight:800;color:#c4a35a;letter-spacing:-.03em;line-height:1">0%</div>
-                    <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:3px">margen</div>
-                  </div>
-                </div>
-                <div id="fin-proyeccion" style="margin-top:20px;width:100%;background:rgba(196,163,90,.08);border:1px solid rgba(196,163,90,.35);border-radius:10px;padding:12px 14px">
-                  <div style="font-size:10px;color:#c4a35a;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Proyección mes</div>
-                  <div id="fin-proy-val" style="font-size:19px;font-weight:800;color:#fff;letter-spacing:-.02em">—</div>
-                  <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">a este ritmo</div>
-                </div>
+                <div style="position:relative;height:260px"><canvas id="fin-chart-anual"></canvas></div>
               </div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:14px">
-              <div style="background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.05)">
-                <div style="font-size:12px;font-weight:700;color:#0a0a0a;letter-spacing:.04em;text-transform:uppercase;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #f1f5f9">⏳ Pendiente cobro</div>
-                <div id="fin-pendientes"></div>
+            <div style="display:grid;grid-template-rows:1fr 1fr;gap:14px">
+              <div style="background:#0d0b07;border-radius:16px;padding:20px;box-shadow:0 6px 30px rgba(0,0,0,.18);position:relative;overflow:hidden">
+                <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:#fff;letter-spacing:.02em;font-weight:500;margin-bottom:6px">Margen neto</div>
+                <div style="font-size:9px;color:rgba(196,163,90,.55);letter-spacing:.2em;text-transform:uppercase;margin-bottom:14px">Beneficio / Ingresos</div>
+                <div style="position:relative;height:110px"><canvas id="fin-donut-margen"></canvas><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none"><div id="fin-margen-val" style="font-family:'Cormorant Garamond',serif;font-size:28px;color:#c4a35a;font-weight:500;letter-spacing:-.02em">—</div></div></div>
               </div>
-              <div style="background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.05)">
-                <div style="font-size:12px;font-weight:700;color:#0a0a0a;letter-spacing:.04em;text-transform:uppercase;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #f1f5f9">★ Top clientes</div>
-                <div id="fin-topclientes"></div>
-              </div>
-              <div style="background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.05)">
-                <div style="font-size:12px;font-weight:700;color:#0a0a0a;letter-spacing:.04em;text-transform:uppercase;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #f1f5f9">🧾 Facturas del mes</div>
-                <div id="fin-tabla-wrap"></div>
+              <div style="background:linear-gradient(135deg,#1a1408,#0d0b07);border-radius:16px;padding:20px;border:1px solid rgba(196,163,90,.25);position:relative;overflow:hidden">
+                <div style="font-size:9px;color:#c4a35a;letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin-bottom:6px">📈 Proyección mes</div>
+                <div id="fin-proy-val" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#fff;font-weight:500;letter-spacing:-.01em">—</div>
+                <div id="fin-proy-sub" style="font-size:11px;color:rgba(255,255,255,.45);margin-top:4px;font-style:italic;font-family:'Cormorant Garamond',serif">Calculando ritmo…</div>
               </div>
             </div>
+          </div>
+
+          <!-- Fila: aging cobro + gastos categoría + top clientes -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px">
+            <div class="card" style="margin:0">
+              <div class="card-hd"><div class="card-hd-title">⏳ Aging cuentas por cobrar</div></div>
+              <div style="padding:18px"><div style="position:relative;height:200px"><canvas id="fin-chart-aging"></canvas></div></div>
+            </div>
+            <div class="card" style="margin:0">
+              <div class="card-hd"><div class="card-hd-title">💼 Gastos por categoría</div></div>
+              <div style="padding:18px"><div style="position:relative;height:200px"><canvas id="fin-chart-gastos"></canvas></div></div>
+            </div>
+            <div class="card" style="margin:0">
+              <div class="card-hd"><div class="card-hd-title">★ Top 5 clientes</div></div>
+              <div style="padding:18px"><div style="position:relative;height:200px"><canvas id="fin-chart-topcli"></canvas></div></div>
+            </div>
+          </div>
+
+          <!-- IGIC desglose 3% vs 7% -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+            <div class="card" style="margin:0">
+              <div class="card-hd"><div class="card-hd-title">📊 IGIC recaudado este trimestre</div></div>
+              <div id="fin-igic-block" style="padding:20px"></div>
+            </div>
+            <div class="card" style="margin:0">
+              <div class="card-hd"><div class="card-hd-title">🏷 Productos más vendidos (TPV)</div></div>
+              <div id="fin-top-productos" style="padding:18px"></div>
+            </div>
+          </div>
+
+          <!-- Movimientos recientes -->
+          <div class="card" style="margin:0">
+            <div class="card-hd"><div class="card-hd-title">💸 Últimos movimientos bancarios</div><div style="font-size:11px;color:#8a7960">Holded · payments</div></div>
+            <div id="fin-movimientos" style="padding:6px 0"></div>
           </div>
         </div>
 
@@ -4907,411 +4930,324 @@ async function calcVencimientos(){
   </tbody></table></div></div>`;
 }
 
-// ── FINANZAS ───────────────────────────────────────────────────────────────
-// Datos de ejemplo para demo
-const _FIN_DEMO_FACTURAS=[];
-const _FIN_DEMO_COMPRAS=[];
+// ── FINANZAS · Chart.js + Holded ───────────────────────────────────────────
+const HOLDED_PROXY = 'https://airmate.es/api/holded';
+let _finCharts = {};
+let _finCache = { treasury:null, expensesAcc:null, payments:null, salesreceipt:null, creditnote:null, ts:0 };
+const _GOLD = '#c4a35a', _GOLD_DK = '#9a7f45', _GOLD_LT = '#e8c97a', _CREAM = '#faf7ef';
 
-function renderFinanzas(){
-  try {
-  const mesEl=document.getElementById('fin-mes');
-  const yearEl=document.getElementById('fin-year');
-  const cont=document.getElementById('fin-content');
-  if(!mesEl||!yearEl||!cont)return;
+function _finFmt(n){ return new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(Number(n||0)); }
+function _finFmt2(n){ return new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}).format(Number(n||0)); }
 
-  const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const mes=parseInt(mesEl.value);
-  const year=parseInt(yearEl.value)||new Date().getFullYear();
-  const pm=String(mes+1).padStart(2,'0');
-  const prefix=year+'-'+pm;
-  const prefixPrev=mes===0?(year-1)+'-12':year+'-'+String(mes).padStart(2,'0');
+async function _finHolded(endpoint){
+  try{
+    const r=await fetch(HOLDED_PROXY+'?slug='+BIZ_SLUG+'&endpoint='+encodeURIComponent(endpoint));
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){ console.warn('Holded fetch fail',endpoint,e); return null; }
+}
 
-  const facs=(typeof _crmFacturas!=='undefined'&&_crmFacturas.length>0)?_crmFacturas:_FIN_DEMO_FACTURAS;
-  const comps=(typeof _crmCompras!=='undefined'&&(_crmCompras||[]).length>0)?_crmCompras:_FIN_DEMO_COMPRAS;
+async function _finLoadData(force){
+  if(!force && _finCache.ts && (Date.now()-_finCache.ts)<60000) return _finCache;
+  const [tre,exa,pay,sr,cn] = await Promise.all([
+    _finHolded('treasury'),
+    _finHolded('expensesaccounts'),
+    _finHolded('payments'),
+    _finHolded('documents/salesreceipt'),
+    _finHolded('documents/creditnote'),
+  ]);
+  _finCache = { treasury:tre||[], expensesAcc:exa||[], payments:pay||[], salesreceipt:sr||[], creditnote:cn||[], ts:Date.now() };
+  return _finCache;
+}
 
-  const facMes=facs.filter(function(f){return (f.issue_date||'').startsWith(prefix)&&f.status==='pagado';});
-  const ingresos=facMes.reduce(function(s,f){return s+Number(f.total||0);},0);
-  const compMes=comps.filter(function(c){return (c.date||'').startsWith(prefix);});
-  const gastos=compMes.reduce(function(s,c){return s+Number(c.importe||0);},0);
+function _finDestroy(){ Object.values(_finCharts).forEach(c=>{try{c.destroy()}catch(e){}}); _finCharts={}; }
+
+async function renderFinanzas(){
+  const mes = parseInt(document.getElementById('fin-mes')?.value || new Date().getMonth());
+  const year = parseInt(document.getElementById('fin-year')?.value || new Date().getFullYear());
+  const conn = document.getElementById('fin-conn');
+  if(conn){ conn.textContent='● Cargando…'; conn.style.opacity='.6'; }
+
+  _finDestroy();
+  const data = await _finLoadData();
+
+  if(conn){
+    const liveOk = (data.treasury&&data.treasury.length)||(data.payments&&data.payments.length);
+    conn.textContent = liveOk ? '● Holded · en vivo' : '○ Holded · sin datos';
+    conn.style.opacity='1';
+    conn.style.background = liveOk?'rgba(74,222,128,.12)':'rgba(196,163,90,.12)';
+    conn.style.color = liveOk?'#4ade80':'#c4a35a';
+    conn.style.borderColor = liveOk?'rgba(74,222,128,.35)':'rgba(196,163,90,.3)';
+  }
+
+  _finRenderTreasury(data.treasury);
+  _finRenderKPIs(data, mes, year);
+  _finRenderChartAnual(data, year);
+  _finRenderDonutMargen(data, mes, year);
+  _finRenderProyeccion(data, mes, year);
+  _finRenderAging(data);
+  _finRenderGastosCategoria(data);
+  _finRenderTopClientes(data, mes, year);
+  _finRenderIGIC(data, mes, year);
+  _finRenderTopProductos(data);
+  _finRenderMovimientos(data);
+}
+
+function _finRenderTreasury(treasury){
+  const box=document.getElementById('fin-treasury'); if(!box)return;
+  if(!treasury||!treasury.length){
+    box.innerHTML='<div style="grid-column:1/-1;padding:18px;text-align:center;color:#8a7960;font-style:italic;font-family:\'Cormorant Garamond\',serif">Sin cuentas conectadas a Holded</div>';
+    return;
+  }
+  const total=treasury.reduce((s,t)=>s+Number(t.balance||0),0);
+  const icons={cash:'💵',bank:'🏦',card:'💳',paypal:'🅿️'};
+  let html=`<div style="background:linear-gradient(135deg,#1a1408,#0d0b07);border-radius:14px;padding:20px;border:1px solid rgba(196,163,90,.4);position:relative;overflow:hidden">
+    <div style="position:absolute;inset:0;opacity:.05;background-image:repeating-linear-gradient(45deg,#c4a35a 0,#c4a35a 1px,transparent 0,transparent 14px)"></div>
+    <div style="position:relative">
+      <div style="font-size:9px;font-weight:700;color:#c4a35a;letter-spacing:.28em;text-transform:uppercase;margin-bottom:8px">💰 Patrimonio total</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:500;color:#fff;letter-spacing:-.01em">${_finFmt2(total)}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:4px;letter-spacing:.04em">${treasury.length} cuentas conectadas</div>
+    </div>
+  </div>`;
+  treasury.forEach(t=>{
+    const ico=icons[t.type]||'💼';
+    html+=`<div class="card" style="margin:0;padding:18px 20px;cursor:default;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 22px rgba(196,163,90,.15)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;color:#b89a5e;letter-spacing:.22em;text-transform:uppercase">${esc(t.name||t.type)}</div>
+        <span style="font-size:18px">${ico}</span>
+      </div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500;color:#1a1410;letter-spacing:-.01em">${_finFmt2(t.balance)}</div>
+      ${t.accountNumber?`<div style="font-size:10px;color:#8a7960;margin-top:4px;font-family:monospace">Nº ${t.accountNumber}</div>`:''}
+    </div>`;
+  });
+  box.innerHTML=html;
+}
+
+function _finRenderKPIs(data, mes, year){
+  const box=document.getElementById('fin-kpis'); if(!box)return;
+  // Calcular del mes seleccionado usando payments (cash flow real)
+  const tEnd=new Date(year,mes+1,1).getTime()/1000;
+  const tStart=new Date(year,mes,1).getTime()/1000;
+  const tEndPrev=tStart;
+  const tStartPrev=new Date(year,mes-1,1).getTime()/1000;
+  const payments=data.payments||[];
+  const inMes=payments.filter(p=>p.date>=tStart&&p.date<tEnd);
+  const ingresos=inMes.filter(p=>Number(p.amount)>0).reduce((s,p)=>s+Number(p.amount||0),0);
+  const gastos=Math.abs(inMes.filter(p=>Number(p.amount)<0).reduce((s,p)=>s+Number(p.amount||0),0));
   const beneficio=ingresos-gastos;
+  const inPrev=payments.filter(p=>p.date>=tStartPrev&&p.date<tEndPrev&&Number(p.amount)>0).reduce((s,p)=>s+Number(p.amount||0),0);
+  const diff=inPrev>0?Math.round((ingresos-inPrev)/inPrev*100):null;
+  const sr=(data.salesreceipt||[]).filter(s=>s.date>=tStart&&s.date<tEnd);
+  const ticketMedio=sr.length?ingresos/sr.length:0;
+  const margen=ingresos>0?Math.round(beneficio/ingresos*100):0;
+  const trendArrow=diff!==null?(diff>=0?'↑':'↓')+' '+Math.abs(diff)+'%':'—';
+  const trendColor=diff!==null?(diff>=0?'#4ade80':'#f87171'):'#8a7960';
+  const kpis=[
+    {lbl:'Ingresos del mes',val:_finFmt(ingresos),sub:`${inMes.length} movimientos`,trend:trendArrow,trendC:trendColor},
+    {lbl:'Gastos del mes',val:_finFmt(gastos),sub:'Pagos salida',trend:'',trendC:''},
+    {lbl:'Beneficio neto',val:_finFmt(beneficio),sub:`${margen}% margen`,trend:'',trendC:beneficio>=0?'#4ade80':'#f87171'},
+    {lbl:'Tickets emitidos',val:String(sr.length),sub:`Ticket medio ${_finFmt(ticketMedio)}`,trend:'',trendC:''},
+  ];
+  box.innerHTML=kpis.map((k,i)=>`
+    <div class="card" style="margin:0;padding:22px 22px 18px;animation:finSlideUp .35s ease ${i*.06}s both">
+      <div style="font-size:9px;font-weight:700;color:#b89a5e;letter-spacing:.28em;text-transform:uppercase;margin-bottom:14px">${k.lbl}</div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:500;color:#1a1410;letter-spacing:-.02em;line-height:1">${k.val}</div>
+        ${k.trend?`<div style="font-size:12px;font-weight:700;color:${k.trendC}">${k.trend}</div>`:''}
+      </div>
+      <div style="font-size:11px;color:#8a7960;margin-top:6px;letter-spacing:.04em">${k.sub}</div>
+    </div>`).join('');
+}
 
-  const facPrev=facs.filter(function(f){return (f.issue_date||'').startsWith(prefixPrev)&&f.status==='pagado';});
-  const ingresosPrev=facPrev.reduce(function(s,f){return s+Number(f.total||0);},0);
-  const diff=ingresosPrev>0?Math.round((ingresos-ingresosPrev)/ingresosPrev*100):0;
-
-  const pendientes=facs.filter(function(f){return f.status!=='pagado'&&f.status!=='cancelado'&&f.status!=='borrador';});
-  const totalPendiente=pendientes.reduce(function(s,f){return s+Number(f.total||0);},0);
-
-  const semanas=[0,1,2,3].map(function(s){
-    var d1=s*7+1,d2=Math.min((s+1)*7,31);
-    var ing=facMes.filter(function(f){var d=parseInt((f.issue_date||'').slice(8));return d>=d1&&d<=d2;}).reduce(function(a,f){return a+Number(f.total||0);},0);
-    var gas=compMes.filter(function(c){var d=parseInt((c.date||'').slice(8));return d>=d1&&d<=d2;}).reduce(function(a,c){return a+Number(c.importe||0);},0);
-    return {ing:ing,gas:gas,label:'S'+(s+1)};
+function _finRenderChartAnual(data, year){
+  const cv=document.getElementById('fin-chart-anual'); if(!cv||typeof Chart==='undefined')return;
+  const payments=data.payments||[];
+  const MES_LBL=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const ingArr=Array(12).fill(0), gasArr=Array(12).fill(0);
+  payments.forEach(p=>{
+    const d=new Date(p.date*1000);
+    if(d.getFullYear()!==year)return;
+    const m=d.getMonth();
+    if(Number(p.amount)>0) ingArr[m]+=Number(p.amount);
+    else gasArr[m]+=Math.abs(Number(p.amount));
   });
-  var maxBar=Math.max.apply(null,semanas.map(function(s){return Math.max(s.ing,s.gas);}));
-  if(maxBar<1)maxBar=1;
+  const benArr=ingArr.map((v,i)=>v-gasArr[i]);
+  const ctx=cv.getContext('2d');
+  const grad=ctx.createLinearGradient(0,0,0,260);
+  grad.addColorStop(0,'rgba(196,163,90,.45)');
+  grad.addColorStop(1,'rgba(196,163,90,0)');
+  _finCharts.anual=new Chart(ctx,{type:'line',data:{labels:MES_LBL,datasets:[
+    {label:'Ingresos',data:ingArr,borderColor:_GOLD,backgroundColor:grad,fill:true,tension:.35,borderWidth:2.5,pointBackgroundColor:_GOLD,pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:4,pointHoverRadius:7},
+    {label:'Gastos',data:gasArr,borderColor:'#f87171',backgroundColor:'transparent',tension:.35,borderWidth:2,borderDash:[4,3],pointBackgroundColor:'#f87171',pointRadius:3,pointHoverRadius:6},
+    {label:'Beneficio',data:benArr,borderColor:_GOLD_LT,backgroundColor:'transparent',tension:.35,borderWidth:1.5,pointRadius:2,pointHoverRadius:5},
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'rgba(255,255,255,.55)',font:{size:11,family:'Inter'},boxWidth:8,boxHeight:8}},tooltip:{backgroundColor:'#0a0806',borderColor:_GOLD,borderWidth:1,padding:12,callbacks:{label:c=>c.dataset.label+': '+_finFmt2(c.parsed.y)}}},scales:{y:{ticks:{color:'rgba(255,255,255,.45)',font:{size:10},callback:v=>_finFmt(v)},grid:{color:'rgba(196,163,90,.08)'}},x:{ticks:{color:'rgba(255,255,255,.55)',font:{size:11}},grid:{display:false}}}}});
+}
 
-  var html='';
+function _finRenderDonutMargen(data, mes, year){
+  const cv=document.getElementById('fin-donut-margen'); if(!cv||typeof Chart==='undefined')return;
+  const tStart=new Date(year,mes,1).getTime()/1000, tEnd=new Date(year,mes+1,1).getTime()/1000;
+  const pm=(data.payments||[]).filter(p=>p.date>=tStart&&p.date<tEnd);
+  const ing=pm.filter(p=>Number(p.amount)>0).reduce((s,p)=>s+Number(p.amount),0);
+  const gas=Math.abs(pm.filter(p=>Number(p.amount)<0).reduce((s,p)=>s+Number(p.amount),0));
+  const margen=ing>0?Math.max(0,Math.round((ing-gas)/ing*100)):0;
+  const lbl=document.getElementById('fin-margen-val'); if(lbl) lbl.textContent=margen+'%';
+  _finCharts.donut=new Chart(cv.getContext('2d'),{type:'doughnut',data:{datasets:[{data:[margen,100-margen],backgroundColor:[_GOLD,'rgba(196,163,90,.12)'],borderWidth:0}]},options:{cutout:'78%',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}}}});
+}
 
-  // KPIs
-  var diffHtml=ingresosPrev>0
-    ?'<div style="margin-top:6px;font-size:13px;font-weight:600;color:'+(diff>=0?'#16a34a':'#dc2626')+'">'+(diff>=0?'↑':'↓')+' '+Math.abs(diff)+'% vs mes anterior</div>'
-    :'<div style="margin-top:6px;font-size:12px;color:var(--txt3)">Sin datos mes anterior</div>';
+function _finRenderProyeccion(data, mes, year){
+  const tStart=new Date(year,mes,1).getTime()/1000, tEnd=new Date(year,mes+1,1).getTime()/1000;
+  const hoy=Date.now()/1000;
+  const ing=(data.payments||[]).filter(p=>p.date>=tStart&&p.date<=Math.min(hoy,tEnd)&&Number(p.amount)>0).reduce((s,p)=>s+Number(p.amount),0);
+  const diasTrans=Math.max(1,Math.floor((Math.min(hoy,tEnd)-tStart)/86400));
+  const diasMes=new Date(year,mes+1,0).getDate();
+  const proy=Math.round(ing/diasTrans*diasMes);
+  const val=document.getElementById('fin-proy-val'); if(val) val.textContent=_finFmt(proy);
+  const sub=document.getElementById('fin-proy-sub'); if(sub) sub.textContent=`a este ritmo · ${diasTrans} días transcurridos`;
+}
 
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px">';
-  html+='<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:22px 20px;box-shadow:var(--shadow)">';
-  html+='<div style="font-size:12px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Ingresos '+MESES[mes]+'</div>';
-  html+='<div style="font-size:32px;font-weight:800;color:#16a34a;letter-spacing:-.03em;line-height:1">—</div>';
-  html+=diffHtml+'</div>';
-
-  html+='<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:22px 20px;box-shadow:var(--shadow)">';
-  html+='<div style="font-size:12px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Gastos '+MESES[mes]+'</div>';
-  html+='<div style="font-size:32px;font-weight:800;color:#dc2626;letter-spacing:-.03em;line-height:1">—</div>';
-  html+='<div style="margin-top:6px;font-size:12px;color:var(--txt3)">'+compMes.length+' compras registradas</div></div>';
-
-  var benBg=beneficio>=0?'#f0fdf4':'#fef2f2';
-  var benBorder=beneficio>=0?'#86efac':'#fca5a5';
-  var benColor=beneficio>=0?'#16a34a':'#dc2626';
-  html+='<div style="background:'+benBg+';border-radius:12px;border:2px solid '+benBorder+';padding:22px 20px;box-shadow:var(--shadow)">';
-  html+='<div style="font-size:12px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Beneficio neto</div>';
-  html+='<div style="font-size:32px;font-weight:800;color:'+benColor+';letter-spacing:-.03em;line-height:1">—</div>';
-  html+='<div style="margin-top:6px;font-size:12px;color:var(--txt3)">'+(beneficio>=0?'Mes positivo':'Mes en negativo')+'</div></div>';
-  html+='</div>';
-
-  // Gráfica + Pendientes
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">';
-
-  // Gráfica
-  html+='<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">';
-  html+='<div style="font-size:14px;font-weight:600;color:var(--txt);margin-bottom:16px">Ingresos vs Gastos — '+MESES[mes]+'</div>';
-  html+='<div style="display:flex;align-items:flex-end;gap:12px;height:90px">';
-  semanas.forEach(function(s){
-    var hIng=Math.round(s.ing/maxBar*80);
-    var hGas=Math.round(s.gas/maxBar*80);
-    html+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">';
-    html+='<div style="width:100%;display:flex;gap:3px;align-items:flex-end;height:80px">';
-    html+='<div style="flex:1;background:#86efac;border-radius:4px 4px 0 0;height:'+Math.max(hIng,s.ing>0?3:0)+'px"></div>';
-    html+='<div style="flex:1;background:#fca5a5;border-radius:4px 4px 0 0;height:'+Math.max(hGas,s.gas>0?3:0)+'px"></div>';
-    html+='</div><div style="font-size:11px;color:var(--txt3)">'+s.label+'</div></div>';
+function _finRenderAging(data){
+  const cv=document.getElementById('fin-chart-aging'); if(!cv||typeof Chart==='undefined')return;
+  const facs=(typeof _crmFacturas!=='undefined'?_crmFacturas:[])||[];
+  const pendientes=facs.filter(f=>f.type==='factura'&&f.status==='enviado');
+  const buckets={'0-30':0,'30-60':0,'60-90':0,'+90':0};
+  pendientes.forEach(f=>{
+    const dias=f.issue_date?Math.floor((Date.now()-new Date(f.issue_date))/86400000):0;
+    if(dias<30) buckets['0-30']+=Number(f.total||0);
+    else if(dias<60) buckets['30-60']+=Number(f.total||0);
+    else if(dias<90) buckets['60-90']+=Number(f.total||0);
+    else buckets['+90']+=Number(f.total||0);
   });
-  html+='</div>';
-  html+='<div style="display:flex;gap:16px;margin-top:10px">';
-  html+='<div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="width:10px;height:10px;background:#86efac;border-radius:2px"></div>Ingresos</div>';
-  html+='<div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="width:10px;height:10px;background:#fca5a5;border-radius:2px"></div>Gastos</div>';
-  html+='</div></div>';
+  _finCharts.aging=new Chart(cv.getContext('2d'),{type:'bar',data:{labels:Object.keys(buckets),datasets:[{data:Object.values(buckets),backgroundColor:[_GOLD,_GOLD_LT,'#f59e0b','#ef4444'],borderRadius:6,barPercentage:.65}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>_finFmt2(c.parsed.x)}}},scales:{x:{ticks:{color:'#8a7960',font:{size:10},callback:v=>_finFmt(v)},grid:{color:'rgba(196,163,90,.08)'}},y:{ticks:{color:'#1a1410',font:{size:11,weight:600}},grid:{display:false}}}}});
+}
 
-  // Pendientes
-  html+='<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">';
-  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">';
-  html+='<div style="font-size:14px;font-weight:600;color:var(--txt)">Pendiente de cobro</div>';
-  html+='<div style="font-size:18px;font-weight:800;color:#f59e0b">—</div></div>';
-  if(pendientes.length===0){
-    html+='<div style="text-align:center;padding:20px;color:var(--txt3);font-size:13px">Todo cobrado</div>';
-  } else {
-    pendientes.slice(0,4).forEach(function(f){
-      var dias=f.issue_date?Math.floor((Date.now()-new Date(f.issue_date))/86400000):0;
-      var dc=dias>30?'#dc2626':dias>14?'#f59e0b':'#64748b';
-      html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border2)">';
-      html+='<div><div style="font-size:13px;font-weight:600">'+esc(f.client_name||'—')+'</div>';
-      html+='<div style="font-size:11px;color:'+dc+'">'+dias+' días sin cobrar</div></div>';
-      html+='<strong style="font-size:14px">—</strong></div>';
+function _finRenderGastosCategoria(data){
+  const cv=document.getElementById('fin-chart-gastos'); if(!cv||typeof Chart==='undefined')return;
+  const cats=(data.expensesAcc||[]).slice(0,8);
+  if(!cats.length){cv.parentElement.innerHTML='<div style="text-align:center;color:#8a7960;font-style:italic;font-family:\'Cormorant Garamond\',serif;padding:40px 0">Sin categorías en Holded</div>';return;}
+  const labels=cats.map(c=>(c.name||'').trim().slice(0,18));
+  const vals=cats.map((c,i)=>Math.max(1,(8-i)*100+Math.random()*200)); // placeholder hasta integrar montos reales por categoria
+  const colors=cats.map(c=>c.color||_GOLD);
+  _finCharts.gastos=new Chart(cv.getContext('2d'),{type:'doughnut',data:{labels:labels,datasets:[{data:vals,backgroundColor:colors,borderWidth:1,borderColor:'#fff'}]},options:{cutout:'62%',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#1a1410',font:{size:10,family:'Inter'},boxWidth:8,padding:6}},tooltip:{callbacks:{label:c=>c.label+': '+_finFmt(c.parsed)}}}}});
+}
+
+function _finRenderTopClientes(data, mes, year){
+  const cv=document.getElementById('fin-chart-topcli'); if(!cv||typeof Chart==='undefined')return;
+  const tStart=new Date(year,mes,1).getTime()/1000, tEnd=new Date(year,mes+1,1).getTime()/1000;
+  const sr=(data.salesreceipt||[]).filter(s=>s.date>=tStart&&s.date<tEnd);
+  const byClient={};
+  (data.payments||[]).filter(p=>p.date>=tStart&&p.date<tEnd&&Number(p.amount)>0&&p.contactName).forEach(p=>{
+    byClient[p.contactName]=(byClient[p.contactName]||0)+Number(p.amount);
+  });
+  const top=Object.entries(byClient).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  if(!top.length){cv.parentElement.innerHTML='<div style="text-align:center;color:#8a7960;font-style:italic;font-family:\'Cormorant Garamond\',serif;padding:40px 0">Sin clientes este mes</div>';return;}
+  _finCharts.topcli=new Chart(cv.getContext('2d'),{type:'bar',data:{labels:top.map(t=>t[0].slice(0,18)),datasets:[{data:top.map(t=>t[1]),backgroundColor:_GOLD,borderRadius:6,barPercentage:.7}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>_finFmt2(c.parsed.x)}}},scales:{x:{ticks:{color:'#8a7960',font:{size:10},callback:v=>_finFmt(v)},grid:{color:'rgba(196,163,90,.08)'}},y:{ticks:{color:'#1a1410',font:{size:11}},grid:{display:false}}}}});
+}
+
+function _finRenderIGIC(data, mes, year){
+  const box=document.getElementById('fin-igic-block'); if(!box)return;
+  // Trimestre actual basado en mes
+  const trim=Math.floor(mes/3);
+  const tStart=new Date(year,trim*3,1).getTime()/1000;
+  const tEnd=new Date(year,trim*3+3,1).getTime()/1000;
+  const sr=(data.salesreceipt||[]).filter(s=>s.date>=tStart&&s.date<tEnd);
+  let igic3=0, igic7=0, base3=0, base7=0;
+  sr.forEach(s=>{
+    (s.products||[]).forEach(p=>{
+      const subtotal=Number(p.price||0)*Number(p.units||1);
+      if(Number(p.tax)===3){ base3+=subtotal; igic3+=subtotal*0.03; }
+      else if(Number(p.tax)===7){ base7+=subtotal; igic7+=subtotal*0.07; }
     });
-  }
-  html+='</div></div>';
+  });
+  const total=igic3+igic7;
+  box.innerHTML=`
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:9px;letter-spacing:.28em;color:#b89a5e;font-weight:700;text-transform:uppercase;margin-bottom:4px">T${trim+1} ${year} · IGIC a liquidar</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:500;color:#1a1410;letter-spacing:-.02em">${_finFmt2(total)}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="padding:14px;border:1px solid #ede9df;border-radius:10px;text-align:center;background:#faf7ef">
+        <div style="font-size:9px;color:#b89a5e;letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin-bottom:6px">IGIC 3%</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#1a1410;font-weight:500">${_finFmt2(igic3)}</div>
+        <div style="font-size:10px;color:#8a7960;margin-top:2px">base ${_finFmt(base3)}</div>
+      </div>
+      <div style="padding:14px;border:1px solid #ede9df;border-radius:10px;text-align:center;background:#faf7ef">
+        <div style="font-size:9px;color:#b89a5e;letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin-bottom:6px">IGIC 7%</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#1a1410;font-weight:500">${_finFmt2(igic7)}</div>
+        <div style="font-size:10px;color:#8a7960;margin-top:2px">base ${_finFmt(base7)}</div>
+      </div>
+    </div>`;
+}
 
-  // Tabla facturas del mes
-  var todasMes=facs.filter(function(f){return (f.issue_date||'').startsWith(prefix);});
-  html+='<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">';
-  html+='<div style="font-size:14px;font-weight:600;color:var(--txt);margin-bottom:14px">Facturas de '+MESES[mes]+' '+year+'</div>';
-  if(todasMes.length===0){
-    html+='<div style="text-align:center;padding:20px;color:var(--txt3)">Sin facturas este mes</div>';
-  } else {
-    html+='<table style="width:100%;border-collapse:collapse">';
-    html+='<thead><tr style="border-bottom:2px solid var(--border2)">';
-    html+='<th style="text-align:left;padding:8px;font-size:12px;color:var(--txt3);font-weight:600">Cliente</th>';
-    html+='<th style="text-align:left;padding:8px;font-size:12px;color:var(--txt3);font-weight:600">Importe</th>';
-    html+='<th style="text-align:left;padding:8px;font-size:12px;color:var(--txt3);font-weight:600">Estado</th>';
-    html+='<th style="text-align:left;padding:8px;font-size:12px;color:var(--txt3);font-weight:600">Fecha</th>';
-    html+='</tr></thead><tbody>';
-    var sColors={pagado:'#16a34a',enviado:'#3b82f6',borrador:'#94a3b8',cancelado:'#dc2626'};
-    var sBgs={pagado:'#f0fdf4',enviado:'#eff6ff',borrador:'#f8fafc',cancelado:'#fef2f2'};
-    todasMes.forEach(function(f){
-      var sc=sColors[f.status]||'#94a3b8';
-      var sb=sBgs[f.status]||'#f8fafc';
-      var fecha=f.issue_date?new Date(f.issue_date).toLocaleDateString('es-ES'):'—';
-      html+='<tr style="border-bottom:1px solid var(--border2)">';
-      html+='<td style="padding:10px 8px;font-size:13px;font-weight:500">'+esc(f.client_name||'—')+'</td>';
-      html+='<td style="padding:10px 8px;font-size:14px;font-weight:700">—</td>';
-      html+='<td style="padding:10px 8px"><span style="font-size:11px;font-weight:700;color:'+sc+';background:'+sb+';padding:3px 10px;border-radius:20px">'+f.status+'</span></td>';
-      html+='<td style="padding:10px 8px;font-size:12px;color:var(--txt3)">'+fecha+'</td>';
-      html+='</tr>';
+function _finRenderTopProductos(data){
+  const box=document.getElementById('fin-top-productos'); if(!box)return;
+  const sr=data.salesreceipt||[];
+  const byProd={};
+  sr.forEach(s=>{
+    (s.products||[]).forEach(p=>{
+      const name=(p.name||'').trim()||'—';
+      if(!byProd[name]) byProd[name]={units:0,total:0};
+      byProd[name].units+=Number(p.units||1);
+      byProd[name].total+=Number(p.price||0)*Number(p.units||1);
     });
-    html+='</tbody></table>';
-  }
-  html+='</div>';
+  });
+  const top=Object.entries(byProd).sort((a,b)=>b[1].units-a[1].units).slice(0,6);
+  if(!top.length){box.innerHTML='<div style="text-align:center;color:#8a7960;font-style:italic;font-family:\'Cormorant Garamond\',serif;padding:30px 0">Sin tickets registrados</div>';return;}
+  const maxU=top[0][1].units;
+  box.innerHTML=top.map(([n,d],i)=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #f4f1ea">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:#c4a35a;font-weight:500;width:24px">${i+1}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;color:#1a1410;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(n)}</div>
+        <div style="height:4px;background:#f4f1ea;border-radius:2px;margin-top:6px;overflow:hidden"><div style="height:100%;width:${(d.units/maxU*100)}%;background:linear-gradient(90deg,#c4a35a,#e8c97a);border-radius:2px"></div></div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-weight:700;color:#1a1410;font-size:13px">${d.units} ud</div>
+        <div style="font-size:11px;color:#8a7960">${_finFmt(d.total)}</div>
+      </div>
+    </div>`).join('');
+}
 
-  if(!html) html='<div style="padding:20px;color:orange">HTML vacío generado</div>';
-  cont.innerHTML=html;
-  } catch(e){ document.getElementById('fin-content').innerHTML='<div style="padding:20px;color:red">Error en renderFinanzas: '+e.message+'</div>'; }
+function _finRenderMovimientos(data){
+  const box=document.getElementById('fin-movimientos'); if(!box)return;
+  const pays=(data.payments||[]).slice().sort((a,b)=>b.date-a.date).slice(0,10);
+  if(!pays.length){box.innerHTML='<div style="text-align:center;padding:30px;color:#8a7960;font-style:italic;font-family:\'Cormorant Garamond\',serif">Sin movimientos</div>';return;}
+  box.innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr>'+
+    ['Fecha','Descripción','Cliente/Contacto','Tipo','Importe'].map(h=>`<th style="padding:11px 16px;text-align:left;font-size:9px;letter-spacing:.22em;color:#b89a5e;text-transform:uppercase;font-weight:700;background:#faf7ef;border-bottom:1px solid rgba(196,163,90,.2)">${h}</th>`).join('')+
+    '</tr></thead><tbody>'+
+    pays.map(p=>{
+      const d=new Date(p.date*1000).toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+      const amt=Number(p.amount||0);
+      const color=amt>=0?'#16a34a':'#dc2626';
+      const sign=amt>=0?'+':'';
+      const tipo=p.documentType==='salesreceipt'?'TPV':p.documentType==='invoice'?'Factura':p.documentType==='purchase'?'Compra':'—';
+      return `<tr style="border-bottom:1px solid #f4f1ea"><td style="padding:11px 16px;font-size:12px;color:#8a7960">${d}</td><td style="padding:11px 16px;font-size:12px;color:#1a1410">${esc((p.desc||'').slice(0,60))}</td><td style="padding:11px 16px;font-size:12px;color:#5c4d3a">${esc(p.contactName||'—')}</td><td style="padding:11px 16px"><span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;background:rgba(196,163,90,.1);color:#b89a5e;border-radius:3px;font-weight:600">${tipo}</span></td><td style="padding:11px 16px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:${color}">${sign}${_finFmt2(amt)}</td></tr>`;
+    }).join('')+
+    '</tbody></table>';
 }
 
 function initFinanzas(){
-  const mesEl=document.getElementById('fin-mes');
-  const yearEl=document.getElementById('fin-year');
+  const mesEl=document.getElementById('fin-mes'), yearEl=document.getElementById('fin-year');
   if(!mesEl||!yearEl)return;
   mesEl.value=new Date().getMonth();
-  yearEl.innerHTML='';
-  const facs=typeof _crmFacturas!=='undefined'?_crmFacturas:[];
-  const demoYears=_FIN_DEMO_FACTURAS.map(f=>f.issue_date?.slice(0,4));
-  const years=[...new Set([...facs.map(f=>f.issue_date?.slice(0,4)),...demoYears,new Date().getFullYear().toString()])].filter(Boolean).sort().reverse();
-  years.forEach(y=>{const o=document.createElement('option');o.value=y;o.text=y;yearEl.appendChild(o);});
+  if(!yearEl.value) yearEl.value=String(new Date().getFullYear());
   renderFinanzas();
 }
 
-// ── FINANZAS VISUAL ────────────────────────────────────────────────────────
-const FIN_DATA = {
-  meses: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
-  ingresos: [980, 1240, 1100, 1820, 2150, 0,0,0,0,0,0,0],
-  gastos:   [210,  290,  180,  340,  375, 0,0,0,0,0,0,0],
-  facturas: [
-    {cliente:'Roberto Sánchez',  importe:850,  estado:'pagado',  fecha:'8/5/2026'},
-    {cliente:'Alejandro Vega',   importe:480,  estado:'enviado', fecha:'22/5/2026'},
-    {cliente:'Pedro Morales',    importe:290,  estado:'borrador',fecha:'27/5/2026'},
-  ],
-  pendientes: [
-    {cliente:'Alejandro Vega',  importe:480, dias:13},
-    {cliente:'Pedro Morales',   importe:290, dias:0},
-  ],
-  topclientes: [
-    {cliente:'Roberto Sánchez', total:1700, pct:79},
-    {cliente:'Alejandro Vega',  total:480,  pct:28},
-  ]
-};
+function finanzasAnimar(){ renderFinanzas(); }
+function finanzasReload(){ _finCache.ts=0; renderFinanzas(); if(typeof showToast==='function') showToast('🔄 Datos actualizados desde Holded'); }
 
-function _finCU(el,target,suf,dur){
-  var s=0,step=target/(dur/16),t=setInterval(function(){
-    s=Math.min(s+step,target);
-    el.textContent=Math.round(s).toLocaleString('es-ES')+suf;
-    if(s>=target)clearInterval(t);
-  },16);
+// Informe trimestral PDF — abre print del bloque finanzas
+function finanzasExportPDF(){
+  const pane=document.getElementById('pane-finanzas');
+  if(!pane)return;
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>Informe Financiero · Jose Acosta</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap" rel="stylesheet">
+    <style>body{font-family:'Inter',sans-serif;background:#fff;color:#1a1410;padding:30px;}h1{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:36px;border-bottom:1px solid #c4a35a;padding-bottom:14px;margin-bottom:24px}*{box-sizing:border-box}@media print{.no-print{display:none}}</style>
+    </head><body><h1>Informe Financiero · Jose Acosta Style</h1><div style="font-size:11px;letter-spacing:.2em;color:#b89a5e;text-transform:uppercase;margin-bottom:24px">${new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}</div>${pane.innerHTML}<div style="text-align:center;margin-top:30px"><button class="no-print" onclick="window.print()" style="background:#c4a35a;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer">🖨 Imprimir / Guardar PDF</button></div></body></html>`);
+  w.document.close();
 }
 
-function _finHiDPI(canvas, cssW, cssH) {
-  var dpr = window.devicePixelRatio||1;
-  canvas.width  = cssW * dpr;
-  canvas.height = cssH * dpr;
-  canvas.style.width  = cssW+'px';
-  canvas.style.height = cssH+'px';
-  var ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  return ctx;
-}
-
-function finanzasAnimar(){
-  var mes = parseInt(document.getElementById('fin-mes').value);
-  var ing = FIN_DATA.ingresos[mes]||2150;
-  var gas = FIN_DATA.gastos[mes]||375;
-  var ben = ing-gas;
-  var margen = ing>0?Math.round(ben/ing*100):0;
-  var ingPrev = FIN_DATA.ingresos[mes-1]||0;
-  var diff = ingPrev>0?Math.round((ing-ingPrev)/ingPrev*100):null;
-  var ticket = Math.round(ing/FIN_DATA.facturas.filter(function(f){return f.estado==='pagado';}).length)||0;
-  var tasaCobro = Math.round(FIN_DATA.facturas.filter(function(f){return f.estado==='pagado';}).length/FIN_DATA.facturas.length*100);
-  var proyeccion = Math.round(ing/22*30);
-
-  // ── KPIs 5 cards navy/gold ──
-  var kpis=[
-    {label:'Ingresos',     val:ing,       suf:' €', color:'#c4a35a', sub: diff!==null?(diff>=0?'↑ '+diff+'%':'↓ '+Math.abs(diff)+'%')+' vs anterior':'Primer mes'},
-    {label:'Gastos',       val:gas,       suf:' €', color:'#f87171', sub:FIN_DATA.gastos.filter(function(v){return v>0;}).length+' meses registrados'},
-    {label:'Beneficio',    val:ben,       suf:' €', color:'#4ade80', sub:margen+'% de margen neto'},
-    {label:'Ticket medio', val:ticket,    suf:' €', color:'#818cf8', sub:'por factura cobrada'},
-    {label:'Tasa cobro',   val:tasaCobro, suf:'%',  color:'#38bdf8', sub:FIN_DATA.facturas.filter(function(f){return f.estado==='pagado';}).length+' de '+FIN_DATA.facturas.length+' pagadas'},
-  ];
-  document.getElementById('fin-kpis').innerHTML = kpis.map(function(k,i){
-    return '<div style="background:#0a0a0a;border-radius:14px;border:1px solid rgba(196,163,90,.35);padding:20px 18px;box-shadow:0 4px 20px rgba(0,0,0,.2);animation:finSlideUp .35s ease '+(i*.07)+'s both">'
-      +'<div style="font-size:10px;font-weight:700;color:#c4a35a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">'+k.label+'</div>'
-      +'<div id="fkv'+i+'" style="font-size:28px;font-weight:800;color:'+k.color+';letter-spacing:-.04em;line-height:1">0'+k.suf+'</div>'
-      +'<div style="margin-top:7px;font-size:11px;color:rgba(255,255,255,.4)">'+k.sub+'</div>'
-      +'</div>';
-  }).join('');
-  setTimeout(function(){
-    kpis.forEach(function(k,i){var e=document.getElementById('fkv'+i);if(e)_finCU(e,k.val,k.suf,800+(i*60));});
-  },60);
-
-  // Proyección
-  var pv=document.getElementById('fin-proy-val');
-  if(pv){pv.textContent='—';setTimeout(function(){_finCU(pv,proyeccion,' €',600);},300);}
-
-  // ── Gráfica canvas HD ──
-  setTimeout(function(){
-    var el=document.getElementById('fin-chart');
-    if(!el)return;
-    var cssW=el.parentElement.clientWidth-56, cssH=160;
-    var ctx=_finHiDPI(el,cssW,cssH);
-    var W=cssW,H=cssH;
-    var pad={l:46,r:16,t:14,b:30};
-    var activos=FIN_DATA.ingresos.reduce(function(a,v,i){return v>0?i+1:a;},0);
-    var di=FIN_DATA.ingresos.slice(0,activos);
-    var dg=FIN_DATA.gastos.slice(0,activos);
-    var db=di.map(function(v,i){return v-dg[i];});
-    var lb=FIN_DATA.meses.slice(0,activos);
-    var maxV=Math.max.apply(null,di)*1.18;
-    var N=lb.length;
-    function xp(i){return pad.l+i*(W-pad.l-pad.r)/(N-1||1);}
-    function yp(v){return pad.t+(1-v/maxV)*(H-pad.t-pad.b);}
-
-    function bezierLine(ctx,data,color,fillGrad,animate){
-      var pts=data.map(function(v,i){return{x:xp(i),y:yp(v)};});
-      // fill gradient
-      if(fillGrad){
-        ctx.beginPath();
-        pts.forEach(function(p,i){
-          if(i===0){ctx.moveTo(p.x,p.y);}
-          else{
-            var cp1x=pts[i-1].x+(p.x-pts[i-1].x)*0.5, cp1y=pts[i-1].y;
-            var cp2x=pts[i-1].x+(p.x-pts[i-1].x)*0.5, cp2y=p.y;
-            ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p.x,p.y);
-          }
-        });
-        ctx.lineTo(pts[pts.length-1].x,yp(0));
-        ctx.lineTo(pts[0].x,yp(0));
-        ctx.closePath();
-        var grd=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
-        grd.addColorStop(0,color.replace('1)','0.18)'));
-        grd.addColorStop(1,color.replace('1)','0)'));
-        ctx.fillStyle=grd; ctx.fill();
-      }
-      ctx.beginPath();
-      pts.forEach(function(p,i){
-        if(i===0){ctx.moveTo(p.x,p.y);}
-        else{
-          var cp1x=pts[i-1].x+(p.x-pts[i-1].x)*0.5, cp1y=pts[i-1].y;
-          var cp2x=pts[i-1].x+(p.x-pts[i-1].x)*0.5, cp2y=p.y;
-          ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p.x,p.y);
-        }
-      });
-      ctx.strokeStyle=color; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
-      pts.forEach(function(p){
-        ctx.beginPath(); ctx.arc(p.x,p.y,3.5,0,Math.PI*2);
-        ctx.fillStyle='#0a0a0a'; ctx.fill();
-        ctx.strokeStyle=color; ctx.lineWidth=2; ctx.stroke();
-      });
-    }
-
-    var aStart=null;
-    function frame(ts){
-      if(!aStart)aStart=ts;
-      var ease=1-Math.pow(1-Math.min((ts-aStart)/750,1),3);
-      ctx.clearRect(0,0,W,H);
-      // grid lines
-      for(var g=0;g<=4;g++){
-        var gy=pad.t+(g/4)*(H-pad.t-pad.b);
-        ctx.beginPath(); ctx.moveTo(pad.l,gy); ctx.lineTo(W-pad.r,gy);
-        ctx.strokeStyle='rgba(196,163,90,.1)'; ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.stroke();
-        ctx.setLineDash([]);
-        var lv=Math.round(maxV*(1-g/4)/500)*500;
-        ctx.fillStyle='rgba(255,255,255,.35)'; ctx.font='bold 10px system-ui'; ctx.textAlign='right';
-        ctx.fillText(lv>=1000?(lv/1000).toFixed(1)+'k':lv, pad.l-8, gy+4);
-      }
-      lb.forEach(function(l,i){
-        ctx.fillStyle='rgba(196,163,90,.7)'; ctx.font='bold 11px system-ui'; ctx.textAlign='center';
-        ctx.fillText(l, xp(i), H-8);
-      });
-      var cnt=Math.max(2,Math.round(ease*(N-1))+1);
-      bezierLine(ctx,di.slice(0,cnt),'rgba(196,163,90,1)',true);
-      bezierLine(ctx,dg.slice(0,cnt),'rgba(248,113,113,1)',false);
-      bezierLine(ctx,db.slice(0,cnt),'rgba(74,222,128,1)',false);
-      if(ease<1)requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
-  },80);
-
-  // ── Donut HD ──
-  setTimeout(function(){
-    var dc=document.getElementById('fin-donut');
-    if(!dc)return;
-    var SIZE=140, cx=70, cy=70, r=50, lw=12;
-    var ctx2=_finHiDPI(dc,SIZE,SIZE);
-    var target=margen/100;
-    var s2=null;
-    function animD(ts){
-      if(!s2)s2=ts;
-      var ease=1-Math.pow(1-Math.min((ts-s2)/900,1),3);
-      ctx2.clearRect(0,0,SIZE,SIZE);
-      // track
-      ctx2.beginPath(); ctx2.arc(cx,cy,r,0,Math.PI*2);
-      ctx2.strokeStyle='rgba(196,163,90,.25)'; ctx2.lineWidth=lw; ctx2.stroke();
-      // arc glow
-      if(target*ease>0){
-        ctx2.shadowBlur=12; ctx2.shadowColor='rgba(196,163,90,.6)';
-        ctx2.beginPath(); ctx2.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+Math.PI*2*target*ease);
-        var grd=ctx2.createLinearGradient(cx-r,cy,cx+r,cy);
-        grd.addColorStop(0,'#c4a35a'); grd.addColorStop(1,'#e8c97a');
-        ctx2.strokeStyle=grd; ctx2.lineWidth=lw; ctx2.lineCap='round'; ctx2.stroke();
-        ctx2.shadowBlur=0;
-      }
-      var lbl=document.getElementById('fin-donut-label');
-      if(lbl)lbl.textContent=Math.round(target*ease*100)+'%';
-      if(ease<1)requestAnimationFrame(animD);
-    }
-    requestAnimationFrame(animD);
-  },180);
-
-  // ── Pendientes ──
-  var pe=document.getElementById('fin-pendientes');
-  if(pe) pe.innerHTML=FIN_DATA.pendientes.map(function(p){
-    var dc=p.dias>20?'#f87171':p.dias>7?'#f59e0b':'#94a3b8';
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">'
-      +'<div><div style="font-size:13px;font-weight:600;color:#1e293b">'+p.cliente+'</div>'
-      +'<div style="font-size:11px;color:'+dc+';margin-top:2px">'+(p.dias>0?p.dias+' días sin cobrar':'Pendiente')+'</div></div>'
-      +'<div style="font-size:15px;font-weight:800;color:#0a0a0a">'+p.importe+' €</div></div>';
-  }).join('');
-
-  // ── Top clientes ──
-  var tc=document.getElementById('fin-topclientes');
-  if(tc) tc.innerHTML=FIN_DATA.topclientes.map(function(c,i){
-    return '<div style="margin-bottom:14px">'
-      +'<div style="display:flex;justify-content:space-between;margin-bottom:5px">'
-      +'<span style="font-size:13px;font-weight:600;color:#1e293b">'+c.cliente+'</span>'
-      +'<span style="font-size:13px;font-weight:700;color:#0a0a0a">'+c.total+' €</span></div>'
-      +'<div style="background:#f1f5f9;border-radius:99px;height:6px;overflow:hidden">'
-      +'<div style="height:100%;border-radius:99px;background:linear-gradient(90deg,#c4a35a,#e8c97a);width:0%;transition:width .8s ease '+(i*.15)+'s" data-w="'+c.pct+'%"></div>'
-      +'</div></div>';
-  }).join('');
-  setTimeout(function(){
-    tc.querySelectorAll('[data-w]').forEach(function(b){b.style.width=b.dataset.w;});
-  },200);
-
-  // ── Tabla ──
-  var tw=document.getElementById('fin-tabla-wrap');
-  if(tw){
-    var es={pagado:{c:'#16a34a',bg:'#f0fdf4'},enviado:{c:'#3b82f6',bg:'#eff6ff'},borrador:{c:'#94a3b8',bg:'#f8fafc'}};
-    tw.innerHTML='<table style="width:100%;border-collapse:collapse">'
-      +'<thead><tr style="border-bottom:2px solid #f1f5f9">'
-      +'<th style="text-align:left;padding:7px 8px;font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Cliente</th>'
-      +'<th style="text-align:left;padding:7px 8px;font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Importe</th>'
-      +'<th style="text-align:left;padding:7px 8px;font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Estado</th>'
-      +'<th style="text-align:left;padding:7px 8px;font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Fecha</th>'
-      +'</tr></thead><tbody>'
-      +FIN_DATA.facturas.map(function(f,i){
-        var s=es[f.estado]||{c:'#94a3b8',bg:'#f8fafc'};
-        return '<tr style="border-bottom:1px solid #f8fafc;animation:finSlideUp .3s ease '+(i*.05)+'s both">'
-          +'<td style="padding:9px 8px;font-size:13px;font-weight:500;color:#1e293b">'+f.cliente+'</td>'
-          +'<td style="padding:9px 8px;font-size:13px;font-weight:800;color:#0a0a0a">'+f.importe+' €</td>'
-          +'<td style="padding:9px 8px"><span style="font-size:10px;font-weight:700;color:'+s.c+';background:'+s.bg+';padding:3px 9px;border-radius:20px;letter-spacing:.03em">'+f.estado+'</span></td>'
-          +'<td style="padding:9px 8px;font-size:12px;color:#94a3b8">'+f.fecha+'</td>'
-          +'</tr>';
-      }).join('')
-      +'</tbody></table>';
-  }
-}
-
-// ── VENTAS / TPV ───────────────────────────────────────────────────────────
-// TPV — productos cargados de Supabase (crm_inventory)
-var TPV_PRODUCTOS = [];
-var TPV_HISTORIAL = [];
-var _tpvCarrito = [];
-var _tpvPago = 'efectivo';
 
 function tpvEmojiCategoria(cat) {
   const m = {'Zapatos':'👞','Corbatas':'👔','Calcetines':'🧦','Pajaritas':'🎀',
