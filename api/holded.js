@@ -47,3 +47,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Proxy error', message: String(e) });
   }
 }
+// Force redeploy 1780085101
