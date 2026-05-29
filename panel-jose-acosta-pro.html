@@ -25,6 +25,35 @@
 @keyframes loginFadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 @keyframes loginLineGrow{from{width:0;opacity:0}to{width:100%;opacity:1}}
 @keyframes loginGlow{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* ═══════════ OLEADA WOW — EFECTOS GLOBALES ═══════════ */
+::view-transition-old(root),::view-transition-new(root){animation-duration:.32s;animation-timing-function:cubic-bezier(.2,.9,.3,1.1);}
+::view-transition-old(root){animation-name:fadeOutScale;}
+::view-transition-new(root){animation-name:fadeInScale;}
+@keyframes fadeOutScale{to{opacity:0;transform:scale(.985);}}
+@keyframes fadeInScale{from{opacity:0;transform:scale(1.015);}}
+
+.sk{background:linear-gradient(90deg,rgba(196,163,90,.06) 0%,rgba(196,163,90,.18) 50%,rgba(196,163,90,.06) 100%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite;border-radius:6px;}
+@keyframes skShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.sk-line{height:12px;margin:6px 0;}
+.sk-line.lg{height:16px;}
+.sk-line.sm{height:10px;width:60%;}
+.sk-block{height:80px;border-radius:8px;}
+.sk-card{padding:16px;border:1px solid var(--border);border-radius:10px;background:#fff;margin-bottom:10px;}
+
+.confetti-piece{position:fixed;width:9px;height:14px;top:-20px;z-index:99999;pointer-events:none;border-radius:1px;will-change:transform,opacity;}
+@keyframes confettiFall{0%{transform:translateY(-10vh) rotate(0);opacity:1;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+
+.btn{will-change:transform;}
+.btn:active{transform:scale(.96)!important;transition:transform .05s;}
+
+.modal-overlay{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+
+#gold-cursor{position:fixed;width:6px;height:6px;border-radius:50%;background:#c4a35a;pointer-events:none;z-index:99998;opacity:.55;transition:transform .12s cubic-bezier(.2,.9,.3,1.2);will-change:transform;display:none;box-shadow:0 0 8px rgba(196,163,90,.5);}
+@media(hover:hover) and (pointer:fine){#gold-cursor{display:block;}}
+
+.notif-toast{box-shadow:0 12px 40px rgba(0,0,0,.18),0 0 0 1px rgba(196,163,90,.18)!important;backdrop-filter:blur(8px);}
+
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;}
 button{font-family:inherit;cursor:pointer;}
@@ -867,6 +896,8 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
 
           <div class="stats-grid" id="stats-grid"></div>
           <div class="dash-grid" id="dash-panels"></div>
+          <div id="ia-insights" style="margin-top:18px"></div>
+          <div id="ia-heatmap" style="margin-top:18px"></div>
         </div>
 
         <!-- CITAS -->
@@ -1801,6 +1832,8 @@ function renderDashboard(){
   const _sal2=_h<13?'Buenos días':_h<20?'Buenas tardes':'Buenas noches';
   const _fd=document.getElementById('dash-hero-saludo');if(_fd)_fd.textContent=_sal2+', Jose';
   const _ff=document.getElementById('dash-hero-fecha');if(_ff)_ff.textContent=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  if(typeof renderIaInsights==='function')renderIaInsights();
+  if(typeof renderIaHeatmap==='function')renderIaHeatmap();
 }
 function stat(icon,label,val,sub,cls='',trend='',tab=''){
   var raw=String(val);
@@ -2379,20 +2412,67 @@ async function crmVerCliente(id){
         <div style="margin-left:auto;font-weight:700;font-size:13px">${crmFmt(f.total||0)}</div>
         ${f.status!=='pagado'&&f.type==='factura'?`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:10px" onclick="marcarPagada('${f.id}');crmCloseModal()">✓ Cobrar</button>`:''}
       </div>`;}).join('')+'</div>':'<p style="color:#94a3b8;font-size:13px">Sin documentos</p>';
+  // ✨ VIP automático según facturación anual
+  const yearAgo=new Date();yearAgo.setFullYear(yearAgo.getFullYear()-1);
+  const factsAnio=factsArr.filter(f=>f.type==='factura'&&f.status==='pagado'&&f.issue_date&&new Date(f.issue_date)>=yearAgo);
+  const gastoAnual=factsAnio.reduce((s,f)=>s+Number(f.total||0),0);
+  const isVIP=gastoAnual>=2000;
+  const isGold=gastoAnual>=1000&&gastoAnual<2000;
+  const vipBadge=isVIP?`<span class="tag" style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;font-weight:800;border:1px solid #c4a35a;font-size:10px">★ VIP · ${crmFmt(gastoAnual)}/año</span>`:isGold?`<span class="tag" style="background:#fef9c3;color:#854d0e;font-weight:700;border:1px solid #fde68a;font-size:10px">◆ GOLD · ${crmFmt(gastoAnual)}/año</span>`:'';
+
+  // ✨ Silueta SVG con medidas posicionadas
+  const siluetaHtml = Object.keys(m).length ? `
+  <div style="margin-bottom:20px;padding:16px;background:linear-gradient(135deg,#faf7ef,#fdfcfa);border:1px solid rgba(196,163,90,.2);border-radius:12px;display:flex;gap:16px;align-items:center">
+    <svg viewBox="0 0 100 220" style="width:90px;height:200px;flex-shrink:0">
+      <!-- Silueta cuerpo -->
+      <path d="M50,12 a8,8 0 1,1 0.001,0 M50,22 L42,35 L36,55 L33,80 L34,110 L36,140 L34,180 L32,215 M50,22 L58,35 L64,55 L67,80 L66,110 L64,140 L66,180 L68,215 M42,35 L24,45 L18,75 L15,95 M58,35 L76,45 L82,75 L85,95"
+            stroke="#c4a35a" stroke-width="1.2" fill="none" opacity=".6" stroke-linecap="round"/>
+      <!-- Puntos de medida -->
+      ${m.pecho?`<circle cx="50" cy="55" r="3" fill="#c4a35a"/><text x="86" y="58" font-size="8" fill="#1a1410" font-weight="600">${m.pecho}</text><line x1="55" y1="55" x2="84" y2="55" stroke="#c4a35a" stroke-width=".5" stroke-dasharray="2,1"/>`:''}
+      ${m.cintura?`<circle cx="50" cy="95" r="3" fill="#c4a35a"/><text x="86" y="98" font-size="8" fill="#1a1410" font-weight="600">${m.cintura}</text><line x1="55" y1="95" x2="84" y2="95" stroke="#c4a35a" stroke-width=".5" stroke-dasharray="2,1"/>`:''}
+      ${m.cadera?`<circle cx="50" cy="125" r="3" fill="#c4a35a"/><text x="86" y="128" font-size="8" fill="#1a1410" font-weight="600">${m.cadera}</text><line x1="55" y1="125" x2="84" y2="125" stroke="#c4a35a" stroke-width=".5" stroke-dasharray="2,1"/>`:''}
+      ${m.largo_pantalon?`<circle cx="34" cy="195" r="3" fill="#c4a35a"/><text x="2" y="198" font-size="8" fill="#1a1410" font-weight="600">${m.largo_pantalon}</text><line x1="29" y1="195" x2="14" y2="195" stroke="#c4a35a" stroke-width=".5" stroke-dasharray="2,1"/>`:''}
+      ${m.largo_chaqueta?`<circle cx="34" cy="110" r="3" fill="#c4a35a"/><text x="2" y="113" font-size="8" fill="#1a1410" font-weight="600">${m.largo_chaqueta}</text><line x1="29" y1="110" x2="14" y2="110" stroke="#c4a35a" stroke-width=".5" stroke-dasharray="2,1"/>`:''}
+    </svg>
+    <div style="flex:1">
+      <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;font-weight:500;color:#1a1410;margin-bottom:4px">Silueta del cliente</div>
+      <div style="font-size:11px;color:#8a7960;letter-spacing:.08em">${Object.entries({talla:'Talla',pecho:'Pecho',cintura:'Cintura',cadera:'Cadera',largo_pantalon:'L.Pant',largo_chaqueta:'L.Chaq'}).filter(([k])=>m[k]).map(([k,l])=>`${l} ${m[k]}${k!=='talla'?'<span style="opacity:.5">cm</span>':''}`).join(' · ')}</div>
+    </div>
+  </div>` : '';
+
+  // ✨ Timeline cronológico (citas + encargos + facturas mezclados)
+  const events=[];
+  (ords.data||[]).forEach(o=>events.push({type:'enc',date:o.created_at||new Date().toISOString(),icon:'🧵',color:'#c4a35a',title:o.title,sub:'Encargo · '+(o.status||'')+(o.price?' · '+crmFmt(o.price):'')}));
+  factsArr.forEach(f=>events.push({type:'fac',date:f.issue_date||new Date().toISOString(),icon:f.type==='factura'?'🧾':'📋',color:f.status==='pagado'?'#16a34a':'#94a3b8',title:f.invoice_number||'—',sub:(f.type==='factura'?'Factura':'Presupuesto')+' · '+(f.status||'')+' · '+crmFmt(f.total||0)}));
+  events.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const timelineHtml = events.length ? `
+  <div style="margin-bottom:20px;padding:18px;border:1px solid var(--border);border-radius:12px;background:#fff">
+    <div style="font-size:10px;font-weight:700;color:#b89a5e;letter-spacing:.22em;text-transform:uppercase;margin-bottom:14px">⏱ Historial</div>
+    <div style="position:relative;padding-left:18px;border-left:2px solid rgba(196,163,90,.2)">
+      ${events.slice(0,8).map(e=>`<div style="position:relative;padding-bottom:14px">
+        <div style="position:absolute;left:-25px;top:1px;width:12px;height:12px;border-radius:50%;background:${e.color};border:2px solid #fff;box-shadow:0 0 0 1px ${e.color}"></div>
+        <div style="font-size:13px;color:#1a1410;font-weight:600">${e.icon} ${esc(e.title)}</div>
+        <div style="font-size:11px;color:#8a7960;margin-top:2px">${e.sub}</div>
+        <div style="font-size:10px;color:#a89478;margin-top:2px;font-style:italic">${new Date(e.date).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}</div>
+      </div>`).join('')}
+    </div>
+  </div>` : '';
+
   crmOpenModal(`👤 ${esc(c.name)}`,
     `<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f1f5f9">
-      <div style="width:48px;height:48px;border-radius:50%;background:var(--acc);display:grid;place-items:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0">${c.name.charAt(0).toUpperCase()}</div>
-      <div>
-        <div style="font-size:17px;font-weight:700">${esc(c.name)}</div>
+      <div style="width:52px;height:52px;border-radius:50%;background:${isVIP?'linear-gradient(135deg,#c4a35a,#9a7f45)':'var(--acc)'};display:grid;place-items:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0;box-shadow:${isVIP?'0 4px 14px rgba(196,163,90,.35)':'none'}">${c.name.charAt(0).toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div style="font-size:17px;font-weight:700">${esc(c.name)}</div>${vipBadge}</div>
         <div style="font-size:13px;color:#64748b">${[c.phone,c.email].filter(Boolean).join(' · ')||'Sin contacto'}</div>
         ${c.nif?`<div style="font-size:12px;color:#94a3b8">NIF: ${esc(c.nif)}</div>`:''}
         ${c.direccion?`<div style="font-size:12px;color:#94a3b8">📍 ${esc(c.direccion)}</div>`:''}
         ${c.tags?`<div style="margin-top:4px">${c.tags.split(',').map(t=>`<span class="tag tag-cold" style="font-size:10px;margin-right:4px">${esc(t.trim())}</span>`).join('')}</div>`:''}
       </div>
-      ${c.empresa?`<div style="margin-left:auto"><span class="tag tag-cold">🏢 ${esc(c.empresa)}</span></div>`:''}
+      ${c.empresa?`<div><span class="tag tag-cold">🏢 ${esc(c.empresa)}</span></div>`:''}
     </div>`+
-    `<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">📐 Medidas</div>`+
-    medHtml+saldoHtml+ordsHtml+factsHtml,
+    siluetaHtml+
+    `<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">📐 Medidas detalladas</div>`+
+    medHtml+saldoHtml+timelineHtml+ordsHtml+factsHtml,
     `<button class="btn btn-ghost" onclick="crmCloseModal()">Cerrar</button>
      <button class="btn btn-ghost" onclick="crmCloseModal();crmOpenFacturaModalForClient('${id}','${esc(c.name)}')">+ Presupuesto</button>
      <button class="btn btn-accent" onclick="crmCloseModal();crmEditCliente('${id}')">✏ Editar</button>`);
@@ -2735,7 +2815,8 @@ async function encDrop(e,col){
   if(o&&o.status!==col){
     await _sb.from('crm_orders').update({status:col,updated_at:new Date().toISOString()}).eq('id',_dragEncId);
     showToast('✓ Estado actualizado');
-    // Auto email al cliente en estados clave
+    if(col==='entregado'){if(typeof fireConfetti==='function')fireConfetti(100);if(typeof soundSuccess==='function')soundSuccess();}
+    else if(typeof soundSew==='function')soundSew();
     await _encNotificarCliente(o,col);
     crmLoadEncargos();
   }
@@ -4067,6 +4148,9 @@ async function marcarPagada(id){
   await _sb.from('crm_invoices').update({status:'pagado'}).eq('id',id);
   const f=_crmFacturas.find(x=>x.id===id);if(f)f.status='pagado';
   crmLoadFacturas();showToast('✓ Marcada como cobrada');
+  const amt=Number(f&&f.total||0);
+  if(typeof fireConfetti==='function')fireConfetti(amt>=500?120:50);
+  if(typeof soundCoin==='function')soundCoin();
 }
 
 function exportClientesCSV(){
@@ -6237,6 +6321,273 @@ mark.gs-hl{background:rgba(196,163,90,.35);color:#fff;border-radius:2px;padding:
       }
     }
   });
+})();
+</script>
+
+
+<!-- ═══════════════════════════════════════════
+     OLEADA WOW — JS: confetti, sonido, cursor, transiciones
+     ═══════════════════════════════════════════ -->
+<div id="gold-cursor"></div>
+<script>
+(function(){
+  var gc=document.getElementById('gold-cursor');
+  if(gc){
+    document.addEventListener('mousemove',function(e){
+      gc.style.transform='translate('+(e.clientX-3)+'px,'+(e.clientY-3)+'px)';
+    });
+    document.addEventListener('mouseenter',function(){gc.style.opacity='.55';});
+    document.addEventListener('mouseleave',function(){gc.style.opacity='0';});
+    document.addEventListener('mouseover',function(e){
+      var t=e.target;
+      var base=gc.style.transform.split(' scale')[0];
+      if(t.closest('button,a,.btn,input,.gs-item,.stat-card,select,textarea,[onclick]')){
+        gc.style.transform=base+' scale(2.5)';
+        gc.style.opacity='.9';
+      } else {
+        gc.style.transform=base;
+        gc.style.opacity='.55';
+      }
+    });
+  }
+
+  window.fireConfetti=function(intensity){
+    intensity=intensity||60;
+    var colors=['#c4a35a','#e8c97a','#b89a5e','#fdf8ee','#9a7f45','#fff'];
+    for(var i=0;i<intensity;i++){
+      (function(i){
+        setTimeout(function(){
+          var p=document.createElement('div');
+          p.className='confetti-piece';
+          p.style.left=Math.random()*100+'vw';
+          p.style.background=colors[Math.floor(Math.random()*colors.length)];
+          p.style.transform='rotate('+(Math.random()*360)+'deg)';
+          var dur=2.5+Math.random()*2.5;
+          p.style.animation='confettiFall '+dur+'s cubic-bezier(.25,.9,.5,1) forwards';
+          p.style.opacity=String(.7+Math.random()*.3);
+          document.body.appendChild(p);
+          setTimeout(function(){p.remove();},dur*1000+200);
+        },i*15);
+      })(i);
+    }
+  };
+
+  var _ac=null;
+  function _audioCtx(){
+    if(!_ac){try{_ac=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}}
+    return _ac;
+  }
+  function _tone(freq,dur,type,vol){
+    var ac=_audioCtx();if(!ac)return;
+    var o=ac.createOscillator();var g=ac.createGain();
+    o.type=type||'sine';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,ac.currentTime);
+    g.gain.linearRampToValueAtTime(vol||.08,ac.currentTime+.005);
+    g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+dur);
+    o.connect(g);g.connect(ac.destination);
+    o.start();o.stop(ac.currentTime+dur);
+  }
+  window.soundSuccess=function(){_tone(880,.12,'sine',.06);setTimeout(function(){_tone(1318,.18,'sine',.05);},80);};
+  window.soundClick=function(){_tone(2400,.04,'sine',.025);};
+  window.soundError=function(){_tone(220,.15,'sawtooth',.06);};
+  window.soundCoin=function(){_tone(988,.08,'square',.04);setTimeout(function(){_tone(1318,.15,'square',.04);},60);};
+  window.soundSew=function(){_tone(1800,.03,'triangle',.03);setTimeout(function(){_tone(1500,.03,'triangle',.025);},40);setTimeout(function(){_tone(1800,.03,'triangle',.03);},80);};
+
+  window.celebrate=function(msg){
+    fireConfetti(80);
+    soundSuccess();
+    if(msg&&typeof notificar==='function')notificar('🎉 '+msg);
+  };
+
+  if(document.startViewTransition&&typeof window.showTab==='function'){
+    var _orig=window.showTab;
+    window.showTab=function(id,btn){
+      try{document.startViewTransition(function(){_orig(id,btn);});}
+      catch(e){_orig(id,btn);}
+    };
+  }
+
+  document.addEventListener('click',function(e){
+    var t=e.target.closest('.btn-accent, .btn-primary');
+    if(t)soundClick();
+  });
+})();
+</script>
+
+
+<!-- ═══════════════════════════════════════════
+     OLEADA 2 — INTELIGENCIA: insights + heatmap
+     ═══════════════════════════════════════════ -->
+<script>
+(function(){
+  function fmt(n){return typeof crmFmt==='function'?crmFmt(n):n+'€';}
+  function esc(s){return (s||'').toString().replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+  window.renderIaInsights=function(){
+    var box=document.getElementById('ia-insights');if(!box)return;
+    var clientes=(typeof _crmClientes!=='undefined'?_crmClientes:[])||[];
+    var encargos=(typeof _allEncargos!=='undefined'?_allEncargos:[])||[];
+    var facturas=(typeof _crmFacturas!=='undefined'?_crmFacturas:[])||[];
+    var stock=(typeof _crmInventario!=='undefined'?_crmInventario:[])||[];
+    var citas=(typeof allCitas!=='undefined'?allCitas:[])||[];
+    var insights=[];
+
+    // 1) Clientes VIP (>=2000€ último año)
+    var yearAgo=new Date();yearAgo.setFullYear(yearAgo.getFullYear()-1);
+    var gastoPorCliente={};
+    facturas.filter(function(f){return f.type==='factura'&&f.status==='pagado'&&f.issue_date&&new Date(f.issue_date)>=yearAgo;}).forEach(function(f){
+      var name=f.client_name||'';if(!name)return;
+      gastoPorCliente[name]=(gastoPorCliente[name]||0)+Number(f.total||0);
+    });
+    var vips=Object.entries(gastoPorCliente).filter(function(x){return x[1]>=2000;}).sort(function(a,b){return b[1]-a[1];});
+    if(vips.length){
+      insights.push({icon:'★',color:'#c4a35a',title:'Clientes VIP activos',body:vips.slice(0,3).map(function(v){return '<strong>'+esc(v[0])+'</strong> · '+fmt(v[1])+'/año';}).join(' &nbsp;·&nbsp; '),action:'crm-clientes'});
+    }
+
+    // 2) Clientes dormidos (con facturado pero sin compras en 6 meses)
+    var halfYearAgo=new Date();halfYearAgo.setMonth(halfYearAgo.getMonth()-6);
+    var dormidos=[];
+    Object.keys(gastoPorCliente).forEach(function(name){
+      var ultima=facturas.filter(function(f){return f.client_name===name&&f.issue_date;}).map(function(f){return new Date(f.issue_date);}).sort(function(a,b){return b-a;})[0];
+      if(ultima&&ultima<halfYearAgo&&gastoPorCliente[name]>=500){dormidos.push({name:name,last:ultima,total:gastoPorCliente[name]});}
+    });
+    if(dormidos.length){
+      var d=dormidos.sort(function(a,b){return b.total-a.total;})[0];
+      var meses=Math.floor((new Date()-d.last)/(1000*60*60*24*30));
+      insights.push({icon:'💤',color:'#f59e0b',title:'Cliente dormido',body:'<strong>'+esc(d.name)+'</strong> lleva <strong>'+meses+' meses</strong> sin venir y gastó '+fmt(d.total)+' antes. ¿Llamamos?',action:'crm-clientes'});
+    }
+
+    // 3) Stock crítico (≤2 unidades)
+    var critico=stock.filter(function(p){return Number(p.stock||0)<=2&&Number(p.stock||0)>=0;});
+    if(critico.length){
+      insights.push({icon:'⚠',color:'#ef4444',title:'Stock crítico ('+critico.length+')',body:critico.slice(0,3).map(function(p){return esc(p.name)+' <span style="color:#ef4444;font-weight:700">('+(p.stock||0)+')</span>';}).join(' · '),action:'crm-stock'});
+    }
+
+    // 4) Encargos atrasados (en producción >30 días)
+    var monthAgo=new Date();monthAgo.setDate(monthAgo.getDate()-30);
+    var atrasados=encargos.filter(function(o){return ['produccion','listo_prueba','ajustes'].indexOf(o.status)>=0 && o.created_at && new Date(o.created_at)<monthAgo;});
+    if(atrasados.length){
+      insights.push({icon:'⏰',color:'#f97316',title:atrasados.length+' encargos atrasados',body:'Llevan más de un mes activos. Revisa el kanban.',action:'crm-encargos'});
+    }
+
+    // 5) Facturas sin cobrar
+    var pendCobro=facturas.filter(function(f){return f.type==='factura'&&f.status==='enviado';});
+    var totalPend=pendCobro.reduce(function(s,f){return s+Number(f.total||0);},0);
+    if(pendCobro.length){
+      insights.push({icon:'💰',color:'#3b82f6',title:fmt(totalPend)+' por cobrar',body:pendCobro.length+' factura(s) enviada(s) pendientes de pago.',action:'crm-facturacion'});
+    }
+
+    // 6) Patrón: día más activo de citas
+    var diasSemana=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    var conteoDia={};
+    citas.forEach(function(c){if(c.starts_at){var d=new Date(c.starts_at).getDay();conteoDia[d]=(conteoDia[d]||0)+1;}});
+    var topDia=Object.entries(conteoDia).sort(function(a,b){return b[1]-a[1];})[0];
+    if(topDia&&topDia[1]>=3){
+      insights.push({icon:'📊',color:'#8b5cf6',title:'Tu día más activo',body:'Los <strong>'+diasSemana[topDia[0]].toLowerCase()+'</strong> tienes el '+Math.round(topDia[1]/citas.length*100)+'% de las citas. Buen día para promociones.',action:'citas'});
+    }
+
+    // 7) Predicción stock — ratio entrega vs stock
+    if(stock.length){
+      var entregados=encargos.filter(function(o){return o.status==='entregado';}).length;
+      var meses=3;
+      var ritmo=entregados/meses;
+      if(ritmo>0){
+        insights.push({icon:'📈',color:'#10b981',title:'Ritmo del taller',body:'Entregas estimadas: <strong>'+ritmo.toFixed(1)+' encargos/mes</strong>. Mantén stock de tejidos sincronizado.',action:'crm-stock'});
+      }
+    }
+
+    if(!insights.length){
+      box.innerHTML='';return;
+    }
+
+    box.innerHTML='<div class="card" style="margin-bottom:0">'+
+      '<div class="card-hd"><div class="card-hd-title">✨ Inteligencia del negocio</div><div style="font-size:10px;color:#8a7960;letter-spacing:.2em;text-transform:uppercase">Análisis automático</div></div>'+
+      '<div style="padding:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px">'+
+      insights.map(function(i){return '<div onclick="showTab(\''+i.action+'\',document.getElementById(\'nav-'+i.action+'\'))" style="padding:14px;border:1px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 6px 18px rgba(196,163,90,.12)\';this.style.borderColor=\'rgba(196,163,90,.4)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\';this.style.borderColor=\'\'">'+
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'+
+        '<div style="width:32px;height:32px;border-radius:8px;background:'+i.color+'15;border:1px solid '+i.color+'40;display:grid;place-items:center;font-size:16px;color:'+i.color+'">'+i.icon+'</div>'+
+        '<div style="font-size:12px;font-weight:700;color:#1a1410;letter-spacing:.02em">'+i.title+'</div></div>'+
+        '<div style="font-size:12px;color:#5c4d3a;line-height:1.55">'+i.body+'</div></div>';}).join('')+
+      '</div></div>';
+  };
+
+  window.renderIaHeatmap=function(){
+    var box=document.getElementById('ia-heatmap');if(!box)return;
+    var citas=(typeof allCitas!=='undefined'?allCitas:[])||[];
+    var encargos=(typeof _allEncargos!=='undefined'?_allEncargos:[])||[];
+    var facturas=(typeof _crmFacturas!=='undefined'?_crmFacturas:[])||[];
+
+    // Mapa de actividad por día — últimas 52 semanas
+    var hoy=new Date();hoy.setHours(0,0,0,0);
+    var dayMap={};
+    var add=function(dateStr){if(!dateStr)return;var d=new Date(dateStr);d.setHours(0,0,0,0);var key=d.toISOString().slice(0,10);dayMap[key]=(dayMap[key]||0)+1;};
+    citas.forEach(function(c){add(c.starts_at);});
+    encargos.forEach(function(o){add(o.created_at);});
+    facturas.forEach(function(f){add(f.issue_date);});
+
+    // Generar 52 semanas hacia atrás
+    var max=0;Object.values(dayMap).forEach(function(v){if(v>max)max=v;});
+    var weeks=[];
+    var cursor=new Date(hoy);
+    // Ajustar a domingo de la semana actual
+    cursor.setDate(cursor.getDate()-cursor.getDay());
+    for(var w=0;w<52;w++){
+      var col=[];
+      for(var d=0;d<7;d++){
+        var day=new Date(cursor);
+        day.setDate(day.getDate()-((51-w)*7)+d);
+        if(day>hoy){col.push(null);continue;}
+        var key=day.toISOString().slice(0,10);
+        var v=dayMap[key]||0;
+        col.push({date:day,count:v,intensity:max>0?v/max:0});
+      }
+      weeks.push(col);
+    }
+
+    function colorFor(int){
+      if(int===0)return '#f4f1ea';
+      if(int<.25)return 'rgba(196,163,90,.25)';
+      if(int<.5)return 'rgba(196,163,90,.5)';
+      if(int<.75)return 'rgba(196,163,90,.75)';
+      return '#c4a35a';
+    }
+
+    var meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    var monthsHeader='';
+    var lastMonth=-1;
+    weeks.forEach(function(col,wi){
+      if(!col[0])return;
+      var m=col[0].date.getMonth();
+      if(m!==lastMonth){
+        monthsHeader+='<div style="position:absolute;left:'+(wi*13)+'px;top:0;font-size:9px;color:#8a7960;letter-spacing:.1em;text-transform:uppercase;font-weight:600">'+meses[m]+'</div>';
+        lastMonth=m;
+      }
+    });
+
+    var cells='';
+    weeks.forEach(function(col,wi){
+      col.forEach(function(cell,di){
+        if(!cell){cells+='<div style="width:11px;height:11px"></div>';return;}
+        cells+='<div title="'+cell.date.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})+' — '+cell.count+' eventos" style="width:11px;height:11px;background:'+colorFor(cell.intensity)+';border-radius:2px;border:1px solid rgba(196,163,90,.08);transition:transform .1s" onmouseover="this.style.transform=\'scale(1.4)\'" onmouseout="this.style.transform=\'\'"></div>';
+      });
+    });
+
+    var total=Object.values(dayMap).reduce(function(s,v){return s+v;},0);
+    var diasActivos=Object.keys(dayMap).length;
+
+    box.innerHTML='<div class="card" style="margin-bottom:0">'+
+      '<div class="card-hd"><div class="card-hd-title">📅 Actividad del año</div>'+
+      '<div style="font-size:11px;color:#8a7960">'+total+' eventos · '+diasActivos+' días activos</div></div>'+
+      '<div style="padding:18px 20px 14px;overflow-x:auto">'+
+        '<div style="position:relative;height:14px;margin-bottom:8px;min-width:'+(52*13)+'px">'+monthsHeader+'</div>'+
+        '<div style="display:grid;grid-template-columns:repeat(52,1fr);grid-template-rows:repeat(7,1fr);grid-auto-flow:column;gap:2px;min-width:'+(52*13)+'px">'+cells+'</div>'+
+        '<div style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:10px;color:#8a7960;letter-spacing:.1em;text-transform:uppercase">'+
+          '<span>Menos</span>'+
+          '<div style="display:flex;gap:2px"><div style="width:11px;height:11px;background:#f4f1ea;border-radius:2px"></div><div style="width:11px;height:11px;background:rgba(196,163,90,.25);border-radius:2px"></div><div style="width:11px;height:11px;background:rgba(196,163,90,.5);border-radius:2px"></div><div style="width:11px;height:11px;background:rgba(196,163,90,.75);border-radius:2px"></div><div style="width:11px;height:11px;background:#c4a35a;border-radius:2px"></div></div>'+
+          '<span>Más</span>'+
+        '</div>'+
+      '</div></div>';
+  };
 })();
 </script>
 
