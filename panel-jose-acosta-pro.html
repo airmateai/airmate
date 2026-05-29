@@ -560,14 +560,20 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
 
 <!-- LOGIN -->
 <div id="login-screen" style="display:none">
-  <div class="login-left" id="ja-login-left" style="flex:1;position:relative;overflow:hidden;background:#08070a;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;">
-    <!-- Visor 360 como fondo -->
-    <div id="login360-stage" style="position:absolute;inset:0;cursor:grab;touch-action:none;overflow:hidden;"
+  <div class="login-left" id="ja-login-left" style="flex:1;position:relative;overflow:hidden;background:#000;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;">
+    <!-- Visor 360 CSS 3D — fondo negro, 2 imágenes, rotación con scaleX -->
+    <div id="login360-stage" style="position:absolute;inset:0;cursor:grab;touch-action:none;overflow:hidden;display:flex;align-items:center;justify-content:center;"
          onmousedown="login360Start(event)" ontouchstart="login360Start(event)">
-      <img id="login360-img" src="https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/suit-1.jpeg"
-           draggable="false" style="width:100%;height:100%;object-fit:cover;object-position:center top;pointer-events:none;display:block;">
-      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(8,7,10,.96) 0%,rgba(8,7,10,.5) 40%,transparent 75%);pointer-events:none"></div>
-      <div style="position:absolute;inset:0;background:linear-gradient(to right,transparent 60%,rgba(8,7,10,.6) 100%);pointer-events:none"></div>
+      <!-- Imagen delantera -->
+      <img id="login360-front" src="https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/front.jpeg"
+           draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none;will-change:transform,opacity;transform-origin:center center;">
+      <!-- Imagen trasera -->
+      <img id="login360-back" src="https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/back.jpeg"
+           draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none;will-change:transform,opacity;transform-origin:center center;opacity:0;">
+      <!-- Degradado inferior para texto -->
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.95) 0%,rgba(0,0,0,.4) 45%,transparent 70%);pointer-events:none;z-index:1"></div>
+      <!-- Degradado derecho suave -->
+      <div style="position:absolute;inset:0;background:linear-gradient(to right,transparent 55%,rgba(0,0,0,.5) 100%);pointer-events:none;z-index:1"></div>
     </div>
     <!-- Contenido encima del visor -->
     <div style="position:relative;z-index:2;padding:40px 48px;pointer-events:none">
@@ -575,7 +581,7 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
       <div style="font-size:11px;font-weight:700;letter-spacing:.18em;color:#b89a5e;text-transform:uppercase;margin-bottom:10px;">Sastrería a Medida · Tenerife</div>
       <div style="font-size:32px;font-weight:800;line-height:1.2;color:#fff;margin-bottom:8px;">Tu negocio,<br>bajo control total</div>
       <div style="font-size:14px;color:rgba(255,255,255,.45);margin-bottom:28px;">Encargos, citas, facturación IGIC y contabilidad<br>desde un solo panel.</div>
-      <div id="login360-hint" style="display:inline-flex;align-items:center;gap:8px;background:rgba(196,163,90,.12);border:1px solid rgba(196,163,90,.25);border-radius:30px;padding:7px 16px;pointer-events:none">
+      <div id="login360-hint" style="display:inline-flex;align-items:center;gap:8px;background:rgba(196,163,90,.12);border:1px solid rgba(196,163,90,.25);border-radius:30px;padding:7px 16px;pointer-events:none;transition:opacity .4s">
         <span style="font-size:16px">↔</span>
         <span style="font-size:12px;font-weight:600;color:#c4a35a;letter-spacing:.04em">Arrastra para girar el traje</span>
       </div>
@@ -5754,45 +5760,74 @@ function _iaMostrarMensaje(nombre, msg, tipo, telefono) {
   document.addEventListener('DOMContentLoaded',function(){setTimeout(_buildDots,500);});
 })();
 
-/* ── LOGIN 360° ──────────────────────────────── */
+/* ── LOGIN 360° CSS 3D — 2 imágenes + scaleX ─── */
 (function(){
-  var BASE='https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/suit-';
-  var EXT='.jpeg';
-  var FRAMES=12;
-  var _frame=0;
+  var FRONT_URL='https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/front.jpeg';
+  var BACK_URL='https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/back.jpeg';
+
+  // Preload
+  new Image().src=FRONT_URL; new Image().src=BACK_URL;
+
+  var _angle=0;       // 0-360
   var _dragging=false;
   var _lastX=0;
-  var _autoTimer=null;
+  var _velX=0;
+  var _raf=null;
+  var _autoSpeed=0.4; // grados por frame auto-rotate
   var _interacted=false;
+  var _autoActive=true;
 
-  for(var i=1;i<=FRAMES;i++){var im=new Image();im.src=BASE+i+EXT;}
+  function _render(){
+    var front=document.getElementById('login360-front');
+    var back=document.getElementById('login360-back');
+    if(!front||!back)return;
 
-  function _setFrame(n){
-    n=((n%FRAMES)+FRAMES)%FRAMES;_frame=n;
-    var el=document.getElementById('login360-img');
-    if(el) el.src=BASE+(n+1)+EXT;
+    var rad=_angle*Math.PI/180;
+    var sx=Math.cos(rad);
+    var absSx=Math.abs(sx);
+    var scale='scaleX('+absSx+')';
+
+    if(sx>=0){
+      // Mostrando delantera
+      front.style.transform=scale;
+      front.style.opacity='1';
+      back.style.transform=scale;
+      back.style.opacity='0';
+    } else {
+      // Mostrando trasera (espejada para que no aparezca invertida)
+      back.style.transform='scaleX('+absSx+')';
+      back.style.opacity='1';
+      front.style.transform='scaleX('+absSx+')';
+      front.style.opacity='0';
+    }
   }
 
-  function _startAuto(){
-    if(_autoTimer)return;
-    _autoTimer=setInterval(function(){_setFrame(_frame+1);},140);
-  }
-
-  function _stopAuto(){
-    if(_autoTimer){clearInterval(_autoTimer);_autoTimer=null;}
+  function _loop(){
+    if(_autoActive && !_dragging){
+      _angle=(_angle+_autoSpeed)%360;
+    } else if(!_dragging && Math.abs(_velX)>0.05){
+      // Inercia al soltar
+      _angle=(_angle-_velX+360)%360;
+      _velX*=0.92;
+    }
+    _render();
+    _raf=requestAnimationFrame(_loop);
   }
 
   function _hideHint(){
     if(_interacted)return;_interacted=true;
     var h=document.getElementById('login360-hint');
-    if(h){h.style.opacity='0';h.style.transition='opacity .4s';setTimeout(function(){h.style.display='none';},400);}
+    if(h){h.style.opacity='0';setTimeout(function(){h.style.display='none';},400);}
   }
 
-  window._startLogin360=function(){_startAuto();};
+  window._startLogin360=function(){
+    if(!_raf) _loop();
+  };
+
   window.login360Start=function(e){
-    _dragging=true;
+    _dragging=true;_autoActive=false;_velX=0;
     _lastX=e.touches?e.touches[0].clientX:e.clientX;
-    _hideHint();_stopAuto();
+    _hideHint();
     var s=document.getElementById('login360-stage');if(s)s.style.cursor='grabbing';
     document.addEventListener('mousemove',_onMove);
     document.addEventListener('mouseup',_onEnd);
@@ -5805,7 +5840,10 @@ function _iaMostrarMensaje(nombre, msg, tipo, telefono) {
     if(e.cancelable)e.preventDefault();
     var x=e.touches?e.touches[0].clientX:e.clientX;
     var dx=x-_lastX;
-    if(Math.abs(dx)>20){_setFrame(_frame+(dx<0?1:-1));_lastX=x;}
+    _velX=dx*0.5;
+    _angle=(_angle-dx*0.4+360)%360;
+    _lastX=x;
+    _render();
   }
 
   function _onEnd(){
@@ -5815,11 +5853,12 @@ function _iaMostrarMensaje(nombre, msg, tipo, telefono) {
     document.removeEventListener('mouseup',_onEnd);
     document.removeEventListener('touchmove',_onMove);
     document.removeEventListener('touchend',_onEnd);
-    setTimeout(function(){if(!_dragging)_startAuto();},3000);
+    // Reanudar auto-rotate tras 4s de inactividad
+    setTimeout(function(){if(!_dragging){_autoActive=true;}},4000);
   }
 
   document.addEventListener('DOMContentLoaded',function(){
-    setTimeout(function(){_startAuto();},800);
+    setTimeout(function(){_loop();},600);
   });
 })();
 
