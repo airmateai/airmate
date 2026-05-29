@@ -561,22 +561,14 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
 <!-- LOGIN -->
 <div id="login-screen" style="display:none">
   <div class="login-left" id="ja-login-left" style="flex:1;position:relative;overflow:hidden;background:#000;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;">
-    <!-- Visor 360 CSS 3D real — perspective + rotateY + backface-visibility -->
-    <div id="login360-stage" style="position:absolute;inset:0;cursor:grab;touch-action:none;overflow:hidden;display:flex;align-items:center;justify-content:center;perspective:1200px;"
-         onmousedown="login360Start(event)" ontouchstart="login360Start(event)">
-      <!-- Card 3D que rota en Y -->
-      <div id="login360-card" style="position:absolute;inset:0;transform-style:preserve-3d;will-change:transform;">
-        <!-- Cara delantera -->
-        <img id="login360-front" src="https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/front.jpeg"
-             draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none;backface-visibility:hidden;-webkit-backface-visibility:hidden;">
-        <!-- Cara trasera (rotada 180°) -->
-        <img id="login360-back" src="https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/back.jpeg"
-             draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg);">
-      </div>
-      <!-- Degradados encima del card -->
-      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.95) 0%,rgba(0,0,0,.35) 45%,transparent 70%);pointer-events:none;z-index:1"></div>
-      <div style="position:absolute;inset:0;background:linear-gradient(to right,transparent 55%,rgba(0,0,0,.45) 100%);pointer-events:none;z-index:1"></div>
-    </div>
+    <!-- Video pasarela de fondo -->
+    <video autoplay loop muted playsinline
+           style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;pointer-events:none;">
+      <source src="https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/runway.mp4" type="video/mp4">
+    </video>
+    <!-- Degradados encima del video -->
+    <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.92) 0%,rgba(0,0,0,.3) 50%,rgba(0,0,0,.1) 100%);pointer-events:none;z-index:1"></div>
+    <div style="position:absolute;inset:0;background:linear-gradient(to right,transparent 50%,rgba(0,0,0,.55) 100%);pointer-events:none;z-index:1"></div>
     <!-- Contenido encima del visor -->
     <div style="position:relative;z-index:2;padding:40px 48px;pointer-events:none">
       <img src="https://joseacosta.com/wp-content/uploads/2020/06/joseacostastyle_logo-600x87.png" alt="Jose Acosta Style" style="height:36px;filter:invert(1) brightness(2);opacity:.92;margin-bottom:20px;display:block;">
@@ -1623,7 +1615,6 @@ async function doLogin(){
     enterApp(BIZ_NAME);
   } else {
     document.getElementById('login-screen').style.display='flex';
-    setTimeout(function(){if(typeof _startLogin360==='function')_startLogin360();},300);
   }
 })();
 
@@ -5762,77 +5753,6 @@ function _iaMostrarMensaje(nombre, msg, tipo, telefono) {
   document.addEventListener('DOMContentLoaded',function(){setTimeout(_buildDots,500);});
 })();
 
-/* ── LOGIN 360° — CSS 3D real rotateY ─────────── */
-(function(){
-  new Image().src='https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/front.jpeg';
-  new Image().src='https://vjofxmfwdybktpwiuanc.supabase.co/storage/v1/object/public/assets/suit360/back.jpeg';
-
-  var _angle=0;
-  var _dragging=false;
-  var _lastX=0;
-  var _velX=0;
-  var _raf=null;
-  var _autoActive=true;
-  var _interacted=false;
-
-  function _render(){
-    var card=document.getElementById('login360-card');
-    if(card) card.style.transform='rotateY('+_angle+'deg)';
-  }
-
-  function _loop(){
-    if(_autoActive&&!_dragging){
-      _angle=(_angle+0.35)%360;
-    } else if(!_dragging&&Math.abs(_velX)>0.1){
-      _angle=(_angle+_velX+360)%360;
-      _velX*=0.94;
-    }
-    _render();
-    _raf=requestAnimationFrame(_loop);
-  }
-
-  function _hideHint(){
-    if(_interacted)return;_interacted=true;
-    var h=document.getElementById('login360-hint');
-    if(h){h.style.opacity='0';setTimeout(function(){h.style.display='none';},400);}
-  }
-
-  window._startLogin360=function(){if(!_raf)_loop();};
-
-  window.login360Start=function(e){
-    _dragging=true;_autoActive=false;_velX=0;
-    _lastX=e.touches?e.touches[0].clientX:e.clientX;
-    _hideHint();
-    var s=document.getElementById('login360-stage');if(s)s.style.cursor='grabbing';
-    document.addEventListener('mousemove',_onMove);
-    document.addEventListener('mouseup',_onEnd);
-    document.addEventListener('touchmove',_onMove,{passive:false});
-    document.addEventListener('touchend',_onEnd);
-  };
-
-  function _onMove(e){
-    if(!_dragging)return;
-    if(e.cancelable)e.preventDefault();
-    var x=e.touches?e.touches[0].clientX:e.clientX;
-    var dx=x-_lastX;
-    _velX=dx*0.6;
-    _angle=(_angle+dx*0.45+360)%360;
-    _lastX=x;
-    _render();
-  }
-
-  function _onEnd(){
-    _dragging=false;
-    var s=document.getElementById('login360-stage');if(s)s.style.cursor='grab';
-    document.removeEventListener('mousemove',_onMove);
-    document.removeEventListener('mouseup',_onEnd);
-    document.removeEventListener('touchmove',_onMove);
-    document.removeEventListener('touchend',_onEnd);
-    setTimeout(function(){if(!_dragging)_autoActive=true;},4000);
-  }
-
-  document.addEventListener('DOMContentLoaded',function(){setTimeout(_loop,600);});
-})();
 
 
 function _init3DTilt(){
