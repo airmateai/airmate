@@ -2277,6 +2277,9 @@ async function crmVerCliente(id){
       <div>
         <div style="font-size:17px;font-weight:700">${esc(c.name)}</div>
         <div style="font-size:13px;color:#64748b">${[c.phone,c.email].filter(Boolean).join(' · ')||'Sin contacto'}</div>
+        ${c.nif?`<div style="font-size:12px;color:#94a3b8">NIF: ${esc(c.nif)}</div>`:''}
+        ${c.direccion?`<div style="font-size:12px;color:#94a3b8">📍 ${esc(c.direccion)}</div>`:''}
+        ${c.tags?`<div style="margin-top:4px">${c.tags.split(',').map(t=>`<span class="tag tag-cold" style="font-size:10px;margin-right:4px">${esc(t.trim())}</span>`).join('')}</div>`:''}
       </div>
       ${c.empresa?`<div style="margin-left:auto"><span class="tag tag-cold">🏢 ${esc(c.empresa)}</span></div>`:''}
     </div>`+
@@ -2321,6 +2324,14 @@ function crmClienteForm(c={}){
     <div class="crm-form-group"><label class="crm-form-label">Teléfono</label><input class="crm-form-ctrl" id="cf-phone" value="${esc(c.phone||'')}"/></div>
     <div class="crm-form-group"><label class="crm-form-label">Email</label><input type="email" class="crm-form-ctrl" id="cf-email" value="${esc(c.email||'')}"/></div>
   </div>
+  <div class="crm-form-row">
+    <div class="crm-form-group"><label class="crm-form-label">NIF / CIF</label><input class="crm-form-ctrl" id="cf-nif" value="${esc(c.nif||'')}"/></div>
+    <div class="crm-form-group"><label class="crm-form-label">IBAN</label><input class="crm-form-ctrl" id="cf-iban" value="${esc(c.iban||'')}"/></div>
+  </div>
+  <div class="crm-form-group"><label class="crm-form-label">Dirección fiscal</label><input class="crm-form-ctrl" id="cf-direccion" value="${esc(c.direccion||'')}"/></div>
+  <div class="crm-form-row">
+    <div class="crm-form-group"><label class="crm-form-label">Etiquetas (separadas por coma)</label><input class="crm-form-ctrl" id="cf-tags" value="${esc(c.tags||'')}" placeholder="novio, corporativo, vip..."/></div>
+  </div>
   <div class="crm-form-group"><label class="crm-form-label">Notas</label><textarea class="crm-form-ctrl" id="cf-notes">${esc(c.notes||'')}</textarea></div>
   <div class="crm-form-group"><label class="crm-form-label">Medidas (cm)</label>
     <div class="crm-form-row" style="margin-bottom:8px">
@@ -2346,7 +2357,7 @@ async function crmSaveCliente(){
   ['pecho','cintura','cadera'].forEach(f=>{const v=cv('cf-'+f);if(v)m[f]=Number(v);});
   const lp=cv('cf-lpant');if(lp)m.largo_pantalon=Number(lp);
   const lc=cv('cf-lchaq');if(lc)m.largo_chaqueta=Number(lc);
-  const payload={business_slug:BIZ_SLUG,name,tipo:cv('cf-tipo')||'particular',empresa:cv('cf-empresa')||null,phone:cv('cf-phone')||null,email:cv('cf-email')||null,notes:cv('cf-notes')||null,measurements:Object.keys(m).length?m:null};
+  const payload={business_slug:BIZ_SLUG,name,tipo:cv('cf-tipo')||'particular',empresa:cv('cf-empresa')||null,phone:cv('cf-phone')||null,email:cv('cf-email')||null,nif:cv('cf-nif')||null,iban:cv('cf-iban')||null,direccion:cv('cf-direccion')||null,tags:cv('cf-tags')||null,notes:cv('cf-notes')||null,measurements:Object.keys(m).length?m:null};
   if(_crmEditId)await _sb.from('crm_clients').update(payload).eq('id',_crmEditId);
   else await _sb.from('crm_clients').insert(payload);
   crmCloseModal();crmLoadClientes();showToast('✓ Cliente guardado');
@@ -2951,6 +2962,10 @@ function crmInvForm(i={}){return `
     <div class="crm-form-group"><label class="crm-form-label">Unidad</label><input class="crm-form-ctrl" id="if-unit" placeholder="ud" value="${esc(i.unit||'')}"/></div>
     <div class="crm-form-group"><label class="crm-form-label">Precio compra (€)</label><input type="number" class="crm-form-ctrl" id="if-pc" step="0.01" min="0" value="${i.precio_compra??''}"/></div>
   </div>
+  <div class="crm-form-row">
+    <div class="crm-form-group"><label class="crm-form-label">SKU / Referencia</label><input class="crm-form-ctrl" id="if-sku" value="${esc(i.sku||'')}" placeholder="REF-001"/></div>
+    <div class="crm-form-group"><label class="crm-form-label">Código de barras</label><input class="crm-form-ctrl" id="if-barcode" value="${esc(i.barcode||'')}"/></div>
+  </div>
   <div class="crm-form-group"><label class="crm-form-label">Foto del producto (URL)</label><input class="crm-form-ctrl" id="if-img" placeholder="https://..." value="${esc(i.image_url||'')}"/>
     ${i.image_url?`<img src="${esc(i.image_url)}" style="margin-top:8px;width:100%;max-height:120px;object-fit:cover;border-radius:8px"/>`:''}</div>`;}
 function crmOpenInventarioModal(){_crmEditId=null;crmOpenModal('Nuevo producto',crmInvForm(),`<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button><button class="btn btn-accent" onclick="crmSaveInventario()">Guardar</button>`);}
@@ -2959,7 +2974,7 @@ async function crmSaveInventario(){
   const name=cv('if-name').trim();if(!name){alert('Nombre obligatorio');return;}
   const stock=parseFloat(cv('if-stock'));if(isNaN(stock)){alert('Stock obligatorio');return;}
   const mr=cv('if-minstock');const pc=cv('if-pc');const img=cv('if-img');
-  const payload={business_slug:BIZ_SLUG,name,category:cv('if-cat')||null,stock,min_stock:mr!==''?parseFloat(mr):null,unit:cv('if-unit')||'ud',precio_compra:pc!==''?parseFloat(pc):null,image_url:img||null};
+  const payload={business_slug:BIZ_SLUG,name,category:cv('if-cat')||null,stock,min_stock:mr!==''?parseFloat(mr):null,unit:cv('if-unit')||'ud',precio_compra:pc!==''?parseFloat(pc):null,image_url:img||null,sku:cv('if-sku')||null,barcode:cv('if-barcode')||null};
   if(_crmEditId)await _sb.from('crm_inventory').update(payload).eq('id',_crmEditId);
   else await _sb.from('crm_inventory').insert(payload);
   crmCloseModal();crmLoadInventario();showToast('✓ Producto guardado');
@@ -3136,8 +3151,16 @@ async function crmFacturaForm(f={}){
     <div id="crm-inv-lines"></div>
     <button class="btn btn-ghost btn-sm" style="margin-top:4px" onclick="crmAddLine()">+ Añadir línea</button>
   </div>
+  <div class="crm-form-row">
+    <div class="crm-form-group"><label class="crm-form-label">Descuento (%)</label><input type="number" class="crm-form-ctrl" id="ff-discount" value="${f.discount||0}" min="0" max="100" step="0.1"/></div>
+    <div class="crm-form-group"><label class="crm-form-label">Retención IRPF (%)</label><input type="number" class="crm-form-ctrl" id="ff-irpf" value="${f.irpf||0}" min="0" max="100" step="0.1"/></div>
+  </div>
   <div style="text-align:right;font-size:16px;font-weight:700;margin:10px 0">Total: <span id="crm-inv-total">0,00 €</span></div>
-  <div class="crm-form-group"><label class="crm-form-label">Notas</label><textarea class="crm-form-ctrl" id="ff-notes">${esc(f.notes)}</textarea></div>`;
+  <div class="crm-form-row">
+    <div class="crm-form-group"><label class="crm-form-label">Fecha vencimiento</label><input type="date" class="crm-form-ctrl" id="ff-due-date" value="${f.due_date||''}"/></div>
+    <div class="crm-form-group"><label class="crm-form-label">Etiquetas (separadas por coma)</label><input class="crm-form-ctrl" id="ff-tags" value="${esc(f.tags||'')}" placeholder="novio, corporativo..."/></div>
+  </div>
+  <div class="crm-form-group"><label class="crm-form-label">Notas</label><textarea class="crm-form-ctrl" id="ff-notes">${esc(f.notes||'')}</textarea></div>`;
 }
 async function crmOpenFacturaModal(){
   _crmEditId=null;
@@ -3169,7 +3192,10 @@ async function crmSaveFactura(){
   const type=cv('ff-type');
   let invoice_number=null;
   if(!_crmEditId)invoice_number=await _nextInvoiceNum(type);
-  const payload={business_slug:BIZ_SLUG,client_id:cId,client_name:cName,type,status:cv('ff-status'),issue_date:cv('ff-date')||null,items:_crmLines,total,notes:cv('ff-notes')||null,...(invoice_number?{invoice_number}:{})};
+  const discount=parseFloat(cv('ff-discount'))||0;
+  const irpf=parseFloat(cv('ff-irpf'))||0;
+  const totalConDesc=total*(1-discount/100)*(1-irpf/100);
+  const payload={business_slug:BIZ_SLUG,client_id:cId,client_name:cName,type,status:cv('ff-status'),issue_date:cv('ff-date')||null,due_date:cv('ff-due-date')||null,items:_crmLines,total:Math.round(totalConDesc*100)/100,discount,irpf,tags:cv('ff-tags')||null,notes:cv('ff-notes')||null,...(invoice_number?{invoice_number}:{})};
   if(_crmEditId)await _sb.from('crm_invoices').update(payload).eq('id',_crmEditId);
   else await _sb.from('crm_invoices').insert(payload);
   crmCloseModal();crmLoadFacturas();showToast('✓ Documento guardado');
