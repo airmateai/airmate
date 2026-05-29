@@ -934,6 +934,7 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
                 <input class="search-input" style="width:200px" placeholder="Buscar..." oninput="crmFilterClientes(this.value)" id="cli-search">
               </div>
               <button class="btn btn-ghost" onclick="exportClientesCSV()" id="cli-btn-csv">⬇ CSV</button>
+              <button class="btn btn-ghost" onclick="sincronizarContactosHolded()" id="cli-btn-sync" title="Enriquecer fichas con NIF, IBAN, dirección y teléfono desde Holded">🔄 Importar Holded</button>
               <button class="btn btn-accent" id="cli-btn-new" onclick="crmOpenClienteModal()">+ Nuevo cliente</button>
             </div>
           </div>
@@ -6633,5 +6634,83 @@ mark.gs-hl{background:rgba(196,163,90,.35);color:#fff;border-radius:2px;padding:
   };
 })();
 </script>
+
+<!-- ═══════════════════════════════════════════
+     Sincronización contactos Holded → CRM
+     ═══════════════════════════════════════════ -->
+<script>
+async function sincronizarContactosHolded(){
+  if(!confirm('Vamos a importar tus contactos de Holded.\n\n• Para clientes ya existentes: actualizamos NIF, IBAN, dirección y teléfono.\n• Para nuevos: los creamos.\n\nNo se importan datos económicos.\n\n¿Continuar?'))return;
+
+  const btn=document.getElementById('cli-btn-sync');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Sincronizando…';}
+
+  try{
+    const r=await fetch('https://airmate.es/api/holded?slug='+BIZ_SLUG+'&endpoint=contacts');
+    if(!r.ok)throw new Error('Holded HTTP '+r.status);
+    const contacts=await r.json();
+    if(!Array.isArray(contacts))throw new Error('Respuesta inesperada');
+
+    // Solo clientes (no proveedores)
+    const clientes=contacts.filter(c=>c.type==='client'||c.clientRecord);
+    let actualizados=0, nuevos=0, omitidos=0;
+
+    for(const c of clientes){
+      if(!c.name||c.name.trim().length<2){omitidos++;continue;}
+      // Construir dirección a partir de billAddress
+      let direccion='';
+      if(c.billAddress){
+        const a=c.billAddress;
+        direccion=[a.address,a.postalCode,a.city,a.province].filter(Boolean).join(', ');
+      }
+      const payload={
+        business_slug:BIZ_SLUG,
+        name:c.name.trim(),
+        phone:(c.mobile||c.phone||'').trim()||null,
+        email:(c.email||'').trim().toLowerCase()||null,
+        nif:(c.vatnumber||c.code||'').trim()||null,
+        iban:(c.iban||'').trim()||null,
+        direccion:direccion||null,
+        empresa:(c.tradeName||'').trim()||null,
+      };
+      // Quitar campos vacíos para no sobrescribir con null lo que ya tenga
+      const update={};Object.keys(payload).forEach(k=>{if(payload[k])update[k]=payload[k];});
+
+      // Buscar match por NIF, teléfono o nombre+email
+      const exist=_crmClientes.find(x=>
+        (payload.nif && x.nif && x.nif.replace(/\s/g,'').toUpperCase()===payload.nif.replace(/\s/g,'').toUpperCase())||
+        (payload.phone && x.phone && x.phone.replace(/\D/g,'')===payload.phone.replace(/\D/g,''))||
+        (payload.email && x.email && x.email.toLowerCase()===payload.email.toLowerCase())||
+        (x.name && x.name.trim().toLowerCase()===payload.name.toLowerCase())
+      );
+
+      if(exist){
+        // Solo actualiza los campos que ahora tienen valor y antes estaban vacíos (sin sobreescribir)
+        const enrich={};
+        ['phone','email','nif','iban','direccion','empresa'].forEach(k=>{
+          if(payload[k]&&!exist[k])enrich[k]=payload[k];
+        });
+        if(Object.keys(enrich).length){
+          const {error}=await _sb.from('crm_clients').update(enrich).eq('id',exist.id);
+          if(!error){Object.assign(exist,enrich);actualizados++;} else omitidos++;
+        } else omitidos++;
+      } else {
+        const {data,error}=await _sb.from('crm_clients').insert(payload).select().single();
+        if(!error&&data){_crmClientes.push(data);nuevos++;} else omitidos++;
+      }
+    }
+
+    if(typeof crmRenderClientes==='function')crmRenderClientes(_crmClientes);
+    const msg=`✓ Sincronización completa\n\n• Nuevos: ${nuevos}\n• Enriquecidos: ${actualizados}\n• Sin cambios: ${omitidos}`;
+    alert(msg);
+    if(typeof soundSuccess==='function')soundSuccess();
+  } catch(e){
+    alert('❌ Error: '+e.message+'\n\nVerifica que el proxy /api/holded está desplegado en Vercel.');
+  } finally {
+    if(btn){btn.disabled=false;btn.textContent='🔄 Importar Holded';}
+  }
+}
+</script>
+
 </body>
 </html>
