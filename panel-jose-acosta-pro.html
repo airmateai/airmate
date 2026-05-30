@@ -1255,7 +1255,7 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
             <!-- Catálogo productos -->
             <div>
               <div style="margin-bottom:12px">
-                <input id="tpv-search" oninput="tpvFiltrar()" placeholder="<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg> Buscar producto..." style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;font-family:inherit;transition:border .15s" onfocus="this.style.borderColor='var(--acc)'" onblur="this.style.borderColor='#e2e8f0'">
+                <input id="tpv-search" oninput="tpvFiltrar()" placeholder="Buscar producto..." style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;font-family:inherit;transition:border .15s" onfocus="this.style.borderColor='var(--acc)'" onblur="this.style.borderColor='#e2e8f0'">
               </div>
               <div id="tpv-cats-bar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
               <div id="tpv-catalogo" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px"></div>
@@ -1782,13 +1782,13 @@ function renderDashboard(){
       </div>`;
   document.getElementById('stats-grid').innerHTML=urgBanner+`
     <div class="stats-grid" style="margin-bottom:0">
-    ${stat('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>','Citas hoy',hoy,'','','','citas')}
-    ${stat('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>','Esta semana',citasW,'citas','',trend,'citas')}
+    ${stat('','Citas hoy',hoy,'','','','citas')}
+    ${stat('','Esta semana',citasW,'citas','',trend,'citas')}
     ${stat('⏳','Por confirmar',pend,pend?'citas':'ninguna',pend?'stat-warn':'','','citas')}
     ${stat('✂️','Encargos activos',encActivos,'en producción','','','crm-encargos')}
     
-    ${stat('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>','Leads calientes',hot,'',hot?'stat-warn':'','','leads')}
-    ${lowStock.length?stat('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>️','Stock bajo',lowStock.length,'artículos','stat-warn','','crm-stock'):''}
+    ${stat('','Leads calientes',hot,'',hot?'stat-warn':'','','leads')}
+    ${lowStock.length?stat('️','Stock bajo',lowStock.length,'artículos','stat-warn','','crm-stock'):''}
     </div>`;
   setTimeout(_animateStatCards,40);
   const proxCitas=allCitas.filter(c=>c.status==='pending'&&apptLocalDate(c.starts_at)>=today).slice(0,5);
@@ -1842,7 +1842,7 @@ function stat(icon,label,val,sub,cls='',trend='',tab=''){
     :`<span>${raw}</span>`;
   var onclick=tab?`onclick="showTab('${tab}',document.getElementById('nav-${tab}'))"`:' ';
   var arrow=tab?`<span style="font-size:11px;color:rgba(196,163,90,.45);margin-left:auto;margin-top:2px">→</span>`:'';
-  return `<div class="stat-card ${cls}" style="animation:finSlideUp .4s ease both" ${onclick}><div class="stat-val">${icon} ${valHtml}${trend?`<span style="font-size:13px;font-weight:500;margin-left:6px;color:${trend>0?'#4ade80':'#f87171'}">${trend>0?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>'}${Math.abs(trend)}</span>`:''}</div><div class="stat-label" style="display:flex;align-items:center;gap:4px">${label}${sub?' · '+sub:''}${arrow}</div></div>`;
+  return `<div class="stat-card ${cls}" style="animation:finSlideUp .4s ease both" ${onclick}><div class="stat-val">${icon} ${valHtml}${trend?`<span style="font-size:13px;font-weight:500;margin-left:6px;color:${trend>0?'#4ade80':'#f87171'}">${trend>0?'':''}${Math.abs(trend)}</span>`:''}</div><div class="stat-label" style="display:flex;align-items:center;gap:4px">${label}${sub?' · '+sub:''}${arrow}</div></div>`;
 }
 function _animateStatCards(){
   document.querySelectorAll('.cu-num').forEach(function(el,i){
@@ -2027,8 +2027,8 @@ async function cambiarEstadoCita(id,status){
   if(typeof closeModal==='function')closeModal();
   renderDashboard();updateBadges();
   renderCitas();
-  showToast(status==='confirmed'?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Cita confirmada':status==='completed'?'✔ Cita completada':status==='cancelled'?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cita cancelada':'Estado actualizado');
-  if(!c||!c.client_email){if(status==='cancelled')showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Esta cita no tiene email del cliente');return;}
+  showToast(status==='confirmed'?'Cita confirmada':status==='completed'?'✔ Cita completada':status==='cancelled'?'Cita cancelada':'Estado actualizado');
+  if(!c||!c.client_email){if(status==='cancelled')showToast('Esta cita no tiene email del cliente');return;}
   const dt=new Date(c.starts_at);
   const dateLabel=dt.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const timeLabel=dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
@@ -2050,7 +2050,7 @@ async function cambiarEstadoCita(id,status){
   if(!tpl)return;
   emailjs.send('service_npmjvvf',tpl,base)
     .then(()=>showToast('📧 Email enviado a '+c.client_email))
-    .catch(e=>{console.error('EmailJS error:',e);showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Email error');});
+    .catch(e=>{console.error('EmailJS error:',e);showToast('Email error');});
 }
 
 function openEditCitaModal(id){
@@ -2095,7 +2095,7 @@ async function updateCita(id){
   const ends_at=new Date(new Date(starts_at).getTime()+dur*60000).toISOString();
   const payload={client_name:document.getElementById('ec-name').value,client_phone:document.getElementById('ec-phone').value||null,client_email:document.getElementById('ec-email').value||null,service:document.getElementById('ec-service').value,starts_at,ends_at,duration_minutes:dur,status:document.getElementById('ec-status').value};
   await _sb.from('appointments').update(payload).eq('id',id);
-  closeModal();loadAll();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Cita actualizada');
+  closeModal();loadAll();showToast('Cita actualizada');
 }
 
 async function crearClienteDesdeCita(id){
@@ -2103,7 +2103,7 @@ async function crearClienteDesdeCita(id){
   const {data:exists}=await _sb.from('crm_clients').select('id').eq('business_slug',BIZ_SLUG).eq('phone',c.client_phone||'').maybeSingle();
   if(exists){showToast('Cliente ya existe en CRM');return;}
   await _sb.from('crm_clients').insert({business_slug:BIZ_SLUG,name:c.client_name,phone:c.client_phone||null,email:c.client_email||null});
-  showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Cliente añadido al CRM');
+  showToast('Cliente añadido al CRM');
   closeModal();
 }
 
@@ -2156,7 +2156,7 @@ async function saveCita(){
   const ends_at=new Date(new Date(starts_at).getTime()+dur*60000).toISOString();
   const payload={business_slug:BIZ_SLUG,client_name:name,client_phone:document.getElementById('nc-phone').value||null,client_email:document.getElementById('nc-email').value||null,service,starts_at,ends_at,duration_minutes:dur,status:document.getElementById('nc-status').value,notes:document.getElementById('nc-notes').value||null};
   await _sb.from('appointments').insert(payload);
-  closeModal();loadAll();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Cita creada');
+  closeModal();loadAll();showToast('Cita creada');
 }
 
 // ── LEADS ──────────────────────────────────────────────────────────────────
@@ -2211,7 +2211,7 @@ async function leadToCRM(id){
   if(exists){showToast('Cliente ya existe en CRM');return;}
   await _sb.from('crm_clients').insert({business_slug:BIZ_SLUG,name:l.name,phone:l.phone||null,email:l.email||null,notes:l.interest||null});
   await _sb.from('leads').update({status:'converted'}).eq('id',id);
-  await loadAll();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Lead convertido a cliente CRM');
+  await loadAll();showToast('Lead convertido a cliente CRM');
 }
 
 function openLeadModal(id){
@@ -2279,7 +2279,7 @@ async function saveSeg(){
   const date=document.getElementById('seg-date').value;
   if(!name||!date){alert('Nombre y fecha son obligatorios');return;}
   await _sb.from('leads').insert({business_slug:BIZ_SLUG,name,phone:document.getElementById('seg-phone').value||null,interest:document.getElementById('seg-interest').value||null,follow_up_date:date,intent_level:document.getElementById('seg-intent').value,status:'new'});
-  closeModal();loadAll();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Seguimiento añadido');
+  closeModal();loadAll();showToast('Seguimiento añadido');
 }
 function editSegFecha(id,current){
   document.getElementById('modal-box').innerHTML=`
@@ -2299,7 +2299,7 @@ async function saveSegFecha(id){
   const date=document.getElementById('seg-new-date').value;
   if(!date)return;
   await _sb.from('leads').update({follow_up_date:date}).eq('id',id);
-  closeModal();loadAll();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Fecha actualizada');
+  closeModal();loadAll();showToast('Fecha actualizada');
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -2448,8 +2448,8 @@ async function crmVerCliente(id){
 
   // <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M12 3l1.9 5.8L20 11l-6.1 1.2L12 19l-2-6.8L4 11l6-2.2z"/></svg> Timeline cronológico (citas + encargos + facturas mezclados)
   const events=[];
-  (ords.data||[]).forEach(o=>events.push({type:'enc',date:o.created_at||new Date().toISOString(),icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>',color:'#c4a35a',title:o.title,sub:'Encargo · '+(o.status||'')+(o.price?' · '+crmFmt(o.price):'')}));
-  factsArr.forEach(f=>events.push({type:'fac',date:f.issue_date||new Date().toISOString(),icon:f.type==='factura'?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M4 2v20l2-2 2 2 2-2 2 2 2-2 2 2 2-2 2 2V2l-2 2-2-2-2 2-2-2-2 2-2-2-2 2-2-2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg>':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M9 2h6a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v0a2 2 0 0 1 2-2z"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>',color:f.status==='pagado'?'#16a34a':'#94a3b8',title:f.invoice_number||'—',sub:(f.type==='factura'?'Factura':'Presupuesto')+' · '+(f.status||'')+' · '+crmFmt(f.total||0)}));
+  (ords.data||[]).forEach(o=>events.push({type:'enc',date:o.created_at||new Date().toISOString(),icon:'',color:'#c4a35a',title:o.title,sub:'Encargo · '+(o.status||'')+(o.price?' · '+crmFmt(o.price):'')}));
+  factsArr.forEach(f=>events.push({type:'fac',date:f.issue_date||new Date().toISOString(),icon:f.type==='factura'?'':'',color:f.status==='pagado'?'#16a34a':'#94a3b8',title:f.invoice_number||'—',sub:(f.type==='factura'?'Factura':'Presupuesto')+' · '+(f.status||'')+' · '+crmFmt(f.total||0)}));
   events.sort((a,b)=>new Date(b.date)-new Date(a.date));
   const timelineHtml = events.length ? `
   <div style="margin-bottom:20px;padding:18px;border:1px solid var(--border);border-radius:12px;background:#fff">
@@ -2506,7 +2506,7 @@ function crmClienteForm(c={}){
     <div class="crm-form-group"><label class="crm-form-label">Nombre *</label><input class="crm-form-ctrl" id="cf-name" value="${esc(c.name||'')}"/></div>
     <div class="crm-form-group"><label class="crm-form-label">Tipo</label>
       <select class="crm-form-ctrl" id="cf-tipo" onchange="document.getElementById('cf-empresa-row').style.display=this.value==='corporativo'?'block':'none'">
-        <option value="particular"${(c.tipo||'particular')==='particular'?' selected':''}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Particular</option>
+        <option value="particular"${(c.tipo||'particular')==='particular'?' selected':''}>Particular</option>
         <option value="corporativo"${c.tipo==='corporativo'?' selected':''}>🏢 Corporativo</option>
       </select>
     </div>
@@ -2555,7 +2555,7 @@ async function crmSaveCliente(){
   const payload={business_slug:BIZ_SLUG,name,tipo:cv('cf-tipo')||'particular',empresa:cv('cf-empresa')||null,phone:cv('cf-phone')||null,email:cv('cf-email')||null,nif:cv('cf-nif')||null,iban:cv('cf-iban')||null,direccion:cv('cf-direccion')||null,tags:cv('cf-tags')||null,notes:cv('cf-notes')||null,measurements:Object.keys(m).length?m:null};
   if(_crmEditId)await _sb.from('crm_clients').update(payload).eq('id',_crmEditId);
   else await _sb.from('crm_clients').insert(payload);
-  crmCloseModal();crmLoadClientes();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Cliente guardado');
+  crmCloseModal();crmLoadClientes();showToast('Cliente guardado');
 }
 async function crmDeleteCliente(id){if(!confirm('¿Eliminar cliente?'))return;await _sb.from('crm_clients').delete().eq('id',id);crmLoadClientes();}
 
@@ -2650,7 +2650,7 @@ async function corpSaveGroup(){
   const payload={business_slug:BIZ_SLUG,nombre,sector:cv('cg-sector')||null,contacto:cv('cg-contacto')||null,telefono:cv('cg-tel')||null,email:cv('cg-email')||null,notes:cv('cg-notes')||null};
   if(_crmEditId)await _sb.from('crm_corporate_groups').update(payload).eq('id',_crmEditId);
   else await _sb.from('crm_corporate_groups').insert(payload);
-  crmCloseModal();corpLoadGroups();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Grupo guardado');
+  crmCloseModal();corpLoadGroups();showToast('Grupo guardado');
 }
 
 function corpEditGroup(id){
@@ -2662,7 +2662,7 @@ async function corpDeleteGroup(id){
   if(!confirm('¿Eliminar este grupo y todos sus miembros?'))return;
   await _sb.from('crm_corporate_members').delete().eq('group_id',id);
   await _sb.from('crm_corporate_groups').delete().eq('id',id);
-  corpLoadGroups();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Grupo eliminado');
+  corpLoadGroups();showToast('Grupo eliminado');
 }
 
 function corpMiembroForm(m={}){
@@ -2722,7 +2722,7 @@ async function corpSaveMiembro(){
   const payload={group_id:_corpEditGroupId,business_slug:BIZ_SLUG,nombre,cargo:cv('cm-cargo')||null,telefono:cv('cm-tel')||null,email:cv('cm-email')||null,measurements:Object.keys(ms).length?ms:null,notes:cv('cm-notes')||null};
   if(_corpEditMembId)await _sb.from('crm_corporate_members').update(payload).eq('id',_corpEditMembId);
   else await _sb.from('crm_corporate_members').insert(payload);
-  crmCloseModal();corpLoadGroups();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Miembro guardado');
+  crmCloseModal();corpLoadGroups();showToast('Miembro guardado');
 }
 
 async function corpEditMiembro(id){
@@ -2750,7 +2750,7 @@ async function corpVerMiembro(id){
 async function corpDeleteMiembro(id,groupId){
   if(!confirm('¿Eliminar este miembro?'))return;
   await _sb.from('crm_corporate_members').delete().eq('id',id);
-  corpLoadGroups();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Miembro eliminado');
+  corpLoadGroups();showToast('Miembro eliminado');
 }
 
 // ── CRM ENCARGOS ───────────────────────────────────────────────────────────
@@ -2821,7 +2821,7 @@ async function encDrop(e,col){
   const o=_allEncargos.find(x=>x.id===_dragEncId);
   if(o&&o.status!==col){
     await _sb.from('crm_orders').update({status:col,updated_at:new Date().toISOString()}).eq('id',_dragEncId);
-    showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Estado actualizado');
+    showToast('Estado actualizado');
     if(col==='entregado'){if(typeof fireConfetti==='function')fireConfetti(100);if(typeof soundSuccess==='function')soundSuccess();}
     else if(typeof soundSew==='function')soundSew();
     await _encNotificarCliente(o,col);
@@ -3104,7 +3104,7 @@ async function crmSaveEncargo(){
     notes:cv('ef-notes')||null,updated_at:new Date().toISOString()};
   if(_crmEditId)await _sb.from('crm_orders').update(payload).eq('id',_crmEditId);
   else await _sb.from('crm_orders').insert(payload);
-  crmCloseModal();crmLoadEncargos();if(validMats.length)crmLoadInventario();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Encargo guardado');
+  crmCloseModal();crmLoadEncargos();if(validMats.length)crmLoadInventario();showToast('Encargo guardado');
 }
 
 async function generarFacturaDesdeEncargo(id){
@@ -3112,7 +3112,7 @@ async function generarFacturaDesdeEncargo(id){
   const items=o.price?[{desc:o.title,qty:1,price:o.price}]:[{desc:o.title,qty:1,price:0}];
   const payload={business_slug:BIZ_SLUG,client_id:o.client_id,client_name:o.client_name,type:'presupuesto',status:'borrador',items,total:o.price||0,issue_date:new Date().toISOString().split('T')[0]};
   await _sb.from('crm_invoices').insert(payload);
-  showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Presupuesto creado en Facturación');
+  showToast('Presupuesto creado en Facturación');
   showTab('crm-facturacion',document.getElementById('nav-crm-facturacion'));
 }
 
@@ -3122,7 +3122,7 @@ async function crmLoadInventario(){
   _crmInventario=data||[];
   const low=_crmInventario.filter(i=>i.min_stock!==null&&i.stock<=i.min_stock);
   const al=document.getElementById('crm-stock-alert');
-  if(low.length){al.style.display='flex';al.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>️ Stock bajo en: '+low.map(i=>'<strong>'+esc(i.name)+'</strong>').join(', ');}
+  if(low.length){al.style.display='flex';al.innerHTML='️ Stock bajo en: '+low.map(i=>'<strong>'+esc(i.name)+'</strong>').join(', ');}
   else al.style.display='none';
   const tb=document.getElementById('crm-inventario-tbody');
   if(!_crmInventario.length){tb.innerHTML='<tr><td colspan="9" class="empty-state">Sin materiales registrados</td></tr>';return;}
@@ -3177,7 +3177,7 @@ async function crmSaveInventario(){
   const payload={business_slug:BIZ_SLUG,name,category:cv('if-cat')||null,stock,min_stock:mr!==''?parseFloat(mr):null,unit:cv('if-unit')||'ud',precio_compra:pc!==''?parseFloat(pc):null,image_url:img||null,sku:cv('if-sku')||null,barcode:cv('if-barcode')||null};
   if(_crmEditId)await _sb.from('crm_inventory').update(payload).eq('id',_crmEditId);
   else await _sb.from('crm_inventory').insert(payload);
-  crmCloseModal();crmLoadInventario();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Producto guardado');
+  crmCloseModal();crmLoadInventario();showToast('Producto guardado');
 }
 async function crmDeleteInventario(id){if(!confirm('¿Eliminar?'))return;await _sb.from('crm_inventory').delete().eq('id',id);crmLoadInventario();}
 
@@ -3206,7 +3206,7 @@ async function invSaveMovimiento(id,tipo){
     _sb.from('crm_inventory').update({stock:newStock}).eq('id',id),
     _sb.from('crm_inventory_movements').insert({business_slug:BIZ_SLUG,inventory_id:id,tipo,cantidad:qty,motivo})
   ]);
-  crmCloseModal();crmLoadInventario();showToast(`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> ${tipo==='entrada'?'Entrada':'Salida'} registrada`);
+  crmCloseModal();crmLoadInventario();showToast(`${tipo==='entrada'?'Entrada':'Salida'} registrada`);
 }
 async function invVerMovimientos(id){
   const inv=_crmInventario.find(x=>x.id===id);if(!inv)return;
@@ -3402,7 +3402,7 @@ async function crmSaveFactura(){
   const payload={business_slug:BIZ_SLUG,client_id:cId,client_name:cName,type,status:cv('ff-status'),issue_date:cv('ff-date')||null,due_date:cv('ff-due-date')||null,items:_crmLines,total:Math.round(totalConDesc*100)/100,discount,irpf,tags:cv('ff-tags')||null,notes:cv('ff-notes')||null,...(invoice_number?{invoice_number}:{})};
   if(_crmEditId)await _sb.from('crm_invoices').update(payload).eq('id',_crmEditId);
   else await _sb.from('crm_invoices').insert(payload);
-  crmCloseModal();crmLoadFacturas();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Documento guardado');
+  crmCloseModal();crmLoadFacturas();showToast('Documento guardado');
 }
 async function crmDeleteFactura(id){if(!confirm('¿Eliminar?'))return;await _sb.from('crm_invoices').delete().eq('id',id);crmLoadFacturas();}
 
@@ -3411,13 +3411,13 @@ async function crmDeleteFactura(id){if(!confirm('¿Eliminar?'))return;await _sb.
 async function verifactuRegistrar(id){
   const f=_crmFacturas.find(x=>x.id===id);
   if(!f){showToast('❌ Factura no encontrada');return;}
-  if(f.type!=='factura'){showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Solo se registran facturas, no presupuestos');return;}
+  if(f.type!=='factura'){showToast('Solo se registran facturas, no presupuestos');return;}
   if(f.verifactu_csv){if(!confirm('Esta factura ya fue registrada en Verifactu. ¿Registrar de nuevo?'))return;}
 
   const biz=getBizInfo();
   const apiKey=biz.verifactu_key||'';
   if(!apiKey){
-    showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Configura tu API Key de Verifactu en <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Ajustes del negocio');
+    showToast('Configura tu API Key de Verifactu en Ajustes del negocio');
     return;
   }
 
@@ -3551,13 +3551,13 @@ async function confirmarVentaTienda(invId){
   });
   crmCloseModal();
   crmLoadInventario();
-  showToast(`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Venta registrada${holdedRes?' · Holded <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>':''}`);
+  showToast(`Venta registrada${holdedRes?' · Holded ':''}`);
 }
 
 // ── RECORDATORIO EMAIL ─────────────────────────────────────────────────────
 async function enviarRecordatorio(citaId){
   const c=allCitas.find(x=>x.id===citaId);if(!c)return;
-  if(!c.client_email){showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Esta cita no tiene email del cliente');return;}
+  if(!c.client_email){showToast('Esta cita no tiene email del cliente');return;}
   const dt=new Date(c.starts_at);
   const dateLabel=dt.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const timeLabel=dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
@@ -3574,7 +3574,7 @@ async function enviarRecordatorio(citaId){
     reply_to:'airmateai@gmail.com'
   })
   .then(()=>showToast('📧 Recordatorio enviado a '+c.client_email))
-  .catch(e=>showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Error: '+JSON.stringify(e)));
+  .catch(e=>showToast('Error:'+JSON.stringify(e)));
 }
 
 // ── CONTRATO DE ENCARGO ────────────────────────────────────────────────────
@@ -3785,7 +3785,7 @@ async function saveCompra(){
   if(_crmEditId){const r=await _sbSrv.from('facturas_compra').update(payload).eq('id',_crmEditId);saveErr=r.error;}
   else{const r=await _sbSrv.from('facturas_compra').insert(payload);saveErr=r.error;}
   if(saveErr){alert('Error al guardar: '+saveErr.message);return;}
-  crmCloseModal();comprasLoad();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Compra guardada');
+  crmCloseModal();comprasLoad();showToast('Compra guardada');
 }
 async function deleteCompra(id){if(!confirm('¿Eliminar?'))return;await _sbSrv.from('facturas_compra').delete().eq('id',id);comprasLoad();}
 function exportComprasCSV(){
@@ -4024,7 +4024,7 @@ function crmViewFactura(id,idx=0){
 function getBizInfo(){try{return JSON.parse(localStorage.getItem('biz_info_'+BIZ_SLUG)||'{}')}catch{return {};}}
 function openBizSettings(){
   const b=getBizInfo();
-  crmOpenModal('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Datos del negocio',`
+  crmOpenModal('Datos del negocio',`
     <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Datos fiscales</div>
     <div class="crm-form-group"><label class="crm-form-label">Nombre del negocio</label><input class="crm-form-ctrl" id="biz-name" value="${esc(b.name||BIZ_NAME)}"/></div>
     <div class="crm-form-group"><label class="crm-form-label">Dirección fiscal</label><input class="crm-form-ctrl" id="biz-addr" value="${esc(b.address||'')}"/></div>
@@ -4074,7 +4074,7 @@ async function saveBizSettings(){
     await _sb.from('bot_configs').update({password_hash:hash}).eq('slug',BIZ_SLUG);
     showToast('🔒 Contraseña actualizada');
   }
-  crmCloseModal();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Datos del negocio guardados');
+  crmCloseModal();showToast('Datos del negocio guardados');
 }
 
 // ── MULTI-ADMIN ─────────────────────────────────────────────────────────────
@@ -4112,12 +4112,12 @@ async function saveAdmin(){
   const hash=await sha256(pass);
   const {error}=await _sb.from('panel_admins').insert({business_slug:BIZ_SLUG,nombre,email,password_hash:hash,rol});
   if(error){alert('Error: '+error.message);return;}
-  showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Administrador creado');openBizSettings();
+  showToast('Administrador creado');openBizSettings();
 }
 async function deleteAdmin(id){
   if(!confirm('¿Eliminar este administrador?'))return;
   await _sb.from('panel_admins').delete().eq('id',id);
-  showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Eliminado');loadAdminsList();
+  showToast('Eliminado');loadAdminsList();
 }
 
 async function convertirAFactura(id){
@@ -4166,7 +4166,7 @@ async function enviarEmailDoc(id){
 async function _doEnviarEmailDoc(id){
   const f=_crmFacturas.find(x=>x.id===id);if(!f)return;
   const toEmail=document.getElementById('email-doc-to')?.value?.trim();
-  if(!toEmail||!toEmail.includes('@')){showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Introduce un email válido');return;}
+  if(!toEmail||!toEmail.includes('@')){showToast('Introduce un email válido');return;}
   const tipDoc=f.type==='factura'?'Factura':'Presupuesto';
   const num=f.invoice_number||'—';
   const total=f.total!=null?crmFmt(f.total):'—';
@@ -4188,18 +4188,18 @@ async function _doEnviarEmailDoc(id){
     notes: lineas
   })
   .then(()=>{showToast('📧 Email enviado a '+toEmail);crmCloseModal();})
-  .catch(e=>{showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Error al enviar: '+JSON.stringify(e));});
+  .catch(e=>{showToast('Error al enviar:'+JSON.stringify(e));});
 }
 
 async function _doConvertirFactura(id, nextNum){
   await _sb.from('crm_invoices').update({type:'factura',status:'enviado',invoice_number:nextNum}).eq('id',id);
-  crmCloseModal();crmLoadFacturas();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Factura '+nextNum+' creada');
+  crmCloseModal();crmLoadFacturas();showToast('Factura'+nextNum+' creada');
 }
 
 async function marcarPagada(id){
   await _sb.from('crm_invoices').update({status:'pagado'}).eq('id',id);
   const f=_crmFacturas.find(x=>x.id===id);if(f)f.status='pagado';
-  crmLoadFacturas();showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Marcada como cobrada');
+  crmLoadFacturas();showToast('Marcada como cobrada');
   const amt=Number(f&&f.total||0);
   if(typeof fireConfetti==='function')fireConfetti(amt>=500?120:50);
   if(typeof soundCoin==='function')soundCoin();
@@ -4215,7 +4215,7 @@ function exportClientesCSV(){
   const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=`clientes-${BIZ_SLUG}-${localDateStr(new Date())}.csv`;a.click();
-  URL.revokeObjectURL(url);showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> CSV descargado');
+  URL.revokeObjectURL(url);showToast('CSV descargado');
 }
 
 // ── SUIT CONFIGURATOR ──────────────────────────────────────────────────────
@@ -4703,7 +4703,7 @@ function startRealtime(){
   _realtimeChannel=_sb.channel('panel-pro-live')
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'leads',filter:`business_slug=eq.${BIZ_SLUG}`},p=>{
       loadAll();
-      const nivel=p.new.intent_level==='hot'?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Lead caliente':p.new.intent_level==='warm'?'🌡️ Lead tibio':'❄️ Lead frío';
+      const nivel=p.new.intent_level==='hot'?'Lead caliente':p.new.intent_level==='warm'?'🌡️ Lead tibio':'❄️ Lead frío';
       notificar(`${nivel}: ${p.new.name||'Sin nombre'}`);
     })
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'appointments',filter:`business_slug=eq.${BIZ_SLUG}`},p=>{
@@ -4795,7 +4795,7 @@ function exportRichardCSV(){
   const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv);
   a.download=`informe-gestor-${y}.csv`;a.click();
-  showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> CSV listo para mandar al gestor');
+  showToast('CSV listo para mandar al gestor');
 }
 
 function exportRichardPDF(){
@@ -4828,7 +4828,7 @@ function exportRichardPDF(){
   </body></html>`;
   w.document.write(html);
   w.document.close();
-  showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> PDF Hacienda generado');
+  showToast('PDF Hacienda generado');
 }
 
 // ── INFORME IGIC ──────────────────────────────────────────────────────────
@@ -5101,14 +5101,14 @@ async function renderFinanzas(){
   const mes = parseInt(document.getElementById('fin-mes')?.value || new Date().getMonth());
   const year = parseInt(document.getElementById('fin-year')?.value || new Date().getFullYear());
   const conn = document.getElementById('fin-conn');
-  if(conn){ conn.textContent='<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:0"><circle cx="12" cy="12" r="8"/></svg> Cargando…'; conn.style.opacity='.6'; }
+  if(conn){ conn.textContent='Cargando…'; conn.style.opacity='.6'; }
 
   _finDestroy();
   const data = await _finLoadData();
 
   if(conn){
     const liveOk = (data.treasury&&data.treasury.length)||(data.payments&&data.payments.length);
-    conn.textContent = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:0"><circle cx="12" cy="12" r="6"/></svg> Datos demo';
+    conn.textContent = 'Datos demo';
     conn.style.opacity='1';
     conn.style.background = 'rgba(196,163,90,.12)';
     conn.style.color = '#c4a35a';
@@ -5135,7 +5135,7 @@ function _finRenderTreasury(treasury){
     return;
   }
   const total=treasury.reduce((s,t)=>s+Number(t.balance||0),0);
-  const icons={cash:'💵',bank:'🏦',card:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',paypal:'🅿️'};
+  const icons={cash:'💵',bank:'🏦',card:'',paypal:'🅿️'};
   let html=`<div style="background:linear-gradient(135deg,#1a1408,#0d0b07);border-radius:14px;padding:20px;border:1px solid rgba(196,163,90,.4);position:relative;overflow:hidden">
     <div style="position:absolute;inset:0;opacity:.05;background-image:repeating-linear-gradient(45deg,#c4a35a 0,#c4a35a 1px,transparent 0,transparent 14px)"></div>
     <div style="position:relative">
@@ -5145,7 +5145,7 @@ function _finRenderTreasury(treasury){
     </div>
   </div>`;
   treasury.forEach(t=>{
-    const ico=icons[t.type]||'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>';
+    const ico=icons[t.type]||'';
     html+=`<div class="card" style="margin:0;padding:18px 20px;cursor:default;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 22px rgba(196,163,90,.15)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div style="font-size:10px;font-weight:700;color:#b89a5e;letter-spacing:.22em;text-transform:uppercase">${esc(t.name||t.type)}</div>
@@ -5175,7 +5175,7 @@ function _finRenderKPIs(data, mes, year){
   const sr=(data.salesreceipt||[]).filter(s=>s.date>=tStart&&s.date<tEnd);
   const ticketMedio=sr.length?ingresos/sr.length:0;
   const margen=ingresos>0?Math.round(beneficio/ingresos*100):0;
-  const trendArrow=diff!==null?(diff>=0?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>')+' '+Math.abs(diff)+'%':'—';
+  const trendArrow=diff!==null?(diff>=0?'':'')+' '+Math.abs(diff)+'%':'—';
   const trendColor=diff!==null?(diff>=0?'#4ade80':'#f87171'):'#8a7960';
   const kpis=[
     {lbl:'Ingresos del mes',val:_finFmt(ingresos),sub:`${inMes.length} movimientos`,trend:trendArrow,trendC:trendColor},
@@ -5369,7 +5369,7 @@ function initFinanzas(){
 }
 
 function finanzasAnimar(){ renderFinanzas(); }
-function finanzasReload(){ _finCache.ts=0; renderFinanzas(); if(typeof showToast==='function') showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Datos actualizados desde Holded'); }
+function finanzasReload(){ _finCache.ts=0; renderFinanzas(); if(typeof showToast==='function') showToast('Datos actualizados desde Holded'); }
 
 // Informe trimestral PDF — abre print del bloque finanzas
 function finanzasExportPDF(){
@@ -5386,9 +5386,9 @@ function finanzasExportPDF(){
 
 function tpvEmojiCategoria(cat) {
   const m = {'Zapatos':'👞','Corbatas':'👔','Calcetines':'🧦','Pajaritas':'🎀',
-    'Tirantes':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M12 3l1.9 5.8L20 11l-6.1 1.2L12 19l-2-6.8L4 11l6-2.2z"/></svg>','Complementos':'🎩','Polos':'👕','Chalecos':'🧥',
+    'Tirantes':'','Complementos':'🎩','Polos':'👕','Chalecos':'🧥',
     'Trajes':'🤵','Telas':'🧶','Accesorios':'💎'};
-  return m[cat] || '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>';
+  return m[cat] || '';
 }
 
 let _tpvCatActiva='';
@@ -5514,7 +5514,7 @@ function tpvRenderCatalogo(prods) {
     } else {
       var ico=document.createElement('div');
       ico.style.cssText='font-size:32px;margin-bottom:10px;text-align:center;height:60px;display:flex;align-items:center;justify-content:center';
-      ico.textContent=p.emoji||'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>';
+      ico.textContent=p.emoji||'';
       card.appendChild(ico);
     }
     // Nombre
@@ -5541,7 +5541,7 @@ function tpvRenderCatalogo(prods) {
     if(inCart){
       var ic=document.createElement('div');
       ic.style.cssText='margin-top:8px;text-align:center;font-size:11px;font-weight:700;color:#c4a35a;background:rgba(196,163,90,.1);border-radius:6px;padding:4px';
-      ic.textContent=inCart.qty+' en ticket <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>';
+      ic.textContent=inCart.qty+' en ticket ';
       card.appendChild(ic);
     }
     el.appendChild(card);
@@ -5622,7 +5622,7 @@ async function tpvCobrar() {
     cliente_nombre: null
   }).select().single();
 
-  if(error){ showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>️ Error al guardar venta'); console.error(error); return; }
+  if(error){ showToast('️ Error al guardar venta'); console.error(error); return; }
 
   // Descontar stock
   for(var c of _tpvCarrito){
@@ -5676,7 +5676,7 @@ function tpvEnviarRecibo(ventaId){
 }
 function _doTpvEnviarRecibo(ventaId){
   const toEmail=document.getElementById('tpv-email-recibo')?.value?.trim();
-  if(!toEmail||!toEmail.includes('@')){showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Introduce un email válido');return;}
+  if(!toEmail||!toEmail.includes('@')){showToast('Introduce un email válido');return;}
   const v=TPV_HISTORIAL.find(x=>x.id===ventaId)||TPV_HISTORIAL[0];
   const biz=getBizInfo();
   emailjs.send('service_npmjvvf','template_lg1l7bi',{
@@ -5684,7 +5684,7 @@ function _doTpvEnviarRecibo(ventaId){
     cliente_email:toEmail,
     cliente_telefono:'—',
     negocio_nombre:biz.name||'Jose Acosta Style',
-    servicio:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M4 2v20l2-2 2 2 2-2 2 2 2-2 2 2 2-2 2 2V2l-2 2-2-2-2 2-2-2-2 2-2-2-2 2-2-2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg> Recibo de compra',
+    servicio:'Recibo de compra',
     duracion:'',
     precio:v?v.total.toFixed(2)+' €':'—',
     fecha:v?v.fecha:new Date().toLocaleDateString('es-ES'),
@@ -5693,7 +5693,7 @@ function _doTpvEnviarRecibo(ventaId){
     notes:v?'Productos: '+v.productos:'Venta en tienda'
   })
   .then(()=>{showToast('📧 Recibo enviado a '+toEmail);crmCloseModal();})
-  .catch(()=>showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Error al enviar el recibo'));
+  .catch(()=>showToast('Error al enviar el recibo'));
 }
 function tpvLimpiar() {
   _tpvCarrito=[];
@@ -5742,9 +5742,9 @@ function tpvRenderStats() {
   var totalHoy=TPV_HISTORIAL.filter(function(v){return v.fecha===hoy;}).reduce(function(s,v){return s+v.total;},0);
   var ticketMedio=TPV_HISTORIAL.length>0?totalMes/TPV_HISTORIAL.length:0;
   sg.innerHTML=''
-    +stat('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>','Ventas este mes',TPV_HISTORIAL.length,'transacciones')
-    +stat('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 6v2m0 8v2"/></svg>','Facturado mes',Math.round(totalMes)+' €','sin IGIC')
-    +stat('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>','Facturado hoy',Math.round(totalHoy)+' €','')
+    +stat('','Ventas este mes',TPV_HISTORIAL.length,'transacciones')
+    +stat('','Facturado mes',Math.round(totalMes)+' €','sin IGIC')
+    +stat('','Facturado hoy',Math.round(totalHoy)+' €','')
     +stat('🎯','Ticket medio',Math.round(ticketMedio)+' €','por venta');
   setTimeout(_animateStatCards,40);
 }
@@ -5796,7 +5796,7 @@ async function tpvInit() {
 .ia-chip { display:inline-block;background:rgba(196,163,90,.1);border:1px solid rgba(196,163,90,.25);border-radius:20px;padding:4px 12px;font-size:11px;color:#c4a35a;cursor:pointer;margin:2px;transition:background .15s; }
 .ia-chip:hover{background:rgba(196,163,90,.22)}
 #ia-resumen-card { background:linear-gradient(135deg,#1a1400,#0f0f0f) !important;border:1px solid rgba(196,163,90,.4) !important;border-radius:14px;padding:16px 18px;margin-bottom:16px;position:relative;overflow:hidden;animation:iaSlideUp .4s ease;color:#e8e8e8 !important; }
-#ia-resumen-card::before{content:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M12 3l1.9 5.8L20 11l-6.1 1.2L12 19l-2-6.8L4 11l6-2.2z"/></svg>';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:32px;opacity:.15;}
+#ia-resumen-card::before{content:'';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:32px;opacity:.15;}
 </style>
 
 <!-- ── ASISTENTE IA FLOTANTE ── -->
@@ -5951,7 +5951,7 @@ async function iaRedactarWhatsApp(tipo, nombre, detalle, extra, telefono) {
   } catch(e) {
     alert('Error al generar mensaje.');
   }
-  if (btn) { btn.disabled=false; btn.textContent='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M12 3l1.9 5.8L20 11l-6.1 1.2L12 19l-2-6.8L4 11l6-2.2z"/></svg> Redactar WhatsApp'; }
+  if (btn) { btn.disabled=false; btn.textContent='Redactar WhatsApp'; }
 }
 
 function _iaMostrarMensaje(nombre, msg, tipo, telefono) {
@@ -5973,7 +5973,7 @@ function _iaMostrarMensaje(nombre, msg, tipo, telefono) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.556 4.112 1.528 5.835L.057 24l6.304-1.654A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.667-.502-5.198-1.378l-.373-.22-3.742.981.999-3.648-.243-.374A9.955 9.955 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
           Abrir en WhatsApp
         </a>` : ''}
-        <button class="btn btn-accent" onclick="navigator.clipboard.writeText(document.getElementById('ia-wa-txt').textContent);showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Copiado al portapapeles')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M9 2h6a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v0a2 2 0 0 1 2-2z"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Copiar</button>
+        <button class="btn btn-accent" onclick="navigator.clipboard.writeText(document.getElementById('ia-wa-txt').textContent);showToast('Copiado al portapapeles')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M9 2h6a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v0a2 2 0 0 1 2-2z"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Copiar</button>
         <button class="btn btn-ghost" onclick="closeModal()">Cerrar</button>
       </div>
     </div>`;
@@ -6149,7 +6149,7 @@ const JA_TIMELINE_STAGES = [
   {id:'corte',       label:'Corte',    icon:'✂️'},
   {id:'prueba',      label:'Prueba',   icon:'🪡'},
   {id:'listo',       label:'Listo',    icon:'🎉'},
-  {id:'entregado',   label:'Entrega',  icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>'},
+  {id:'entregado',   label:'Entrega',  icon:''},
 ];
 function jaBuildTimeline(status){
   const ids = JA_TIMELINE_STAGES.map(s=>s.id);
@@ -6270,35 +6270,35 @@ mark.gs-hl{background:rgba(196,163,90,.35);color:#fff;border-radius:2px;padding:
 
     (typeof _crmClientes!=="undefined"?_crmClientes:[]).forEach(function(c){
       if(_norm(c.name).includes(nq)||_norm(c.phone).includes(nq)||_norm(c.email).includes(nq)){
-        out.push({type:'cliente',icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',tag:'Cliente',title:c.name,sub:[c.phone,c.email].filter(Boolean).join(' · ')||'Sin contacto',action:function(){gsearchClose();showTab('crm-clientes',document.getElementById('nav-crm-clientes'));setTimeout(function(){if(typeof crmVerCliente==='function')crmVerCliente(c.id);},250);}});
+        out.push({type:'cliente',icon:'',tag:'Cliente',title:c.name,sub:[c.phone,c.email].filter(Boolean).join(' · ')||'Sin contacto',action:function(){gsearchClose();showTab('crm-clientes',document.getElementById('nav-crm-clientes'));setTimeout(function(){if(typeof crmVerCliente==='function')crmVerCliente(c.id);},250);}});
       }
     });
     (typeof _allEncargos!=="undefined"?_allEncargos:[]).forEach(function(o){
       if(_norm(o.title).includes(nq)||_norm(o.client_name).includes(nq)){
         var m={presupuesto:'Presupuesto',produccion:'En producción',listo_prueba:'Listo prueba',prueba:'En prueba',ajustes:'Ajustes',listo:'Listo entrega',entregado:'Entregado'};
-        out.push({type:'encargo',icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>',tag:'Encargo',title:o.title,sub:(o.client_name||'')+' · '+(m[o.status]||o.status||'')+(o.price?' · '+fmt(o.price):''),action:function(){gsearchClose();showTab('crm-encargos',document.getElementById('nav-crm-encargos'));}});
+        out.push({type:'encargo',icon:'',tag:'Encargo',title:o.title,sub:(o.client_name||'')+' · '+(m[o.status]||o.status||'')+(o.price?' · '+fmt(o.price):''),action:function(){gsearchClose();showTab('crm-encargos',document.getElementById('nav-crm-encargos'));}});
       }
     });
     (typeof _crmFacturas!=="undefined"?_crmFacturas:[]).forEach(function(f){
       var num=f.invoice_number||'';
       if(_norm(num).includes(nq)){
-        out.push({type:'factura',icon:f.type==='presupuesto'?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M9 2h6a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v0a2 2 0 0 1 2-2z"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M4 2v20l2-2 2 2 2-2 2 2 2-2 2 2 2-2 2 2V2l-2 2-2-2-2 2-2-2-2 2-2-2-2 2-2-2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg>',tag:f.type==='presupuesto'?'Presup.':'Factura',title:num,sub:(f.issue_date||'')+(f.total?' · '+fmt(f.total):'')+' · '+(f.status||''),action:function(){gsearchClose();showTab('crm-facturacion',document.getElementById('nav-crm-facturacion'));}});
+        out.push({type:'factura',icon:f.type==='presupuesto'?'':'',tag:f.type==='presupuesto'?'Presup.':'Factura',title:num,sub:(f.issue_date||'')+(f.total?' · '+fmt(f.total):'')+' · '+(f.status||''),action:function(){gsearchClose();showTab('crm-facturacion',document.getElementById('nav-crm-facturacion'));}});
       }
     });
     (typeof _crmInventario!=="undefined"?_crmInventario:[]).forEach(function(p){
       if(_norm(p.name).includes(nq)||_norm(p.sku).includes(nq)||_norm(p.barcode).includes(nq)){
-        out.push({type:'producto',icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>',tag:'Producto',title:p.name,sub:(p.sku?'SKU '+p.sku+' · ':'')+'Stock: '+(p.stock||0)+(p.price?' · '+fmt(p.price):''),action:function(){gsearchClose();showTab('crm-stock',document.getElementById('nav-crm-stock'));}});
+        out.push({type:'producto',icon:'',tag:'Producto',title:p.name,sub:(p.sku?'SKU '+p.sku+' · ':'')+'Stock: '+(p.stock||0)+(p.price?' · '+fmt(p.price):''),action:function(){gsearchClose();showTab('crm-stock',document.getElementById('nav-crm-stock'));}});
       }
     });
     (typeof allCitas!=="undefined"?allCitas:[]).forEach(function(a){
       if(_norm(a.client_name).includes(nq)||_norm(a.service).includes(nq)){
         var d=new Date(a.starts_at);
-        out.push({type:'cita',icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',tag:'Cita',title:(a.client_name||'')+(a.service?' — '+a.service:''),sub:d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'})+' · '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})+' · '+(a.status||''),action:function(){gsearchClose();showTab('citas',document.getElementById('nav-citas'));}});
+        out.push({type:'cita',icon:'',tag:'Cita',title:(a.client_name||'')+(a.service?' — '+a.service:''),sub:d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'})+' · '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})+' · '+(a.status||''),action:function(){gsearchClose();showTab('citas',document.getElementById('nav-citas'));}});
       }
     });
     (typeof allLeads!=="undefined"?allLeads:[]).forEach(function(l){
       if(_norm(l.name).includes(nq)||_norm(l.phone).includes(nq)||_norm(l.interest).includes(nq)){
-        out.push({type:'lead',icon:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',tag:'Lead',title:l.name,sub:[l.phone,l.interest].filter(Boolean).join(' · ')+' · '+(l.intent_level||''),action:function(){gsearchClose();showTab('leads',document.getElementById('nav-leads'));}});
+        out.push({type:'lead',icon:'',tag:'Lead',title:l.name,sub:[l.phone,l.interest].filter(Boolean).join(' · ')+' · '+(l.intent_level||''),action:function(){gsearchClose();showTab('leads',document.getElementById('nav-leads'));}});
       }
     });
     // <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M12 3l1.9 5.8L20 11l-6.1 1.2L12 19l-2-6.8L4 11l6-2.2z"/></svg> ACCIONES — comandos rápidos
@@ -6316,7 +6316,7 @@ mark.gs-hl{background:rgba(196,163,90,.35);color:#fff;border-radius:2px;padding:
     ];
     actions.forEach(function(a){
       if(_norm(a.kw).includes(nq)||_norm(a.title).includes(nq)){
-        out.unshift({type:'accion',icon:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',tag:'Acción',title:a.title,sub:a.sub,action:a.action});
+        out.unshift({type:'accion',icon:'',tag:'Acción',title:a.title,sub:a.sub,action:a.action});
       }
     });
 
@@ -6478,7 +6478,7 @@ mark.gs-hl{background:rgba(196,163,90,.35);color:#fff;border-radius:2px;padding:
     });
     var vips=Object.entries(gastoPorCliente).filter(function(x){return x[1]>=2000;}).sort(function(a,b){return b[1]-a[1];});
     if(vips.length){
-      insights.push({icon:'<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',color:'#c4a35a',title:'Clientes VIP activos',body:vips.slice(0,3).map(function(v){return '<strong>'+esc(v[0])+'</strong> · '+fmt(v[1])+'/año';}).join(' &nbsp;·&nbsp; '),action:'crm-clientes'});
+      insights.push({icon:'',color:'#c4a35a',title:'Clientes VIP activos',body:vips.slice(0,3).map(function(v){return '<strong>'+esc(v[0])+'</strong> · '+fmt(v[1])+'/año';}).join(' &nbsp;·&nbsp; '),action:'crm-clientes'});
     }
 
     // 2) Clientes dormidos (con facturado pero sin compras en 6 meses)
@@ -6497,21 +6497,21 @@ mark.gs-hl{background:rgba(196,163,90,.35);color:#fff;border-radius:2px;padding:
     // 3) Stock crítico (≤2 unidades)
     var critico=stock.filter(function(p){return Number(p.stock||0)<=2&&Number(p.stock||0)>=0;});
     if(critico.length){
-      insights.push({icon:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',color:'#ef4444',title:'Stock crítico ('+critico.length+')',body:critico.slice(0,3).map(function(p){return esc(p.name)+' <span style="color:#ef4444;font-weight:700">('+(p.stock||0)+')</span>';}).join(' · '),action:'crm-stock'});
+      insights.push({icon:'',color:'#ef4444',title:'Stock crítico ('+critico.length+')',body:critico.slice(0,3).map(function(p){return esc(p.name)+' <span style="color:#ef4444;font-weight:700">('+(p.stock||0)+')</span>';}).join(' · '),action:'crm-stock'});
     }
 
     // 4) Encargos atrasados (en producción >30 días)
     var monthAgo=new Date();monthAgo.setDate(monthAgo.getDate()-30);
     var atrasados=encargos.filter(function(o){return ['produccion','listo_prueba','ajustes'].indexOf(o.status)>=0 && o.created_at && new Date(o.created_at)<monthAgo;});
     if(atrasados.length){
-      insights.push({icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/></svg>',color:'#f97316',title:atrasados.length+' encargos atrasados',body:'Llevan más de un mes activos. Revisa el kanban.',action:'crm-encargos'});
+      insights.push({icon:'',color:'#f97316',title:atrasados.length+' encargos atrasados',body:'Llevan más de un mes activos. Revisa el kanban.',action:'crm-encargos'});
     }
 
     // 5) Facturas sin cobrar
     var pendCobro=facturas.filter(function(f){return f.type==='factura'&&f.status==='enviado';});
     var totalPend=pendCobro.reduce(function(s,f){return s+Number(f.total||0);},0);
     if(pendCobro.length){
-      insights.push({icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 6v2m0 8v2"/></svg>',color:'#3b82f6',title:fmt(totalPend)+' por cobrar',body:pendCobro.length+' factura(s) enviada(s) pendientes de pago.',action:'crm-facturacion'});
+      insights.push({icon:'',color:'#3b82f6',title:fmt(totalPend)+' por cobrar',body:pendCobro.length+' factura(s) enviada(s) pendientes de pago.',action:'crm-facturacion'});
     }
 
     // 6) Patrón: día más activo de citas
@@ -6520,7 +6520,7 @@ mark.gs-hl{background:rgba(196,163,90,.35);color:#fff;border-radius:2px;padding:
     citas.forEach(function(c){if(c.starts_at){var d=new Date(c.starts_at).getDay();conteoDia[d]=(conteoDia[d]||0)+1;}});
     var topDia=Object.entries(conteoDia).sort(function(a,b){return b[1]-a[1];})[0];
     if(topDia&&topDia[1]>=3){
-      insights.push({icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>',color:'#8b5cf6',title:'Tu día más activo',body:'Los <strong>'+diasSemana[topDia[0]].toLowerCase()+'</strong> tienes el '+Math.round(topDia[1]/citas.length*100)+'% de las citas. Buen día para promociones.',action:'citas'});
+      insights.push({icon:'',color:'#8b5cf6',title:'Tu día más activo',body:'Los <strong>'+diasSemana[topDia[0]].toLowerCase()+'</strong> tienes el '+Math.round(topDia[1]/citas.length*100)+'% de las citas. Buen día para promociones.',action:'citas'});
     }
 
     // 7) Predicción stock — ratio entrega vs stock
@@ -6529,7 +6529,7 @@ mark.gs-hl{background:rgba(196,163,90,.35);color:#fff;border-radius:2px;padding:
       var meses=3;
       var ritmo=entregados/meses;
       if(ritmo>0){
-        insights.push({icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',color:'#10b981',title:'Ritmo del taller',body:'Entregas estimadas: <strong>'+ritmo.toFixed(1)+' encargos/mes</strong>. Mantén stock de tejidos sincronizado.',action:'crm-stock'});
+        insights.push({icon:'',color:'#10b981',title:'Ritmo del taller',body:'Entregas estimadas: <strong>'+ritmo.toFixed(1)+' encargos/mes</strong>. Mantén stock de tejidos sincronizado.',action:'crm-stock'});
       }
     }
 
@@ -6648,7 +6648,7 @@ mark.gs-hl{background:rgba(196,163,90,.35);color:#fff;border-radius:2px;padding:
     e.preventDefault();_deferred=e;
     var btn=document.createElement('button');
     btn.id='pwa-install-btn';
-    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Instalar app';
+    btn.innerHTML='Instalar app';
     btn.style.cssText='position:fixed;bottom:24px;left:24px;background:linear-gradient(135deg,#c4a35a,#b89a5e);color:#fff;border:none;padding:12px 20px;border-radius:30px;font-size:13px;font-weight:700;letter-spacing:.04em;cursor:pointer;box-shadow:0 8px 24px rgba(196,163,90,.4),0 0 0 1px rgba(255,255,255,.1) inset;z-index:9997;font-family:inherit;animation:loginFadeUp .5s ease both;';
     btn.onclick=function(){
       _deferred.prompt();
@@ -6761,7 +6761,7 @@ mark.gs-hl{background:rgba(196,163,90,.35);color:#fff;border-radius:2px;padding:
   window.compartirPortalCliente=function(clientId,clientName,phone){
     var url='https://airmate.es/cliente-jose-acosta.html?id='+clientId;
     try{navigator.clipboard.writeText(url);}catch(e){}
-    if(typeof showToast==='function')showToast('<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Enlace copiado: '+url);
+    if(typeof showToast==='function')showToast('Enlace copiado:'+url);
     if(typeof soundSuccess==='function')soundSuccess();
     // Si tiene WhatsApp, ofrecer enviar
     if(phone){
@@ -6780,7 +6780,7 @@ mark.gs-hl{background:rgba(196,163,90,.35);color:#fff;border-radius:2px;padding:
     // const STRIPE_KEY = 'pk_live_xxx';
     // fetch('https://airmate.es/api/stripe-link', {body:JSON.stringify({invoiceId,amount})})
     //   .then(r=>r.json()).then(d=>window.open(d.url,'_blank'));
-    alert('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> Pago Stripe — pendiente de activar\n\nFactura: '+invoiceId+'\nImporte: '+amount+'€\n\nPasos para activar:\n1. Crear cuenta Stripe (gratis)\n2. Mandarme las API keys\n3. Activo el botón y los clientes pagarán con tarjeta desde el email');
+    alert('Pago Stripe — pendiente de activar\n\nFactura:'+invoiceId+'\nImporte: '+amount+'€\n\nPasos para activar:\n1. Crear cuenta Stripe (gratis)\n2. Mandarme las API keys\n3. Activo el botón y los clientes pagarán con tarjeta desde el email');
   };
 
   // ── WHATSAPP RECORDATORIO 24h ANTES
@@ -6867,7 +6867,7 @@ async function sincronizarContactosHolded(){
   } catch(e){
     alert('❌ Error: '+e.message+'\n\nVerifica que el proxy /api/holded está desplegado en Vercel.');
   } finally {
-    if(btn){btn.disabled=false;btn.textContent='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Importar Holded';}
+    if(btn){btn.disabled=false;btn.textContent='Importar Holded';}
   }
 }
 </script>
