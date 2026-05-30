@@ -1,20 +1,16 @@
-// Service Worker — Panel Jose Acosta
-const CACHE='ja-panel-v5';
-self.addEventListener('install',e=>{self.skipWaiting();});
-self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});
-self.addEventListener('fetch',e=>{
-  const url=new URL(e.request.url);
-  // Network-first para HTML (siempre fresh)
-  if(e.request.mode==='navigate'||(url.pathname.endsWith('.html'))){
-    e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));
-    return;
-  }
-  // Cache-first para assets estáticos (fotos, fonts)
-  if(url.hostname.includes('supabase.co')||url.hostname.includes('fonts.g')||url.hostname.includes('jsdelivr')){
-    e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(resp=>{
-      const clone=resp.clone();
-      caches.open(CACHE).then(c=>c.put(e.request,clone));
-      return resp;
-    })));
-  }
+// KILL-SWITCH SW — limpia caches y se desregistra solo
+self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('activate', e => {
+  e.waitUntil((async () => {
+    try {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+      const regs = await self.registration.unregister();
+    } catch (err) {}
+    const clients = await self.clients.matchAll();
+    clients.forEach(c => c.navigate(c.url));
+  })());
+});
+self.addEventListener('fetch', e => {
+  // Pass-through directo a red — sin cache
 });
