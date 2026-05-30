@@ -7141,11 +7141,14 @@ const IA_TOOLS = [
 
 // Set de herramientas que requieren confirmación explícita del usuario antes de ejecutarse
 const IA_TOOLS_CONFIRMAR = new Set([
-  // Lectura (todas confirman ahora)
+  // Lectura (todas confirman)
   'buscar_cliente','listar_citas_hoy','resumen_dia',
+  'buscar_encargo','buscar_factura','buscar_lead','buscar_producto','buscar_cita',
   // Escritura
   'crear_cita','cambiar_estado_cita','crear_cliente','mover_encargo',
-  'marcar_factura_pagada','enviar_email_confirmacion_cita','crear_lead'
+  'marcar_factura_pagada','enviar_email_confirmacion_cita','crear_lead',
+  'crear_encargo','crear_presupuesto','cambiar_estado_factura','cambiar_estado_lead',
+  'actualizar_cliente','enviar_whatsapp','ajustar_stock','crear_seguimiento','eliminar_cita'
 ]);
 
 // ── Implementación de cada tool ──
@@ -7262,6 +7265,128 @@ async function _iaExecTool(name, args){
         if(error)return {ok:false,error:error.message};
         if(typeof loadAll==='function')loadAll();
         return {ok:true,lead:{id:data.id,nombre:data.name}};
+            }
+      case 'buscar_factura': {
+        const q=(args.query||'').toLowerCase();
+        const list=(typeof _crmFacturas!=='undefined'?_crmFacturas:[]).filter(f=>
+          (f.invoice_number||'').toLowerCase().includes(q)||
+          (f.client_name||'').toLowerCase().includes(q)||
+          (f.status||'').toLowerCase().includes(q)||
+          (f.type||'').toLowerCase().includes(q)
+        ).slice(0,10);
+        return {ok:true,facturas:list.map(f=>({id:f.id,numero:f.invoice_number,cliente:f.client_name,tipo:f.type,estado:f.status,total:f.total,fecha:f.issue_date}))};
+      }
+      case 'buscar_lead': {
+        const q=(args.query||'').toLowerCase();
+        const list=(typeof allLeads!=='undefined'?allLeads:[]).filter(l=>
+          (l.name||'').toLowerCase().includes(q)||
+          (l.phone||'').includes(q)||
+          (l.interest||'').toLowerCase().includes(q)||
+          (l.status||'').toLowerCase().includes(q)
+        ).slice(0,10);
+        return {ok:true,leads:list.map(l=>({id:l.id,nombre:l.name,telefono:l.phone,interes:l.interest,estado:l.status,intent:l.intent_level}))};
+      }
+      case 'buscar_producto': {
+        const q=(args.query||'').toLowerCase();
+        const list=(typeof _crmInventario!=='undefined'?_crmInventario:[]).filter(p=>
+          (p.name||'').toLowerCase().includes(q)||
+          (p.category||'').toLowerCase().includes(q)||
+          (p.sku||'').toLowerCase().includes(q)
+        ).slice(0,10);
+        return {ok:true,productos:list.map(p=>({id:p.id,nombre:p.name,categoria:p.category,stock:p.stock,precio:p.precio_venta,sku:p.sku}))};
+      }
+      case 'buscar_cita': {
+        const q=(args.query||'').toLowerCase();
+        const list=(typeof allCitas!=='undefined'?allCitas:[]).filter(c=>
+          (c.client_name||'').toLowerCase().includes(q)||
+          (c.service||'').toLowerCase().includes(q)||
+          (c.status||'').toLowerCase().includes(q)
+        ).slice(0,10);
+        return {ok:true,citas:list.map(c=>({id:c.id,cliente:c.client_name,servicio:c.service,inicio:c.starts_at,estado:c.status,phone:c.client_phone,email:c.client_email}))};
+      }
+      case 'crear_encargo': {
+        const payload={
+          business_slug:BIZ_SLUG,
+          title:args.titulo,
+          client_id:args.cliente_id||null,
+          client_name:args.cliente_nombre,
+          status:args.estado||'presupuesto',
+          price:parseFloat(args.precio||0)||0,
+          fecha_entrega:args.fecha_entrega||null,
+          evento:args.evento?{tipo:args.evento}:null
+        };
+        const {data,error}=await _sb.from('crm_orders').insert(payload).select().single();
+        if(error)return {ok:false,error:error.message};
+        if(typeof crmLoadEncargos==='function')crmLoadEncargos();
+        return {ok:true,encargo:{id:data.id,titulo:data.title}};
+      }
+      case 'crear_presupuesto': {
+        const items=Array.isArray(args.items)?args.items:[{desc:args.descripcion||args.titulo||'Servicio',qty:1,price:parseFloat(args.precio||0)||0}];
+        const total=items.reduce((s,l)=>s+(parseFloat(l.qty||1)*parseFloat(l.price||0)),0);
+        const today=new Date().toISOString().slice(0,10);
+        const year=new Date().getFullYear();
+        const {data:prev}=await _sb.from('crm_invoices').select('invoice_number').eq('business_slug',BIZ_SLUG).like('invoice_number','PRE '+year+'-%').order('invoice_number',{ascending:false}).limit(1);
+        let next='PRE '+year+'-0001';
+        if(prev&&prev.length&&prev[0].invoice_number){
+          const n=parseInt(prev[0].invoice_number.replace('PRE '+year+'-',''))||0;
+          next='PRE '+year+'-'+String(n+1).padStart(4,'0');
+        }
+        const payload={business_slug:BIZ_SLUG,client_id:args.cliente_id||null,client_name:args.cliente_nombre,type:'presupuesto',status:'borrador',issue_date:today,items,total,invoice_number:next};
+        const {data,error}=await _sb.from('crm_invoices').insert(payload).select().single();
+        if(error)return {ok:false,error:error.message};
+        if(typeof crmLoadFacturas==='function')crmLoadFacturas();
+        return {ok:true,presupuesto:{id:data.id,numero:next,total}};
+      }
+      case 'cambiar_estado_factura': {
+        const {error}=await _sb.from('crm_invoices').update({status:args.nuevo_estado}).eq('id',args.factura_id);
+        if(error)return {ok:false,error:error.message};
+        if(typeof crmLoadFacturas==='function')crmLoadFacturas();
+        return {ok:true,factura_id:args.factura_id,nuevo_estado:args.nuevo_estado};
+      }
+      case 'cambiar_estado_lead': {
+        const {error}=await _sb.from('leads').update({status:args.nuevo_estado}).eq('id',args.lead_id);
+        if(error)return {ok:false,error:error.message};
+        if(typeof loadAll==='function')loadAll();
+        return {ok:true,lead_id:args.lead_id,nuevo_estado:args.nuevo_estado};
+      }
+      case 'actualizar_cliente': {
+        const upd={};
+        ['nombre','telefono','email','nif','iban','direccion','empresa','notas'].forEach(k=>{
+          if(args[k]!=null) upd[{nombre:'name',telefono:'phone',notas:'notes'}[k]||k]=args[k];
+        });
+        const {error}=await _sb.from('crm_clients').update(upd).eq('id',args.cliente_id);
+        if(error)return {ok:false,error:error.message};
+        if(typeof crmLoadClientes==='function')crmLoadClientes();
+        return {ok:true,cliente_id:args.cliente_id,actualizado:upd};
+      }
+      case 'enviar_whatsapp': {
+        const phone=(args.telefono||'').replace(/\D/g,'');
+        if(!phone)return {ok:false,error:'Falta teléfono'};
+        const url='https://wa.me/'+phone+'?text='+encodeURIComponent(args.mensaje||'');
+        window.open(url,'_blank');
+        return {ok:true,abierto:url,telefono:phone};
+      }
+      case 'ajustar_stock': {
+        const inv=(typeof _crmInventario!=='undefined'?_crmInventario:[]).find(p=>p.id===args.producto_id);
+        if(!inv)return {ok:false,error:'Producto no encontrado'};
+        const nuevo=(parseFloat(inv.stock)||0)+(parseFloat(args.cantidad)||0);
+        const {error}=await _sb.from('crm_inventory').update({stock:nuevo}).eq('id',args.producto_id);
+        if(error)return {ok:false,error:error.message};
+        if(typeof crmLoadInventario==='function')crmLoadInventario();
+        return {ok:true,producto_id:args.producto_id,stock_anterior:inv.stock,stock_nuevo:nuevo};
+      }
+      case 'crear_seguimiento': {
+        const payload={business_slug:BIZ_SLUG,name:args.nombre,phone:args.telefono||null,interest:args.motivo||args.interes||null,follow_up_date:args.fecha,intent_level:args.intent_level||'warm',status:'new'};
+        const {data,error}=await _sb.from('leads').insert(payload).select().single();
+        if(error)return {ok:false,error:error.message};
+        if(typeof loadAll==='function')loadAll();
+        return {ok:true,seguimiento:{id:data.id,nombre:data.name,fecha:args.fecha}};
+      }
+      case 'eliminar_cita': {
+        const {error}=await _sb.from('appointments').update({status:'cancelled'}).eq('id',args.cita_id);
+        if(error)return {ok:false,error:error.message};
+        if(typeof loadAll==='function')loadAll();
+        return {ok:true,cita_id:args.cita_id,estado:'cancelled'};
       }
     }
     return {ok:false,error:'Tool desconocida: '+name};
@@ -7275,10 +7400,17 @@ function _iaConfirmar(toolName,args){
     overlay.style.cssText='position:fixed;inset:0;background:rgba(8,7,10,.7);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
     var labels={
       buscar_cliente:'buscar un cliente',listar_citas_hoy:'listar las citas',resumen_dia:'mostrar el resumen del día',
+      buscar_encargo:'buscar un encargo',buscar_factura:'buscar una factura',
+      buscar_lead:'buscar un lead',buscar_producto:'buscar un producto',buscar_cita:'buscar una cita',
       crear_cita:'crear una cita',cambiar_estado_cita:'cambiar el estado de una cita',
       crear_cliente:'registrar un nuevo cliente',mover_encargo:'mover un encargo en el kanban',
       marcar_factura_pagada:'marcar una factura como COBRADA',
-      enviar_email_confirmacion_cita:'enviar EMAIL al cliente',crear_lead:'crear un lead'
+      enviar_email_confirmacion_cita:'enviar EMAIL al cliente',crear_lead:'crear un lead',
+      crear_encargo:'crear un encargo',crear_presupuesto:'crear un presupuesto',
+      cambiar_estado_factura:'cambiar el estado de una factura',cambiar_estado_lead:'cambiar el estado de un lead',
+      actualizar_cliente:'actualizar datos del cliente',enviar_whatsapp:'abrir WhatsApp con mensaje',
+      ajustar_stock:'ajustar stock de un producto',crear_seguimiento:'crear un seguimiento',
+      eliminar_cita:'cancelar una cita'
     };
     var argList=Object.entries(args).map(([k,v])=>'<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #f4f1ea"><span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#b89a5e;font-weight:700;min-width:120px">'+k+'</span><span style="color:#1a1410;font-size:13px">'+esc(String(v))+'</span></div>').join('');
     overlay.innerHTML='<div style="background:#fff;border-radius:14px;max-width:480px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.4);overflow:hidden"><div style="background:#0d0b07;padding:18px 22px;color:#fff"><div style="font-size:10px;font-weight:700;color:#c4a35a;letter-spacing:.28em;text-transform:uppercase;margin-bottom:4px">Confirmar acción IA</div><div style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:400">El asistente quiere '+(labels[toolName]||toolName)+'</div></div><div style="padding:20px 24px">'+argList+'</div><div style="padding:14px 22px;border-top:1px solid #ede9df;display:flex;gap:10px;justify-content:flex-end;background:#faf7ef"><button class="btn btn-ghost" id="_iac-no">Cancelar</button><button class="btn btn-accent" id="_iac-yes">Confirmar</button></div></div>';
@@ -7390,6 +7522,19 @@ HERRAMIENTAS DISPONIBLES:
 - marcar_factura_pagada(factura_id)
 - enviar_email_confirmacion_cita(cita_id)
 - crear_lead(nombre, telefono, interes, intent_level) — hot/warm/cold
+- buscar_factura(query) — busca por número/cliente/estado/tipo
+- buscar_lead(query) — busca por nombre/teléfono/interés
+- buscar_producto(query) — busca por nombre/categoría/SKU
+- buscar_cita(query) — busca por cliente/servicio
+- crear_encargo(titulo, cliente_nombre, cliente_id, precio, estado, fecha_entrega, evento)
+- crear_presupuesto(cliente_nombre, cliente_id, titulo, precio, descripcion, items[])
+- cambiar_estado_factura(factura_id, nuevo_estado) — borrador/enviado/pagado/cancelado
+- cambiar_estado_lead(lead_id, nuevo_estado) — new/contacted/qualified/converted/lost
+- actualizar_cliente(cliente_id, nombre, telefono, email, nif, iban, direccion, empresa, notas)
+- enviar_whatsapp(telefono, mensaje) — abre WhatsApp Web con el mensaje
+- ajustar_stock(producto_id, cantidad) — cantidad puede ser negativa para descontar
+- crear_seguimiento(nombre, telefono, fecha, motivo, intent_level)
+- eliminar_cita(cita_id) — cancela la cita (no la borra)
 
 REGLAS:
 1. NUNCA digas \"he registrado\" o \"he creado\" sin antes emitir el bloque <<<ACCION>>>. El sistema solo ejecuta cuando ve ese bloque exacto.
