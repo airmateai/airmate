@@ -1626,6 +1626,16 @@ function enterApp(name){
   document.getElementById('sidebar-avatar').textContent=(name||BIZ_NAME).charAt(0).toUpperCase();
   document.title='Panel · '+BIZ_NAME;
   emailjs.init('i4iBVVP-BkUOOwBE9');
+  // ── Auto-seed datos fiscales (idempotente, sólo si vacío) ─────
+  if(BIZ_SLUG==='jose-acosta'){
+    try{
+      const cur=JSON.parse(localStorage.getItem('biz_info_'+BIZ_SLUG)||'{}');
+      const seeds={name:'JOSE AURELIO ACOSTA MENDEZ',cif:'78701897Z',address:'Pasaje Peligros 2, 38002 Sta. Cruz de Tenerife',iban:'ES43 0049 0043 3226 9107 8041',iva_pct:7,iva_pct_tpv:3,irpf_pct:0,payment_terms:'50% señal + 50% entrega · Efectivo, tarjeta o transferencia',pagos_aceptados:'efectivo,tarjeta,transferencia,bizum'};
+      let changed=false;
+      Object.keys(seeds).forEach(k=>{if(cur[k]==null||cur[k]==='')Object.assign(cur,{[k]:seeds[k]})&&(changed=true);});
+      if(changed)localStorage.setItem('biz_info_'+BIZ_SLUG,JSON.stringify(cur));
+    }catch(e){}
+  }
   loadAll();
   setInterval(loadAll,30000);
   startRealtime();
@@ -3337,7 +3347,7 @@ async function crmFacturaForm(f={}){
   </div>
   <div class="crm-form-row">
     <div class="crm-form-group"><label class="crm-form-label">Descuento (%)</label><input type="number" class="crm-form-ctrl" id="ff-discount" value="${f.discount||0}" min="0" max="100" step="0.1"/></div>
-    <div class="crm-form-group"><label class="crm-form-label">Retención IRPF (%)</label><input type="number" class="crm-form-ctrl" id="ff-irpf" value="${f.irpf||0}" min="0" max="100" step="0.1"/></div>
+    <div class="crm-form-group" style="display:none"><input type="number" class="crm-form-ctrl" id="ff-irpf" value="0"/></div>
   </div>
   <div style="text-align:right;font-size:16px;font-weight:700;margin:10px 0">Total: <span id="crm-inv-total">0,00 €</span></div>
   <div class="crm-form-row">
@@ -3361,13 +3371,17 @@ async function crmEditFactura(id){
 }
 async function _nextInvoiceNum(type){
   const year=new Date().getFullYear();
-  const prefix=type==='factura'?`FAC-${year}-`:`PRE-${year}-`;
+  let prefix;
+  if(type==='ticket') prefix=`FAC SIMPLIFICADAS ${year}/`;
+  else if(type==='factura') prefix=`FAC ${year}-`;
+  else prefix=`PRE ${year}-`;
   const {data}=await _sb.from('crm_invoices').select('invoice_number').eq('business_slug',BIZ_SLUG).like('invoice_number',prefix+'%').order('invoice_number',{ascending:false}).limit(1);
   if(data&&data.length&&data[0].invoice_number){
-    const n=parseInt(data[0].invoice_number.split('-').pop())||0;
-    return prefix+String(n+1).padStart(3,'0');
+    const tail=data[0].invoice_number.replace(prefix,'');
+    const n=parseInt(tail)||0;
+    return prefix+String(n+1).padStart(4,'0');
   }
-  return prefix+'001';
+  return prefix+'0001';
 }
 async function crmSaveFactura(){
   const sel=document.getElementById('ff-client');
@@ -3521,7 +3535,8 @@ async function confirmarVentaTienda(invId){
   await _sb.from('crm_inventory_movements').insert({business_slug:BIZ_SLUG,inventory_id:invId,tipo:'salida',cantidad:qty,motivo:`Venta tienda — ${clientName}`});
   // 2. Registrar en facturas_compra como ingreso (tabla separada)
   const today=new Date().toISOString().split('T')[0];
-  await _sb.from('crm_invoices').insert({business_slug:BIZ_SLUG,client_name:clientName,type:'factura',status:'pagado',items:[{desc:inv.name,qty,price}],total,issue_date:today,notes:`Venta tienda · ${metodo}`});
+  const invoice_number=await _nextInvoiceNum('ticket');
+  await _sb.from('crm_invoices').insert({business_slug:BIZ_SLUG,client_name:clientName,type:'ticket',status:'pagado',items:[{desc:inv.name,qty,price}],total,issue_date:today,notes:`Venta tienda · ${metodo}`,invoice_number});
   // 3. Holded sync
   const holdedRes=await holdedSync('invoices',{
     desc:`Venta: ${inv.name}`,date:Math.floor(Date.now()/1000),
@@ -3994,6 +4009,9 @@ function openBizSettings(){
       <div class="crm-form-group"><label class="crm-form-label">Teléfono</label><input class="crm-form-ctrl" id="biz-tel" value="${esc(b.phone||'')}"/></div>
       <div class="crm-form-group"><label class="crm-form-label">CIF / NIF</label><input class="crm-form-ctrl" id="biz-cif" value="${esc(b.cif||'')}"/></div>
     </div>
+    <div class="crm-form-group"><label class="crm-form-label">IBAN</label><input class="crm-form-ctrl" id="biz-iban" value="${esc(b.iban||'')}" placeholder="ES00 0000 0000 00 0000000000"/></div>
+    <div class="crm-form-row" style="display:none">
+    </div>
     <div class="crm-form-row">
       <div class="crm-form-group"><label class="crm-form-label">Email</label><input class="crm-form-ctrl" id="biz-email" value="${esc(b.email||'')}"/></div>
       <div class="crm-form-group"><label class="crm-form-label">IGIC (%)</label>
@@ -4022,7 +4040,7 @@ function openBizSettings(){
   loadAdminsList();
 }
 async function saveBizSettings(){
-  const b={name:cv('biz-name'),address:cv('biz-addr'),phone:cv('biz-tel'),cif:cv('biz-cif'),email:cv('biz-email'),iva_pct:parseInt(cv('biz-iva'))||0,payment_terms:cv('biz-payment-terms')||null,holded_key:cv('biz-holded')||null,verifactu_key:cv('biz-verifactu')||null};
+  const cur=getBizInfo(); const b=Object.assign({},cur,{name:cv('biz-name'),address:cv('biz-addr'),phone:cv('biz-tel'),cif:cv('biz-cif'),email:cv('biz-email'),iva_pct:parseInt(cv('biz-iva'))||0,iban:cv('biz-iban')||cur.iban||null,payment_terms:cv('biz-payment-terms')||null,holded_key:cv('biz-holded')||null,verifactu_key:cv('biz-verifactu')||null});
   localStorage.setItem('biz_info_'+BIZ_SLUG,JSON.stringify(b));
   // Cambio de contraseña
   const np=cv('biz-newpass'),np2=cv('biz-newpass2');
@@ -5454,9 +5472,10 @@ function tpvSetPago(tipo) {
 
 async function tpvCobrar() {
   if(_tpvCarrito.length===0){showToast('Añade productos al ticket');return;}
-  var sub=_tpvCarrito.reduce(function(s,c){return s+c.precio*c.qty;},0);
-  var igic=sub*0.07;
-  var total=sub+igic;
+  // Comercio al menor: IGIC 3% INCLUIDO en el precio (no se desglosa al cliente)
+  var total=_tpvCarrito.reduce(function(s,c){return s+c.precio*c.qty;},0);
+  var sub=Math.round((total/1.03)*100)/100;
+  var igic=Math.round((total-sub)*100)/100;
   var lineas=_tpvCarrito.map(function(c){return {id:c.id,nombre:c.nombre,precio:c.precio,qty:c.qty};});
   var prods=_tpvCarrito.map(function(c){return c.nombre+(c.qty>1?' ×'+c.qty:'');}).join(', ');
 
