@@ -1120,19 +1120,20 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
                 ${[0,1,2].map(i=>{const y=new Date().getFullYear()-i;return`<option value="${y}">${y}</option>`;}).join('')}
               </select>
               <button class="btn btn-accent" onclick="calcRichard()">🔄 Actualizar</button>
-              <button class="btn btn-ghost" onclick="exportRichardCSV()">📥 Exportar para gestor</button>
+              <button class="btn btn-ghost" onclick="exportRichardCSV()">📥 CSV gestor</button>
+              <button class="btn btn-ghost" onclick="exportRichardPDF()">📄 PDF Hacienda</button>
             </div>
             <div id="richard-stats" class="stats-grid" style="margin-bottom:20px"></div>
             <div style="display:flex;gap:16px;flex-wrap:wrap">
               <div style="flex:1;min-width:300px">
-                <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#0f172a">📤 Ingresos (Facturas emitidas)</div>
+                <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#0f172a">📤 Libro de facturas emitidas</div>
                 <div class="card"><div class="table-wrap">
                   <table><thead><tr><th>Nº</th><th>Cliente</th><th>Fecha</th><th>Estado</th><th>Total</th></tr></thead>
                   <tbody id="richard-facturas-tbody"></tbody></table>
                 </div></div>
               </div>
               <div style="flex:1;min-width:300px">
-                <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#0f172a">📥 Gastos (Facturas de compra)</div>
+                <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#0f172a">📥 Libro de facturas recibidas</div>
                 <div class="card"><div class="table-wrap">
                   <table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th>Importe</th><th>Foto</th></tr></thead>
                   <tbody id="richard-compras-tbody"></tbody></table>
@@ -4773,6 +4774,39 @@ function exportRichardCSV(){
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv);
   a.download=`informe-gestor-${y}.csv`;a.click();
   showToast('✓ CSV listo para mandar al gestor');
+}
+
+function exportRichardPDF(){
+  const y=parseInt(document.getElementById('richard-year')?.value)||new Date().getFullYear();
+  const biz=getBizInfo();
+  const fmt=n=>Number(n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+  const totalIng=_richardFacturas.reduce((s,f)=>s+Number(f.total||0),0);
+  const totalGas=_richardCompras.reduce((s,c)=>s+Number(c.importe||0),0);
+  const balance=totalIng-totalGas;
+  const w=window.open('','_blank');
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Libros Hacienda ${y} - ${esc(biz.name||BIZ_NAME)}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500&display=swap" rel="stylesheet">
+  <style>body{font-family:Inter,sans-serif;color:#1a1410;padding:30px;background:#fff;}h1{font-family:Cormorant Garamond,serif;font-weight:400;font-size:32px;margin-bottom:6px}h2{font-family:Cormorant Garamond,serif;font-weight:400;font-size:20px;color:#b89a5e;margin-top:30px;margin-bottom:12px;border-bottom:1px solid #c4a35a;padding-bottom:6px}table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:11px}th{background:#faf7ef;color:#b89a5e;text-transform:uppercase;letter-spacing:.18em;font-size:9px;text-align:left;padding:8px 10px;border-bottom:1px solid #c4a35a}td{padding:7px 10px;border-bottom:1px solid #f4f1ea}.tot{background:#1a1410;color:#fff;padding:18px 24px;border-radius:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:24px 0}.tot div{text-align:center}.tot label{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:#c4a35a;display:block;margin-bottom:4px}.tot strong{font-size:22px;font-weight:700;letter-spacing:-.02em}.meta{font-size:11px;letter-spacing:.18em;color:#b89a5e;text-transform:uppercase;margin-bottom:24px}.fis{background:#faf7ef;padding:14px 18px;border-left:3px solid #c4a35a;border-radius:4px;margin-bottom:24px;font-size:12px;line-height:1.6}@media print{.np{display:none}}</style>
+  </head><body>
+  <h1>Libros para Hacienda · ${y}</h1>
+  <div class="meta">${esc(biz.name||BIZ_NAME)} · ${esc(biz.cif||'')} · Emitido ${new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}</div>
+  <div class="fis"><strong>Datos fiscales:</strong> ${esc(biz.name||'')} · NIF ${esc(biz.cif||'')} · ${esc(biz.address||'')}${biz.iban?' · IBAN '+esc(biz.iban):''}</div>
+  <div class="tot">
+    <div><label>Ingresos</label><strong style="color:#4ade80">${fmt(totalIng)}</strong></div>
+    <div><label>Gastos</label><strong style="color:#f87171">${fmt(totalGas)}</strong></div>
+    <div><label>Balance neto</label><strong style="color:${balance>=0?'#4ade80':'#f87171'}">${fmt(balance)}</strong></div>
+  </div>
+  <h2>Libro de facturas emitidas (${_richardFacturas.length})</h2>
+  <table><thead><tr><th>Nº</th><th>Fecha</th><th>Cliente</th><th>Estado</th><th style="text-align:right">Total</th></tr></thead>
+  <tbody>${_richardFacturas.map(f=>`<tr><td>${esc(f.invoice_number||'—')}</td><td>${f.issue_date?new Date(f.issue_date).toLocaleDateString('es-ES'):'—'}</td><td>${esc(f.client_name||'—')}</td><td>${esc(f.status||'')}</td><td style="text-align:right;font-weight:600">${fmt(f.total)}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;font-style:italic;padding:20px">Sin facturas</td></tr>'}</tbody></table>
+  <h2>Libro de facturas recibidas (${_richardCompras.length})</h2>
+  <table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th style="text-align:right">Importe</th></tr></thead>
+  <tbody>${_richardCompras.map(c=>`<tr><td>${c.fecha?new Date(c.fecha+'T00:00:00').toLocaleDateString('es-ES'):'—'}</td><td>${esc(c.proveedor||'—')}</td><td>${esc(c.concepto||'—')}</td><td style="text-align:right;font-weight:600">${fmt(c.importe)}</td></tr>`).join('')||'<tr><td colspan="4" style="text-align:center;font-style:italic;padding:20px">Sin gastos</td></tr>'}</tbody></table>
+  <div style="text-align:center;margin-top:30px"><button class="np" onclick="window.print()" style="background:#c4a35a;color:#fff;border:none;padding:11px 28px;border-radius:6px;font-size:13px;cursor:pointer;letter-spacing:.04em;font-weight:600">🖨 Imprimir / Guardar PDF</button></div>
+  </body></html>`;
+  w.document.write(html);
+  w.document.close();
+  showToast('✓ PDF Hacienda generado');
 }
 
 // ── INFORME IGIC ──────────────────────────────────────────────────────────
