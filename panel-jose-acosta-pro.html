@@ -5385,20 +5385,41 @@ function tpvEmojiCategoria(cat) {
 
 let _tpvCatActiva='';
 async function tpvLoadProductos() {
-  const {data} = await _sb.from('crm_inventory')
-    .select('*').eq('business_slug', BIZ_SLUG)
-    .order('category').order('name');
-  TPV_PRODUCTOS = (data||[]).map(p => ({
-    id: p.id,
-    nombre: p.name,
-    categoria: p.category || 'General',
-    precio: p.precio_venta || 0,
-    stock: p.stock || 0,
-    emoji: tpvEmojiCategoria(p.category),
-    imagen: p.image_url || null
+  var dbg=document.getElementById('tpv-dbg');
+  if(!dbg){
+    dbg=document.createElement('div');
+    dbg.id='tpv-dbg';
+    dbg.style.cssText='position:fixed;top:60px;right:20px;background:#0d0b07;color:#c4a35a;padding:8px 14px;border-radius:6px;font-size:11px;letter-spacing:.1em;z-index:10000;border:1px solid rgba(196,163,90,.3);font-family:monospace';
+    document.body.appendChild(dbg);
+  }
+  dbg.textContent='Cargando productos...';
+  const {data,error}=await _sb.from('crm_inventory').select('*').eq('business_slug',BIZ_SLUG).order('category').order('name');
+  if(error){dbg.style.color='#f87171';dbg.textContent='ERROR: '+error.message;console.error(error);return;}
+  TPV_PRODUCTOS=(data||[]).map(p=>({
+    id:p.id,
+    nombre:p.name,
+    categoria:p.category||'General',
+    precio:parseFloat(p.precio_venta||p.price||0)||0,
+    stock:parseFloat(p.stock||0)||0,
+    emoji:tpvEmojiCategoria(p.category),
+    imagen:p.image_url||null
   }));
+  dbg.textContent=TPV_PRODUCTOS.length+' productos cargados, renderizando...';
+  console.log('TPV cargados:',TPV_PRODUCTOS.length,TPV_PRODUCTOS);
   tpvRenderCatBar();
   tpvRenderCatalogo();
+  setTimeout(function(){
+    var el=document.getElementById('tpv-catalogo');
+    var n=el?el.children.length:0;
+    if(n===0&&TPV_PRODUCTOS.length>0){
+      dbg.style.color='#f87171';
+      dbg.textContent='BUG: '+TPV_PRODUCTOS.length+' productos pero 0 tarjetas en DOM';
+    } else {
+      dbg.style.color='#4ade80';
+      dbg.textContent='OK: '+n+' tarjetas renderizadas';
+      setTimeout(function(){dbg.style.transition='opacity 1s';dbg.style.opacity='0';setTimeout(function(){if(dbg.parentNode)dbg.parentNode.removeChild(dbg);},1200);},4000);
+    }
+  },500);
 }
 
 function tpvRenderCatBar(){
@@ -5448,31 +5469,70 @@ function tpvFiltrar() {
 
 function tpvRenderCatalogo(prods) {
   var el=document.getElementById('tpv-catalogo');
-  if(!el){console.warn('tpv-catalogo no encontrado');return;}
-  var arr=prods||TPV_PRODUCTOS;
-  if(!arr||arr.length===0){
-    el.innerHTML='<div style="grid-column:1/-1;padding:40px;text-align:center;color:#8a7960;font-family:\'Cormorant Garamond\',serif;font-style:italic;font-size:15px">Sin productos para mostrar</div>';
+  if(!el){
+    // Reintenta cuando el DOM esté listo
+    setTimeout(function(){ tpvRenderCatalogo(prods); },150);
     return;
   }
-  el.innerHTML=arr.map(function(p){
+  // Limpiar y rebuild con DOM creation (sin innerHTML)
+  while(el.firstChild) el.removeChild(el.firstChild);
+  var arr=prods||TPV_PRODUCTOS;
+  if(!arr||arr.length===0){
+    var emp=document.createElement('div');
+    emp.style.cssText='grid-column:1/-1;padding:40px;text-align:center;color:#8a7960;font-style:italic;font-size:15px';
+    emp.textContent='Sin productos para mostrar';
+    el.appendChild(emp);
+    return;
+  }
+  arr.forEach(function(p){
     var inCart=_tpvCarrito.find(function(c){return c.id===p.id;});
-    var border=inCart?'#c4a35a':'#e2e8f0';
-    var shadow=inCart?'0 0 0 3px rgba(196,163,90,.25)':'0 1px 4px rgba(0,0,0,.06)';
-    var imgHtml=p.imagen
-      ?'<img src="'+p.imagen+'" alt="" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:10px;display:block;background:#faf7ef" onerror="this.style.display=\'none\'"/>'
-      :'<div style="font-size:32px;margin-bottom:10px;text-align:center;height:60px;display:flex;align-items:center;justify-content:center">'+(p.emoji||'📦')+'</div>';
-    var stockColor=p.stock<5?'#f87171':'#94a3b8';
-    var inCartHtml=inCart?'<div style="margin-top:8px;text-align:center;font-size:11px;font-weight:700;color:#c4a35a;background:rgba(196,163,90,.1);border-radius:6px;padding:4px">'+inCart.qty+' en ticket ✓</div>':'';
-    return '<div onclick="tpvAgregar(\''+p.id+'\')" style="background:#fff;border-radius:12px;border:1.5px solid '+border+';padding:14px;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;box-shadow:'+shadow+';opacity:1" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.borderColor=\'#c4a35a\'" onmouseout="this.style.transform=\'\';this.style.borderColor=\''+border+'\'">'+
-      imgHtml+
-      '<div style="font-size:13px;font-weight:700;color:#0a0a0a;line-height:1.3;margin-bottom:6px;min-height:34px">'+(p.nombre||'')+'</div>'+
-      '<div style="font-size:10px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">'+(p.categoria||'')+'</div>'+
-      '<div style="display:flex;align-items:center;justify-content:space-between">'+
-        '<span style="font-size:16px;font-weight:800;color:#c4a35a">'+(p.precio||0)+' €</span>'+
-        '<span style="font-size:10px;color:'+stockColor+'">Stock: '+(p.stock||0)+'</span>'+
-      '</div>'+inCartHtml+
-    '</div>';
-  }).join('');
+    var card=document.createElement('div');
+    card.style.cssText='background:#fff;border-radius:12px;border:1.5px solid '+(inCart?'#c4a35a':'#e2e8f0')+';padding:14px;cursor:pointer;box-shadow:'+(inCart?'0 0 0 3px rgba(196,163,90,.25)':'0 1px 4px rgba(0,0,0,.06)')+';transition:transform .15s,border-color .15s';
+    card.onclick=function(){ tpvAgregar(p.id); };
+    card.onmouseenter=function(){this.style.transform='translateY(-2px)';this.style.borderColor='#c4a35a';};
+    card.onmouseleave=function(){this.style.transform='';this.style.borderColor=inCart?'#c4a35a':'#e2e8f0';};
+    // Imagen o emoji
+    if(p.imagen){
+      var img=document.createElement('img');
+      img.src=p.imagen; img.alt='';
+      img.style.cssText='width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:10px;display:block;background:#faf7ef';
+      img.onerror=function(){ this.style.display='none'; };
+      card.appendChild(img);
+    } else {
+      var ico=document.createElement('div');
+      ico.style.cssText='font-size:32px;margin-bottom:10px;text-align:center;height:60px;display:flex;align-items:center;justify-content:center';
+      ico.textContent=p.emoji||'📦';
+      card.appendChild(ico);
+    }
+    // Nombre
+    var nm=document.createElement('div');
+    nm.style.cssText='font-size:13px;font-weight:700;color:#0a0a0a;line-height:1.3;margin-bottom:6px;min-height:34px';
+    nm.textContent=p.nombre||'(sin nombre)';
+    card.appendChild(nm);
+    // Categoría
+    var cat=document.createElement('div');
+    cat.style.cssText='font-size:10px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px';
+    cat.textContent=p.categoria||'';
+    card.appendChild(cat);
+    // Precio + stock
+    var bottom=document.createElement('div');
+    bottom.style.cssText='display:flex;align-items:center;justify-content:space-between';
+    var price=document.createElement('span');
+    price.style.cssText='font-size:16px;font-weight:800;color:#c4a35a';
+    price.textContent=(p.precio||0)+' €';
+    var stock=document.createElement('span');
+    stock.style.cssText='font-size:10px;color:'+(p.stock<5?'#f87171':'#94a3b8');
+    stock.textContent='Stock: '+(p.stock||0);
+    bottom.appendChild(price); bottom.appendChild(stock);
+    card.appendChild(bottom);
+    if(inCart){
+      var ic=document.createElement('div');
+      ic.style.cssText='margin-top:8px;text-align:center;font-size:11px;font-weight:700;color:#c4a35a;background:rgba(196,163,90,.1);border-radius:6px;padding:4px';
+      ic.textContent=inCart.qty+' en ticket ✓';
+      card.appendChild(ic);
+    }
+    el.appendChild(card);
+  });
 }
 
 function tpvAgregar(id) {
