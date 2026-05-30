@@ -1009,8 +1009,8 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
           </div>
           <div id="crm-stock-alert" class="alert alert-red" style="display:none"></div>
           <div class="card"><div class="table-wrap">
-            <table><thead><tr><th>Material</th><th>Categoría</th><th>Stock</th><th>Mínimo</th><th>Unidad</th><th>P.Compra</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody id="crm-inventario-tbody"><tr><td colspan="8" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr></tbody>
+            <table><thead><tr><th style="width:64px">Foto</th><th>Material</th><th>Categoría</th><th>Stock</th><th>Mínimo</th><th>Unidad</th><th>P.Compra</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="crm-inventario-tbody"><tr><td colspan="9" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr></tbody>
             </table>
           </div></div>
         </div>
@@ -1187,12 +1187,12 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
               <div style="background:#0d0b07;border-radius:16px;padding:20px;box-shadow:0 6px 30px rgba(0,0,0,.18);position:relative;overflow:hidden">
                 <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:#fff;letter-spacing:.02em;font-weight:500;margin-bottom:6px">Margen neto</div>
                 <div style="font-size:9px;color:rgba(196,163,90,.55);letter-spacing:.2em;text-transform:uppercase;margin-bottom:14px">Beneficio / Ingresos</div>
-                <div style="position:relative;height:110px"><canvas id="fin-donut-margen"></canvas><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none"><div id="fin-margen-val" style="font-family:'Cormorant Garamond',serif;font-size:28px;color:#c4a35a;font-weight:500;letter-spacing:-.02em">—</div></div></div>
+                <div style="position:relative;height:110px"><canvas id="fin-donut-margen"></canvas><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none"><div id="fin-margen-val" style="font-size:28px;color:#c4a35a;font-weight:800;letter-spacing:-.03em">—</div></div></div>
               </div>
               <div style="background:linear-gradient(135deg,#1a1408,#0d0b07);border-radius:16px;padding:20px;border:1px solid rgba(196,163,90,.25);position:relative;overflow:hidden">
                 <div style="font-size:9px;color:#c4a35a;letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin-bottom:6px">📈 Proyección mes</div>
-                <div id="fin-proy-val" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#fff;font-weight:500;letter-spacing:-.01em">—</div>
-                <div id="fin-proy-sub" style="font-size:11px;color:rgba(255,255,255,.45);margin-top:4px;font-style:italic;font-family:'Cormorant Garamond',serif">Calculando ritmo…</div>
+                <div id="fin-proy-val" style="font-size:26px;color:#fff;font-weight:800;letter-spacing:-.03em">—</div>
+                <div id="fin-proy-sub" style="font-size:11px;color:rgba(255,255,255,.45);margin-top:4px">Calculando ritmo…</div>
               </div>
             </div>
           </div>
@@ -3109,11 +3109,15 @@ async function crmLoadInventario(){
   if(low.length){al.style.display='flex';al.innerHTML='⚠️ Stock bajo en: '+low.map(i=>'<strong>'+esc(i.name)+'</strong>').join(', ');}
   else al.style.display='none';
   const tb=document.getElementById('crm-inventario-tbody');
-  if(!_crmInventario.length){tb.innerHTML='<tr><td colspan="8" class="empty-state">Sin materiales registrados</td></tr>';return;}
+  if(!_crmInventario.length){tb.innerHTML='<tr><td colspan="9" class="empty-state">Sin materiales registrados</td></tr>';return;}
   tb.innerHTML=_crmInventario.map(i=>{
     const isLow=i.min_stock!==null&&i.stock<=i.min_stock;
     const pc=i.precio_compra!=null?crmFmt(i.precio_compra):'—';
+    const imgCell=i.image_url
+      ?`<td><img src="${esc(i.image_url)}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;display:block" onerror="this.style.display='none'"/></td>`
+      :`<td style="text-align:center;color:#cbd5e1;font-size:18px">—</td>`;
     return `<tr>
+      ${imgCell}
       <td><strong>${esc(i.name)}</strong></td><td>${esc(i.category||'—')}</td>
       <td class="${isLow?'stock-low':'stock-ok'}">${i.stock} ${esc(i.unit||'')}</td>
       <td>${i.min_stock!==null?i.min_stock:'—'}</td><td>${esc(i.unit||'ud')}</td>
@@ -5062,7 +5066,7 @@ function _finRenderTreasury(treasury){
     <div style="position:absolute;inset:0;opacity:.05;background-image:repeating-linear-gradient(45deg,#c4a35a 0,#c4a35a 1px,transparent 0,transparent 14px)"></div>
     <div style="position:relative">
       <div style="font-size:9px;font-weight:700;color:#c4a35a;letter-spacing:.28em;text-transform:uppercase;margin-bottom:8px">💰 Patrimonio total</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:500;color:#fff;letter-spacing:-.01em">${_finFmt2(total)}</div>
+      <div style="font-size:30px;font-weight:800;color:#fff;letter-spacing:-.03em">${_finFmt2(total)}</div>
       <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:4px;letter-spacing:.04em">${treasury.length} cuentas conectadas</div>
     </div>
   </div>`;
@@ -5073,7 +5077,7 @@ function _finRenderTreasury(treasury){
         <div style="font-size:10px;font-weight:700;color:#b89a5e;letter-spacing:.22em;text-transform:uppercase">${esc(t.name||t.type)}</div>
         <span style="font-size:18px">${ico}</span>
       </div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500;color:#1a1410;letter-spacing:-.01em">${_finFmt2(t.balance)}</div>
+      <div style="font-size:24px;font-weight:800;color:#1a1410;letter-spacing:-.03em">${_finFmt2(t.balance)}</div>
       ${t.accountNumber?`<div style="font-size:10px;color:#8a7960;margin-top:4px;font-family:monospace">Nº ${t.accountNumber}</div>`:''}
     </div>`;
   });
@@ -5109,7 +5113,7 @@ function _finRenderKPIs(data, mes, year){
     <div class="card" style="margin:0;padding:22px 22px 18px;animation:finSlideUp .35s ease ${i*.06}s both">
       <div style="font-size:9px;font-weight:700;color:#b89a5e;letter-spacing:.28em;text-transform:uppercase;margin-bottom:14px">${k.lbl}</div>
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:500;color:#1a1410;letter-spacing:-.02em;line-height:1">${k.val}</div>
+        <div style="font-size:30px;font-weight:800;color:#1a1410;letter-spacing:-.03em;line-height:1">${k.val}</div>
         ${k.trend?`<div style="font-size:12px;font-weight:700;color:${k.trendC}">${k.trend}</div>`:''}
       </div>
       <div style="font-size:11px;color:#8a7960;margin-top:6px;letter-spacing:.04em">${k.sub}</div>
@@ -5219,17 +5223,17 @@ function _finRenderIGIC(data, mes, year){
   box.innerHTML=`
     <div style="text-align:center;margin-bottom:18px">
       <div style="font-size:9px;letter-spacing:.28em;color:#b89a5e;font-weight:700;text-transform:uppercase;margin-bottom:4px">T${trim+1} ${year} · IGIC a liquidar</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:500;color:#1a1410;letter-spacing:-.02em">${_finFmt2(total)}</div>
+      <div style="font-size:38px;font-weight:800;color:#1a1410;letter-spacing:-.03em">${_finFmt2(total)}</div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div style="padding:14px;border:1px solid #ede9df;border-radius:10px;text-align:center;background:#faf7ef">
         <div style="font-size:9px;color:#b89a5e;letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin-bottom:6px">IGIC 3%</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#1a1410;font-weight:500">${_finFmt2(igic3)}</div>
+        <div style="font-size:20px;color:#1a1410;font-weight:800">${_finFmt2(igic3)}</div>
         <div style="font-size:10px;color:#8a7960;margin-top:2px">base ${_finFmt(base3)}</div>
       </div>
       <div style="padding:14px;border:1px solid #ede9df;border-radius:10px;text-align:center;background:#faf7ef">
         <div style="font-size:9px;color:#b89a5e;letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin-bottom:6px">IGIC 7%</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#1a1410;font-weight:500">${_finFmt2(igic7)}</div>
+        <div style="font-size:20px;color:#1a1410;font-weight:800">${_finFmt2(igic7)}</div>
         <div style="font-size:10px;color:#8a7960;margin-top:2px">base ${_finFmt(base7)}</div>
       </div>
     </div>`;
@@ -5252,7 +5256,7 @@ function _finRenderTopProductos(data){
   const maxU=top[0][1].units;
   box.innerHTML=top.map(([n,d],i)=>`
     <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #f4f1ea">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:#c4a35a;font-weight:500;width:24px">${i+1}</div>
+      <div style="font-size:18px;color:#c4a35a;font-weight:800;width:24px">${i+1}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:500;color:#1a1410;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(n)}</div>
         <div style="height:4px;background:#f4f1ea;border-radius:2px;margin-top:6px;overflow:hidden"><div style="height:100%;width:${(d.units/maxU*100)}%;background:linear-gradient(90deg,#c4a35a,#e8c97a);border-radius:2px"></div></div>

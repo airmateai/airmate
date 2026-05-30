@@ -1,5 +1,5 @@
 // Service Worker — Panel Jose Acosta
-const CACHE='ja-panel-v1';
+const CACHE='ja-panel-v3';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});
 self.addEventListener('fetch',e=>{
