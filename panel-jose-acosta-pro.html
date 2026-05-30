@@ -7200,6 +7200,15 @@ async function _iaExecTool(name, args){
         if(typeof crmLoadClientes==='function')crmLoadClientes();
         return {ok:true,cliente:{id:data.id,nombre:data.name}};
       }
+      case 'buscar_encargo': {
+        const q=(args.query||'').toLowerCase();
+        const list=(typeof _allEncargos!=='undefined'?_allEncargos:[]).filter(o=>
+          (o.title||'').toLowerCase().includes(q)||
+          (o.client_name||'').toLowerCase().includes(q)||
+          (o.status||'').toLowerCase().includes(q)
+        ).slice(0,8);
+        return {ok:true,encargos:list.map(o=>({id:o.id,titulo:o.title,cliente:o.client_name,estado:o.status,precio:o.price}))};
+      }
       case 'mover_encargo': {
         const {error}=await _sb.from('crm_orders').update({status:args.nuevo_estado,updated_at:new Date().toISOString()}).eq('id',args.encargo_id);
         if(error)return {ok:false,error:error.message};
@@ -7377,14 +7386,14 @@ HERRAMIENTAS DISPONIBLES:
 - crear_cita(cliente_nombre, cliente_phone, servicio, fecha YYYY-MM-DD, hora HH:MM, duracion_min [opcional, default 60])
 - cambiar_estado_cita(cita_id, nuevo_estado) — pending/confirmed/cancelled/completed
 - crear_cliente(nombre, telefono, email, notas)
-- mover_encargo(encargo_id, nuevo_estado) — presupuesto/produccion/listo_prueba/prueba/ajustes/listo/entregado
+- buscar_encargo(query) — busca por título, cliente o estado; SIEMPRE úsala antes de mover_encargo para sacar el ID\n- mover_encargo(encargo_id, nuevo_estado) — presupuesto/produccion/listo_prueba/prueba/ajustes/listo/entregado
 - marcar_factura_pagada(factura_id)
 - enviar_email_confirmacion_cita(cita_id)
 - crear_lead(nombre, telefono, interes, intent_level) — hot/warm/cold
 
 REGLAS:
 1. NUNCA digas \"he registrado\" o \"he creado\" sin antes emitir el bloque <<<ACCION>>>. El sistema solo ejecuta cuando ve ese bloque exacto.
-2. NO inventes IDs ni datos. Si necesitas un id (cita_id, encargo_id...), llama primero a buscar_cliente o listar_citas_hoy.
+2. NO inventes IDs. Si necesitas un id de encargo, llama buscar_encargo(query) primero. Si necesitas id de cita, listar_citas_hoy. Si necesitas id de cliente, buscar_cliente. SIEMPRE en 2 pasos: 1) buscar, 2) ejecutar acción con el ID encontrado.
 3. Si te falta info crítica (teléfono al crear cita, etc.), pregúntalo al usuario antes.
 4. Responde en español, breve y directo.
 5. Ejemplo correcto:
