@@ -7167,12 +7167,25 @@ async function _iaExecTool(name, args){
         return {ok:true,fecha:f,total:list.length,citas:list.map(c=>({id:c.id,cliente:c.client_name,servicio:c.service,hora:new Date(c.starts_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),estado:c.status,phone:c.client_phone}))};
       }
       case 'crear_cita': {
-        const starts_at=args.fecha+'T'+args.hora+':00';
-        const payload={business_slug:BIZ_SLUG,client_name:args.cliente_nombre,client_phone:args.cliente_phone||null,service:args.servicio,starts_at,status:'confirmed'};
+        const dur=parseInt(args.duracion_min)||60;
+        const startD=new Date(args.fecha+'T'+args.hora+':00');
+        const endD=new Date(startD.getTime()+dur*60000);
+        const payload={
+          business_slug:BIZ_SLUG,
+          client_name:args.cliente_nombre,
+          client_phone:args.cliente_phone||null,
+          client_email:args.cliente_email||null,
+          service:args.servicio,
+          starts_at:startD.toISOString(),
+          ends_at:endD.toISOString(),
+          duration_minutes:dur,
+          status:'confirmed',
+          notes:args.notas||null
+        };
         const {data,error}=await _sb.from('appointments').insert(payload).select().single();
         if(error)return {ok:false,error:error.message};
         if(typeof loadAll==='function')loadAll();
-        return {ok:true,creada:{id:data.id,cliente:args.cliente_nombre,servicio:args.servicio,fecha:args.fecha,hora:args.hora}};
+        return {ok:true,creada:{id:data.id,cliente:args.cliente_nombre,servicio:args.servicio,fecha:args.fecha,hora:args.hora,duracion_min:dur}};
       }
       case 'cambiar_estado_cita': {
         const {error}=await _sb.from('appointments').update({status:args.nuevo_estado}).eq('id',args.cita_id);
@@ -7361,7 +7374,7 @@ HERRAMIENTAS DISPONIBLES:
 - buscar_cliente(query) — busca por nombre/teléfono/email
 - listar_citas_hoy(fecha) — fecha opcional YYYY-MM-DD, vacío = hoy
 - resumen_dia() — métricas del día
-- crear_cita(cliente_nombre, cliente_phone, servicio, fecha YYYY-MM-DD, hora HH:MM)
+- crear_cita(cliente_nombre, cliente_phone, servicio, fecha YYYY-MM-DD, hora HH:MM, duracion_min [opcional, default 60])
 - cambiar_estado_cita(cita_id, nuevo_estado) — pending/confirmed/cancelled/completed
 - crear_cliente(nombre, telefono, email, notas)
 - mover_encargo(encargo_id, nuevo_estado) — presupuesto/produccion/listo_prueba/prueba/ajustes/listo/entregado
