@@ -5971,8 +5971,8 @@ async function tpvInit() {
   <div id="ia-msgs"></div>
   <div style="padding:8px 16px 4px;display:flex;flex-wrap:wrap;gap:4px" id="ia-chips"></div>
   <div id="ia-input-row">
-    <input id="ia-input" placeholder="Pregunta algo sobre el negocio..." onkeydown="if(event.key==='Enter')iaSend()"/>
-    <button id="ia-send" onclick="iaSend()">
+    <input id="ia-input" placeholder="Pregunta algo sobre el negocio..." onkeydown="if(event.key==='Enter'){if(window._iaUseAgent)iaSendWithTools();else iaSend();}"/>
+    <button id="ia-send" onclick="window._iaUseAgent?iaSendWithTools():iaSend()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
     </button>
   </div>
@@ -7029,5 +7029,336 @@ async function sincronizarContactosHolded(){
 }
 </script>
 
+<script>
+
+/* ═══════════════════════════════════════════
+   AGENTE IA CON HERRAMIENTAS — function calling
+   ═══════════════════════════════════════════ */
+const IA_TOOLS = [
+  {
+    type:'function',
+    function:{
+      name:'buscar_cliente',
+      description:'Busca un cliente por nombre, teléfono o email. Devuelve datos básicos (id, nombre, teléfono, email, NIF, dirección, medidas, gasto total).',
+      parameters:{type:'object',properties:{query:{type:'string',description:'Texto de búsqueda (nombre o teléfono)'}},required:['query']}
+    }
+  },
+  {
+    type:'function',
+    function:{
+      name:'listar_citas_hoy',
+      description:'Devuelve las citas de hoy o de un día concreto (cliente, servicio, hora, estado).',
+      parameters:{type:'object',properties:{fecha:{type:'string',description:'Fecha YYYY-MM-DD; si vacío, hoy'}},required:[]}
+    }
+  },
+  {
+    type:'function',
+    function:{
+      name:'crear_cita',
+      description:'Crea una nueva cita en la agenda. Requiere confirmación del usuario antes de ejecutar.',
+      parameters:{type:'object',properties:{
+        cliente_nombre:{type:'string'},
+        cliente_phone:{type:'string'},
+        servicio:{type:'string',description:'Tipo de visita: primera toma de medidas, prueba, recogida, etc.'},
+        fecha:{type:'string',description:'YYYY-MM-DD'},
+        hora:{type:'string',description:'HH:MM 24h'}
+      },required:['cliente_nombre','servicio','fecha','hora']}
+    }
+  },
+  {
+    type:'function',
+    function:{
+      name:'cambiar_estado_cita',
+      description:'Cambia el estado de una cita (pending, confirmed, cancelled, completed). Requiere confirmación.',
+      parameters:{type:'object',properties:{
+        cita_id:{type:'string'},
+        nuevo_estado:{type:'string',enum:['pending','confirmed','cancelled','completed']}
+      },required:['cita_id','nuevo_estado']}
+    }
+  },
+  {
+    type:'function',
+    function:{
+      name:'crear_cliente',
+      description:'Registra un nuevo cliente en el CRM. Requiere confirmación.',
+      parameters:{type:'object',properties:{
+        nombre:{type:'string'},
+        telefono:{type:'string'},
+        email:{type:'string'},
+        notas:{type:'string'}
+      },required:['nombre']}
+    }
+  },
+  {
+    type:'function',
+    function:{
+      name:'mover_encargo',
+      description:'Mueve un encargo de columna en el kanban (presupuesto/produccion/listo_prueba/prueba/ajustes/listo/entregado). Requiere confirmación.',
+      parameters:{type:'object',properties:{
+        encargo_id:{type:'string'},
+        nuevo_estado:{type:'string',enum:['presupuesto','produccion','listo_prueba','prueba','ajustes','listo','entregado']}
+      },required:['encargo_id','nuevo_estado']}
+    }
+  },
+  {
+    type:'function',
+    function:{
+      name:'marcar_factura_pagada',
+      description:'Marca una factura como cobrada. Acción CRÍTICA — requiere confirmación.',
+      parameters:{type:'object',properties:{factura_id:{type:'string'}},required:['factura_id']}
+    }
+  },
+  {
+    type:'function',
+    function:{
+      name:'resumen_dia',
+      description:'Devuelve un resumen del día: número de citas, encargos activos, facturas cobradas, leads nuevos.',
+      parameters:{type:'object',properties:{},required:[]}
+    }
+  },
+  {
+    type:'function',
+    function:{
+      name:'enviar_email_confirmacion_cita',
+      description:'Envía email al cliente con plantilla de confirmación de cita. Acción CRÍTICA — requiere confirmación.',
+      parameters:{type:'object',properties:{cita_id:{type:'string'}},required:['cita_id']}
+    }
+  },
+  {
+    type:'function',
+    function:{
+      name:'crear_lead',
+      description:'Crea un lead en el pipeline. Requiere confirmación.',
+      parameters:{type:'object',properties:{
+        nombre:{type:'string'},
+        telefono:{type:'string'},
+        interes:{type:'string'},
+        intent_level:{type:'string',enum:['hot','warm','cold']}
+      },required:['nombre']}
+    }
+  }
+];
+
+// Set de herramientas que requieren confirmación explícita del usuario antes de ejecutarse
+const IA_TOOLS_CONFIRMAR = new Set([
+  'crear_cita','cambiar_estado_cita','crear_cliente','mover_encargo',
+  'marcar_factura_pagada','enviar_email_confirmacion_cita','crear_lead'
+]);
+
+// ── Implementación de cada tool ──
+async function _iaExecTool(name, args){
+  try{
+    switch(name){
+      case 'buscar_cliente': {
+        const q=(args.query||'').toLowerCase();
+        const matches=(typeof _crmClientes!=='undefined'?_crmClientes:[]).filter(c=>
+          (c.name||'').toLowerCase().includes(q)||
+          (c.phone||'').includes(q)||
+          (c.email||'').toLowerCase().includes(q)
+        ).slice(0,5);
+        return {ok:true,resultados:matches.map(c=>({id:c.id,nombre:c.name,telefono:c.phone,email:c.email,nif:c.nif,direccion:c.direccion,medidas:c.measurements||{}}))};
+      }
+      case 'listar_citas_hoy': {
+        const f=args.fecha||new Date().toISOString().slice(0,10);
+        const list=(typeof allCitas!=='undefined'?allCitas:[]).filter(c=>(c.starts_at||'').startsWith(f));
+        return {ok:true,fecha:f,total:list.length,citas:list.map(c=>({id:c.id,cliente:c.client_name,servicio:c.service,hora:new Date(c.starts_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),estado:c.status,phone:c.client_phone}))};
+      }
+      case 'crear_cita': {
+        const starts_at=args.fecha+'T'+args.hora+':00';
+        const payload={business_slug:BIZ_SLUG,client_name:args.cliente_nombre,client_phone:args.cliente_phone||null,service:args.servicio,starts_at,status:'confirmed'};
+        const {data,error}=await _sb.from('appointments').insert(payload).select().single();
+        if(error)return {ok:false,error:error.message};
+        if(typeof loadAll==='function')loadAll();
+        return {ok:true,creada:{id:data.id,cliente:args.cliente_nombre,servicio:args.servicio,fecha:args.fecha,hora:args.hora}};
+      }
+      case 'cambiar_estado_cita': {
+        const {error}=await _sb.from('appointments').update({status:args.nuevo_estado}).eq('id',args.cita_id);
+        if(error)return {ok:false,error:error.message};
+        if(typeof loadAll==='function')loadAll();
+        return {ok:true,cita_id:args.cita_id,nuevo_estado:args.nuevo_estado};
+      }
+      case 'crear_cliente': {
+        const payload={business_slug:BIZ_SLUG,name:args.nombre,phone:args.telefono||null,email:args.email||null,notes:args.notas||null};
+        const {data,error}=await _sb.from('crm_clients').insert(payload).select().single();
+        if(error)return {ok:false,error:error.message};
+        if(typeof crmLoadClientes==='function')crmLoadClientes();
+        return {ok:true,cliente:{id:data.id,nombre:data.name}};
+      }
+      case 'mover_encargo': {
+        const {error}=await _sb.from('crm_orders').update({status:args.nuevo_estado,updated_at:new Date().toISOString()}).eq('id',args.encargo_id);
+        if(error)return {ok:false,error:error.message};
+        if(typeof crmLoadEncargos==='function')crmLoadEncargos();
+        return {ok:true,encargo_id:args.encargo_id,nuevo_estado:args.nuevo_estado};
+      }
+      case 'marcar_factura_pagada': {
+        const {error}=await _sb.from('crm_invoices').update({status:'pagado'}).eq('id',args.factura_id);
+        if(error)return {ok:false,error:error.message};
+        const f=(typeof _crmFacturas!=='undefined'?_crmFacturas:[]).find(x=>x.id===args.factura_id);if(f)f.status='pagado';
+        if(typeof crmLoadFacturas==='function')crmLoadFacturas();
+        if(typeof soundCoin==='function')soundCoin();
+        return {ok:true,factura_id:args.factura_id,estado:'pagado'};
+      }
+      case 'resumen_dia': {
+        const hoy=new Date().toISOString().slice(0,10);
+        const citasHoy=(typeof allCitas!=='undefined'?allCitas:[]).filter(c=>(c.starts_at||'').startsWith(hoy));
+        const encActivos=(typeof _allEncargos!=='undefined'?_allEncargos:[]).filter(o=>o.status!=='entregado'&&o.status!=='presupuesto');
+        const factHoy=(typeof _crmFacturas!=='undefined'?_crmFacturas:[]).filter(f=>f.status==='pagado'&&f.issue_date===hoy);
+        const leadsNuevos=(typeof allLeads!=='undefined'?allLeads:[]).filter(l=>l.status==='new');
+        return {ok:true,resumen:{
+          fecha:hoy,
+          citas_hoy:citasHoy.length,
+          citas_pendientes:citasHoy.filter(c=>c.status==='pending').length,
+          encargos_activos:encActivos.length,
+          facturas_cobradas_hoy:factHoy.length,
+          leads_nuevos:leadsNuevos.length
+        }};
+      }
+      case 'enviar_email_confirmacion_cita': {
+        const cita=(typeof allCitas!=='undefined'?allCitas:[]).find(c=>c.id===args.cita_id);
+        if(!cita)return {ok:false,error:'Cita no encontrada'};
+        if(!cita.client_email)return {ok:false,error:'La cita no tiene email del cliente'};
+        const fechaStr=new Date(cita.starts_at).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+        const horaStr=new Date(cita.starts_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        try{
+          await emailjs.send('service_npmjvvf','template_qnip0mc',{
+            to_email:cita.client_email,
+            cliente:cita.client_name||'',
+            servicio:cita.service||'',
+            fecha:fechaStr,
+            hora:horaStr,
+            negocio_nombre:BIZ_NAME||'Jose Acosta Style'
+          });
+          return {ok:true,enviado_a:cita.client_email};
+        }catch(e){return {ok:false,error:'EmailJS error: '+(e.text||e.message||'')};}
+      }
+      case 'crear_lead': {
+        const payload={business_slug:BIZ_SLUG,name:args.nombre,phone:args.telefono||null,interest:args.interes||null,intent_level:args.intent_level||'warm',status:'new'};
+        const {data,error}=await _sb.from('leads').insert(payload).select().single();
+        if(error)return {ok:false,error:error.message};
+        if(typeof loadAll==='function')loadAll();
+        return {ok:true,lead:{id:data.id,nombre:data.name}};
+      }
+    }
+    return {ok:false,error:'Tool desconocida: '+name};
+  }catch(e){return {ok:false,error:e.message||String(e)};}
+}
+
+// Modal de confirmación visual antes de ejecutar acción crítica
+function _iaConfirmar(toolName,args){
+  return new Promise(resolve=>{
+    var overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(8,7,10,.7);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+    var labels={
+      crear_cita:'crear una cita',cambiar_estado_cita:'cambiar el estado de una cita',
+      crear_cliente:'registrar un nuevo cliente',mover_encargo:'mover un encargo en el kanban',
+      marcar_factura_pagada:'marcar una factura como COBRADA',
+      enviar_email_confirmacion_cita:'enviar EMAIL al cliente',crear_lead:'crear un lead'
+    };
+    var argList=Object.entries(args).map(([k,v])=>'<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #f4f1ea"><span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#b89a5e;font-weight:700;min-width:120px">'+k+'</span><span style="color:#1a1410;font-size:13px">'+esc(String(v))+'</span></div>').join('');
+    overlay.innerHTML='<div style="background:#fff;border-radius:14px;max-width:480px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.4);overflow:hidden"><div style="background:#0d0b07;padding:18px 22px;color:#fff"><div style="font-size:10px;font-weight:700;color:#c4a35a;letter-spacing:.28em;text-transform:uppercase;margin-bottom:4px">Confirmar acción IA</div><div style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:400">El asistente quiere '+(labels[toolName]||toolName)+'</div></div><div style="padding:20px 24px">'+argList+'</div><div style="padding:14px 22px;border-top:1px solid #ede9df;display:flex;gap:10px;justify-content:flex-end;background:#faf7ef"><button class="btn btn-ghost" id="_iac-no">Cancelar</button><button class="btn btn-accent" id="_iac-yes">Confirmar</button></div></div>';
+    document.body.appendChild(overlay);
+    overlay.querySelector('#_iac-yes').onclick=()=>{overlay.remove();resolve(true);};
+    overlay.querySelector('#_iac-no').onclick=()=>{overlay.remove();resolve(false);};
+  });
+}
+
+// Loop conversacional con tool_calls
+async function iaSendWithTools(){
+  const inp=document.getElementById('ia-input');
+  const txt=inp.value.trim();
+  if(!txt)return;
+  inp.value='';
+  document.getElementById('ia-chips').innerHTML='';
+  iaAddMsg('user',txt);
+  iaThinking(true);
+
+  // Historial en formato OpenAI (con tool messages cuando aplica)
+  if(!window._iaMsgs) window._iaMsgs=[];
+  window._iaMsgs.push({role:'user',content:txt});
+
+  let safety=0;
+  try{
+    while(safety++<6){
+      const res=await fetch(IA_PROXY,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-Airmate-Token':IA_TOKEN},
+        body:JSON.stringify({
+          system_prompt:_iaCtxAgent(),
+          messages:window._iaMsgs.slice(-20),
+          tools:IA_TOOLS
+        })
+      });
+      const data=await res.json();
+      if(!res.ok){iaThinking(false);iaAddMsg('bot','Error: '+(data.error||'desconocido'));return;}
+
+      // Si vienen tool_calls, ejecutar
+      const toolCalls=data.tool_calls;
+      if(toolCalls&&toolCalls.length){
+        // Guardar assistant message con tool_calls
+        window._iaMsgs.push(data.assistant_message);
+
+        for(const tc of toolCalls){
+          let args={};
+          try{args=JSON.parse(tc.function.arguments||'{}');}catch(e){args={};}
+          let result;
+          if(IA_TOOLS_CONFIRMAR.has(tc.function.name)){
+            iaThinking(false);
+            const ok=await _iaConfirmar(tc.function.name,args);
+            iaThinking(true);
+            if(!ok){result={ok:false,cancelado_por_usuario:true};}
+            else result=await _iaExecTool(tc.function.name,args);
+          } else {
+            result=await _iaExecTool(tc.function.name,args);
+          }
+          window._iaMsgs.push({
+            role:'tool',
+            tool_call_id:tc.id,
+            content:JSON.stringify(result)
+          });
+        }
+        // Continuar el loop para que el modelo procese resultados
+        continue;
+      }
+
+      // No hay tool_calls → respuesta final
+      iaThinking(false);
+      const reply=data.reply||'(sin respuesta)';
+      window._iaMsgs.push({role:'assistant',content:reply});
+      iaAddMsg('bot',reply);
+      _iaShowChips();
+      return;
+    }
+    iaThinking(false);
+    iaAddMsg('bot','Demasiados pasos. Reformula la petición.');
+  }catch(e){
+    iaThinking(false);
+    iaAddMsg('bot','Error de conexión.');
+  }
+}
+
+// Contexto para el agente (más operativo que el chat normal)
+function _iaCtxAgent(){
+  const hoy=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+  const citasHoy=(typeof allCitas!=='undefined'?allCitas:[]).filter(c=>(c.starts_at||'').startsWith(new Date().toISOString().slice(0,10))).length;
+  const encActivos=(typeof _allEncargos!=='undefined'?_allEncargos:[]).filter(o=>o.status!=='entregado').length;
+  return `Eres el asistente operativo de ${typeof BIZ_NAME!=='undefined'?BIZ_NAME:'Jose Acosta Style'}, una sastrería a medida. Hoy es ${hoy}.
+
+Tienes herramientas para gestionar el negocio en tiempo real: buscar clientes, listar citas, crear/modificar citas, registrar clientes, mover encargos en el kanban, marcar facturas como cobradas, enviar emails de confirmación, crear leads.
+
+REGLAS:
+1. Cuando el usuario te pida una acción, ÚSA LAS HERRAMIENTAS — no inventes datos.
+2. Antes de crear cita/cliente/lead, busca primero si el cliente ya existe.
+3. Si te falta un dato (ej. teléfono al crear cita), pregúntalo. No inventes.
+4. Las acciones de escritura te pedirán confirmación al usuario automáticamente.
+5. Responde en español, breve y directo, sin saludos largos.
+6. Si el usuario te pregunta el estado del negocio, usa la herramienta resumen_dia.
+
+Estado actual rápido: ${citasHoy} citas hoy · ${encActivos} encargos activos.`;
+}
+
+// Sustituye la función iaSend si está cargado el agente con tools
+window._iaUseAgent=true;
+
+</script>
 </body>
 </html>
