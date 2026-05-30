@@ -7266,7 +7266,7 @@ function _iaConfirmar(toolName,args){
   });
 }
 
-// Loop conversacional con tool_calls
+// Loop conversacional — detecta acciones en formato <<<ACCION:{...}>>>
 async function iaSendWithTools(){
   const inp=document.getElementById('ia-input');
   const txt=inp.value.trim();
@@ -7276,7 +7276,6 @@ async function iaSendWithTools(){
   iaAddMsg('user',txt);
   iaThinking(true);
 
-  // Historial en formato OpenAI (con tool messages cuando aplica)
   if(!window._iaMsgs) window._iaMsgs=[];
   window._iaMsgs.push({role:'user',content:txt});
 
@@ -7288,47 +7287,51 @@ async function iaSendWithTools(){
         headers:{'Content-Type':'application/json','X-Airmate-Token':IA_TOKEN},
         body:JSON.stringify({
           system_prompt:_iaCtxAgent(),
-          messages:window._iaMsgs.slice(-20),
-          tools:IA_TOOLS
+          messages:window._iaMsgs.slice(-20)
         })
       });
       const data=await res.json();
       if(!res.ok){iaThinking(false);iaAddMsg('bot','Error: '+(data.error||'desconocido'));return;}
 
-      // Si vienen tool_calls, ejecutar
-      const toolCalls=data.tool_calls;
-      if(toolCalls&&toolCalls.length){
-        // Guardar assistant message con tool_calls
-        window._iaMsgs.push(data.assistant_message);
+      const reply=data.reply||'';
 
-        for(const tc of toolCalls){
-          let args={};
-          try{args=JSON.parse(tc.function.arguments||'{}');}catch(e){args={};}
-          let result;
-          if(IA_TOOLS_CONFIRMAR.has(tc.function.name)){
-            iaThinking(false);
-            const ok=await _iaConfirmar(tc.function.name,args);
-            iaThinking(true);
-            if(!ok){result={ok:false,cancelado_por_usuario:true};}
-            else result=await _iaExecTool(tc.function.name,args);
-          } else {
-            result=await _iaExecTool(tc.function.name,args);
-          }
-          window._iaMsgs.push({
-            role:'tool',
-            tool_call_id:tc.id,
-            content:JSON.stringify(result)
-          });
+      // Detectar bloque de acción <<<ACCION:{...}>>>
+      const match=reply.match(/<<<ACCION:(\{[\s\S]*?\})>>>/);
+      if(match){
+        let payload;
+        try{payload=JSON.parse(match[1]);}catch(e){
+          iaThinking(false);
+          iaAddMsg('bot','Error parseando acción. '+reply.replace(/<<<.*?>>>/,'').trim());
+          window._iaMsgs.push({role:'assistant',content:reply});
+          return;
         }
-        // Continuar el loop para que el modelo procese resultados
+        // Mostrar el texto que rodea la acción (sin el bloque) si tiene contenido útil
+        const visibleText=reply.replace(/<<<ACCION:[\s\S]*?>>>/,'').trim();
+        if(visibleText)iaAddMsg('bot',visibleText);
+
+        const name=payload.name;
+        const args=payload.args||{};
+        let result;
+        if(IA_TOOLS_CONFIRMAR.has(name)){
+          iaThinking(false);
+          const ok=await _iaConfirmar(name,args);
+          iaThinking(true);
+          if(!ok){result={ok:false,cancelado_por_usuario:true};}
+          else result=await _iaExecTool(name,args);
+        } else {
+          result=await _iaExecTool(name,args);
+        }
+        // Guardar el mensaje del modelo y el resultado de la herramienta
+        window._iaMsgs.push({role:'assistant',content:reply});
+        window._iaMsgs.push({role:'user',content:'RESULTADO_HERRAMIENTA('+name+'): '+JSON.stringify(result)});
+        // Continuar el loop para que el modelo procese el resultado y responda al usuario
         continue;
       }
 
-      // No hay tool_calls → respuesta final
+      // Respuesta normal sin acción
       iaThinking(false);
-      const reply=data.reply||'(sin respuesta)';
       window._iaMsgs.push({role:'assistant',content:reply});
-      iaAddMsg('bot',reply);
+      iaAddMsg('bot',reply||'(sin respuesta)');
       _iaShowChips();
       return;
     }
@@ -7342,22 +7345,42 @@ async function iaSendWithTools(){
 
 // Contexto para el agente (más operativo que el chat normal)
 function _iaCtxAgent(){
-  const hoy=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
-  const citasHoy=(typeof allCitas!=='undefined'?allCitas:[]).filter(c=>(c.starts_at||'').startsWith(new Date().toISOString().slice(0,10))).length;
+  const hoy=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const hoyISO=new Date().toISOString().slice(0,10);
+  const citasHoy=(typeof allCitas!=='undefined'?allCitas:[]).filter(c=>(c.starts_at||'').startsWith(hoyISO)).length;
   const encActivos=(typeof _allEncargos!=='undefined'?_allEncargos:[]).filter(o=>o.status!=='entregado').length;
-  return `Eres el asistente operativo de ${typeof BIZ_NAME!=='undefined'?BIZ_NAME:'Jose Acosta Style'}, una sastrería a medida. Hoy es ${hoy}.
+  return `Eres el asistente operativo de ${typeof BIZ_NAME!=='undefined'?BIZ_NAME:'Jose Acosta Style'}, una sastrería a medida. Hoy es ${hoy} (${hoyISO}).
 
-Tienes herramientas para gestionar el negocio en tiempo real: buscar clientes, listar citas, crear/modificar citas, registrar clientes, mover encargos en el kanban, marcar facturas como cobradas, enviar emails de confirmación, crear leads.
+ESTÁS CONECTADO AL PANEL. Puedes ejecutar acciones reales emitiendo un bloque especial. Cuando quieras ejecutar una acción, escribe SOLO el bloque (sin más texto, sin explicación):
+
+<<<ACCION:{"name":"NOMBRE_HERRAMIENTA","args":{...}}>>>
+
+El sistema pedirá confirmación al usuario, ejecutará la herramienta y te enviará el resultado en el siguiente mensaje como \"RESULTADO_HERRAMIENTA(...)\". Entonces respondes al usuario con lo que pasó.
+
+HERRAMIENTAS DISPONIBLES:
+- buscar_cliente(query) — busca por nombre/teléfono/email
+- listar_citas_hoy(fecha) — fecha opcional YYYY-MM-DD, vacío = hoy
+- resumen_dia() — métricas del día
+- crear_cita(cliente_nombre, cliente_phone, servicio, fecha YYYY-MM-DD, hora HH:MM)
+- cambiar_estado_cita(cita_id, nuevo_estado) — pending/confirmed/cancelled/completed
+- crear_cliente(nombre, telefono, email, notas)
+- mover_encargo(encargo_id, nuevo_estado) — presupuesto/produccion/listo_prueba/prueba/ajustes/listo/entregado
+- marcar_factura_pagada(factura_id)
+- enviar_email_confirmacion_cita(cita_id)
+- crear_lead(nombre, telefono, interes, intent_level) — hot/warm/cold
 
 REGLAS:
-1. Cuando el usuario te pida una acción, ÚSA LAS HERRAMIENTAS — no inventes datos.
-2. Antes de crear cita/cliente/lead, busca primero si el cliente ya existe.
-3. Si te falta un dato (ej. teléfono al crear cita), pregúntalo. No inventes.
-4. Las acciones de escritura te pedirán confirmación al usuario automáticamente.
-5. Responde en español, breve y directo, sin saludos largos.
-6. Si el usuario te pregunta el estado del negocio, usa la herramienta resumen_dia.
+1. NUNCA digas \"he registrado\" o \"he creado\" sin antes emitir el bloque <<<ACCION>>>. El sistema solo ejecuta cuando ve ese bloque exacto.
+2. NO inventes IDs ni datos. Si necesitas un id (cita_id, encargo_id...), llama primero a buscar_cliente o listar_citas_hoy.
+3. Si te falta info crítica (teléfono al crear cita, etc.), pregúntalo al usuario antes.
+4. Responde en español, breve y directo.
+5. Ejemplo correcto:
+   Usuario: "crea cita con María mañana a las 11 para toma de medidas"
+   Tú: <<<ACCION:{"name":"crear_cita","args":{"cliente_nombre":"María","servicio":"toma de medidas","fecha":"2026-05-31","hora":"11:00"}}>>>
+   (Sistema ejecuta y te devuelve resultado)
+   Tú: "Hecho. Cita confirmada para mañana 11:00."
 
-Estado actual rápido: ${citasHoy} citas hoy · ${encActivos} encargos activos.`;
+Estado: ${citasHoy} citas hoy · ${encActivos} encargos activos.`;
 }
 
 // Sustituye la función iaSend si está cargado el agente con tools
