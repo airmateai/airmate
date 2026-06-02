@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<title>Pure Aesthetic Clinic · Management Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --primary:#0a0a0f;
+  --accent:#c9a85c;
+  --bg:#fafaf7;
+  --surface:#fff;
+  --border:#e5e7eb;
+  --border2:#f1f5f9;
+  --txt:#0a0a0a;
+  --txt2:#4b5563;
+  --txt3:#9ca3af;
+  --danger:#ef4444;
+  --warn:#f59e0b;
+  --ok:#16a34a;
+  --rad:10px;
+  --shadow:0 1px 3px rgba(0,0,0,.04);
+  --shadow-md:0 8px 28px rgba(0,0,0,.06);
+  --font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-serif:'Cormorant Garamond',Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;}
+input,textarea,select{font-family:inherit;}
+a{color:inherit;text-decoration:none;}
+
+/* ═══ DARK MODE ═══ */
+[data-theme="dark"]{
+  --bg:#0d1117;--surface:#161b22;--border:#21262d;--border2:#161b22;
+  --txt:#e6edf3;--txt2:#9aa4af;--txt3:#6b7280;
+  --shadow:0 1px 3px rgba(0,0,0,.4);
+}
+[data-theme="dark"] .card,
+[data-theme="dark"] .modal,
+[data-theme="dark"] .topbar,
+[data-theme="dark"] .sidebar{background:var(--surface)!important;border-color:var(--border)!important;color:var(--txt)!important;}
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea{background:#0d1117!important;color:var(--txt)!important;border-color:#30363d!important;}
+[data-theme="dark"] tr:hover{background:#1c2128!important;}
+[data-theme="dark"] thead th{background:#161b22!important;color:#a8b3c4!important;}
+
+/* ═══ LOGIN ═══ */
+#login{position:fixed;inset:0;z-index:9999;display:flex;background:#000;}
+#login.hidden{display:none;}
+.login-left{flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;color:#fff;}
+.login-left video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.login-left::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.9),rgba(0,0,0,.2) 50%,transparent);}
+.login-brand{position:relative;z-index:1;padding:60px 56px;}
+.login-brand-logo{width:46px;height:46px;background:var(--accent);border-radius:12px;display:grid;place-items:center;color:#fff;font-family:var(--font-serif);font-size:22px;font-weight:500;margin-bottom:24px;}
+.login-brand-name{font-family:var(--font-serif);font-size:42px;font-weight:400;letter-spacing:.02em;margin-bottom:8px;}
+.login-brand-sub{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;font-weight:600;}
+.login-brand-line{width:40px;height:1px;background:var(--accent);margin-bottom:20px;}
+.login-brand-tag{font-family:var(--font-serif);font-size:24px;font-weight:300;line-height:1.4;margin-bottom:16px;font-style:italic;}
+.login-brand-tag em{color:var(--accent);font-style:italic;}
+.login-right{width:440px;background:#fff;display:flex;align-items:center;justify-content:center;padding:60px 50px;}
+@media(max-width:840px){.login-left{display:none;}.login-right{width:100%;}}
+.login-box{width:100%;max-width:360px;}
+.login-box h2{font-family:var(--font-serif);font-size:30px;font-weight:400;color:var(--txt);margin-bottom:6px;letter-spacing:.01em;}
+.login-box p{font-size:13px;color:var(--txt2);margin-bottom:30px;}
+.field-group{margin-bottom:14px;}
+.field-label{display:block;font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase;}
+.field-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;transition:border-color .15s;color:var(--txt);background:#fff;}
+.field-input:focus{border-color:var(--accent);}
+.btn-login{width:100%;padding:13px;background:var(--primary);color:#fff;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:.04em;cursor:pointer;margin-top:8px;transition:transform .1s;text-transform:uppercase;}
+.btn-login:hover{transform:translateY(-1px);}
+.login-hint{margin-top:16px;text-align:center;font-size:11px;color:var(--txt3);letter-spacing:.05em;}
+
+/* ═══ MAIN LAYOUT ═══ */
+#app{display:none;min-height:100vh;display:flex;}
+#app.visible{display:flex;}
+.sidebar{width:230px;background:var(--primary);color:#fff;display:flex;flex-direction:column;padding:18px 0;position:fixed;top:0;bottom:0;left:0;}
+.sidebar-brand{padding:0 22px 18px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sidebar-brand .name{font-family:var(--font-serif);font-size:22px;font-weight:400;letter-spacing:.05em;color:#fff;line-height:1.1;}
+.sidebar-brand .accent{color:var(--accent);}
+.sidebar-brand .line{width:30px;height:1px;background:var(--accent);margin:8px 0;opacity:.7;}
+.sidebar-brand .sub{font-size:8px;letter-spacing:.3em;color:var(--accent);text-transform:uppercase;font-weight:600;}
+.sidebar-nav{flex:1;padding:14px 0;overflow-y:auto;}
+.nav-section{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.18em;text-transform:uppercase;padding:10px 22px 6px;font-weight:600;}
+.nav-item{padding:10px 22px;font-size:13px;font-weight:500;color:rgba(255,255,255,.6);cursor:pointer;border-left:2px solid transparent;transition:all .15s;display:flex;align-items:center;gap:10px;}
+.nav-item:hover{background:rgba(255,255,255,.04);color:#fff;}
+.nav-item.active{background:rgba(255,255,255,.06);color:var(--accent);border-left-color:var(--accent);font-weight:600;}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;}
+.sidebar-footer{padding:14px 22px;border-top:1px solid rgba(255,255,255,.08);}
+.sidebar-user{display:flex;align-items:center;gap:10px;}
+.sidebar-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;}
+.sidebar-user-name{font-size:12px;font-weight:600;color:#fff;}
+.sidebar-user-role{font-size:10px;color:rgba(255,255,255,.4);}
+.theme-toggle{margin-top:12px;width:100%;padding:8px;background:none;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);border-radius:7px;font-size:11px;text-align:left;cursor:pointer;letter-spacing:.05em;}
+.theme-toggle:hover{background:rgba(255,255,255,.06);color:#fff;}
+.main{margin-left:230px;flex:1;padding:30px 36px;max-width:calc(100vw - 230px);min-height:100vh;}
+@media(max-width:840px){.sidebar{transform:translateX(-100%);transition:transform .2s;z-index:300;}.sidebar.open{transform:translateX(0);}.main{margin-left:0;padding:20px;max-width:100%;}}
+
+/* ═══ PAGE ═══ */
+.page{display:none;}
+.page.active{display:block;animation:fadeIn .3s;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.page-hd{margin-bottom:28px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.page-title{font-family:var(--font-serif);font-size:36px;font-weight:400;color:var(--txt);letter-spacing:.01em;line-height:1.05;}
+.page-title::after{content:'';display:block;width:48px;height:1px;background:linear-gradient(90deg,var(--accent),rgba(0,0,0,0));margin-top:12px;}
+.page-sub{font-size:11px;color:var(--txt3);margin-top:8px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;}
+
+/* ═══ CARDS / KPIs ═══ */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);padding:20px 20px 16px;transition:transform .15s,box-shadow .15s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.stat-label{font-size:10px;font-weight:700;color:var(--txt3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:10px;}
+.stat-val{font-family:var(--font-serif);font-size:34px;font-weight:500;color:var(--txt);letter-spacing:-.01em;line-height:1;}
+.stat-trend{font-size:11px;color:var(--txt3);margin-top:6px;font-weight:500;}
+.stat-trend.up{color:var(--ok);}
+.stat-trend.down{color:var(--danger);}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;margin-bottom:18px;}
+.card-hd{padding:16px 22px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,#fdfcfa,#fff);}
+.card-hd-title{font-family:var(--font-serif);font-size:18px;font-weight:500;color:var(--txt);display:flex;align-items:center;gap:10px;}
+.card-hd-title::before{content:'';width:3px;height:16px;background:var(--accent);border-radius:1px;}
+.card-body{padding:20px 22px;}
+
+/* ═══ TOPBAR ═══ */
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.topbar-title{font-size:14px;font-weight:600;color:var(--txt);}
+.topbar-right{display:flex;gap:10px;align-items:center;}
+.topbar-btn{padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:7px;font-size:12px;font-weight:600;color:var(--txt2);cursor:pointer;}
+.topbar-btn:hover{background:var(--bg);color:var(--txt);}
+
+/* ═══ BUTTONS ═══ */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.02em;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.12);}
+.btn-accent{background:linear-gradient(135deg,var(--accent),#e0c08a);color:#fff;}
+.btn-accent:hover{transform:translateY(-1px);}
+.btn-ghost{background:transparent;color:var(--txt2);border:1px solid var(--border);}
+.btn-ghost:hover{background:var(--bg);color:var(--txt);}
+
+/* ═══ TABLES ═══ */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{width:100%;border-collapse:collapse;}
+th{padding:13px 16px;text-align:left;font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.22em;background:rgba(0,0,0,.02);border-bottom:1px solid var(--border);}
+td{padding:14px 16px;font-size:13px;border-bottom:1px solid var(--border2);color:var(--txt);}
+tbody tr{transition:background .12s;}
+tbody tr:hover{background:rgba(0,0,0,.02);}
+
+/* ═══ TAGS ═══ */
+.tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+.tag-ok{background:#ecfdf5;color:#059669;}
+.tag-pending{background:#fef3c7;color:#92400e;}
+.tag-info{background:#dbeafe;color:#1e40af;}
+.tag-danger{background:#fee2e2;color:#991b1b;}
+.tag-accent{background:rgba(0,0,0,.04);color:var(--accent);border:1px solid var(--accent);}
+
+/* ═══ KANBAN ═══ */
+.kanban{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;}
+.kan-col{min-width:280px;flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;}
+.kan-col-hd{padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.kan-col-name{font-size:12px;font-weight:700;color:var(--txt);}
+.kan-col-count{font-size:11px;font-weight:700;color:var(--accent);}
+.kan-body{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:200px;}
+.kan-card{background:#fff;border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:12px 14px;cursor:pointer;transition:transform .12s,box-shadow .12s;}
+.kan-card:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.06);}
+.kan-card-title{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:4px;}
+.kan-card-sub{font-size:11px;color:var(--txt3);margin-bottom:8px;}
+.kan-card-foot{display:flex;justify-content:space-between;align-items:center;}
+.kan-card-price{font-weight:700;color:var(--accent);font-size:12px;}
+
+/* ═══ INSIGHTS ═══ */
+.insights-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;}
+.insight{padding:16px;border:1px solid var(--border);border-radius:10px;background:var(--surface);cursor:pointer;transition:all .15s;}
+.insight:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.06);border-color:var(--accent);}
+.insight-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.insight-icon{width:34px;height:34px;border-radius:8px;background:rgba(0,0,0,.04);display:grid;place-items:center;color:var(--accent);font-weight:700;font-size:16px;}
+.insight-title{font-size:12px;font-weight:700;color:var(--txt);letter-spacing:.02em;}
+.insight-body{font-size:12px;color:var(--txt2);line-height:1.55;}
+
+/* ═══ AI BUBBLE ═══ */
+#ai-fab{position:fixed;bottom:24px;right:24px;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#e0c08a);color:#fff;z-index:9000;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.18);transition:transform .15s;}
+#ai-fab:hover{transform:scale(1.08);}
+#ai-fab svg{width:24px;height:24px;}
+#ai-panel{position:fixed;bottom:90px;right:24px;width:380px;max-height:540px;background:#0a0806;border:1px solid rgba(255,255,255,.1);border-radius:18px;z-index:9001;display:none;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.4);}
+#ai-panel.open{display:flex;}
+.ai-hd{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:8px;}
+.ai-hd-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);}
+.ai-hd-name{font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.06em;flex:1;}
+.ai-hd-close{background:none;border:none;color:rgba(255,255,255,.4);font-size:17px;cursor:pointer;}
+.ai-msgs{flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+.ai-msg{max-width:88%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;}
+.ai-msg-bot{background:rgba(255,255,255,.04);color:rgba(255,255,255,.92);align-self:flex-start;border-bottom-left-radius:4px;}
+.ai-msg-user{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+.ai-input-row{padding:12px 14px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:8px;}
+.ai-input{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:9px 12px;font-size:12px;color:#fff;outline:none;}
+.ai-input::placeholder{color:rgba(255,255,255,.3);}
+.ai-send{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#e0c08a);border-radius:9px;display:grid;place-items:center;color:#fff;}
+
+/* ═══ LANG SWITCHER ═══ */
+.lang-switch{position:fixed;top:14px;right:14px;display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:3px;z-index:200;}
+.lang-btn{padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:var(--txt3);}
+.lang-btn.active{background:var(--accent);color:#fff;}
+
+[dir="rtl"] .sidebar{left:auto;right:0;}
+[dir="rtl"] .main{margin-left:0;margin-right:230px;}
+[dir="rtl"] .lang-switch{left:14px;right:auto;}
+
+/* Print PDF */
+@media print{.sidebar,#ai-fab,#ai-panel,.lang-switch,.btn{display:none!important;}.main{margin:0!important;}}
+
+</style>
+</head>
+<body>
+
+<!-- LANG SWITCHER -->
+<div class="lang-switch">
+  <button class="lang-btn active" onclick="setLang('en')">EN</button>
+  <button class="lang-btn" onclick="setLang('ar')">عربي</button>
+</div>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-left">
+    <video autoplay loop muted playsinline>
+      <source src="https://cdn.pixabay.com/video/2024/06/01/214826_large.mp4" type="video/mp4">
+    </video>
+    <div class="login-brand">
+      <div class="login-brand-logo">PA</div>
+      <div class="login-brand-name">Pure Aesthetic Clinic</div>
+      <div class="login-brand-sub">Medical Aesthetics · Dubai</div>
+      <div class="login-brand-line"></div>
+      <div class="login-brand-tag">Refined results.<br><em>Discreet care.</em></div>
+    </div>
+  </div>
+  <div class="login-right">
+    <div class="login-box">
+      <h2>Welcome back.</h2>
+      <p>Sign in to continue managing your business.</p>
+      <div class="field-group">
+        <label class="field-label">Email</label>
+        <input type="email" class="field-input" id="li-email" value="demo@aesthetic-clinic.ae">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <input type="password" class="field-input" id="li-pass" value="demo2026">
+      </div>
+      <button class="btn-login" onclick="login()">Enter Panel</button>
+      <div class="login-hint">Demo · email + password are pre-filled</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="name">PURE<span class="accent">·</span>AESTHETIC</div>
+      <div class="line"></div>
+      <div class="sub">Medical Aesthetics · Dubai</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Main</div>
+      <div class="nav-item active" onclick="goPage('dashboard',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="goPage('schedule',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Consultations
+      </div>
+      <div class="nav-item" onclick="goPage('pipeline',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="6" height="18"/><rect x="11" y="3" width="6" height="14"/><rect x="19" y="3" width="2" height="10"/></svg>
+        Treatment plans
+      </div>
+      <div class="nav-section">Records</div>
+      <div class="nav-item" onclick="goPage('clients',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
+        Patients
+      </div>
+      <div class="nav-item" onclick="goPage('catalog',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Treatments
+      </div>
+      <div class="nav-section">Finance</div>
+      <div class="nav-item" onclick="goPage('invoices',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Invoices
+      </div>
+      <div class="nav-item" onclick="goPage('reports',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        Reports
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar">PA</div>
+        <div>
+          <div class="sidebar-user-name">Dr. Layla Ahmed</div>
+          <div class="sidebar-user-role">Owner</div>
+        </div>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()">◐ Toggle dark mode</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-right">
+        <button class="topbar-btn" onclick="alert('Refreshed')">↻ Refresh</button>
+        <button class="topbar-btn" onclick="logout()">Sign out</button>
+      </div>
+    </div>
+
+    <!-- ─── DASHBOARD ─── -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-hd">
+        <div>
+          <h1 class="page-title">Good morning, <em style="font-style:italic;color:var(--accent)">Layla</em></h1>
+          <div class="page-sub" id="today-date"></div>
+        </div>
+      </div>
+      <div class="stats-grid" id="dash-stats"></div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">✦ Business Insights</div><span style="font-size:10px;color:var(--txt3);letter-spacing:.2em;text-transform:uppercase">Auto analysis</span></div>
+        <div class="card-body"><div class="insights-grid" id="dash-insights"></div></div>
+      </div>
+    </div>
+
+    <!-- ─── SCHEDULE / APPOINTMENTS ─── -->
+    <div id="page-schedule" class="page">
+      <div class="page-hd">
+        <div>
+          <h1 class="page-title">Consultations</h1>
+          <div class="page-sub">Today · Upcoming · History</div>
+        </div>
+        <button class="btn btn-accent">+ New Consultation</button>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Today</div></div>
+        <div class="table-wrap"><table><thead><tr><th>Time</th><th>Client</th><th>Treatment</th><th>Duration</th><th>Status</th></tr></thead><tbody id="schedule-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ─── PIPELINE / KANBAN ─── -->
+    <div id="page-pipeline" class="page">
+      <div class="page-hd">
+        <div>
+          <h1 class="page-title">Treatment plans</h1>
+          <div class="page-sub">Drag-and-drop workflow</div>
+        </div>
+        <button class="btn btn-accent">+ New entry</button>
+      </div>
+      <div class="kanban" id="kanban"></div>
+    </div>
+
+    <!-- ─── CLIENTS ─── -->
+    <div id="page-clients" class="page">
+      <div class="page-hd">
+        <div>
+          <h1 class="page-title">Patients</h1>
+          <div class="page-sub">Complete client database</div>
+        </div>
+        <button class="btn btn-accent">+ New client</button>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <input class="field-input" placeholder="Search by name, phone, email…" oninput="filterClients(this.value)" style="margin-bottom:14px;">
+          <div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Last treatment</th><th>Visits</th><th>Spent</th><th>Tags</th></tr></thead><tbody id="clients-tbody"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── CATALOG / PRODUCTS ─── -->
+    <div id="page-catalog" class="page">
+      <div class="page-hd">
+        <div>
+          <h1 class="page-title">Treatments</h1>
+          <div class="page-sub">Products and services</div>
+        </div>
+        <button class="btn btn-accent">+ New item</button>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div id="catalog-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── INVOICES ─── -->
+    <div id="page-invoices" class="page">
+      <div class="page-hd">
+        <div>
+          <h1 class="page-title">Invoices</h1>
+          <div class="page-sub">VAT 5% · UAE</div>
+        </div>
+        <button class="btn btn-accent">+ New invoice</button>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="table-wrap"><table><thead><tr><th>Number</th><th>Client</th><th>Date</th><th>Status</th><th>Total</th></tr></thead><tbody id="inv-tbody"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── REPORTS ─── -->
+    <div id="page-reports" class="page">
+      <div class="page-hd">
+        <div>
+          <h1 class="page-title">Reports</h1>
+          <div class="page-sub">Financial summary · Export</div>
+        </div>
+      </div>
+      <div class="stats-grid" id="reports-stats"></div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Top performance metrics</div></div>
+        <div class="card-body">
+          <p style="color:var(--txt2);font-size:13px;line-height:1.7;">Connected to your accounting tools (Zoho Books, QuickBooks, Xero). Quarterly VAT report exportable for FTA submission. Detailed breakdown by service category, branch, and date range.</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- AI BUBBLE -->
+<button id="ai-fab" onclick="toggleAI()" title="AI Assistant">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+</button>
+<div id="ai-panel">
+  <div class="ai-hd">
+    <div class="ai-hd-dot"></div>
+    <span class="ai-hd-name">AI ASSISTANT</span>
+    <button class="ai-hd-close" onclick="toggleAI()">×</button>
+  </div>
+  <div class="ai-msgs" id="ai-msgs">
+    <div class="ai-msg ai-msg-bot">Hi! I'm your AI assistant. Ask me about today's bookings, top clients, revenue or anything about your business.</div>
+  </div>
+  <div class="ai-input-row">
+    <input class="ai-input" id="ai-input" placeholder="Ask anything…" onkeydown="if(event.key==='Enter')aiSend()">
+    <button class="ai-send" onclick="aiSend()">↑</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════ DEMO CONFIG ═══════════════
+const CONFIG = {"biz": "Pure Aesthetic Clinic", "colors": {"primary": "#0a0a0f", "accent": "#c9a85c"}, "labels": {"schedule": "Consultations", "pipeline": "Treatment plans", "clients": "Patients", "catalog": "Treatments"}, "stats": [{"label": "Consultations today", "value": "9", "trend": "+2", "trendType": "up"}, {"label": "Revenue today", "value": "AED 4,320", "trend": "+12%", "trendType": "up"}, {"label": "New this month", "value": "18", "trend": "+5", "trendType": "up"}, {"label": "Repeat rate", "value": "68%", "trend": "+3 pts", "trendType": "up"}], "insights": [{"icon": "★", "color": "#c9a85c", "title": "Top clients", "body": "Your 3 most valuable customers this month — keep them close.", "go": "clients", "navIdx": 3}, {"icon": "⏰", "color": "#f59e0b", "title": "Inactivity alert", "body": "4 clients have not come back in over 2 months. Time to reach out.", "go": "clients", "navIdx": 3}, {"icon": "💰", "color": "#16a34a", "title": "Pending revenue", "body": "<strong>AED 12,400</strong> in invoices waiting to be paid.", "go": "invoices", "navIdx": 5}, {"icon": "📈", "color": "#3b82f6", "title": "Best day", "body": "<strong>Saturdays</strong> drive 28% of weekly revenue.", "go": "reports", "navIdx": 6}], "schedule": [{"time": "09:00", "client": "Mohamed Al Suwaidi", "service": "Treatment A", "duration": "45 min", "status": "Confirmed", "statusClass": "ok"}, {"time": "10:30", "client": "Sarah Wilson", "service": "Treatment Premium", "duration": "90 min", "status": "In progress", "statusClass": "info"}, {"time": "12:00", "client": "Rashid Al Maktoum", "service": "Treatment Standard", "duration": "60 min", "status": "Confirmed", "statusClass": "ok"}, {"time": "15:00", "client": "Emily Chen", "service": "Treatment Express", "duration": "30 min", "status": "Pending", "statusClass": "pending"}], "kanban": {"columns": [{"name": "New", "color": "#94a3b8", "cards": [{"title": "Inquiry #200", "sub": "New contact", "meta": "today", "price": 480}, {"title": "Inquiry #201", "sub": "New contact", "meta": "today", "price": 480}]}, {"name": "In progress", "color": "#c9a85c", "cards": [{"title": "Active job", "sub": "Mohamed A.", "meta": "1h left", "price": 624}]}, {"name": "Waiting client", "color": "#a78bfa", "cards": [{"title": "Awaiting approval", "sub": "Sarah W.", "meta": "2 days", "price": 768}]}, {"name": "Closed", "color": "#16a34a", "cards": [{"title": "Completed", "sub": "Rashid M.", "meta": "today", "price": 384}]}]}, "clients": [{"name": "Mohamed Al Suwaidi", "phone": "+971 50 111 2233", "field": "Premium", "visits": 24, "spent": 11520, "tags": [{"cls": "accent", "text": "VIP"}]}, {"name": "Sarah Wilson", "phone": "+971 55 444 5566", "field": "Regular", "visits": 12, "spent": 5760, "tags": []}, {"name": "Rashid Al Maktoum", "phone": "+971 52 777 8899", "field": "Premium", "visits": 8, "spent": 3840, "tags": [{"cls": "accent", "text": "VIP"}]}, {"name": "Emily Chen", "phone": "+971 56 222 3344", "field": "Standard", "visits": 3, "spent": 1440, "tags": [{"cls": "info", "text": "New"}]}, {"name": "Karim Hosny", "phone": "+971 50 999 1010", "field": "Regular", "visits": 6, "spent": 2880, "tags": [{"cls": "pending", "text": "Dormant"}]}], "catalog": [{"name": "Treatment Express", "cat": "30 min", "price": 288, "label": "Service"}, {"name": "Treatment Standard", "cat": "60 min", "price": 480, "label": "Service"}, {"name": "Treatment Premium", "cat": "90 min", "price": 768, "label": "Premium"}, {"name": "Treatment Deluxe", "cat": "120 min", "price": 1056, "label": "Deluxe"}, {"name": "Monthly package", "cat": "Recurring", "price": 1680, "label": "Package"}, {"name": "Annual VIP", "cat": "12 months", "price": 15360, "label": "VIP"}], "invoices": [{"num": "INV-2026-201", "client": "Mohamed Al Suwaidi", "date": "30/05", "status": "Paid", "statusClass": "ok", "total": 768}, {"num": "INV-2026-200", "client": "Sarah Wilson", "date": "29/05", "status": "Sent", "statusClass": "info", "total": 480}, {"num": "INV-2026-199", "client": "Rashid Al Maktoum", "date": "28/05", "status": "Paid", "statusClass": "ok", "total": 1056}, {"num": "INV-2026-198", "client": "Emily Chen", "date": "27/05", "status": "Draft", "statusClass": "pending", "total": 288}], "reportStats": [{"label": "Revenue MTD", "value": "AED 105,600", "trend": "+11% vs last month", "trendType": "up"}, {"label": "VAT collected", "value": "AED 5,280", "trend": "5% standard rate"}, {"label": "Avg ticket", "value": "AED 480", "trend": "+AED 24", "trendType": "up"}, {"label": "Repeat customers", "value": "68%", "trend": "+4 pts", "trendType": "up"}], "aiReplies": ["Today: 9 consultations, AED 4,320 in revenue. Going well.", "Your top client this month is Mohamed Al Suwaidi — lifetime value AED 11,520. Worth a personal message.", "You have 4 dormant clients who used to spend AED 3,840+ each. Want me to draft re-engagement messages?", "Pending invoices total AED 12,400. The oldest is 18 days late — should I send a reminder to Sarah Wilson?"]};
+
+// ═══════════════ STATE ═══════════════
+let CURRENT_PAGE='dashboard';
+let LANG='en';
+
+// ═══════════════ AUTH ═══════════════
+function login(){
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('app').classList.add('visible');
+  initApp();
+}
+function logout(){
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('login').classList.remove('hidden');
+}
+
+// ═══════════════ NAV ═══════════════
+function goPage(id,el){
+  CURRENT_PAGE=id;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el)el.classList.add('active');
+  const titles={dashboard:'Dashboard',schedule:CONFIG.labels.schedule,pipeline:CONFIG.labels.pipeline,clients:CONFIG.labels.clients,catalog:CONFIG.labels.catalog,invoices:'Invoices',reports:'Reports'};
+  document.getElementById('topbar-title').textContent=titles[id]||id;
+}
+
+// ═══════════════ THEME ═══════════════
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute('data-theme');
+  document.documentElement.setAttribute('data-theme',cur==='dark'?'light':'dark');
+}
+
+// ═══════════════ LANG ═══════════════
+function setLang(l){
+  LANG=l;
+  document.documentElement.lang=l;
+  document.documentElement.dir=l==='ar'?'rtl':'ltr';
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// ═══════════════ AI ═══════════════
+function toggleAI(){document.getElementById('ai-panel').classList.toggle('open');}
+function aiSend(){
+  const inp=document.getElementById('ai-input');
+  const txt=inp.value.trim();if(!txt)return;
+  const msgs=document.getElementById('ai-msgs');
+  const u=document.createElement('div');u.className='ai-msg ai-msg-user';u.textContent=txt;msgs.appendChild(u);
+  inp.value='';
+  setTimeout(()=>{
+    const b=document.createElement('div');b.className='ai-msg ai-msg-bot';
+    const reply=CONFIG.aiReplies[Math.floor(Math.random()*CONFIG.aiReplies.length)];
+    b.textContent=reply;msgs.appendChild(b);msgs.scrollTop=msgs.scrollHeight;
+  },600);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+// ═══════════════ RENDER ═══════════════
+function initApp(){
+  document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
+  renderDashboard();
+  renderSchedule();
+  renderKanban();
+  renderClients();
+  renderCatalog();
+  renderInvoices();
+  renderReports();
+}
+
+function fmt(n,currency='AED'){return currency+' '+Number(n||0).toLocaleString('en-AE',{maximumFractionDigits:0});}
+
+function renderDashboard(){
+  const stats=CONFIG.stats;
+  document.getElementById('dash-stats').innerHTML=stats.map(s=>`
+    <div class="stat-card">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-val">${s.value}</div>
+      <div class="stat-trend ${s.trendType||''}">${s.trend||''}</div>
+    </div>
+  `).join('');
+  document.getElementById('dash-insights').innerHTML=CONFIG.insights.map(i=>`
+    <div class="insight" onclick="goPage('${i.go}',document.querySelectorAll('.nav-item')[${i.navIdx||0}])">
+      <div class="insight-hd">
+        <div class="insight-icon" style="background:${i.color}15;color:${i.color};border:1px solid ${i.color}40">${i.icon}</div>
+        <div class="insight-title">${i.title}</div>
+      </div>
+      <div class="insight-body">${i.body}</div>
+    </div>
+  `).join('');
+}
+
+function renderSchedule(){
+  document.getElementById('schedule-tbody').innerHTML=CONFIG.schedule.map(s=>`
+    <tr>
+      <td><strong>${s.time}</strong></td>
+      <td>${s.client}</td>
+      <td>${s.service}</td>
+      <td>${s.duration}</td>
+      <td><span class="tag tag-${s.statusClass}">${s.status}</span></td>
+    </tr>
+  `).join('');
+}
+
+function renderKanban(){
+  document.getElementById('kanban').innerHTML=CONFIG.kanban.columns.map(col=>`
+    <div class="kan-col">
+      <div class="kan-col-hd">
+        <span class="kan-col-name">${col.name}</span>
+        <span class="kan-col-count">${col.cards.length}</span>
+      </div>
+      <div class="kan-body">
+        ${col.cards.map(c=>`
+          <div class="kan-card" style="border-left-color:${col.color}">
+            <div class="kan-card-title">${c.title}</div>
+            <div class="kan-card-sub">${c.sub}</div>
+            <div class="kan-card-foot">
+              <span style="font-size:10px;color:var(--txt3)">${c.meta||''}</span>
+              <span class="kan-card-price">${c.price?fmt(c.price):''}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+let ALL_CLIENTS=[];
+function renderClients(){
+  ALL_CLIENTS=CONFIG.clients;
+  drawClients(ALL_CLIENTS);
+}
+function drawClients(list){
+  document.getElementById('clients-tbody').innerHTML=list.map(c=>`
+    <tr>
+      <td><strong>${c.name}</strong></td>
+      <td>${c.phone}</td>
+      <td>${c.field}</td>
+      <td>${c.visits}</td>
+      <td><strong>${fmt(c.spent)}</strong></td>
+      <td>${(c.tags||[]).map(t=>`<span class="tag tag-${t.cls}">${t.text}</span>`).join(' ')}</td>
+    </tr>
+  `).join('');
+}
+function filterClients(q){
+  q=q.toLowerCase();
+  drawClients(ALL_CLIENTS.filter(c=>(c.name+c.phone+c.field).toLowerCase().includes(q)));
+}
+
+function renderCatalog(){
+  document.getElementById('catalog-grid').innerHTML=CONFIG.catalog.map(p=>`
+    <div style="background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:transform .12s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+      <div style="aspect-ratio:1/1;background:linear-gradient(135deg,${CONFIG.colors.accent}22,${CONFIG.colors.accent}08);display:grid;place-items:center;color:${CONFIG.colors.accent};font-family:var(--font-serif);font-size:14px;font-style:italic;">${p.label||'Service'}</div>
+      <div style="padding:14px 16px;">
+        <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${p.name}</div>
+        <div style="font-size:11px;color:var(--txt3);margin-bottom:8px;">${p.cat||''}</div>
+        <div style="font-size:14px;font-weight:800;color:var(--accent);">${fmt(p.price)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderInvoices(){
+  document.getElementById('inv-tbody').innerHTML=CONFIG.invoices.map(i=>`
+    <tr>
+      <td><strong>${i.num}</strong></td>
+      <td>${i.client}</td>
+      <td>${i.date}</td>
+      <td><span class="tag tag-${i.statusClass}">${i.status}</span></td>
+      <td><strong>${fmt(i.total)}</strong></td>
+    </tr>
+  `).join('');
+}
+
+function renderReports(){
+  document.getElementById('reports-stats').innerHTML=CONFIG.reportStats.map(s=>`
+    <div class="stat-card">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-val">${s.value}</div>
+      <div class="stat-trend ${s.trendType||''}">${s.trend||''}</div>
+    </div>
+  `).join('');
+}
+
+// Cmd+K (basic)
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();const q=prompt('Search clients, items, invoices…');if(q)alert('Demo search for: '+q);}
+});
+
+</script>
+</body>
+</html>
