@@ -544,8 +544,9 @@ section{position:relative;padding:120px 5vw;}
 .bsd-preview-card{
   background:#fff;border-radius:14px;width:100%;
   aspect-ratio:3/4;display:grid;place-items:center;overflow:hidden;
-  box-shadow:0 16px 40px rgba(0,0,0,.35);
+  box-shadow:0 16px 40px rgba(0,0,0,.35);position:relative;
 }
+@keyframes bsdSpin{to{transform:rotate(360deg);}}
 .bsd-preview-card img{width:100%;height:100%;object-fit:contain;background:linear-gradient(180deg,#f8f5ee,#e8e2d2);transition:opacity .35s;animation:bsdFade .35s ease;}
 @keyframes bsdFade{from{opacity:0;}to{opacity:1;}}
 .bsd-spec{text-align:center;font-family:var(--serif);}
@@ -575,7 +576,14 @@ section{position:relative;padding:120px 5vw;}
   letter-spacing:.04em;
 }
 .bsd-pat{aspect-ratio:3/4;}
-.bsd-pat .bsd-fab-tex{background-color:#3a3a3a;background-size:contain;background-repeat:no-repeat;background-position:center;}
+.bsd-pat .bsd-fab-tex{
+  background-color:#3a2a18;
+  background-image:linear-gradient(135deg,#5a4830 0%,#2a1c10 100%);
+  background-size:cover;background-position:center;
+  position:relative;
+}
+.bsd-pat .bsd-fab-tex[style*="data:image"]{background-image:none;}
+.bsd-lapel-img:not([style*="data:image"]){background:linear-gradient(180deg,#fafaf3,#e8e2d2);}
 .bsd-lapel-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .bsd-lapel{
   border:1.5px solid rgba(0,0,0,.1);border-radius:10px;cursor:pointer;
@@ -1101,7 +1109,11 @@ section{position:relative;padding:120px 5vw;}
       <aside class="bsd-left">
         <div class="bsd-left-eyebrow">Live Preview</div>
         <div class="bsd-preview-card">
-          <img id="bsd-photo" alt="" loading="lazy">
+          <img id="bsd-photo" alt="" loading="eager" style="opacity:0">
+          <div id="bsd-loading" style="position:absolute;display:flex;flex-direction:column;align-items:center;gap:14px;font-family:var(--serif);color:#7a6020;font-style:italic;font-size:14px;">
+            <div style="width:36px;height:36px;border:1.5px solid rgba(122,96,32,.2);border-top-color:var(--gold);border-radius:50%;animation:bsdSpin .9s linear infinite;"></div>
+            <span>Loading atelier materials…</span>
+          </div>
         </div>
         <div class="bsd-spec">
           <div class="bsd-spec-lead"><span id="bsd-spec-color">Charcoal</span> · <span id="bsd-spec-lapel">notch lapel</span></div>
@@ -1970,6 +1982,8 @@ function bsdUpdate(){
   if(src){
     photoEl.style.animation='none';void photoEl.offsetWidth;photoEl.style.animation='';
     photoEl.src=src;
+    photoEl.style.opacity='1';
+    const ld=document.getElementById('bsd-loading');if(ld)ld.style.display='none';
   }
   const cObj=BSD_COLORS.find(c=>c.key===BSD.color)||BSD_COLORS[0];
   const lObj=BSD_LAPELS.find(l=>l.key===BSD.lapel)||BSD_LAPELS[0];
