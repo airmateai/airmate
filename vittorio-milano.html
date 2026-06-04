@@ -418,22 +418,17 @@ section{position:relative;padding:120px 5vw;}
   margin-top:56px;
 }
 .cfg-preview{
-  background:#1a0f12;
-  aspect-ratio:3/4;display:grid;place-items:center;
+  background:radial-gradient(ellipse at 50% 30%, #2a1418 0%, #14080a 70%, #0a0507 100%);
+  aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;
   border:1px solid rgba(0,0,0,.06);position:relative;overflow:hidden;
 }
-.cfg-photo{
-  position:absolute;inset:0;background-size:cover;background-position:center top;
-  transition:opacity .5s,background-image .5s;
-  animation:cfgFade .6s ease;
+.cfg-mannequin{
+  width:88%;max-width:520px;display:flex;align-items:center;justify-content:center;
+  filter:drop-shadow(0 32px 48px rgba(0,0,0,.45));
+  animation:cfgFade .5s ease;
 }
-@keyframes cfgFade{from{opacity:0;transform:scale(1.04);}to{opacity:1;transform:none;}}
-.cfg-photo-veil{
-  position:absolute;inset:0;pointer-events:none;
-  background:
-    linear-gradient(180deg, rgba(0,0,0,.25) 0%, transparent 25%, transparent 55%, rgba(15,7,9,.55) 100%),
-    radial-gradient(ellipse at top, rgba(201,160,92,.06), transparent 60%);
-}
+.cfg-mannequin svg{width:100%;height:auto;display:block;}
+@keyframes cfgFade{from{opacity:0;transform:scale(1.03);}to{opacity:1;transform:none;}}
 .cfg-badge{
   position:absolute;bottom:24px;left:24px;
   background:rgba(15,7,9,.78);backdrop-filter:blur(8px);
@@ -465,8 +460,8 @@ section{position:relative;padding:120px 5vw;}
 .cfg-svg{width:74%;height:auto;display:block;filter:drop-shadow(0 28px 40px rgba(0,0,0,.18));}
 .cfg-meta-tag{
   position:absolute;top:24px;left:24px;
-  font-family:var(--display);color:var(--burg-dk);font-size:10px;letter-spacing:.36em;
-  text-transform:uppercase;font-weight:600;
+  font-family:'Cinzel',serif;color:var(--gold);font-size:10px;letter-spacing:.36em;
+  text-transform:uppercase;font-weight:600;z-index:5;
 }
 .cfg-meta-price{
   position:absolute;bottom:24px;right:24px;
@@ -972,8 +967,7 @@ section{position:relative;padding:120px 5vw;}
   </div>
   <div class="cfg-wrap reveal">
     <div class="cfg-preview" id="cfg-preview">
-      <div class="cfg-photo" id="cfg-photo"></div>
-      <div class="cfg-photo-veil"></div>
+      <div class="cfg-mannequin" id="cfg-mannequin"></div>
       <span class="cfg-meta-tag">Preview · Live</span>
       <div class="cfg-badge" id="cfg-badge">
         <div class="cfg-badge-l">CLOTH</div>
@@ -1433,7 +1427,130 @@ document.getElementById('fab-row').innerHTML=FABRICS.map(f=>`
     </div>
   </div>`).join('');
 
-// ═══ CONFIGURATOR (Jose Acosta-style: lapel, button count, colour, button finish, tie, square) ═══
+// ═══ CONFIGURATOR (Vittorio Milano · ported from Jose Acosta atelier mannequin) ═══
+function _dk(h,p){let r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return '#'+[Math.max(0,Math.round(r*(1-p/100))),Math.max(0,Math.round(g*(1-p/100))),Math.max(0,Math.round(b*(1-p/100)))].map(x=>x.toString(16).padStart(2,'0')).join('');}
+function _lt(h,p){let r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return '#'+[Math.min(255,Math.round(r+(255-r)*p/100)),Math.min(255,Math.round(g+(255-g)*p/100)),Math.min(255,Math.round(b+(255-b)*p/100))].map(x=>x.toString(16).padStart(2,'0')).join('');}
+
+function getSuitSVG(cfg){
+  cfg=cfg||{};
+  const c=cfg.color||'#1a2744';
+  const lap=cfg.lapel||'notch';
+  const nbtn=parseInt(cfg.buttons)||2;
+  const bcol=cfg.btnColor||'#c9a227';
+  const tie=cfg.tieColor||'#8b1a1a';
+  const psq=cfg.pocketSquare||false;
+  const tieStyle=cfg.tieStyle||'regular';
+  const dark=_dk(c,44),shadow=_dk(c,64),mid=_dk(c,22),hi=_lt(c,22),shine=_lt(c,40);
+  const ol='rgba(8,10,24,0.78)';
+  const sw=1.6;
+  const white='#eceae4';
+  const brk=172;
+
+  let lapL,lapR,gorgeL='',gorgeR='';
+  if(lap==='notch'){
+    lapL=`M 108 64 L 62 90 L 48 108 L 38 122 L 54 133 L 108 ${brk} L 116 78 Z`;
+    lapR=`M 132 64 L 178 90 L 192 108 L 202 122 L 186 133 L 132 ${brk} L 124 78 Z`;
+    gorgeL=`<path d="M 108 64 L 54 133" stroke="${ol}" stroke-width="0.9" fill="none" opacity="0.3"/>`;
+    gorgeR=`<path d="M 132 64 L 186 133" stroke="${ol}" stroke-width="0.9" fill="none" opacity="0.3"/>`;
+  } else if(lap==='peak'){
+    lapL=`M 108 64 L 34 70 L 62 96 L 108 ${brk} L 116 78 Z`;
+    lapR=`M 132 64 L 206 70 L 178 96 L 132 ${brk} L 124 78 Z`;
+  } else {
+    lapL=`M 108 64 Q 52 98 108 ${brk} L 102 ${brk-14} Q 48 90 100 66 Z`;
+    lapR=`M 132 64 Q 188 98 132 ${brk} L 138 ${brk-14} Q 192 90 140 66 Z`;
+  }
+  const bys=nbtn===1?[200]:nbtn===2?[182,217]:[170,198,226];
+  const btns=bys.map(y=>
+    `<circle cx="120" cy="${y}" r="7" fill="${bcol}" stroke="${_dk(bcol,35)}" stroke-width="1.3"/>`+
+    `<circle cx="120" cy="${y}" r="2.5" fill="${_dk(bcol,52)}"/>`+
+    `<circle cx="122.5" cy="${y-3}" r="1.1" fill="${_lt(bcol,32)}" opacity="0.8"/>`
+  ).join('');
+
+  let tieHtml;
+  if(tieStyle==='bow'){
+    const td=_dk(tie,24);
+    tieHtml=`<polygon points="96,74 109,64 109,80 96,90" fill="${tie}"/>
+<polygon points="144,74 131,64 131,80 144,90" fill="${td}"/>
+<ellipse cx="120" cy="77" rx="9" ry="8" fill="${_dk(tie,32)}"/>
+<ellipse cx="120" cy="77" rx="5" ry="3.5" fill="${tie}"/>`;
+  } else if(tieStyle==='none'){
+    tieHtml='';
+  } else {
+    tieHtml=`<polygon points="114,76 126,76 129,${brk} 123,255 120,266 117,255 111,${brk}" fill="url(#gT)"/>
+<line x1="120" y1="76" x2="120" y2="266" stroke="${_dk(tie,32)}" stroke-width="0.8" opacity="0.5"/>
+<polygon points="111,66 129,66 131,78 120,87 109,78" fill="${_dk(tie,26)}"/>
+<line x1="120" y1="67" x2="120" y2="87" stroke="${_dk(tie,45)}" stroke-width="1"/>`;
+  }
+
+  const pqHtml=psq
+    ?`<polygon points="68,158 86,158 84,174 78,170 70,174" fill="${_lt(tie,36)}" opacity="0.92"/>
+<line x1="72" y1="158" x2="70" y2="173" stroke="${tie}" stroke-width="0.9"/>
+<line x1="77" y1="158" x2="76" y2="170" stroke="${tie}" stroke-width="0.9"/>
+<line x1="82" y1="158" x2="83" y2="172" stroke="${tie}" stroke-width="0.9"/>`
+    :`<rect x="68" y="160" width="22" height="4" rx="2" fill="${dark}" stroke="${ol}" stroke-width="0.8" opacity="0.55"/>`;
+
+  return `<svg viewBox="0 0 240 580" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <radialGradient id="gBody" cx="50%" cy="30%" r="75%" fx="50%" fy="30%">
+    <stop offset="0%" stop-color="${shine}"/><stop offset="32%" stop-color="${hi}"/><stop offset="66%" stop-color="${c}"/><stop offset="100%" stop-color="${shadow}"/>
+  </radialGradient>
+  <linearGradient id="gSL" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="${shadow}"/><stop offset="38%" stop-color="${mid}"/><stop offset="70%" stop-color="${c}"/><stop offset="100%" stop-color="${dark}"/></linearGradient>
+  <linearGradient id="gSR" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="${dark}"/><stop offset="30%" stop-color="${c}"/><stop offset="62%" stop-color="${mid}"/><stop offset="100%" stop-color="${shadow}"/></linearGradient>
+  <linearGradient id="gPL" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="${shadow}"/><stop offset="36%" stop-color="${c}"/><stop offset="72%" stop-color="${mid}"/><stop offset="100%" stop-color="${dark}"/></linearGradient>
+  <linearGradient id="gPR" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="${dark}"/><stop offset="28%" stop-color="${mid}"/><stop offset="64%" stop-color="${c}"/><stop offset="100%" stop-color="${shadow}"/></linearGradient>
+  <linearGradient id="gWB" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${mid}"/><stop offset="100%" stop-color="${dark}"/></linearGradient>
+  <linearGradient id="gT" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="${_dk(tie,26)}"/><stop offset="50%" stop-color="${tie}"/><stop offset="100%" stop-color="${_dk(tie,26)}"/></linearGradient>
+  <linearGradient id="gPost" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#3d1c08"/><stop offset="42%" stop-color="#9a5a28"/><stop offset="100%" stop-color="#4a2208"/></linearGradient>
+</defs>
+<path d="M 114 0 L 126 0 L 128 64 L 112 64 Z" fill="url(#gPost)"/>
+<ellipse cx="120" cy="62" rx="20" ry="9" fill="#5c2d0e"/>
+<ellipse cx="120" cy="60" rx="15" ry="6" fill="#8b4c22"/>
+<path d="M 48 320 L 110 320 L 108 580 L 46 580 Z" fill="url(#gPL)" stroke="${ol}" stroke-width="${sw}" stroke-linejoin="round"/>
+<path d="M 130 320 L 192 320 L 194 580 L 132 580 Z" fill="url(#gPR)" stroke="${ol}" stroke-width="${sw}" stroke-linejoin="round"/>
+<path d="M 110 320 L 130 320 L 132 580 L 108 580 Z" fill="${shadow}" opacity="0.75"/>
+<line x1="72" y1="320" x2="70" y2="580" stroke="${shine}" stroke-width="1.4" opacity="0.18"/>
+<line x1="168" y1="320" x2="170" y2="580" stroke="${shine}" stroke-width="1.4" opacity="0.18"/>
+<line x1="46" y1="572" x2="108" y2="572" stroke="${ol}" stroke-width="${sw}" opacity="0.7"/>
+<line x1="132" y1="572" x2="194" y2="572" stroke="${ol}" stroke-width="${sw}" opacity="0.7"/>
+<path d="M 42 318 L 198 318 L 198 340 L 42 340 Z" fill="url(#gWB)" stroke="${ol}" stroke-width="${sw}"/>
+${[58,82,120,158,182].map(x=>`<rect x="${x-5}" y="316" width="10" height="16" rx="2" fill="${shadow}" stroke="${ol}" stroke-width="${sw*0.65}"/>`).join('')}
+<line x1="120" y1="340" x2="120" y2="385" stroke="${ol}" stroke-width="${sw*0.55}" opacity="0.35"/>
+<path d="M 22 86 L 10 434 L 16 448 L 56 448 L 62 434 L 60 86 Z" fill="url(#gSL)" stroke="${ol}" stroke-width="${sw}" stroke-linejoin="round"/>
+<path d="M 10 428 L 10 448 L 16 462 L 56 462 L 62 448 L 62 428" fill="${dark}" stroke="${ol}" stroke-width="${sw*0.85}" stroke-linejoin="round"/>
+<rect x="14" y="450" width="44" height="13" rx="3" fill="${white}" opacity="0.88"/>
+<line x1="34" y1="86" x2="30" y2="432" stroke="${shine}" stroke-width="2.5" opacity="0.15"/>
+<circle cx="36" cy="455" r="3" fill="${bcol}" stroke="${_dk(bcol,30)}" stroke-width="0.8"/>
+<path d="M 218 86 L 230 434 L 224 448 L 184 448 L 178 434 L 180 86 Z" fill="url(#gSR)" stroke="${ol}" stroke-width="${sw}" stroke-linejoin="round"/>
+<path d="M 230 428 L 230 448 L 224 462 L 184 462 L 178 448 L 178 428" fill="${dark}" stroke="${ol}" stroke-width="${sw*0.85}" stroke-linejoin="round"/>
+<rect x="182" y="450" width="44" height="13" rx="3" fill="${white}" opacity="0.88"/>
+<line x1="206" y1="86" x2="210" y2="432" stroke="${shine}" stroke-width="2.5" opacity="0.15"/>
+<circle cx="204" cy="455" r="3" fill="${bcol}" stroke="${_dk(bcol,30)}" stroke-width="0.8"/>
+<path d="M 108 64 Q 80 72 56 88 L 44 162 Q 42 246 42 320 L 198 320 Q 198 246 196 162 L 184 88 Q 160 72 132 64 Z" fill="url(#gBody)" stroke="${ol}" stroke-width="${sw}" stroke-linejoin="round"/>
+<path d="M 56 88 L 44 162 Q 42 245 42 320" stroke="${shadow}" stroke-width="1.4" fill="none" opacity="0.45"/>
+<path d="M 184 88 L 196 162 Q 198 245 198 320" stroke="${shadow}" stroke-width="1.4" fill="none" opacity="0.45"/>
+<line x1="120" y1="64" x2="120" y2="320" stroke="${shine}" stroke-width="3" opacity="0.08"/>
+<path d="M 108 64 Q 120 56 132 64 L 129 74 Q 120 66 111 74 Z" fill="${mid}" stroke="${ol}" stroke-width="${sw*0.9}"/>
+<polygon points="108,64 132,64 132,${brk} 120,${brk+12} 108,${brk}" fill="${white}"/>
+${[108,124,140].map(y=>`<circle cx="120" cy="${y}" r="2.2" fill="${_dk(white,25)}" opacity="0.6"/>`).join('')}
+${tieHtml}
+<path d="${lapL}" fill="${hi}" stroke="${ol}" stroke-width="${sw}" stroke-linejoin="round"/>
+<path d="${lapR}" fill="${hi}" stroke="${ol}" stroke-width="${sw}" stroke-linejoin="round"/>
+${gorgeL}${gorgeR}
+<path d="M 116 78 L 108 ${brk}" stroke="${dark}" stroke-width="0.9" fill="none" opacity="0.22"/>
+<path d="M 124 78 L 132 ${brk}" stroke="${dark}" stroke-width="0.9" fill="none" opacity="0.22"/>
+<polygon points="110,64 118,64 104,82" fill="${white}" stroke="${_dk(white,22)}" stroke-width="0.9"/>
+<polygon points="130,64 122,64 136,82" fill="${white}" stroke="${_dk(white,22)}" stroke-width="0.9"/>
+<line x1="120" y1="${brk}" x2="120" y2="320" stroke="${ol}" stroke-width="${sw*0.5}" opacity="0.22"/>
+${pqHtml}
+<path d="M 46 262 L 96 256 L 96 273 L 46 278 Z" fill="${mid}" stroke="${ol}" stroke-width="${sw}" stroke-linejoin="round"/>
+<line x1="46" y1="256" x2="96" y2="250" stroke="${ol}" stroke-width="0.7" opacity="0.4"/>
+<path d="M 194 262 L 144 256 L 144 273 L 194 278 Z" fill="${mid}" stroke="${ol}" stroke-width="${sw}" stroke-linejoin="round"/>
+<line x1="194" y1="256" x2="144" y2="250" stroke="${ol}" stroke-width="0.7" opacity="0.4"/>
+${btns}
+<path d="M 42 320 Q 120 328 198 320 L 198 323 Q 120 331 42 323 Z" fill="${shine}" opacity="0.1"/>
+</svg>`;
+}
+
 const CFG={lapel:'notch',btn:'2',color:'#1a2744',bcol:'#e8ddd0',tie:'regular',sq:'1'};
 const SUIT_COLORS=[
   {hex:'#1a2744',grad:['#243154','#0e1729'],name:'Midnight Navy',mill:'Loro Piana',photo:'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80'},
@@ -1461,21 +1578,29 @@ function renderSwatches(){
   document.querySelectorAll('[data-color]').forEach(el=>el.addEventListener('click',()=>{CFG.color=el.dataset.color;renderSwatches();updatePreview();}));
   document.querySelectorAll('[data-bcol]').forEach(el=>el.addEventListener('click',()=>{CFG.bcol=el.dataset.bcol;renderSwatches();updatePreview();}));
 }
+const TIE_COLOR='#8b1a1a';
 function updatePreview(){
   const cObj=SUIT_COLORS.find(c=>c.hex===CFG.color)||SUIT_COLORS[0];
+  const bColObj=BUTTON_COLORS.find(b=>b.hex===CFG.bcol)||BUTTON_COLORS[0];
 
-  // ── REAL PHOTO PREVIEW ──
-  const photoEl=document.getElementById('cfg-photo');
-  if(photoEl){
-    photoEl.style.animation='none';
-    void photoEl.offsetWidth;
-    photoEl.style.backgroundImage="url('"+cObj.photo+"')";
-    photoEl.style.animation='';
-  }
+  // ── RENDER MANNEQUIN SVG (Jose Acosta atelier-grade) ──
+  const mEl=document.getElementById('cfg-mannequin');
+  mEl.style.animation='none';void mEl.offsetWidth;mEl.style.animation='';
+  // doubleBreasted -> 2 buttons (visual approximation)
+  const btnCount=CFG.btn==='db'?2:Number(CFG.btn);
+  mEl.innerHTML=getSuitSVG({
+    color:CFG.color,
+    lapel:CFG.lapel,
+    buttons:btnCount,
+    btnColor:CFG.bcol,
+    tieStyle:CFG.tie,
+    tieColor:TIE_COLOR,
+    pocketSquare:CFG.sq==='1'
+  });
+
+  // ── badge & chips ──
   document.getElementById('cfg-badge-cloth').textContent=cObj.name;
   document.getElementById('cfg-badge-mill').textContent=cObj.mill;
-
-  // ── spec chips ──
   const lblLapShort={notch:'Notch Lapel',peak:'Peak Lapel',shawl:'Shawl Lapel'}[CFG.lapel];
   const lblBtnShort=CFG.btn==='db'?'Double-Breasted · 6':'Single · '+CFG.btn;
   const tieShort={regular:'Necktie',bow:'Bow Tie',none:'No Tie'}[CFG.tie];
@@ -1483,66 +1608,7 @@ function updatePreview(){
   document.getElementById('chip-btn').textContent=lblBtnShort;
   document.getElementById('chip-acc').textContent=tieShort+(CFG.sq==='1'?' · Square':'');
 
-  // ── legacy SVG (hidden but still drives logic if needed) ──
-  const grad=document.querySelector('#g-fabric');
-  grad.children[0].setAttribute('stop-color',cObj.grad[0]);
-  grad.children[1].setAttribute('stop-color',cObj.grad[1]);
-
-  const lL=document.getElementById('cfg-lapel-l');
-  const lR=document.getElementById('cfg-lapel-r');
-  if(CFG.lapel==='notch'){
-    lL.setAttribute('d','M100 50 L120 70 L120 200 L80 90 Z');
-    lR.setAttribute('d','M140 50 L120 70 L120 200 L160 90 Z');
-  } else if(CFG.lapel==='peak'){
-    lL.setAttribute('d','M100 50 L130 60 L120 70 L120 200 L80 90 Z');
-    lR.setAttribute('d','M140 50 L110 60 L120 70 L120 200 L160 90 Z');
-  } else {
-    lL.setAttribute('d','M100 50 Q70 130 120 200 L120 70 Z');
-    lR.setAttribute('d','M140 50 Q170 130 120 200 L120 70 Z');
-  }
-
-  // buttons
-  const bColObj=BUTTON_COLORS.find(b=>b.hex===CFG.bcol)||BUTTON_COLORS[0];
-  const btnEl=document.getElementById('cfg-buttons');
-  let html='';
-  if(CFG.btn==='db'){
-    const ys=[150,200,250];
-    ys.forEach(y=>{
-      html+=`<circle cx="110" cy="${y}" r="3.4" fill="${bColObj.hex}" stroke="${bColObj.stroke}" stroke-width=".5"/>`;
-      html+=`<circle cx="130" cy="${y}" r="3.4" fill="${bColObj.hex}" stroke="${bColObj.stroke}" stroke-width=".5"/>`;
-    });
-  } else {
-    const n=Number(CFG.btn);
-    const startY=n===1?180:(n===2?170:160);
-    for(let i=0;i<n;i++){
-      html+=`<circle cx="120" cy="${startY+i*32}" r="3.4" fill="${bColObj.hex}" stroke="${bColObj.stroke}" stroke-width=".5"/>`;
-    }
-  }
-  btnEl.innerHTML=html;
-
-  // accessories: tie + pocket square
-  let accEl=document.getElementById('cfg-accessories');
-  if(!accEl){
-    accEl=document.createElementNS('http://www.w3.org/2000/svg','g');
-    accEl.setAttribute('id','cfg-accessories');
-    document.getElementById('cfg-jacket').appendChild(accEl);
-  }
-  let accHTML='';
-  if(CFG.tie==='regular'){
-    accHTML+='<path d="M115 75 L125 75 L128 130 L120 145 L112 130 Z" fill="#c9a05c" stroke="#7a6020" stroke-width=".5"/>';
-    accHTML+='<path d="M115 75 L125 75 L122 85 L118 85 Z" fill="#a08545"/>';
-  } else if(CFG.tie==='bow'){
-    accHTML+='<path d="M108 76 L122 70 L122 84 L108 78 Z" fill="#1a1a1a"/>';
-    accHTML+='<path d="M132 70 L132 84 L118 78 L118 76 Z" fill="#1a1a1a"/>';
-    accHTML+='<rect x="118" y="74" width="4" height="8" fill="#0a0a0a"/>';
-  }
-  if(CFG.sq==='1'){
-    accHTML+='<rect x="155" y="108" width="22" height="4" fill="#f8f3e7"/>';
-    accHTML+='<path d="M158 105 L162 112 L172 105 L168 112 Z" fill="#f8f3e7"/>';
-  }
-  accEl.innerHTML=accHTML;
-
-  // summary
+  // ── summary ──
   const lblLap={notch:'Notch',peak:'Peak',shawl:'Shawl'}[CFG.lapel];
   const lblBtn=(CFG.btn==='db'?'Double-Breasted · 6':'Single · '+CFG.btn)+' · '+bColObj.name;
   const tieLbl={regular:'Necktie',bow:'Bow Tie',none:'No Tie'}[CFG.tie];
@@ -1569,7 +1635,6 @@ document.querySelectorAll('[data-sq]').forEach(b=>b.addEventListener('click',()=
 }));
 renderSwatches();
 updatePreview();
-document.getElementById('cfg-photo').style.backgroundImage="url('"+SUIT_COLORS[0].photo+"')";
 
 // ═══ MATERIALS & PRODUCTS (Jose Acosta-style atelier shop) ═══
 const MATERIALS=[
