@@ -1075,23 +1075,24 @@ section{position:relative;padding:120px 5vw;}
   <div class="fab-row reveal" id="fab-row"></div>
 </section>
 
-<!-- ═══ MATERIALS (Atelier · Trajes · Pantalones · Camisas · Corbatas · Botones) ═══ -->
+<!-- ═══ DESIGN YOUR SUIT · Real material photographs ═══ -->
 <section class="materials" id="materials">
   <div class="center reveal">
-    <div class="section-eyebrow">The Atelier Shop</div>
-    <h2 class="section-title">Trajes · Camisas · <em>Corbatas</em> · Botones</h2>
+    <div class="section-eyebrow">Design Your Suit</div>
+    <h2 class="section-title">Real materials. <em>Real photographs.</em></h2>
     <div class="section-divider"></div>
-    <p class="section-lead">Every piece in our atelier — from the principal garment down to the last horn button — is curated and finished by hand. Browse the materials of a Vittorio Milano commission.</p>
+    <p class="section-lead">Every component of a Vittorio Milano garment — buttons, linings, collars, ties, lapels — photographed in our atelier under natural light. Browse the same library our master tailors work with.</p>
   </div>
   <div class="mat-tabs reveal">
-    <button class="mat-tab active" data-mat="all">All</button>
-    <button class="mat-tab" data-mat="Trajes">Trajes</button>
-    <button class="mat-tab" data-mat="Pantalones">Pantalones</button>
-    <button class="mat-tab" data-mat="Camisas">Camisas</button>
-    <button class="mat-tab" data-mat="Corbatas">Corbatas</button>
-    <button class="mat-tab" data-mat="Botones">Botones</button>
+    <button class="mat-tab active" data-mat="buttons">Buttons</button>
+    <button class="mat-tab" data-mat="linings">Linings</button>
+    <button class="mat-tab" data-mat="collars">Shirt Collars</button>
+    <button class="mat-tab" data-mat="ties">Ties</button>
+    <button class="mat-tab" data-mat="lapels">Lapels</button>
   </div>
-  <div class="mat-grid reveal" id="mat-grid"></div>
+  <div class="mat-grid reveal" id="mat-grid">
+    <div style="grid-column:1/-1;text-align:center;padding:60px 0;color:var(--txt3);font-family:var(--serif);font-style:italic;font-size:18px;">Loading atelier photographs…</div>
+  </div>
 </section>
 
 <!-- ═══ EXPERIENCE ═══ -->
@@ -1636,42 +1637,45 @@ document.querySelectorAll('[data-sq]').forEach(b=>b.addEventListener('click',()=
 renderSwatches();
 updatePreview();
 
-// ═══ MATERIALS & PRODUCTS (Jose Acosta-style atelier shop) ═══
-const MATERIALS=[
-  {cat:'Trajes',name:'Bespoke Two-Piece',meta:'Full canvas · 3 fittings',img:'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=600&q=80'},
-  {cat:'Trajes',name:'Three-Piece Italian',meta:'With waistcoat',img:'https://images.unsplash.com/photo-1593030103066-0093718efeb9?w=600&q=80'},
-  {cat:'Trajes',name:'Tuxedo · Black Tie',meta:'Shawl lapel · grosgrain',img:'https://images.unsplash.com/photo-1543132220-3ec99c6094dc?w=600&q=80'},
-  {cat:'Pantalones',name:'Pleated Trouser',meta:'High-rise · Italian cut',img:'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=600&q=80'},
-  {cat:'Pantalones',name:'Flat-Front Trouser',meta:'Tapered · Sea Island wool',img:'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=600&q=80'},
-  {cat:'Camisas',name:'Sea Island Shirt',meta:'200/2 · Mother-of-pearl',img:'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&q=80'},
-  {cat:'Camisas',name:'Egyptian Cotton · Twill',meta:'Cutaway collar',img:'https://images.unsplash.com/photo-1598961942613-ba897716405b?w=600&q=80'},
-  {cat:'Corbatas',name:'7-Fold Silk · Burgundy',meta:'Como, Italy · hand-rolled',img:'https://images.unsplash.com/photo-1622547748225-3fc4abd2cca0?w=600&q=80'},
-  {cat:'Corbatas',name:'Grenadine · Navy',meta:'Fina weave · untipped',img:'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&q=80'},
-  {cat:'Corbatas',name:'Bow Tie · Black Satin',meta:'Adjustable · self-tie',img:'https://images.unsplash.com/photo-1563630423918-b58f07336ac9?w=600&q=80'},
-  {cat:'Botones',name:'Mother-of-Pearl',meta:'Hand-cut · Australian',img:'https://images.unsplash.com/photo-1631729371254-42c2892f0e6e?w=600&q=80'},
-  {cat:'Botones',name:'Horn Buttons · Brown',meta:'Italian · oil-finished',img:'https://images.unsplash.com/photo-1583394293214-28ded15ee548?w=600&q=80'},
-];
+// ═══ DESIGN YOUR SUIT — Real atelier material photographs (loaded async) ═══
+const MAT_META={
+  buttons:{label:'Button',sub:'Hand-cut · finished in oil & polish'},
+  linings:{label:'Lining',sub:'Bemberg silk twill · cut to garment'},
+  collars:{label:'Collar',sub:'Sea Island cotton · mother-of-pearl'},
+  ties:{label:'Tie',sub:'Como, Italy · hand-rolled edges'},
+  lapels:{label:'Lapel',sub:'Hand-padded canvas · pick-stitched'}
+};
 function drawMaterials(cat){
-  const list=cat==='all'?MATERIALS:MATERIALS.filter(m=>m.cat===cat);
-  document.getElementById('mat-grid').innerHTML=list.map(m=>`
+  const p=window.VM_DESIGN_PHOTOS;
+  const grid=document.getElementById('mat-grid');
+  if(!p){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px 0;color:var(--txt3);font-family:var(--serif);font-style:italic;font-size:18px;">Loading atelier photographs…</div>';return;}
+  const set=p[cat]||{};
+  const meta=MAT_META[cat]||{label:'Material',sub:''};
+  grid.innerHTML=Object.entries(set).map(([name,src])=>`
     <div class="mat-card">
-      <div class="mat-img" style="background-image:url('${m.img}')"></div>
-      <div class="mat-tag">${m.cat}</div>
+      <div class="mat-img" style="background-image:url('${src}')"></div>
+      <div class="mat-tag">${meta.label}</div>
       <div class="mat-info">
-        <div class="mat-name">${m.name}</div>
-        <div class="mat-meta">${m.meta}</div>
+        <div class="mat-name">${name}</div>
+        <div class="mat-meta">${meta.sub}</div>
       </div>
     </div>`).join('');
 }
-drawMaterials('all');
+let CUR_MAT='buttons';
 document.querySelectorAll('.mat-tab').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.mat-tab').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active');drawMaterials(b.dataset.mat);
+  b.classList.add('active');CUR_MAT=b.dataset.mat;drawMaterials(CUR_MAT);
 }));
+function tryLoadMaterials(){if(window.VM_DESIGN_PHOTOS)drawMaterials(CUR_MAT);}
+document.addEventListener('vm-photos-ready',tryLoadMaterials);
+tryLoadMaterials();
 
 // ═══ MODAL ═══
 function openConfirm(){document.getElementById('modal-confirm').classList.add('open');}
 function closeConfirm(){document.getElementById('modal-confirm').classList.remove('open');}
+
+// load real atelier material photos (Jose Acosta library)
+(function(){var s=document.createElement('script');s.src='vittorio-materials.js?v=1';s.defer=true;document.body.appendChild(s);})();
 
 // close mobile menu on link click
 document.querySelectorAll('.nav-links a').forEach(a=>a.addEventListener('click',()=>{
