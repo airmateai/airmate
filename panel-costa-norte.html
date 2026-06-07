@@ -203,11 +203,100 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 /* ═══ APARTMENTS · REALISTIC BUILDING FAÇADE ═══ */
 .bldg-wrap{
   position:relative;width:100%;
-  background:linear-gradient(180deg,#a8d8ea 0%,#d4eaf7 40%,#f5edd6 100%);
+  background:linear-gradient(180deg,#a8d8ea 0%,#d4eaf7 35%,#fef3c7 75%,#f5d896 100%);
   border-radius:16px;padding:30px 30px 0;overflow:hidden;
-  min-height:520px;
+  min-height:660px;
 }
-[data-theme="dark"] .bldg-wrap{background:linear-gradient(180deg,#1a3a5c 0%,#0a2540 100%);}
+[data-theme="dark"] .bldg-wrap{background:linear-gradient(180deg,#0a1830 0%,#1a3a5c 70%,#0a2540 100%);}
+
+/* ═══ SCENE LAYERS ═══ */
+.scene-mountain{
+  position:absolute;bottom:38%;left:0;right:0;height:90px;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(120,140,160,.5) 0%,rgba(90,110,135,.7) 100%);
+  clip-path:polygon(0% 100%,10% 60%,18% 80%,28% 40%,38% 70%,48% 30%,58% 70%,68% 50%,78% 80%,88% 55%,100% 75%,100% 100%);
+  opacity:.55;
+}
+[data-theme="dark"] .scene-mountain{background:linear-gradient(180deg,rgba(40,50,70,.8),rgba(20,30,50,.9));opacity:1;}
+.scene-sea{
+  position:absolute;bottom:0;left:0;right:0;height:38%;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg,#3a8db5 0%,#1d5a7d 60%,#0c3e5e 100%);
+  border-top:2px solid rgba(255,255,255,.4);
+}
+[data-theme="dark"] .scene-sea{background:linear-gradient(180deg,#0a2538,#040d18);}
+.wave{
+  position:absolute;background:rgba(255,255,255,.4);border-radius:50%;
+  animation:waveFloat 4s ease-in-out infinite;
+}
+@keyframes waveFloat{0%,100%{transform:translateY(0) scaleX(1);}50%{transform:translateY(-2px) scaleX(1.1);}}
+.wave-1{width:60px;height:6px;bottom:20%;left:12%;animation-delay:0s;}
+.wave-2{width:80px;height:7px;bottom:14%;left:38%;animation-delay:.8s;}
+.wave-3{width:70px;height:6px;bottom:18%;right:18%;animation-delay:1.6s;}
+.wave-4{width:50px;height:5px;bottom:24%;left:55%;animation-delay:.4s;}
+.wave-5{width:65px;height:6px;bottom:10%;left:8%;animation-delay:2.2s;}
+/* Surfers on waves */
+.surfer{position:absolute;font-size:14px;z-index:2;animation:surfMove 5s ease-in-out infinite;}
+.surfer-1{bottom:22%;left:25%;animation-delay:0s;}
+.surfer-2{bottom:18%;left:62%;animation-delay:1s;}
+.surfer-3{bottom:25%;right:25%;animation-delay:2s;}
+@keyframes surfMove{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-4px) rotate(3deg);}}
+
+/* Lighthouse · San Vicente landmark */
+.lighthouse{
+  position:absolute;bottom:30%;right:6%;width:24px;height:80px;z-index:2;pointer-events:none;
+}
+.lighthouse::before{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:60px;
+  background:linear-gradient(90deg,#fff 0%,#fff 50%,#e0454a 50%,#e0454a 100%);
+  background-size:100% 12px;
+  border:1px solid #6b5a48;border-radius:2px;
+}
+.lighthouse::after{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:18px;height:22px;
+  background:linear-gradient(180deg,#fbbf24 0%,#f59e0b 100%);
+  border:1px solid #6b5a48;border-radius:4px 4px 0 0;
+  box-shadow:0 0 18px rgba(251,191,36,.6);
+  animation:lighthouseGlow 3s ease-in-out infinite;
+}
+@keyframes lighthouseGlow{0%,100%{box-shadow:0 0 8px rgba(251,191,36,.4);}50%{box-shadow:0 0 24px rgba(251,191,36,.9);}}
+
+/* Boat in bay */
+.boat{position:absolute;bottom:24%;left:75%;font-size:18px;z-index:2;animation:boatRock 6s ease-in-out infinite;}
+@keyframes boatRock{0%,100%{transform:rotate(-2deg);}50%{transform:rotate(2deg);}}
+
+/* Bird */
+.bird{position:absolute;top:80px;font-size:18px;z-index:2;animation:birdFly 18s linear infinite;}
+.bird-1{animation-delay:0s;}
+.bird-2{animation-delay:9s;top:50px;}
+@keyframes birdFly{0%{left:-30px;transform:translateY(0);}50%{left:50%;transform:translateY(-10px);}100%{left:110%;transform:translateY(0);}}
+
+/* ═══ CONDITIONS RIBBON ═══ */
+.cond-bar{
+  position:absolute;top:14px;left:14px;right:14px;z-index:5;
+  background:rgba(10,37,64,.85);backdrop-filter:blur(8px);
+  color:var(--sand);padding:10px 16px;border-radius:30px;
+  display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+  font-size:11px;font-weight:600;letter-spacing:.04em;
+  border:1px solid rgba(245,237,214,.18);
+}
+.cond-bar-i{display:flex;align-items:center;gap:6px;}
+.cond-bar-i strong{color:#fff;}
+.cond-bar-i .em{color:var(--coral);font-family:var(--display);font-weight:700;}
+
+/* ═══ BUILDING STATS OVERLAY ═══ */
+.bldg-stats{
+  position:absolute;top:60px;right:20px;z-index:5;
+  display:flex;flex-direction:column;gap:8px;
+}
+.bldg-stat-card{
+  background:rgba(255,255,255,.92);backdrop-filter:blur(10px);
+  border-radius:12px;padding:10px 14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.15);
+  font-size:11px;font-weight:600;color:var(--ocean);
+  min-width:130px;
+}
+[data-theme="dark"] .bldg-stat-card{background:rgba(20,40,60,.92);color:var(--sand);}
+.bldg-stat-card .lbl{font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:var(--txt3);font-weight:700;margin-bottom:2px;}
+.bldg-stat-card .v{font-family:var(--display);font-size:16px;font-weight:700;color:var(--coral);line-height:1;}
 /* Sky decoration */
 .bldg-sun{position:absolute;top:24px;right:36px;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle,#fef3c7 0%,#fbbf24 70%,transparent);opacity:.85;}
 .bldg-cloud{position:absolute;background:rgba(255,255,255,.7);border-radius:30px;}
@@ -292,6 +381,59 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 .apt-w.maint{background:linear-gradient(180deg,#fde68a 0%,#f59e0b 100%);}
 /* Inner "light" effect when occupied */
 .apt-w.occupied::before{box-shadow:0 0 12px rgba(255,200,100,.3);background:rgba(107,90,72,.7);}
+.apt-w.occupied{
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.4),inset 0 -6px 12px rgba(0,0,0,.08),0 0 18px rgba(251,191,36,.35);
+}
+
+/* Guest count badge on apartment */
+.apt-w-guests{
+  position:absolute;top:4px;right:4px;z-index:4;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
+  color:#fff;font-size:9px;font-weight:700;
+  padding:2px 6px;border-radius:10px;
+  display:flex;align-items:center;gap:3px;
+  border:1px solid rgba(255,255,255,.3);
+  cursor:pointer;transition:all .15s;
+}
+.apt-w-guests:hover{background:var(--coral);transform:scale(1.1);}
+
+/* Days remaining */
+.apt-w-days{
+  position:absolute;top:4px;left:4px;z-index:4;
+  background:rgba(255,94,58,.85);color:#fff;font-size:8px;font-weight:700;
+  padding:2px 5px;border-radius:8px;letter-spacing:.04em;
+}
+
+/* Surf flag (for surf guests) */
+.apt-w-surf{position:absolute;bottom:36px;right:-2px;font-size:11px;z-index:4;animation:flagWave 2s ease-in-out infinite;}
+@keyframes flagWave{0%,100%{transform:rotate(-8deg);}50%{transform:rotate(8deg);}}
+
+/* Plant on balcony */
+.apt-w-plant{position:absolute;bottom:-2px;right:6px;font-size:10px;z-index:5;}
+
+/* Cleaning icon overlay */
+.apt-w-icon{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:18px;z-index:3;opacity:.7;animation:iconSpin 4s ease-in-out infinite;
+}
+@keyframes iconSpin{0%,100%{transform:translate(-50%,-50%) rotate(-10deg);}50%{transform:translate(-50%,-50%) rotate(10deg);}}
+
+/* Rich tooltip on hover */
+.apt-w[data-tip]:hover::before{
+  content:attr(data-tip);
+  position:absolute;bottom:calc(100% + 12px);left:50%;transform:translateX(-50%);
+  background:var(--ocean);color:var(--sand);padding:8px 12px;border-radius:8px;
+  font-size:11px;font-weight:600;white-space:nowrap;z-index:50;
+  box-shadow:0 6px 14px rgba(0,0,0,.25);pointer-events:none;
+  width:auto;height:auto;border:none;
+  background-image:none;
+}
+
+/* Night mode lighting */
+.apt-w.occupied.night{
+  background:linear-gradient(180deg,#fde68a 0%,#f59e0b 100%);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.5),0 0 28px rgba(251,191,36,.7);
+}
 
 /* Number badge inside the window */
 .apt-w-n{
@@ -1203,17 +1345,28 @@ function quickAdd(){openModal('+ Nueva reserva',`
 
 // ════════════ DATA ════════════
 const APTS=[
-  {n:1,name:'Apto 1',rooms:1,state:'occupied'},{n:2,name:'Apto 2',rooms:2,state:'occupied'},
-  {n:3,name:'Apto 3',rooms:2,state:'occupied'},{n:4,name:'Apto 4',rooms:1,state:'cleaning'},
-  {n:5,name:'Apto 5',rooms:3,state:'occupied'},{n:6,name:'Apto 6',rooms:2,state:'occupied'},
-  {n:7,name:'Apto 7',rooms:2,state:'occupied'},{n:8,name:'Apto 8',rooms:1,state:'maint'},
-  {n:9,name:'Apto 9',rooms:2,state:'occupied'},{n:10,name:'Apto 10',rooms:3,state:'occupied'},
-  {n:11,name:'Apto 11',rooms:2,state:'free'},{n:12,name:'Apto 12',rooms:2,state:'occupied'},
-  {n:13,name:'Apto 13',rooms:1,state:'occupied'},{n:14,name:'Apto 14',rooms:3,state:'occupied'},
-  {n:15,name:'Apto 15',rooms:2,state:'occupied'},{n:16,name:'Apto 16',rooms:2,state:'occupied'},
-  {n:17,name:'Apto 17',rooms:1,state:'free'},{n:18,name:'Apto 18',rooms:2,state:'cleaning'},
-  {n:19,name:'Apto 19',rooms:2,state:'occupied'},{n:20,name:'Apto 20',rooms:3,state:'occupied'},
-  {n:21,name:'Apto 21',rooms:2,state:'free'},{n:22,name:'Apto 22',rooms:2,state:'free'},
+  {n:1,name:'Apto 1',rooms:1,state:'occupied',guests:['M. Riba'],days:2,surf:true},
+  {n:2,name:'Apto 2',rooms:2,state:'occupied',guests:['H. Vidal','J. Vidal'],days:4,surf:true},
+  {n:3,name:'Apto 3',rooms:2,state:'occupied',guests:['A. Berasaluce','Pareja'],days:6},
+  {n:4,name:'Apto 4',rooms:1,state:'cleaning',guests:[]},
+  {n:5,name:'Apto 5',rooms:3,state:'occupied',guests:['J. Vega','+2 pax'],days:5,surf:true,vip:true},
+  {n:6,name:'Apto 6',rooms:2,state:'occupied',guests:['Pereira','+1 pax'],days:3},
+  {n:7,name:'Apto 7',rooms:2,state:'occupied',guests:['D. Pérez','+2 pax'],days:7,surf:true},
+  {n:8,name:'Apto 8',rooms:1,state:'maint',guests:[]},
+  {n:9,name:'Apto 9',rooms:2,state:'occupied',guests:['P. Lacroix','S. Lacroix'],days:1},
+  {n:10,name:'Apto 10',rooms:3,state:'occupied',guests:['Familia Costa','+3 pax'],days:6,vip:true},
+  {n:11,name:'Apto 11',rooms:2,state:'free',guests:[]},
+  {n:12,name:'Apto 12',rooms:2,state:'occupied',guests:['S. Rivas','+1 pax'],days:4},
+  {n:13,name:'Apto 13',rooms:1,state:'occupied',guests:['L. Mendoza'],days:1,surf:true},
+  {n:14,name:'Apto 14',rooms:3,state:'occupied',guests:['Familia Bauer','+3 pax'],days:6,vip:true,surf:true},
+  {n:15,name:'Apto 15',rooms:2,state:'occupied',guests:['Hartmann','+1 pax'],days:5},
+  {n:16,name:'Apto 16',rooms:2,state:'occupied',guests:['Sancho','+1 pax'],days:4},
+  {n:17,name:'Apto 17',rooms:1,state:'free',guests:[]},
+  {n:18,name:'Apto 18',rooms:2,state:'cleaning',guests:[]},
+  {n:19,name:'Apto 19',rooms:2,state:'occupied',guests:['Y. Möller','+1 pax'],days:3,vip:true},
+  {n:20,name:'Apto 20',rooms:3,state:'occupied',guests:['Jensen','+3 pax'],days:5},
+  {n:21,name:'Apto 21',rooms:2,state:'free',guests:[]},
+  {n:22,name:'Apto 22',rooms:2,state:'free',guests:[]},
 ];
 const APT_STATE_LBL={free:'Libre',occupied:'Ocupado',cleaning:'Limpieza',maint:'Manten.'};
 
@@ -1462,17 +1615,24 @@ function renderAgenda(){
 }
 
 function renderAptMap(){
-  // Building structure:
-  // Ático: 21, 22 (2 apartments, wider)
-  // Planta 4: 17, 18, 19, 20
-  // Planta 3: 13, 14, 15, 16
-  // Planta 2: 9, 10, 11, 12
-  // Planta 1: 5, 6, 7, 8
-  // Planta Baja: 1, 2, 3, 4 (with entrance)
   const stateShort={free:'LIBRE',occupied:'OCUPADO',cleaning:'LIMPIEZA',maint:'MANTEN.'};
+  const hour=new Date().getHours();
+  const isNight=(hour<7||hour>=20);
   const drawApt=(n)=>{
     const a=APTS.find(x=>x.n===n);if(!a)return '';
-    return `<div class="apt-w ${a.state}" onclick="aptDetail(${a.n})" title="Apto ${a.n} · ${APT_STATE_LBL[a.state]}">
+    const guestCount=a.guests.length;
+    const guestsLbl=a.guests.length?a.guests.join(' · '):'Libre';
+    const tip=`Apto ${a.n} · ${a.rooms}h · ${guestsLbl}${a.days?' · '+a.days+'d':''}`;
+    let extra='';
+    if(a.state==='occupied'){
+      extra+=`<div class="apt-w-days">${a.days}d</div>`;
+      extra+=`<div class="apt-w-guests" onclick="event.stopPropagation();editGuests(${a.n})" title="Editar huéspedes">👤 ${guestCount}</div>`;
+      if(a.surf)extra+=`<div class="apt-w-surf" title="Cliente surf">🏄</div>`;
+      if(a.vip)extra+=`<div class="apt-w-plant" title="VIP">🌿</div>`;
+    } else if(a.state==='cleaning') extra+=`<div class="apt-w-icon">🧹</div>`;
+    else if(a.state==='maint') extra+=`<div class="apt-w-icon">🔧</div>`;
+    return `<div class="apt-w ${a.state} ${isNight&&a.state==='occupied'?'night':''}" onclick="aptDetail(${a.n})" data-tip="${tip}">
+      ${extra}
       <div class="apt-w-n">${a.n}</div>
       <div class="apt-w-s">${stateShort[a.state]}</div>
       <div class="apt-w-balcony"></div>
@@ -1483,13 +1643,44 @@ function renderAptMap(){
       <div class="bldg-floor-lbl">${label}</div>
       ${nums.map(drawApt).join('')}
     </div>`;
+
+  // Stats
+  const occ=APTS.filter(a=>a.state==='occupied').length;
+  const free=APTS.filter(a=>a.state==='free').length;
+  const totalGuests=APTS.reduce((a,x)=>a+x.guests.length,0);
+  const totalRev=APTS.filter(a=>a.state==='occupied').reduce((a,x)=>a+(x.rooms===1?105:x.rooms===2?138:165),0);
+
   document.getElementById('apt-map').outerHTML=`
     <div class="bldg-wrap" id="apt-map">
+      <!-- Conditions ribbon (real-time surf) -->
+      <div class="cond-bar">
+        <div class="cond-bar-i">🌊 <span>Olas</span> <strong class="em">1.4m</strong></div>
+        <div class="cond-bar-i">💨 <span>Viento</span> <strong>NE 12km/h</strong></div>
+        <div class="cond-bar-i">🌡 <span>Agua</span> <strong>17°C</strong></div>
+        <div class="cond-bar-i">☀️ <span>Cielo</span> <strong>Despejado</strong></div>
+        <div class="cond-bar-i">🌅 <span>Marea</span> <strong>Sube · 14:32</strong></div>
+      </div>
+
+      <!-- Birds -->
+      <div class="bird bird-1">🕊️</div>
+      <div class="bird bird-2">🐦</div>
+
+      <!-- Sky scene -->
       <div class="bldg-sun"></div>
       <div class="bldg-cloud bldg-cloud-1"></div>
       <div class="bldg-cloud bldg-cloud-2"></div>
-      <div class="bldg-palm bldg-palm-1">🌴</div>
-      <div class="bldg-palm bldg-palm-2">🌴</div>
+
+      <!-- Stats overlay -->
+      <div class="bldg-stats">
+        <div class="bldg-stat-card"><div class="lbl">Ocupación</div><div class="v">${Math.round(occ/22*100)}%</div></div>
+        <div class="bldg-stat-card"><div class="lbl">Huéspedes hoy</div><div class="v">${totalGuests}</div></div>
+        <div class="bldg-stat-card"><div class="lbl">Ingresos · día</div><div class="v">€${totalRev.toLocaleString('es-ES')}</div></div>
+      </div>
+
+      <!-- Mountains (Picos de Europa silhouette) -->
+      <div class="scene-mountain"></div>
+
+      <!-- Building -->
       <div class="bldg">
         <div class="bldg-roof"><div class="bldg-chimney"></div></div>
         <div class="bldg-body">
@@ -1507,7 +1698,50 @@ function renderAptMap(){
           <div class="bldg-sign" style="padding:10px;"><div>Av. F. Giner de los Ríos · 46</div></div>
         </div>
       </div>
+
+      <!-- Sea + scene below -->
+      <div class="scene-sea">
+        <div class="wave wave-1"></div>
+        <div class="wave wave-2"></div>
+        <div class="wave wave-3"></div>
+        <div class="wave wave-4"></div>
+        <div class="wave wave-5"></div>
+        <div class="surfer surfer-1">🏄</div>
+        <div class="surfer surfer-2">🏄‍♀️</div>
+        <div class="surfer surfer-3">🏄</div>
+        <div class="boat">⛵</div>
+      </div>
+      <!-- Lighthouse San Vicente -->
+      <div class="lighthouse"></div>
+
+      <!-- Palms on top of everything -->
+      <div class="bldg-palm bldg-palm-1" style="z-index:3;">🌴</div>
+      <div class="bldg-palm bldg-palm-2" style="z-index:3;">🌴</div>
     </div>`;
+}
+
+function editGuests(n){
+  const a=APTS.find(x=>x.n===n);
+  openModal('Editar huéspedes · Apto '+n,`
+    <p style="font-size:12px;color:var(--txt2);margin-bottom:14px;">${a.guests.length} huésped${a.guests.length>1?'es':''} actualmente en este apartamento.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;" id="guest-list">
+      ${a.guests.map((g,i)=>`<div style="display:flex;gap:8px;align-items:center;"><input value="${g}" id="guest-${i}" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);"><button class="btn btn-ghost" onclick="this.parentNode.remove()" style="padding:6px 10px;">×</button></div>`).join('')}
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:10px;" onclick="const d=document.createElement('div');d.style.cssText='display:flex;gap:8px;align-items:center;';d.innerHTML='<input placeholder=&quot;Nuevo huésped&quot; style=&quot;flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);&quot;><button class=&quot;btn btn-ghost&quot; onclick=&quot;this.parentNode.remove()&quot; style=&quot;padding:6px 10px;&quot;>×</button>';document.getElementById('guest-list').appendChild(d);">+ Añadir huésped</button>
+    <div style="margin-top:16px;background:rgba(255,94,58,.06);border:1px dashed var(--coral);padding:10px 14px;border-radius:8px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--coral);">Tip:</strong> Si añades nombre y email, el bot generará automáticamente las instrucciones de check-in para cada huésped.</div>
+    <div style="display:flex;gap:8px;margin-top:18px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveGuests(${n})">Guardar</button>
+    </div>
+  `);
+}
+function saveGuests(n){
+  const a=APTS.find(x=>x.n===n);
+  const inputs=document.querySelectorAll('#guest-list input');
+  a.guests=Array.from(inputs).map(i=>i.value).filter(v=>v.trim());
+  toast('✓ '+a.guests.length+' huéspedes guardados');
+  closeModal();
+  renderAptMap();
 }
 function aptDetail(n){
   const a=APTS.find(x=>x.n===n);
