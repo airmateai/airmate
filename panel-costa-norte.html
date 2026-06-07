@@ -970,7 +970,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       <div class="page-hd">
         <div><h1>Mapa de <em>apartamentos</em></h1><div class="page-sub">22 unidades · clic para ver detalle</div></div>
         <div class="page-hd-actions">
-          <button class="btn btn-ghost" onclick="toast('Sincronizando con Airbnb...')">🔄 Sync</button>
+          <button class="btn btn-ghost" onclick="toast('Vista actualizada')">🔄 Actualizar</button>
           <button class="btn btn-primary" onclick="quickAdd()">+ Nueva reserva</button>
         </div>
       </div>
@@ -1006,10 +1006,8 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
         </div>
       </div>
       <div class="src-legend">
-        <div class="src-legend-i direct">Directa</div>
-        <div class="src-legend-i airbnb">Airbnb</div>
-        <div class="src-legend-i booking">Booking.com</div>
-        <div class="src-legend-i blocked">Bloqueado</div>
+        <div class="src-legend-i direct">Reserva</div>
+        <div class="src-legend-i blocked">Limpieza / Mantenimiento</div>
       </div>
       <div class="card">
         <div class="cal-wrap"><div class="cal" id="cal-grid"></div></div>
@@ -1023,7 +1021,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
         <div class="page-hd-actions"><button class="btn btn-primary" onclick="quickAdd()">+ Reserva</button></div>
       </div>
       <div class="tabs"><button class="tab active">Todas</button><button class="tab">Hoy</button><button class="tab">Próximos 7 días</button><button class="tab">Pendientes pago</button></div>
-      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Apto</th><th>Cliente</th><th>Entrada</th><th>Salida</th><th>Noches</th><th>Canal</th><th>Total</th><th>Estado</th></tr></thead><tbody id="apt-res-tbody"></tbody></table></div></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Apto</th><th>Cliente</th><th>Entrada</th><th>Salida</th><th>Noches</th><th>Total</th><th>Estado</th></tr></thead><tbody id="apt-res-tbody"></tbody></table></div></div>
     </div>
 
     <!-- ════════════ LIMPIEZA ════════════ -->
@@ -1052,7 +1050,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
           <button class="btn btn-ghost">‹ Semana</button>
           <button class="btn btn-ghost">Hoy</button>
           <button class="btn btn-ghost">Semana ›</button>
-          <button class="btn btn-primary" onclick="quickAdd()">+ Nueva clase</button>
+          <button class="btn btn-primary" onclick="newClass(0,'10:00')">+ Nueva clase</button>
         </div>
       </div>
       <div class="kpi-grid">
@@ -1987,6 +1985,35 @@ function fActions(saveLabel,saveFn,deleteFn){
   </div>`;
 }
 
+function newReservation(aptN,date){
+  openModal('+ Nueva reserva · Apto '+aptN+' · '+date,`
+    ${fLbl('Cliente')}${fInp('nr-name','','text','Nombre completo')}
+    ${fRow(fLbl('Teléfono')+fInp('nr-phone','','tel','+34 6...'), fLbl('Email')+fInp('nr-email','','email','opcional'))}
+    ${fRow(fLbl('Check-in')+fInp('nr-in',date,'date'), fLbl('Check-out')+fInp('nr-out','','date'))}
+    ${fLbl('Nº huéspedes')}${fInp('nr-pax',2,'number')}
+    ${fLbl('Notas')}${fTxt('nr-notes','','2','Alergias, preferencias, hora estimada de llegada...')}
+    <div style="background:rgba(255,94,58,.06);border:1px dashed var(--coral);padding:10px 14px;border-radius:8px;margin-top:14px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--coral);">Bot IA:</strong> Si añades email, el bot enviará confirmación + instrucciones check-in 24h antes.</div>
+    ${fActions('Crear reserva','createReservation('+aptN+')')}
+  `);
+}
+function createReservation(aptN){
+  const a=APTS.find(x=>x.n===aptN);
+  const name=document.getElementById('nr-name').value.trim();
+  if(!name){toast('Pon nombre del cliente');return;}
+  a.state='occupied';
+  a.guests=[name];
+  const pax=+document.getElementById('nr-pax').value;
+  if(pax>1)a.guests.push('+'+(pax-1)+' pax');
+  a.checkIn=document.getElementById('nr-in').value;
+  a.checkOut=document.getElementById('nr-out').value;
+  a.notes=document.getElementById('nr-notes').value;
+  if(a.checkIn&&a.checkOut){
+    a.days=Math.max(1,Math.round((new Date(a.checkOut)-new Date(a.checkIn))/(1000*60*60*24)));
+  }
+  toast('✓ Reserva creada · Apto '+aptN);
+  closeModal();renderAptMap();renderCal();renderAptRes();
+}
+
 function aptDetail(n){
   const a=APTS.find(x=>x.n===n);
   if(!a.checkIn)a.checkIn=new Date().toISOString().slice(0,10);
@@ -2108,19 +2135,17 @@ function renderCal(){
     const dow=d.getDay();const isToday=i===0;const isWk=dow===0||dow===6;
     html+=`<div class="cal-h ${isToday?'today':''} ${isWk?'weekend':''}">${d.getDate()}<br>${['D','L','M','X','J','V','S'][dow]}</div>`;
   }
-  // Per-apartment sample channels (kept for visual variety)
-  const channelByApt={1:'direct',2:'airbnb',3:'direct',4:'blocked',5:'direct',6:'booking',7:'direct',8:'blocked',9:'direct',10:'airbnb',11:'direct',12:'airbnb',13:'direct',14:'direct',15:'airbnb',16:'direct',17:'direct',18:'blocked',19:'airbnb',20:'booking',21:'direct',22:'direct'};
-  // Future reservations per apartment (sample, for visual completeness)
+  // All reservations are direct (CRM only, no integrations)
   const futureRes={
     7:[{start:18,len:5,name:'Möller',src:'direct'}],
-    14:[{start:14,len:6,name:'Costa',src:'airbnb'}],
-    19:[{start:10,len:6,name:'Eriksson',src:'airbnb'}],
-    5:[{start:15,len:5,name:'Sancho',src:'airbnb'}],
-    3:[{start:10,len:7,name:'Jensen',src:'booking'}],
+    14:[{start:14,len:6,name:'Costa',src:'direct'}],
+    19:[{start:10,len:6,name:'Eriksson',src:'direct'}],
+    5:[{start:15,len:5,name:'Sancho',src:'direct'}],
+    3:[{start:10,len:7,name:'Jensen',src:'direct'}],
     9:[{start:8,len:5,name:'Riba',src:'direct'}],
     1:[{start:7,len:4,name:'Vega',src:'direct'}],
     11:[{start:5,len:4,name:'Reservas web',src:'direct'}],
-    21:[{start:8,len:6,name:'Pereira',src:'booking'}],
+    21:[{start:8,len:6,name:'Pereira',src:'direct'}],
   };
   APTS.slice(0,12).forEach((a)=>{
     html+=`<div class="cal-row-h">Apto ${a.n}<em>${a.rooms}h</em></div>`;
@@ -2131,8 +2156,7 @@ function renderCal(){
       const checkInDay=a.checkIn?Math.max(0,Math.round((new Date(a.checkIn)-today)/(1000*60*60*24))):0;
       const checkOutDay=a.checkOut?Math.round((new Date(a.checkOut)-today)/(1000*60*60*24)):(a.days||5);
       const len=Math.max(1,checkOutDay-checkInDay);
-      const src=channelByApt[a.n]||'direct';
-      books.push({start:checkInDay,len:len,name:name,src:src});
+      books.push({start:checkInDay,len:len,name:name,src:'direct'});
     } else if(a.state==='cleaning'){
       books.push({start:0,len:1,name:'Limpieza',src:'blocked'});
     } else if(a.state==='maint'){
@@ -2145,7 +2169,8 @@ function renderCal(){
       const dow=(today.getDay()+i)%7;const isToday=i===0;const isWk=dow===0||dow===6;
       let bookHtml='';
       books.forEach(b=>{if(b.start===i){bookHtml+=`<div class="cal-book ${b.src}" style="width:calc(${b.len*100}% + ${b.len-1}px);" onclick="event.stopPropagation();aptDetail(${a.n})">${b.name}</div>`;}});
-      html+=`<div class="cal-cell ${isToday?'today':''} ${isWk?'weekend':''}">${bookHtml}</div>`;
+      const cellDate=new Date(today);cellDate.setDate(today.getDate()+i);
+      html+=`<div class="cal-cell ${isToday?'today':''} ${isWk?'weekend':''}" onclick="newReservation(${a.n},'${cellDate.toISOString().slice(0,10)}')">${bookHtml}</div>`;
     }
   });
   document.getElementById('cal-grid').innerHTML=html;
@@ -2153,22 +2178,21 @@ function renderCal(){
 
 function renderAptRes(){
   const res=[
-    {apt:7,c:'Daniel Pérez',in:'12 Jul',out:'19 Jul',nights:7,ch:'WhatsApp IA',total:1015,s:'Confirmada',sc:'ok'},
-    {apt:14,c:'Familia Bauer',in:'Hoy',out:'14 Jun',nights:7,ch:'Directa',total:1155,s:'Check-in OK',sc:'ok'},
-    {apt:19,c:'Yannick Möller',in:'Hoy',out:'12 Jun',nights:5,ch:'Airbnb',total:725,s:'Check-in OK',sc:'ok'},
-    {apt:21,c:'Reem Al Mansoori',in:'Mañana',out:'13 Jun',nights:3,ch:'Booking.com',total:540,s:'Pendiente pago',sc:'warn'},
-    {apt:3,c:'Ainhoa Berasaluce',in:'10 Jun',out:'17 Jun',nights:7,ch:'Directa',total:1015,s:'Pendiente pago',sc:'warn'},
-    {apt:12,c:'Sofía Rivas',in:'15 Jun',out:'19 Jun',nights:4,ch:'Airbnb',total:480,s:'Confirmada',sc:'ok'},
-    {apt:5,c:'Jaime Vega',in:'20 Jun',out:'27 Jun',nights:7,ch:'Directa',total:1015,s:'Confirmada',sc:'ok'},
-    {apt:8,c:'(Mantenimiento)',in:'Hoy',out:'9 Jun',nights:2,ch:'Bloqueo',total:0,s:'Bloqueado',sc:'info'}
+    {apt:7,c:'Daniel Pérez',in:'12 Jul',out:'19 Jul',nights:7,total:1015,s:'Confirmada',sc:'ok'},
+    {apt:14,c:'Familia Bauer',in:'Hoy',out:'14 Jun',nights:7,total:1155,s:'Check-in OK',sc:'ok'},
+    {apt:19,c:'Yannick Möller',in:'Hoy',out:'12 Jun',nights:5,total:725,s:'Check-in OK',sc:'ok'},
+    {apt:21,c:'Reem Al Mansoori',in:'Mañana',out:'13 Jun',nights:3,total:540,s:'Pendiente pago',sc:'warn'},
+    {apt:3,c:'Ainhoa Berasaluce',in:'10 Jun',out:'17 Jun',nights:7,total:1015,s:'Pendiente pago',sc:'warn'},
+    {apt:12,c:'Sofía Rivas',in:'15 Jun',out:'19 Jun',nights:4,total:480,s:'Confirmada',sc:'ok'},
+    {apt:5,c:'Jaime Vega',in:'20 Jun',out:'27 Jun',nights:7,total:1015,s:'Confirmada',sc:'ok'},
+    {apt:8,c:'(Mantenimiento)',in:'Hoy',out:'9 Jun',nights:2,total:0,s:'Bloqueado',sc:'info'}
   ];
-  document.getElementById('apt-res-tbody').innerHTML=res.map(r=>`<tr>
+  document.getElementById('apt-res-tbody').innerHTML=res.map(r=>`<tr onclick="aptDetail(${r.apt})">
     <td><strong>Apto ${r.apt}</strong></td>
     <td>${r.c}</td>
     <td>${r.in}</td>
     <td>${r.out}</td>
     <td>${r.nights}</td>
-    <td><span class="tag tag-${r.ch==='Airbnb'?'coral':r.ch==='Booking.com'?'ocean':r.ch.includes('IA')?'info':'ok'}">${r.ch}</span></td>
     <td><strong>${fmt(r.total)}</strong></td>
     <td><span class="tag tag-${r.sc}">${r.s}</span></td>
   </tr>`).join('');
@@ -2294,13 +2318,52 @@ function renderClasses(){
     html+=`<div class="sched-time">${h}</div>`;
     for(let d=0;d<7;d++){
       const c=grid[d+'-'+h];
-      html+=`<div class="sched-cell">${c?`<div class="sched-class ${c.cls}" onclick="toast('Clase: ${c.t}')"><strong>${c.t.split('·')[0]}</strong>${c.i} · ${c.n}/${c.m}</div>`:''}</div>`;
+      if(c){
+        html+=`<div class="sched-cell"><div class="sched-class ${c.cls}" onclick="editClass(${d},'${h}','${c.t}','${c.i}',${c.n},${c.m})"><strong>${c.t.split('·')[0]}</strong>${c.i} · ${c.n}/${c.m}</div></div>`;
+      } else {
+        html+=`<div class="sched-cell" onclick="newClass(${d},'${h}')" style="cursor:pointer;"></div>`;
+      }
     }
   });
   document.getElementById('sched-grid').innerHTML=html;
   const monday=new Date(today);monday.setDate(today.getDate()-dow);
   const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
   document.getElementById('week-range').textContent=monday.getDate()+' — '+sunday.getDate()+' '+sunday.toLocaleDateString('es-ES',{month:'long'});
+}
+
+const DAYS_ES=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+function newClass(dow,hour){
+  openModal('+ Nueva clase · '+(DAYS_ES[dow]||'')+' '+(hour||''),`
+    ${fRow(fLbl('Día')+fSel('cls-d',DAYS_ES[dow]||'Lunes',DAYS_ES), fLbl('Hora')+fInp('cls-h',hour||'10:00','time'))}
+    ${fRow(fLbl('Tipo')+fSel('cls-t','Grupal · Iniciación',['Grupal · Iniciación','Grupal · Intermedio','Grupal · Avanzado','Privada','SUP','Camp grupal','Familia']), fLbl('Instructor')+fSel('cls-i','David',INSTRUCTORS.map(x=>x.name.split(' ')[0])))}
+    ${fRow(fLbl('Plazas')+fInp('cls-m',10,'number'), fLbl('Duración (min)')+fInp('cls-dur',60,'number'))}
+    ${fLbl('Notas')}${fTxt('cls-notes','','2','Material adicional, peticiones especiales...')}
+    <div style="background:rgba(255,94,58,.06);border:1px dashed var(--coral);padding:10px 14px;border-radius:8px;margin-top:14px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--coral);">Bot IA:</strong> Esta clase aparecerá automáticamente disponible en la web. El bot la ofrecerá cuando alguien pida reserva.</div>
+    ${fActions('Crear clase','saveNewClass()')}
+  `);
+}
+function saveNewClass(){
+  toast('✓ Clase creada '+document.getElementById('cls-d').value+' '+document.getElementById('cls-h').value);
+  closeModal();
+}
+function editClass(d,h,t,instr,n,m){
+  openModal('Clase · '+(DAYS_ES[d]||'')+' '+h,`
+    ${fRow(fLbl('Día')+fSel('ce-d',DAYS_ES[d],DAYS_ES), fLbl('Hora')+fInp('ce-h',h,'time'))}
+    ${fRow(fLbl('Tipo')+fInp('ce-t',t), fLbl('Instructor')+fSel('ce-i',instr,INSTRUCTORS.map(x=>x.name.split(' ')[0])))}
+    ${fRow(fLbl('Alumnos inscritos')+fInp('ce-n',n,'number'), fLbl('Plazas')+fInp('ce-m',m,'number'))}
+
+    <div style="background:var(--bg);padding:14px;border-radius:10px;margin-top:14px;">
+      <div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:10px;">Alumnos en la clase</div>
+      ${(['Marc Riba','Helena Vidal','Familia Bauer','+'+Math.max(0,n-3)+' más'].slice(0,Math.min(n,4))).map(name=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px;"><span>👤 ${name}</span><button onclick="toast('Quitado: ${name}')" style="background:none;border:none;color:var(--coral);cursor:pointer;font-size:14px;">×</button></div>`).join('')}
+      <button class="btn btn-ghost" style="width:100%;margin-top:8px;font-size:11px;">+ Añadir alumno</button>
+    </div>
+
+    <div style="display:flex;gap:6px;margin-top:14px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('📣 Notificación enviada a alumnos');">📣 Notificar</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('❌ Clase cancelada');closeModal();">Cancelar clase</button>
+    </div>
+    ${fActions('Guardar','toast(\'✓ Clase guardada\');closeModal();')}
+  `);
 }
 
 function renderStudents(){
@@ -2590,7 +2653,7 @@ function editClient(i){
 
     ${fLbl('Nombre completo')}${fInp('cl-name',c.name)}
     ${fRow(fLbl('Teléfono')+fInp('cl-phone',c.phone,'tel'), fLbl('Email')+fInp('cl-email',c.email,'email'))}
-    ${fLbl('Origen / Cómo nos conoció')}${fSel('cl-src',c.src,['Apartamento','Surf','Tienda','Apt + Surf','Web directo','Recomendación','Instagram','Google','Airbnb','Booking.com'])}
+    ${fLbl('Origen / Cómo nos conoció')}${fSel('cl-src',c.src,['Apartamento','Surf','Tienda','Apt + Surf','Web directo','Recomendación','Instagram','Google','WhatsApp','Llamada'])}
     ${fLbl('Notas')}${fTxt('cl-notes',c.notes||'','2','Alergias, preferencias, próxima visita prevista...')}
 
     <div style="margin-top:14px;">
@@ -2797,41 +2860,23 @@ function saveMember(i){
 }
 function deleteMember(i){if(confirm('¿Eliminar miembro?')){TEAM.splice(i,1);toast('Eliminado');closeModal();renderTeam();}}
 
-let INTEGRATIONS=[
-  {n:'Airbnb',d:'Sincronización iCal bidireccional · 22 apartamentos',on:true,i:'🏠'},
-  {n:'Booking.com',d:'Reservas + tarifas automáticas',on:true,i:'🌐'},
-  {n:'Stripe',d:'Pasarela pagos · 1.4% fee',on:true,i:'💳'},
-  {n:'Mailchimp',d:'Newsletter automática post-estancia',on:true,i:'✉'},
-  {n:'WhatsApp Business',d:'Agente IA 24/7 · ES + EN',on:true,i:'💬'},
-  {n:'Google Calendar',d:'Sync clases + reservas en tu calendario',on:true,i:'📅'},
-  {n:'Verifactu / AEAT',d:'Factura electrónica obligatoria 2026',on:false,i:'📋'},
-  {n:'Instagram DM',d:'Bot responde mensajes IG en automático',on:true,i:'📷'},
-  {n:'TPV Stripe Terminal',d:'Lector tarjeta físico inalámbrico',on:false,i:'🖨'},
-  {n:'Vrbo / HomeAway',d:'Sync iCal apartamentos',on:false,i:'🏖'},
-  {n:'Spotahome',d:'Estancias largas',on:false,i:'🛏'},
-];
 function renderSettings(){
-  document.getElementById('integrations-list').innerHTML=INTEGRATIONS.map((it,i)=>`
-    <div onclick="toggleInt(${i})" style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border2);cursor:pointer;transition:background .12s;" onmouseover="this.style.background='rgba(255,94,58,.04)'" onmouseout="this.style.background=''">
-      <div style="display:flex;gap:10px;align-items:center;">
-        <div style="font-size:22px;">${it.i}</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;color:var(--txt);">${it.n}</div>
-          <div style="font-size:11px;color:var(--txt3);">${it.d}</div>
+  document.getElementById('integrations-list').innerHTML=`
+    <div style="padding:14px;background:rgba(45,186,138,.08);border:1px solid var(--leaf);border-radius:10px;display:flex;gap:12px;align-items:flex-start;">
+      <div style="font-size:22px;">🤖</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px;">Widget IA · Tu agente 24/7</div>
+        <div style="font-size:11px;color:var(--txt3);line-height:1.5;">El chatbot embebido en escueladesurfcostanorte.com responde reservas de apartamentos, clases y packs en automático. Conectado al panel: lo que vende el bot aparece aquí.</div>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:8px;">
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--leaf);"><span style="width:8px;height:8px;background:var(--leaf);border-radius:50%;"></span>ACTIVO</div>
+          <span style="color:var(--txt3);">·</span>
+          <span style="font-size:11px;color:var(--txt3);">ES + EN · responde en &lt; 1 min</span>
         </div>
       </div>
-      <label style="display:flex;align-items:center;cursor:pointer;" onclick="event.stopPropagation();">
-        <div style="position:relative;width:38px;height:22px;background:${it.on?'var(--leaf)':'var(--border)'};border-radius:11px;transition:all .2s;">
-          <div style="position:absolute;top:2px;left:${it.on?'18px':'2px'};width:18px;height:18px;background:#fff;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,.18);transition:left .2s;"></div>
-        </div>
-        <input type="checkbox" ${it.on?'checked':''} onclick="toggleInt(${i});event.stopPropagation();" style="display:none;">
-      </label>
-    </div>`).join('');
-}
-function toggleInt(i){
-  INTEGRATIONS[i].on=!INTEGRATIONS[i].on;
-  toast(INTEGRATIONS[i].on?'✓ '+INTEGRATIONS[i].n+' conectado':INTEGRATIONS[i].n+' desconectado');
-  renderSettings();
+    </div>
+    <div style="text-align:center;padding:20px 0;color:var(--txt3);font-size:12px;font-style:italic;">
+      Este panel funciona de forma autónoma. No requiere conexión con servicios externos.
+    </div>`;
 }
 
 // init when login
