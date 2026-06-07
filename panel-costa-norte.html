@@ -1005,6 +1005,14 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
           <button class="btn btn-primary" onclick="quickAdd()">+ Reserva</button>
         </div>
       </div>
+      <!-- TODAY summary -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="kpi"><div class="kpi-lbl">Llegan hoy</div><div class="kpi-val" id="today-checkin">0</div><div class="kpi-trend" id="today-checkin-l">huéspedes nuevos</div></div>
+        <div class="kpi"><div class="kpi-lbl">Salen hoy</div><div class="kpi-val" id="today-checkout">0</div><div class="kpi-trend" id="today-checkout-l">apartamentos liberados</div></div>
+        <div class="kpi"><div class="kpi-lbl">Estancia media</div><div class="kpi-val" id="avg-stay">5,2</div><div class="kpi-trend">noches por reserva</div></div>
+        <div class="kpi"><div class="kpi-lbl">Próximas 7 días</div><div class="kpi-val" id="next-week">12</div><div class="kpi-trend up">+€8,420</div></div>
+      </div>
+
       <div class="src-legend">
         <div class="src-legend-i direct">Reserva</div>
         <div class="src-legend-i blocked">Limpieza / Mantenimiento</div>
@@ -1059,9 +1067,31 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
         <div class="kpi"><div class="kpi-lbl">Ocupación clases</div><div class="kpi-val">86%</div><div class="kpi-trend up">+4 pts</div></div>
         <div class="kpi"><div class="kpi-lbl">Bonos vendidos</div><div class="kpi-val">23</div><div class="kpi-trend up">€3,250</div></div>
       </div>
+
+      <!-- Surf conditions today -->
+      <div class="card" style="background:linear-gradient(135deg,#1d5a7d,#3a8db5);color:#fff;border:none;">
+        <div style="padding:18px 22px;display:grid;grid-template-columns:1fr repeat(5,auto);gap:24px;align-items:center;">
+          <div>
+            <div style="font-family:var(--display);font-size:16px;font-weight:700;color:#fff;">🌊 Condiciones de hoy</div>
+            <div style="font-size:11px;color:rgba(245,237,214,.7);letter-spacing:.04em;margin-top:2px;">Playa de Oyambre · San Vicente de la Barquera</div>
+          </div>
+          <div style="text-align:center;"><div style="font-family:var(--display);font-size:24px;font-weight:700;color:#fff;">1.4m</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Olas</div></div>
+          <div style="text-align:center;"><div style="font-family:var(--display);font-size:24px;font-weight:700;color:#fff;">NE 12</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Viento km/h</div></div>
+          <div style="text-align:center;"><div style="font-family:var(--display);font-size:24px;font-weight:700;color:#fff;">17°C</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Agua</div></div>
+          <div style="text-align:center;"><div style="font-family:var(--display);font-size:24px;font-weight:700;color:#fff;">14:32</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Marea sube</div></div>
+          <div style="text-align:center;"><div style="font-family:var(--display);font-size:24px;font-weight:700;color:#22c55e;">★★★★</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Condiciones</div></div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-hd"><div class="card-hd-title">Vista semanal</div><span class="card-hd-meta" id="week-range"></span></div>
         <div class="card-body"><div class="sched-grid" id="sched-grid"></div></div>
+      </div>
+
+      <!-- Today's classes attendance -->
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Clases de hoy · check-in</div><span class="card-hd-meta">7 clases</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Hora</th><th>Tipo</th><th>Instructor</th><th>Inscritos</th><th>Asistencia</th><th>Acción</th></tr></thead><tbody id="classes-today-tbody"></tbody></table></div>
       </div>
     </div>
 
@@ -1106,8 +1136,20 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
     <div id="page-shop" class="page">
       <div class="page-hd">
         <div><h1>TPV · <em>Surf Shop</em></h1><div class="page-sub">Punto de venta · cobro rápido</div></div>
-        <div class="page-hd-actions"><button class="btn btn-ghost" onclick="posClear()">Vaciar carrito</button></div>
+        <div class="page-hd-actions">
+          <button class="btn btn-ghost" onclick="posClear()">Vaciar</button>
+          <button class="btn btn-ghost" onclick="dailyClose()">🔒 Cierre del día</button>
+        </div>
       </div>
+
+      <!-- TPV mini KPIs -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px;">
+        <div class="kpi" style="padding:14px;"><div class="kpi-lbl">Ventas hoy</div><div class="kpi-val" style="font-size:22px;">€480</div></div>
+        <div class="kpi" style="padding:14px;"><div class="kpi-lbl">Tickets</div><div class="kpi-val" style="font-size:22px;">12</div></div>
+        <div class="kpi" style="padding:14px;"><div class="kpi-lbl">Ticket medio</div><div class="kpi-val" style="font-size:22px;">€40</div></div>
+        <div class="kpi" style="padding:14px;"><div class="kpi-lbl">Top producto</div><div class="kpi-val" style="font-size:14px;font-weight:600;">Crema EQ</div></div>
+      </div>
+
       <div class="pos-wrap">
         <div class="card" style="margin-bottom:0;">
           <div class="card-hd"><div class="card-hd-title">Catálogo</div><input style="border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;background:var(--surface);color:var(--txt);width:200px;" placeholder="Buscar producto..." oninput="posFilter(this.value)"></div>
@@ -1115,9 +1157,26 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
         </div>
         <div class="pos-cart">
           <div class="pos-cart-h">Ticket actual</div>
+
+          <!-- Customer assign -->
+          <div style="background:rgba(255,255,255,.05);padding:8px 12px;border-radius:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;font-size:11px;cursor:pointer;" onclick="assignCustomer()">
+            <span style="color:rgba(245,237,214,.7);">Cliente:</span>
+            <strong id="pos-customer" style="color:var(--sand);">Sin asignar →</strong>
+          </div>
+
+          <!-- Discount field -->
+          <div style="background:rgba(255,255,255,.05);padding:8px 12px;border-radius:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;font-size:11px;">
+            <span style="color:rgba(245,237,214,.7);">Descuento:</span>
+            <div style="display:flex;gap:4px;">
+              <input type="number" id="pos-disc" value="0" min="0" max="50" onchange="posDraw()" style="width:42px;padding:3px 6px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:#fff;font-size:11px;text-align:right;">
+              <span style="color:rgba(245,237,214,.7);align-self:center;">%</span>
+            </div>
+          </div>
+
           <div class="pos-cart-list" id="pos-cart"></div>
           <div class="pos-totals">
             <div>Subtotal <strong id="pos-sub">€0</strong></div>
+            <div id="pos-disc-row" style="display:none;">Descuento <strong id="pos-disc-v" style="color:var(--coral);">-€0</strong></div>
             <div>IVA 21% <strong id="pos-vat">€0</strong></div>
             <div class="grand"><div>Total <strong id="pos-total">€0</strong></div></div>
           </div>
@@ -2147,7 +2206,7 @@ function renderCal(){
     11:[{start:5,len:4,name:'Reservas web',src:'direct'}],
     21:[{start:8,len:6,name:'Pereira',src:'direct'}],
   };
-  APTS.slice(0,12).forEach((a)=>{
+  APTS.forEach((a)=>{
     html+=`<div class="cal-row-h">Apto ${a.n}<em>${a.rooms}h</em></div>`;
     // Compute current booking from apartment state + checkIn/checkOut
     const books=[];
@@ -2174,6 +2233,15 @@ function renderCal(){
     }
   });
   document.getElementById('cal-grid').innerHTML=html;
+  // Today summary stats
+  const todayStr=today.toISOString().slice(0,10);
+  const arrivals=APTS.filter(a=>a.checkIn===todayStr&&a.state==='occupied').length;
+  const departures=APTS.filter(a=>a.checkOut===todayStr).length;
+  const occupiedSt=APTS.filter(a=>a.state==='occupied');
+  const avgStay=occupiedSt.length?(occupiedSt.reduce((a,x)=>a+(x.days||5),0)/occupiedSt.length).toFixed(1).replace('.',','):'5,2';
+  const tcin=document.getElementById('today-checkin');if(tcin)tcin.textContent=arrivals;
+  const tcout=document.getElementById('today-checkout');if(tcout)tcout.textContent=departures;
+  const av=document.getElementById('avg-stay');if(av)av.textContent=avgStay;
 }
 
 function renderAptRes(){
@@ -2329,7 +2397,59 @@ function renderClasses(){
   const monday=new Date(today);monday.setDate(today.getDate()-dow);
   const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
   document.getElementById('week-range').textContent=monday.getDate()+' — '+sunday.getDate()+' '+sunday.toLocaleDateString('es-ES',{month:'long'});
+
+  // Today's classes table
+  const tb=document.getElementById('classes-today-tbody');
+  if(tb)tb.innerHTML=CLASSES.map((c,i)=>{
+    const attended=c.attended||0;
+    return `<tr>
+      <td><strong>${c.time}</strong></td>
+      <td><span class="tag tag-${c.type==='Privada'?'coral':c.type==='SUP'?'info':'ok'}">${c.type}</span></td>
+      <td>${c.instr}</td>
+      <td>${c.students}</td>
+      <td><div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;"><div style="height:100%;background:${attended===c.students?'var(--leaf)':attended>0?'var(--warn)':'var(--coral)'};width:${(attended/c.students)*100}%"></div></div><strong style="font-size:11px;">${attended}/${c.students}</strong></div></td>
+      <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="checkinClass(${i})">📝 Check-in</button></td>
+    </tr>`;
+  }).join('');
 }
+
+function checkinClass(i){
+  const c=CLASSES[i];
+  if(!c.attended)c.attended=0;
+  const fakeStudents=['Marc Riba','Helena Vidal','Familia Bauer','Pierre Lacroix','Lola Mendoza','Jaime Vega','Sofía Rivas','Ainhoa B.','Tom Bauer'].slice(0,c.students);
+  if(!c.checkedIn)c.checkedIn=new Array(c.students).fill(false);
+  openModal('Check-in · '+c.time+' · '+c.type,`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding:12px;background:var(--bg);border-radius:8px;">
+      <div>
+        <div style="font-family:var(--display);font-size:15px;font-weight:600;">${c.instr} · ${c.level}</div>
+        <div style="font-size:11px;color:var(--txt3);">Material asignado · 8 tablas soft · 8 neoprenos 3/2</div>
+      </div>
+      <div style="text-align:right;"><div style="font-family:var(--display);font-size:24px;font-weight:700;color:var(--coral);" id="ckCount">${c.checkedIn.filter(x=>x).length}/${c.students}</div><div style="font-size:9px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Presentes</div></div>
+    </div>
+    <div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:10px;">Alumnos · marca presentes</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${fakeStudents.map((s,si)=>`
+        <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:${c.checkedIn[si]?'rgba(45,186,138,.1)':'var(--bg)'};border:1px solid ${c.checkedIn[si]?'var(--leaf)':'var(--border)'};border-radius:8px;cursor:pointer;transition:all .15s;">
+          <input type="checkbox" data-ck="${si}" ${c.checkedIn[si]?'checked':''} onchange="toggleCk(${i},${si},this.checked)" style="width:18px;height:18px;accent-color:var(--leaf);">
+          <span style="flex:1;font-weight:600;font-size:13px;">${s}</span>
+          ${c.checkedIn[si]?'<span class="tag tag-ok">Presente</span>':'<span style="font-size:11px;color:var(--txt3);">Pendiente</span>'}
+        </label>`).join('')}
+    </div>
+    <div style="display:flex;gap:6px;margin-top:14px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('📲 SMS enviado a ausentes')">📲 Recordar ausentes</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="markAll(${i})">✓ Marcar todos</button>
+    </div>
+    ${fActions('Cerrar check-in','closeCk('+i+')')}
+  `);
+}
+function toggleCk(i,si,v){
+  CLASSES[i].checkedIn[si]=v;
+  const cnt=CLASSES[i].checkedIn.filter(x=>x).length;
+  document.getElementById('ckCount').textContent=cnt+'/'+CLASSES[i].students;
+  CLASSES[i].attended=cnt;
+}
+function markAll(i){CLASSES[i].checkedIn.fill(true);CLASSES[i].attended=CLASSES[i].students;checkinClass(i);}
+function closeCk(i){toast('✓ Check-in cerrado · '+CLASSES[i].attended+'/'+CLASSES[i].students+' presentes');closeModal();renderClasses();}
 
 const DAYS_ES=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 function newClass(dow,hour){
@@ -2367,14 +2487,19 @@ function editClass(d,h,t,instr,n,m){
 }
 
 function renderStudents(){
-  document.getElementById('students-tbody').innerHTML=STUDENTS.map((s,i)=>`<tr onclick="editStudent(${i})">
-    <td><strong>${s.name}</strong></td>
-    <td><span class="tag tag-${s.level==='Avanzado'?'coral':s.level==='Intermedio'?'info':s.level==='SUP'?'ocean':'ok'}">${s.level}</span></td>
-    <td>${s.pack}</td>
-    <td><strong>${s.left}</strong></td>
-    <td>${s.next}</td>
-    <td><strong>${fmt(s.spent)}</strong></td>
-  </tr>`).join('');
+  const lowBonos=STUDENTS.filter(s=>s.left<=2).length;
+  document.getElementById('students-tbody').innerHTML=STUDENTS.map((s,i)=>{
+    const lowAlert=s.left===0;
+    const warnAlert=s.left>0&&s.left<=2;
+    return `<tr onclick="editStudent(${i})" ${lowAlert?'style="background:rgba(255,94,58,.04)"':warnAlert?'style="background:rgba(245,158,11,.04)"':''}>
+      <td><strong>${s.name}</strong></td>
+      <td><span class="tag tag-${s.level==='Avanzado'?'coral':s.level==='Intermedio'?'info':s.level==='SUP'?'ocean':'ok'}">${s.level}</span></td>
+      <td>${s.pack}</td>
+      <td><strong style="${lowAlert?'color:var(--coral)':warnAlert?'color:var(--warn)':''}">${s.left}</strong> ${lowAlert?'<span class="tag tag-coral" style="margin-left:4px;">⚠ Renovar</span>':warnAlert?'<span class="tag tag-warn" style="margin-left:4px;">Pocas</span>':''}</td>
+      <td>${s.next}</td>
+      <td><strong>${fmt(s.spent)}</strong></td>
+    </tr>`;
+  }).join('');
 }
 function editStudent(i){
   const s=STUDENTS[i];
@@ -2542,22 +2667,129 @@ function posAdd(idx){
   if(ex)ex.qty++;else POS_CART.push({idx,name:p.name,price:p.price,qty:1});
   posDraw();
 }
+let POS_CUSTOMER=null;
 function posDraw(){
   const cart=document.getElementById('pos-cart');
   if(!POS_CART.length){cart.innerHTML='<div style="text-align:center;padding:24px 0;color:rgba(245,237,214,.5);font-size:12px;font-style:italic;">Carrito vacío · pulsa producto para añadir</div>';}
   else cart.innerHTML=POS_CART.map((c,i)=>`<div class="pos-cart-item"><div><strong>${c.name}</strong><em>${c.qty} × ${fmt(c.price)}</em></div><div class="price">${fmt(c.price*c.qty)}</div><button onclick="POS_CART.splice(${i},1);posDraw()">×</button></div>`).join('');
-  const sub=POS_CART.reduce((a,c)=>a+c.price*c.qty,0);
-  const vat=sub*0.21/1.21;
-  document.getElementById('pos-sub').textContent=fmt(sub-vat);
+  const grossTotal=POS_CART.reduce((a,c)=>a+c.price*c.qty,0);
+  const discInp=document.getElementById('pos-disc');
+  const discPct=discInp?+discInp.value:0;
+  const discAmt=grossTotal*discPct/100;
+  const total=grossTotal-discAmt;
+  const sub=total/1.21;
+  const vat=total-sub;
+  document.getElementById('pos-sub').textContent=fmt(sub);
   document.getElementById('pos-vat').textContent=fmt(vat);
-  document.getElementById('pos-total').textContent=fmt(sub);
+  document.getElementById('pos-total').textContent=fmt(total);
+  const drow=document.getElementById('pos-disc-row');
+  if(drow){drow.style.display=discAmt>0?'flex':'none';
+    const dv=document.getElementById('pos-disc-v');if(dv)dv.textContent='-'+fmt(discAmt);}
 }
-function posClear(){POS_CART=[];posDraw();toast('Carrito vaciado');}
+function assignCustomer(){
+  const list=CLIENTS.map((c,i)=>`<div style="padding:11px 14px;background:var(--bg);border-radius:8px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="setCustomer(${i})"><div><strong style="font-size:13px;">${c.name}</strong><div style="font-size:11px;color:var(--txt3);">${c.src}</div></div><div style="font-family:var(--display);font-size:14px;font-weight:700;color:var(--coral);">${fmt(c.ltv)}</div></div>`).join('');
+  openModal('Asignar cliente al ticket',`
+    <input placeholder="Buscar cliente..." oninput="filterCustList(this.value)" style="width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;margin-bottom:12px;">
+    <div id="cust-list" style="max-height:400px;overflow-y:auto;">${list}</div>
+    <div style="margin-top:14px;padding:12px;background:rgba(255,94,58,.06);border:1px dashed var(--coral);border-radius:8px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--coral);">VIP:</strong> Si el cliente es VIP se aplica 10% descuento automático.</div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="setCustomer(-1)">Sin cliente</button>
+      <button class="btn btn-primary" style="flex:1" onclick="closeModal()">+ Nuevo cliente</button>
+    </div>
+  `);
+}
+function setCustomer(i){
+  if(i===-1){POS_CUSTOMER=null;document.getElementById('pos-customer').textContent='Sin asignar →';}
+  else{
+    POS_CUSTOMER=CLIENTS[i];
+    document.getElementById('pos-customer').textContent=POS_CUSTOMER.name+' →';
+    if(POS_CUSTOMER.tags.includes('VIP')){document.getElementById('pos-disc').value=10;posDraw();toast('VIP · 10% aplicado');}
+  }
+  closeModal();
+}
+function filterCustList(q){
+  const list=CLIENTS.filter(c=>!q||c.name.toLowerCase().includes(q.toLowerCase())).map((c,i)=>`<div style="padding:11px 14px;background:var(--bg);border-radius:8px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="setCustomer(${CLIENTS.indexOf(c)})"><div><strong style="font-size:13px;">${c.name}</strong><div style="font-size:11px;color:var(--txt3);">${c.src}</div></div><div style="font-family:var(--display);font-size:14px;font-weight:700;color:var(--coral);">${fmt(c.ltv)}</div></div>`).join('');
+  document.getElementById('cust-list').innerHTML=list||'<div style="text-align:center;padding:24px;color:var(--txt3);font-style:italic;">Sin resultados</div>';
+}
+
+function posClear(){POS_CART=[];POS_CUSTOMER=null;const dc=document.getElementById('pos-disc');if(dc)dc.value=0;const pc=document.getElementById('pos-customer');if(pc)pc.textContent='Sin asignar →';posDraw();toast('Carrito vaciado');}
+
 function posPay(m){
   if(!POS_CART.length){toast('Carrito vacío');return;}
-  const total=POS_CART.reduce((a,c)=>a+c.price*c.qty,0);
-  toast('✓ Cobrado '+fmt(total)+' · '+m);
-  POS_CART=[];posDraw();
+  const grossTotal=POS_CART.reduce((a,c)=>a+c.price*c.qty,0);
+  const discPct=+document.getElementById('pos-disc').value||0;
+  const discAmt=grossTotal*discPct/100;
+  const total=grossTotal-discAmt;
+  const sub=total/1.21;
+  const vat=total-sub;
+  const num='TKT-'+Math.floor(Math.random()*9000+1000);
+  const items=POS_CART.slice();
+  const customer=POS_CUSTOMER;
+
+  openModal('Ticket '+num+' · '+m,`
+    <div style="background:#fff;border:1px dashed var(--border);padding:24px;border-radius:8px;margin-bottom:14px;font-family:'Courier New',monospace;color:#1d1418;">
+      <div style="text-align:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px dashed #ccc;">
+        <div style="font-family:var(--display);font-size:16px;font-weight:700;">COSTA NORTE</div>
+        <div style="font-size:10px;letter-spacing:.2em;margin-top:2px;">SURF SHOP · CANTABRIA</div>
+        <div style="font-size:10px;color:#666;margin-top:4px;">CIF B-39XXXXXX · Av. F. Giner de los Ríos 46</div>
+      </div>
+      <div style="font-size:11px;display:flex;justify-content:space-between;margin-bottom:10px;">
+        <span>${new Date().toLocaleString('es-ES')}</span>
+        <span><strong>${num}</strong></span>
+      </div>
+      ${customer?`<div style="font-size:11px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px dotted #ccc;">Cliente: <strong>${customer.name}</strong></div>`:''}
+      <div style="font-size:11px;">
+        ${items.map(it=>`<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>${it.qty} × ${it.name}</span><strong>${fmt(it.price*it.qty)}</strong></div>`).join('')}
+      </div>
+      <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #ccc;font-size:11px;">
+        <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>Subtotal</span><span>${fmt(sub)}</span></div>
+        ${discAmt>0?`<div style="display:flex;justify-content:space-between;padding:2px 0;color:#e0492a;"><span>Descuento ${discPct}%</span><span>-${fmt(discAmt)}</span></div>`:''}
+        <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>IVA 21%</span><span>${fmt(vat)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0 4px;margin-top:6px;border-top:1px solid #000;font-family:var(--display);font-size:18px;font-weight:700;"><span>TOTAL</span><span>${fmt(total)}</span></div>
+      </div>
+      <div style="text-align:center;margin-top:14px;font-size:10px;color:#666;letter-spacing:.18em;text-transform:uppercase;">Forma de pago: ${m}</div>
+      <div style="text-align:center;margin-top:14px;font-size:10px;color:#666;font-style:italic;">¡Gracias por tu compra! 🌊</div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('🖨 Imprimiendo...')">🖨 Imprimir</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('💬 WhatsApp enviado')">💬 WhatsApp</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('✉ Email enviado')">✉ Email</button>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="closeModal()">Cerrar y nuevo ticket</button>
+  `);
+  POS_CART=[];POS_CUSTOMER=null;
+  const dc=document.getElementById('pos-disc');if(dc)dc.value=0;
+  const pc=document.getElementById('pos-customer');if(pc)pc.textContent='Sin asignar →';
+  posDraw();
+}
+
+function dailyClose(){
+  openModal('Cierre del día',`
+    <div style="text-align:center;padding:14px;margin-bottom:14px;background:linear-gradient(135deg,var(--ocean),var(--ocean-dk));color:var(--sand);border-radius:10px;">
+      <div style="font-size:10px;letter-spacing:.32em;color:var(--coral);text-transform:uppercase;font-weight:700;">Resumen del día</div>
+      <div style="font-family:var(--display);font-size:38px;font-weight:700;color:#fff;line-height:1;margin-top:8px;">€480</div>
+      <div style="font-size:11px;color:rgba(245,237,214,.7);margin-top:4px;">12 tickets · 38 productos vendidos</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div style="padding:12px;background:var(--bg);border-radius:8px;text-align:center;"><div style="font-family:var(--display);font-size:18px;font-weight:700;color:var(--ocean);">€280</div><div style="font-size:9px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-top:2px;">Tarjeta</div></div>
+      <div style="padding:12px;background:var(--bg);border-radius:8px;text-align:center;"><div style="font-family:var(--display);font-size:18px;font-weight:700;color:var(--leaf);">€140</div><div style="font-size:9px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-top:2px;">Efectivo</div></div>
+      <div style="padding:12px;background:var(--bg);border-radius:8px;text-align:center;"><div style="font-family:var(--display);font-size:18px;font-weight:700;color:var(--aqua-dk);">€60</div><div style="font-size:9px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-top:2px;">Bizum</div></div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:8px;">Top 5 productos</div>
+      <div style="font-size:12px;">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border2);"><span>Crema EQ SPF50</span><strong>12 × €14</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border2);"><span>Parafina Sex Wax</span><strong>8 × €3.5</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border2);"><span>Gorra Rip Curl</span><strong>4 × €22</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border2);"><span>Boardshort</span><strong>2 × €55</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;"><span>Camiseta Rip Curl</span><strong>2 × €32</strong></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('📄 Reporte descargado')">📄 PDF</button>
+      <button class="btn btn-primary" style="flex:1" onclick="toast('✓ Caja cerrada · día contabilizado');closeModal();">🔒 Cerrar caja</button>
+    </div>
+  `);
 }
 
 function renderStock(){
