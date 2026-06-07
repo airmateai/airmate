@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>Costa Norte · Panel CRM · Surf Center</title>
+<meta name="theme-color" content="#0a2540">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ocean:#0a2540;
+  --ocean-dk:#061a30;
+  --ocean-mid:#1a3a5c;
+  --sand:#f5edd6;
+  --sand-lt:#fbf6e8;
+  --cream:#ffffff;
+  --coral:#ff5e3a;
+  --coral-dk:#e0492a;
+  --aqua:#5dbdd3;
+  --aqua-dk:#3a9bb5;
+  --leaf:#2dba8a;
+  --warn:#f59e0b;
+  --bg:#f1efe6;
+  --surface:#ffffff;
+  --border:rgba(10,37,64,.12);
+  --border2:rgba(10,37,64,.06);
+  --txt:#0a2540;
+  --txt2:#3a4d63;
+  --txt3:#7a8a9a;
+  --display:'Bricolage Grotesque','Inter',sans-serif;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Inter',-apple-system,sans-serif;
+  --rad:12px;
+}
+[data-theme="dark"]{
+  --bg:#0a1421;
+  --surface:#101e2e;
+  --border:rgba(255,255,255,.1);
+  --border2:rgba(255,255,255,.05);
+  --txt:#e8eef5;
+  --txt2:#a8b6c5;
+  --txt3:#6a7a8a;
+  --sand:#1a2940;
+  --sand-lt:#0e1a2a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+::selection{background:var(--coral);color:#fff;}
+img{max-width:100%;display:block;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+
+/* ════════════ LOGIN ════════════ */
+.login{position:fixed;inset:0;z-index:9999;background:var(--ocean);display:flex;align-items:stretch;justify-content:stretch;overflow:hidden;}
+.login.hidden{display:none;}
+.login-bg{
+  position:absolute;inset:0;
+  background:url('https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=1800&q=85') center/cover;
+  opacity:.35;animation:slowZoom 28s ease-in-out infinite alternate;
+}
+@keyframes slowZoom{0%{transform:scale(1.04);}100%{transform:scale(1.14);}}
+.login-veil{position:absolute;inset:0;background:linear-gradient(135deg,rgba(10,37,64,.85),rgba(6,26,48,.75));}
+.login-card{
+  position:relative;z-index:2;margin:auto;max-width:440px;width:90%;
+  background:rgba(245,237,214,.97);backdrop-filter:blur(8px);
+  border-radius:18px;padding:40px;
+  box-shadow:0 32px 80px rgba(0,0,0,.45);
+}
+.login-mark{
+  width:64px;height:64px;border-radius:50%;
+  background:var(--ocean);display:grid;place-items:center;margin:0 auto 18px;
+  font-family:var(--display);font-weight:700;color:var(--sand);font-size:18px;letter-spacing:.04em;
+}
+.login-name{font-family:var(--display);font-size:28px;font-weight:600;color:var(--ocean);text-align:center;line-height:1.05;}
+.login-name em{font-style:italic;color:var(--coral);font-family:var(--serif);font-weight:500;}
+.login-sub{text-align:center;font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--ocean-mid);font-weight:600;margin-top:6px;margin-bottom:30px;}
+.login-row{margin-bottom:16px;}
+.login-row label{display:block;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--ocean-mid);font-weight:700;margin-bottom:6px;}
+.login-row input{width:100%;padding:13px 16px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:14px;color:var(--ocean);}
+.login-row input:focus{outline:none;border-color:var(--coral);box-shadow:0 0 0 3px rgba(255,94,58,.12);}
+.login-btn{width:100%;padding:14px;background:var(--ocean);color:var(--sand);font-size:12px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;border-radius:10px;cursor:pointer;transition:all .2s;margin-top:10px;}
+.login-btn:hover{background:var(--ocean-dk);}
+.login-foot{margin-top:20px;font-size:10px;letter-spacing:.18em;color:var(--ocean-mid);text-align:center;font-weight:600;text-transform:uppercase;opacity:.6;}
+
+/* ════════════ APP SHELL ════════════ */
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+
+/* SIDEBAR */
+.sb{
+  position:sticky;top:0;align-self:start;height:100vh;
+  background:var(--ocean);color:var(--sand);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.sb-brand{padding:22px 24px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-logo{width:38px;height:38px;border-radius:50%;background:var(--coral);color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:13px;}
+.sb-name{font-family:var(--display);font-size:16px;font-weight:600;color:#fff;letter-spacing:-.01em;line-height:1.1;}
+.sb-name span{display:block;font-family:var(--sans);font-size:9px;font-weight:600;color:rgba(245,237,214,.55);letter-spacing:.18em;text-transform:uppercase;margin-top:2px;}
+.sb-nav{flex:1;overflow-y:auto;padding:12px 12px 80px;}
+.sb-section{padding:14px 12px 6px;font-size:9px;letter-spacing:.24em;color:rgba(245,237,214,.5);font-weight:700;text-transform:uppercase;}
+.nav-item{
+  width:100%;padding:10px 12px;border-radius:8px;
+  display:flex;align-items:center;gap:10px;
+  color:rgba(245,237,214,.78);font-size:13px;font-weight:500;
+  transition:all .15s;text-align:left;margin-bottom:1px;
+  border-left:2px solid transparent;
+}
+.nav-item:hover{background:rgba(255,255,255,.05);color:#fff;}
+.nav-item.active{background:rgba(255,94,58,.14);color:var(--coral);border-left-color:var(--coral);}
+.nav-item svg{width:16px;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:var(--coral);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:.04em;}
+.sb-foot{padding:14px;border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.15);}
+.sb-user{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.sb-user-av{width:32px;height:32px;border-radius:50%;background:var(--coral);color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px;}
+.sb-user-name{font-size:12px;color:#fff;font-weight:600;}
+.sb-user-role{font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.55);text-transform:uppercase;font-weight:600;}
+.theme-toggle{width:100%;background:rgba(255,255,255,.05);color:rgba(245,237,214,.7);font-size:10px;letter-spacing:.18em;text-transform:uppercase;font-weight:600;padding:8px;border-radius:6px;cursor:pointer;}
+.theme-toggle:hover{background:rgba(255,255,255,.1);color:#fff;}
+
+/* MAIN */
+.main{position:relative;background:var(--bg);}
+.topbar{
+  position:sticky;top:0;z-index:30;background:rgba(241,239,230,.95);backdrop-filter:blur(10px);
+  padding:14px 24px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+[data-theme="dark"] .topbar{background:rgba(10,20,33,.95);}
+.tb-title{font-family:var(--display);font-size:20px;font-weight:600;color:var(--ocean);}
+[data-theme="dark"] .tb-title{color:var(--sand);}
+.tb-right{display:flex;align-items:center;gap:8px;}
+.tb-btn{padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;color:var(--txt2);background:var(--surface);transition:all .15s;display:flex;align-items:center;gap:6px;}
+.tb-btn:hover{border-color:var(--coral);color:var(--coral);}
+.tb-btn svg{width:13px;}
+.tb-search{
+  display:flex;align-items:center;gap:8px;background:var(--surface);
+  border:1px solid var(--border);border-radius:8px;padding:8px 12px;
+  font-size:12px;color:var(--txt3);min-width:200px;cursor:pointer;
+}
+.tb-search:hover{border-color:var(--coral);}
+.tb-search kbd{font-family:monospace;font-size:10px;background:var(--border2);padding:2px 5px;border-radius:4px;color:var(--txt2);margin-left:auto;}
+.lang-pill{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.lang-pill button{padding:6px 10px;font-size:10px;font-weight:700;color:var(--txt3);}
+.lang-pill button.active{background:var(--ocean);color:var(--sand);}
+
+/* PAGES */
+.page{display:none;padding:24px;}
+.page.active{display:block;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+.page-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;gap:16px;flex-wrap:wrap;}
+.page-hd h1{font-family:var(--display);font-size:28px;font-weight:600;color:var(--txt);letter-spacing:-.01em;line-height:1.1;}
+.page-hd h1 em{font-family:var(--serif);font-style:italic;color:var(--coral);font-weight:500;}
+.page-sub{font-size:12px;color:var(--txt3);margin-top:4px;letter-spacing:.04em;}
+.page-hd-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+.btn{padding:9px 16px;border-radius:8px;font-size:12px;font-weight:600;letter-spacing:.02em;transition:all .15s;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:var(--coral);color:#fff;}
+.btn-primary:hover{background:var(--coral-dk);}
+.btn-ocean{background:var(--ocean);color:var(--sand);}
+.btn-ocean:hover{background:var(--ocean-dk);}
+.btn-ghost{background:var(--surface);color:var(--txt);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--coral);color:var(--coral);}
+.btn svg{width:14px;}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);padding:18px;}
+.kpi-lbl{font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:6px;}
+.kpi-val{font-family:var(--display);font-size:28px;font-weight:600;color:var(--txt);line-height:1;}
+.kpi-trend{font-size:11px;font-weight:600;margin-top:6px;}
+.kpi-trend.up{color:var(--leaf);}
+.kpi-trend.warn{color:var(--warn);}
+.kpi-trend.down{color:var(--coral);}
+.kpi-spark{display:block;height:24px;margin-top:8px;}
+.kpi-spark path{fill:none;stroke:var(--coral);stroke-width:1.6;}
+.kpi-spark circle{fill:var(--coral);}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);margin-bottom:14px;overflow:hidden;}
+.card-hd{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border2);}
+.card-hd-title{font-family:var(--display);font-size:15px;font-weight:600;color:var(--txt);}
+.card-hd-meta{font-size:10px;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase;font-weight:700;}
+.card-body{padding:18px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:900px){.two-col{grid-template-columns:1fr;}}
+
+/* TABLES */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th,td{padding:11px 18px;text-align:left;border-bottom:1px solid var(--border2);}
+th{font-size:9px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;background:var(--bg);}
+tbody tr{transition:background .12s;}
+tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
+.tag{display:inline-block;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:600;letter-spacing:.02em;}
+.tag-ok{background:rgba(45,186,138,.14);color:var(--leaf);}
+.tag-warn{background:rgba(245,158,11,.14);color:var(--warn);}
+.tag-info{background:rgba(93,189,211,.14);color:var(--aqua-dk);}
+.tag-coral{background:rgba(255,94,58,.14);color:var(--coral);}
+.tag-ocean{background:rgba(10,37,64,.1);color:var(--ocean);}
+
+/* ═══ APARTMENTS MAP ═══ */
+.apt-map{display:grid;grid-template-columns:repeat(11,1fr);gap:8px;margin-top:14px;}
+@media(max-width:1100px){.apt-map{grid-template-columns:repeat(6,1fr);}}
+@media(max-width:680px){.apt-map{grid-template-columns:repeat(4,1fr);}}
+.apt-unit{
+  aspect-ratio:1/1.1;border-radius:10px;border:2px solid transparent;
+  display:flex;flex-direction:column;justify-content:space-between;padding:8px;
+  cursor:pointer;transition:all .15s;font-family:var(--display);
+  background:linear-gradient(135deg,var(--leaf),#1f9d6f);color:#fff;
+  box-shadow:0 4px 10px rgba(45,186,138,.18);
+}
+.apt-unit.occupied{background:linear-gradient(135deg,var(--coral),var(--coral-dk));box-shadow:0 4px 10px rgba(255,94,58,.2);}
+.apt-unit.cleaning{background:linear-gradient(135deg,var(--aqua),var(--aqua-dk));box-shadow:0 4px 10px rgba(93,189,211,.2);}
+.apt-unit.maint{background:linear-gradient(135deg,var(--warn),#d97706);box-shadow:0 4px 10px rgba(245,158,11,.2);}
+.apt-unit:hover{transform:translateY(-3px) scale(1.03);}
+.apt-unit-n{font-size:18px;font-weight:700;}
+.apt-unit-s{font-size:9px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;opacity:.85;}
+.apt-legend{display:flex;gap:18px;margin-top:14px;font-size:11px;color:var(--txt2);flex-wrap:wrap;}
+.apt-legend-i{display:flex;align-items:center;gap:6px;}
+.apt-legend-i::before{content:'';width:12px;height:12px;border-radius:3px;}
+.apt-legend-i.free::before{background:var(--leaf);}
+.apt-legend-i.busy::before{background:var(--coral);}
+.apt-legend-i.cln::before{background:var(--aqua);}
+.apt-legend-i.mnt::before{background:var(--warn);}
+
+/* ═══ CALENDAR GRID (Airbnb-style) ═══ */
+.cal-wrap{overflow-x:auto;}
+.cal{
+  display:grid;grid-template-columns:140px repeat(30,1fr);gap:0;
+  min-width:1400px;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;
+}
+.cal-h{padding:8px 4px;font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;text-align:center;background:var(--bg);border-bottom:1px solid var(--border2);border-right:1px solid var(--border2);}
+.cal-h:first-child{text-align:left;padding-left:14px;letter-spacing:.16em;}
+.cal-h.today{background:rgba(255,94,58,.12);color:var(--coral);}
+.cal-h.weekend{background:rgba(93,189,211,.08);}
+.cal-row-h{padding:10px 14px;font-size:12px;font-weight:600;color:var(--txt);background:var(--bg);border-bottom:1px solid var(--border2);border-right:1px solid var(--border2);display:flex;align-items:center;}
+.cal-row-h em{font-style:normal;color:var(--txt3);font-size:10px;font-weight:600;letter-spacing:.04em;margin-left:8px;}
+.cal-cell{border-bottom:1px solid var(--border2);border-right:1px solid var(--border2);min-height:38px;position:relative;}
+.cal-cell.today{background:rgba(255,94,58,.04);}
+.cal-cell.weekend{background:rgba(93,189,211,.04);}
+.cal-book{
+  position:absolute;top:4px;bottom:4px;left:2px;right:2px;
+  background:linear-gradient(135deg,var(--coral),var(--coral-dk));
+  color:#fff;font-size:10px;font-weight:600;
+  padding:4px 6px;border-radius:4px;cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  box-shadow:0 2px 6px rgba(255,94,58,.25);
+  transition:transform .12s;
+}
+.cal-book:hover{transform:translateY(-1px);}
+.cal-book.airbnb{background:linear-gradient(135deg,#ff5a5f,#e0454a);}
+.cal-book.booking{background:linear-gradient(135deg,#003580,#001f4d);}
+.cal-book.direct{background:linear-gradient(135deg,var(--coral),var(--coral-dk));}
+.cal-book.blocked{background:repeating-linear-gradient(45deg,#94a3b8,#94a3b8 3px,#7a8a9a 3px,#7a8a9a 6px);}
+
+.src-legend{display:flex;gap:14px;margin:10px 0;font-size:11px;color:var(--txt2);}
+.src-legend-i{display:flex;align-items:center;gap:5px;}
+.src-legend-i::before{content:'';width:10px;height:10px;border-radius:3px;}
+.src-legend-i.direct::before{background:var(--coral);}
+.src-legend-i.airbnb::before{background:#ff5a5f;}
+.src-legend-i.booking::before{background:#003580;}
+.src-legend-i.blocked::before{background:#94a3b8;}
+
+/* ═══ SCHEDULE GRID ═══ */
+.sched-grid{display:grid;grid-template-columns:80px repeat(7,1fr);gap:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.sched-h{padding:10px 6px;font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;text-align:center;background:var(--bg);border-bottom:1px solid var(--border2);border-right:1px solid var(--border2);}
+.sched-h.today{color:var(--coral);background:rgba(255,94,58,.08);}
+.sched-time{padding:8px 6px;font-size:10px;font-weight:700;color:var(--txt3);text-align:right;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);min-height:54px;}
+.sched-cell{border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);min-height:54px;padding:3px;}
+.sched-class{
+  background:linear-gradient(135deg,var(--aqua),var(--aqua-dk));color:#fff;
+  font-size:10px;font-weight:600;padding:5px 7px;border-radius:6px;line-height:1.25;cursor:pointer;margin-bottom:2px;
+}
+.sched-class.private{background:linear-gradient(135deg,var(--coral),var(--coral-dk));}
+.sched-class.sup{background:linear-gradient(135deg,#a78bfa,#7c3aed);}
+.sched-class.full{opacity:.6;background:repeating-linear-gradient(45deg,#94a3b8,#94a3b8 3px,#7a8a9a 3px,#7a8a9a 6px);}
+.sched-class strong{display:block;font-size:9px;font-weight:700;}
+
+/* ═══ STOCK GRID ═══ */
+.stk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;}
+.stk-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all .15s;}
+.stk-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(10,37,64,.1);}
+.stk-img{aspect-ratio:1/1;background-size:cover;background-position:center;background-color:var(--sand);}
+.stk-body{padding:12px;}
+.stk-name{font-family:var(--display);font-size:13px;font-weight:600;color:var(--txt);line-height:1.2;margin-bottom:3px;}
+.stk-meta{font-size:10px;color:var(--txt3);letter-spacing:.04em;}
+.stk-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+.stk-stock{font-size:11px;color:var(--leaf);font-weight:700;}
+.stk-stock.low{color:var(--warn);}
+.stk-stock.out{color:var(--coral);}
+.stk-price{font-family:var(--display);font-weight:700;color:var(--coral);font-size:14px;}
+
+/* ═══ POS / TPV ═══ */
+.pos-wrap{display:grid;grid-template-columns:1fr 340px;gap:14px;}
+@media(max-width:1100px){.pos-wrap{grid-template-columns:1fr;}}
+.pos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
+.pos-prod{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all .15s;}
+.pos-prod:hover{border-color:var(--coral);transform:translateY(-2px);}
+.pos-prod-img{aspect-ratio:1/1;background-size:cover;background-position:center;background-color:var(--sand);}
+.pos-prod-body{padding:8px 10px;}
+.pos-prod-name{font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pos-prod-price{font-family:var(--display);font-size:13px;font-weight:700;color:var(--coral);margin-top:2px;}
+.pos-cart{background:var(--ocean);color:var(--sand);border-radius:var(--rad);padding:18px;position:sticky;top:80px;}
+.pos-cart-h{font-family:var(--display);font-size:16px;color:#fff;font-weight:600;margin-bottom:12px;}
+.pos-cart-list{max-height:280px;overflow-y:auto;margin-bottom:10px;}
+.pos-cart-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:12px;gap:8px;}
+.pos-cart-item div{flex:1;min-width:0;}
+.pos-cart-item strong{color:#fff;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:600;}
+.pos-cart-item em{font-style:normal;color:rgba(245,237,214,.6);font-size:10px;}
+.pos-cart-item .price{color:var(--coral);font-family:var(--display);font-weight:700;}
+.pos-cart-item button{background:none;border:none;color:rgba(255,255,255,.4);font-size:16px;cursor:pointer;}
+.pos-totals{padding-top:10px;border-top:1px solid var(--coral);}
+.pos-totals div{display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:rgba(245,237,214,.7);}
+.pos-totals div strong{color:#fff;font-weight:600;}
+.pos-totals .grand{margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.15);}
+.pos-totals .grand div{font-family:var(--display);font-size:20px;color:#fff;font-weight:700;}
+.pos-totals .grand strong{color:var(--coral);}
+.pos-pay{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px;}
+.pos-pay button{padding:10px;background:rgba(255,255,255,.08);border-radius:8px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#fff;font-weight:600;cursor:pointer;transition:all .15s;}
+.pos-pay button:hover{background:rgba(255,255,255,.16);}
+.pos-pay .full{grid-column:1/-1;background:var(--coral);}
+.pos-pay .full:hover{background:var(--coral-dk);}
+
+/* ═══ AI INBOX ═══ */
+.inbox-wrap{display:grid;grid-template-columns:320px 1fr;gap:14px;height:600px;}
+@media(max-width:900px){.inbox-wrap{grid-template-columns:1fr;}}
+.inbox-list{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;}
+.inbox-list-hd{padding:12px 16px;border-bottom:1px solid var(--border2);display:flex;justify-content:space-between;align-items:center;}
+.inbox-list-hd strong{font-family:var(--display);font-size:14px;}
+.inbox-list-hd span{font-size:10px;letter-spacing:.18em;color:var(--coral);text-transform:uppercase;font-weight:700;}
+.inbox-threads{flex:1;overflow-y:auto;}
+.inbox-thread{padding:12px 16px;border-bottom:1px solid var(--border2);cursor:pointer;transition:background .12s;}
+.inbox-thread:hover{background:rgba(255,94,58,.04);}
+.inbox-thread.active{background:rgba(255,94,58,.08);}
+.it-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:3px;}
+.it-name{font-size:12px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.it-when{font-size:9px;color:var(--txt3);letter-spacing:.04em;flex-shrink:0;}
+.it-prev{font-size:11px;color:var(--txt3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.it-tag{display:inline-block;margin-top:5px;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:.04em;}
+
+.inbox-chat{background:var(--surface);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;overflow:hidden;}
+.inbox-chat-hd{padding:14px 18px;border-bottom:1px solid var(--border2);display:flex;justify-content:space-between;align-items:center;}
+.inbox-chat-hd strong{font-family:var(--display);font-size:15px;}
+.inbox-chat-hd em{font-style:normal;font-size:10px;color:var(--txt3);letter-spacing:.18em;text-transform:uppercase;font-weight:700;}
+.inbox-msgs{flex:1;overflow-y:auto;padding:18px;background:var(--bg);display:flex;flex-direction:column;gap:10px;}
+.msg{max-width:75%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.45;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+.msg.client{align-self:flex-start;background:#fff;color:var(--txt);border-bottom-left-radius:4px;}
+.msg.bot,.msg.owner{align-self:flex-end;background:#d9fdd3;color:#0a2540;border-bottom-right-radius:4px;}
+.msg .at{font-size:9px;color:#7a8a9a;text-align:right;margin-top:3px;}
+.msg.bot .at::before{content:'🤖 ';color:var(--coral);}
+.inbox-input{padding:14px;border-top:1px solid var(--border2);display:flex;gap:8px;}
+.inbox-input input{flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;color:var(--txt);}
+.inbox-input input:focus{outline:none;border-color:var(--coral);}
+
+/* ═══ KANBAN ═══ */
+.kan{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+@media(max-width:1100px){.kan{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:680px){.kan{grid-template-columns:1fr;}}
+.kan-col{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;}
+.kan-col-h{display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:2px solid;margin-bottom:10px;}
+.kan-col-h strong{font-family:var(--display);font-size:13px;font-weight:600;}
+.kan-col-h span{font-size:10px;background:var(--bg);padding:3px 8px;border-radius:10px;font-weight:700;}
+.kan-card{background:var(--bg);padding:10px 12px;border-radius:8px;margin-bottom:8px;cursor:pointer;border-left:3px solid;}
+.kan-card:hover{box-shadow:0 4px 10px rgba(0,0,0,.06);}
+.kan-card strong{display:block;font-size:12px;font-weight:600;color:var(--txt);margin-bottom:3px;}
+.kan-card em{font-style:normal;font-size:10px;color:var(--txt3);}
+.kan-card-row{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:11px;}
+.kan-card-row b{color:var(--coral);font-family:var(--display);font-weight:700;}
+
+/* ═══ MISC ═══ */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.tab{padding:8px 14px;border-radius:20px;background:var(--surface);border:1px solid var(--border);font-size:11px;font-weight:600;color:var(--txt2);transition:all .15s;}
+.tab.active{background:var(--ocean);color:var(--sand);border-color:var(--ocean);}
+.tab:hover{border-color:var(--coral);}
+.detail-row{display:grid;grid-template-columns:140px 1fr;gap:14px;padding:9px 0;border-bottom:1px solid var(--border2);font-size:13px;}
+.detail-row b{font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;}
+
+.bar-chart{display:flex;align-items:flex-end;gap:5px;height:120px;padding-bottom:18px;position:relative;}
+.bar-chart .bar{flex:1;background:linear-gradient(180deg,var(--coral),rgba(255,94,58,0));border-radius:3px 3px 0 0;min-height:4px;cursor:pointer;position:relative;transition:filter .15s;}
+.bar-chart .bar:hover{filter:brightness(1.15);}
+.bar-chart .bar-lbl{position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--txt3);font-weight:600;}
+
+/* ═══ MODAL ═══ */
+.modal{position:fixed;inset:0;background:rgba(6,26,48,.65);z-index:9000;display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(6px);}
+.modal.open{display:flex;}
+.modal-box{background:var(--surface);max-width:620px;width:100%;max-height:90vh;border-radius:14px;display:flex;flex-direction:column;overflow:hidden;animation:modalIn .25s cubic-bezier(.2,.9,.3,1.1);}
+@keyframes modalIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:none;}}
+.modal-hd{padding:16px 22px;border-bottom:1px solid var(--border2);display:flex;justify-content:space-between;align-items:center;}
+.modal-hd-t{font-family:var(--display);font-size:18px;font-weight:600;}
+.modal-close{background:none;border:none;font-size:22px;color:var(--txt3);cursor:pointer;}
+.modal-body{padding:22px;overflow-y:auto;flex:1;}
+
+/* ═══ TOAST ═══ */
+.toast-host{position:fixed;top:20px;right:20px;z-index:9500;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--ocean);color:var(--sand);padding:11px 18px;border-radius:8px;font-size:13px;box-shadow:0 10px 30px rgba(0,0,0,.2);min-width:240px;border-left:3px solid var(--coral);animation:tIn .25s cubic-bezier(.2,.9,.3,1.1);}
+@keyframes tIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:none;}}
+
+/* ═══ WIDGET PREVIEW ═══ */
+.wid-preview{background:linear-gradient(135deg,var(--ocean),var(--ocean-dk));border-radius:14px;padding:24px;position:relative;min-height:520px;overflow:hidden;}
+.wid-preview::before{content:'';position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=900&q=85') center/cover;opacity:.15;}
+.wid-frame{position:relative;z-index:2;background:#fff;border-radius:16px;max-width:340px;margin-left:auto;box-shadow:0 24px 60px rgba(0,0,0,.35);overflow:hidden;}
+.wid-frame-h{background:var(--ocean);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;}
+.wid-frame-av{width:36px;height:36px;border-radius:50%;background:var(--coral);color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:12px;}
+.wid-frame-name{font-family:var(--display);font-size:14px;font-weight:600;color:#fff;line-height:1.2;}
+.wid-frame-status{font-size:9px;letter-spacing:.18em;color:var(--leaf);text-transform:uppercase;font-weight:700;display:flex;align-items:center;gap:5px;}
+.wid-frame-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--leaf);}
+.wid-frame-body{padding:16px;background:var(--bg);height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+.wid-msg{max-width:80%;padding:8px 12px;border-radius:12px;font-size:12px;line-height:1.4;}
+.wid-msg.bot{background:#fff;color:var(--txt);border-bottom-left-radius:3px;align-self:flex-start;}
+.wid-msg.user{background:var(--ocean);color:#fff;border-bottom-right-radius:3px;align-self:flex-end;}
+.wid-quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.wid-q{font-size:11px;padding:5px 10px;border:1px solid var(--coral);color:var(--coral);border-radius:14px;cursor:pointer;background:#fff;}
+.wid-frame-foot{padding:10px;border-top:1px solid var(--border2);background:#fff;display:flex;gap:6px;}
+.wid-frame-foot input{flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:18px;font-size:12px;background:var(--bg);}
+.wid-frame-foot button{background:var(--coral);color:#fff;border-radius:50%;width:32px;height:32px;display:grid;place-items:center;font-size:14px;}
+
+.code-block{background:#0a1421;color:#5dbdd3;padding:18px;border-radius:10px;font-family:'Monaco','Menlo',monospace;font-size:11px;line-height:1.6;overflow-x:auto;}
+.code-block .tag{color:#ff5e3a;background:none;padding:0;font-size:11px;font-weight:400;}
+.code-block .attr{color:#e0c995;}
+.code-block .str{color:#a8e1a1;}
+
+/* RESPONSIVE */
+.mob-burger{display:none;}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr;}
+  .sb{position:fixed;top:0;left:-260px;width:240px;transition:left .25s;z-index:100;}
+  .sb.open{left:0;}
+  .mob-burger{display:grid;place-items:center;width:36px;height:36px;border-radius:8px;background:var(--surface);border:1px solid var(--border);font-size:18px;color:var(--ocean);}
+  .tb-search{min-width:140px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════ LOGIN ════════════ -->
+<div class="login" id="login">
+  <div class="login-bg"></div>
+  <div class="login-veil"></div>
+  <div class="login-card">
+    <div class="login-mark">CN</div>
+    <div class="login-name">Costa <em>Norte</em></div>
+    <div class="login-sub">Panel CRM · Surf Center</div>
+    <div class="login-row"><label>Usuario</label><input id="lg-u" value="admin" placeholder="admin"></div>
+    <div class="login-row"><label>Contraseña</label><input id="lg-p" type="password" value="surf2026" placeholder="••••••••"></div>
+    <button class="login-btn" onclick="doLogin()">Entrar al panel</button>
+    <div class="login-foot">San Vicente de la Barquera · Cantabria · 2025</div>
+  </div>
+</div>
+
+<!-- ════════════ APP ════════════ -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sb" id="sb">
+    <div class="sb-brand">
+      <div class="sb-logo">CN</div>
+      <div class="sb-name">Costa Norte<span>Surf Center · Cantabria</span></div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">Operaciones</div>
+      <button class="nav-item active" onclick="go('dashboard',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" onclick="go('agenda',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Agenda del día
+      </button>
+
+      <div class="sb-section">Apartamentos · 22</div>
+      <button class="nav-item" onclick="go('apt-map',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Mapa · Estado
+      </button>
+      <button class="nav-item" onclick="go('apt-cal',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Calendario
+      </button>
+      <button class="nav-item" onclick="go('apt-res',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11H3v10h6V11zM21 3H11v18h10V3zM9 3H3v6h6V3z"/></svg>
+        Reservas
+        <span class="nav-badge">4</span>
+      </button>
+      <button class="nav-item" onclick="go('apt-clean',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><polyline points="9 14 11 16 15 12"/></svg>
+        Limpieza
+      </button>
+      <button class="nav-item" onclick="go('apt-maint',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        Mantenimiento
+      </button>
+
+      <div class="sb-section">Escuela de Surf</div>
+      <button class="nav-item" onclick="go('classes',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        Horario clases
+      </button>
+      <button class="nav-item" onclick="go('students',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Alumnos &amp; bonos
+      </button>
+      <button class="nav-item" onclick="go('packs',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Packs &amp; precios
+      </button>
+      <button class="nav-item" onclick="go('instructors',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
+        Instructores
+      </button>
+
+      <div class="sb-section">Alquiler &amp; Tienda</div>
+      <button class="nav-item" onclick="go('rental',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17s6-6 9-6 9 6 9 6"/><path d="M3 11s6-6 9-6 9 6 9 6"/></svg>
+        Alquileres
+        <span class="nav-badge">8</span>
+      </button>
+      <button class="nav-item" onclick="go('shop',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        TPV Surf Shop
+      </button>
+      <button class="nav-item" onclick="go('stock',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7l-8-4-8 4v10l8 4 8-4V7z"/><path d="M12 11 4 7"/><path d="M12 11l8-4"/><path d="M12 11v10"/></svg>
+        Stock
+      </button>
+
+      <div class="sb-section">Clientes &amp; Finanzas</div>
+      <button class="nav-item" onclick="go('clients',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
+        Clientes
+      </button>
+      <button class="nav-item" onclick="go('invoices',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Facturación
+      </button>
+      <button class="nav-item" onclick="go('reports',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        Informes &amp; IVA
+      </button>
+
+      <div class="sb-section">Comunicación</div>
+      <button class="nav-item" onclick="go('inbox',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+        Bandeja IA
+        <span class="nav-badge">3</span>
+      </button>
+      <button class="nav-item" onclick="go('widget',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Widget Web
+      </button>
+
+      <div class="sb-section">Sistema</div>
+      <button class="nav-item" onclick="go('team',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        Equipo
+      </button>
+      <button class="nav-item" onclick="go('settings',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Ajustes
+      </button>
+    </nav>
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="sb-user-av">RB</div>
+        <div>
+          <div class="sb-user-name">Roberto Bárcena</div>
+          <div class="sb-user-role">Director</div>
+        </div>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()">◐ Modo oscuro</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="mob-burger" onclick="document.getElementById('sb').classList.toggle('open')">☰</button>
+        <div class="tb-title" id="tb-title">Dashboard</div>
+      </div>
+      <div class="tb-right">
+        <div class="tb-search" onclick="toast('Búsqueda · Cmd+K')">
+          <svg width="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          Buscar
+          <kbd>⌘K</kbd>
+        </div>
+        <div class="lang-pill">
+          <button class="active" onclick="setLang('es',this)">ES</button>
+          <button onclick="setLang('en',this)">EN</button>
+        </div>
+        <button class="tb-btn" onclick="toast('3 notificaciones')">🔔 3</button>
+        <button class="tb-btn" onclick="logout()">Salir</button>
+      </div>
+    </div>
+
+    <!-- ════════════ DASHBOARD ════════════ -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-hd">
+        <div>
+          <h1>Hola <em>Roberto</em></h1>
+          <div class="page-sub" id="dash-date"></div>
+        </div>
+        <div class="page-hd-actions">
+          <button class="btn btn-ghost" onclick="go('agenda',null)">Ver agenda completa</button>
+          <button class="btn btn-primary" onclick="quickAdd()">+ Nueva reserva</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid" id="dash-kpis"></div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-hd"><div class="card-hd-title">Ingresos semana</div><span class="card-hd-meta">+18% vs anterior</span></div>
+          <div class="card-body"><div id="dash-chart"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-hd-title">Ocupación apartamentos</div><span class="card-hd-meta">Hoy</span></div>
+          <div class="card-body">
+            <div style="display:flex;justify-content:center;align-items:center;gap:18px;padding:14px 0;">
+              <div style="position:relative;width:120px;height:120px;">
+                <svg viewBox="0 0 36 36" style="width:100%;height:100%;transform:rotate(-90deg);">
+                  <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--border)" stroke-width="3"/>
+                  <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--coral)" stroke-width="3" stroke-dasharray="73 100" stroke-linecap="round"/>
+                </svg>
+                <div style="position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:28px;font-weight:700;color:var(--ocean);">73%</div>
+              </div>
+              <div>
+                <div style="display:flex;gap:14px;font-size:12px;color:var(--txt2);margin-bottom:6px;"><span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:var(--coral);border-radius:2px;"></span>16 ocupados</span></div>
+                <div style="display:flex;gap:14px;font-size:12px;color:var(--txt2);margin-bottom:6px;"><span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:var(--leaf);border-radius:2px;"></span>4 libres</span></div>
+                <div style="display:flex;gap:14px;font-size:12px;color:var(--txt2);"><span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:var(--aqua);border-radius:2px;"></span>2 limpieza</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Clases de hoy</div><span class="card-hd-meta" id="classes-today-count">0 reservas</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Hora</th><th>Tipo</th><th>Instructor</th><th>Alumnos</th><th>Nivel</th><th></th></tr></thead><tbody id="dash-classes"></tbody></table></div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-hd"><div class="card-hd-title">Actividad reciente</div><span class="card-hd-meta">Hoy</span></div>
+          <div class="card-body"><ul id="dash-activity" style="list-style:none;padding:0;"></ul></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-hd-title">Alertas</div><span class="card-hd-meta" style="color:var(--coral)">3 pendientes</span></div>
+          <div class="card-body"><ul id="dash-alerts" style="list-style:none;padding:0;"></ul></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ AGENDA ════════════ -->
+    <div id="page-agenda" class="page">
+      <div class="page-hd">
+        <div><h1>Agenda <em>del día</em></h1><div class="page-sub">Check-ins · clases · alquileres · entregas</div></div>
+        <div class="page-hd-actions">
+          <button class="btn btn-ghost">‹ Anterior</button>
+          <button class="btn btn-ghost">Hoy</button>
+          <button class="btn btn-ghost">Siguiente ›</button>
+        </div>
+      </div>
+      <div class="card"><div class="card-hd"><div class="card-hd-title">Eventos de hoy</div></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Hora</th><th>Tipo</th><th>Cliente / Apto</th><th>Detalle</th><th>Estado</th></tr></thead><tbody id="agenda-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ════════════ APARTAMENTOS · MAPA ════════════ -->
+    <div id="page-apt-map" class="page">
+      <div class="page-hd">
+        <div><h1>Mapa de <em>apartamentos</em></h1><div class="page-sub">22 unidades · clic para ver detalle</div></div>
+        <div class="page-hd-actions">
+          <button class="btn btn-ghost" onclick="toast('Sincronizando con Airbnb...')">🔄 Sync</button>
+          <button class="btn btn-primary" onclick="quickAdd()">+ Nueva reserva</button>
+        </div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-lbl">Ocupación hoy</div><div class="kpi-val">73%</div><div class="kpi-trend up">+12 pts vs ayer</div></div>
+        <div class="kpi"><div class="kpi-lbl">Libres</div><div class="kpi-val">4</div><div class="kpi-trend">21,22,17,11</div></div>
+        <div class="kpi"><div class="kpi-lbl">Check-ins hoy</div><div class="kpi-val">5</div><div class="kpi-trend warn">2 sin contestar</div></div>
+        <div class="kpi"><div class="kpi-lbl">ADR medio</div><div class="kpi-val">€118</div><div class="kpi-trend up">+€8</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Estado actual · 22 apartamentos</div></div>
+        <div class="card-body">
+          <div class="apt-map" id="apt-map"></div>
+          <div class="apt-legend">
+            <div class="apt-legend-i free">Libre</div>
+            <div class="apt-legend-i busy">Ocupado</div>
+            <div class="apt-legend-i cln">Limpieza</div>
+            <div class="apt-legend-i mnt">Mantenimiento</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ APARTAMENTOS · CALENDARIO ════════════ -->
+    <div id="page-apt-cal" class="page">
+      <div class="page-hd">
+        <div><h1>Calendario de <em>reservas</em></h1><div class="page-sub">Vista 30 días · drag & drop</div></div>
+        <div class="page-hd-actions">
+          <button class="btn btn-ghost">‹</button>
+          <button class="btn btn-ghost">Hoy</button>
+          <button class="btn btn-ghost">›</button>
+          <button class="btn btn-primary" onclick="quickAdd()">+ Reserva</button>
+        </div>
+      </div>
+      <div class="src-legend">
+        <div class="src-legend-i direct">Directa</div>
+        <div class="src-legend-i airbnb">Airbnb</div>
+        <div class="src-legend-i booking">Booking.com</div>
+        <div class="src-legend-i blocked">Bloqueado</div>
+      </div>
+      <div class="card">
+        <div class="cal-wrap"><div class="cal" id="cal-grid"></div></div>
+      </div>
+    </div>
+
+    <!-- ════════════ APARTAMENTOS · RESERVAS LIST ════════════ -->
+    <div id="page-apt-res" class="page">
+      <div class="page-hd">
+        <div><h1>Reservas <em>activas</em></h1><div class="page-sub">Próximas 30 días</div></div>
+        <div class="page-hd-actions"><button class="btn btn-primary" onclick="quickAdd()">+ Reserva</button></div>
+      </div>
+      <div class="tabs"><button class="tab active">Todas</button><button class="tab">Hoy</button><button class="tab">Próximos 7 días</button><button class="tab">Pendientes pago</button></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Apto</th><th>Cliente</th><th>Entrada</th><th>Salida</th><th>Noches</th><th>Canal</th><th>Total</th><th>Estado</th></tr></thead><tbody id="apt-res-tbody"></tbody></table></div></div>
+    </div>
+
+    <!-- ════════════ LIMPIEZA ════════════ -->
+    <div id="page-apt-clean" class="page">
+      <div class="page-hd">
+        <div><h1>Plan de <em>limpieza</em></h1><div class="page-sub">Hoy · mañana · pendientes</div></div>
+        <div class="page-hd-actions"><button class="btn btn-primary">+ Asignar tarea</button></div>
+      </div>
+      <div class="kan" id="clean-kan"></div>
+    </div>
+
+    <!-- ════════════ MANTENIMIENTO ════════════ -->
+    <div id="page-apt-maint" class="page">
+      <div class="page-hd">
+        <div><h1>Tickets de <em>mantenimiento</em></h1><div class="page-sub">Incidencias por apartamento</div></div>
+        <div class="page-hd-actions"><button class="btn btn-primary">+ Nuevo ticket</button></div>
+      </div>
+      <div class="kan" id="maint-kan"></div>
+    </div>
+
+    <!-- ════════════ CLASES SURF ════════════ -->
+    <div id="page-classes" class="page">
+      <div class="page-hd">
+        <div><h1>Horario de <em>clases</em></h1><div class="page-sub">Grupales · privadas · SUP</div></div>
+        <div class="page-hd-actions">
+          <button class="btn btn-ghost">‹ Semana</button>
+          <button class="btn btn-ghost">Hoy</button>
+          <button class="btn btn-ghost">Semana ›</button>
+          <button class="btn btn-primary" onclick="quickAdd()">+ Nueva clase</button>
+        </div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-lbl">Clases esta semana</div><div class="kpi-val">38</div><div class="kpi-trend up">+6</div></div>
+        <div class="kpi"><div class="kpi-lbl">Alumnos esta semana</div><div class="kpi-val">142</div><div class="kpi-trend up">+18</div></div>
+        <div class="kpi"><div class="kpi-lbl">Ocupación clases</div><div class="kpi-val">86%</div><div class="kpi-trend up">+4 pts</div></div>
+        <div class="kpi"><div class="kpi-lbl">Bonos vendidos</div><div class="kpi-val">23</div><div class="kpi-trend up">€3,250</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Vista semanal</div><span class="card-hd-meta" id="week-range"></span></div>
+        <div class="card-body"><div class="sched-grid" id="sched-grid"></div></div>
+      </div>
+    </div>
+
+    <!-- ════════════ ALUMNOS ════════════ -->
+    <div id="page-students" class="page">
+      <div class="page-hd">
+        <div><h1>Alumnos &amp; <em>bonos</em></h1><div class="page-sub">Saldos · niveles · histórico</div></div>
+        <div class="page-hd-actions"><button class="btn btn-primary">+ Nuevo alumno</button></div>
+      </div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Alumno</th><th>Nivel</th><th>Bono</th><th>Sesiones restantes</th><th>Próxima clase</th><th>Total gastado</th></tr></thead><tbody id="students-tbody"></tbody></table></div></div>
+    </div>
+
+    <!-- ════════════ PACKS ════════════ -->
+    <div id="page-packs" class="page">
+      <div class="page-hd">
+        <div><h1>Packs &amp; <em>tarifas</em></h1><div class="page-sub">Bonos · semanas · alquiler</div></div>
+        <div class="page-hd-actions"><button class="btn btn-primary">+ Nuevo pack</button></div>
+      </div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Pack</th><th>Tipo</th><th>Sesiones</th><th>Precio</th><th>Vendidos · mes</th><th>Margen</th><th>Estado</th></tr></thead><tbody id="packs-tbody"></tbody></table></div></div>
+    </div>
+
+    <!-- ════════════ INSTRUCTORES ════════════ -->
+    <div id="page-instructors" class="page">
+      <div class="page-hd">
+        <div><h1>Nuestros <em>instructores</em></h1><div class="page-sub">5 monitores titulados</div></div>
+        <div class="page-hd-actions"><button class="btn btn-primary">+ Añadir instructor</button></div>
+      </div>
+      <div id="instructors-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
+    </div>
+
+    <!-- ════════════ ALQUILER ════════════ -->
+    <div id="page-rental" class="page">
+      <div class="page-hd">
+        <div><h1>Alquileres <em>activos</em></h1><div class="page-sub">Tablas · neoprenos · accesorios</div></div>
+        <div class="page-hd-actions"><button class="btn btn-primary" onclick="quickAdd()">+ Nuevo alquiler</button></div>
+      </div>
+      <div class="tabs"><button class="tab active">Activos</button><button class="tab">Devueltos hoy</button><button class="tab">Histórico</button><button class="tab">Inventario</button></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Material</th><th>Cliente</th><th>Salida</th><th>Devolución</th><th>Días</th><th>Estado</th><th>Total</th></tr></thead><tbody id="rental-tbody"></tbody></table></div></div>
+    </div>
+
+    <!-- ════════════ TPV / SHOP ════════════ -->
+    <div id="page-shop" class="page">
+      <div class="page-hd">
+        <div><h1>TPV · <em>Surf Shop</em></h1><div class="page-sub">Punto de venta · cobro rápido</div></div>
+        <div class="page-hd-actions"><button class="btn btn-ghost" onclick="posClear()">Vaciar carrito</button></div>
+      </div>
+      <div class="pos-wrap">
+        <div class="card" style="margin-bottom:0;">
+          <div class="card-hd"><div class="card-hd-title">Catálogo</div><input style="border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;background:var(--surface);color:var(--txt);width:200px;" placeholder="Buscar producto..." oninput="posFilter(this.value)"></div>
+          <div class="card-body"><div class="pos-grid" id="pos-grid"></div></div>
+        </div>
+        <div class="pos-cart">
+          <div class="pos-cart-h">Ticket actual</div>
+          <div class="pos-cart-list" id="pos-cart"></div>
+          <div class="pos-totals">
+            <div>Subtotal <strong id="pos-sub">€0</strong></div>
+            <div>IVA 21% <strong id="pos-vat">€0</strong></div>
+            <div class="grand"><div>Total <strong id="pos-total">€0</strong></div></div>
+          </div>
+          <div class="pos-pay">
+            <button onclick="posPay('Tarjeta')">💳 Tarjeta</button>
+            <button onclick="posPay('Efectivo')">💵 Efectivo</button>
+            <button class="full" onclick="posPay('Bizum')">Bizum / Apple Pay</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ STOCK ════════════ -->
+    <div id="page-stock" class="page">
+      <div class="page-hd">
+        <div><h1>Stock <em>tienda + alquiler</em></h1><div class="page-sub">Inventario combinado · proveedores</div></div>
+        <div class="page-hd-actions"><button class="btn btn-ghost">↓ Exportar CSV</button><button class="btn btn-primary">+ Producto</button></div>
+      </div>
+      <div class="tabs"><button class="tab active">Todo</button><button class="tab">Tablas</button><button class="tab">Neoprenos</button><button class="tab">Ropa Rip Curl</button><button class="tab">Accesorios</button><button class="tab">Bajo mínimos</button></div>
+      <div class="stk-grid" id="stk-grid"></div>
+    </div>
+
+    <!-- ════════════ CLIENTES ════════════ -->
+    <div id="page-clients" class="page">
+      <div class="page-hd">
+        <div><h1>Clientes <em>unificados</em></h1><div class="page-sub">Huéspedes + alumnos + compradores en uno</div></div>
+        <div class="page-hd-actions"><button class="btn btn-primary">+ Nuevo cliente</button></div>
+      </div>
+      <div class="tabs"><button class="tab active">Todos</button><button class="tab">Apartamento</button><button class="tab">Surf</button><button class="tab">Tienda</button><button class="tab">VIP</button><button class="tab">Newsletter</button></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Cliente</th><th>Origen</th><th>Apartamento</th><th>Clases</th><th>Compras</th><th>LTV</th><th>Tags</th></tr></thead><tbody id="clients-tbody"></tbody></table></div></div>
+    </div>
+
+    <!-- ════════════ FACTURAS ════════════ -->
+    <div id="page-invoices" class="page">
+      <div class="page-hd">
+        <div><h1>Facturación <em>combinada</em></h1><div class="page-sub">Apartamentos · escuela · tienda · alquiler</div></div>
+        <div class="page-hd-actions"><button class="btn btn-ghost">↓ Exportar</button><button class="btn btn-primary">+ Factura manual</button></div>
+      </div>
+      <div class="tabs"><button class="tab active">Todas</button><button class="tab">Apartamentos</button><button class="tab">Escuela</button><button class="tab">Tienda</button><button class="tab">Pendientes</button></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Número</th><th>Cliente</th><th>Concepto</th><th>Fecha</th><th>IVA</th><th>Total</th><th>Estado</th></tr></thead><tbody id="inv-tbody"></tbody></table></div></div>
+    </div>
+
+    <!-- ════════════ INFORMES ════════════ -->
+    <div id="page-reports" class="page">
+      <div class="page-hd">
+        <div><h1>Informes &amp; <em>IVA</em></h1><div class="page-sub">Resumen trimestral para gestor</div></div>
+        <div class="page-hd-actions"><select class="tb-btn" style="padding:8px 14px;"><option>Este mes</option><option>Trimestre</option><option>Año</option></select><button class="btn btn-primary">↓ Exportar IVA</button></div>
+      </div>
+      <div class="kpi-grid" id="reports-kpis"></div>
+      <div class="two-col">
+        <div class="card"><div class="card-hd"><div class="card-hd-title">Ingresos por línea de negocio</div></div><div class="card-body">
+          <div id="biz-bars"></div>
+        </div></div>
+        <div class="card"><div class="card-hd"><div class="card-hd-title">IVA 21% · resumen trimestral</div><span class="card-hd-meta">Para presentar al gestor</span></div><div class="card-body">
+          <div class="detail-row"><b>IVA repercutido</b><div style="font-family:var(--display);font-size:22px;font-weight:700;color:var(--ocean);" id="vat-out">€0</div></div>
+          <div class="detail-row"><b>IVA soportado</b><div style="font-family:var(--display);font-size:22px;font-weight:700;color:var(--ocean);" id="vat-in">€0</div></div>
+          <div class="detail-row" style="border-bottom:none;padding-top:14px;"><b>IVA a liquidar</b><div style="font-family:var(--display);font-size:28px;font-weight:700;color:var(--coral);" id="vat-net">€0</div></div>
+        </div></div>
+      </div>
+      <div class="card"><div class="card-hd"><div class="card-hd-title">Top productos / packs vendidos</div></div><div class="card-body">
+        <div class="tbl-wrap"><table><thead><tr><th>Concepto</th><th>Línea</th><th>Cantidad</th><th>Ingresos</th><th>Margen</th></tr></thead><tbody id="top-tbody"></tbody></table></div>
+      </div></div>
+    </div>
+
+    <!-- ════════════ BANDEJA IA ════════════ -->
+    <div id="page-inbox" class="page">
+      <div class="page-hd">
+        <div><h1>Bandeja <em>IA</em></h1><div class="page-sub">Conversaciones del agente · WhatsApp · web · Instagram</div></div>
+        <div class="page-hd-actions"><button class="btn btn-ghost">⚡ Auto-respuesta ON</button><button class="btn btn-primary">⚙ Entrenar IA</button></div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-lbl">Conversaciones · 24h</div><div class="kpi-val">42</div><div class="kpi-trend up">+12</div></div>
+        <div class="kpi"><div class="kpi-lbl">Reservas vía IA</div><div class="kpi-val">8</div><div class="kpi-trend up">19% conv</div></div>
+        <div class="kpi"><div class="kpi-lbl">Tiempo respuesta</div><div class="kpi-val">42s</div><div class="kpi-trend up">24/7</div></div>
+        <div class="kpi"><div class="kpi-lbl">Idiomas</div><div class="kpi-val">ES · EN</div><div class="kpi-trend">auto-detecta</div></div>
+      </div>
+      <div class="inbox-wrap">
+        <div class="inbox-list">
+          <div class="inbox-list-hd"><strong>Hilos</strong><span>3 activos</span></div>
+          <div class="inbox-threads" id="inbox-threads"></div>
+        </div>
+        <div class="inbox-chat">
+          <div class="inbox-chat-hd" id="chat-hd"><strong>Selecciona un hilo</strong><em></em></div>
+          <div class="inbox-msgs" id="inbox-msgs"></div>
+          <div class="inbox-input">
+            <input id="inbox-in" placeholder="Escribir mensaje o dejar a la IA..." onkeydown="if(event.key==='Enter')inboxSend()">
+            <button class="btn btn-primary" onclick="inboxSend()">Enviar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ WIDGET WEB ════════════ -->
+    <div id="page-widget" class="page">
+      <div class="page-hd">
+        <div><h1>Widget Web · <em>Chatbot IA</em></h1><div class="page-sub">Reservas automáticas en escueladesurfcostanorte.com</div></div>
+        <div class="page-hd-actions"><button class="btn btn-ocean">📋 Copiar snippet</button></div>
+      </div>
+      <div class="two-col">
+        <div>
+          <div class="card">
+            <div class="card-hd"><div class="card-hd-title">Vista previa en directo</div></div>
+            <div class="card-body">
+              <div class="wid-preview">
+                <div class="wid-frame">
+                  <div class="wid-frame-h">
+                    <div class="wid-frame-av">CN</div>
+                    <div>
+                      <div class="wid-frame-name">Costa Norte</div>
+                      <div class="wid-frame-status">En línea · responde &lt; 1 min</div>
+                    </div>
+                  </div>
+                  <div class="wid-frame-body">
+                    <div class="wid-msg bot">¡Hola! Soy el asistente virtual de Costa Norte 🌊 ¿En qué puedo ayudarte?</div>
+                    <div class="wid-quick">
+                      <div class="wid-q">Reservar apartamento</div>
+                      <div class="wid-q">Clase de surf</div>
+                      <div class="wid-q">Surf camp</div>
+                      <div class="wid-q">Alquiler tabla</div>
+                    </div>
+                    <div class="wid-msg user">Quiero apartamento para 4 personas 15-22 julio</div>
+                    <div class="wid-msg bot">¡Perfecto! Para esas fechas tengo 3 apartamentos disponibles:<br><br>🏠 <strong>Apto 7</strong> · 2 hab · €145/noche<br>🏠 <strong>Apto 14</strong> · 3 hab · €165/noche<br>🏠 <strong>Apto 21</strong> · 3 hab · €175/noche<br><br>¿Cuál te interesa?</div>
+                    <div class="wid-msg user">El 14</div>
+                    <div class="wid-msg bot">Excelente. El Apto 14 incluye:<br>✓ 3 habitaciones · vistas al mar<br>✓ Plaza de garaje<br>✓ Descuento 15% en clases de surf<br><br>7 noches × €165 = <strong>€1,155</strong><br><br>¿Tu nombre y email para reservar?</div>
+                  </div>
+                  <div class="wid-frame-foot">
+                    <input placeholder="Escribe un mensaje...">
+                    <button>→</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-hd"><div class="card-hd-title">¿Qué puede hacer el bot?</div></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <div style="display:flex;gap:12px;align-items:flex-start;"><div style="font-size:20px;flex-shrink:0;">🏠</div><div><strong style="display:block;font-size:13px;color:var(--txt);">Reservar apartamento</strong><span style="font-size:11px;color:var(--txt3);">Consulta disponibilidad en vivo · captura datos · cierra reserva con pasarela Stripe</span></div></div>
+                <div style="display:flex;gap:12px;align-items:flex-start;"><div style="font-size:20px;flex-shrink:0;">🏄</div><div><strong style="display:block;font-size:13px;color:var(--txt);">Reservar clase de surf</strong><span style="font-size:11px;color:var(--txt3);">Grupal o privada · asigna instructor · pregunta nivel</span></div></div>
+                <div style="display:flex;gap:12px;align-items:flex-start;"><div style="font-size:20px;flex-shrink:0;">🎁</div><div><strong style="display:block;font-size:13px;color:var(--txt);">Vender packs/bonos online</strong><span style="font-size:11px;color:var(--txt3);">5x, 10x, semana completa · pago en línea · envío bono por email</span></div></div>
+                <div style="display:flex;gap:12px;align-items:flex-start;"><div style="font-size:20px;flex-shrink:0;">📋</div><div><strong style="display:block;font-size:13px;color:var(--txt);">FAQ inteligente</strong><span style="font-size:11px;color:var(--txt3);">Responde dudas comunes en ES/EN · deriva a WhatsApp humano si no puede</span></div></div>
+                <div style="display:flex;gap:12px;align-items:flex-start;"><div style="font-size:20px;flex-shrink:0;">✉</div><div><strong style="display:block;font-size:13px;color:var(--txt);">Emails automáticos</strong><span style="font-size:11px;color:var(--txt3);">Confirmación reserva · check-in info · recordatorio clase 24h antes</span></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><div class="card-hd-title">Instalación</div><span class="card-hd-meta">2 min · sin código</span></div>
+            <div class="card-body">
+              <p style="font-size:12px;color:var(--txt2);line-height:1.5;margin-bottom:12px;">Pega este snippet justo antes del <code style="background:var(--bg);padding:2px 5px;border-radius:3px;font-size:11px;">&lt;/body&gt;</code> en tu web:</p>
+              <div class="code-block">
+&lt;<span class="tag">script</span> <span class="attr">src</span>=<span class="str">"https://airmate.es/widget.js"</span><br>&nbsp;&nbsp;<span class="attr">data-slug</span>=<span class="str">"costa-norte"</span><br>&nbsp;&nbsp;<span class="attr">data-color</span>=<span class="str">"#ff5e3a"</span><br>&nbsp;&nbsp;<span class="attr">defer</span>&gt;<br>&lt;/<span class="tag">script</span>&gt;
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ EQUIPO ════════════ -->
+    <div id="page-team" class="page">
+      <div class="page-hd">
+        <div><h1>Nuestro <em>equipo</em></h1><div class="page-sub">Recepción · instructores · limpieza</div></div>
+        <div class="page-hd-actions"><button class="btn btn-primary">+ Invitar miembro</button></div>
+      </div>
+      <div id="team-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
+    </div>
+
+    <!-- ════════════ AJUSTES ════════════ -->
+    <div id="page-settings" class="page">
+      <div class="page-hd">
+        <div><h1><em>Ajustes</em></h1><div class="page-sub">Negocio · integraciones · automatizaciones</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-hd"><div class="card-hd-title">Datos del negocio</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+            <div class="detail-row"><b>Nombre</b><div>Escuela de Surf Costa Norte</div></div>
+            <div class="detail-row"><b>CIF</b><div>B-39XXXXXX</div></div>
+            <div class="detail-row"><b>Dirección</b><div>Av. Francisco Giner de los Ríos 46<br>San Vicente de la Barquera, Cantabria</div></div>
+            <div class="detail-row"><b>Régimen IVA</b><div>General · 21%</div></div>
+            <div class="detail-row"><b>Año fundación</b><div>2006 · 20 años</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-hd-title">Integraciones</div></div>
+          <div class="card-body" id="integrations-list"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ════════════ TOAST ════════════ -->
+<div class="toast-host" id="toast-host"></div>
+
+<!-- ════════════ MODAL ════════════ -->
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-hd"><div class="modal-hd-t" id="modal-t">Detalle</div><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body" id="modal-b"></div>
+  </div>
+</div>
+
+<script>
+// ════════════ LOGIN ════════════
+function doLogin(){document.getElementById('login').classList.add('hidden');initApp();}
+function logout(){document.getElementById('login').classList.remove('hidden');}
+
+// ════════════ NAV ════════════
+function go(p,el){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(el)el.classList.add('active');else{
+    const links=document.querySelectorAll('.nav-item');
+    const labels={dashboard:'Dashboard',agenda:'Agenda',apt:'Mapa',cal:'Calendario',res:'Reservas',clean:'Limpieza',maint:'Mantenimiento',classes:'Clases',students:'Alumnos',packs:'Packs',instructors:'Instructores',rental:'Alquileres',shop:'TPV',stock:'Stock',clients:'Clientes',invoices:'Facturas',reports:'Informes',inbox:'Bandeja IA',widget:'Widget',team:'Equipo',settings:'Ajustes'};
+  }
+  const titles={dashboard:'Dashboard',agenda:'Agenda del día','apt-map':'Mapa apartamentos','apt-cal':'Calendario reservas','apt-res':'Reservas','apt-clean':'Limpieza','apt-maint':'Mantenimiento',classes:'Horario de clases',students:'Alumnos',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',reports:'Informes & IVA',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes'};
+  document.getElementById('tb-title').textContent=titles[p]||'';
+  document.getElementById('sb').classList.remove('open');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleTheme(){const cur=document.documentElement.getAttribute('data-theme');document.documentElement.setAttribute('data-theme',cur==='dark'?'light':'dark');}
+function setLang(l,el){document.querySelectorAll('.lang-pill button').forEach(x=>x.classList.remove('active'));el.classList.add('active');toast(l==='es'?'Cambiado a Español':'Switched to English');}
+
+// ════════════ TOAST ════════════
+function toast(msg){
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  document.getElementById('toast-host').appendChild(t);
+  setTimeout(()=>{t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(()=>t.remove(),300);},2500);
+}
+
+// ════════════ MODAL ════════════
+function openModal(title,html){document.getElementById('modal-t').textContent=title;document.getElementById('modal-b').innerHTML=html;document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function quickAdd(){openModal('+ Nueva reserva',`
+  <div style="display:flex;flex-direction:column;gap:14px;">
+    <label style="display:flex;flex-direction:column;gap:6px;"><span style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Tipo</span><select style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);"><option>Apartamento</option><option>Clase de surf grupal</option><option>Clase de surf privada</option><option>Pack semana completa</option><option>Alquiler de material</option></select></label>
+    <label style="display:flex;flex-direction:column;gap:6px;"><span style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Cliente</span><input placeholder="Nombre completo" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);"></label>
+    <div class="two-col">
+      <label style="display:flex;flex-direction:column;gap:6px;"><span style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Entrada</span><input type="date" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);"></label>
+      <label style="display:flex;flex-direction:column;gap:6px;"><span style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Salida</span><input type="date" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);"></label>
+    </div>
+    <label style="display:flex;flex-direction:column;gap:6px;"><span style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Notas</span><textarea rows="2" placeholder="Detalles adicionales..." style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);resize:vertical;"></textarea></label>
+    <div style="background:rgba(255,94,58,.06);border:1px dashed var(--coral);padding:10px 14px;border-radius:8px;font-size:12px;color:var(--txt2);"><strong style="color:var(--coral);">✦ Sugerencia IA:</strong> Enviar email confirmación + WhatsApp con instrucciones de check-in 24h antes.</div>
+    <div style="display:flex;gap:8px;"><button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" style="flex:1" onclick="toast('✓ Reserva creada · email enviado');closeModal()">Confirmar</button></div>
+  </div>
+`);}
+
+// ════════════ DATA ════════════
+const APTS=[
+  {n:1,name:'Apto 1',rooms:1,state:'occupied'},{n:2,name:'Apto 2',rooms:2,state:'occupied'},
+  {n:3,name:'Apto 3',rooms:2,state:'occupied'},{n:4,name:'Apto 4',rooms:1,state:'cleaning'},
+  {n:5,name:'Apto 5',rooms:3,state:'occupied'},{n:6,name:'Apto 6',rooms:2,state:'occupied'},
+  {n:7,name:'Apto 7',rooms:2,state:'occupied'},{n:8,name:'Apto 8',rooms:1,state:'maint'},
+  {n:9,name:'Apto 9',rooms:2,state:'occupied'},{n:10,name:'Apto 10',rooms:3,state:'occupied'},
+  {n:11,name:'Apto 11',rooms:2,state:'free'},{n:12,name:'Apto 12',rooms:2,state:'occupied'},
+  {n:13,name:'Apto 13',rooms:1,state:'occupied'},{n:14,name:'Apto 14',rooms:3,state:'occupied'},
+  {n:15,name:'Apto 15',rooms:2,state:'occupied'},{n:16,name:'Apto 16',rooms:2,state:'occupied'},
+  {n:17,name:'Apto 17',rooms:1,state:'free'},{n:18,name:'Apto 18',rooms:2,state:'cleaning'},
+  {n:19,name:'Apto 19',rooms:2,state:'occupied'},{n:20,name:'Apto 20',rooms:3,state:'occupied'},
+  {n:21,name:'Apto 21',rooms:2,state:'free'},{n:22,name:'Apto 22',rooms:2,state:'free'},
+];
+const APT_STATE_LBL={free:'Libre',occupied:'Ocupado',cleaning:'Limpieza',maint:'Manten.'};
+
+const CLASSES=[
+  {time:'09:00',type:'Grupal',instr:'David Sánchez',students:8,level:'Iniciación'},
+  {time:'10:30',type:'Privada',instr:'Lucas Ortega',students:1,level:'Intermedio'},
+  {time:'11:30',type:'Grupal',instr:'David Sánchez',students:6,level:'Avanzado'},
+  {time:'12:30',type:'SUP',instr:'María Quintana',students:4,level:'Iniciación'},
+  {time:'15:00',type:'Grupal',instr:'Lucas Ortega',students:9,level:'Iniciación'},
+  {time:'16:30',type:'Privada',instr:'David Sánchez',students:2,level:'Avanzado'},
+  {time:'17:30',type:'Grupal',instr:'María Quintana',students:7,level:'Intermedio'},
+];
+
+const RENTALS=[
+  {item:'Tabla soft 7\'2"',client:'Marc Riba',out:'Hoy 09:30',ret:'Mañana 09:30',days:1,state:'Activo',total:18},
+  {item:'Neopreno 4/3 talla M',client:'Marc Riba',out:'Hoy 09:30',ret:'Mañana 09:30',days:1,state:'Activo',total:12},
+  {item:'Tabla rigida 6\'10"',client:'Helena Vidal',out:'Ayer 14:00',ret:'Mañana 14:00',days:2,state:'Activo',total:35},
+  {item:'Tabla soft 8\'0"',client:'Familia Bauer',out:'Hoy 11:00',ret:'Sábado 11:00',days:5,state:'Activo',total:75},
+  {item:'2× neopreno 3/2',client:'Familia Bauer',out:'Hoy 11:00',ret:'Sábado 11:00',days:5,state:'Activo',total:50},
+  {item:'Longboard 9\'2"',client:'Pierre Lacroix',out:'Hoy 08:00',ret:'Hoy 14:00',days:0.5,state:'Activo',total:15},
+  {item:'SUP race 12\'6"',client:'Lola Mendoza',out:'Hoy 10:00',ret:'Hoy 18:00',days:0.5,state:'Activo',total:25},
+  {item:'Neopreno 5/4 talla L',client:'Tom Bauer',out:'Hoy 11:00',ret:'Sábado 11:00',days:5,state:'Activo',total:55},
+];
+
+const PACKS=[
+  {name:'1 Clase suelta',type:'Clase',sess:1,price:35,sold:18,margin:'62%',state:'Activo'},
+  {name:'Bono 5 clases',type:'Bono',sess:5,price:140,sold:24,margin:'68%',state:'Activo'},
+  {name:'Bono 10 clases',type:'Bono',sess:10,price:250,sold:12,margin:'72%',state:'Activo'},
+  {name:'Semana surf · 5 días',type:'Semana',sess:5,price:175,sold:38,margin:'75%',state:'Top'},
+  {name:'Surf Camp · 7 noches',type:'Camp',sess:5,price:520,sold:14,margin:'58%',state:'Top'},
+  {name:'SUP 1 hora',type:'SUP',sess:1,price:25,sold:42,margin:'70%',state:'Activo'},
+  {name:'Privada · 1 hora',type:'Privada',sess:1,price:55,sold:16,margin:'82%',state:'Activo'},
+  {name:'Familia · 4 personas',type:'Grupal',sess:1,price:120,sold:8,margin:'65%',state:'Nuevo'},
+];
+
+const INSTRUCTORS=[
+  {name:'David Sánchez',role:'Director técnico',exp:'18 años',cert:'ISA · WSL',rating:5.0,classes:1240,img:'https://images.unsplash.com/photo-1539571696857-7c4e7e1f8d8b?w=400&q=85'},
+  {name:'Lucas Ortega',role:'Instructor senior',exp:'12 años',cert:'ISA L2',rating:4.9,classes:980,img:'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=400&q=85'},
+  {name:'María Quintana',role:'Instructora SUP',exp:'8 años',cert:'ISA SUP',rating:4.9,classes:720,img:'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=85'},
+  {name:'Iker Bárcena',role:'Instructor júnior',exp:'4 años',cert:'ISA L1',rating:4.7,classes:280,img:'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=85'},
+  {name:'Nora Fernández',role:'Instructora kids',exp:'6 años',cert:'ISA L1 · CCAA',rating:4.9,classes:540,img:'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=85'},
+];
+
+const STUDENTS=[
+  {name:'Marc Riba',level:'Iniciación',pack:'Semana 5 días',left:3,next:'Mañana 10:30',spent:285},
+  {name:'Helena Vidal',level:'Intermedio',pack:'Bono 10x',left:6,next:'Vie 11:30',spent:480},
+  {name:'Pierre Lacroix',level:'Avanzado',pack:'Privada',left:0,next:'-',spent:165},
+  {name:'Familia Bauer',level:'Iniciación',pack:'Familia 4 pax',left:2,next:'Hoy 15:00',spent:480},
+  {name:'Lola Mendoza',level:'SUP',pack:'1 sesión',left:0,next:'-',spent:25},
+  {name:'Jaime Vega',level:'Avanzado',pack:'Bono 10x',left:8,next:'Sáb 12:30',spent:680},
+  {name:'Sofía Rivas',level:'Intermedio',pack:'Bono 5x',left:2,next:'Dom 10:30',spent:320},
+  {name:'Ainhoa Berasaluce',level:'Iniciación',pack:'Semana 5 días',left:5,next:'Lun 09:00',spent:175},
+  {name:'Tom Bauer',level:'Iniciación',pack:'Familia 4 pax',left:2,next:'Hoy 15:00',spent:120},
+  {name:'Carlos Ramírez',level:'Avanzado',pack:'Bono 10x',left:4,next:'Mié 11:30',spent:740},
+];
+
+const STOCK=[
+  {name:'Tabla Soft 7\'2"',sku:'TB-S072',cat:'Tabla',stock:6,min:3,cost:120,price:225,img:'https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=400&q=85'},
+  {name:'Tabla Soft 8\'0"',sku:'TB-S080',cat:'Tabla',stock:4,min:3,cost:140,price:265,img:'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=400&q=85'},
+  {name:'Tabla Rígida 6\'10"',sku:'TB-R610',cat:'Tabla',stock:2,min:3,cost:280,price:550,img:'https://images.unsplash.com/photo-1591025207163-942350e47db2?w=400&q=85'},
+  {name:'Longboard 9\'2"',sku:'TB-L092',cat:'Tabla',stock:1,min:2,cost:380,price:720,img:'https://images.unsplash.com/photo-1504911890770-7fed5dad0b87?w=400&q=85'},
+  {name:'Neopreno Rip Curl 4/3 M',sku:'NP-43M',cat:'Neopreno',stock:8,min:4,cost:90,price:185,img:'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&q=85'},
+  {name:'Neopreno Rip Curl 3/2 M',sku:'NP-32M',cat:'Neopreno',stock:5,min:4,cost:75,price:155,img:'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&q=85'},
+  {name:'Neopreno Rip Curl 5/4 L',sku:'NP-54L',cat:'Neopreno',stock:0,min:2,cost:110,price:225,img:'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&q=85'},
+  {name:'Camiseta Rip Curl Sun',sku:'RC-CAM',cat:'Ropa',stock:14,min:6,cost:12,price:32,img:'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=85'},
+  {name:'Boardshort Rip Curl',sku:'RC-BSH',cat:'Ropa',stock:9,min:6,cost:22,price:55,img:'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=85'},
+  {name:'Bikini Rip Curl',sku:'RC-BIK',cat:'Ropa',stock:7,min:4,cost:18,price:48,img:'https://images.unsplash.com/photo-1583846783214-7229a91b20ed?w=400&q=85'},
+  {name:'Crema EQ SPF50',sku:'EQ-SPF',cat:'Acc',stock:24,min:10,cost:5,price:14,img:'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=85'},
+  {name:'Gorra Rip Curl Cap',sku:'RC-GOR',cat:'Acc',stock:18,min:8,cost:8,price:22,img:'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=400&q=85'},
+  {name:'Leash 6\' premium',sku:'AC-LSH',cat:'Acc',stock:11,min:5,cost:9,price:24,img:'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=400&q=85'},
+  {name:'Parafina Sex Wax',sku:'AC-WAX',cat:'Acc',stock:32,min:15,cost:1.2,price:3.5,img:'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=85'},
+];
+
+const CLIENTS=[
+  {name:'Marc Riba',src:'Apt 7 + Surf',apto:'Apto 7',clas:3,buys:'€48',ltv:485,tags:['VIP','Surf']},
+  {name:'Helena Vidal',src:'Surf · bono 10x',apto:'-',clas:4,buys:'€55',ltv:520,tags:['Bono activo']},
+  {name:'Familia Bauer',src:'Apt 14 + Camp',apto:'Apto 14',clas:4,buys:'€140',ltv:1295,tags:['VIP','Familia']},
+  {name:'Pierre Lacroix',src:'Surf · privada',apto:'-',clas:3,buys:'-',ltv:165,tags:['Francés']},
+  {name:'Lola Mendoza',src:'SUP · alquiler',apto:'-',clas:1,buys:'€25',ltv:50,tags:['Nuevo']},
+  {name:'Tom Bauer',src:'Camp · 4 pax',apto:'Apto 14',clas:5,buys:'€85',ltv:300,tags:['Familia']},
+  {name:'Jaime Vega',src:'Surf · bono 10x',apto:'Apto 5',clas:6,buys:'€220',ltv:920,tags:['VIP','Bono activo']},
+  {name:'Sofía Rivas',src:'Surf · bono 5x',apto:'Apto 12',clas:3,buys:'€42',ltv:412,tags:['Newsletter']},
+  {name:'Carlos Ramírez',src:'Surf · bono 10x',apto:'-',clas:6,buys:'€180',ltv:960,tags:['VIP']},
+  {name:'Ainhoa Berasaluce',src:'Apt 3 + Semana',apto:'Apto 3',clas:0,buys:'€95',ltv:380,tags:['Newsletter']},
+  {name:'Yannick Möller',src:'Apt 19',apto:'Apto 19',clas:0,buys:'€68',ltv:840,tags:['Alemán','VIP']},
+  {name:'Reem Al Mansoori',src:'Surf · privada',apto:'Apto 21',clas:2,buys:'-',ltv:220,tags:['Internacional']},
+];
+
+const INVOICES=[
+  {num:'FAC-2026-3142',client:'Familia Bauer',concept:'Apto 14 · 7 noches + Camp 4 pax',date:'07/06',vat:'21%',total:1675,state:'Pagada',sc:'ok'},
+  {num:'FAC-2026-3141',client:'Marc Riba',concept:'Semana surf · 5 sesiones',date:'06/06',vat:'21%',total:175,state:'Pagada',sc:'ok'},
+  {num:'FAC-2026-3140',client:'Helena Vidal',concept:'Bono 10 clases',date:'06/06',vat:'21%',total:250,state:'Pagada',sc:'ok'},
+  {num:'FAC-2026-3139',client:'Yannick Möller',concept:'Apto 19 · 5 noches',date:'05/06',vat:'21%',total:725,state:'Pagada',sc:'ok'},
+  {num:'FAC-2026-3138',client:'Jaime Vega',concept:'Tienda · Neopreno 4/3 + tabla',date:'05/06',vat:'21%',total:410,state:'Pagada',sc:'ok'},
+  {num:'FAC-2026-3137',client:'Reem Al Mansoori',concept:'Apto 21 · 3 noches + clases',date:'04/06',vat:'21%',total:540,state:'Enviada',sc:'info'},
+  {num:'FAC-2026-3136',client:'Sofía Rivas',concept:'Apto 12 · 4 noches',date:'04/06',vat:'21%',total:480,state:'Pagada',sc:'ok'},
+  {num:'FAC-2026-3135',client:'Pierre Lacroix',concept:'Privada x3',date:'03/06',vat:'21%',total:165,state:'Pagada',sc:'ok'},
+  {num:'FAC-2026-3134',client:'Lola Mendoza',concept:'SUP + alquiler SUP',date:'03/06',vat:'21%',total:50,state:'Pagada',sc:'ok'},
+  {num:'FAC-2026-3133',client:'Ainhoa Berasaluce',concept:'Apto 3 · 7 noches',date:'02/06',vat:'21%',total:1015,state:'Pendiente',sc:'warn'},
+  {num:'FAC-2026-3132',client:'Carlos Ramírez',concept:'Bono 10 + tabla Rip Curl',date:'02/06',vat:'21%',total:805,state:'Pagada',sc:'ok'},
+  {num:'FAC-2026-3131',client:'Tom Bauer',concept:'Tienda · varios',date:'01/06',vat:'21%',total:185,state:'Pagada',sc:'ok'},
+];
+
+const THREADS=[
+  {name:'Daniel Pérez',phone:'+34 612 345 678',channel:'WhatsApp',when:'2m',state:'active',booked:true,prev:'Perfecto, reservo Apto 7 del 12 al 19',tag:{cls:'ok',label:'Reservado'},msgs:[
+    {from:'client',text:'Hola buenas, quería información sobre apartamentos disponibles para julio',at:'10:42'},
+    {from:'bot',text:'¡Hola Daniel! 👋 Para julio tenemos varias opciones. ¿Cuántas personas y qué fechas exactas te interesan?',at:'10:42'},
+    {from:'client',text:'Somos 2 adultos y 1 niño, del 12 al 19 de julio',at:'10:43'},
+    {from:'bot',text:'Para esas fechas y 3 personas tengo disponible:\n\n🏠 Apto 7 · 2 hab · €145/noche\n🏠 Apto 11 · 2 hab · €138/noche\n🏠 Apto 17 · 1 hab grande · €115/noche\n\nTodos a pie de playa. ¿Cuál te interesa?',at:'10:43'},
+    {from:'client',text:'El 7 me gusta. ¿Incluye algo de surf?',at:'10:44'},
+    {from:'bot',text:'¡Buena elección! Si reservas el Apto 7 incluyo un 15% descuento en clases de surf 🏄\n\n7 noches × €145 = **€1,015**\n\n¿Te paso el link de pago?',at:'10:44'},
+    {from:'client',text:'Perfecto, reservo Apto 7 del 12 al 19',at:'10:45'}
+  ]},
+  {name:'Marie Dubois',phone:'+33 6 78 90 12 34',channel:'Web',when:'18m',state:'active',booked:false,prev:'Hi, do you offer surf classes for beginners?',tag:{cls:'info',label:'Consulta'},msgs:[
+    {from:'client',text:'Hi, do you offer surf classes for beginners?',at:'10:25'},
+    {from:'bot',text:'Hi! 🌊 Yes, we have beginner classes every day. Group (€35) or private (€55) lessons available. What dates are you in San Vicente?',at:'10:25'},
+    {from:'client',text:'July 8-15',at:'10:26'},
+    {from:'bot',text:'Great! For that week I recommend our "Surf Week · 5 days" pack for €175 — saves you €100 vs single classes. Includes board + wetsuit.',at:'10:26'},
+    {from:'client',text:'Do I need to book accommodation separately?',at:'10:27'},
+    {from:'bot',text:'You can book everything with us! We have 22 beachfront apartments. For July 8-15 we have 3 free apartments. Should I check options?',at:'10:27'}
+  ]},
+  {name:'Lukas Bauer',phone:'+49 152 1234 5678',channel:'Instagram',when:'1h',state:'closed',booked:true,prev:'Danke schön! Bis dann',tag:{cls:'ok',label:'Confirmado'},msgs:[
+    {from:'client',text:'Hallo, ich möchte das Surf Camp für August buchen',at:'09:18'},
+    {from:'bot',text:'¡Hola Lukas! 🏄 For August we have the Surf Camp · 7 nights for €520. Includes apartment + 5 classes + board rental. Which week?',at:'09:18'},
+    {from:'client',text:'15-22 August, 2 personas',at:'09:19'},
+    {from:'bot',text:'Perfect, that week is available. Total for 2 people = **€1,040**. I can hold the slot for 24h. Need your email to send confirmation?',at:'09:19'},
+    {from:'client',text:'lukas.bauer@email.com',at:'09:20'},
+    {from:'bot',text:'✓ Reservation confirmed! Email sent with details and payment link. Roberto will contact you personally 24h before arrival. Vielen Dank!',at:'09:20'},
+    {from:'client',text:'Danke schön! Bis dann',at:'09:21'}
+  ]},
+  {name:'Roberto Casas',phone:'+34 666 789 012',channel:'WhatsApp',when:'2h',state:'closed',booked:false,prev:'Ok, gracias',tag:{cls:'warn',label:'Sin cerrar'},msgs:[
+    {from:'client',text:'¿Hacéis SUP los martes?',at:'08:33'},
+    {from:'bot',text:'¡Sí! SUP los martes a las 12:30 con María. €25 por sesión, 1 hora. ¿Te apunto a algún día?',at:'08:33'},
+    {from:'client',text:'Ok, gracias',at:'08:35'},
+    {from:'bot',text:'Cuando quieras reservar pasa por aquí o llama al 942 71 25 04. ¡Buen día! 🌊',at:'08:35'}
+  ]}
+];
+
+const TEAM=[
+  {name:'Roberto Bárcena',role:'Director',email:'roberto@costanorte',phone:'618 964 263',av:'RB',color:'var(--coral)'},
+  {name:'David Sánchez',role:'Director técnico surf',email:'david@costanorte',phone:'618 964 264',av:'DS',color:'var(--aqua-dk)'},
+  {name:'Lucia Pellón',role:'Recepción',email:'recepcion@costanorte',phone:'942 71 25 04',av:'LP',color:'var(--leaf)'},
+  {name:'María Quintana',role:'Instructora SUP',email:'maria@costanorte',phone:'-',av:'MQ',color:'var(--ocean-mid)'},
+  {name:'Iker Bárcena',role:'Instructor júnior',email:'iker@costanorte',phone:'-',av:'IB',color:'var(--coral-dk)'},
+  {name:'Marta Sevilla',role:'Limpieza · jefa',email:'limpieza@costanorte',phone:'-',av:'MS',color:'#a78bfa'},
+];
+
+let CUR_THREAD=null;
+
+// ════════════ RENDER ════════════
+function initApp(){
+  document.getElementById('dash-date').textContent=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  renderDash();
+  renderAgenda();
+  renderAptMap();
+  renderCal();
+  renderAptRes();
+  renderClean();
+  renderMaint();
+  renderClasses();
+  renderStudents();
+  renderPacks();
+  renderInstructors();
+  renderRental();
+  renderShop();
+  renderStock();
+  renderClients();
+  renderInvoices();
+  renderReports();
+  renderInbox();
+  renderTeam();
+  renderSettings();
+}
+
+function fmt(n,c='€'){return c+Number(n||0).toLocaleString('es-ES',{maximumFractionDigits:2});}
+function sparkline(values){
+  const w=100,h=24,max=Math.max(...values),min=Math.min(...values),rng=(max-min)||1;
+  const pts=values.map((v,i)=>{const x=(i/(values.length-1))*w;const y=h-((v-min)/rng)*(h-4)-2;return [x,y];});
+  const d='M '+pts.map(p=>p.join(',')).join(' L ');
+  const last=pts[pts.length-1];
+  return `<svg class="kpi-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d}"/><circle cx="${last[0]}" cy="${last[1]}" r="2"/></svg>`;
+}
+
+function renderDash(){
+  document.getElementById('dash-kpis').innerHTML=[
+    {l:'Ingresos hoy',v:'€2,840',t:'+€420 vs ayer',cls:'up',s:[3,5,4,6,5,8,7,9]},
+    {l:'Ocupación apt',v:'73%',t:'+12 pts',cls:'up',s:[4,5,5,7,6,7,8,8]},
+    {l:'Clases hoy',v:'7',t:'42 alumnos',cls:'up',s:[2,3,4,3,5,6,5,7]},
+    {l:'Ventas tienda',v:'€480',t:'+18%',cls:'up',s:[3,3,5,4,5,5,6,7]},
+    {l:'Alquileres activos',v:'8',t:'4 devoluciones hoy',cls:'',s:[2,3,3,4,4,5,5,6]},
+    {l:'Reservas IA · 24h',v:'8',t:'19% conv.',cls:'up',s:[1,2,3,2,3,4,3,5]},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-trend ${k.cls}">${k.t}</div>${sparkline(k.s)}</div>`).join('');
+
+  const wk=[1840,2120,1980,2640,2400,3120,2840];
+  const days=['L','M','X','J','V','S','D'];
+  const max=Math.max(...wk);
+  document.getElementById('dash-chart').innerHTML=`<div class="bar-chart">${wk.map((v,i)=>`<div class="bar" style="height:${(v/max)*100}%" title="${days[i]}: €${v}"><span class="bar-lbl">${days[i]}</span></div>`).join('')}</div>`;
+
+  document.getElementById('classes-today-count').textContent=CLASSES.length+' clases';
+  document.getElementById('dash-classes').innerHTML=CLASSES.slice(0,5).map(c=>`<tr>
+    <td><strong>${c.time}</strong></td>
+    <td><span class="tag tag-${c.type==='Privada'?'coral':c.type==='SUP'?'info':'ok'}">${c.type}</span></td>
+    <td>${c.instr}</td>
+    <td>${c.students}</td>
+    <td>${c.level}</td>
+    <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:10px;">Ver</button></td>
+  </tr>`).join('');
+
+  document.getElementById('dash-activity').innerHTML=[
+    {when:'2 min',w:'IA confirmó reserva',m:'Daniel Pérez · Apto 7 · 7 noches'},
+    {when:'18 min',w:'Pago recibido',m:'FAC-2026-3142 · €1,675 · Familia Bauer'},
+    {when:'45 min',w:'Devolución material',m:'Marc Riba devolvió tabla 7\'2"'},
+    {when:'1h',w:'Nueva clase reservada',m:'Helena Vidal · Bono 10 · Mañana 11:30'},
+    {when:'2h',w:'Limpieza completada',m:'Apto 4 · listo para check-in'}
+  ].map(a=>`<li style="padding:10px 0;border-bottom:1px solid var(--border2);"><div style="font-size:10px;letter-spacing:.12em;color:var(--coral);text-transform:uppercase;font-weight:700;margin-bottom:2px;">${a.when}</div><div style="font-size:13px;color:var(--txt);font-weight:600;">${a.w}</div><div style="font-size:11px;color:var(--txt3);">${a.m}</div></li>`).join('');
+
+  document.getElementById('dash-alerts').innerHTML=[
+    {p:'high',w:'Apto 8 mantenimiento',m:'Boiler · técnico llega 14:00'},
+    {p:'mid',w:'Stock bajo',m:'Neopreno 5/4 L · sin stock · reorden urgente'},
+    {p:'mid',w:'Pago pendiente',m:'FAC-2026-3133 · Ainhoa B. · €1,015 · 5 días'}
+  ].map(a=>`<li style="padding:10px 0;border-bottom:1px solid var(--border2);"><div style="font-size:10px;letter-spacing:.12em;color:var(--warn);text-transform:uppercase;font-weight:700;margin-bottom:2px;">${a.p==='high'?'ALTA':'MEDIA'}</div><div style="font-size:13px;color:var(--txt);font-weight:600;">${a.w}</div><div style="font-size:11px;color:var(--txt3);">${a.m}</div></li>`).join('');
+}
+
+function renderAgenda(){
+  const events=[
+    {h:'09:00',t:'Clase grupal · Iniciación',c:'8 alumnos · David',s:'ok',d:'Surf'},
+    {h:'09:30',t:'Check-in Apto 7',c:'Daniel Pérez (3 pax)',s:'warn',d:'Pendiente llaves'},
+    {h:'10:00',t:'Check-out Apto 4',c:'Familia Bauer → traspaso a Apto 14',s:'ok',d:'Apto'},
+    {h:'10:30',t:'Clase privada',c:'Pierre Lacroix · Lucas',s:'ok',d:'Surf'},
+    {h:'11:00',t:'Check-in Apto 14',c:'Familia Bauer (4 pax)',s:'ok',d:'Apto'},
+    {h:'11:30',t:'Clase grupal · Avanzado',c:'6 alumnos · David',s:'ok',d:'Surf'},
+    {h:'12:30',t:'SUP grupal',c:'4 alumnos · María',s:'ok',d:'SUP'},
+    {h:'14:00',t:'Mantenimiento Apto 8',c:'Técnico boiler',s:'warn',d:'Apto'},
+    {h:'15:00',t:'Clase grupal · Iniciación',c:'9 alumnos · Lucas',s:'ok',d:'Surf'},
+    {h:'16:30',t:'Clase privada',c:'Carlos Ramírez · David',s:'ok',d:'Surf'},
+    {h:'18:00',t:'Devolución tablas',c:'Marc Riba (2 ítems)',s:'ok',d:'Alquiler'},
+    {h:'19:00',t:'Cierre caja',c:'Resumen día',s:'ok',d:'Tienda'}
+  ];
+  document.getElementById('agenda-tbody').innerHTML=events.map(e=>`<tr>
+    <td><strong>${e.h}</strong></td>
+    <td><span class="tag tag-${e.d==='Surf'?'info':e.d==='Apto'?'coral':e.d==='SUP'?'ocean':e.d==='Alquiler'?'warn':'ok'}">${e.d}</span></td>
+    <td><strong>${e.t}</strong></td>
+    <td>${e.c}</td>
+    <td><span class="tag tag-${e.s}">${e.s==='ok'?'OK':'Atención'}</span></td>
+  </tr>`).join('');
+}
+
+function renderAptMap(){
+  document.getElementById('apt-map').innerHTML=APTS.map(a=>`
+    <div class="apt-unit ${a.state==='free'?'':a.state==='occupied'?'occupied':a.state==='cleaning'?'cleaning':'maint'}" onclick="aptDetail(${a.n})">
+      <div class="apt-unit-n">${a.n}</div>
+      <div class="apt-unit-s">${APT_STATE_LBL[a.state]}</div>
+    </div>`).join('');
+}
+function aptDetail(n){
+  const a=APTS.find(x=>x.n===n);
+  const occupants=a.state==='occupied'?'Familia Bauer · 4 pax · 12-19 Jul':a.state==='cleaning'?'Marta Sevilla · termina 13:30':a.state==='maint'?'Boiler · técnico 14:00':'Listo para reservas';
+  openModal('Apto '+n+' · '+APT_STATE_LBL[a.state],`
+    <div class="detail-row"><b>Tipo</b><div>${a.rooms} habitación${a.rooms>1?'es':''} · pie de playa</div></div>
+    <div class="detail-row"><b>Estado</b><div><span class="tag tag-${a.state==='free'?'ok':a.state==='occupied'?'coral':a.state==='cleaning'?'info':'warn'}">${APT_STATE_LBL[a.state]}</span></div></div>
+    <div class="detail-row"><b>Ocupante</b><div>${occupants}</div></div>
+    <div class="detail-row"><b>Próxima reserva</b><div>${a.state==='free'?'No hay':'Yannick Möller · 20-27 Jul'}</div></div>
+    <div class="detail-row"><b>Tarifa noche</b><div><strong style="font-family:var(--display);font-size:18px;color:var(--coral);">€${a.rooms===1?105:a.rooms===2?138:165}</strong></div></div>
+    <div class="detail-row" style="border-bottom:none;"><b>Sincronización</b><div>✓ Airbnb · ✓ Booking.com · ✓ iCal directo</div></div>
+    <div style="display:flex;gap:8px;margin-top:18px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cerrar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="toast('Reserva creada');closeModal()">+ Reservar</button>
+    </div>
+  `);
+}
+
+function renderCal(){
+  const days=30;
+  let html='<div class="cal-h">Apartamento</div>';
+  const today=new Date();
+  for(let i=0;i<days;i++){
+    const d=new Date(today);d.setDate(today.getDate()+i);
+    const dow=d.getDay();const isToday=i===0;const isWk=dow===0||dow===6;
+    html+=`<div class="cal-h ${isToday?'today':''} ${isWk?'weekend':''}">${d.getDate()}<br>${['D','L','M','X','J','V','S'][dow]}</div>`;
+  }
+  // Sample bookings per apt
+  const sampleBookings=[
+    [{start:0,len:5,name:'Familia Bauer',src:'airbnb'},{start:8,len:7,name:'Möller',src:'direct'},{start:17,len:5,name:'Reem A.',src:'booking'}],
+    [{start:0,len:8,name:'Hartmann',src:'airbnb'},{start:12,len:6,name:'Vega J.',src:'direct'}],
+    [{start:2,len:5,name:'A. Berasaluce',src:'direct'},{start:9,len:7,name:'Jensen',src:'booking'}],
+    [{start:0,len:3,name:'Lim.',src:'blocked'},{start:5,len:4,name:'Riba',src:'direct'},{start:14,len:5,name:'Sancho',src:'airbnb'}],
+    [{start:0,len:10,name:'Bauer T.',src:'direct'},{start:14,len:6,name:'Costa',src:'airbnb'}],
+    [{start:1,len:5,name:'Pereira',src:'booking'},{start:9,len:5,name:'Rivas S.',src:'direct'}],
+    [{start:0,len:7,name:'Pérez D.',src:'direct'},{start:10,len:6,name:'Eriksson',src:'airbnb'}],
+  ];
+  APTS.slice(0,12).forEach((a,idx)=>{
+    html+=`<div class="cal-row-h">Apto ${a.n}<em>${a.rooms}h</em></div>`;
+    const books=sampleBookings[idx%sampleBookings.length]||[];
+    for(let i=0;i<days;i++){
+      const dow=(today.getDay()+i)%7;const isToday=i===0;const isWk=dow===0||dow===6;
+      let bookHtml='';
+      books.forEach(b=>{if(b.start===i){bookHtml=`<div class="cal-book ${b.src}" style="width:calc(${b.len*100}% + ${b.len-1}px);" onclick="event.stopPropagation();toast('Reserva: ${b.name}')">${b.name}</div>`;}});
+      html+=`<div class="cal-cell ${isToday?'today':''} ${isWk?'weekend':''}">${bookHtml}</div>`;
+    }
+  });
+  document.getElementById('cal-grid').innerHTML=html;
+}
+
+function renderAptRes(){
+  const res=[
+    {apt:7,c:'Daniel Pérez',in:'12 Jul',out:'19 Jul',nights:7,ch:'WhatsApp IA',total:1015,s:'Confirmada',sc:'ok'},
+    {apt:14,c:'Familia Bauer',in:'Hoy',out:'14 Jun',nights:7,ch:'Directa',total:1155,s:'Check-in OK',sc:'ok'},
+    {apt:19,c:'Yannick Möller',in:'Hoy',out:'12 Jun',nights:5,ch:'Airbnb',total:725,s:'Check-in OK',sc:'ok'},
+    {apt:21,c:'Reem Al Mansoori',in:'Mañana',out:'13 Jun',nights:3,ch:'Booking.com',total:540,s:'Pendiente pago',sc:'warn'},
+    {apt:3,c:'Ainhoa Berasaluce',in:'10 Jun',out:'17 Jun',nights:7,ch:'Directa',total:1015,s:'Pendiente pago',sc:'warn'},
+    {apt:12,c:'Sofía Rivas',in:'15 Jun',out:'19 Jun',nights:4,ch:'Airbnb',total:480,s:'Confirmada',sc:'ok'},
+    {apt:5,c:'Jaime Vega',in:'20 Jun',out:'27 Jun',nights:7,ch:'Directa',total:1015,s:'Confirmada',sc:'ok'},
+    {apt:8,c:'(Mantenimiento)',in:'Hoy',out:'9 Jun',nights:2,ch:'Bloqueo',total:0,s:'Bloqueado',sc:'info'}
+  ];
+  document.getElementById('apt-res-tbody').innerHTML=res.map(r=>`<tr>
+    <td><strong>Apto ${r.apt}</strong></td>
+    <td>${r.c}</td>
+    <td>${r.in}</td>
+    <td>${r.out}</td>
+    <td>${r.nights}</td>
+    <td><span class="tag tag-${r.ch==='Airbnb'?'coral':r.ch==='Booking.com'?'ocean':r.ch.includes('IA')?'info':'ok'}">${r.ch}</span></td>
+    <td><strong>${fmt(r.total)}</strong></td>
+    <td><span class="tag tag-${r.sc}">${r.s}</span></td>
+  </tr>`).join('');
+}
+
+function renderClean(){
+  const cols=[
+    {name:'Pendiente',color:'#94a3b8',cards:[{t:'Apto 4',m:'Tras check-out 10:00',b:'Marta'},{t:'Apto 11',m:'Tras check-out 11:00',b:'Marta'}]},
+    {name:'En curso',color:'var(--aqua)',cards:[{t:'Apto 18',m:'Marta empezó 11:30',b:'Marta'}]},
+    {name:'Hecho',color:'var(--leaf)',cards:[{t:'Apto 17',m:'Listo desde 09:45',b:'Marta'},{t:'Apto 22',m:'Listo desde 08:30',b:'Marta'}]},
+    {name:'Mañana',color:'var(--coral)',cards:[{t:'Apto 7',m:'Tras check-out 12:00',b:'-'},{t:'Apto 19',m:'Tras check-out 11:00',b:'-'},{t:'Apto 5',m:'Tras check-out 10:00',b:'-'}]}
+  ];
+  document.getElementById('clean-kan').innerHTML=cols.map(c=>`<div class="kan-col"><div class="kan-col-h" style="border-color:${c.color};"><strong style="color:${c.color}">${c.name}</strong><span>${c.cards.length}</span></div>${c.cards.map(k=>`<div class="kan-card" style="border-left-color:${c.color}"><strong>${k.t}</strong><em>${k.m}</em><div class="kan-card-row"><span style="color:var(--txt3)">Asignada: ${k.b}</span><b>1h 30m</b></div></div>`).join('')}</div>`).join('');
+}
+
+function renderMaint(){
+  const cols=[
+    {name:'Nuevo',color:'var(--coral)',cards:[{t:'Apto 8 · Boiler',m:'No hay agua caliente',p:'Alta',d:'Hoy'}]},
+    {name:'En curso',color:'var(--warn)',cards:[{t:'Apto 14 · Aire acondicionado',m:'Hace ruido extraño',p:'Media',d:'Mañana'}]},
+    {name:'Esperando piezas',color:'var(--aqua)',cards:[{t:'Apto 2 · Persiana',m:'Pieza pedida',p:'Baja',d:'5 días'}]},
+    {name:'Resuelto',color:'var(--leaf)',cards:[{t:'Apto 11 · Grifo cocina',m:'Cambiado',p:'Baja',d:'Ayer'},{t:'Apto 6 · Wifi',m:'Router reseteado',p:'Media',d:'Ayer'}]}
+  ];
+  document.getElementById('maint-kan').innerHTML=cols.map(c=>`<div class="kan-col"><div class="kan-col-h" style="border-color:${c.color};"><strong style="color:${c.color}">${c.name}</strong><span>${c.cards.length}</span></div>${c.cards.map(k=>`<div class="kan-card" style="border-left-color:${c.color}"><strong>${k.t}</strong><em>${k.m}</em><div class="kan-card-row"><span style="color:var(--txt3)">Prioridad ${k.p}</span><b>${k.d}</b></div></div>`).join('')}</div>`).join('');
+}
+
+function renderClasses(){
+  const days=['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+  const hours=['09:00','10:30','11:30','12:30','14:00','15:00','16:30','17:30','18:30'];
+  const today=new Date();
+  const dow=(today.getDay()+6)%7;
+  let html='<div class="sched-h"></div>';
+  for(let i=0;i<7;i++){html+=`<div class="sched-h ${i===dow?'today':''}">${days[i]}</div>`;}
+  // sample classes per slot
+  const grid={};
+  const sample=[
+    {d:0,h:'09:00',t:'Grupal · Iniciación',i:'David',n:8,m:10,c:'',cls:''},
+    {d:0,h:'10:30',t:'Privada',i:'Lucas',n:1,m:1,c:'',cls:'private'},
+    {d:0,h:'11:30',t:'Grupal · Avanzado',i:'David',n:6,m:8,c:'',cls:''},
+    {d:0,h:'12:30',t:'SUP',i:'María',n:4,m:6,c:'',cls:'sup'},
+    {d:0,h:'15:00',t:'Grupal · Iniciación',i:'Lucas',n:9,m:10,c:'',cls:''},
+    {d:0,h:'16:30',t:'Privada',i:'David',n:2,m:2,c:'',cls:'private'},
+    {d:1,h:'10:30',t:'Grupal · Intermedio',i:'David',n:7,m:10,c:'',cls:''},
+    {d:1,h:'11:30',t:'Grupal · Iniciación',i:'Lucas',n:10,m:10,c:'',cls:' full'},
+    {d:1,h:'14:00',t:'SUP',i:'María',n:3,m:6,c:'',cls:'sup'},
+    {d:2,h:'09:00',t:'Grupal · Iniciación',i:'David',n:7,m:10,c:'',cls:''},
+    {d:2,h:'15:00',t:'Privada',i:'Iker',n:1,m:2,c:'',cls:'private'},
+    {d:3,h:'10:30',t:'Grupal · Avanzado',i:'David',n:5,m:8,c:'',cls:''},
+    {d:3,h:'16:30',t:'Grupal · Iniciación',i:'Lucas',n:9,m:10,c:'',cls:''},
+    {d:4,h:'09:00',t:'Camp grupal',i:'David',n:8,m:10,c:'',cls:''},
+    {d:4,h:'11:30',t:'SUP race',i:'María',n:4,m:6,c:'',cls:'sup'},
+    {d:5,h:'10:30',t:'Grupal · Familia',i:'Nora',n:4,m:4,c:'',cls:' full'},
+    {d:5,h:'14:00',t:'Camp grupal',i:'Lucas',n:7,m:10,c:'',cls:''},
+    {d:6,h:'11:30',t:'Privada VIP',i:'David',n:2,m:2,c:'',cls:'private'},
+  ];
+  sample.forEach(s=>{grid[s.d+'-'+s.h]=s;});
+  hours.forEach(h=>{
+    html+=`<div class="sched-time">${h}</div>`;
+    for(let d=0;d<7;d++){
+      const c=grid[d+'-'+h];
+      html+=`<div class="sched-cell">${c?`<div class="sched-class ${c.cls}" onclick="toast('Clase: ${c.t}')"><strong>${c.t.split('·')[0]}</strong>${c.i} · ${c.n}/${c.m}</div>`:''}</div>`;
+    }
+  });
+  document.getElementById('sched-grid').innerHTML=html;
+  const monday=new Date(today);monday.setDate(today.getDate()-dow);
+  const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
+  document.getElementById('week-range').textContent=monday.getDate()+' — '+sunday.getDate()+' '+sunday.toLocaleDateString('es-ES',{month:'long'});
+}
+
+function renderStudents(){
+  document.getElementById('students-tbody').innerHTML=STUDENTS.map(s=>`<tr>
+    <td><strong>${s.name}</strong></td>
+    <td><span class="tag tag-${s.level==='Avanzado'?'coral':s.level==='Intermedio'?'info':s.level==='SUP'?'ocean':'ok'}">${s.level}</span></td>
+    <td>${s.pack}</td>
+    <td><strong>${s.left}</strong></td>
+    <td>${s.next}</td>
+    <td><strong>${fmt(s.spent)}</strong></td>
+  </tr>`).join('');
+}
+
+function renderPacks(){
+  document.getElementById('packs-tbody').innerHTML=PACKS.map(p=>`<tr>
+    <td><strong>${p.name}</strong></td>
+    <td><span class="tag tag-${p.type==='Privada'?'coral':p.type==='Camp'?'ocean':p.type==='SUP'?'info':'ok'}">${p.type}</span></td>
+    <td>${p.sess}</td>
+    <td><strong style="color:var(--coral);font-family:var(--display);font-size:15px;">${fmt(p.price)}</strong></td>
+    <td>${p.sold}</td>
+    <td><strong>${p.margin}</strong></td>
+    <td><span class="tag tag-${p.state==='Top'?'coral':p.state==='Nuevo'?'info':'ok'}">${p.state}</span></td>
+  </tr>`).join('');
+}
+
+function renderInstructors(){
+  document.getElementById('instructors-grid').innerHTML=INSTRUCTORS.map(i=>`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;cursor:pointer;transition:all .2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 36px rgba(0,0,0,.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+      <div style="aspect-ratio:1/1;background:url('${i.img}') center/cover;background-color:var(--sand);"></div>
+      <div style="padding:14px;">
+        <div style="font-family:var(--display);font-size:16px;font-weight:600;color:var(--txt);">${i.name}</div>
+        <div style="font-size:10px;letter-spacing:.2em;color:var(--coral);text-transform:uppercase;font-weight:700;margin:3px 0 8px;">${i.role}</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);padding:8px 0;border-top:1px solid var(--border2);">
+          <span><strong style="color:var(--txt);">${i.exp}</strong> exp.</span>
+          <span><strong style="color:var(--txt);">${i.rating}</strong>★ · ${i.classes} clases</span>
+        </div>
+        <div style="font-size:10px;letter-spacing:.1em;color:var(--txt3);text-transform:uppercase;font-weight:600;margin-top:4px;">${i.cert}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderRental(){
+  document.getElementById('rental-tbody').innerHTML=RENTALS.map(r=>`<tr>
+    <td><strong>${r.item}</strong></td>
+    <td>${r.client}</td>
+    <td>${r.out}</td>
+    <td>${r.ret}</td>
+    <td>${r.days}</td>
+    <td><span class="tag tag-ok">${r.state}</span></td>
+    <td><strong>${fmt(r.total)}</strong></td>
+  </tr>`).join('');
+}
+
+let POS_CART=[];
+function renderShop(){posFilter('');posDraw();}
+function posFilter(q){
+  q=(q||'').toLowerCase();
+  const list=STOCK.filter(s=>!q||s.name.toLowerCase().includes(q));
+  document.getElementById('pos-grid').innerHTML=list.map((p,i)=>{
+    const idx=STOCK.indexOf(p);
+    return `<div class="pos-prod" onclick="posAdd(${idx})">
+      <div class="pos-prod-img" style="background-image:url('${p.img}')"></div>
+      <div class="pos-prod-body">
+        <div class="pos-prod-name">${p.name}</div>
+        <div class="pos-prod-price">${fmt(p.price)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function posAdd(idx){
+  const p=STOCK[idx];
+  const ex=POS_CART.find(c=>c.idx===idx);
+  if(ex)ex.qty++;else POS_CART.push({idx,name:p.name,price:p.price,qty:1});
+  posDraw();
+}
+function posDraw(){
+  const cart=document.getElementById('pos-cart');
+  if(!POS_CART.length){cart.innerHTML='<div style="text-align:center;padding:24px 0;color:rgba(245,237,214,.5);font-size:12px;font-style:italic;">Carrito vacío · pulsa producto para añadir</div>';}
+  else cart.innerHTML=POS_CART.map((c,i)=>`<div class="pos-cart-item"><div><strong>${c.name}</strong><em>${c.qty} × ${fmt(c.price)}</em></div><div class="price">${fmt(c.price*c.qty)}</div><button onclick="POS_CART.splice(${i},1);posDraw()">×</button></div>`).join('');
+  const sub=POS_CART.reduce((a,c)=>a+c.price*c.qty,0);
+  const vat=sub*0.21/1.21;
+  document.getElementById('pos-sub').textContent=fmt(sub-vat);
+  document.getElementById('pos-vat').textContent=fmt(vat);
+  document.getElementById('pos-total').textContent=fmt(sub);
+}
+function posClear(){POS_CART=[];posDraw();toast('Carrito vaciado');}
+function posPay(m){
+  if(!POS_CART.length){toast('Carrito vacío');return;}
+  const total=POS_CART.reduce((a,c)=>a+c.price*c.qty,0);
+  toast('✓ Cobrado '+fmt(total)+' · '+m);
+  POS_CART=[];posDraw();
+}
+
+function renderStock(){
+  document.getElementById('stk-grid').innerHTML=STOCK.map(s=>{
+    const low=s.stock<=s.min;const out=s.stock===0;
+    return `<div class="stk-card" onclick="toast('Producto: ${s.name}')">
+      <div class="stk-img" style="background-image:url('${s.img}')"></div>
+      <div class="stk-body">
+        <div class="stk-name">${s.name}</div>
+        <div class="stk-meta">${s.cat} · ${s.sku}</div>
+        <div class="stk-row">
+          <span class="stk-stock ${out?'out':low?'low':''}">${out?'AGOTADO':s.stock+' · min '+s.min}</span>
+          <span class="stk-price">${fmt(s.price)}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderClients(){
+  document.getElementById('clients-tbody').innerHTML=CLIENTS.map(c=>`<tr>
+    <td><strong>${c.name}</strong></td>
+    <td>${c.src}</td>
+    <td>${c.apto}</td>
+    <td>${c.clas}</td>
+    <td>${c.buys}</td>
+    <td><strong>${fmt(c.ltv)}</strong></td>
+    <td>${c.tags.map(t=>`<span class="tag tag-${t==='VIP'?'coral':t==='Nuevo'?'info':'ok'}">${t}</span>`).join(' ')}</td>
+  </tr>`).join('');
+}
+
+function renderInvoices(){
+  document.getElementById('inv-tbody').innerHTML=INVOICES.map(i=>`<tr>
+    <td><strong>${i.num}</strong></td>
+    <td>${i.client}</td>
+    <td>${i.concept}</td>
+    <td>${i.date}</td>
+    <td>${i.vat}</td>
+    <td><strong>${fmt(i.total)}</strong></td>
+    <td><span class="tag tag-${i.sc}">${i.state}</span></td>
+  </tr>`).join('');
+}
+
+function renderReports(){
+  document.getElementById('reports-kpis').innerHTML=[
+    {l:'Ingresos · mes',v:'€68,420',t:'+22% vs anterior',cls:'up'},
+    {l:'Apartamentos',v:'€41,800',t:'61%',cls:''},
+    {l:'Escuela surf',v:'€18,940',t:'28%',cls:''},
+    {l:'Tienda + alquiler',v:'€7,680',t:'11%',cls:''}
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-trend ${k.cls}">${k.t}</div></div>`).join('');
+
+  const biz=[{name:'Apartamentos',pct:61,val:41800,col:'var(--coral)'},{name:'Escuela',pct:28,val:18940,col:'var(--aqua-dk)'},{name:'Tienda',pct:7,val:4720,col:'var(--ocean-mid)'},{name:'Alquiler',pct:4,val:2960,col:'var(--leaf)'}];
+  document.getElementById('biz-bars').innerHTML=biz.map(b=>`
+    <div style="padding:10px 0;border-bottom:1px solid var(--border2);">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><strong>${b.name}</strong><span style="color:var(--coral);font-family:var(--display);font-weight:700;">${fmt(b.val)}</span></div>
+      <div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden;"><div style="height:100%;background:${b.col};width:${b.pct}%"></div></div>
+    </div>`).join('');
+
+  // VAT
+  const sub=68420/1.21;const vatOut=68420-sub;const vatIn=vatOut*0.34;
+  document.getElementById('vat-out').textContent=fmt(Math.round(vatOut));
+  document.getElementById('vat-in').textContent=fmt(Math.round(vatIn));
+  document.getElementById('vat-net').textContent=fmt(Math.round(vatOut-vatIn));
+
+  document.getElementById('top-tbody').innerHTML=[
+    {c:'Semana surf · 5 días',l:'Escuela',q:38,r:6650,m:'75%'},
+    {c:'Apto 14 · noches',l:'Apartamento',q:42,r:6930,m:'68%'},
+    {c:'Surf Camp · 7 noches',l:'Camp',q:14,r:7280,m:'58%'},
+    {c:'Bono 10 clases',l:'Escuela',q:12,r:3000,m:'72%'},
+    {c:'Neopreno Rip Curl 4/3',l:'Tienda',q:18,r:3330,m:'51%'}
+  ].map(t=>`<tr><td><strong>${t.c}</strong></td><td><span class="tag tag-info">${t.l}</span></td><td>${t.q}</td><td><strong>${fmt(t.r)}</strong></td><td>${t.m}</td></tr>`).join('');
+}
+
+function renderInbox(){
+  document.getElementById('inbox-threads').innerHTML=THREADS.map((t,i)=>`
+    <div class="inbox-thread ${i===0?'active':''}" id="thread-${i}" onclick="openThread(${i})">
+      <div class="it-row">
+        <div class="it-name">${t.name}</div>
+        <div class="it-when">${t.when}</div>
+      </div>
+      <div class="it-prev">${t.prev}</div>
+      <div class="it-row" style="margin-top:6px;">
+        <span style="font-size:9px;letter-spacing:.16em;color:var(--txt3);text-transform:uppercase;font-weight:600;">${t.channel}</span>
+        <span class="tag tag-${t.tag.cls}" style="font-size:9px;">${t.tag.label}</span>
+      </div>
+    </div>`).join('');
+  openThread(0);
+}
+function openThread(i){
+  CUR_THREAD=i;
+  document.querySelectorAll('.inbox-thread').forEach(x=>x.classList.remove('active'));
+  document.getElementById('thread-'+i).classList.add('active');
+  const t=THREADS[i];
+  document.getElementById('chat-hd').innerHTML=`<strong>${t.name}</strong><em>${t.phone} · ${t.channel}</em>`;
+  document.getElementById('inbox-msgs').innerHTML=t.msgs.map(m=>`<div class="msg ${m.from}">${m.text.replace(/\n/g,'<br>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}<div class="at">${m.at}</div></div>`).join('');
+}
+function inboxSend(){
+  const inp=document.getElementById('inbox-in');
+  const v=inp.value.trim();if(!v||CUR_THREAD==null)return;
+  const now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  THREADS[CUR_THREAD].msgs.push({from:'owner',text:v,at:now});
+  inp.value='';
+  openThread(CUR_THREAD);
+  setTimeout(()=>{document.getElementById('inbox-msgs').scrollTop=99999;},50);
+}
+
+function renderTeam(){
+  document.getElementById('team-grid').innerHTML=TEAM.map(t=>`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);padding:18px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div style="width:44px;height:44px;border-radius:50%;background:${t.color};color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:14px;">${t.av}</div>
+        <div>
+          <div style="font-family:var(--display);font-size:14px;font-weight:600;color:var(--txt);">${t.name}</div>
+          <div style="font-size:10px;letter-spacing:.18em;color:var(--coral);text-transform:uppercase;font-weight:700;margin-top:2px;">${t.role}</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--txt3);padding-top:10px;border-top:1px solid var(--border2);">
+        <div>${t.email}</div>
+        <div style="margin-top:2px;">${t.phone}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderSettings(){
+  const ints=[
+    {n:'Airbnb',d:'Sincronización iCal bidireccional',on:true,i:'🏠'},
+    {n:'Booking.com',d:'Reservas + tarifas',on:true,i:'🌐'},
+    {n:'Stripe',d:'Pasarela pagos · 1.4% fee',on:true,i:'💳'},
+    {n:'Mailchimp',d:'Newsletter automática',on:true,i:'✉'},
+    {n:'WhatsApp Business',d:'Agente IA 24/7',on:true,i:'💬'},
+    {n:'Google Calendar',d:'Sync clases + reservas',on:true,i:'📅'},
+    {n:'Verifactu / AEAT',d:'Factura electrónica obligatoria',on:false,i:'📋'},
+    {n:'Instagram DM',d:'Bot responde mensajes IG',on:true,i:'📷'},
+    {n:'TPV Stripe Terminal',d:'Lector tarjeta físico',on:false,i:'🖨'},
+  ];
+  document.getElementById('integrations-list').innerHTML=ints.map(i=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border2);">
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div style="font-size:22px;">${i.i}</div>
+        <div><div style="font-size:13px;font-weight:600;color:var(--txt);">${i.n}</div><div style="font-size:11px;color:var(--txt3);">${i.d}</div></div>
+      </div>
+      <span class="tag tag-${i.on?'ok':'warn'}">${i.on?'Conectado':'Sin conectar'}</span>
+    </div>`).join('');
+}
+
+// init when login
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeModal();
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();toast('⌘K · búsqueda rápida (demo)');}
+});
+</script>
+</body>
+</html>
