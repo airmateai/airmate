@@ -200,14 +200,24 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 .tag-coral{background:rgba(255,94,58,.14);color:var(--coral);}
 .tag-ocean{background:rgba(10,37,64,.1);color:var(--ocean);}
 
-/* ═══ APARTMENTS · REALISTIC BUILDING FAÇADE ═══ */
+/* ═══ APARTMENTS · REALISTIC BUILDING FAÇADE v2 ═══ */
 .bldg-wrap{
   position:relative;width:100%;
-  background:linear-gradient(180deg,#a8d8ea 0%,#d4eaf7 35%,#fef3c7 75%,#f5d896 100%);
-  border-radius:16px;padding:30px 30px 0;overflow:hidden;
-  min-height:660px;
+  background:linear-gradient(180deg,
+    #4a90c2 0%,
+    #87c5e8 25%,
+    #ffd89e 60%,
+    #ffb380 75%,
+    #f5d896 90%);
+  border-radius:18px;overflow:hidden;
+  min-height:780px;
+  box-shadow:inset 0 0 80px rgba(0,0,0,.06);
 }
-[data-theme="dark"] .bldg-wrap{background:linear-gradient(180deg,#0a1830 0%,#1a3a5c 70%,#0a2540 100%);}
+[data-theme="dark"] .bldg-wrap{background:linear-gradient(180deg,#0a1830 0%,#1a3a5c 50%,#0a2540 100%);}
+
+/* SVG layer for scenery */
+.scene-svg{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;}
+.scene-svg.foreground{z-index:8;}
 
 /* ═══ SCENE LAYERS ═══ */
 .scene-mountain{
@@ -312,31 +322,59 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 
 /* Building */
 .bldg{
-  position:relative;z-index:2;max-width:780px;margin:30px auto 0;
+  position:relative;z-index:6;max-width:780px;margin:80px auto 0;
   display:flex;flex-direction:column;align-items:center;
+  filter:drop-shadow(0 24px 40px rgba(0,0,0,.25));
 }
-/* Roof */
+/* Roof · pitched with terracotta tiles */
 .bldg-roof{
-  width:108%;height:42px;margin-left:-4%;margin-bottom:-1px;position:relative;
-  background:linear-gradient(180deg,#8b3a1a 0%,#6b2a10 100%);
-  clip-path:polygon(2% 100%,8% 0%,92% 0%,98% 100%);
-  box-shadow:inset 0 -4px 8px rgba(0,0,0,.3);
+  width:110%;height:52px;margin-left:-5%;margin-bottom:-1px;position:relative;
+  background:
+    repeating-linear-gradient(90deg,
+      #a04820 0px,#a04820 4px,
+      #b85525 4px,#b85525 12px,
+      #8b3a1a 12px,#8b3a1a 16px,
+      #b85525 16px,#b85525 24px,
+      #a04820 24px,#a04820 28px),
+    linear-gradient(180deg,#8b3a1a 0%,#6b2a10 100%);
+  clip-path:polygon(3% 100%,10% 0%,90% 0%,97% 100%);
+  box-shadow:inset 0 -6px 12px rgba(0,0,0,.35);
 }
+/* Tile lines */
 .bldg-roof::before{
-  content:'';position:absolute;top:6px;left:10%;right:10%;height:4px;
-  background:repeating-linear-gradient(90deg,#a04820 0 12px,#8b3a1a 12px 14px);opacity:.6;
+  content:'';position:absolute;top:18px;left:12%;right:12%;height:2px;
+  background:rgba(0,0,0,.25);
+}
+.bldg-roof::after{
+  content:'';position:absolute;top:34px;left:8%;right:8%;height:2px;
+  background:rgba(0,0,0,.25);
 }
 .bldg-chimney{
-  position:absolute;top:-18px;right:18%;width:18px;height:24px;
-  background:linear-gradient(180deg,#c8b5a0,#9a8770);border-radius:2px 2px 0 0;
+  position:absolute;top:-24px;right:16%;width:22px;height:32px;
+  background:linear-gradient(180deg,#c8b5a0 0%,#9a8770 60%,#6b5a48 100%);
+  border-radius:3px 3px 0 0;
+  box-shadow:0 -2px 4px rgba(0,0,0,.2);
 }
+.bldg-chimney::before{
+  content:'';position:absolute;top:-4px;left:-3px;right:-3px;height:4px;
+  background:#5a4a38;border-radius:2px;
+}
+/* Smoke from chimney */
+.bldg-chimney::after{
+  content:'';position:absolute;top:-26px;left:50%;width:14px;height:14px;
+  border-radius:50%;background:rgba(255,255,255,.6);transform:translateX(-50%);
+  animation:smokeRise 4s ease-out infinite;filter:blur(2px);
+}
+@keyframes smokeRise{0%{transform:translate(-50%,0) scale(.6);opacity:.7;}100%{transform:translate(-50%,-40px) scale(1.6);opacity:0;}}
 
 /* Floors */
 .bldg-body{
-  width:100%;background:linear-gradient(180deg,#fbf6e8 0%,#f0e6d2 100%);
-  border:2px solid #6b5a48;border-radius:0 0 6px 6px;
+  width:100%;
+  background:
+    repeating-linear-gradient(0deg,rgba(120,90,60,.04) 0 1px,transparent 1px 30px),
+    linear-gradient(180deg,#fbf6e8 0%,#f0e6d2 100%);
+  border:2.5px solid #6b5a48;border-radius:0 0 8px 8px;
   padding:0 0 4px;position:relative;
-  box-shadow:0 12px 30px rgba(0,0,0,.18);
 }
 [data-theme="dark"] .bldg-body{background:linear-gradient(180deg,#3a4a5c,#2a3a4a);border-color:#1a2a3a;}
 .bldg-name{
@@ -356,22 +394,77 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
   writing-mode:horizontal-tb;text-align:right;width:36px;
 }
 
-/* Window (apartment unit) */
+/* Window (apartment unit) · with shutters */
 .apt-w{
   position:relative;aspect-ratio:5/6;
-  border:3px solid #6b5a48;border-radius:6px 6px 0 0;
-  background:linear-gradient(180deg,#dbeafe 0%,#a5cbe6 100%);
+  border:3px solid #5a4a38;border-radius:4px 4px 0 0;
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.4) 0%,rgba(255,255,255,0) 50%),
+    linear-gradient(180deg,#dbeafe 0%,#a5cbe6 100%);
   display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
-  cursor:pointer;transition:all .18s;overflow:hidden;
-  box-shadow:inset 0 0 0 2px rgba(255,255,255,.4),inset 0 -6px 12px rgba(0,0,0,.08);
+  cursor:pointer;transition:all .25s cubic-bezier(.2,.9,.3,1.1);overflow:visible;
+  box-shadow:
+    inset 0 0 0 2px rgba(255,255,255,.5),
+    inset 0 -8px 14px rgba(0,0,0,.1),
+    0 3px 8px rgba(0,0,0,.15);
+  margin:0 6px;
 }
-.apt-w:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 8px 18px rgba(0,0,0,.2),inset 0 0 0 2px rgba(255,255,255,.6);z-index:5;}
-/* Window cross frame */
+.apt-w:hover{transform:translateY(-4px) scale(1.06);z-index:10;}
+.apt-w:hover .apt-w-shutter{transform:rotateY(-50deg);}
+.apt-w:hover .apt-w-shutter.right{transform:rotateY(50deg);}
+
+/* Window cross frame (mullions) */
 .apt-w::before{
-  content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(107,90,72,.6);transform:translateX(-50%);
+  content:'';position:absolute;left:50%;top:8%;bottom:18%;width:2px;background:rgba(107,90,72,.7);transform:translateX(-50%);
+  box-shadow:1px 0 0 rgba(255,255,255,.3);
 }
 .apt-w::after{
-  content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:rgba(107,90,72,.6);transform:translateY(-50%);
+  content:'';position:absolute;top:50%;left:8%;right:8%;height:2px;background:rgba(107,90,72,.7);transform:translateY(-50%);
+  box-shadow:0 1px 0 rgba(255,255,255,.3);
+}
+
+/* Wooden shutters (open by default) */
+.apt-w-shutter{
+  position:absolute;top:-3px;width:32%;height:calc(100% - 6px);
+  background:
+    repeating-linear-gradient(0deg,
+      #1f9d6f 0px,#1f9d6f 2px,
+      #2dba8a 2px,#2dba8a 4px),
+    #2dba8a;
+  border:2px solid #145a3f;border-radius:2px;
+  z-index:6;transition:transform .35s cubic-bezier(.2,.9,.3,1.1);
+  transform-origin:right center;transform:rotateY(-15deg);
+  box-shadow:2px 0 4px rgba(0,0,0,.2);
+}
+.apt-w-shutter.left{left:-28%;}
+.apt-w-shutter.right{left:96%;transform-origin:left center;transform:rotateY(15deg);}
+/* Shutter color variations per state */
+.apt-w.occupied .apt-w-shutter{background:repeating-linear-gradient(0deg,#a04820 0 2px,#b85525 2px 4px),#b85525;border-color:#6b2a10;}
+.apt-w.maint .apt-w-shutter{background:repeating-linear-gradient(0deg,#94a3b8 0 2px,#cbd5e1 2px 4px),#94a3b8;border-color:#475569;}
+.apt-w.cleaning .apt-w-shutter{background:repeating-linear-gradient(0deg,#3a9bb5 0 2px,#5dbdd3 2px 4px),#5dbdd3;border-color:#1d5a7d;}
+
+/* Window curtains inside */
+.apt-w-curtain-l,.apt-w-curtain-r{
+  position:absolute;top:6%;bottom:14%;width:18%;
+  background:linear-gradient(180deg,rgba(255,255,255,.6),rgba(255,255,255,.3));
+  z-index:2;pointer-events:none;
+  border-radius:0 0 50% 50%/0 0 10px 10px;
+}
+.apt-w-curtain-l{left:5%;}
+.apt-w-curtain-r{right:5%;}
+.apt-w.free .apt-w-curtain-l,.apt-w.free .apt-w-curtain-r{display:none;}
+
+/* Awning above some windows */
+.apt-w-awning{
+  position:absolute;top:-2px;left:-4px;right:-4px;height:8px;
+  background:repeating-linear-gradient(90deg,#ff5e3a 0 6px,#e0492a 6px 12px);
+  border-bottom:1.5px solid #6b2a10;border-radius:1px;
+  z-index:5;
+}
+.apt-w-awning::before{
+  content:'';position:absolute;bottom:-4px;left:0;right:0;height:4px;
+  background:repeating-linear-gradient(90deg,#ff5e3a 0 6px,transparent 6px 8px);
+  clip-path:polygon(0 0,4% 100%,8% 0,12% 100%,16% 0,20% 100%,24% 0,28% 100%,32% 0,36% 100%,40% 0,44% 100%,48% 0,52% 100%,56% 0,60% 100%,64% 0,68% 100%,72% 0,76% 100%,80% 0,84% 100%,88% 0,92% 100%,96% 0,100% 100%);
 }
 /* States · curtain colors */
 .apt-w.free{background:linear-gradient(180deg,#86efac 0%,#22c55e 100%);}
@@ -452,17 +545,74 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
   text-shadow:0 1px 2px rgba(0,0,0,.5);
 }
 
-/* Balcony */
+/* Balcony · wrought iron */
 .apt-w-balcony{
-  position:absolute;bottom:-8px;left:-4px;right:-4px;height:8px;
-  background:linear-gradient(180deg,#94a3b8,#64748b);
-  border-radius:3px;
-  border:1px solid rgba(0,0,0,.2);z-index:3;
-  display:flex;justify-content:space-around;
+  position:absolute;bottom:-14px;left:-8px;right:-8px;height:14px;
+  background:linear-gradient(180deg,#fbf6e8 0%,#e0d8c0 100%);
+  border:1.5px solid #5a4a38;border-top:none;
+  border-radius:0 0 3px 3px;
+  z-index:4;
 }
+/* Wrought iron rail (vertical bars) */
 .apt-w-balcony::before{
-  content:'';position:absolute;top:-3px;left:0;right:0;height:3px;
-  background:repeating-linear-gradient(90deg,transparent 0 4px,rgba(0,0,0,.15) 4px 5px);
+  content:'';position:absolute;top:-12px;left:0;right:0;height:12px;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,transparent 6%,#3a2a18 6%,#3a2a18 8%,transparent 8%,transparent 14%,
+      #3a2a18 14%,#3a2a18 16%,transparent 16%,transparent 22%,
+      #3a2a18 22%,#3a2a18 24%,transparent 24%,transparent 30%,
+      #3a2a18 30%,#3a2a18 32%,transparent 32%,transparent 38%,
+      #3a2a18 38%,#3a2a18 40%,transparent 40%,transparent 46%,
+      #3a2a18 46%,#3a2a18 48%,transparent 48%,transparent 54%,
+      #3a2a18 54%,#3a2a18 56%,transparent 56%,transparent 62%,
+      #3a2a18 62%,#3a2a18 64%,transparent 64%,transparent 70%,
+      #3a2a18 70%,#3a2a18 72%,transparent 72%,transparent 78%,
+      #3a2a18 78%,#3a2a18 80%,transparent 80%,transparent 86%,
+      #3a2a18 86%,#3a2a18 88%,transparent 88%,transparent 94%,
+      #3a2a18 94%,#3a2a18 96%,transparent 96%);
+}
+/* Top horizontal rail */
+.apt-w-balcony::after{
+  content:'';position:absolute;top:-13px;left:0;right:0;height:2px;background:#3a2a18;border-radius:1px;
+}
+
+/* Flower box on balcony for VIP */
+.apt-w-flowers{
+  position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);
+  width:60%;height:8px;background:linear-gradient(180deg,#6b3a1a,#3a1c08);
+  border-radius:2px;z-index:5;
+}
+.apt-w-flowers::before{
+  content:'';position:absolute;top:-6px;left:0;right:0;height:8px;
+  background:radial-gradient(circle at 20% 50%,#e11d48 0 3px,transparent 4px),
+             radial-gradient(circle at 50% 30%,#f59e0b 0 3px,transparent 4px),
+             radial-gradient(circle at 80% 50%,#e11d48 0 3px,transparent 4px);
+}
+.apt-w-flowers::after{
+  content:'';position:absolute;top:-4px;left:0;right:0;height:6px;
+  background:radial-gradient(circle at 35% 50%,#2dba8a 0 2px,transparent 3px),
+             radial-gradient(circle at 65% 50%,#1f9d6f 0 2px,transparent 3px);
+}
+
+/* Towel hanging from balcony for surf guests */
+.apt-w-towel{
+  position:absolute;bottom:-12px;left:14%;width:14px;height:14px;
+  background:repeating-linear-gradient(0deg,#ff5e3a 0 3px,#fef3c7 3px 6px);
+  border:1px solid #6b2a10;border-radius:1px;
+  z-index:5;transform:rotate(-3deg);
+  animation:towelSway 4s ease-in-out infinite;
+}
+@keyframes towelSway{0%,100%{transform:rotate(-3deg);}50%{transform:rotate(3deg);}}
+
+/* AC unit on some windows */
+.apt-w-ac{
+  position:absolute;bottom:-26px;right:8%;width:18px;height:10px;
+  background:linear-gradient(180deg,#e8eef5,#a8b6c5);
+  border:1px solid #5a4a38;border-radius:2px;z-index:5;
+}
+.apt-w-ac::before{
+  content:'';position:absolute;inset:1px;background:repeating-linear-gradient(90deg,#475569 0 2px,#94a3b8 2px 3px);
+  opacity:.6;
 }
 
 /* Ground floor entrance */
@@ -1618,19 +1768,30 @@ function renderAptMap(){
   const stateShort={free:'LIBRE',occupied:'OCUPADO',cleaning:'LIMPIEZA',maint:'MANTEN.'};
   const hour=new Date().getHours();
   const isNight=(hour<7||hour>=20);
+  // Surfboards count from active rentals
+  const surfBoards=8;
   const drawApt=(n)=>{
     const a=APTS.find(x=>x.n===n);if(!a)return '';
     const guestCount=a.guests.length;
     const guestsLbl=a.guests.length?a.guests.join(' · '):'Libre';
     const tip=`Apto ${a.n} · ${a.rooms}h · ${guestsLbl}${a.days?' · '+a.days+'d':''}`;
     let extra='';
+    if(a.vip)extra+=`<div class="apt-w-awning"></div>`;
     if(a.state==='occupied'){
       extra+=`<div class="apt-w-days">${a.days}d</div>`;
-      extra+=`<div class="apt-w-guests" onclick="event.stopPropagation();editGuests(${a.n})" title="Editar huéspedes">👤 ${guestCount}</div>`;
-      if(a.surf)extra+=`<div class="apt-w-surf" title="Cliente surf">🏄</div>`;
-      if(a.vip)extra+=`<div class="apt-w-plant" title="VIP">🌿</div>`;
-    } else if(a.state==='cleaning') extra+=`<div class="apt-w-icon">🧹</div>`;
-    else if(a.state==='maint') extra+=`<div class="apt-w-icon">🔧</div>`;
+      extra+=`<div class="apt-w-guests" onclick="event.stopPropagation();editGuests(${a.n})" title="Editar huéspedes">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4"/><path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2z"/></svg>
+        ${guestCount}
+      </div>`;
+    }
+    extra+=`<span class="apt-w-curtain-l"></span><span class="apt-w-curtain-r"></span>`;
+    extra+=`<span class="apt-w-shutter left"></span><span class="apt-w-shutter right"></span>`;
+    if(a.state==='occupied'){
+      if(a.vip)extra+=`<div class="apt-w-flowers" title="VIP"></div>`;
+      else if(a.surf)extra+=`<div class="apt-w-towel" title="Cliente surf"></div>`;
+      if(n%3===0)extra+=`<div class="apt-w-ac" title="A/C"></div>`;
+    } else if(a.state==='cleaning') extra+=`<div class="apt-w-icon" style="font-size:22px;">🧹</div>`;
+    else if(a.state==='maint') extra+=`<div class="apt-w-icon" style="font-size:22px;">🔧</div>`;
     return `<div class="apt-w ${a.state} ${isNight&&a.state==='occupied'?'night':''}" onclick="aptDetail(${a.n})" data-tip="${tip}">
       ${extra}
       <div class="apt-w-n">${a.n}</div>
@@ -1652,6 +1813,233 @@ function renderAptMap(){
 
   document.getElementById('apt-map').outerHTML=`
     <div class="bldg-wrap" id="apt-map">
+
+      <!-- ═══ SKY LAYER · clouds, sun, birds (SVG) ═══ -->
+      <svg class="scene-svg" viewBox="0 0 1200 780" preserveAspectRatio="xMidYMid slice">
+        <!-- Sun with rays -->
+        <defs>
+          <radialGradient id="sunGrad"><stop offset="0%" stop-color="#fff3c0"/><stop offset="60%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#f59e0b"/></radialGradient>
+          <radialGradient id="sunHalo"><stop offset="0%" stop-color="rgba(251,191,36,.5)"/><stop offset="100%" stop-color="rgba(251,191,36,0)"/></radialGradient>
+          <linearGradient id="seaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a8db5"/><stop offset="50%" stop-color="#1d5a7d"/><stop offset="100%" stop-color="#0c3e5e"/></linearGradient>
+          <linearGradient id="sandGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f5d896"/><stop offset="100%" stop-color="#e0b870"/></linearGradient>
+          <linearGradient id="mountGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(120,140,160,.45)"/><stop offset="100%" stop-color="rgba(80,100,130,.7)"/></linearGradient>
+          <linearGradient id="mountGrad2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(95,115,140,.6)"/><stop offset="100%" stop-color="rgba(60,80,110,.85)"/></linearGradient>
+        </defs>
+
+        <!-- Sun halo + sun -->
+        <circle cx="1050" cy="120" r="120" fill="url(#sunHalo)"/>
+        <circle cx="1050" cy="120" r="48" fill="url(#sunGrad)"/>
+        <g stroke="#fbbf24" stroke-width="2.5" opacity=".6" stroke-linecap="round">
+          <line x1="1050" y1="50" x2="1050" y2="35"/>
+          <line x1="1115" y1="80" x2="1128" y2="68"/>
+          <line x1="985" y1="80" x2="972" y2="68"/>
+          <line x1="1130" y1="120" x2="1148" y2="120"/>
+          <line x1="970" y1="120" x2="952" y2="120"/>
+          <line x1="1115" y1="160" x2="1128" y2="172"/>
+        </g>
+
+        <!-- Clouds (puffy SVG) -->
+        <g fill="white" opacity=".85">
+          <g transform="translate(180,90)"><ellipse cx="0" cy="0" rx="38" ry="14"/><ellipse cx="-22" cy="-6" rx="22" ry="14"/><ellipse cx="22" cy="-4" rx="26" ry="16"/><ellipse cx="-44" cy="2" rx="18" ry="10"/></g>
+          <g transform="translate(620,60)" opacity=".7"><ellipse cx="0" cy="0" rx="32" ry="11"/><ellipse cx="-16" cy="-5" rx="18" ry="10"/><ellipse cx="18" cy="-3" rx="22" ry="13"/></g>
+          <g transform="translate(880,180)" opacity=".55"><ellipse cx="0" cy="0" rx="28" ry="10"/><ellipse cx="-14" cy="-4" rx="14" ry="9"/><ellipse cx="14" cy="-3" rx="18" ry="11"/></g>
+          <g transform="translate(360,200)" opacity=".5"><ellipse cx="0" cy="0" rx="24" ry="9"/><ellipse cx="-12" cy="-3" rx="13" ry="8"/></g>
+        </g>
+
+        <!-- Birds (V-shape gulls) -->
+        <g fill="none" stroke="#3a4a5c" stroke-width="2.5" stroke-linecap="round">
+          <g><animateTransform attributeName="transform" type="translate" values="-50,0;1250,40;-50,0" dur="35s" repeatCount="indefinite"/>
+            <path d="M0 0 Q5 -6 10 0 Q15 -6 20 0"/>
+          </g>
+          <g><animateTransform attributeName="transform" type="translate" values="-50,30;1250,80;-50,30" dur="42s" begin="6s" repeatCount="indefinite"/>
+            <path d="M0 0 Q4 -5 8 0 Q12 -5 16 0" stroke-width="2"/>
+          </g>
+          <g><animateTransform attributeName="transform" type="translate" values="1250,55;-50,55;1250,55" dur="38s" begin="12s" repeatCount="indefinite"/>
+            <path d="M0 0 Q5 -6 10 0 Q15 -6 20 0"/>
+          </g>
+        </g>
+
+        <!-- Distant mountains (Picos de Europa double layer) -->
+        <path d="M0 440 L80 380 L130 410 L200 320 L280 380 L360 290 L440 360 L520 300 L600 350 L680 280 L760 340 L840 290 L920 360 L1000 310 L1080 380 L1200 340 L1200 480 L0 480 Z" fill="url(#mountGrad)"/>
+        <path d="M0 470 L60 430 L140 460 L240 400 L320 450 L420 390 L500 440 L600 400 L700 440 L820 390 L920 430 L1020 400 L1120 440 L1200 420 L1200 500 L0 500 Z" fill="url(#mountGrad2)"/>
+
+        <!-- Sea -->
+        <rect x="0" y="500" width="1200" height="280" fill="url(#seaGrad)"/>
+        <!-- Sea reflection of sun -->
+        <ellipse cx="1050" cy="510" rx="80" ry="14" fill="#fef3c7" opacity=".4"/>
+        <ellipse cx="1050" cy="540" rx="60" ry="8" fill="#fbbf24" opacity=".25"/>
+
+        <!-- Waves (multiple layers) -->
+        <g fill="white" opacity=".35">
+          <path d="M0 520 Q60 510 120 520 T240 520 T360 520 T480 520 T600 520 T720 520 T840 520 T960 520 T1080 520 T1200 520" stroke="white" stroke-width="2" fill="none"/>
+          <path d="M0 555 Q80 548 160 555 T320 555 T480 555 T640 555 T800 555 T960 555 T1120 555 T1200 555" stroke="white" stroke-width="2" fill="none" opacity=".5"/>
+          <path d="M0 600 Q100 592 200 600 T400 600 T600 600 T800 600 T1000 600 T1200 600" stroke="white" stroke-width="1.5" fill="none" opacity=".35"/>
+        </g>
+
+        <!-- White foam bubbles -->
+        <g fill="white" opacity=".5">
+          <animateTransform attributeName="transform" type="translate" values="0,0;-30,0;0,0" dur="6s" repeatCount="indefinite"/>
+          <circle cx="120" cy="538" r="2"/><circle cx="135" cy="540" r="1.5"/><circle cx="280" cy="556" r="2"/><circle cx="295" cy="558" r="1.5"/>
+          <circle cx="540" cy="528" r="2"/><circle cx="700" cy="556" r="1.5"/><circle cx="860" cy="540" r="2"/><circle cx="980" cy="560" r="2"/>
+        </g>
+
+        <!-- Surfers on waves (realistic small SVG) -->
+        <g>
+          <animateTransform attributeName="transform" type="translate" values="200,545;220,540;200,545" dur="3s" repeatCount="indefinite"/>
+          <ellipse cx="0" cy="0" rx="14" ry="3" fill="#fafaf5"/>
+          <line x1="0" y1="-8" x2="0" y2="-2" stroke="#3a4a5c" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="0" cy="-12" r="3" fill="#f5d896"/>
+        </g>
+        <g>
+          <animateTransform attributeName="transform" type="translate" values="500,565;515,560;500,565" dur="3.5s" begin=".5s" repeatCount="indefinite"/>
+          <ellipse cx="0" cy="0" rx="14" ry="3" fill="#ff5e3a"/>
+          <line x1="0" y1="-8" x2="0" y2="-2" stroke="#3a4a5c" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="0" cy="-12" r="3" fill="#7a5538"/>
+        </g>
+        <g>
+          <animateTransform attributeName="transform" type="translate" values="780,548;798,544;780,548" dur="4s" begin="1s" repeatCount="indefinite"/>
+          <ellipse cx="0" cy="0" rx="14" ry="3" fill="#5dbdd3"/>
+          <line x1="0" y1="-8" x2="0" y2="-2" stroke="#3a4a5c" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="0" cy="-12" r="3" fill="#f5d896"/>
+        </g>
+
+        <!-- Sailboat -->
+        <g transform="translate(380,500)">
+          <animateTransform attributeName="transform" type="rotate" values="-2 0 0;2 0 0;-2 0 0" dur="5s" repeatCount="indefinite" additive="sum"/>
+          <!-- Hull -->
+          <path d="M-22 8 L22 8 L18 16 L-18 16 Z" fill="#6b3a1a" stroke="#3a1c08" stroke-width="1"/>
+          <!-- Mast -->
+          <line x1="0" y1="-32" x2="0" y2="8" stroke="#3a1c08" stroke-width="2"/>
+          <!-- Sail -->
+          <path d="M0 -30 L0 6 L18 0 Z" fill="white" stroke="#3a1c08" stroke-width="1"/>
+          <!-- Flag -->
+          <path d="M0 -32 L8 -30 L0 -28 Z" fill="#ff5e3a"/>
+        </g>
+
+        <!-- Lighthouse (San Vicente · proper SVG) -->
+        <g transform="translate(1080,430)">
+          <!-- Base rocks -->
+          <ellipse cx="0" cy="68" rx="32" ry="10" fill="#5a4a38"/>
+          <ellipse cx="-8" cy="64" rx="14" ry="6" fill="#7a6a58"/>
+          <!-- Body (red/white stripes) -->
+          <rect x="-10" y="-10" width="20" height="78" fill="white" stroke="#6b5a48" stroke-width="1.2"/>
+          <rect x="-10" y="0" width="20" height="12" fill="#e0454a"/>
+          <rect x="-10" y="22" width="20" height="12" fill="#e0454a"/>
+          <rect x="-10" y="44" width="20" height="12" fill="#e0454a"/>
+          <!-- Top platform -->
+          <rect x="-14" y="-14" width="28" height="4" fill="#3a4a5c"/>
+          <!-- Light room -->
+          <rect x="-9" y="-30" width="18" height="16" fill="#fef3c7" stroke="#6b5a48" stroke-width="1"/>
+          <!-- Glowing light -->
+          <circle cx="0" cy="-22" r="6" fill="#fbbf24">
+            <animate attributeName="opacity" values=".4;1;.4" dur="3s" repeatCount="indefinite"/>
+            <animate attributeName="r" values="5;8;5" dur="3s" repeatCount="indefinite"/>
+          </circle>
+          <!-- Roof -->
+          <path d="M-12 -30 L0 -42 L12 -30 Z" fill="#3a4a5c"/>
+          <circle cx="0" cy="-44" r="2" fill="#fbbf24"/>
+          <!-- Light beam -->
+          <path d="M0 -22 L-120 -50 L-120 0 Z" fill="url(#sunHalo)" opacity=".4">
+            <animateTransform attributeName="transform" type="rotate" values="-30 0 -22;30 0 -22;-30 0 -22" dur="8s" repeatCount="indefinite"/>
+          </path>
+        </g>
+
+        <!-- Pelican formation -->
+        <g fill="none" stroke="#1a1410" stroke-width="2" stroke-linecap="round">
+          <animateTransform attributeName="transform" type="translate" values="-100,250;1300,300;-100,250" dur="55s" begin="18s" repeatCount="indefinite"/>
+          <path d="M0 0 Q6 -8 12 0 Q18 -8 24 0"/>
+          <path d="M-30 8 Q-24 0 -18 8 Q-12 0 -6 8"/>
+          <path d="M-60 20 Q-54 12 -48 20 Q-42 12 -36 20"/>
+        </g>
+      </svg>
+
+      <!-- ═══ FOREGROUND: surfboards + beach umbrellas at base ═══ -->
+      <svg class="scene-svg foreground" viewBox="0 0 1200 780" preserveAspectRatio="xMidYMid slice" style="pointer-events:none;">
+        <!-- Surfboards leaning on wall (left of building) -->
+        <g transform="translate(60,640)">
+          <ellipse cx="0" cy="60" rx="30" ry="3" fill="rgba(0,0,0,.2)"/>
+          <g transform="rotate(-78)">
+            <path d="M-7 -50 Q-7 -80 0 -88 Q7 -80 7 -50 L7 50 Q5 60 0 65 Q-5 60 -7 50 Z" fill="#ff5e3a" stroke="#3a1c08" stroke-width="1.5"/>
+            <line x1="0" y1="-80" x2="0" y2="60" stroke="#fff" stroke-width=".8" opacity=".5"/>
+          </g>
+          <g transform="rotate(-72) translate(14,0)">
+            <path d="M-7 -50 Q-7 -80 0 -88 Q7 -80 7 -50 L7 50 Q5 60 0 65 Q-5 60 -7 50 Z" fill="#5dbdd3" stroke="#3a1c08" stroke-width="1.5"/>
+          </g>
+          <g transform="rotate(-66) translate(28,0)">
+            <path d="M-7 -50 Q-7 -80 0 -88 Q7 -80 7 -50 L7 50 Q5 60 0 65 Q-5 60 -7 50 Z" fill="#fef3c7" stroke="#3a1c08" stroke-width="1.5"/>
+          </g>
+        </g>
+
+        <!-- Beach umbrellas (right of building) -->
+        <g transform="translate(1140,680)">
+          <ellipse cx="0" cy="22" rx="14" ry="3" fill="rgba(0,0,0,.18)"/>
+          <line x1="0" y1="-30" x2="0" y2="22" stroke="#3a1c08" stroke-width="2"/>
+          <path d="M-30 -20 L0 -36 L30 -20 Z" fill="#ff5e3a"/>
+          <path d="M-30 -20 L0 -36 L-18 -28 Z" fill="#e0492a"/>
+          <path d="M30 -20 L0 -36 L18 -28 Z" fill="#e0492a"/>
+          <path d="M-30 -20 L30 -20 Q0 -14 -30 -20" fill="#e0492a"/>
+          <circle cx="0" cy="-36" r="2" fill="#fbbf24"/>
+        </g>
+        <g transform="translate(1090,720)">
+          <ellipse cx="0" cy="18" rx="11" ry="2.5" fill="rgba(0,0,0,.15)"/>
+          <line x1="0" y1="-22" x2="0" y2="18" stroke="#3a1c08" stroke-width="1.8"/>
+          <path d="M-22 -14 L0 -28 L22 -14 Z" fill="#5dbdd3"/>
+          <path d="M-22 -14 L0 -28 L-14 -22 Z" fill="#3a9bb5"/>
+          <path d="M22 -14 L0 -28 L14 -22 Z" fill="#3a9bb5"/>
+        </g>
+
+        <!-- Beach loungers -->
+        <g transform="translate(1050,750)" opacity=".85">
+          <rect x="0" y="-2" width="36" height="4" rx="2" fill="#fef3c7" stroke="#6b5a48" stroke-width=".8"/>
+          <rect x="22" y="-10" width="14" height="10" rx="3" fill="#fef3c7" stroke="#6b5a48" stroke-width=".8" transform="rotate(-20 28 -5)"/>
+        </g>
+
+        <!-- Palm tree LEFT (no clipping) -->
+        <g transform="translate(60,720)">
+          <!-- Trunk -->
+          <path d="M0 0 Q-3 -40 -2 -70 Q-1 -110 4 -150" stroke="#6b3a1a" stroke-width="6" fill="none" stroke-linecap="round"/>
+          <line x1="-2" y1="-30" x2="2" y2="-30" stroke="#3a1c08" stroke-width="1"/>
+          <line x1="-2" y1="-65" x2="2" y2="-65" stroke="#3a1c08" stroke-width="1"/>
+          <line x1="-1" y1="-95" x2="3" y2="-95" stroke="#3a1c08" stroke-width="1"/>
+          <line x1="0" y1="-125" x2="4" y2="-125" stroke="#3a1c08" stroke-width="1"/>
+          <!-- Coconuts -->
+          <circle cx="0" cy="-145" r="3" fill="#6b3a1a"/>
+          <circle cx="6" cy="-148" r="3" fill="#5a2e10"/>
+          <!-- Fronds -->
+          <g transform="translate(4,-152)">
+            <path d="M0 0 Q-20 -10 -50 -8 Q-40 0 0 4 Z" fill="#1f9d6f"/>
+            <path d="M0 0 Q-15 -25 -30 -45 Q-10 -25 0 -5 Z" fill="#2dba8a"/>
+            <path d="M0 0 Q15 -25 35 -45 Q15 -25 0 -5 Z" fill="#2dba8a"/>
+            <path d="M0 0 Q20 -10 50 -8 Q40 0 0 4 Z" fill="#1f9d6f"/>
+            <path d="M0 0 Q5 -20 -10 -42 Q-5 -20 0 -5 Z" fill="#2dba8a"/>
+            <path d="M0 0 Q-5 -20 10 -42 Q5 -20 0 -5 Z" fill="#1f9d6f"/>
+            <path d="M0 0 Q-25 5 -45 18 Q-25 8 0 5 Z" fill="#1f9d6f"/>
+            <path d="M0 0 Q25 5 45 18 Q25 8 0 5 Z" fill="#2dba8a"/>
+            <animateTransform attributeName="transform" type="rotate" values="-2 0 0;2 0 0;-2 0 0" dur="4s" repeatCount="indefinite" additive="sum"/>
+          </g>
+        </g>
+
+        <!-- Palm tree RIGHT -->
+        <g transform="translate(1140,720)">
+          <path d="M0 0 Q3 -40 2 -70 Q1 -110 -4 -150" stroke="#6b3a1a" stroke-width="6" fill="none" stroke-linecap="round"/>
+          <line x1="-2" y1="-30" x2="2" y2="-30" stroke="#3a1c08" stroke-width="1"/>
+          <line x1="-2" y1="-65" x2="2" y2="-65" stroke="#3a1c08" stroke-width="1"/>
+          <line x1="-3" y1="-95" x2="1" y2="-95" stroke="#3a1c08" stroke-width="1"/>
+          <line x1="-4" y1="-125" x2="0" y2="-125" stroke="#3a1c08" stroke-width="1"/>
+          <circle cx="0" cy="-145" r="3" fill="#6b3a1a"/>
+          <circle cx="-6" cy="-148" r="3" fill="#5a2e10"/>
+          <g transform="translate(-4,-152)">
+            <path d="M0 0 Q-20 -10 -50 -8 Q-40 0 0 4 Z" fill="#2dba8a"/>
+            <path d="M0 0 Q-15 -25 -30 -45 Q-10 -25 0 -5 Z" fill="#1f9d6f"/>
+            <path d="M0 0 Q15 -25 35 -45 Q15 -25 0 -5 Z" fill="#2dba8a"/>
+            <path d="M0 0 Q20 -10 50 -8 Q40 0 0 4 Z" fill="#1f9d6f"/>
+            <path d="M0 0 Q5 -20 -10 -42 Q-5 -20 0 -5 Z" fill="#2dba8a"/>
+            <path d="M0 0 Q-5 -20 10 -42 Q5 -20 0 -5 Z" fill="#1f9d6f"/>
+            <animateTransform attributeName="transform" type="rotate" values="2 0 0;-2 0 0;2 0 0" dur="4.5s" begin=".5s" repeatCount="indefinite" additive="sum"/>
+          </g>
+        </g>
+      </svg>
+
       <!-- Conditions ribbon (real-time surf) -->
       <div class="cond-bar">
         <div class="cond-bar-i">🌊 <span>Olas</span> <strong class="em">1.4m</strong></div>
@@ -1661,24 +2049,12 @@ function renderAptMap(){
         <div class="cond-bar-i">🌅 <span>Marea</span> <strong>Sube · 14:32</strong></div>
       </div>
 
-      <!-- Birds -->
-      <div class="bird bird-1">🕊️</div>
-      <div class="bird bird-2">🐦</div>
-
-      <!-- Sky scene -->
-      <div class="bldg-sun"></div>
-      <div class="bldg-cloud bldg-cloud-1"></div>
-      <div class="bldg-cloud bldg-cloud-2"></div>
-
       <!-- Stats overlay -->
       <div class="bldg-stats">
         <div class="bldg-stat-card"><div class="lbl">Ocupación</div><div class="v">${Math.round(occ/22*100)}%</div></div>
         <div class="bldg-stat-card"><div class="lbl">Huéspedes hoy</div><div class="v">${totalGuests}</div></div>
         <div class="bldg-stat-card"><div class="lbl">Ingresos · día</div><div class="v">€${totalRev.toLocaleString('es-ES')}</div></div>
       </div>
-
-      <!-- Mountains (Picos de Europa silhouette) -->
-      <div class="scene-mountain"></div>
 
       <!-- Building -->
       <div class="bldg">
@@ -1699,24 +2075,6 @@ function renderAptMap(){
         </div>
       </div>
 
-      <!-- Sea + scene below -->
-      <div class="scene-sea">
-        <div class="wave wave-1"></div>
-        <div class="wave wave-2"></div>
-        <div class="wave wave-3"></div>
-        <div class="wave wave-4"></div>
-        <div class="wave wave-5"></div>
-        <div class="surfer surfer-1">🏄</div>
-        <div class="surfer surfer-2">🏄‍♀️</div>
-        <div class="surfer surfer-3">🏄</div>
-        <div class="boat">⛵</div>
-      </div>
-      <!-- Lighthouse San Vicente -->
-      <div class="lighthouse"></div>
-
-      <!-- Palms on top of everything -->
-      <div class="bldg-palm bldg-palm-1" style="z-index:3;">🌴</div>
-      <div class="bldg-palm bldg-palm-2" style="z-index:3;">🌴</div>
     </div>`;
 }
 
