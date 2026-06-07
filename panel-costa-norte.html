@@ -1973,6 +1973,20 @@ function saveGuests(n){
   closeModal();
   renderAptMap();
 }
+// ════════════ GENERIC FIELD HELPERS ════════════
+function fLbl(text){return `<div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:6px;">${text}</div>`;}
+function fInp(id,val,type='text',ph=''){return `<input id="${id}" type="${type}" value="${val||''}" placeholder="${ph}" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;">`;}
+function fSel(id,val,opts){return `<select id="${id}" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;">${opts.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('')}</select>`;}
+function fTxt(id,val,rows=2,ph=''){return `<textarea id="${id}" rows="${rows}" placeholder="${ph}" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;resize:vertical;font-family:inherit;">${val||''}</textarea>`;}
+function fRow(...cols){return `<div class="two-col" style="margin-bottom:14px;">${cols.map(c=>'<div>'+c+'</div>').join('')}</div>`;}
+function fActions(saveLabel,saveFn,deleteFn){
+  return `<div style="display:flex;gap:8px;margin-top:18px;">
+    <button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cancelar</button>
+    ${deleteFn?`<button class="btn btn-ghost" style="color:var(--coral);border-color:var(--coral);" onclick="${deleteFn}">🗑 Eliminar</button>`:''}
+    <button class="btn btn-primary" style="flex:2" onclick="${saveFn}"><svg width="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> ${saveLabel}</button>
+  </div>`;
+}
+
 function aptDetail(n){
   const a=APTS.find(x=>x.n===n);
   if(!a.checkIn)a.checkIn=new Date().toISOString().slice(0,10);
@@ -2042,7 +2056,7 @@ function aptDetail(n){
         Guardar cambios
       </button>
     </div>
-    <div style="margin-top:12px;text-align:center;font-size:11px;color:var(--txt3);font-style:italic;">Los cambios se reflejan automáticamente en el calendario y mapa.</div>
+    <div style="margin-top:12px;text-align:center;font-size:11px;color:var(--txt3);font-style:italic;">Los cambios se reflejan en el calendario, mapa y lista de reservas.</div>
   `);
 }
 
@@ -2160,25 +2174,91 @@ function renderAptRes(){
   </tr>`).join('');
 }
 
+let CLEAN_COLS=[
+  {name:'Pendiente',color:'#94a3b8',cards:[{t:'Apto 4',m:'Tras check-out 10:00',b:'Marta'},{t:'Apto 11',m:'Tras check-out 11:00',b:'Marta'}]},
+  {name:'En curso',color:'#5dbdd3',cards:[{t:'Apto 18',m:'Marta empezó 11:30',b:'Marta'}]},
+  {name:'Hecho',color:'#2dba8a',cards:[{t:'Apto 17',m:'Listo desde 09:45',b:'Marta'},{t:'Apto 22',m:'Listo desde 08:30',b:'Marta'}]},
+  {name:'Mañana',color:'#ff5e3a',cards:[{t:'Apto 7',m:'Tras check-out 12:00',b:'-'},{t:'Apto 19',m:'Tras check-out 11:00',b:'-'},{t:'Apto 5',m:'Tras check-out 10:00',b:'-'}]}
+];
 function renderClean(){
-  const cols=[
-    {name:'Pendiente',color:'#94a3b8',cards:[{t:'Apto 4',m:'Tras check-out 10:00',b:'Marta'},{t:'Apto 11',m:'Tras check-out 11:00',b:'Marta'}]},
-    {name:'En curso',color:'var(--aqua)',cards:[{t:'Apto 18',m:'Marta empezó 11:30',b:'Marta'}]},
-    {name:'Hecho',color:'var(--leaf)',cards:[{t:'Apto 17',m:'Listo desde 09:45',b:'Marta'},{t:'Apto 22',m:'Listo desde 08:30',b:'Marta'}]},
-    {name:'Mañana',color:'var(--coral)',cards:[{t:'Apto 7',m:'Tras check-out 12:00',b:'-'},{t:'Apto 19',m:'Tras check-out 11:00',b:'-'},{t:'Apto 5',m:'Tras check-out 10:00',b:'-'}]}
-  ];
-  document.getElementById('clean-kan').innerHTML=cols.map(c=>`<div class="kan-col"><div class="kan-col-h" style="border-color:${c.color};"><strong style="color:${c.color}">${c.name}</strong><span>${c.cards.length}</span></div>${c.cards.map(k=>`<div class="kan-card" style="border-left-color:${c.color}"><strong>${k.t}</strong><em>${k.m}</em><div class="kan-card-row"><span style="color:var(--txt3)">Asignada: ${k.b}</span><b>1h 30m</b></div></div>`).join('')}</div>`).join('');
+  document.getElementById('clean-kan').innerHTML=CLEAN_COLS.map((c,ci)=>`
+    <div class="kan-col" ondragover="event.preventDefault();this.style.background='rgba(255,94,58,.06)'" ondragleave="this.style.background=''" ondrop="dropClean(event,${ci})">
+      <div class="kan-col-h" style="border-color:${c.color};"><strong style="color:${c.color}">${c.name}</strong><span>${c.cards.length}</span></div>
+      ${c.cards.map((k,ki)=>`<div class="kan-card" draggable="true" ondragstart="dragClean(event,${ci},${ki})" onclick="editCleanCard(${ci},${ki})" style="border-left-color:${c.color}"><strong>${k.t}</strong><em>${k.m}</em><div class="kan-card-row"><span style="color:var(--txt3)">${k.b}</span><b>1h 30m</b></div></div>`).join('')}
+    </div>`).join('');
 }
+let _dragClean=null;
+function dragClean(e,c,i){_dragClean={c,i};e.dataTransfer.effectAllowed='move';}
+function dropClean(e,toCol){e.preventDefault();e.target.style.background='';if(!_dragClean||_dragClean.c===toCol)return;
+  const card=CLEAN_COLS[_dragClean.c].cards.splice(_dragClean.i,1)[0];
+  CLEAN_COLS[toCol].cards.push(card);
+  toast('✓ '+card.t+' → '+CLEAN_COLS[toCol].name);
+  _dragClean=null;renderClean();
+}
+function editCleanCard(ci,ki){
+  const k=CLEAN_COLS[ci].cards[ki];
+  openModal('Tarea limpieza · '+k.t,`
+    ${fLbl('Apartamento')}${fInp('cc-t',k.t)}
+    ${fLbl('Detalle')}${fInp('cc-m',k.m)}
+    ${fLbl('Asignada a')}${fSel('cc-b',k.b,['Marta','Lucia','Iker','Pendiente','-'])}
+    ${fLbl('Estado / columna')}${fSel('cc-col',CLEAN_COLS[ci].name,CLEAN_COLS.map(c=>c.name))}
+    ${fActions('Guardar','saveCleanCard('+ci+','+ki+')','deleteCleanCard('+ci+','+ki+')')}
+  `);
+}
+function saveCleanCard(ci,ki){
+  const k=CLEAN_COLS[ci].cards[ki];
+  k.t=document.getElementById('cc-t').value;
+  k.m=document.getElementById('cc-m').value;
+  k.b=document.getElementById('cc-b').value;
+  const newCol=document.getElementById('cc-col').value;
+  const newColIdx=CLEAN_COLS.findIndex(c=>c.name===newCol);
+  if(newColIdx!==ci){CLEAN_COLS[ci].cards.splice(ki,1);CLEAN_COLS[newColIdx].cards.push(k);}
+  toast('✓ Guardado');closeModal();renderClean();
+}
+function deleteCleanCard(ci,ki){if(confirm('¿Eliminar tarea?')){CLEAN_COLS[ci].cards.splice(ki,1);toast('Eliminada');closeModal();renderClean();}}
 
+let MAINT_COLS=[
+  {name:'Nuevo',color:'#ff5e3a',cards:[{t:'Apto 8 · Boiler',m:'No hay agua caliente',p:'Alta',d:'Hoy'}]},
+  {name:'En curso',color:'#f59e0b',cards:[{t:'Apto 14 · A/C',m:'Hace ruido extraño',p:'Media',d:'Mañana'}]},
+  {name:'Esperando piezas',color:'#5dbdd3',cards:[{t:'Apto 2 · Persiana',m:'Pieza pedida',p:'Baja',d:'5 días'}]},
+  {name:'Resuelto',color:'#2dba8a',cards:[{t:'Apto 11 · Grifo cocina',m:'Cambiado',p:'Baja',d:'Ayer'},{t:'Apto 6 · Wifi',m:'Router reseteado',p:'Media',d:'Ayer'}]}
+];
 function renderMaint(){
-  const cols=[
-    {name:'Nuevo',color:'var(--coral)',cards:[{t:'Apto 8 · Boiler',m:'No hay agua caliente',p:'Alta',d:'Hoy'}]},
-    {name:'En curso',color:'var(--warn)',cards:[{t:'Apto 14 · Aire acondicionado',m:'Hace ruido extraño',p:'Media',d:'Mañana'}]},
-    {name:'Esperando piezas',color:'var(--aqua)',cards:[{t:'Apto 2 · Persiana',m:'Pieza pedida',p:'Baja',d:'5 días'}]},
-    {name:'Resuelto',color:'var(--leaf)',cards:[{t:'Apto 11 · Grifo cocina',m:'Cambiado',p:'Baja',d:'Ayer'},{t:'Apto 6 · Wifi',m:'Router reseteado',p:'Media',d:'Ayer'}]}
-  ];
-  document.getElementById('maint-kan').innerHTML=cols.map(c=>`<div class="kan-col"><div class="kan-col-h" style="border-color:${c.color};"><strong style="color:${c.color}">${c.name}</strong><span>${c.cards.length}</span></div>${c.cards.map(k=>`<div class="kan-card" style="border-left-color:${c.color}"><strong>${k.t}</strong><em>${k.m}</em><div class="kan-card-row"><span style="color:var(--txt3)">Prioridad ${k.p}</span><b>${k.d}</b></div></div>`).join('')}</div>`).join('');
+  document.getElementById('maint-kan').innerHTML=MAINT_COLS.map((c,ci)=>`
+    <div class="kan-col" ondragover="event.preventDefault();this.style.background='rgba(255,94,58,.06)'" ondragleave="this.style.background=''" ondrop="dropMaint(event,${ci})">
+      <div class="kan-col-h" style="border-color:${c.color};"><strong style="color:${c.color}">${c.name}</strong><span>${c.cards.length}</span></div>
+      ${c.cards.map((k,ki)=>`<div class="kan-card" draggable="true" ondragstart="dragMaint(event,${ci},${ki})" onclick="editMaintCard(${ci},${ki})" style="border-left-color:${c.color}"><strong>${k.t}</strong><em>${k.m}</em><div class="kan-card-row"><span style="color:var(--txt3)">Prioridad ${k.p}</span><b>${k.d}</b></div></div>`).join('')}
+    </div>`).join('');
 }
+let _dragMaint=null;
+function dragMaint(e,c,i){_dragMaint={c,i};}
+function dropMaint(e,toCol){e.preventDefault();e.target.style.background='';if(!_dragMaint||_dragMaint.c===toCol)return;
+  const card=MAINT_COLS[_dragMaint.c].cards.splice(_dragMaint.i,1)[0];
+  MAINT_COLS[toCol].cards.push(card);
+  toast('✓ '+card.t+' → '+MAINT_COLS[toCol].name);_dragMaint=null;renderMaint();
+}
+function editMaintCard(ci,ki){
+  const k=MAINT_COLS[ci].cards[ki];
+  openModal('Ticket · '+k.t,`
+    ${fLbl('Título')}${fInp('mc-t',k.t)}
+    ${fLbl('Descripción')}${fTxt('mc-m',k.m,2,'Descripción de la incidencia...')}
+    ${fRow(fLbl('Prioridad')+fSel('mc-p',k.p,['Alta','Media','Baja']), fLbl('ETA')+fInp('mc-d',k.d))}
+    ${fLbl('Estado / columna')}${fSel('mc-col',MAINT_COLS[ci].name,MAINT_COLS.map(c=>c.name))}
+    ${fLbl('Notas técnico')}${fTxt('mc-notes',k.notes||'','2','Piezas necesarias, observaciones...')}
+    ${fActions('Guardar','saveMaintCard('+ci+','+ki+')','deleteMaintCard('+ci+','+ki+')')}
+  `);
+}
+function saveMaintCard(ci,ki){
+  const k=MAINT_COLS[ci].cards[ki];
+  k.t=document.getElementById('mc-t').value;k.m=document.getElementById('mc-m').value;
+  k.p=document.getElementById('mc-p').value;k.d=document.getElementById('mc-d').value;
+  k.notes=document.getElementById('mc-notes').value;
+  const newCol=document.getElementById('mc-col').value;
+  const newColIdx=MAINT_COLS.findIndex(c=>c.name===newCol);
+  if(newColIdx!==ci){MAINT_COLS[ci].cards.splice(ki,1);MAINT_COLS[newColIdx].cards.push(k);}
+  toast('✓ Ticket guardado');closeModal();renderMaint();
+}
+function deleteMaintCard(ci,ki){if(confirm('¿Eliminar ticket?')){MAINT_COLS[ci].cards.splice(ki,1);toast('Eliminado');closeModal();renderMaint();}}
 
 function renderClasses(){
   const days=['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
@@ -2224,7 +2304,7 @@ function renderClasses(){
 }
 
 function renderStudents(){
-  document.getElementById('students-tbody').innerHTML=STUDENTS.map(s=>`<tr>
+  document.getElementById('students-tbody').innerHTML=STUDENTS.map((s,i)=>`<tr onclick="editStudent(${i})">
     <td><strong>${s.name}</strong></td>
     <td><span class="tag tag-${s.level==='Avanzado'?'coral':s.level==='Intermedio'?'info':s.level==='SUP'?'ocean':'ok'}">${s.level}</span></td>
     <td>${s.pack}</td>
@@ -2233,9 +2313,33 @@ function renderStudents(){
     <td><strong>${fmt(s.spent)}</strong></td>
   </tr>`).join('');
 }
+function editStudent(i){
+  const s=STUDENTS[i];
+  openModal('Alumno · '+s.name,`
+    ${fLbl('Nombre')}${fInp('st-name',s.name)}
+    ${fRow(fLbl('Nivel')+fSel('st-level',s.level,['Iniciación','Intermedio','Avanzado','SUP','Kids']), fLbl('Sesiones restantes')+fInp('st-left',s.left,'number'))}
+    ${fLbl('Pack actual')}${fSel('st-pack',s.pack,PACKS.map(p=>p.name).concat(['1 sesión suelta']))}
+    ${fRow(fLbl('Próxima clase')+fInp('st-next',s.next,'text','Vie 11:30'), fLbl('Total gastado (€)')+fInp('st-spent',s.spent,'number'))}
+    ${fLbl('Notas del instructor')}${fTxt('st-notes',s.notes||'','2','Hábil con maniobras, le cuesta el pop-up, alérgica al frío...')}
+    <div style="background:rgba(255,94,58,.06);border:1px dashed var(--coral);padding:10px 14px;border-radius:8px;margin-top:14px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--coral);">Tip:</strong> Si pones 0 sesiones restantes, el bot enviará WhatsApp ofreciendo renovar bono.</div>
+    ${fActions('Guardar','saveStudent('+i+')','deleteStudent('+i+')')}
+  `);
+}
+function saveStudent(i){
+  const s=STUDENTS[i];
+  s.name=document.getElementById('st-name').value;
+  s.level=document.getElementById('st-level').value;
+  s.pack=document.getElementById('st-pack').value;
+  s.left=+document.getElementById('st-left').value;
+  s.next=document.getElementById('st-next').value;
+  s.spent=+document.getElementById('st-spent').value;
+  s.notes=document.getElementById('st-notes').value;
+  toast('✓ Alumno guardado');closeModal();renderStudents();
+}
+function deleteStudent(i){if(confirm('¿Eliminar alumno?')){STUDENTS.splice(i,1);toast('Alumno eliminado');closeModal();renderStudents();}}
 
 function renderPacks(){
-  document.getElementById('packs-tbody').innerHTML=PACKS.map(p=>`<tr>
+  document.getElementById('packs-tbody').innerHTML=PACKS.map((p,i)=>`<tr onclick="editPack(${i})">
     <td><strong>${p.name}</strong></td>
     <td><span class="tag tag-${p.type==='Privada'?'coral':p.type==='Camp'?'ocean':p.type==='SUP'?'info':'ok'}">${p.type}</span></td>
     <td>${p.sess}</td>
@@ -2245,25 +2349,74 @@ function renderPacks(){
     <td><span class="tag tag-${p.state==='Top'?'coral':p.state==='Nuevo'?'info':'ok'}">${p.state}</span></td>
   </tr>`).join('');
 }
+function editPack(i){
+  const p=PACKS[i];
+  openModal('Pack · '+p.name,`
+    ${fLbl('Nombre del pack')}${fInp('pk-name',p.name)}
+    ${fRow(fLbl('Tipo')+fSel('pk-type',p.type,['Clase','Bono','Semana','Camp','SUP','Privada','Grupal']), fLbl('Sesiones incluidas')+fInp('pk-sess',p.sess,'number'))}
+    ${fRow(fLbl('Precio (€)')+fInp('pk-price',p.price,'number'), fLbl('Estado')+fSel('pk-state',p.state,['Activo','Top','Nuevo','Pausado']))}
+    ${fLbl('Descripción para web')}${fTxt('pk-desc',p.desc||'','3','5 sesiones de surf en grupo, incluye material...')}
+    <div style="margin-top:14px;background:var(--bg);padding:12px;border-radius:8px;display:flex;justify-content:space-between;font-size:12px;">
+      <div>Vendidos este mes: <strong>${p.sold}</strong></div>
+      <div>Ingresos: <strong style="color:var(--coral)">${fmt(p.sold*p.price)}</strong></div>
+    </div>
+    ${fActions('Guardar','savePack('+i+')','deletePack('+i+')')}
+  `);
+}
+function savePack(i){
+  const p=PACKS[i];
+  p.name=document.getElementById('pk-name').value;
+  p.type=document.getElementById('pk-type').value;
+  p.sess=+document.getElementById('pk-sess').value;
+  p.price=+document.getElementById('pk-price').value;
+  p.state=document.getElementById('pk-state').value;
+  p.desc=document.getElementById('pk-desc').value;
+  toast('✓ Pack guardado · sincronizado en web');closeModal();renderPacks();
+}
+function deletePack(i){if(confirm('¿Eliminar pack?')){PACKS.splice(i,1);toast('Pack eliminado');closeModal();renderPacks();}}
 
 function renderInstructors(){
-  document.getElementById('instructors-grid').innerHTML=INSTRUCTORS.map(i=>`
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;cursor:pointer;transition:all .2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 36px rgba(0,0,0,.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-      <div style="aspect-ratio:1/1;background:url('${i.img}') center/cover;background-color:var(--sand);"></div>
+  document.getElementById('instructors-grid').innerHTML=INSTRUCTORS.map((ins,i)=>`
+    <div onclick="editInstructor(${i})" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;cursor:pointer;transition:all .2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 36px rgba(0,0,0,.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+      <div style="aspect-ratio:1/1;background:url('${ins.img}') center/cover;background-color:var(--sand);"></div>
       <div style="padding:14px;">
-        <div style="font-family:var(--display);font-size:16px;font-weight:600;color:var(--txt);">${i.name}</div>
-        <div style="font-size:10px;letter-spacing:.2em;color:var(--coral);text-transform:uppercase;font-weight:700;margin:3px 0 8px;">${i.role}</div>
+        <div style="font-family:var(--display);font-size:16px;font-weight:600;color:var(--txt);">${ins.name}</div>
+        <div style="font-size:10px;letter-spacing:.2em;color:var(--coral);text-transform:uppercase;font-weight:700;margin:3px 0 8px;">${ins.role}</div>
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);padding:8px 0;border-top:1px solid var(--border2);">
-          <span><strong style="color:var(--txt);">${i.exp}</strong> exp.</span>
-          <span><strong style="color:var(--txt);">${i.rating}</strong>★ · ${i.classes} clases</span>
+          <span><strong style="color:var(--txt);">${ins.exp}</strong> exp.</span>
+          <span><strong style="color:var(--txt);">${ins.rating}</strong>★ · ${ins.classes} clases</span>
         </div>
-        <div style="font-size:10px;letter-spacing:.1em;color:var(--txt3);text-transform:uppercase;font-weight:600;margin-top:4px;">${i.cert}</div>
+        <div style="font-size:10px;letter-spacing:.1em;color:var(--txt3);text-transform:uppercase;font-weight:600;margin-top:4px;">${ins.cert}</div>
       </div>
     </div>`).join('');
 }
+function editInstructor(i){
+  const ins=INSTRUCTORS[i];
+  openModal('Instructor · '+ins.name,`
+    ${fLbl('Nombre')}${fInp('in-name',ins.name)}
+    ${fRow(fLbl('Rol')+fSel('in-role',ins.role,['Director técnico','Instructor senior','Instructor júnior','Instructora SUP','Instructora kids']), fLbl('Experiencia')+fInp('in-exp',ins.exp))}
+    ${fRow(fLbl('Certificación')+fInp('in-cert',ins.cert), fLbl('Rating')+fInp('in-rating',ins.rating,'number'))}
+    ${fRow(fLbl('Clases dadas')+fInp('in-classes',ins.classes,'number'), fLbl('Comisión/clase (€)')+fInp('in-com',ins.com||12,'number'))}
+    ${fLbl('Disponibilidad')}${fSel('in-avail',ins.avail||'Tiempo completo',['Tiempo completo','Mañanas','Tardes','Fin de semana','Temporada alta'])}
+    ${fActions('Guardar','saveInstructor('+i+')','deleteInstructor('+i+')')}
+  `);
+}
+function saveInstructor(i){
+  const ins=INSTRUCTORS[i];
+  ins.name=document.getElementById('in-name').value;
+  ins.role=document.getElementById('in-role').value;
+  ins.exp=document.getElementById('in-exp').value;
+  ins.cert=document.getElementById('in-cert').value;
+  ins.rating=+document.getElementById('in-rating').value;
+  ins.classes=+document.getElementById('in-classes').value;
+  ins.com=+document.getElementById('in-com').value;
+  ins.avail=document.getElementById('in-avail').value;
+  toast('✓ Instructor guardado');closeModal();renderInstructors();
+}
+function deleteInstructor(i){if(confirm('¿Eliminar instructor?')){INSTRUCTORS.splice(i,1);toast('Eliminado');closeModal();renderInstructors();}}
 
 function renderRental(){
-  document.getElementById('rental-tbody').innerHTML=RENTALS.map(r=>`<tr>
+  document.getElementById('rental-tbody').innerHTML=RENTALS.map((r,i)=>`<tr onclick="editRental(${i})">
     <td><strong>${r.item}</strong></td>
     <td>${r.client}</td>
     <td>${r.out}</td>
@@ -2273,6 +2426,36 @@ function renderRental(){
     <td><strong>${fmt(r.total)}</strong></td>
   </tr>`).join('');
 }
+function editRental(i){
+  const r=RENTALS[i];
+  openModal('Alquiler · '+r.item,`
+    ${fLbl('Material')}${fInp('rn-item',r.item)}
+    ${fLbl('Cliente')}${fInp('rn-client',r.client)}
+    ${fRow(fLbl('Salida')+fInp('rn-out',r.out), fLbl('Devolución')+fInp('rn-ret',r.ret))}
+    ${fRow(fLbl('Días')+fInp('rn-days',r.days,'number'), fLbl('Total (€)')+fInp('rn-total',r.total,'number'))}
+    ${fLbl('Estado')}${fSel('rn-state',r.state,['Activo','Devuelto','Roto','Perdido'])}
+    ${fLbl('Notas')}${fTxt('rn-notes',r.notes||'','2','Estado del material, daños observados...')}
+    <div style="display:flex;gap:6px;margin-top:14px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="markReturned(${i})">✓ Marcar devuelto</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('Días extendidos +1')">+ Extender 1 día</button>
+    </div>
+    ${fActions('Guardar','saveRental('+i+')','deleteRental('+i+')')}
+  `);
+}
+function markReturned(i){RENTALS[i].state='Devuelto';toast('✓ Devolución registrada');closeModal();renderRental();}
+function saveRental(i){
+  const r=RENTALS[i];
+  r.item=document.getElementById('rn-item').value;
+  r.client=document.getElementById('rn-client').value;
+  r.out=document.getElementById('rn-out').value;
+  r.ret=document.getElementById('rn-ret').value;
+  r.days=+document.getElementById('rn-days').value;
+  r.total=+document.getElementById('rn-total').value;
+  r.state=document.getElementById('rn-state').value;
+  r.notes=document.getElementById('rn-notes').value;
+  toast('✓ Alquiler guardado');closeModal();renderRental();
+}
+function deleteRental(i){if(confirm('¿Eliminar?')){RENTALS.splice(i,1);toast('Eliminado');closeModal();renderRental();}}
 
 let POS_CART=[];
 function renderShop(){posFilter('');posDraw();}
@@ -2315,9 +2498,9 @@ function posPay(m){
 }
 
 function renderStock(){
-  document.getElementById('stk-grid').innerHTML=STOCK.map(s=>{
+  document.getElementById('stk-grid').innerHTML=STOCK.map((s,i)=>{
     const low=s.stock<=s.min;const out=s.stock===0;
-    return `<div class="stk-card" onclick="toast('Producto: ${s.name}')">
+    return `<div class="stk-card" onclick="editStock(${i})">
       <div class="stk-img" style="background-image:url('${s.img}')"></div>
       <div class="stk-body">
         <div class="stk-name">${s.name}</div>
@@ -2330,9 +2513,54 @@ function renderStock(){
     </div>`;
   }).join('');
 }
+function editStock(i){
+  const s=STOCK[i];
+  openModal('Producto · '+s.name,`
+    <div style="display:flex;gap:14px;margin-bottom:18px;">
+      <div style="width:80px;height:80px;border-radius:10px;background:url('${s.img}') center/cover;background-color:var(--sand);"></div>
+      <div style="flex:1;">
+        ${fInp('sk-name',s.name)}
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <input style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;" id="sk-sku" value="${s.sku}" placeholder="SKU">
+          <input style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;" id="sk-cat" value="${s.cat}" placeholder="Categoría">
+        </div>
+      </div>
+    </div>
+
+    <!-- Stock controls -->
+    <div style="background:var(--bg);padding:14px;border-radius:10px;margin-bottom:14px;">
+      <div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:10px;">Stock actual</div>
+      <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
+        <button onclick="stkStep(${i},-1)" style="width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:18px;cursor:pointer;">−</button>
+        <input id="sk-stock" type="number" value="${s.stock}" style="width:90px;padding:14px;text-align:center;font-family:var(--display);font-size:26px;font-weight:700;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--coral);">
+        <button onclick="stkStep(${i},1)" style="width:42px;height:42px;border-radius:50%;background:var(--coral);color:#fff;border:none;font-size:18px;cursor:pointer;font-weight:700;">+</button>
+      </div>
+    </div>
+
+    ${fRow(fLbl('Mínimo')+fInp('sk-min',s.min,'number'), fLbl('Coste compra (€)')+fInp('sk-cost',s.cost,'number'))}
+    ${fRow(fLbl('Precio venta (€)')+fInp('sk-price',s.price,'number'), fLbl('Margen')+`<div style="padding:10px 12px;background:var(--bg);border-radius:8px;font-weight:600;color:var(--leaf);">${Math.round((s.price-s.cost)/s.price*100)}%</div>`)}
+
+    <div style="background:rgba(255,94,58,.06);border:1px dashed var(--coral);padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--coral);">Bajo mínimos:</strong> el bot avisa por WhatsApp cuando bajes del stock mínimo.</div>
+
+    ${fActions('Guardar','saveStock('+i+')','deleteStock('+i+')')}
+  `);
+}
+function stkStep(i,d){const s=STOCK[i];s.stock=Math.max(0,s.stock+d);document.getElementById('sk-stock').value=s.stock;}
+function saveStock(i){
+  const s=STOCK[i];
+  s.name=document.getElementById('sk-name').value;
+  s.sku=document.getElementById('sk-sku').value;
+  s.cat=document.getElementById('sk-cat').value;
+  s.stock=+document.getElementById('sk-stock').value;
+  s.min=+document.getElementById('sk-min').value;
+  s.cost=+document.getElementById('sk-cost').value;
+  s.price=+document.getElementById('sk-price').value;
+  toast('✓ Producto guardado');closeModal();renderStock();renderShop();
+}
+function deleteStock(i){if(confirm('¿Eliminar producto?')){STOCK.splice(i,1);toast('Eliminado');closeModal();renderStock();renderShop();}}
 
 function renderClients(){
-  document.getElementById('clients-tbody').innerHTML=CLIENTS.map(c=>`<tr>
+  document.getElementById('clients-tbody').innerHTML=CLIENTS.map((c,i)=>`<tr onclick="editClient(${i})">
     <td><strong>${c.name}</strong></td>
     <td>${c.src}</td>
     <td>${c.apto}</td>
@@ -2342,18 +2570,128 @@ function renderClients(){
     <td>${c.tags.map(t=>`<span class="tag tag-${t==='VIP'?'coral':t==='Nuevo'?'info':'ok'}">${t}</span>`).join(' ')}</td>
   </tr>`).join('');
 }
+function editClient(i){
+  const c=CLIENTS[i];
+  if(!c.phone)c.phone='+34 6';
+  if(!c.email)c.email='';
+  openModal('Cliente · '+c.name,`
+    <!-- 360° view -->
+    <div style="display:flex;gap:14px;align-items:center;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div style="width:54px;height:54px;border-radius:50%;background:var(--coral);color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:20px;">${c.name.split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
+      <div style="flex:1;">
+        <div style="font-family:var(--display);font-size:20px;font-weight:600;">${c.name}</div>
+        <div style="font-size:11px;color:var(--txt3);">${c.src}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:9px;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase;font-weight:700;">LTV</div>
+        <div style="font-family:var(--display);font-size:22px;color:var(--coral);font-weight:700;">${fmt(c.ltv)}</div>
+      </div>
+    </div>
+
+    ${fLbl('Nombre completo')}${fInp('cl-name',c.name)}
+    ${fRow(fLbl('Teléfono')+fInp('cl-phone',c.phone,'tel'), fLbl('Email')+fInp('cl-email',c.email,'email'))}
+    ${fLbl('Origen / Cómo nos conoció')}${fSel('cl-src',c.src,['Apartamento','Surf','Tienda','Apt + Surf','Web directo','Recomendación','Instagram','Google','Airbnb','Booking.com'])}
+    ${fLbl('Notas')}${fTxt('cl-notes',c.notes||'','2','Alergias, preferencias, próxima visita prevista...')}
+
+    <div style="margin-top:14px;">
+      <div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:8px;">Etiquetas</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        ${['VIP','Familia','Surfista','SUP','Newsletter','Nuevo','Internacional','Frances','Aleman','Bono activo'].map(t=>`<label style="display:inline-flex;align-items:center;gap:5px;padding:6px 11px;background:var(--bg);border-radius:18px;font-size:11px;cursor:pointer;font-weight:600;"><input type="checkbox" data-tag="${t}" ${c.tags.includes(t)?'checked':''} style="margin:0;">${t}</label>`).join('')}
+      </div>
+    </div>
+
+    <!-- Historial 360 -->
+    <div style="margin-top:18px;padding:14px;background:var(--bg);border-radius:10px;">
+      <div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:10px;">Historial 360°</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;">
+        <div><div style="font-family:var(--display);font-size:18px;font-weight:700;color:var(--ocean);">${c.apto||'-'}</div><div style="font-size:9px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:600;">Apartamento</div></div>
+        <div><div style="font-family:var(--display);font-size:18px;font-weight:700;color:var(--aqua-dk);">${c.clas}</div><div style="font-size:9px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:600;">Clases</div></div>
+        <div><div style="font-family:var(--display);font-size:18px;font-weight:700;color:var(--leaf);">${c.buys}</div><div style="font-size:9px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:600;">Tienda</div></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:6px;margin-top:14px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('💬 WhatsApp abierto');">💬 WhatsApp</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('✉ Email enviado');">✉ Email</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('+ Reserva creada');">+ Reservar</button>
+    </div>
+
+    ${fActions('Guardar','saveClient('+i+')','deleteClient('+i+')')}
+  `);
+}
+function saveClient(i){
+  const c=CLIENTS[i];
+  c.name=document.getElementById('cl-name').value;
+  c.phone=document.getElementById('cl-phone').value;
+  c.email=document.getElementById('cl-email').value;
+  c.src=document.getElementById('cl-src').value;
+  c.notes=document.getElementById('cl-notes').value;
+  c.tags=Array.from(document.querySelectorAll('[data-tag]:checked')).map(el=>el.dataset.tag);
+  toast('✓ Cliente guardado');closeModal();renderClients();
+}
+function deleteClient(i){if(confirm('¿Eliminar cliente?')){CLIENTS.splice(i,1);toast('Cliente eliminado');closeModal();renderClients();}}
 
 function renderInvoices(){
-  document.getElementById('inv-tbody').innerHTML=INVOICES.map(i=>`<tr>
-    <td><strong>${i.num}</strong></td>
-    <td>${i.client}</td>
-    <td>${i.concept}</td>
-    <td>${i.date}</td>
-    <td>${i.vat}</td>
-    <td><strong>${fmt(i.total)}</strong></td>
-    <td><span class="tag tag-${i.sc}">${i.state}</span></td>
+  document.getElementById('inv-tbody').innerHTML=INVOICES.map((inv,i)=>`<tr onclick="viewInvoice(${i})">
+    <td><strong>${inv.num}</strong></td>
+    <td>${inv.client}</td>
+    <td>${inv.concept}</td>
+    <td>${inv.date}</td>
+    <td>${inv.vat}</td>
+    <td><strong>${fmt(inv.total)}</strong></td>
+    <td><span class="tag tag-${inv.sc}">${inv.state}</span></td>
   </tr>`).join('');
 }
+function viewInvoice(i){
+  const inv=INVOICES[i];
+  const sub=Math.round(inv.total/1.21);
+  const vat=inv.total-sub;
+  openModal('Factura · '+inv.num,`
+    <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:18px;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-family:var(--display);font-size:18px;font-weight:700;color:var(--ocean);">COSTA NORTE Surf Center</div>
+          <div style="font-size:11px;color:var(--txt3);margin-top:2px;">CIF: B-39XXXXXX</div>
+          <div style="font-size:11px;color:var(--txt3);">Av. F. Giner de los Ríos 46, San Vicente de la Barquera</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;letter-spacing:.2em;color:var(--coral);text-transform:uppercase;font-weight:700;">Factura</div>
+          <div style="font-family:var(--display);font-size:22px;font-weight:700;color:var(--ocean);margin-top:2px;">${inv.num}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);">
+        <div><div style="font-size:9px;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Cliente</div><div style="font-weight:600;margin-top:2px;">${inv.client}</div></div>
+        <div><div style="font-size:9px;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Fecha</div><div style="font-weight:600;margin-top:2px;">${inv.date}/2026</div></div>
+      </div>
+      <table style="width:100%;margin:14px 0;">
+        <thead><tr><th style="text-align:left;font-size:9px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;padding:6px 0;border-bottom:1px solid var(--border);">Concepto</th><th style="text-align:right;font-size:9px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;padding:6px 0;border-bottom:1px solid var(--border);">Importe</th></tr></thead>
+        <tbody><tr><td style="padding:10px 0;">${inv.concept}</td><td style="text-align:right;font-weight:600;">${fmt(sub)}</td></tr></tbody>
+      </table>
+      <div style="padding-top:10px;border-top:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:var(--txt2);"><span>Base imponible</span><span>${fmt(sub)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:var(--txt2);"><span>IVA 21%</span><span>${fmt(vat)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-family:var(--display);font-size:22px;font-weight:700;padding-top:8px;border-top:2px solid var(--coral);margin-top:6px;"><span>TOTAL</span><span style="color:var(--coral);">${fmt(inv.total)}</span></div>
+      </div>
+    </div>
+
+    ${fLbl('Cambiar estado')}
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;">
+      ${[{l:'Pagada',c:'ok'},{l:'Enviada',c:'info'},{l:'Pendiente',c:'warn'},{l:'Rectificada',c:'coral'}].map(s=>`<button onclick="setInvState(${i},'${s.l}','${s.c}')" style="padding:10px;border:2px solid ${inv.state===s.l?'var(--coral)':'var(--border)'};background:${inv.state===s.l?'rgba(255,94,58,.08)':'var(--surface)'};border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">${s.l}</button>`).join('')}
+    </div>
+
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('💬 Factura enviada por WhatsApp')">💬 WhatsApp</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('✉ Email enviado')">✉ Email</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('📄 PDF descargado')">📄 PDF</button>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cerrar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="closeModal()">Hecho</button>
+    </div>
+  `);
+}
+function setInvState(i,l,c){INVOICES[i].state=l;INVOICES[i].sc=c;toast('Estado actualizado a '+l);viewInvoice(i);renderInvoices();}
 
 function renderReports(){
   document.getElementById('reports-kpis').innerHTML=[
@@ -2419,8 +2757,8 @@ function inboxSend(){
 }
 
 function renderTeam(){
-  document.getElementById('team-grid').innerHTML=TEAM.map(t=>`
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);padding:18px;">
+  document.getElementById('team-grid').innerHTML=TEAM.map((t,i)=>`
+    <div onclick="editMember(${i})" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);padding:18px;cursor:pointer;transition:all .15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='var(--coral)'" onmouseout="this.style.transform='';this.style.borderColor='var(--border)'">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
         <div style="width:44px;height:44px;border-radius:50%;background:${t.color};color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:14px;">${t.av}</div>
         <div>
@@ -2434,27 +2772,66 @@ function renderTeam(){
       </div>
     </div>`).join('');
 }
+function editMember(i){
+  const t=TEAM[i];
+  openModal('Miembro · '+t.name,`
+    ${fLbl('Nombre')}${fInp('tm-name',t.name)}
+    ${fLbl('Rol / Cargo')}${fSel('tm-role',t.role,['Director','Director técnico surf','Recepción','Instructora SUP','Instructor surf','Instructor júnior','Limpieza · jefa','Limpieza','Mantenimiento','Contabilidad'])}
+    ${fRow(fLbl('Email')+fInp('tm-email',t.email,'email'), fLbl('Teléfono')+fInp('tm-phone',t.phone))}
+    ${fLbl('Permisos del panel')}
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
+      ${['Apartamentos','Escuela','Tienda','Facturas','Informes','Equipo','Ajustes','Limpieza'].map(p=>`<label style="display:inline-flex;align-items:center;gap:5px;padding:6px 11px;background:var(--bg);border-radius:18px;font-size:11px;cursor:pointer;font-weight:600;"><input type="checkbox" data-perm="${p}" ${(t.perms||[]).includes(p)?'checked':''} style="margin:0;">${p}</label>`).join('')}
+    </div>
+    <div style="margin-top:14px;background:rgba(255,94,58,.06);border:1px dashed var(--coral);padding:10px 14px;border-radius:8px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--coral);">Acceso:</strong> Recibirá invitación por email para crear contraseña.</div>
+    ${fActions('Guardar','saveMember('+i+')','deleteMember('+i+')')}
+  `);
+}
+function saveMember(i){
+  const t=TEAM[i];
+  t.name=document.getElementById('tm-name').value;
+  t.role=document.getElementById('tm-role').value;
+  t.email=document.getElementById('tm-email').value;
+  t.phone=document.getElementById('tm-phone').value;
+  t.perms=Array.from(document.querySelectorAll('[data-perm]:checked')).map(el=>el.dataset.perm);
+  toast('✓ Miembro guardado');closeModal();renderTeam();
+}
+function deleteMember(i){if(confirm('¿Eliminar miembro?')){TEAM.splice(i,1);toast('Eliminado');closeModal();renderTeam();}}
 
+let INTEGRATIONS=[
+  {n:'Airbnb',d:'Sincronización iCal bidireccional · 22 apartamentos',on:true,i:'🏠'},
+  {n:'Booking.com',d:'Reservas + tarifas automáticas',on:true,i:'🌐'},
+  {n:'Stripe',d:'Pasarela pagos · 1.4% fee',on:true,i:'💳'},
+  {n:'Mailchimp',d:'Newsletter automática post-estancia',on:true,i:'✉'},
+  {n:'WhatsApp Business',d:'Agente IA 24/7 · ES + EN',on:true,i:'💬'},
+  {n:'Google Calendar',d:'Sync clases + reservas en tu calendario',on:true,i:'📅'},
+  {n:'Verifactu / AEAT',d:'Factura electrónica obligatoria 2026',on:false,i:'📋'},
+  {n:'Instagram DM',d:'Bot responde mensajes IG en automático',on:true,i:'📷'},
+  {n:'TPV Stripe Terminal',d:'Lector tarjeta físico inalámbrico',on:false,i:'🖨'},
+  {n:'Vrbo / HomeAway',d:'Sync iCal apartamentos',on:false,i:'🏖'},
+  {n:'Spotahome',d:'Estancias largas',on:false,i:'🛏'},
+];
 function renderSettings(){
-  const ints=[
-    {n:'Airbnb',d:'Sincronización iCal bidireccional',on:true,i:'🏠'},
-    {n:'Booking.com',d:'Reservas + tarifas',on:true,i:'🌐'},
-    {n:'Stripe',d:'Pasarela pagos · 1.4% fee',on:true,i:'💳'},
-    {n:'Mailchimp',d:'Newsletter automática',on:true,i:'✉'},
-    {n:'WhatsApp Business',d:'Agente IA 24/7',on:true,i:'💬'},
-    {n:'Google Calendar',d:'Sync clases + reservas',on:true,i:'📅'},
-    {n:'Verifactu / AEAT',d:'Factura electrónica obligatoria',on:false,i:'📋'},
-    {n:'Instagram DM',d:'Bot responde mensajes IG',on:true,i:'📷'},
-    {n:'TPV Stripe Terminal',d:'Lector tarjeta físico',on:false,i:'🖨'},
-  ];
-  document.getElementById('integrations-list').innerHTML=ints.map(i=>`
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border2);">
+  document.getElementById('integrations-list').innerHTML=INTEGRATIONS.map((it,i)=>`
+    <div onclick="toggleInt(${i})" style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border2);cursor:pointer;transition:background .12s;" onmouseover="this.style.background='rgba(255,94,58,.04)'" onmouseout="this.style.background=''">
       <div style="display:flex;gap:10px;align-items:center;">
-        <div style="font-size:22px;">${i.i}</div>
-        <div><div style="font-size:13px;font-weight:600;color:var(--txt);">${i.n}</div><div style="font-size:11px;color:var(--txt3);">${i.d}</div></div>
+        <div style="font-size:22px;">${it.i}</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--txt);">${it.n}</div>
+          <div style="font-size:11px;color:var(--txt3);">${it.d}</div>
+        </div>
       </div>
-      <span class="tag tag-${i.on?'ok':'warn'}">${i.on?'Conectado':'Sin conectar'}</span>
+      <label style="display:flex;align-items:center;cursor:pointer;" onclick="event.stopPropagation();">
+        <div style="position:relative;width:38px;height:22px;background:${it.on?'var(--leaf)':'var(--border)'};border-radius:11px;transition:all .2s;">
+          <div style="position:absolute;top:2px;left:${it.on?'18px':'2px'};width:18px;height:18px;background:#fff;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,.18);transition:left .2s;"></div>
+        </div>
+        <input type="checkbox" ${it.on?'checked':''} onclick="toggleInt(${i});event.stopPropagation();" style="display:none;">
+      </label>
     </div>`).join('');
+}
+function toggleInt(i){
+  INTEGRATIONS[i].on=!INTEGRATIONS[i].on;
+  toast(INTEGRATIONS[i].on?'✓ '+INTEGRATIONS[i].n+' conectado':INTEGRATIONS[i].n+' desconectado');
+  renderSettings();
 }
 
 // init when login
