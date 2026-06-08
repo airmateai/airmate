@@ -1188,11 +1188,11 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
             <div style="font-family:var(--display);font-size:16px;font-weight:700;color:#fff;">🌊 Condiciones de hoy</div>
             <div style="font-size:11px;color:rgba(245,237,214,.7);letter-spacing:.04em;margin-top:2px;">Playa de Oyambre · San Vicente de la Barquera</div>
           </div>
-          <div style="text-align:center;"><div style="font-family:var(--display);font-size:24px;font-weight:700;color:#fff;">1.4m</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Olas</div></div>
-          <div style="text-align:center;"><div style="font-family:var(--display);font-size:24px;font-weight:700;color:#fff;">NE 12</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Viento km/h</div></div>
-          <div style="text-align:center;"><div style="font-family:var(--display);font-size:24px;font-weight:700;color:#fff;">17°C</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Agua</div></div>
-          <div style="text-align:center;"><div style="font-family:var(--display);font-size:24px;font-weight:700;color:#fff;">14:32</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Marea sube</div></div>
-          <div style="text-align:center;"><div style="font-family:var(--display);font-size:24px;font-weight:700;color:#22c55e;">★★★★</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Condiciones</div></div>
+          <div style="text-align:center;"><div id="sc-wave" style="font-family:var(--display);font-size:24px;font-weight:700;color:#fff;">—</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Olas</div></div>
+          <div style="text-align:center;"><div id="sc-wind" style="font-family:var(--display);font-size:24px;font-weight:700;color:#fff;">—</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Viento km/h</div></div>
+          <div style="text-align:center;"><div id="sc-water" style="font-family:var(--display);font-size:24px;font-weight:700;color:#fff;">—</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Agua</div></div>
+          <div style="text-align:center;"><div id="sc-period" style="font-family:var(--display);font-size:24px;font-weight:700;color:#fff;">—</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Periodo (s)</div></div>
+          <div style="text-align:center;"><div id="sc-rating" style="font-family:var(--display);font-size:24px;font-weight:700;color:#22c55e;">·····</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Condiciones</div></div>
         </div>
       </div>
 
@@ -1738,6 +1738,8 @@ function initApp(){
   renderInbox();
   renderTeam();
   renderSettings();
+  fetchSurfConditions();
+  setInterval(fetchSurfConditions, 30*60*1000);
 }
 
 function fmt(n,c='€'){return c+Number(n||0).toLocaleString('es-ES',{maximumFractionDigits:2});}
@@ -2140,11 +2142,11 @@ function renderAptMap(){
 
       <!-- Conditions ribbon (real-time surf) -->
       <div class="cond-bar">
-        <div class="cond-bar-i">🌊 <span>Olas</span> <strong class="em">1.4m</strong></div>
-        <div class="cond-bar-i">💨 <span>Viento</span> <strong>NE 12km/h</strong></div>
-        <div class="cond-bar-i">🌡 <span>Agua</span> <strong>17°C</strong></div>
-        <div class="cond-bar-i">☀️ <span>Cielo</span> <strong>Despejado</strong></div>
-        <div class="cond-bar-i">🌅 <span>Marea</span> <strong>Sube · 14:32</strong></div>
+        <div class="cond-bar-i">🌊 <span>Olas</span> <strong class="em" id="cb-wave">—</strong></div>
+        <div class="cond-bar-i">💨 <span>Viento</span> <strong id="cb-wind">—</strong></div>
+        <div class="cond-bar-i">🌡 <span>Agua</span> <strong id="cb-water">—</strong></div>
+        <div class="cond-bar-i">☀️ <span>Cielo</span> <strong id="cb-sky">—</strong></div>
+        <div class="cond-bar-i">⏱ <span>Periodo</span> <strong id="cb-period">—</strong></div>
       </div>
 
       <!-- Stats overlay -->
@@ -3278,6 +3280,65 @@ function renderSettings(){
     <div style="text-align:center;padding:20px 0;color:var(--txt3);font-size:12px;font-style:italic;">
       Este panel funciona de forma autónoma. No requiere conexión con servicios externos.
     </div>`;
+}
+
+// ═══ SURF CONDITIONS · Open-Meteo (gratis, sin clave) ═══
+const SURF_LAT=43.38,SURF_LON=-4.40;
+function degToCard(d){const dirs=['N','NE','E','SE','S','SO','O','NO'];return dirs[Math.round(d/45)%8];}
+function waveRating(h,p){
+  if(h>=1.8&&p>=10)return{stars:'★★★★★',col:'#22c55e'};
+  if(h>=1.2&&p>=8) return{stars:'★★★★',col:'#22c55e'};
+  if(h>=0.7&&p>=6) return{stars:'★★★',col:'#fbbf24'};
+  if(h>=0.3)        return{stars:'★★',col:'#f59e0b'};
+  return{stars:'★',col:'#ef4444'};
+}
+function skyLabel(code){
+  if(code===0)return'☀️ Despejado';
+  if(code<=2) return'🌤 Poco nublado';
+  if(code<=3) return'⛅ Nublado';
+  if(code<=49)return'🌫 Niebla';
+  if(code<=69)return'🌧 Lluvia';
+  if(code<=79)return'🌨 Nieve';
+  if(code<=99)return'⛈ Tormenta';
+  return'—';
+}
+async function fetchSurfConditions(){
+  try{
+    const [mar,wea]=await Promise.all([
+      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${SURF_LAT}&longitude=${SURF_LON}&current=wave_height,wave_period,wave_direction,sea_surface_temperature&timezone=Europe%2FMadrid`).then(r=>r.json()),
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${SURF_LAT}&longitude=${SURF_LON}&current=wind_speed_10m,wind_direction_10m,weather_code&timezone=Europe%2FMadrid`).then(r=>r.json())
+    ]);
+    const wh=+(mar.current?.wave_height??0).toFixed(1);
+    const wp=+(mar.current?.wave_period??0).toFixed(0);
+    const sst=+(mar.current?.sea_surface_temperature??0).toFixed(0);
+    const ws=+(wea.current?.wind_speed_10m??0).toFixed(0);
+    const wd=degToCard(wea.current?.wind_direction_10m??0);
+    const wcode=wea.current?.weather_code??0;
+    const {stars,col}=waveRating(wh,wp);
+    const waveStr=wh+'m';
+    const windStr=wd+' '+ws;
+    const waterStr=sst+'°C';
+    const periodStr=wp+'s';
+
+    // clases card
+    const ids={wave:'sc-wave',wind:'sc-wind',water:'sc-water',period:'sc-period',rating:'sc-rating'};
+    const el=id=>document.getElementById(id);
+    if(el(ids.wave))  el(ids.wave).textContent=waveStr;
+    if(el(ids.wind))  el(ids.wind).textContent=windStr;
+    if(el(ids.water)) el(ids.water).textContent=waterStr;
+    if(el(ids.period))el(ids.period).textContent=periodStr;
+    if(el(ids.rating)){el(ids.rating).textContent=stars;el(ids.rating).style.color=col;}
+
+    // cond-bar (mapa apartamentos)
+    const cb=id=>document.getElementById(id);
+    if(cb('cb-wave'))  cb('cb-wave').textContent=waveStr;
+    if(cb('cb-wind'))  cb('cb-wind').textContent=windStr+' km/h';
+    if(cb('cb-water')) cb('cb-water').textContent=waterStr;
+    if(cb('cb-sky'))   cb('cb-sky').textContent=skyLabel(wcode);
+    if(cb('cb-period'))cb('cb-period').textContent=periodStr;
+
+    console.log('[Surf] condiciones actualizadas',{waveStr,windStr,waterStr,periodStr,stars});
+  }catch(e){console.warn('[Surf] error al cargar condiciones',e);}
 }
 
 // init when login
