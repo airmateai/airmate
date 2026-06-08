@@ -719,15 +719,148 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 .code-block .attr{color:#e0c995;}
 .code-block .str{color:#a8e1a1;}
 
-/* RESPONSIVE */
+/* ═══ RESPONSIVE · MOBILE APP ═══ */
 .mob-burger{display:none;}
+.bot-nav{display:none;}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99;backdrop-filter:blur(2px);}
+.mob-overlay.on{display:block;}
+
 @media(max-width:900px){
+  /* layout */
   .app{grid-template-columns:1fr;}
-  .sb{position:fixed;top:0;left:-260px;width:240px;transition:left .25s;z-index:100;}
+  .main{padding-bottom:72px;}
+
+  /* topbar mobile */
+  .topbar{padding:10px 16px;height:56px;}
+  .tb-title{font-size:17px;}
+  .tb-search,.lang-pill{display:none;}
+  .tb-btn{padding:6px 10px;font-size:11px;}
+  .mob-burger{display:none;} /* replaced by bottom nav */
+
+  /* sidebar as full-screen drawer */
+  .sb{
+    position:fixed;top:0;left:-100%;width:280px;height:100%;
+    transition:left .28s cubic-bezier(.4,0,.2,1);z-index:200;
+    overflow-y:auto;
+  }
   .sb.open{left:0;}
-  .mob-burger{display:grid;place-items:center;width:36px;height:36px;border-radius:8px;background:var(--surface);border:1px solid var(--border);font-size:18px;color:var(--ocean);}
-  .tb-search{min-width:140px;}
+
+  /* pages */
+  .page{padding:14px 12px;}
+  .page-hd{margin-bottom:14px;}
+  .page-hd h1{font-size:22px;}
+  .page-hd-actions{gap:6px;}
+  .btn{padding:8px 13px;font-size:11px;}
+
+  /* KPI grid — 2 cols */
+  .kpi-grid{grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
+  .kpi{padding:14px 12px;}
+  .kpi-val{font-size:22px;}
+
+  /* two-col */
+  .two-col{grid-template-columns:1fr;}
+
+  /* cards */
+  .card-hd{padding:12px 14px;}
+  .card-body{padding:14px;}
+
+  /* tables → card list */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{min-width:540px;}
+  th,td{padding:9px 12px;font-size:12px;}
+
+  /* kanban */
+  .kan{grid-template-columns:1fr;}
+
+  /* building */
+  .bldg-wrap{min-height:520px;}
+  .bldg{margin-top:60px;}
+  .bldg-stats{top:46px;right:10px;}
+  .bldg-stat-card{min-width:100px;padding:8px 10px;}
+  .bldg-stat-card .v{font-size:13px;}
+
+  /* calendar */
+  .cal{min-width:860px;}
+
+  /* schedule */
+  .sched-grid{min-width:600px;}
+
+  /* pos */
+  .pos-wrap{grid-template-columns:1fr;}
+  .pos-cart{position:static;margin-top:14px;}
+
+  /* inbox */
+  .inbox-wrap{grid-template-columns:1fr;height:auto;}
+  .inbox-list{max-height:260px;}
+
+  /* surf conditions card */
+  .surf-cond-grid{
+    grid-template-columns:1fr 1fr !important;
+    gap:10px !important;
+    padding:14px !important;
+  }
+  .surf-cond-header{display:none;}
+
+  /* AI banner */
+  .ai-roi-grid{
+    grid-template-columns:1fr 1fr !important;
+    gap:12px !important;
+  }
+  .ai-roi-main{grid-column:1/-1;}
+
+  /* automations grid */
+  .auto-grid{grid-template-columns:1fr !important;}
+
+  /* vs comparison */
+  .vs-grid{grid-template-columns:1fr !important;}
+
+  /* forecast */
+  .forecast-meta{grid-template-columns:1fr 1fr !important;}
+
+  /* bottom navigation */
+  .bot-nav{
+    display:flex;
+    position:fixed;bottom:0;left:0;right:0;
+    height:64px;
+    background:var(--ocean);
+    border-top:1px solid rgba(255,255,255,.1);
+    z-index:150;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .bot-nav-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;color:rgba(245,237,214,.5);font-size:9px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+    transition:color .15s;padding:6px 0;
+    border:none;background:none;font-family:inherit;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .bot-nav-item.active{color:var(--coral);}
+  .bot-nav-item svg{width:20px;height:20px;}
+  .bot-nav-item .bn-dot{
+    position:absolute;top:8px;right:calc(50% - 18px);
+    width:7px;height:7px;background:var(--coral);border-radius:50%;
+    border:1.5px solid var(--ocean);
+  }
+  .bot-nav-item{position:relative;}
+
+  /* FAB */
+  .mob-fab{
+    display:grid;
+    position:fixed;bottom:76px;right:16px;
+    width:50px;height:50px;border-radius:50%;
+    background:var(--coral);color:#fff;
+    box-shadow:0 6px 20px rgba(255,94,58,.45);
+    place-items:center;font-size:22px;z-index:151;cursor:pointer;
+    border:none;transition:transform .15s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mob-fab:active{transform:scale(.93);}
 }
+
+/* hide FAB on desktop */
+.mob-fab{display:none;}
+@media(min-width:901px){.mob-fab{display:none!important;}.bot-nav{display:none!important;}}
 </style>
 </head>
 <body>
@@ -874,7 +1007,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
   <main class="main">
     <div class="topbar">
       <div style="display:flex;align-items:center;gap:10px;">
-        <button class="mob-burger" onclick="document.getElementById('sb').classList.toggle('open')">☰</button>
+        <button class="mob-burger" onclick="openSidebar()" style="display:none;">☰</button>
         <div class="tb-title" id="tb-title">Dashboard</div>
       </div>
       <div class="tb-right">
@@ -1183,8 +1316,8 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 
       <!-- Surf conditions today -->
       <div class="card" style="background:linear-gradient(135deg,#1d5a7d,#3a8db5);color:#fff;border:none;">
-        <div style="padding:18px 22px;display:grid;grid-template-columns:1fr repeat(5,auto);gap:24px;align-items:center;">
-          <div>
+        <div class="surf-cond-grid" style="padding:18px 22px;display:grid;grid-template-columns:1fr repeat(5,auto);gap:24px;align-items:center;">
+          <div class="surf-cond-header">
             <div style="font-family:var(--display);font-size:16px;font-weight:700;color:#fff;">🌊 Condiciones de hoy</div>
             <div style="font-size:11px;color:rgba(245,237,214,.7);letter-spacing:.04em;margin-top:2px;">Playa de Oyambre · San Vicente de la Barquera</div>
           </div>
@@ -1483,6 +1616,37 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
     </div>
 
   </main>
+
+  <!-- ════════════ BOTTOM NAV · MOBILE ════════════ -->
+  <nav class="bot-nav" id="bot-nav">
+    <button class="bot-nav-item active" id="bn-dashboard" onclick="go('dashboard',null);setBotNav('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      Inicio
+    </button>
+    <button class="bot-nav-item" id="bn-apt-map" onclick="go('apt-map',null);setBotNav('apt-map')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Aptos
+    </button>
+    <button class="bot-nav-item" id="bn-classes" onclick="go('classes',null);setBotNav('classes')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17s6-6 9-6 9 6 9 6"/><path d="M3 11s6-6 9-6 9 6 9 6"/></svg>
+      Clases
+    </button>
+    <button class="bot-nav-item" id="bn-shop" onclick="go('shop',null);setBotNav('shop')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      TPV
+    </button>
+    <button class="bot-nav-item" id="bn-more" onclick="openSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      Más
+    </button>
+  </nav>
+
+  <!-- FAB -->
+  <button class="mob-fab" onclick="quickAdd()">+</button>
+
+  <!-- Overlay for sidebar -->
+  <div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
+
 </div>
 
 <!-- ════════════ TOAST ════════════ -->
@@ -1513,6 +1677,8 @@ function go(p,el){
   const titles={dashboard:'Dashboard',agenda:'Agenda del día','apt-map':'Mapa apartamentos','apt-cal':'Calendario reservas','apt-res':'Reservas','apt-clean':'Limpieza','apt-maint':'Mantenimiento',classes:'Horario de clases',students:'Alumnos',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',reports:'Informes & IVA',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes'};
   document.getElementById('tb-title').textContent=titles[p]||'';
   document.getElementById('sb').classList.remove('open');
+  const ov=document.getElementById('mob-overlay');if(ov)ov.classList.remove('on');
+  document.body.style.overflow='';
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function toggleTheme(){const cur=document.documentElement.getAttribute('data-theme');document.documentElement.setAttribute('data-theme',cur==='dark'?'light':'dark');}
@@ -3340,6 +3506,26 @@ async function fetchSurfConditions(){
     console.log('[Surf] condiciones actualizadas',{waveStr,windStr,waterStr,periodStr,stars});
   }catch(e){console.warn('[Surf] error al cargar condiciones',e);}
 }
+
+// ═══ MOBILE NAV ═══
+function openSidebar(){
+  document.getElementById('sb').classList.add('open');
+  document.getElementById('mob-overlay').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+function closeSidebar(){
+  document.getElementById('sb').classList.remove('open');
+  document.getElementById('mob-overlay').classList.remove('on');
+  document.body.style.overflow='';
+}
+function setBotNav(page){
+  document.querySelectorAll('.bot-nav-item').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById('bn-'+page);
+  if(el)el.classList.add('active');
+  closeSidebar();
+}
+// override go() to also close sidebar on mobile
+const _goOrig=go;
 
 // init when login
 document.addEventListener('keydown',e=>{
