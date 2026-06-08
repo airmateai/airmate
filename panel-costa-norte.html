@@ -2,9 +2,16 @@
 <html lang="es" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>Costa Norte · Panel CRM · Surf Center</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
+<title>Costa Norte · Panel</title>
 <meta name="theme-color" content="#0a2540">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Costa Norte">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Costa Norte">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%230a2540'/><text x='90' y='118' text-anchor='middle' font-family='system-ui,sans-serif' font-weight='700' font-size='72' fill='%23f5edd6'>CN</text></svg>">
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Costa%20Norte%20Panel%22%2C%22short_name%22%3A%22Costa%20Norte%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230a2540%22%2C%22theme_color%22%3A%22%230a2540%22%2C%22orientation%22%3A%22portrait%22%7D">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@1,500&display=swap" rel="stylesheet">
@@ -922,6 +929,24 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
         Mantenimiento
       </button>
+      <button class="nav-item" onclick="go('apt-channels',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        Canal Manager
+        <span class="nav-badge">2</span>
+      </button>
+      <button class="nav-item" onclick="go('apt-revenue',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        Revenue · Aptos
+      </button>
+      <button class="nav-item" onclick="go('apt-automsg',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Mensajes auto
+        <span class="nav-badge">5</span>
+      </button>
+      <button class="nav-item" onclick="go('apt-rates',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Tarifas
+      </button>
 
       <div class="sb-section">Escuela de Surf</div>
       <button class="nav-item" onclick="go('classes',this)">
@@ -1271,11 +1296,17 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
     <!-- ════════════ APARTAMENTOS · RESERVAS LIST ════════════ -->
     <div id="page-apt-res" class="page">
       <div class="page-hd">
-        <div><h1>Reservas <em>activas</em></h1><div class="page-sub">Próximas 30 días</div></div>
+        <div><h1>Reservas <em>activas</em></h1><div class="page-sub">Todas las reservas · próximas y actuales</div></div>
         <div class="page-hd-actions"><button class="btn btn-primary" onclick="quickAdd()">+ Reserva</button></div>
       </div>
-      <div class="tabs"><button class="tab active">Todas</button><button class="tab">Hoy</button><button class="tab">Próximos 7 días</button><button class="tab">Pendientes pago</button></div>
-      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Apto</th><th>Cliente</th><th>Entrada</th><th>Salida</th><th>Noches</th><th>Total</th><th>Estado</th></tr></thead><tbody id="apt-res-tbody"></tbody></table></div></div>
+      <div class="tabs" id="res-tabs">
+        <button class="tab active" onclick="filterRes('all',this)">Todas</button>
+        <button class="tab" onclick="filterRes('today',this)">Hoy</button>
+        <button class="tab" onclick="filterRes('week',this)">Próximos 7 días</button>
+        <button class="tab" onclick="filterRes('deposit',this)">Pendiente depósito</button>
+        <button class="tab" onclick="filterRes('checkin',this)">Pendiente check-in</button>
+      </div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Apto</th><th>Canal</th><th>Huésped</th><th>Check-in</th><th>Check-out</th><th>Noches</th><th>Total</th><th>Depósito</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="apt-res-tbody"></tbody></table></div></div>
     </div>
 
     <!-- ════════════ LIMPIEZA ════════════ -->
@@ -1615,6 +1646,137 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       </div>
     </div>
 
+    <!-- ════════════ CANAL MANAGER ════════════ -->
+    <div id="page-apt-channels" class="page">
+      <div class="page-hd">
+        <div><h1>Canal <em>Manager</em></h1><div class="page-sub">Airbnb · Booking · VRBO · Directo · iCal</div></div>
+        <div class="page-hd-actions"><button class="btn btn-primary" onclick="toast('✓ Sincronizando todos los canales...')">Sincronizar todo</button></div>
+      </div>
+      <div class="kpi-grid" id="channels-kpis"></div>
+      <div id="channels-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:18px;"></div>
+      <div class="two-col" style="gap:14px;">
+        <div class="card">
+          <div class="card-hd"><strong>Importar calendario externo (iCal)</strong></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+            <div class="two-col">
+              <div><div style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:5px;">Apartamento</div><select style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;">${Array.from({length:22},(_,i)=>`<option>Apto ${i+1}</option>`).join('')}</select></div>
+              <div><div style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:5px;">Canal</div><select style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;"><option>Airbnb</option><option>Booking.com</option><option>VRBO</option><option>HomeAway</option><option>Otro</option></select></div>
+            </div>
+            <div><div style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:5px;">URL iCal</div><input placeholder="https://www.airbnb.com/calendar/ical/..." style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;"></div>
+            <button class="btn btn-primary" style="align-self:flex-start;" onclick="toast('✓ Calendario importado · próxima sincronización en 1h')">Importar calendario</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><strong>Detector de conflictos</strong><span style="font-size:10px;color:var(--warn);font-weight:700;margin-left:8px;">⚠ 1 conflicto detectado</span></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Apto</th><th>Fechas</th><th>Canal 1</th><th>Canal 2</th><th>Acción</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Apto 7</strong></td><td>18–22 Jul</td><td><span style="background:#ff5a5f;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">Airbnb</span></td><td><span style="background:var(--coral);color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">Directo</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;" onclick="toast('Conflicto abierto en detalle')">Resolver</button></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ REVENUE APARTAMENTOS ════════════ -->
+    <div id="page-apt-revenue" class="page">
+      <div class="page-hd">
+        <div><h1>Revenue <em>por apartamento</em></h1><div class="page-sub">Junio 2026 · métricas de rendimiento</div></div>
+        <div class="page-hd-actions">
+          <button class="btn btn-ghost" onclick="openOwnerStatement()">Extracto propietario</button>
+          <button class="btn btn-primary" onclick="toast('Exportando CSV...')">Exportar CSV</button>
+        </div>
+      </div>
+      <div class="kpi-grid" id="revenue-kpis"></div>
+      <div class="two-col" style="gap:14px;margin-bottom:18px;">
+        <div class="card" style="flex:2;">
+          <div class="card-hd"><strong>Ingresos últimos 6 meses</strong></div>
+          <div class="card-body" id="revenue-chart" style="height:160px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><strong>Top 3 apartamentos</strong></div>
+          <div class="card-body" id="revenue-top3" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><strong>Rendimiento por apartamento · Junio</strong></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Apto</th><th>Hab.</th><th>Noches ocup.</th><th>ADR</th><th>Ingresos mes</th><th>Dep. pendiente</th><th>Reseña media</th></tr></thead><tbody id="revenue-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ════════════ MENSAJES AUTOMÁTICOS ════════════ -->
+    <div id="page-apt-automsg" class="page">
+      <div class="page-hd">
+        <div><h1>Mensajes <em>automáticos</em></h1><div class="page-sub">Bienvenida · check-in · recordatorio · post-estancia · reseña</div></div>
+        <div class="page-hd-actions"><button class="btn btn-primary" onclick="toast('Procesando mensajes pendientes...')">Enviar pendientes</button></div>
+      </div>
+      <div class="kpi-grid" id="automsg-kpis"></div>
+      <div class="tabs" id="automsg-tabs">
+        <button class="tab active" onclick="showAutoMsgTab('pending',this)">Pendientes <span style="background:var(--coral);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px;">5</span></button>
+        <button class="tab" onclick="showAutoMsgTab('sent',this)">Enviados</button>
+        <button class="tab" onclick="showAutoMsgTab('config',this)">Configuración</button>
+      </div>
+      <div id="automsg-pending">
+        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Apto</th><th>Huésped</th><th>Tipo mensaje</th><th>Programado para</th><th>Canal</th><th>Acciones</th></tr></thead><tbody id="automsg-pending-tbody"></tbody></table></div></div>
+      </div>
+      <div id="automsg-sent" style="display:none;">
+        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Apto</th><th>Huésped</th><th>Tipo</th><th>Enviado</th><th>Canal</th><th>Estado</th></tr></thead><tbody id="automsg-sent-tbody"></tbody></table></div></div>
+      </div>
+      <div id="automsg-config" style="display:none;">
+        <div class="card">
+          <div class="card-hd"><strong>Configuración de mensajes automáticos</strong></div>
+          <div class="card-body" id="automsg-config-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ TARIFAS ════════════ -->
+    <div id="page-apt-rates" class="page">
+      <div class="page-hd">
+        <div><h1>Gestión de <em>tarifas</em></h1><div class="page-sub">Precios base · temporada · descuentos</div></div>
+        <div class="page-hd-actions"><button class="btn btn-primary" onclick="toast('✓ Tarifas sincronizadas con Airbnb y Booking')">Sincronizar tarifas</button></div>
+      </div>
+      <div class="two-col" style="gap:14px;margin-bottom:18px;">
+        <div class="card">
+          <div class="card-hd"><strong>Tarifas por tipo de apartamento</strong></div>
+          <div class="tbl-wrap"><table><thead><tr><th>Tipo</th><th>Base semana</th><th>Fin semana</th><th>Temp. alta</th><th>Estancia mín.</th><th>Limpieza</th></tr></thead>
+            <tbody id="rates-tbody"></tbody>
+          </table></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><strong>Descuento por duración</strong></div>
+          <div class="card-body">
+            <table style="width:100%;"><thead><tr><th style="text-align:left;padding:6px 0;font-size:11px;color:var(--txt3);">Duración</th><th style="text-align:right;padding:6px 0;font-size:11px;color:var(--txt3);">Descuento</th></tr></thead>
+              <tbody>
+                <tr><td style="padding:8px 0;font-size:13px;">7+ noches</td><td style="padding:8px 0;text-align:right;"><strong style="color:var(--leaf);">-10%</strong></td></tr>
+                <tr><td style="padding:8px 0;font-size:13px;">14+ noches</td><td style="padding:8px 0;text-align:right;"><strong style="color:var(--leaf);">-15%</strong></td></tr>
+                <tr><td style="padding:8px 0;font-size:13px;">28+ noches</td><td style="padding:8px 0;text-align:right;"><strong style="color:var(--leaf);">-25%</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="two-col" style="gap:14px;">
+        <div class="card">
+          <div class="card-hd"><strong>Descuento last-minute</strong></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+            <div style="background:rgba(255,94,58,.06);border:1px dashed var(--coral);padding:12px 16px;border-radius:10px;font-size:13px;color:var(--txt);">
+              <strong style="color:var(--coral);">Regla activa:</strong> Si quedan menos de <strong>3 días</strong> para check-in y el apartamento está libre, aplicar <strong>15% de descuento</strong>.
+            </div>
+            <div class="two-col">
+              <div><div style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:5px;">Días antes check-in</div><input type="number" value="3" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;"></div>
+              <div><div style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:5px;">Descuento (%)</div><input type="number" value="15" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;"></div>
+            </div>
+            <button class="btn btn-primary" style="align-self:flex-start;" onclick="toast('✓ Regla last-minute guardada')">Guardar regla</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><strong>Calendario de temporadas</strong></div>
+          <div class="card-body" id="rates-calendar"></div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- ════════════ BOTTOM NAV · MOBILE ════════════ -->
@@ -1674,7 +1836,7 @@ function go(p,el){
     const links=document.querySelectorAll('.nav-item');
     const labels={dashboard:'Dashboard',agenda:'Agenda',apt:'Mapa',cal:'Calendario',res:'Reservas',clean:'Limpieza',maint:'Mantenimiento',classes:'Clases',students:'Alumnos',packs:'Packs',instructors:'Instructores',rental:'Alquileres',shop:'TPV',stock:'Stock',clients:'Clientes',invoices:'Facturas',reports:'Informes',inbox:'Bandeja IA',widget:'Widget',team:'Equipo',settings:'Ajustes'};
   }
-  const titles={dashboard:'Dashboard',agenda:'Agenda del día','apt-map':'Mapa apartamentos','apt-cal':'Calendario reservas','apt-res':'Reservas','apt-clean':'Limpieza','apt-maint':'Mantenimiento',classes:'Horario de clases',students:'Alumnos',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',reports:'Informes & IVA',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes'};
+  const titles={dashboard:'Dashboard',agenda:'Agenda del día','apt-map':'Mapa apartamentos','apt-cal':'Calendario reservas','apt-res':'Reservas','apt-clean':'Limpieza','apt-maint':'Mantenimiento','apt-channels':'Canal Manager','apt-revenue':'Revenue · Apartamentos','apt-automsg':'Mensajes automáticos','apt-rates':'Gestión de tarifas',classes:'Horario de clases',students:'Alumnos',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',reports:'Informes & IVA',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes'};
   document.getElementById('tb-title').textContent=titles[p]||'';
   document.getElementById('sb').classList.remove('open');
   const ov=document.getElementById('mob-overlay');if(ov)ov.classList.remove('on');
@@ -1710,30 +1872,59 @@ function quickAdd(){openModal('+ Nueva reserva',`
 
 // ════════════ DATA ════════════
 const APTS=[
-  {n:1,name:'Apto 1',rooms:1,state:'occupied',guests:['M. Riba'],days:2,surf:true},
-  {n:2,name:'Apto 2',rooms:2,state:'occupied',guests:['H. Vidal','J. Vidal'],days:4,surf:true},
-  {n:3,name:'Apto 3',rooms:2,state:'occupied',guests:['A. Berasaluce','Pareja'],days:6},
-  {n:4,name:'Apto 4',rooms:1,state:'cleaning',guests:[]},
-  {n:5,name:'Apto 5',rooms:3,state:'occupied',guests:['J. Vega','+2 pax'],days:5,surf:true,vip:true},
-  {n:6,name:'Apto 6',rooms:2,state:'occupied',guests:['Pereira','+1 pax'],days:3},
-  {n:7,name:'Apto 7',rooms:2,state:'occupied',guests:['D. Pérez','+2 pax'],days:7,surf:true},
-  {n:8,name:'Apto 8',rooms:1,state:'maint',guests:[]},
-  {n:9,name:'Apto 9',rooms:2,state:'occupied',guests:['P. Lacroix','S. Lacroix'],days:1},
-  {n:10,name:'Apto 10',rooms:3,state:'occupied',guests:['Familia Costa','+3 pax'],days:6,vip:true},
-  {n:11,name:'Apto 11',rooms:2,state:'free',guests:[]},
-  {n:12,name:'Apto 12',rooms:2,state:'occupied',guests:['S. Rivas','+1 pax'],days:4},
-  {n:13,name:'Apto 13',rooms:1,state:'occupied',guests:['L. Mendoza'],days:1,surf:true},
-  {n:14,name:'Apto 14',rooms:3,state:'occupied',guests:['Familia Bauer','+3 pax'],days:6,vip:true,surf:true},
-  {n:15,name:'Apto 15',rooms:2,state:'occupied',guests:['Hartmann','+1 pax'],days:5},
-  {n:16,name:'Apto 16',rooms:2,state:'occupied',guests:['Sancho','+1 pax'],days:4},
-  {n:17,name:'Apto 17',rooms:1,state:'free',guests:[]},
-  {n:18,name:'Apto 18',rooms:2,state:'cleaning',guests:[]},
-  {n:19,name:'Apto 19',rooms:2,state:'occupied',guests:['Y. Möller','+1 pax'],days:3,vip:true},
-  {n:20,name:'Apto 20',rooms:3,state:'occupied',guests:['Jensen','+3 pax'],days:5},
-  {n:21,name:'Apto 21',rooms:2,state:'free',guests:[]},
-  {n:22,name:'Apto 22',rooms:2,state:'free',guests:[]},
+  {n:1,name:'Apto 1',rooms:1,floor:1,state:'occupied',guests:['M. Riba'],days:2,surf:true,vip:false,channel:'airbnb',guestName:'Marc Riba',guestEmail:'marc.riba@gmail.com',guestPhone:'+34 622 104 551',guestCountry:'ES',checkIn:'2026-06-07',checkOut:'2026-06-09',pax:1,total:210,deposit:63,depositPaid:true,balance:147,doorCode:'4821',notes:'Cliente habitual, surfer nivel medio.',amenities:['Wifi','AC','Terraza'],cleanerAssigned:'Marta',rating:4.8,monthRev:420},
+  {n:2,name:'Apto 2',rooms:2,floor:1,state:'occupied',guests:['H. Vidal','J. Vidal'],days:4,surf:true,vip:false,channel:'booking',guestName:'Helena Vidal',guestEmail:'hvidal@outlook.com',guestPhone:'+34 611 234 789',guestCountry:'ES',checkIn:'2026-06-05',checkOut:'2026-06-09',pax:2,total:552,deposit:166,depositPaid:true,balance:386,doorCode:'7345',notes:'Pareja de surf, primera vez.',amenities:['Wifi','AC','Terraza','Parking'],cleanerAssigned:'Marta',rating:4.6,monthRev:828},
+  {n:3,name:'Apto 3',rooms:2,floor:1,state:'occupied',guests:['A. Berasaluce','Pareja'],days:6,surf:false,vip:false,channel:'direct',guestName:'Ainhoa Berasaluce',guestEmail:'ainhoa.b@euskaltel.com',guestPhone:'+34 688 456 001',guestCountry:'ES',checkIn:'2026-06-03',checkOut:'2026-06-10',pax:2,total:966,deposit:290,depositPaid:false,balance:966,doorCode:'2190',notes:'Pago pendiente, llamar hoy.',amenities:['Wifi','Terraza'],cleanerAssigned:'Marta',rating:4.5,monthRev:966},
+  {n:4,name:'Apto 4',rooms:1,floor:1,state:'cleaning',guests:[],days:0,surf:false,vip:false,channel:'airbnb',guestName:'',guestEmail:'',guestPhone:'',guestCountry:'',checkIn:'',checkOut:'',pax:0,total:0,deposit:0,depositPaid:false,balance:0,doorCode:'3074',notes:'Limpieza tras check-out de Van den Berg.',amenities:['Wifi','AC'],cleanerAssigned:'Marta',rating:4.7,monthRev:315},
+  {n:5,name:'Apto 5',rooms:3,floor:2,state:'occupied',guests:['J. Vega','+2 pax'],days:5,surf:true,vip:true,channel:'direct',guestName:'Jaime Vega',guestEmail:'jaimevega@surf.es',guestPhone:'+34 699 001 222',guestCountry:'ES',checkIn:'2026-06-06',checkOut:'2026-06-13',pax:3,total:1155,deposit:347,depositPaid:true,balance:808,doorCode:'6610',notes:'VIP · clase privada incluida.',amenities:['Wifi','AC','Terraza','Parking','Jacuzzi'],cleanerAssigned:'Lucia',rating:5.0,monthRev:1650},
+  {n:6,name:'Apto 6',rooms:2,floor:2,state:'occupied',guests:['Pereira','+1 pax'],days:3,surf:false,vip:false,channel:'booking',guestName:'Carlos Pereira',guestEmail:'c.pereira@hotmail.com',guestPhone:'+351 91 234 5678',guestCountry:'ES',checkIn:'2026-06-06',checkOut:'2026-06-09',pax:2,total:414,deposit:124,depositPaid:true,balance:290,doorCode:'5530',notes:'',amenities:['Wifi','AC'],cleanerAssigned:'Marta',rating:4.4,monthRev:552},
+  {n:7,name:'Apto 7',rooms:2,floor:2,state:'occupied',guests:['D. Pérez','+2 pax'],days:7,surf:true,vip:false,channel:'direct',guestName:'Daniel Pérez',guestEmail:'d.perez@gmail.com',guestPhone:'+34 612 345 678',guestCountry:'ES',checkIn:'2026-06-02',checkOut:'2026-06-09',pax:3,total:966,deposit:290,depositPaid:true,balance:676,doorCode:'1188',notes:'Familia con niño, tabla alquilada.',amenities:['Wifi','AC','Terraza','Parking'],cleanerAssigned:'Marta',rating:4.9,monthRev:1104},
+  {n:8,name:'Apto 8',rooms:1,floor:2,state:'maint',guests:[],days:0,surf:false,vip:false,channel:'direct',guestName:'',guestEmail:'',guestPhone:'',guestCountry:'',checkIn:'',checkOut:'',pax:0,total:0,deposit:0,depositPaid:false,balance:0,doorCode:'9900',notes:'Boiler averiado · técnico llega 14:00.',amenities:['Wifi'],cleanerAssigned:'-',rating:4.2,monthRev:210},
+  {n:9,name:'Apto 9',rooms:2,floor:2,state:'occupied',guests:['P. Lacroix','S. Lacroix'],days:1,surf:false,vip:false,channel:'airbnb',guestName:'Pierre Lacroix',guestEmail:'p.lacroix@free.fr',guestPhone:'+33 6 78 90 12 34',guestCountry:'FR',checkIn:'2026-06-08',checkOut:'2026-06-09',pax:2,total:138,deposit:41,depositPaid:true,balance:97,doorCode:'4407',notes:'Pareille française, surf le matin.',amenities:['Wifi','AC'],cleanerAssigned:'Marta',rating:4.6,monthRev:552},
+  {n:10,name:'Apto 10',rooms:3,floor:3,state:'occupied',guests:['Familia Costa','+3 pax'],days:6,surf:false,vip:true,channel:'booking',guestName:'Carlos Costa',guestEmail:'familia.costa@gmail.com',guestPhone:'+34 644 778 990',guestCountry:'ES',checkIn:'2026-06-05',checkOut:'2026-06-13',pax:4,total:1320,deposit:396,depositPaid:true,balance:924,doorCode:'3312',notes:'VIP, familia con 2 hijos, cuna solicitada.',amenities:['Wifi','AC','Terraza','Parking','Cuna'],cleanerAssigned:'Lucia',rating:4.9,monthRev:1650},
+  {n:11,name:'Apto 11',rooms:2,floor:3,state:'free',guests:[],days:0,surf:false,vip:false,channel:'direct',guestName:'',guestEmail:'',guestPhone:'',guestCountry:'',checkIn:'',checkOut:'',pax:0,total:0,deposit:0,depositPaid:false,balance:0,doorCode:'7712',notes:'Disponible.',amenities:['Wifi','AC','Terraza'],cleanerAssigned:'Marta',rating:4.5,monthRev:414},
+  {n:12,name:'Apto 12',rooms:2,floor:3,state:'occupied',guests:['S. Rivas','+1 pax'],days:4,surf:false,vip:false,channel:'airbnb',guestName:'Sofía Rivas',guestEmail:'sofia.rivas@gmail.com',guestPhone:'+34 655 321 100',guestCountry:'ES',checkIn:'2026-06-05',checkOut:'2026-06-09',pax:2,total:552,deposit:166,depositPaid:true,balance:386,doorCode:'8841',notes:'Newsletter subscriber.',amenities:['Wifi','AC'],cleanerAssigned:'Marta',rating:4.7,monthRev:690},
+  {n:13,name:'Apto 13',rooms:1,floor:3,state:'occupied',guests:['L. Mendoza'],days:1,surf:true,vip:false,channel:'booking',guestName:'Lola Mendoza',guestEmail:'lola.mendoza@yahoo.es',guestPhone:'+34 677 543 210',guestCountry:'ES',checkIn:'2026-06-08',checkOut:'2026-06-09',pax:1,total:105,deposit:32,depositPaid:true,balance:73,doorCode:'2255',notes:'SUP + tabla alquilada.',amenities:['Wifi'],cleanerAssigned:'Marta',rating:4.3,monthRev:315},
+  {n:14,name:'Apto 14',rooms:3,floor:3,state:'occupied',guests:['Familia Bauer','+3 pax'],days:6,surf:true,vip:true,channel:'direct',guestName:'Thomas Bauer',guestEmail:'t.bauer@gmail.de',guestPhone:'+49 152 1234 5678',guestCountry:'DE',checkIn:'2026-06-08',checkOut:'2026-06-15',pax:4,total:1155,deposit:347,depositPaid:true,balance:808,doorCode:'6699',notes:'VIP, familia alemana, repiten cada verano.',amenities:['Wifi','AC','Terraza','Parking','Jacuzzi'],cleanerAssigned:'Lucia',rating:5.0,monthRev:1980},
+  {n:15,name:'Apto 15',rooms:2,floor:4,state:'occupied',guests:['Hartmann','+1 pax'],days:5,surf:false,vip:false,channel:'airbnb',guestName:'Klaus Hartmann',guestEmail:'k.hartmann@web.de',guestPhone:'+49 176 5566 7788',guestCountry:'DE',checkIn:'2026-06-04',checkOut:'2026-06-09',pax:2,total:690,deposit:207,depositPaid:true,balance:483,doorCode:'1033',notes:'Turistas alemanes, inglés OK.',amenities:['Wifi','AC','Parking'],cleanerAssigned:'Marta',rating:4.5,monthRev:828},
+  {n:16,name:'Apto 16',rooms:2,floor:4,state:'occupied',guests:['Sancho','+1 pax'],days:4,surf:false,vip:false,channel:'booking',guestName:'Marta Sancho',guestEmail:'marta.sancho@outlook.es',guestPhone:'+34 644 901 234',guestCountry:'ES',checkIn:'2026-06-05',checkOut:'2026-06-09',pax:2,total:552,deposit:166,depositPaid:true,balance:386,doorCode:'4480',notes:'',amenities:['Wifi','AC'],cleanerAssigned:'Marta',rating:4.4,monthRev:552},
+  {n:17,name:'Apto 17',rooms:1,floor:4,state:'free',guests:[],days:0,surf:false,vip:false,channel:'direct',guestName:'',guestEmail:'',guestPhone:'',guestCountry:'',checkIn:'',checkOut:'',pax:0,total:0,deposit:0,depositPaid:false,balance:0,doorCode:'7730',notes:'Disponible.',amenities:['Wifi'],cleanerAssigned:'Marta',rating:4.6,monthRev:210},
+  {n:18,name:'Apto 18',rooms:2,floor:4,state:'cleaning',guests:[],days:0,surf:false,vip:false,channel:'airbnb',guestName:'',guestEmail:'',guestPhone:'',guestCountry:'',checkIn:'',checkOut:'',pax:0,total:0,deposit:0,depositPaid:false,balance:0,doorCode:'5520',notes:'Limpieza en curso.',amenities:['Wifi','AC'],cleanerAssigned:'Marta',rating:4.5,monthRev:414},
+  {n:19,name:'Apto 19',rooms:2,floor:5,state:'occupied',guests:['Y. Möller','+1 pax'],days:3,surf:false,vip:true,channel:'direct',guestName:'Yannick Möller',guestEmail:'y.moeller@gmx.de',guestPhone:'+49 157 3344 5566',guestCountry:'DE',checkIn:'2026-06-06',checkOut:'2026-06-09',pax:2,total:414,deposit:124,depositPaid:true,balance:290,doorCode:'9921',notes:'VIP cliente fidelizado, 3ª visita.',amenities:['Wifi','AC','Terraza'],cleanerAssigned:'Lucia',rating:4.9,monthRev:828},
+  {n:20,name:'Apto 20',rooms:3,floor:5,state:'occupied',guests:['Jensen','+3 pax'],days:5,surf:false,vip:false,channel:'airbnb',guestName:'Erik Jensen',guestEmail:'e.jensen@gmail.com',guestPhone:'+45 23 45 67 89',guestCountry:'DK',checkIn:'2026-06-04',checkOut:'2026-06-09',pax:4,total:825,deposit:248,depositPaid:true,balance:577,doorCode:'3367',notes:'Familia danesa, 4 personas.',amenities:['Wifi','AC','Terraza','Parking'],cleanerAssigned:'Marta',rating:4.6,monthRev:1155},
+  {n:21,name:'Apto 21',rooms:2,floor:5,state:'free',guests:[],days:0,surf:false,vip:false,channel:'direct',guestName:'',guestEmail:'',guestPhone:'',guestCountry:'',checkIn:'',checkOut:'',pax:0,total:0,deposit:0,depositPaid:false,balance:0,doorCode:'1144',notes:'Disponible.',amenities:['Wifi','AC'],cleanerAssigned:'Marta',rating:4.4,monthRev:276},
+  {n:22,name:'Apto 22',rooms:2,floor:5,state:'free',guests:[],days:0,surf:false,vip:false,channel:'booking',guestName:'',guestEmail:'',guestPhone:'',guestCountry:'',checkIn:'',checkOut:'',pax:0,total:0,deposit:0,depositPaid:false,balance:0,doorCode:'8803',notes:'Disponible.',amenities:['Wifi','AC'],cleanerAssigned:'Marta',rating:4.5,monthRev:276},
 ];
 const APT_STATE_LBL={free:'Libre',occupied:'Ocupado',cleaning:'Limpieza',maint:'Manten.'};
+
+const RESERVATIONS=[
+  {id:'RES-001',aptN:7,aptName:'Apto 7',guestName:'Daniel Pérez',guestEmail:'d.perez@gmail.com',guestPhone:'+34 612 345 678',guestCountry:'ES',checkIn:'2026-07-12',checkOut:'2026-07-19',nights:7,pax:3,channel:'direct',total:1015,deposit:305,depositPaid:true,balance:710,status:'confirmed',doorCode:'1188',autoMsgs:{welcome:true,checkin:false,reminder:false,checkout:false,review:false},notes:'Apto 7 julio, clase surf incluida.',rating:null},
+  {id:'RES-002',aptN:14,aptName:'Apto 14',guestName:'Thomas Bauer',guestEmail:'t.bauer@gmail.de',guestPhone:'+49 152 1234 5678',guestCountry:'DE',checkIn:'2026-06-08',checkOut:'2026-06-15',nights:7,pax:4,channel:'direct',total:1155,deposit:347,depositPaid:true,balance:808,status:'checked-in',doorCode:'6699',autoMsgs:{welcome:true,checkin:true,reminder:false,checkout:false,review:false},notes:'VIP. Familia alemana.',rating:null},
+  {id:'RES-003',aptN:19,aptName:'Apto 19',guestName:'Yannick Möller',guestEmail:'y.moeller@gmx.de',guestPhone:'+49 157 3344 5566',guestCountry:'DE',checkIn:'2026-06-06',checkOut:'2026-06-09',nights:3,pax:2,channel:'direct',total:414,deposit:124,depositPaid:true,balance:290,status:'checked-in',doorCode:'9921',autoMsgs:{welcome:true,checkin:true,reminder:true,checkout:false,review:false},notes:'VIP, 3ª visita.',rating:null},
+  {id:'RES-004',aptN:3,aptName:'Apto 3',guestName:'Ainhoa Berasaluce',guestEmail:'ainhoa.b@euskaltel.com',guestPhone:'+34 688 456 001',guestCountry:'ES',checkIn:'2026-06-03',checkOut:'2026-06-10',nights:7,pax:2,channel:'direct',total:966,deposit:290,depositPaid:false,balance:966,status:'checked-in',doorCode:'2190',autoMsgs:{welcome:true,checkin:true,reminder:false,checkout:false,review:false},notes:'Pago pendiente.',rating:null},
+  {id:'RES-005',aptN:21,aptName:'Apto 21',guestName:'Reem Al Mansoori',guestEmail:'reem.alm@email.ae',guestPhone:'+971 50 123 4567',guestCountry:'AE',checkIn:'2026-06-09',checkOut:'2026-06-12',nights:3,pax:2,channel:'airbnb',total:414,deposit:124,depositPaid:false,balance:414,status:'confirmed',doorCode:'1144',autoMsgs:{welcome:false,checkin:false,reminder:false,checkout:false,review:false},notes:'Check-in digital pendiente.',rating:null},
+  {id:'RES-006',aptN:5,aptName:'Apto 5',guestName:'Jaime Vega',guestEmail:'jaimevega@surf.es',guestPhone:'+34 699 001 222',guestCountry:'ES',checkIn:'2026-06-20',checkOut:'2026-06-27',nights:7,pax:3,channel:'direct',total:1155,deposit:347,depositPaid:true,balance:808,status:'confirmed',doorCode:'6610',autoMsgs:{welcome:false,checkin:false,reminder:false,checkout:false,review:false},notes:'Clase privada incluida.',rating:null},
+  {id:'RES-007',aptN:12,aptName:'Apto 12',guestName:'Sofía Rivas',guestEmail:'sofia.rivas@gmail.com',guestPhone:'+34 655 321 100',guestCountry:'ES',checkIn:'2026-06-15',checkOut:'2026-06-19',nights:4,pax:2,channel:'airbnb',total:552,deposit:166,depositPaid:true,balance:386,status:'confirmed',doorCode:'8841',autoMsgs:{welcome:false,checkin:false,reminder:false,checkout:false,review:false},notes:'',rating:null},
+  {id:'RES-008',aptN:11,aptName:'Apto 11',guestName:'Marie Dubois',guestEmail:'marie.dubois@gmail.fr',guestPhone:'+33 6 88 77 66 55',guestCountry:'FR',checkIn:'2026-07-08',checkOut:'2026-07-15',nights:7,pax:2,channel:'booking',total:966,deposit:290,depositPaid:true,balance:676,status:'confirmed',doorCode:'7712',autoMsgs:{welcome:false,checkin:false,reminder:false,checkout:false,review:false},notes:'Semana surf + apartamento.',rating:null},
+  {id:'RES-009',aptN:17,aptName:'Apto 17',guestName:'Laura Sánchez',guestEmail:'l.sanchez@correo.es',guestPhone:'+34 633 777 888',guestCountry:'ES',checkIn:'2026-06-12',checkOut:'2026-06-14',nights:2,pax:1,channel:'direct',total:210,deposit:63,depositPaid:true,balance:147,status:'confirmed',doorCode:'7730',autoMsgs:{welcome:false,checkin:false,reminder:false,checkout:false,review:false},notes:'',rating:null},
+  {id:'RES-010',aptN:22,aptName:'Apto 22',guestName:'Patrick van den Berg',guestEmail:'p.vandenberg@hotmail.nl',guestPhone:'+31 6 12 34 56 78',guestCountry:'NL',checkIn:'2026-06-14',checkOut:'2026-06-21',nights:7,pax:2,channel:'booking',total:966,deposit:290,depositPaid:true,balance:676,status:'confirmed',doorCode:'8803',autoMsgs:{welcome:false,checkin:false,reminder:false,checkout:false,review:false},notes:'Holandés, inglés OK.',rating:null},
+  {id:'RES-011',aptN:10,aptName:'Apto 10',guestName:'Carlos Costa',guestEmail:'familia.costa@gmail.com',guestPhone:'+34 644 778 990',guestCountry:'ES',checkIn:'2026-06-05',checkOut:'2026-06-13',nights:8,pax:4,channel:'booking',total:1320,deposit:396,depositPaid:true,balance:924,status:'checked-in',doorCode:'3312',autoMsgs:{welcome:true,checkin:true,reminder:true,checkout:false,review:false},notes:'VIP, cuna solicitada.',rating:null},
+  {id:'RES-012',aptN:2,aptName:'Apto 2',guestName:'Helena Vidal',guestEmail:'hvidal@outlook.com',guestPhone:'+34 611 234 789',guestCountry:'ES',checkIn:'2026-06-05',checkOut:'2026-06-09',nights:4,pax:2,channel:'booking',total:552,deposit:166,depositPaid:true,balance:386,status:'checked-in',doorCode:'7345',autoMsgs:{welcome:true,checkin:true,reminder:false,checkout:false,review:false},notes:'',rating:null},
+  {id:'RES-013',aptN:4,aptName:'Apto 4',guestName:'Anna Eriksson',guestEmail:'a.eriksson@gmail.se',guestPhone:'+46 70 123 45 67',guestCountry:'SE',checkIn:'2026-06-10',checkOut:'2026-06-17',nights:7,pax:2,channel:'airbnb',total:966,deposit:290,depositPaid:true,balance:676,status:'confirmed',doorCode:'3074',autoMsgs:{welcome:false,checkin:false,reminder:false,checkout:false,review:false},notes:'Post limpieza apto 4.',rating:null},
+  {id:'RES-014',aptN:15,aptName:'Apto 15',guestName:'Lukas Bauer',guestEmail:'l.bauer@web.de',guestPhone:'+49 152 9988 7766',guestCountry:'DE',checkIn:'2026-08-15',checkOut:'2026-08-22',nights:7,pax:2,channel:'direct',total:966,deposit:290,depositPaid:true,balance:676,status:'confirmed',doorCode:'1033',autoMsgs:{welcome:false,checkin:false,reminder:false,checkout:false,review:false},notes:'Surf camp agosto.',rating:null},
+  {id:'RES-015',aptN:6,aptName:'Apto 6',guestName:'Emma Wilson',guestEmail:'emma.wilson@gmail.co.uk',guestPhone:'+44 7700 900123',guestCountry:'GB',checkIn:'2026-07-01',checkOut:'2026-07-08',nights:7,pax:2,channel:'airbnb',total:966,deposit:290,depositPaid:false,balance:966,status:'confirmed',doorCode:'5530',autoMsgs:{welcome:false,checkin:false,reminder:false,checkout:false,review:false},notes:'Depósito pendiente.',rating:null},
+  {id:'RES-016',aptN:1,aptName:'Apto 1',guestName:'Marc Riba',guestEmail:'marc.riba@gmail.com',guestPhone:'+34 622 104 551',guestCountry:'ES',checkIn:'2026-06-07',checkOut:'2026-06-09',nights:2,pax:1,channel:'airbnb',total:210,deposit:63,depositPaid:true,balance:147,status:'checked-in',doorCode:'4821',autoMsgs:{welcome:true,checkin:true,reminder:true,checkout:false,review:false},notes:'',rating:null},
+  {id:'RES-017',aptN:9,aptName:'Apto 9',guestName:'Pierre Lacroix',guestEmail:'p.lacroix@free.fr',guestPhone:'+33 6 78 90 12 34',guestCountry:'FR',checkIn:'2026-06-08',checkOut:'2026-06-09',nights:1,pax:2,channel:'airbnb',total:138,deposit:41,depositPaid:true,balance:97,status:'checked-in',doorCode:'4407',autoMsgs:{welcome:true,checkin:true,reminder:true,checkout:false,review:false},notes:'',rating:null},
+  {id:'RES-018',aptN:20,aptName:'Apto 20',guestName:'Erik Jensen',guestEmail:'e.jensen@gmail.com',guestPhone:'+45 23 45 67 89',guestCountry:'DK',checkIn:'2026-06-04',checkOut:'2026-06-09',nights:5,pax:4,channel:'airbnb',total:825,deposit:248,depositPaid:true,balance:577,status:'checked-in',doorCode:'3367',autoMsgs:{welcome:true,checkin:true,reminder:true,checkout:false,review:false},notes:'Familia danesa.',rating:null},
+];
+
+const CHANNELS=[
+  {id:'airbnb',name:'Airbnb',color:'#ff5a5f',icon:'🏠',active:true,listings:14,sync:'hace 8 min',commission:15,cal:'https://www.airbnb.com/ical/12345.ics'},
+  {id:'booking',name:'Booking.com',color:'#003580',icon:'🔵',active:true,listings:14,sync:'hace 3 min',commission:18,cal:'https://admin.booking.com/ical/67890.ics'},
+  {id:'vrbo',name:'VRBO',color:'#1a7ac7',icon:'🌐',active:false,listings:0,sync:'Inactivo',commission:8,cal:''},
+  {id:'direct',name:'Reserva directa',color:'#ff5e3a',icon:'✦',active:true,listings:22,sync:'En tiempo real',commission:0,cal:''},
+  {id:'ical',name:'iCal sync',color:'#5dbdd3',icon:'📅',active:true,listings:22,sync:'Cada hora',commission:0,cal:''},
+];
 
 const CLASSES=[
   {time:'09:00',type:'Grupal',instr:'David Sánchez',students:8,level:'Iniciación'},
@@ -1904,6 +2095,10 @@ function initApp(){
   renderInbox();
   renderTeam();
   renderSettings();
+  renderChannels();
+  renderRevenue();
+  renderAutoMsg();
+  renderRates();
   fetchSurfConditions();
   setInterval(fetchSurfConditions, 30*60*1000);
 }
@@ -2417,69 +2612,140 @@ function aptDetail(n){
   if(!a.notes)a.notes='';
   const price=a.rooms===1?105:a.rooms===2?138:165;
   const stateColor={free:'#22c55e',occupied:'#ff5e3a',cleaning:'#06b6d4',maint:'#f59e0b'};
-  openModal('Apto '+n+' · '+a.rooms+'h · pie de playa',`
-    <!-- STATE PICKER -->
-    <div style="margin-bottom:18px;">
-      <div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:8px;">Estado del apartamento</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
-        ${['free','occupied','cleaning','maint'].map(s=>`<button class="st-pick" data-st="${s}" onclick="pickState(${n},'${s}')" style="padding:11px 6px;border:2px solid ${a.state===s?stateColor[s]:'var(--border)'};background:${a.state===s?stateColor[s]+'15':'var(--surface)'};color:${a.state===s?stateColor[s]:'var(--txt2)'};border-radius:10px;font-size:11px;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:all .15s;">${APT_STATE_LBL[s]}</button>`).join('')}
+  const channelColor={airbnb:'#ff5a5f',booking:'#003580',direct:'#ff5e3a',vrbo:'#1a7ac7'};
+  const channelName={airbnb:'Airbnb',booking:'Booking.com',direct:'Reserva directa',vrbo:'VRBO'};
+  const chColor=channelColor[a.channel]||'#888';
+  const chName=channelName[a.channel]||a.channel;
+  const nights=a.days||5;
+  const cleanFee=45;
+  const flagMap={ES:'🇪🇸',FR:'🇫🇷',DE:'🇩🇪',GB:'🇬🇧',NL:'🇳🇱',DK:'🇩🇰',AE:'🇦🇪',SE:'🇸🇪'};
+  const flag=flagMap[a.guestCountry]||'🌍';
+  const amenChips=(a.amenities||[]).map(am=>`<span style="background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;">${am}</span>`).join('');
+  const aptMsgs=[
+    {type:'Bienvenida',icon:'👋',status:a.state==='occupied'?'sent':'pending',channel:'WhatsApp'},
+    {type:'Check-in instrucciones',icon:'🔑',status:a.state==='occupied'?'sent':'pending',channel:'Email'},
+    {type:'Recordatorio 24h',icon:'⏰',status:'pending',channel:'WhatsApp'},
+    {type:'Post check-out',icon:'⭐',status:'pending',channel:'WhatsApp'},
+    {type:'Solicitud reseña',icon:'📝',status:'pending',channel:'Email'},
+  ];
+  openModal('Apto '+n+' · '+a.rooms+' hab · pie de playa',`
+    <!-- TAB BAR -->
+    <div style="display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--border2);padding-bottom:0;">
+      ${['Reserva','Huésped','Propiedad','Mensajes'].map((t,i)=>`<button onclick="document.querySelectorAll('.aptab').forEach(x=>x.style.display='none');document.getElementById('aptab-${i}').style.display='block';document.querySelectorAll('.aptab-btn').forEach(x=>{x.style.borderBottom='3px solid transparent';x.style.color='var(--txt3)'});this.style.borderBottom='3px solid var(--coral)';this.style.color='var(--coral)';" class="aptab-btn" style="padding:8px 14px;font-size:12px;font-weight:700;background:none;border:none;border-bottom:${i===0?'3px solid var(--coral)':'3px solid transparent'};color:${i===0?'var(--coral)':'var(--txt3)'};cursor:pointer;letter-spacing:.04em;">${t}</button>`).join('')}
+    </div>
+
+    <!-- TAB 0: RESERVA -->
+    <div id="aptab-0" class="aptab">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+        <span style="background:${chColor};color:#fff;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;">${chName}</span>
+        ${a.vip?'<span style="background:rgba(251,191,36,.2);color:#92600a;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">⭐ VIP</span>':''}
+        ${a.surf?'<span style="background:rgba(93,189,211,.15);color:var(--aqua-dk);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">🏄 Surf</span>':''}
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%;margin-top:8px;">
+          ${['free','occupied','cleaning','maint'].map(s=>`<button class="st-pick" onclick="pickState(${n},'${s}')" style="padding:10px 6px;border:2px solid ${a.state===s?stateColor[s]:'var(--border)'};background:${a.state===s?stateColor[s]+'15':'var(--surface)'};color:${a.state===s?stateColor[s]:'var(--txt2)'};border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;">${APT_STATE_LBL[s]}</button>`).join('')}
+        </div>
+      </div>
+      <div class="two-col" style="margin-bottom:14px;">
+        <div><div style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:5px;">Check-in</div><input type="date" id="apt-in" value="${a.checkIn}" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;"></div>
+        <div><div style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:5px;">Check-out</div><input type="date" id="apt-out" value="${a.checkOut}" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;"></div>
+      </div>
+      <div style="background:var(--bg);padding:14px;border-radius:10px;margin-bottom:14px;">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;margin-bottom:10px;">
+          <div><div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.18em;font-weight:700;">Noches</div><div style="font-family:var(--display);font-size:20px;font-weight:700;color:var(--ocean);">${nights}</div></div>
+          <div><div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.18em;font-weight:700;">Tarifa/noche</div><div style="font-family:var(--display);font-size:20px;font-weight:700;color:var(--coral);">€${price}</div></div>
+          <div><div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.18em;font-weight:700;">Total</div><div style="font-family:var(--display);font-size:20px;font-weight:700;color:var(--ocean);">€${a.total||price*nights}</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:10px;border-top:1px solid var(--border2);">
+          <div style="font-size:12px;color:var(--txt2);">Depósito <strong>${a.depositPaid?'<span style=color:var(--leaf)>✓ Pagado</span>':'<span style=color:var(--warn)>Pendiente</span>'}</strong></div>
+          <div style="font-size:12px;color:var(--txt2);text-align:right;">€${a.deposit||0}</div>
+          <div style="font-size:12px;color:var(--txt2);">Limpieza</div>
+          <div style="font-size:12px;color:var(--txt2);text-align:right;">€${cleanFee}</div>
+          <div style="font-size:12px;font-weight:700;color:var(--txt);">Saldo pendiente</div>
+          <div style="font-size:12px;font-weight:700;color:var(--coral);text-align:right;">€${a.balance||0}</div>
+        </div>
+      </div>
+      <div style="background:var(--bg);padding:12px 14px;border-radius:10px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+        <div><div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.18em;font-weight:700;margin-bottom:3px;">Código de puerta</div><div style="font-family:monospace;font-size:22px;font-weight:700;color:var(--ocean);letter-spacing:.12em;">${a.doorCode||'—'}</div></div>
+        <button class="btn btn-ghost" style="font-size:12px;" onclick="navigator.clipboard.writeText('${a.doorCode||''}');toast('✓ Código copiado')">Copiar</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" style="flex:2" onclick="saveApt(${n})">✓ Guardar cambios</button>
       </div>
     </div>
 
-    <!-- DATES (Check-in / Check-out) -->
-    <div class="two-col" style="margin-bottom:18px;">
-      <div>
-        <div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:6px;">Check-in</div>
-        <input type="date" id="apt-in" value="${a.checkIn}" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;">
+    <!-- TAB 1: HUÉSPED -->
+    <div id="aptab-1" class="aptab" style="display:none;">
+      <div style="display:flex;align-items:center;gap:14px;padding:16px;background:var(--bg);border-radius:12px;margin-bottom:16px;">
+        <div style="width:52px;height:52px;border-radius:50%;background:var(--ocean);color:var(--sand);display:grid;place-items:center;font-family:var(--display);font-size:18px;font-weight:700;">${(a.guestName||'?').split(' ').map(x=>x[0]).join('').slice(0,2)}</div>
+        <div>
+          <div style="font-family:var(--display);font-size:17px;font-weight:600;color:var(--txt);">${a.guestName||'Sin huésped'} ${flag}</div>
+          <div style="font-size:12px;color:var(--txt3);">${a.pax||0} personas · ${a.guestCountry||'-'} ${a.vip?'<span style="color:#92600a;font-weight:700;">⭐ VIP</span>':''}</div>
+        </div>
       </div>
-      <div>
-        <div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:6px;">Check-out</div>
-        <input type="date" id="apt-out" value="${a.checkOut}" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;">
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:13px;"><span style="color:var(--txt3);">✉</span><span>${a.guestEmail||'—'}</span></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:13px;"><span style="color:var(--txt3);">📞</span><span>${a.guestPhone||'—'}</span></div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:5px;">Notas internas</div>
+        <textarea id="apt-notes" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;resize:vertical;font-family:inherit;">${a.notes}</textarea>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost" onclick="toast('Abriendo WhatsApp con ${a.guestName||'huésped'}...')" style="flex:1;min-width:120px;">💬 WhatsApp</button>
+        <button class="btn btn-ghost" onclick="toast('Abriendo email para ${a.guestEmail||'—'}...')" style="flex:1;min-width:120px;">✉ Email</button>
+        <button class="btn btn-primary" onclick="toast('Perfil completo de ${a.guestName||'huésped'}')" style="flex:1;min-width:120px;">Ver perfil completo</button>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:6px;padding:7px 12px;background:var(--bg);border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;"><input type="checkbox" id="apt-vip" ${a.vip?'checked':''} style="margin:0;"> VIP</label>
+        <label style="display:flex;align-items:center;gap:6px;padding:7px 12px;background:var(--bg);border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;"><input type="checkbox" id="apt-surf" ${a.surf?'checked':''} style="margin:0;"> Cliente surf</label>
       </div>
     </div>
 
-    <!-- GUESTS -->
-    <div style="margin-bottom:18px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Huéspedes <span id="apt-gcount" style="color:var(--coral);">${a.guests.length}</span></div>
-        <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="addGuest()">+ Añadir</button>
+    <!-- TAB 2: PROPIEDAD -->
+    <div id="aptab-2" class="aptab" style="display:none;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;text-align:center;">
+        <div style="background:var(--bg);padding:12px;border-radius:10px;"><div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.18em;font-weight:700;">Habitaciones</div><div style="font-family:var(--display);font-size:24px;font-weight:700;color:var(--ocean);">${a.rooms}</div></div>
+        <div style="background:var(--bg);padding:12px;border-radius:10px;"><div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.18em;font-weight:700;">Planta</div><div style="font-family:var(--display);font-size:24px;font-weight:700;color:var(--ocean);">${a.floor||'—'}</div></div>
+        <div style="background:var(--bg);padding:12px;border-radius:10px;"><div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.18em;font-weight:700;">Reseña media</div><div style="font-family:var(--display);font-size:24px;font-weight:700;color:var(--warn);">⭐ ${a.rating||'—'}</div></div>
       </div>
-      <div id="apt-guests-list" style="display:flex;flex-direction:column;gap:6px;">
-        ${a.guests.map((g,i)=>`<div style="display:flex;gap:6px;align-items:center;"><input value="${g}" data-gi="${i}" style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;"><button onclick="this.parentNode.remove();document.getElementById('apt-gcount').textContent=document.querySelectorAll('#apt-guests-list input').length;" style="width:32px;height:32px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--txt3);font-size:14px;cursor:pointer;">×</button></div>`).join('')}
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:8px;">Equipamiento</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">${amenChips||'<span style="color:var(--txt3);font-size:12px;">Sin datos</span>'}</div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:8px;">Fotos</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+          ${[1,2,3].map(i=>`<div style="aspect-ratio:4/3;background:var(--bg);border:2px dashed var(--border);border-radius:8px;display:grid;place-items:center;color:var(--txt3);font-size:11px;cursor:pointer;" onclick="toast('Foto ${i} · gestión de imágenes próximamente')">+ Foto ${i}</div>`).join('')}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div style="background:var(--bg);padding:12px;border-radius:10px;"><div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.14em;font-weight:700;">Ingresos este mes</div><div style="font-family:var(--display);font-size:18px;font-weight:700;color:var(--coral);">€${a.monthRev||0}</div></div>
+        <div style="background:var(--bg);padding:12px;border-radius:10px;"><div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.14em;font-weight:700;">Limpieza asignada</div><div style="font-size:14px;font-weight:600;color:var(--txt);margin-top:4px;">${a.cleanerAssigned||'—'}</div></div>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;" onclick="toast('Manual de la casa · Apto ${n}')">📖 Ver manual de la casa</button>
+    </div>
+
+    <!-- TAB 3: MENSAJES -->
+    <div id="aptab-3" class="aptab" style="display:none;">
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+        ${aptMsgs.map(m=>`<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg);border-radius:10px;border-left:3px solid ${m.status==='sent'?'var(--leaf)':'var(--border)'};">
+          <span style="font-size:18px;">${m.icon}</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:600;color:var(--txt);">${m.type}</div>
+            <div style="font-size:10px;color:var(--txt3);">${m.channel} · <span style="color:${m.status==='sent'?'var(--leaf)':'var(--warn)'};">${m.status==='sent'?'✓ Enviado':'Pendiente'}</span></div>
+          </div>
+          <button class="btn btn-ghost" style="padding:5px 10px;font-size:10px;" onclick="toast('✓ Mensaje enviado: ${m.type}')">Enviar</button>
+        </div>`).join('')}
+      </div>
+      <div style="padding-top:14px;border-top:1px solid var(--border2);">
+        <div style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:8px;">Mensaje manual</div>
+        <textarea rows="3" placeholder="Escribe un mensaje personalizado para ${a.guestName||'el huésped'}..." style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;resize:vertical;font-family:inherit;margin-bottom:8px;"></textarea>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" style="flex:1;" onclick="toast('WhatsApp enviado a ${a.guestName||'huésped'}')">💬 WhatsApp</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="toast('Email enviado a ${a.guestEmail||'—'}')">✉ Email</button>
+        </div>
       </div>
     </div>
-
-    <!-- NOTES -->
-    <div style="margin-bottom:18px;">
-      <div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:6px;">Notas internas</div>
-      <textarea id="apt-notes" rows="2" placeholder="Llave en recepción, mascotas, allergias, preferencias..." style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;resize:vertical;font-family:inherit;">${a.notes}</textarea>
-    </div>
-
-    <!-- TAGS / FLAGS -->
-    <div style="margin-bottom:18px;display:flex;gap:8px;flex-wrap:wrap;">
-      <label style="display:flex;align-items:center;gap:6px;padding:7px 12px;background:var(--bg);border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;">
-        <input type="checkbox" id="apt-vip" ${a.vip?'checked':''} style="margin:0;"> VIP
-      </label>
-      <label style="display:flex;align-items:center;gap:6px;padding:7px 12px;background:var(--bg);border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;">
-        <input type="checkbox" id="apt-surf" ${a.surf?'checked':''} style="margin:0;"> Cliente surf
-      </label>
-    </div>
-
-    <!-- SUMMARY -->
-    <div style="background:var(--bg);padding:14px;border-radius:10px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-      <div><div style="font-size:9px;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Tarifa noche</div><div style="font-family:var(--display);font-size:18px;font-weight:700;color:var(--coral);" id="apt-rate">€${price}</div></div>
-      <div><div style="font-size:9px;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Total estancia</div><div style="font-family:var(--display);font-size:18px;font-weight:700;color:var(--ocean);" id="apt-total">€${price*(a.days||5)}</div></div>
-    </div>
-
-    <!-- ACTIONS -->
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-primary" style="flex:2" onclick="saveApt(${n})">
-        <svg width="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-        Guardar cambios
-      </button>
-    </div>
-    <div style="margin-top:12px;text-align:center;font-size:11px;color:var(--txt3);font-style:italic;">Los cambios se reflejan en el calendario, mapa y lista de reservas.</div>
   `);
 }
 
@@ -2581,25 +2847,49 @@ function renderCal(){
   const av=document.getElementById('avg-stay');if(av)av.textContent=avgStay;
 }
 
+let _resFilter='all';
+function filterRes(f,el){
+  _resFilter=f;
+  document.querySelectorAll('#res-tabs .tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+  renderAptRes();
+}
 function renderAptRes(){
-  const res=[
-    {apt:7,c:'Daniel Pérez',in:'12 Jul',out:'19 Jul',nights:7,total:1015,s:'Confirmada',sc:'ok'},
-    {apt:14,c:'Familia Bauer',in:'Hoy',out:'14 Jun',nights:7,total:1155,s:'Check-in OK',sc:'ok'},
-    {apt:19,c:'Yannick Möller',in:'Hoy',out:'12 Jun',nights:5,total:725,s:'Check-in OK',sc:'ok'},
-    {apt:21,c:'Reem Al Mansoori',in:'Mañana',out:'13 Jun',nights:3,total:540,s:'Pendiente pago',sc:'warn'},
-    {apt:3,c:'Ainhoa Berasaluce',in:'10 Jun',out:'17 Jun',nights:7,total:1015,s:'Pendiente pago',sc:'warn'},
-    {apt:12,c:'Sofía Rivas',in:'15 Jun',out:'19 Jun',nights:4,total:480,s:'Confirmada',sc:'ok'},
-    {apt:5,c:'Jaime Vega',in:'20 Jun',out:'27 Jun',nights:7,total:1015,s:'Confirmada',sc:'ok'},
-    {apt:8,c:'(Mantenimiento)',in:'Hoy',out:'9 Jun',nights:2,total:0,s:'Bloqueado',sc:'info'}
-  ];
-  document.getElementById('apt-res-tbody').innerHTML=res.map(r=>`<tr onclick="aptDetail(${r.apt})">
-    <td><strong>Apto ${r.apt}</strong></td>
-    <td>${r.c}</td>
-    <td>${r.in}</td>
-    <td>${r.out}</td>
+  const today='2026-06-08';
+  const todayD=new Date(today);
+  const week7=new Date(todayD);week7.setDate(todayD.getDate()+7);
+  const chColor={airbnb:'#ff5a5f',booking:'#003580',direct:'var(--coral)',vrbo:'#1a7ac7'};
+  const chName={airbnb:'Airbnb',booking:'Booking.com',direct:'Directo',vrbo:'VRBO'};
+  const stMap={confirmed:'Confirmada',
+    'checked-in':'Check-in OK',
+    'checked-out':'Check-out',
+    cancelled:'Cancelada'};
+  const stCls={confirmed:'ok','checked-in':'ok','checked-out':'info',cancelled:'warn'};
+  let rows=RESERVATIONS;
+  if(_resFilter==='today'){
+    rows=rows.filter(r=>r.checkIn===today||r.checkOut===today);
+  } else if(_resFilter==='week'){
+    rows=rows.filter(r=>new Date(r.checkIn)>=todayD&&new Date(r.checkIn)<=week7);
+  } else if(_resFilter==='deposit'){
+    rows=rows.filter(r=>!r.depositPaid);
+  } else if(_resFilter==='checkin'){
+    rows=rows.filter(r=>r.status==='confirmed'&&new Date(r.checkIn)>=todayD&&new Date(r.checkIn)<=week7);
+  }
+  document.getElementById('apt-res-tbody').innerHTML=rows.map(r=>`<tr>
+    <td onclick="aptDetail(${r.aptN})" style="cursor:pointer;"><strong>Apto ${r.aptN}</strong></td>
+    <td><span style="background:${chColor[r.channel]||'#888'};color:#fff;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;white-space:nowrap;">${chName[r.channel]||r.channel}</span></td>
+    <td onclick="aptDetail(${r.aptN})" style="cursor:pointer;">${r.guestName}</td>
+    <td>${r.checkIn}</td>
+    <td>${r.checkOut}</td>
     <td>${r.nights}</td>
     <td><strong>${fmt(r.total)}</strong></td>
-    <td><span class="tag tag-${r.sc}">${r.s}</span></td>
+    <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${r.depositPaid?'var(--leaf)':'var(--warn)'};margin-right:5px;"></span>${r.depositPaid?fmt(r.deposit)+' ✓':'Pendiente'}</td>
+    <td><span class="tag tag-${stCls[r.status]||'ok'}">${stMap[r.status]||r.status}</span></td>
+    <td><div style="display:flex;gap:4px;">
+      <button class="btn btn-ghost" style="padding:5px 8px;font-size:12px;" title="Código puerta" onclick="toast('Código: ${r.doorCode}')">🔑</button>
+      <button class="btn btn-ghost" style="padding:5px 8px;font-size:12px;" title="WhatsApp" onclick="toast('WhatsApp → ${r.guestName}')">💬</button>
+      <button class="btn btn-ghost" style="padding:5px 8px;font-size:12px;" title="Detalle" onclick="aptDetail(${r.aptN})">📋</button>
+    </div></td>
   </tr>`).join('');
 }
 
@@ -3524,6 +3814,240 @@ function setBotNav(page){
   if(el)el.classList.add('active');
   closeSidebar();
 }
+// ════════════ RENDER CHANNELS ════════════
+function renderChannels(){
+  const airbnbCount=RESERVATIONS.filter(r=>r.channel==='airbnb').length;
+  const bookingCount=RESERVATIONS.filter(r=>r.channel==='booking').length;
+  const directCount=RESERVATIONS.filter(r=>r.channel==='direct').length;
+  const commissions=RESERVATIONS.filter(r=>r.channel==='airbnb'||r.channel==='booking').reduce((sum,r)=>{
+    const ch=CHANNELS.find(c=>c.id===r.channel);
+    return sum+Math.round(r.total*(ch?ch.commission/100:0));
+  },0);
+  const kpis=document.getElementById('channels-kpis');
+  if(kpis)kpis.innerHTML=[
+    {l:'Reservas Airbnb (mes)',v:airbnbCount,t:'15% comisión'},
+    {l:'Reservas Booking (mes)',v:bookingCount,t:'18% comisión'},
+    {l:'Comisiones pagadas (mes)',v:fmt(commissions),t:'Coste canales'},
+    {l:'Reservas directas (mes)',v:directCount,t:'0% comisión'},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-trend">${k.t}</div></div>`).join('');
+  const cards=document.getElementById('channels-cards');
+  if(cards)cards.innerHTML=CHANNELS.map(ch=>`
+    <div class="card" style="border-top:4px solid ${ch.color};">
+      <div class="card-body">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="font-size:28px;">${ch.icon}</div>
+          <div style="flex:1;">
+            <div style="font-family:var(--display);font-size:16px;font-weight:700;color:var(--txt);">${ch.name}</div>
+            <div style="font-size:11px;color:var(--txt3);">${ch.listings} apartamentos sincronizados</div>
+          </div>
+          <span style="background:${ch.active?'rgba(45,186,138,.15)':'rgba(148,163,184,.15)'};color:${ch.active?'var(--leaf)':'var(--txt3)'};padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;">${ch.active?'Activo':'Inactivo'}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+          <div style="background:var(--bg);padding:10px;border-radius:8px;"><div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.14em;font-weight:700;">Última sync</div><div style="font-size:12px;font-weight:600;margin-top:2px;">${ch.sync}</div></div>
+          <div style="background:var(--bg);padding:10px;border-radius:8px;"><div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.14em;font-weight:700;">Comisión</div><div style="font-size:12px;font-weight:600;margin-top:2px;color:${ch.commission>0?'var(--warn)':'var(--leaf)'};">${ch.commission>0?ch.commission+'%':'Sin coste'}</div></div>
+        </div>
+        ${ch.cal?`<div style="display:flex;gap:6px;align-items:center;background:var(--bg);border-radius:8px;padding:8px 10px;margin-bottom:10px;"><div style="flex:1;font-size:10px;color:var(--txt3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ch.cal}</div><button class="btn btn-ghost" style="padding:4px 10px;font-size:10px;flex-shrink:0;" onclick="navigator.clipboard.writeText('${ch.cal}');toast('✓ URL copiada')">Copiar</button></div>`:''}
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-ghost" style="flex:1;font-size:11px;" onclick="toast('Reservas de ${ch.name}: cargando...')">Ver reservas</button>
+          <button class="btn ${ch.active?'btn-ghost':'btn-primary'}" style="flex:1;font-size:11px;" onclick="toast('${ch.name} ${ch.active?'desactivado':'activado'}')">${ch.active?'Desactivar':'Activar'}</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ════════════ RENDER REVENUE ════════════
+function renderRevenue(){
+  const kpis=document.getElementById('revenue-kpis');
+  if(kpis)kpis.innerHTML=[
+    {l:'RevPAR total',v:'€108',t:'Por apto disponible/noche'},
+    {l:'ADR medio',v:'€138',t:'Tarifa diaria media'},
+    {l:'Ocupación mes',v:'74%',t:'+8 pts vs mayo'},
+    {l:'Ingresos mes',v:'€38,420',t:'Junio 2026'},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-trend up">${k.t}</div></div>`).join('');
+
+  const months=['Ene','Feb','Mar','Abr','May','Jun'];
+  const vals=[14200,15800,18400,22600,31200,38420];
+  const maxV=Math.max(...vals);
+  const chart=document.getElementById('revenue-chart');
+  if(chart)chart.innerHTML=`<div class="bar-chart" style="height:120px;padding-bottom:20px;">${vals.map((v,i)=>`<div class="bar" style="height:${(v/maxV)*100}%;position:relative;" title="${months[i]}: €${v.toLocaleString('es-ES')}"><span class="bar-lbl">${months[i]}</span></div>`).join('')}</div>`;
+
+  const top3=document.getElementById('revenue-top3');
+  if(top3){
+    const sorted=[...APTS].filter(a=>a.monthRev>0).sort((a,b)=>b.monthRev-a.monthRev).slice(0,3);
+    top3.innerHTML=sorted.map((a,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:8px;">
+      <div style="width:28px;height:28px;border-radius:50%;background:${['#fbbf24','#94a3b8','#cd7f32'][i]};color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800;">${i+1}</div>
+      <div style="flex:1;"><div style="font-weight:600;font-size:13px;">Apto ${a.n}</div><div style="font-size:11px;color:var(--txt3);">${a.rooms} hab · Planta ${a.floor}</div></div>
+      <div style="font-family:var(--display);font-size:16px;font-weight:700;color:var(--coral);">${fmt(a.monthRev)}</div>
+    </div>`).join('');
+  }
+
+  const tbody=document.getElementById('revenue-tbody');
+  if(tbody){
+    const nights22=22,daysMonth=30;
+    tbody.innerHTML=APTS.map(a=>{
+      const nightRate=a.rooms===1?105:a.rooms===2?138:165;
+      const occ=a.state==='occupied'?Math.round((a.days||5)/(daysMonth)*100):a.state==='free'?0:a.state==='cleaning'?5:10;
+      const adr=nightRate;
+      const dep=!a.depositPaid&&a.deposit>0?fmt(a.deposit):'<span style="color:var(--leaf);">✓</span>';
+      return `<tr>
+        <td><strong onclick="aptDetail(${a.n})" style="cursor:pointer;">Apto ${a.n}</strong></td>
+        <td>${a.rooms} hab</td>
+        <td>${a.days||0} noches</td>
+        <td>${fmt(adr)}</td>
+        <td><strong>${fmt(a.monthRev)}</strong></td>
+        <td>${dep}</td>
+        <td>⭐ ${a.rating||'—'}</td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+function openOwnerStatement(){
+  openModal('Extracto del propietario · Junio 2026',`
+    <div style="font-family:var(--sans);font-size:13px;">
+      <div style="text-align:center;margin-bottom:18px;">
+        <div style="font-family:var(--display);font-size:20px;font-weight:700;">Costa Norte · San Vicente de la Barquera</div>
+        <div style="color:var(--txt3);font-size:12px;">Extracto de ingresos por apartamento · Junio 2026</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:18px;">
+        <thead><tr style="background:var(--bg);">
+          <th style="padding:8px;text-align:left;font-size:11px;border-bottom:2px solid var(--border);">Apto</th>
+          <th style="padding:8px;text-align:right;font-size:11px;border-bottom:2px solid var(--border);">Noches</th>
+          <th style="padding:8px;text-align:right;font-size:11px;border-bottom:2px solid var(--border);">ADR</th>
+          <th style="padding:8px;text-align:right;font-size:11px;border-bottom:2px solid var(--border);">Ingresos</th>
+        </tr></thead>
+        <tbody>
+          ${APTS.slice(0,8).map(a=>`<tr><td style="padding:7px 8px;border-bottom:1px solid var(--border2);">Apto ${a.n}</td><td style="padding:7px 8px;border-bottom:1px solid var(--border2);text-align:right;">${a.days||0}</td><td style="padding:7px 8px;border-bottom:1px solid var(--border2);text-align:right;">${fmt(a.rooms===1?105:a.rooms===2?138:165)}</td><td style="padding:7px 8px;border-bottom:1px solid var(--border2);text-align:right;font-weight:700;">${fmt(a.monthRev)}</td></tr>`).join('')}
+        </tbody>
+        <tfoot><tr style="background:var(--bg);">
+          <td colspan="3" style="padding:10px 8px;font-weight:700;">TOTAL JUNIO</td>
+          <td style="padding:10px 8px;text-align:right;font-family:var(--display);font-size:16px;font-weight:700;color:var(--coral);">€38,420</td>
+        </tr></tfoot>
+      </table>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cerrar</button>
+        <button class="btn btn-primary" style="flex:1" onclick="toast('Extracto enviado al propietario por email')">Enviar por email</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="window.print();toast('Imprimiendo...')">Imprimir</button>
+      </div>
+    </div>
+  `);
+}
+
+// ════════════ RENDER AUTO MESSAGES ════════════
+function showAutoMsgTab(tab,el){
+  document.querySelectorAll('#automsg-pending,#automsg-sent,#automsg-config').forEach(x=>x.style.display='none');
+  document.getElementById('automsg-'+tab).style.display='block';
+  document.querySelectorAll('#automsg-tabs .tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+}
+function renderAutoMsg(){
+  const kpis=document.getElementById('automsg-kpis');
+  if(kpis)kpis.innerHTML=[
+    {l:'Enviados hoy',v:'8',t:'↑ vs ayer'},
+    {l:'Pendientes',v:'5',t:'próximas 24h'},
+    {l:'Tasa apertura',v:'94%',t:'WhatsApp'},
+    {l:'Tiempo ahorrado',v:'2.4h',t:'esta semana'},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-trend up">${k.t}</div></div>`).join('');
+
+  const pending=[
+    {apt:7,guest:'Daniel Pérez',tipo:'Bienvenida',when:'Mañana 10:00',canal:'WhatsApp'},
+    {apt:21,guest:'Reem Al Mansoori',tipo:'Check-in instrucciones',when:'Hoy 18:00',canal:'Email'},
+    {apt:5,guest:'Jaime Vega',tipo:'Recordatorio 24h',when:'19 Jun 12:00',canal:'WhatsApp'},
+    {apt:11,guest:'Marie Dubois',tipo:'Bienvenida',when:'7 Jul 15:00',canal:'WhatsApp'},
+    {apt:22,guest:'Patrick van den Berg',tipo:'Check-in instrucciones',when:'13 Jun 18:00',canal:'Email'},
+  ];
+  const ptbody=document.getElementById('automsg-pending-tbody');
+  if(ptbody)ptbody.innerHTML=pending.map(m=>`<tr>
+    <td><strong>Apto ${m.apt}</strong></td>
+    <td>${m.guest}</td>
+    <td><span class="tag tag-info">${m.tipo}</span></td>
+    <td>${m.when}</td>
+    <td><span class="tag tag-${m.canal==='WhatsApp'?'ok':'coral'}">${m.canal}</span></td>
+    <td><div style="display:flex;gap:4px;">
+      <button class="btn btn-primary" style="padding:5px 10px;font-size:11px;" onclick="toast('✓ Mensaje enviado a ${m.guest}')">Enviar ahora</button>
+      <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="toast('Editando mensaje...')">Editar</button>
+      <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="this.closest('tr').style.opacity='.4';toast('Mensaje omitido')">Omitir</button>
+    </div></td>
+  </tr>`).join('');
+
+  const sent=[
+    {apt:14,guest:'Thomas Bauer',tipo:'Bienvenida',when:'Hoy 09:00',canal:'WhatsApp',st:'abierto'},
+    {apt:19,guest:'Yannick Möller',tipo:'Bienvenida',when:'Ayer 14:00',canal:'WhatsApp',st:'abierto'},
+    {apt:10,guest:'Carlos Costa',tipo:'Recordatorio 24h',when:'Ayer 12:00',canal:'WhatsApp',st:'abierto'},
+    {apt:1,guest:'Marc Riba',tipo:'Check-in instrucciones',when:'Ayer 10:00',canal:'Email',st:'enviado'},
+    {apt:9,guest:'Pierre Lacroix',tipo:'Bienvenida',when:'Hoy 08:00',canal:'WhatsApp',st:'abierto'},
+    {apt:2,guest:'Helena Vidal',tipo:'Check-in instrucciones',when:'Ayer 09:00',canal:'Email',st:'sin respuesta'},
+    {apt:20,guest:'Erik Jensen',tipo:'Recordatorio 24h',when:'03 Jun 12:00',canal:'WhatsApp',st:'abierto'},
+    {apt:16,guest:'Marta Sancho',tipo:'Bienvenida',when:'04 Jun 15:00',canal:'WhatsApp',st:'enviado'},
+  ];
+  const stbody=document.getElementById('automsg-sent-tbody');
+  if(stbody)stbody.innerHTML=sent.map(m=>`<tr>
+    <td><strong>Apto ${m.apt}</strong></td>
+    <td>${m.guest}</td>
+    <td><span class="tag tag-info">${m.tipo}</span></td>
+    <td>${m.when}</td>
+    <td><span class="tag tag-${m.canal==='WhatsApp'?'ok':'coral'}">${m.canal}</span></td>
+    <td><span class="tag tag-${m.st==='abierto'?'ok':m.st==='enviado'?'info':'warn'}">${m.st}</span></td>
+  </tr>`).join('');
+
+  const cfg=document.getElementById('automsg-config-body');
+  if(cfg){
+    const types=[
+      {name:'Mensaje de bienvenida',desc:'Cuando se crea la reserva. Confirma llegada, WiFi y código de puerta.',canal:'WhatsApp',timing:'Inmediato tras reserva',active:true},
+      {name:'Instrucciones check-in',desc:'Con horario de llegada, cómo recoger llaves y código.',canal:'Email',timing:'24h antes del check-in',active:true},
+      {name:'Recordatorio 24h',desc:'Recordatorio breve con el código de puerta.',canal:'WhatsApp',timing:'24h antes del check-in',active:true},
+      {name:'Post check-out',desc:'Agradecimiento y solicitud de reseña suave.',canal:'WhatsApp',timing:'6h después del check-out',active:true},
+      {name:'Solicitud reseña',desc:'Pide reseña en Airbnb/Booking con enlace directo.',canal:'Email',timing:'24h después del check-out',active:false},
+    ];
+    cfg.innerHTML=types.map(t=>`<div style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--border2);">
+      <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;margin-top:2px;">
+        <input type="checkbox" ${t.active?'checked':''} style="opacity:0;width:0;height:0;" onchange="toast(this.checked?'✓ ${t.name} activado':'${t.name} desactivado')">
+        <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${t.active?'var(--leaf)':'#ccc'};border-radius:24px;transition:.2s;"></span>
+      </label>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:3px;">${t.name}</div>
+        <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">${t.desc}</div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--txt2);">
+          <span style="background:var(--bg);padding:3px 8px;border-radius:10px;">${t.canal}</span>
+          <span style="background:var(--bg);padding:3px 8px;border-radius:10px;">⏱ ${t.timing}</span>
+        </div>
+      </div>
+      <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;flex-shrink:0;" onclick="toast('Editando plantilla: ${t.name}')">Editar</button>
+    </div>`).join('');
+  }
+}
+
+// ════════════ RENDER RATES ════════════
+function renderRates(){
+  const tbody=document.getElementById('rates-tbody');
+  if(tbody)tbody.innerHTML=[
+    {type:'1 habitación',base:105,wknd:125,high:145,min:2,clean:35},
+    {type:'2 habitaciones',base:138,wknd:158,high:185,min:3,clean:45},
+    {type:'3 habitaciones',base:165,wknd:190,high:225,min:3,clean:55},
+  ].map(r=>`<tr>
+    <td><strong>${r.type}</strong></td>
+    <td>${fmt(r.base)}</td>
+    <td>${fmt(r.wknd)}</td>
+    <td><strong style="color:var(--coral);">${fmt(r.high)}</strong></td>
+    <td>${r.min} noches</td>
+    <td>${fmt(r.clean)}</td>
+  </tr>`).join('');
+
+  const cal=document.getElementById('rates-calendar');
+  if(cal){
+    const months=[
+      {m:'Ene',level:1},{m:'Feb',level:1},{m:'Mar',level:2},
+      {m:'Abr',level:2},{m:'May',level:3},{m:'Jun',level:3},
+      {m:'Jul',level:5},{m:'Ago',level:5},{m:'Sep',level:4},
+      {m:'Oct',level:2},{m:'Nov',level:1},{m:'Dic',level:2},
+    ];
+    const lColors=['#e2e8f0','#bfdbfe','#93c5fd','#f9a8d4','#ff5e3a'];
+    const lNames=['Baja','Normal','Media-alta','Alta','Temporada alta'];
+    cal.innerHTML=`<div style="display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-bottom:10px;">${months.map(m=>`<div style="text-align:center;"><div style="background:${lColors[m.level-1]};height:40px;border-radius:6px;margin-bottom:4px;" title="${lNames[m.level-1]}"></div><div style="font-size:10px;color:var(--txt3);font-weight:700;">${m.m}</div></div>`).join('')}</div><div style="display:flex;gap:8px;flex-wrap:wrap;">${lColors.map((c,i)=>`<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);"><div style="width:12px;height:12px;background:${c};border-radius:3px;"></div>${lNames[i]}</div>`).join('')}</div>`;
+  }
+}
+
 // override go() to also close sidebar on mobile
 const _goOrig=go;
 
