@@ -990,9 +990,13 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Facturación
       </button>
+      <button class="nav-item" onclick="go('gastos',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+        Gastos
+      </button>
       <button class="nav-item" onclick="go('reports',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-        Informes &amp; IVA
+        Gestor financiero
       </button>
 
       <div class="sb-section">Comunicación</div>
@@ -1488,35 +1492,109 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 
     <!-- ════════════ FACTURAS ════════════ -->
     <div id="page-invoices" class="page">
-      <div class="page-hd">
-        <div><h1>Facturación <em>combinada</em></h1><div class="page-sub">Apartamentos · escuela · tienda · alquiler</div></div>
-        <div class="page-hd-actions"><button class="btn btn-ghost">↓ Exportar</button><button class="btn btn-primary">+ Factura manual</button></div>
-      </div>
-      <div class="tabs"><button class="tab active">Todas</button><button class="tab">Apartamentos</button><button class="tab">Escuela</button><button class="tab">Tienda</button><button class="tab">Pendientes</button></div>
-      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Número</th><th>Cliente</th><th>Concepto</th><th>Fecha</th><th>IVA</th><th>Total</th><th>Estado</th></tr></thead><tbody id="inv-tbody"></tbody></table></div></div>
+  <div class="page-hd">
+    <div><h1>Facturación <em>completa</em></h1><div class="page-sub">Apartamentos · Escuela · Tienda · Alquiler</div></div>
+    <div class="page-hd-actions">
+      <button class="btn btn-ghost" onclick="exportFacturasCSV()">↓ CSV Hacienda</button>
+      <button class="btn btn-ghost" onclick="newInvoiceModal()">+ Factura manual</button>
+      <button class="btn btn-primary" onclick="newInvoiceModal()">
+        <svg width="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nueva factura
+      </button>
     </div>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);" id="inv-kpis"></div>
+  <div class="tabs" id="inv-tabs">
+    <button class="tab active" onclick="filterInv('all',this)">Todas</button>
+    <button class="tab" onclick="filterInv('apt',this)">Apartamentos</button>
+    <button class="tab" onclick="filterInv('school',this)">Escuela</button>
+    <button class="tab" onclick="filterInv('shop',this)">Tienda</button>
+    <button class="tab" onclick="filterInv('pending',this)">Pendientes <span style="color:var(--coral);font-weight:700;" id="inv-pend-count"></span></button>
+    <button class="tab" onclick="filterInv('overdue',this)">Vencidas</button>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-hd-title" id="inv-table-title">Todas las facturas</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input placeholder="Buscar cliente..." oninput="searchInvoices(this.value)" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:12px;width:180px;">
+        <span class="card-hd-meta" id="inv-count-lbl">20 facturas</span>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nº Factura</th>
+            <th>Cliente</th>
+            <th>Concepto</th>
+            <th>Fecha</th>
+            <th>Canal</th>
+            <th>Base</th>
+            <th>IVA</th>
+            <th>Total</th>
+            <th>Pago</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="inv-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
     <!-- ════════════ INFORMES ════════════ -->
     <div id="page-reports" class="page">
-      <div class="page-hd">
-        <div><h1>Informes &amp; <em>IVA</em></h1><div class="page-sub">Resumen trimestral para gestor</div></div>
-        <div class="page-hd-actions"><select class="tb-btn" style="padding:8px 14px;"><option>Este mes</option><option>Trimestre</option><option>Año</option></select><button class="btn btn-primary">↓ Exportar IVA</button></div>
-      </div>
-      <div class="kpi-grid" id="reports-kpis"></div>
-      <div class="two-col">
-        <div class="card"><div class="card-hd"><div class="card-hd-title">Ingresos por línea de negocio</div></div><div class="card-body">
-          <div id="biz-bars"></div>
-        </div></div>
-        <div class="card"><div class="card-hd"><div class="card-hd-title">IVA 21% · resumen trimestral</div><span class="card-hd-meta">Para presentar al gestor</span></div><div class="card-body">
-          <div class="detail-row"><b>IVA repercutido</b><div style="font-family:var(--display);font-size:22px;font-weight:700;color:var(--ocean);" id="vat-out">€0</div></div>
-          <div class="detail-row"><b>IVA soportado</b><div style="font-family:var(--display);font-size:22px;font-weight:700;color:var(--ocean);" id="vat-in">€0</div></div>
-          <div class="detail-row" style="border-bottom:none;padding-top:14px;"><b>IVA a liquidar</b><div style="font-family:var(--display);font-size:28px;font-weight:700;color:var(--coral);" id="vat-net">€0</div></div>
-        </div></div>
-      </div>
-      <div class="card"><div class="card-hd"><div class="card-hd-title">Top productos / packs vendidos</div></div><div class="card-body">
-        <div class="tbl-wrap"><table><thead><tr><th>Concepto</th><th>Línea</th><th>Cantidad</th><th>Ingresos</th><th>Margen</th></tr></thead><tbody id="top-tbody"></tbody></table></div>
-      </div></div>
+  <div class="page-hd">
+    <div>
+      <h1>Gestor <em>financiero</em></h1>
+      <div class="page-sub">Contabilidad · IVA · IRPF · Hacienda · P&amp;L</div>
     </div>
+    <div class="page-hd-actions">
+      <select id="rpt-period" onchange="renderReports()" class="tb-btn" style="padding:8px 14px;">
+        <option value="q2">2T 2026 (Abr-Jun)</option>
+        <option value="q1">1T 2026 (Ene-Mar)</option>
+        <option value="year">Año 2026</option>
+        <option value="month">Junio 2026</option>
+      </select>
+      <button class="btn btn-ghost" onclick="toast('📄 Informe generado en PDF')">📄 PDF gestor</button>
+    </div>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);" id="reports-kpis"></div>
+  <div class="tabs" id="rpt-tabs">
+    <button class="tab active" onclick="rptTab('resumen',this)">📊 Resumen P&amp;L</button>
+    <button class="tab" onclick="rptTab('iva',this)">🧾 IVA · Mod. 303</button>
+    <button class="tab" onclick="rptTab('irpf',this)">💼 IRPF · Mod. 130</button>
+    <button class="tab" onclick="rptTab('gastos',this)">💸 Gastos deducibles</button>
+    <button class="tab" onclick="rptTab('gestor',this)">🤖 Gestor IA</button>
+  </div>
+  <div id="rpt-content"></div>
+</div>
+
+    <!-- ════════════ GASTOS ════════════ -->
+    <div id="page-gastos" class="page">
+  <div class="page-hd">
+    <div><h1>Gastos <em>deducibles</em></h1><div class="page-sub">Registro de facturas de compra · IVA soportado</div></div>
+    <div class="page-hd-actions">
+      <button class="btn btn-ghost" onclick="exportGastosCSV()">↓ CSV</button>
+      <button class="btn btn-primary" onclick="newGastoModal()">+ Registrar gasto</button>
+    </div>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);" id="gastos-kpis"></div>
+  <div class="tabs">
+    <button class="tab active" onclick="filterGastos('all',this)">Todos</button>
+    <button class="tab" onclick="filterGastos('Personal',this)">Personal</button>
+    <button class="tab" onclick="filterGastos('Suministros',this)">Suministros</button>
+    <button class="tab" onclick="filterGastos('Reparaciones',this)">Reparaciones</button>
+    <button class="tab" onclick="filterGastos('Marketing',this)">Marketing</button>
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-hd-title">Registro de gastos</div><span class="card-hd-meta" id="gastos-count">15 gastos</span></div>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th>Categoría</th><th>Base</th><th>IVA</th><th>Total</th><th>Deducible</th><th>Documento</th></tr></thead>
+      <tbody id="gastos-tbody"></tbody></table>
+    </div>
+  </div>
+</div>
 
     <!-- ════════════ BANDEJA IA ════════════ -->
     <div id="page-inbox" class="page">
@@ -1836,7 +1914,7 @@ function go(p,el){
     const links=document.querySelectorAll('.nav-item');
     const labels={dashboard:'Dashboard',agenda:'Agenda',apt:'Mapa',cal:'Calendario',res:'Reservas',clean:'Limpieza',maint:'Mantenimiento',classes:'Clases',students:'Alumnos',packs:'Packs',instructors:'Instructores',rental:'Alquileres',shop:'TPV',stock:'Stock',clients:'Clientes',invoices:'Facturas',reports:'Informes',inbox:'Bandeja IA',widget:'Widget',team:'Equipo',settings:'Ajustes'};
   }
-  const titles={dashboard:'Dashboard',agenda:'Agenda del día','apt-map':'Mapa apartamentos','apt-cal':'Calendario reservas','apt-res':'Reservas','apt-clean':'Limpieza','apt-maint':'Mantenimiento','apt-channels':'Canal Manager','apt-revenue':'Revenue · Apartamentos','apt-automsg':'Mensajes automáticos','apt-rates':'Gestión de tarifas',classes:'Horario de clases',students:'Alumnos',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',reports:'Informes & IVA',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes'};
+  const titles={dashboard:'Dashboard',agenda:'Agenda del día','apt-map':'Mapa apartamentos','apt-cal':'Calendario reservas','apt-res':'Reservas','apt-clean':'Limpieza','apt-maint':'Mantenimiento','apt-channels':'Canal Manager','apt-revenue':'Revenue · Apartamentos','apt-automsg':'Mensajes automáticos','apt-rates':'Gestión de tarifas',classes:'Horario de clases',students:'Alumnos',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',gastos:'Gastos deducibles',reports:'Gestor financiero',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes'};
   document.getElementById('tb-title').textContent=titles[p]||'';
   document.getElementById('sb').classList.remove('open');
   const ov=document.getElementById('mob-overlay');if(ov)ov.classList.remove('on');
@@ -2012,19 +2090,61 @@ const CLIENTS=[
 ];
 
 const INVOICES=[
-  {num:'FAC-2026-3142',client:'Familia Bauer',concept:'Apto 14 · 7 noches + Camp 4 pax',date:'07/06',vat:'21%',total:1675,state:'Pagada',sc:'ok'},
-  {num:'FAC-2026-3141',client:'Marc Riba',concept:'Semana surf · 5 sesiones',date:'06/06',vat:'21%',total:175,state:'Pagada',sc:'ok'},
-  {num:'FAC-2026-3140',client:'Helena Vidal',concept:'Bono 10 clases',date:'06/06',vat:'21%',total:250,state:'Pagada',sc:'ok'},
-  {num:'FAC-2026-3139',client:'Yannick Möller',concept:'Apto 19 · 5 noches',date:'05/06',vat:'21%',total:725,state:'Pagada',sc:'ok'},
-  {num:'FAC-2026-3138',client:'Jaime Vega',concept:'Tienda · Neopreno 4/3 + tabla',date:'05/06',vat:'21%',total:410,state:'Pagada',sc:'ok'},
-  {num:'FAC-2026-3137',client:'Reem Al Mansoori',concept:'Apto 21 · 3 noches + clases',date:'04/06',vat:'21%',total:540,state:'Enviada',sc:'info'},
-  {num:'FAC-2026-3136',client:'Sofía Rivas',concept:'Apto 12 · 4 noches',date:'04/06',vat:'21%',total:480,state:'Pagada',sc:'ok'},
-  {num:'FAC-2026-3135',client:'Pierre Lacroix',concept:'Privada x3',date:'03/06',vat:'21%',total:165,state:'Pagada',sc:'ok'},
-  {num:'FAC-2026-3134',client:'Lola Mendoza',concept:'SUP + alquiler SUP',date:'03/06',vat:'21%',total:50,state:'Pagada',sc:'ok'},
-  {num:'FAC-2026-3133',client:'Ainhoa Berasaluce',concept:'Apto 3 · 7 noches',date:'02/06',vat:'21%',total:1015,state:'Pendiente',sc:'warn'},
-  {num:'FAC-2026-3132',client:'Carlos Ramírez',concept:'Bono 10 + tabla Rip Curl',date:'02/06',vat:'21%',total:805,state:'Pagada',sc:'ok'},
-  {num:'FAC-2026-3131',client:'Tom Bauer',concept:'Tienda · varios',date:'01/06',vat:'21%',total:185,state:'Pagada',sc:'ok'},
+  {num:'FAC-2026-3142',client:'Familia Bauer',clientNif:'Sin NIF',clientEmail:'bauer@gmail.com',clientAddress:'Múnich, Alemania',concept:'Apto 14 · 7 noches + Surf Camp 4 pax',lines:[{desc:'Alojamiento Apto 14 · 7 noches',qty:7,unitPrice:145,vatPct:10},{desc:'Surf Camp 4 pax · 5 días',qty:4,unitPrice:175,vatPct:21}],date:'07/06/2026',issueDate:'07/06/2026',dueDate:'07/06/2026',vatPct:10,base:1815,vat:220,total:2035,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Directo',quarter:2},
+  {num:'FAC-2026-3141',client:'Marc Riba',clientNif:'47820913L',clientEmail:'marc.riba@outlook.es',clientAddress:'Barcelona',concept:'Semana surf · 5 sesiones grupo',lines:[{desc:'Pack Semana Surf · 5 clases grupo',qty:1,unitPrice:175,vatPct:21}],date:'06/06/2026',issueDate:'06/06/2026',dueDate:'06/06/2026',vatPct:21,base:145,vat:30,total:175,state:'Pagada',sc:'ok',payMethod:'Bizum',channel:'Escuela',quarter:2},
+  {num:'FAC-2026-3140',client:'Helena Vidal',clientNif:'52987634M',clientEmail:'helenav@gmail.com',clientAddress:'Santander',concept:'Bono 10 clases surf',lines:[{desc:'Bono 10 clases surf grupo',qty:1,unitPrice:250,vatPct:21}],date:'06/06/2026',issueDate:'06/06/2026',dueDate:'13/06/2026',vatPct:21,base:207,vat:43,total:250,state:'Pagada',sc:'ok',payMethod:'Transferencia',channel:'Escuela',quarter:2},
+  {num:'FAC-2026-3139',client:'Yannick Möller',clientNif:'Sin NIF',clientEmail:'y.moller@web.de',clientAddress:'Berlín, Alemania',concept:'Apto 19 · 5 noches',lines:[{desc:'Alojamiento Apto 19 · 5 noches',qty:5,unitPrice:138,vatPct:10}],date:'05/06/2026',issueDate:'05/06/2026',dueDate:'05/06/2026',vatPct:10,base:627,vat:63,total:690,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Booking',quarter:2},
+  {num:'FAC-2026-3138',client:'Jaime Vega',clientNif:'38741205K',clientEmail:'jaime.vega@live.es',clientAddress:'Oviedo',concept:'Tienda · Neopreno 4/3 Rip Curl + tabla longboard',lines:[{desc:'Neopreno Rip Curl 4/3 talla M',qty:1,unitPrice:280,vatPct:21},{desc:'Tabla longboard 9\'2"',qty:1,unitPrice:360,vatPct:21}],date:'05/06/2026',issueDate:'05/06/2026',dueDate:'05/06/2026',vatPct:21,base:529,vat:111,total:640,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Tienda',quarter:2},
+  {num:'FAC-2026-3137',client:'Reem Al Mansoori',clientNif:'Sin NIF',clientEmail:'reem.alm@gmail.com',clientAddress:'Abu Dabi, EAU',concept:'Apto 21 · 3 noches + 2 clases privadas',lines:[{desc:'Alojamiento Apto 21 · 3 noches',qty:3,unitPrice:158,vatPct:10},{desc:'Clases privadas surf · 2 sesiones',qty:2,unitPrice:55,vatPct:21}],date:'04/06/2026',issueDate:'04/06/2026',dueDate:'11/06/2026',vatPct:10,base:534,vat:65,total:599,state:'Enviada',sc:'info',payMethod:'Transferencia',channel:'Directo',quarter:2},
+  {num:'FAC-2026-3136',client:'Sofía Rivas',clientNif:'55312048J',clientEmail:'sofia.rivas@hotmail.com',clientAddress:'Madrid',concept:'Apto 12 · 4 noches',lines:[{desc:'Alojamiento Apto 12 · 4 noches',qty:4,unitPrice:128,vatPct:10}],date:'04/06/2026',issueDate:'04/06/2026',dueDate:'04/06/2026',vatPct:10,base:465,vat:47,total:512,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Airbnb',quarter:2},
+  {num:'FAC-2026-3135',client:'Pierre Lacroix',clientNif:'Sin NIF',clientEmail:'pierre.l@laposte.fr',clientAddress:'Lyon, Francia',concept:'3 clases privadas surf',lines:[{desc:'Clase privada surf · 1h',qty:3,unitPrice:55,vatPct:21}],date:'03/06/2026',issueDate:'03/06/2026',dueDate:'03/06/2026',vatPct:21,base:136,vat:29,total:165,state:'Pagada',sc:'ok',payMethod:'Efectivo',channel:'Escuela',quarter:2},
+  {num:'FAC-2026-3134',client:'Lola Mendoza',clientNif:'45620178R',clientEmail:'lola.mendoza@gmail.com',clientAddress:'Bilbao',concept:'Sesión SUP + alquiler tabla SUP 2h',lines:[{desc:'Sesión SUP grupo',qty:1,unitPrice:25,vatPct:21},{desc:'Alquiler tabla SUP · 2h',qty:2,unitPrice:12,vatPct:21}],date:'03/06/2026',issueDate:'03/06/2026',dueDate:'03/06/2026',vatPct:21,base:41,vat:9,total:50,state:'Pagada',sc:'ok',payMethod:'Efectivo',channel:'Escuela',quarter:2},
+  {num:'FAC-2026-3133',client:'Ainhoa Berasaluce',clientNif:'78341250A',clientEmail:'ainhoa.b@euskaltel.net',clientAddress:'Vitoria-Gasteiz',concept:'Apto 3 · 7 noches',lines:[{desc:'Alojamiento Apto 3 · 7 noches',qty:7,unitPrice:135,vatPct:10}],date:'02/06/2026',issueDate:'02/06/2026',dueDate:'09/06/2026',vatPct:10,base:859,vat:86,total:945,state:'Pendiente',sc:'warn',payMethod:'Transferencia',channel:'Directo',quarter:2},
+  {num:'FAC-2026-3132',client:'Carlos Ramírez',clientNif:'36741203V',clientEmail:'carlos.ramirez@gmail.com',clientAddress:'Valladolid',concept:'Bono 10 clases + tabla Rip Curl Fish',lines:[{desc:'Bono 10 clases surf grupo',qty:1,unitPrice:250,vatPct:21},{desc:'Tabla Rip Curl Fish 6\'2"',qty:1,unitPrice:420,vatPct:21}],date:'02/06/2026',issueDate:'02/06/2026',dueDate:'02/06/2026',vatPct:21,base:554,vat:116,total:670,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Tienda',quarter:2},
+  {num:'FAC-2026-3131',client:'Familie Jensen',clientNif:'Sin NIF',clientEmail:'jensen@gmail.dk',clientAddress:'Copenhague, Dinamarca',concept:'Apto 8 · 5 noches + Pack Familia Surf',lines:[{desc:'Alojamiento Apto 8 · 5 noches',qty:5,unitPrice:142,vatPct:10},{desc:'Pack Familia Surf · 4 pax · 3 días',qty:4,unitPrice:95,vatPct:21}],date:'01/06/2026',issueDate:'01/06/2026',dueDate:'01/06/2026',vatPct:10,base:959,vat:131,total:1090,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Airbnb',quarter:2},
+  {num:'FAC-2026-3130',client:'Roberto Pérez',clientNif:'28741203B',clientEmail:'roberto.perez@gmail.com',clientAddress:'Santander',concept:'Alquiler equipo · 3 días neopreno + tabla + leash',lines:[{desc:'Alquiler neopreno 3/2 · 3 días',qty:3,unitPrice:15,vatPct:21},{desc:'Alquiler tabla shortboard · 3 días',qty:3,unitPrice:20,vatPct:21}],date:'31/05/2026',issueDate:'31/05/2026',dueDate:'31/05/2026',vatPct:21,base:99,vat:21,total:120,state:'Pagada',sc:'ok',payMethod:'Efectivo',channel:'Escuela',quarter:2},
+  {num:'FAC-2026-3129',client:'Surf Academy SL',clientNif:'B-28741204',clientEmail:'admin@surfacademy.es',clientAddress:'Madrid',concept:'10 bonos grupo pack empresa · delegación Madrid',lines:[{desc:'Bono 10 clases grupo · pack empresa',qty:10,unitPrice:220,vatPct:21}],date:'30/05/2026',issueDate:'30/05/2026',dueDate:'13/06/2026',vatPct:21,base:1818,vat:382,total:2200,state:'Pendiente',sc:'warn',payMethod:'Transferencia',channel:'Escuela',quarter:2},
+  {num:'FAC-2026-3128',client:'Katrin Hoffmann',clientNif:'Sin NIF',clientEmail:'k.hoffmann@gmx.de',clientAddress:'Hamburgo, Alemania',concept:'Apto 22 · 10 noches temporada alta',lines:[{desc:'Alojamiento Apto 22 · 10 noches',qty:10,unitPrice:162,vatPct:10}],date:'29/05/2026',issueDate:'29/05/2026',dueDate:'29/05/2026',vatPct:10,base:1473,vat:147,total:1620,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Booking',quarter:2},
+  {num:'FAC-2026-3127',client:'Amaia Iriondo',clientNif:'16520047L',clientEmail:'amaia.iriondo@gmail.com',clientAddress:'Pamplona',concept:'Tienda · Traje seco + accesorios surf',lines:[{desc:'Traje seco Patagonia R3 talla S',qty:1,unitPrice:380,vatPct:21},{desc:'Leash 9\' + wax cold + gorro 3mm',qty:1,unitPrice:75,vatPct:21}],date:'28/05/2026',issueDate:'28/05/2026',dueDate:'28/05/2026',vatPct:21,base:376,vat:79,total:455,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Tienda',quarter:2},
+  {num:'FAC-2026-3126',client:'Iago Costa',clientNif:'33412087P',clientEmail:'iago.costa@correo.es',clientAddress:'A Coruña',concept:'Apto 6 · 4 noches + Semana surf',lines:[{desc:'Alojamiento Apto 6 · 4 noches',qty:4,unitPrice:120,vatPct:10},{desc:'Pack Semana Surf · 5 clases grupo',qty:1,unitPrice:175,vatPct:21}],date:'26/05/2026',issueDate:'26/05/2026',dueDate:'02/06/2026',vatPct:10,base:582,vat:79,total:661,state:'Vencida',sc:'coral',payMethod:'Transferencia',channel:'Directo',quarter:2},
+  {num:'FAC-2026-3125',client:'Costa Norte SL',clientNif:'B-39XXXXXX',clientEmail:'roberto@costanorte.es',clientAddress:'San Vicente de la Barquera',concept:'RECTIFICATIVA FAC-2026-3120 · error IVA aplicado',lines:[{desc:'Rectificación tipo IVA alojamiento (21%→10%)',qty:1,unitPrice:-148,vatPct:10}],date:'20/05/2026',issueDate:'20/05/2026',dueDate:'20/05/2026',vatPct:10,base:-135,vat:-14,total:-149,state:'Rectificada',sc:'warn',payMethod:'Tarjeta',channel:'Directo',quarter:2},
+  {num:'FAC-2026-3118',client:'Martin O\'Brien',clientNif:'Sin NIF',clientEmail:'martin.obrien@gmail.ie',clientAddress:'Dublín, Irlanda',concept:'Surf Camp · 7 noches Apto 17 + 5 clases',lines:[{desc:'Alojamiento Apto 17 · 7 noches',qty:7,unitPrice:118,vatPct:10},{desc:'Pack Surf Camp · 5 clases grupo',qty:1,unitPrice:175,vatPct:21}],date:'12/05/2026',issueDate:'12/05/2026',dueDate:'12/05/2026',vatPct:10,base:976,vat:118,total:1094,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Airbnb',quarter:2},
+  {num:'FAC-2026-3110',client:'Lucía Fernández',clientNif:'71204538C',clientEmail:'lucia.fernandez@gmail.com',clientAddress:'Logroño',concept:'Apto 11 · 6 noches + alquiler material',lines:[{desc:'Alojamiento Apto 11 · 6 noches',qty:6,unitPrice:130,vatPct:10},{desc:'Alquiler material · 4 días',qty:4,unitPrice:35,vatPct:21}],date:'02/04/2026',issueDate:'02/04/2026',dueDate:'02/04/2026',vatPct:10,base:841,vat:99,total:940,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Booking',quarter:1},
 ];
+
+const EXPENSES=[
+  {num:'GAS-2026-0215',date:'05/06/2026',vendor:'Marta Sevilla',concept:'Nómina junio · Responsable limpieza',category:'Personal',base:1450,vatPct:0,vat:0,total:1450,deductible:true,payMethod:'Transferencia',doc:'Recibo',state:'Registrado'},
+  {num:'GAS-2026-0214',date:'05/06/2026',vendor:'Iker Bárcena',concept:'Factura autónomo · Instructor surf junio',category:'Personal',base:1200,vatPct:21,vat:252,total:1452,deductible:true,payMethod:'Transferencia',doc:'Factura',state:'Registrado'},
+  {num:'GAS-2026-0213',date:'05/06/2026',vendor:'David Sánchez',concept:'Factura autónomo · Director técnico junio',category:'Personal',base:1800,vatPct:21,vat:378,total:2178,deductible:true,payMethod:'Transferencia',doc:'Factura',state:'Registrado'},
+  {num:'GAS-2026-0212',date:'04/06/2026',vendor:'Endesa',concept:'Electricidad · suministro junio complejo',category:'Suministros',base:820,vatPct:21,vat:172,total:992,deductible:true,payMethod:'Domiciliación',doc:'Factura',state:'Registrado'},
+  {num:'GAS-2026-0211',date:'04/06/2026',vendor:'Canal de Aguas de Cantabria',concept:'Agua · suministro junio 22 apartamentos',category:'Suministros',base:310,vatPct:10,vat:31,total:341,deductible:true,payMethod:'Domiciliación',doc:'Factura',state:'Registrado'},
+  {num:'GAS-2026-0210',date:'03/06/2026',vendor:'Movistar Empresas',concept:'Fibra óptica + WiFi 6 apartamentos junio',category:'Suministros',base:185,vatPct:21,vat:39,total:224,deductible:true,payMethod:'Domiciliación',doc:'Factura',state:'Registrado'},
+  {num:'GAS-2026-0209',date:'03/06/2026',vendor:'Proveedores de Limpieza SL',concept:'Productos limpieza profesional · stock junio',category:'Limpieza',base:380,vatPct:21,vat:80,total:460,deductible:true,payMethod:'Transferencia',doc:'Factura',state:'Registrado'},
+  {num:'GAS-2026-0208',date:'02/06/2026',vendor:'Airbnb Payments Europe',concept:'Comisión plataforma Airbnb · mayo 2026',category:'Software',base:1840,vatPct:0,vat:0,total:1840,deductible:true,payMethod:'Domiciliación',doc:'Recibo',state:'Registrado'},
+  {num:'GAS-2026-0207',date:'02/06/2026',vendor:'Booking.com BV',concept:'Comisión plataforma Booking · mayo 2026',category:'Software',base:1240,vatPct:0,vat:0,total:1240,deductible:true,payMethod:'Domiciliación',doc:'Recibo',state:'Registrado'},
+  {num:'GAS-2026-0206',date:'01/06/2026',vendor:'Meta Ads',concept:'Publicidad Facebook/Instagram · mayo',category:'Marketing',base:480,vatPct:21,vat:101,total:581,deductible:true,payMethod:'Tarjeta',doc:'Factura',state:'Registrado'},
+  {num:'GAS-2026-0205',date:'01/06/2026',vendor:'Google Ads',concept:'Campañas SEM Google · mayo',category:'Marketing',base:320,vatPct:21,vat:67,total:387,deductible:true,payMethod:'Tarjeta',doc:'Factura',state:'Registrado'},
+  {num:'GAS-2026-0204',date:'31/05/2026',vendor:'Zurich Seguros',concept:'Seguro responsabilidad civil actividades acuáticas',category:'Seguros',base:880,vatPct:0,vat:0,total:880,deductible:true,payMethod:'Domiciliación',doc:'Recibo',state:'Registrado'},
+  {num:'GAS-2026-0203',date:'30/05/2026',vendor:'Fontanería Cantabria SL',concept:'Reparación instalación agua caliente Apto 8',category:'Reparaciones',base:420,vatPct:21,vat:88,total:508,deductible:true,payMethod:'Transferencia',doc:'Factura',state:'Registrado'},
+  {num:'GAS-2026-0202',date:'28/05/2026',vendor:'Pinturas Norte SL',concept:'Pintura y rehabilitación Apto 4 + terraza',category:'Reparaciones',base:680,vatPct:21,vat:143,total:823,deductible:true,payMethod:'Transferencia',doc:'Factura',state:'Registrado'},
+  {num:'GAS-2026-0201',date:'26/05/2026',vendor:'Surf Supplies SL',concept:'Stock wax cold + leashes + grip tapes tienda',category:'Proveedores',base:560,vatPct:21,vat:118,total:678,deductible:true,payMethod:'Tarjeta',doc:'Factura',state:'Pendiente'},
+];
+
+const CONTABILIDAD={
+  year:2026,
+  months:[
+    {month:'Ene',ingresos:18400,gastos:12800,beneficio:5600,iva_rep:3444,iva_sop:1890,iva_liq:1554},
+    {month:'Feb',ingresos:14200,gastos:11400,beneficio:2800,iva_rep:2740,iva_sop:1620,iva_liq:1120},
+    {month:'Mar',ingresos:22800,gastos:13200,beneficio:9600,iva_rep:4274,iva_sop:2100,iva_liq:2174},
+    {month:'Abr',ingresos:31400,gastos:14800,beneficio:16600,iva_rep:5682,iva_sop:2320,iva_liq:3362},
+    {month:'May',ingresos:38200,gastos:15600,beneficio:22600,iva_rep:6840,iva_sop:2450,iva_liq:4390},
+    {month:'Jun',ingresos:42800,gastos:17200,beneficio:25600,iva_rep:7540,iva_sop:2640,iva_liq:4900},
+  ],
+  irpf_retencion:0.07,
+  regimen:'Estimación directa simplificada',
+  epigrafes:['685 - Hoteles y pensiones','671 - Restaurantes','659 - Comercio menor'],
+  cif:'B-39XXXXXX'
+};
 
 const THREADS=[
   {name:'Daniel Pérez',phone:'+34 612 345 678',channel:'WhatsApp',when:'2m',state:'active',booked:true,prev:'Perfecto, reservo Apto 7 del 12 al 19',tag:{cls:'ok',label:'Reservado'},msgs:[
@@ -2092,6 +2212,7 @@ function initApp(){
   renderClients();
   renderInvoices();
   renderReports();
+  renderGastos();
   renderInbox();
   renderTeam();
   renderSettings();
@@ -3553,17 +3674,56 @@ function saveClient(i){
 }
 function deleteClient(i){if(confirm('¿Eliminar cliente?')){CLIENTS.splice(i,1);toast('Cliente eliminado');closeModal();renderClients();}}
 
+let INV_FILTER='all', INV_SEARCH='';
 function renderInvoices(){
-  document.getElementById('inv-tbody').innerHTML=INVOICES.map((inv,i)=>`<tr onclick="viewInvoice(${i})">
-    <td><strong>${inv.num}</strong></td>
-    <td>${inv.client}</td>
-    <td>${inv.concept}</td>
-    <td>${inv.date}</td>
-    <td>${inv.vat}</td>
-    <td><strong>${fmt(inv.total)}</strong></td>
-    <td><span class="tag tag-${inv.sc}">${inv.state}</span></td>
-  </tr>`).join('');
+  const totalMes=INVOICES.reduce((a,i)=>a+i.total,0);
+  const cobrado=INVOICES.filter(i=>i.state==='Pagada').reduce((a,i)=>a+i.total,0);
+  const pendiente=INVOICES.filter(i=>i.state==='Pendiente'||i.state==='Enviada').reduce((a,i)=>a+i.total,0);
+  const ivaRep=INVOICES.reduce((a,i)=>a+i.vat,0);
+  const nFact=INVOICES.length;
+  const pendCount=INVOICES.filter(i=>i.state==='Pendiente'||i.state==='Enviada').length;
+  document.getElementById('inv-kpis').innerHTML=[
+    {l:'Total facturado',v:fmt(totalMes),t:'Jun 2026',cls:''},
+    {l:'Cobrado',v:fmt(cobrado),t:'✓ '+Math.round(cobrado/totalMes*100)+'%',cls:'up'},
+    {l:'Pendiente cobro',v:fmt(pendiente),t:pendCount+' facturas',cls:'warn'},
+    {l:'IVA repercutido',v:fmt(Math.round(ivaRep)),t:'a liquidar en Jul',cls:''},
+    {l:'Facturas emitidas',v:String(nFact),t:'este mes',cls:''},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val" style="font-size:20px;">${k.v}</div><div class="kpi-trend ${k.cls}">${k.t}</div></div>`).join('');
+  const pc=document.getElementById('inv-pend-count');
+  if(pc)pc.textContent=pendCount?'('+pendCount+')':'';
+  filterInv(INV_FILTER);
 }
+function filterInv(f,tabEl){
+  INV_FILTER=f;
+  if(tabEl){document.querySelectorAll('#inv-tabs .tab').forEach(t=>t.classList.remove('active'));tabEl.classList.add('active');}
+  let list=INVOICES;
+  if(f==='apt')list=INVOICES.filter(i=>i.channel==='Airbnb'||i.channel==='Booking'||(i.channel==='Directo'&&i.concept.toLowerCase().includes('apto')));
+  else if(f==='school')list=INVOICES.filter(i=>i.channel==='Escuela');
+  else if(f==='shop')list=INVOICES.filter(i=>i.channel==='Tienda');
+  else if(f==='pending')list=INVOICES.filter(i=>i.state==='Pendiente'||i.state==='Enviada');
+  else if(f==='overdue')list=INVOICES.filter(i=>i.state==='Vencida');
+  if(INV_SEARCH)list=list.filter(i=>i.client.toLowerCase().includes(INV_SEARCH)||i.num.toLowerCase().includes(INV_SEARCH));
+  const chColors={Airbnb:'#ff5a5f',Booking:'#003580',Directo:'var(--coral)',Escuela:'var(--aqua-dk)',Tienda:'var(--ocean-mid)'};
+  const payIcons={Tarjeta:'💳',Efectivo:'💵',Bizum:'📱',Transferencia:'🏦'};
+  document.getElementById('inv-tbody').innerHTML=list.map((inv)=>{
+    const realI=INVOICES.indexOf(inv);
+    return `<tr onclick="viewInvoice(${realI})" style="cursor:pointer;">
+      <td><strong style="font-size:11px;font-family:monospace;">${inv.num}</strong></td>
+      <td><strong>${inv.client}</strong>${inv.clientNif&&inv.clientNif!='Sin NIF'?`<div style="font-size:9px;color:var(--txt3);">${inv.clientNif}</div>`:''}
+      </td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${inv.concept}</td>
+      <td style="white-space:nowrap;">${inv.date}</td>
+      <td><span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:10px;font-size:9px;font-weight:700;letter-spacing:.04em;background:${chColors[inv.channel]||'var(--ocean)'}22;color:${chColors[inv.channel]||'var(--ocean)'};">${inv.channel}</span></td>
+      <td>${fmt(inv.base)}</td>
+      <td style="color:var(--txt3);">${fmt(inv.vat)} <span style="font-size:9px;">(${inv.vatPct}%)</span></td>
+      <td><strong style="color:var(--coral);">${fmt(inv.total)}</strong></td>
+      <td>${payIcons[inv.payMethod]||'—'} <span style="font-size:10px;color:var(--txt3);">${inv.payMethod||''}</span></td>
+      <td><span class="tag tag-${inv.sc}">${inv.state}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('inv-count-lbl').textContent=list.length+' facturas';
+}
+function searchInvoices(q){INV_SEARCH=(q||'').toLowerCase();filterInv(INV_FILTER);}
 function viewInvoice(i){
   const inv=INVOICES[i];
   const sub=Math.round(inv.total/1.21);
@@ -3616,34 +3776,468 @@ function viewInvoice(i){
 function setInvState(i,l,c){INVOICES[i].state=l;INVOICES[i].sc=c;toast('Estado actualizado a '+l);viewInvoice(i);renderInvoices();}
 
 function renderReports(){
+  const q=document.getElementById('rpt-period')?.value||'q2';
+  const months=q==='q1'?[0,1,2]:q==='q2'?[3,4,5]:q==='month'?[5]:[0,1,2,3,4,5];
+  const sel=CONTABILIDAD.months.filter((_,i)=>months.includes(i));
+  const totIng=sel.reduce((a,m)=>a+m.ingresos,0);
+  const totGast=sel.reduce((a,m)=>a+m.gastos,0);
+  const totBen=sel.reduce((a,m)=>a+m.beneficio,0);
+  const ivaLiq=sel.reduce((a,m)=>a+m.iva_liq,0);
   document.getElementById('reports-kpis').innerHTML=[
-    {l:'Ingresos · mes',v:'€68,420',t:'+22% vs anterior',cls:'up'},
-    {l:'Apartamentos',v:'€41,800',t:'61%',cls:''},
-    {l:'Escuela surf',v:'€18,940',t:'28%',cls:''},
-    {l:'Tienda + alquiler',v:'€7,680',t:'11%',cls:''}
+    {l:'Ingresos periodo',v:fmt(totIng),t:'+18% vs anterior',cls:'up'},
+    {l:'Gastos periodo',v:fmt(totGast),t:'Margen '+(Math.round(totBen/totIng*100))+'%',cls:''},
+    {l:'Beneficio neto',v:fmt(totBen),t:'antes de IRPF',cls:'up'},
+    {l:'IVA a liquidar',v:fmt(ivaLiq),t:'próx. pago Hacienda',cls:'warn'},
   ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-trend ${k.cls}">${k.t}</div></div>`).join('');
-
-  const biz=[{name:'Apartamentos',pct:61,val:41800,col:'var(--coral)'},{name:'Escuela',pct:28,val:18940,col:'var(--aqua-dk)'},{name:'Tienda',pct:7,val:4720,col:'var(--ocean-mid)'},{name:'Alquiler',pct:4,val:2960,col:'var(--leaf)'}];
-  document.getElementById('biz-bars').innerHTML=biz.map(b=>`
-    <div style="padding:10px 0;border-bottom:1px solid var(--border2);">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><strong>${b.name}</strong><span style="color:var(--coral);font-family:var(--display);font-weight:700;">${fmt(b.val)}</span></div>
-      <div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden;"><div style="height:100%;background:${b.col};width:${b.pct}%"></div></div>
-    </div>`).join('');
-
-  // VAT
-  const sub=68420/1.21;const vatOut=68420-sub;const vatIn=vatOut*0.34;
-  document.getElementById('vat-out').textContent=fmt(Math.round(vatOut));
-  document.getElementById('vat-in').textContent=fmt(Math.round(vatIn));
-  document.getElementById('vat-net').textContent=fmt(Math.round(vatOut-vatIn));
-
-  document.getElementById('top-tbody').innerHTML=[
-    {c:'Semana surf · 5 días',l:'Escuela',q:38,r:6650,m:'75%'},
-    {c:'Apto 14 · noches',l:'Apartamento',q:42,r:6930,m:'68%'},
-    {c:'Surf Camp · 7 noches',l:'Camp',q:14,r:7280,m:'58%'},
-    {c:'Bono 10 clases',l:'Escuela',q:12,r:3000,m:'72%'},
-    {c:'Neopreno Rip Curl 4/3',l:'Tienda',q:18,r:3330,m:'51%'}
-  ].map(t=>`<tr><td><strong>${t.c}</strong></td><td><span class="tag tag-info">${t.l}</span></td><td>${t.q}</td><td><strong>${fmt(t.r)}</strong></td><td>${t.m}</td></tr>`).join('');
+  rptTab('resumen');
 }
+
+function rptTab(tab,tabEl){
+  if(tabEl){document.querySelectorAll('#rpt-tabs .tab').forEach(t=>t.classList.remove('active'));tabEl.classList.add('active');}
+  const q=document.getElementById('rpt-period')?.value||'q2';
+  const months=q==='q1'?[0,1,2]:q==='q2'?[3,4,5]:q==='month'?[5]:[0,1,2,3,4,5];
+  const sel=CONTABILIDAD.months.filter((_,i)=>months.includes(i));
+  const totIng=sel.reduce((a,m)=>a+m.ingresos,0);
+  const totGast=sel.reduce((a,m)=>a+m.gastos,0);
+  const totBen=sel.reduce((a,m)=>a+m.beneficio,0);
+  const ivaRep=sel.reduce((a,m)=>a+m.iva_rep,0);
+  const ivaSop=sel.reduce((a,m)=>a+m.iva_sop,0);
+  const ivaLiq=sel.reduce((a,m)=>a+m.iva_liq,0);
+  const irpfBase=totBen;
+  const irpfPago=Math.round(irpfBase*0.20);
+  const irpfRet=Math.round(totIng*0.07);
+  const irpfAIngresar=Math.max(0,irpfPago-irpfRet);
+  const el=document.getElementById('rpt-content');
+
+  if(tab==='resumen'){
+    const biz=[
+      {name:'🏠 Apartamentos',pct:61,val:Math.round(totIng*0.61),col:'var(--coral)'},
+      {name:'🏄 Escuela surf',pct:28,val:Math.round(totIng*0.28),col:'var(--aqua-dk)'},
+      {name:'🛒 Tienda',pct:7,val:Math.round(totIng*0.07),col:'var(--ocean-mid)'},
+      {name:'🏄 Alquiler material',pct:4,val:Math.round(totIng*0.04),col:'var(--leaf)'}
+    ];
+    el.innerHTML=`
+    <div class="two-col">
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Cuenta de resultados</div><span class="card-hd-meta">${q==='q1'?'1T':q==='q2'?'2T':q==='month'?'Jun':'2026'} 2026</span></div>
+        <div class="card-body">
+          ${[
+            {lbl:'Ingresos brutos',val:totIng,bold:false,col:'var(--leaf)'},
+            {lbl:'— Comisiones OTA (Airbnb/Booking)',val:-Math.round(totIng*0.061),bold:false,col:'var(--coral)'},
+            {lbl:'= Ingresos netos',val:totIng-Math.round(totIng*0.061),bold:true,col:'var(--ocean)'},
+            {lbl:'— Gastos operativos',val:-totGast,bold:false,col:'var(--coral)'},
+            {lbl:'= EBITDA',val:totBen+Math.round(totIng*0.061),bold:false,col:'var(--txt)'},
+            {lbl:'— Amortización estimada',val:-Math.round(totIng*0.04),bold:false,col:'var(--txt3)'},
+            {lbl:'= Beneficio antes de impuestos',val:totBen,bold:true,col:'var(--ocean)'},
+            {lbl:'— IRPF estimado (20%)',val:-Math.round(totBen*0.20),bold:false,col:'var(--coral)'},
+            {lbl:'= Beneficio neto estimado',val:Math.round(totBen*0.80),bold:true,col:'var(--leaf)'},
+          ].map(r=>`
+            <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border2);${r.bold?'padding-top:14px;padding-bottom:14px;border-top:2px solid var(--border);':''}">
+              <span style="font-size:${r.bold?'13':'12'}px;font-weight:${r.bold?700:400};color:${r.bold?'var(--txt)':'var(--txt2)'};">${r.lbl}</span>
+              <strong style="font-family:var(--display);font-size:${r.bold?'16':'13'}px;color:${r.col};">${fmt(r.val)}</strong>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Ingresos por línea</div></div>
+        <div class="card-body">
+          ${biz.map(b=>`
+            <div style="padding:10px 0;border-bottom:1px solid var(--border2);">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><strong>${b.name}</strong><span style="color:${b.col};font-family:var(--display);font-weight:700;">${fmt(b.val)}</span></div>
+              <div style="display:flex;align-items:center;gap:8px;"><div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;"><div style="height:100%;background:${b.col};width:${b.pct}%;transition:width .6s;"></div></div><span style="font-size:10px;color:var(--txt3);min-width:28px;">${b.pct}%</span></div>
+            </div>`).join('')}
+          <div style="margin-top:18px;">
+            <div style="font-size:9px;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:12px;">Evolución mensual</div>
+            <div style="display:flex;align-items:flex-end;gap:4px;height:80px;padding-bottom:20px;position:relative;">
+              ${CONTABILIDAD.months.map(m=>{
+                const maxIng=Math.max(...CONTABILIDAD.months.map(x=>x.ingresos));
+                const hIng=Math.round((m.ingresos/maxIng)*72);
+                const hGast=Math.round((m.gastos/maxIng)*72);
+                return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;position:relative;">
+                  <div style="position:absolute;bottom:20px;left:0;right:0;display:flex;align-items:flex-end;gap:1px;">
+                    <div title="Ingresos ${fmt(m.ingresos)}" style="flex:1;height:${hIng}px;background:var(--coral);border-radius:2px 2px 0 0;opacity:.8;"></div>
+                    <div title="Gastos ${fmt(m.gastos)}" style="flex:1;height:${hGast}px;background:var(--txt3);border-radius:2px 2px 0 0;opacity:.5;"></div>
+                  </div>
+                  <div style="position:absolute;bottom:0;font-size:8px;color:var(--txt3);font-weight:600;">${m.month}</div>
+                </div>`;
+              }).join('')}
+            </div>
+            <div style="display:flex;gap:12px;font-size:10px;color:var(--txt3);margin-top:4px;">
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;background:var(--coral);border-radius:2px;opacity:.8;"></div>Ingresos</div>
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;background:var(--txt3);border-radius:2px;opacity:.5;"></div>Gastos</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  else if(tab==='iva'){
+    el.innerHTML=`
+    <div class="card" style="border-left:4px solid var(--coral);">
+      <div class="card-hd">
+        <div>
+          <div class="card-hd-title">🧾 Modelo 303 · Declaración IVA</div>
+          <div style="font-size:10px;color:var(--txt3);margin-top:2px;">${q==='q1'?'1T 2026 · presentar antes del 20/04/2026':q==='month'?'Jun 2026':'2T 2026 · presentar antes del 20/07/2026'}</div>
+        </div>
+        <button class="btn btn-primary" onclick="toast('📄 Modelo 303 generado · listo para gestor')">Generar Mod. 303</button>
+      </div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+          <div>
+            <div style="font-size:10px;letter-spacing:.22em;color:var(--coral);text-transform:uppercase;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--coral);">IVA DEVENGADO (repercutido)</div>
+            ${[
+              {tipo:'IVA 21% · clases, tienda, alquiler material',base:Math.round(ivaRep/1.21*0.62),iva:Math.round(ivaRep*0.62),pct:21},
+              {tipo:'IVA 10% · alojamiento turístico (aptos)',base:Math.round(ivaRep/1.10*0.38),iva:Math.round(ivaRep*0.38),pct:10},
+            ].map(r=>`
+              <div style="padding:10px 0;border-bottom:1px solid var(--border2);">
+                <div style="font-size:11px;color:var(--txt2);margin-bottom:4px;">${r.tipo}</div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;">
+                  <span>Base: <strong>${fmt(r.base)}</strong></span>
+                  <span>IVA ${r.pct}%: <strong style="color:var(--coral);">${fmt(r.iva)}</strong></span>
+                </div>
+              </div>`).join('')}
+            <div style="display:flex;justify-content:space-between;padding:14px 0 0;font-family:var(--display);font-size:18px;font-weight:700;border-top:2px solid var(--border);">
+              <span>Total devengado</span>
+              <span style="color:var(--coral);">${fmt(Math.round(ivaRep))}</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px;letter-spacing:.22em;color:var(--ocean);text-transform:uppercase;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--ocean);">IVA DEDUCIBLE (soportado)</div>
+            ${[
+              {tipo:'Compras y gastos generales (21%)',base:Math.round(ivaSop/1.21),iva:Math.round(ivaSop*0.85),pct:21},
+              {tipo:'Comisiones OTAs extranjeras (0%)',base:Math.round(totIng*0.042),iva:0,pct:0},
+            ].map(r=>`
+              <div style="padding:10px 0;border-bottom:1px solid var(--border2);">
+                <div style="font-size:11px;color:var(--txt2);margin-bottom:4px;">${r.tipo}</div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;">
+                  <span>Base: <strong>${fmt(r.base)}</strong></span>
+                  <span>IVA ${r.pct}%: <strong style="color:var(--ocean);">${fmt(r.iva)}</strong></span>
+                </div>
+              </div>`).join('')}
+            <div style="display:flex;justify-content:space-between;padding:14px 0 0;font-family:var(--display);font-size:18px;font-weight:700;border-top:2px solid var(--border);">
+              <span>Total deducible</span>
+              <span style="color:var(--ocean);">${fmt(Math.round(ivaSop))}</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:24px;padding:20px;background:linear-gradient(135deg,var(--ocean),var(--ocean-mid));border-radius:12px;color:#fff;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:10px;letter-spacing:.28em;text-transform:uppercase;font-weight:700;color:rgba(245,237,214,.7);margin-bottom:4px;">RESULTADO MOD. 303 · A INGRESAR</div>
+            <div style="font-size:10px;color:rgba(245,237,214,.6);">IVA repercutido ${fmt(Math.round(ivaRep))} − IVA deducible ${fmt(Math.round(ivaSop))}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:var(--display);font-size:42px;font-weight:700;color:var(--coral);line-height:1;">${fmt(Math.round(ivaLiq))}</div>
+            <div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.7);text-transform:uppercase;margin-top:4px;">Fecha límite: ${q==='q1'?'20 Abr 2026':'20 Jul 2026'}</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;background:rgba(245,158,11,.08);border:1px solid var(--warn);border-radius:10px;padding:14px 16px;font-size:12px;color:var(--txt2);">
+          ⚠️ <strong style="color:var(--warn);">Recuerda:</strong> El IVA del alojamiento turístico tributa al <strong>10%</strong> (art. 91 LIVA). Las comisiones de Airbnb/Booking son <strong>inversión del sujeto pasivo</strong> — no deducible directamente si son extranjeras sin establecimiento permanente.
+          <div style="margin-top:8px;"><button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;" onclick="toast('📋 Nota enviada al gestor')">📋 Enviar nota al gestor</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-hd-title">Desglose facturas por tipo IVA · ${q==='q2'?'2T':'1T'} 2026</div></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Mes</th><th>Alojam. (10%) Base</th><th>Alojam. IVA</th><th>General (21%) Base</th><th>General IVA</th><th>Total IVA dev.</th></tr></thead>
+          <tbody>
+            ${CONTABILIDAD.months.filter((_,i)=>[3,4,5].includes(i)).map(m=>`
+              <tr>
+                <td><strong>${m.month} 2026</strong></td>
+                <td>${fmt(Math.round(m.ingresos*0.55))}</td>
+                <td style="color:var(--coral);">${fmt(Math.round(m.ingresos*0.55*0.10))}</td>
+                <td>${fmt(Math.round(m.ingresos*0.45/1.21))}</td>
+                <td style="color:var(--coral);">${fmt(Math.round(m.ingresos*0.45/1.21*0.21))}</td>
+                <td><strong>${fmt(m.iva_rep)}</strong></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+
+  else if(tab==='irpf'){
+    el.innerHTML=`
+    <div class="card" style="border-left:4px solid var(--ocean);">
+      <div class="card-hd">
+        <div>
+          <div class="card-hd-title">💼 Modelo 130 · Pago fraccionado IRPF</div>
+          <div style="font-size:10px;color:var(--txt3);margin-top:2px;">${q==='q1'?'1T · antes 20/04/2026':q==='month'?'Jun 2026':'2T · antes 20/07/2026'} · Estimación directa simplificada</div>
+        </div>
+        <button class="btn btn-primary" onclick="toast('📄 Modelo 130 generado')">Generar Mod. 130</button>
+      </div>
+      <div class="card-body">
+        <div style="background:var(--bg);border-radius:12px;padding:20px;margin-bottom:18px;">
+          <div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:14px;">Cálculo pago fraccionado</div>
+          ${[
+            {lbl:'(1) Rendimientos íntegros del periodo',val:totIng,note:'suma de ingresos facturados'},
+            {lbl:'(2) Gastos fiscalmente deducibles',val:-totGast,note:'personal, suministros, amortización...'},
+            {lbl:'(3) Rendimiento neto (1) + (2)',val:totBen,note:'base del pago fraccionado',bold:true},
+            {lbl:'(4) × 20% (tipo pago fraccionado)',val:irpfPago,note:'20% sobre rendimiento neto',col:'var(--coral)'},
+            {lbl:'(5) − Retenciones ya soportadas (7%)',val:-irpfRet,note:'retenciones en facturas emitidas'},
+            {lbl:'(6) − Pagos fraccionados anteriores',val:q==='q2'?-Math.round(irpfPago*0.45):0,note:q==='q2'?'1T ya ingresado':'primer pago'},
+            {lbl:'CUOTA A INGRESAR (Mod. 130)',val:irpfAIngresar,note:'en caso negativo: 0',bold:true,col:'var(--coral)'},
+          ].map(r=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border2);${r.bold?'background:rgba(255,94,58,.04);margin:0 -8px;padding:12px 8px;border-radius:8px;':''}">
+              <div>
+                <div style="font-size:${r.bold?'13':'12'}px;font-weight:${r.bold?700:400};color:${r.bold?'var(--txt)':'var(--txt2)'};">${r.lbl}</div>
+                ${r.note?`<div style="font-size:10px;color:var(--txt3);">${r.note}</div>`:''}
+              </div>
+              <strong style="font-family:var(--display);font-size:${r.bold?'18':'14'}px;color:${r.col||'var(--txt)'};">${fmt(r.val)}</strong>
+            </div>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+          <div style="padding:16px;background:linear-gradient(135deg,var(--ocean),var(--ocean-mid));border-radius:12px;color:#fff;text-align:center;">
+            <div style="font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(245,237,214,.7);font-weight:700;margin-bottom:6px;">A INGRESAR · MOD. 130</div>
+            <div style="font-family:var(--display);font-size:36px;font-weight:700;color:var(--coral);line-height:1;">${fmt(irpfAIngresar)}</div>
+            <div style="font-size:10px;color:rgba(245,237,214,.6);margin-top:4px;">Fecha límite: ${q==='q1'?'20/04/2026':'20/07/2026'}</div>
+          </div>
+          <div style="padding:16px;background:var(--bg);border-radius:12px;">
+            <div style="font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--txt3);font-weight:700;margin-bottom:10px;">Previsión anual IRPF</div>
+            <div style="font-size:12px;color:var(--txt2);line-height:1.6;">
+              Beneficio anual estimado: <strong>${fmt(Math.round(totBen/months.length*12))}</strong><br>
+              IRPF estimado anual: <strong style="color:var(--coral);">${fmt(Math.round(totBen/months.length*12*0.30))}</strong><br>
+              <span style="font-size:10px;color:var(--txt3);">tipo medio estimado 30%</span>
+            </div>
+          </div>
+        </div>
+        <div style="background:rgba(93,189,211,.08);border:1px solid var(--aqua);border-radius:10px;padding:14px 16px;font-size:12px;color:var(--txt2);">
+          💡 <strong style="color:var(--aqua-dk);">Tip del gestor:</strong> Con los beneficios actuales puede ser conveniente considerar <strong>constituir SL</strong> — tipo IS 25% vs IRPF progresivo que puede llegar al 45%. Consulta con tu asesor fiscal.
+          <div style="margin-top:8px;display:flex;gap:8px;">
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;" onclick="toast('📋 Consulta enviada al asesor')">📋 Consultar asesor</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;" onclick="toast('📊 Comparativa SL vs Autónomo generada')">📊 Comparar SL vs Autónomo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-hd-title">Retenciones IRPF aplicadas en facturas emitidas</div><span class="card-hd-meta">7% sobre base · autónomos</span></div>
+      <div class="card-body">
+        <div style="font-size:12px;color:var(--txt2);margin-bottom:12px;">Las retenciones del 7% que aplicas en tus facturas se descuentan del pago fraccionado. Llevas retenido este trimestre:</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+          ${CONTABILIDAD.months.filter((_,i)=>[3,4,5].includes(i)).map(m=>`
+            <div style="padding:14px;background:var(--bg);border-radius:10px;text-align:center;">
+              <div style="font-size:9px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:6px;">${m.month}</div>
+              <div style="font-family:var(--display);font-size:20px;font-weight:700;color:var(--ocean);">${fmt(Math.round(m.ingresos*0.07))}</div>
+              <div style="font-size:9px;color:var(--txt3);">retenido (7%)</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  else if(tab==='gastos'){
+    const totalGast=EXPENSES.reduce((a,g)=>a+g.total,0);
+    const bycat={};EXPENSES.forEach(g=>{bycat[g.category]=(bycat[g.category]||0)+g.total;});
+    el.innerHTML=`
+    <div class="two-col">
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Gastos por categoría</div></div>
+        <div class="card-body">
+          ${Object.entries(bycat).sort((a,b)=>b[1]-a[1]).map(([cat,val])=>{
+            const cols={Personal:'var(--coral)',Suministros:'var(--aqua-dk)',Reparaciones:'var(--warn)',Marketing:'#a78bfa',Software:'var(--ocean-mid)',Limpieza:'var(--leaf)',Seguros:'var(--txt2)',Banco:'var(--txt3)',Proveedores:'var(--ocean)'};
+            const pct=Math.round(val/totalGast*100);
+            return `<div style="padding:10px 0;border-bottom:1px solid var(--border2);">
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;"><strong>${cat}</strong><span style="color:${cols[cat]||'var(--txt)'};font-family:var(--display);font-weight:700;">${fmt(val)}</span></div>
+              <div style="display:flex;align-items:center;gap:8px;"><div style="flex:1;height:5px;background:var(--bg);border-radius:3px;overflow:hidden;"><div style="height:100%;background:${cols[cat]||'var(--coral)'};width:${pct}%;"></div></div><span style="font-size:9px;color:var(--txt3);">${pct}%</span></div>
+            </div>`;
+          }).join('')}
+          <div style="display:flex;justify-content:space-between;padding:14px 0 0;font-family:var(--display);font-size:16px;font-weight:700;border-top:2px solid var(--border);margin-top:6px;">
+            <span>Total gastos</span><span style="color:var(--coral);">${fmt(totalGast)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Top gastos</div><button class="btn btn-ghost" style="font-size:11px;padding:6px 10px;" onclick="go('gastos',null)">Ver todos →</button></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Proveedor</th><th>Concepto</th><th>Total</th><th>Ded.</th></tr></thead>
+            <tbody>${EXPENSES.slice().sort((a,b)=>b.total-a.total).slice(0,8).map(g=>`
+              <tr><td><strong>${g.vendor}</strong></td><td style="font-size:11px;">${g.concept}</td><td><strong>${fmt(g.total)}</strong></td><td>${g.deductible?'<span class="tag tag-ok">✓</span>':'<span class="tag tag-warn">Parcial</span>'}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  else if(tab==='gestor'){
+    el.innerHTML=`
+    <div class="card" style="border-left:4px solid var(--coral);">
+      <div class="card-hd">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--ocean),var(--coral));display:grid;place-items:center;font-size:18px;">🤖</div>
+          <div>
+            <div class="card-hd-title">Gestor IA · Ana</div>
+            <div style="font-size:10px;color:var(--leaf);font-weight:700;letter-spacing:.12em;">● EN LÍNEA · responde al instante</div>
+          </div>
+        </div>
+        <span class="card-hd-meta" style="color:var(--coral);">Asesora fiscal 24/7</span>
+      </div>
+      <div style="background:var(--bg);padding:18px;min-height:200px;display:flex;flex-direction:column;gap:12px;" id="gestor-msgs">
+        <div style="align-self:flex-start;max-width:80%;background:var(--surface);padding:12px 16px;border-radius:12px 12px 12px 3px;font-size:13px;color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.06);">
+          👋 Hola, soy <strong>Ana</strong>, tu gestora IA. Analizo tus cuentas en tiempo real y te aviso cuando hay que actuar. <br><br>
+          <strong>Este trimestre (2T 2026):</strong><br>
+          • IVA a liquidar el 20 jul: <strong style="color:var(--coral);">${fmt(Math.round(ivaLiq))}</strong><br>
+          • Mod. 130 IRPF el 20 jul: <strong style="color:var(--coral);">${fmt(irpfAIngresar)}</strong><br>
+          • Beneficio neto estimado: <strong style="color:var(--leaf);">${fmt(Math.round(totBen*0.80))}</strong><br><br>
+          ¿En qué puedo ayudarte hoy?
+          <div style="font-size:9px;color:var(--txt3);margin-top:6px;">Ana · ahora mismo</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px;border-top:1px solid var(--border2);">
+        ${[
+          '¿Cuánto IVA debo pagar este trimestre?',
+          '¿Tengo gastos deducibles pendientes?',
+          '¿Cuándo es el próximo pago a Hacienda?',
+          '¿Debo hacer alguna factura rectificativa?',
+          'Genera extracto del mes para el gestor',
+          '¿Cuál es mi margen neto actual?'
+        ].map(q=>`<button onclick="gestorAsk('${q}')" style="font-size:11px;padding:6px 11px;border:1px solid var(--coral);color:var(--coral);border-radius:14px;cursor:pointer;background:#fff;transition:all .15s;" onmouseover="this.style.background='var(--coral)';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='var(--coral)'">${q}</button>`).join('')}
+      </div>
+      <div style="padding:14px 18px;border-top:1px solid var(--border2);display:flex;gap:8px;">
+        <input id="gestor-in" placeholder="Pregunta a Ana sobre tus cuentas..." onkeydown="if(event.key==='Enter')gestorSend()" style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:20px;background:var(--surface);color:var(--txt);font-size:13px;">
+        <button class="btn btn-primary" style="border-radius:50%;width:40px;height:40px;padding:0;display:grid;place-items:center;" onclick="gestorSend()">→</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><div class="card-hd-title">⚠️ Alertas fiscales activas</div><span class="card-hd-meta" style="color:var(--warn);">3 pendientes</span></div>
+      <div class="card-body" style="padding:0;">
+        ${[
+          {icon:'🗓',title:'Mod. 303 IVA 2T 2026',desc:'Presentar antes del <strong>20 de julio 2026</strong>. A ingresar: '+fmt(Math.round(ivaLiq)),urgency:'warn',days:41},
+          {icon:'💼',title:'Mod. 130 IRPF 2T 2026',desc:'Pago fraccionado IRPF. A ingresar: '+fmt(irpfAIngresar)+'. Fecha límite <strong>20/07/2026</strong>',urgency:'warn',days:41},
+          {icon:'📋',title:'Factura vencida · '+(INVOICES.find(i=>i.state==='Vencida')||{num:'—'}).num,desc:'Cliente: <strong>'+(INVOICES.find(i=>i.state==='Vencida')||{client:'—'}).client+'</strong>. Importe: '+fmt((INVOICES.find(i=>i.state==='Vencida')||{total:0}).total)+'. Vencida hace 12 días.',urgency:'coral',days:-12},
+          {icon:'📊',title:'Cierre contable junio',desc:'Fin de mes: revisar gastos, conciliar TPV, cuadrar caja. <strong>Pendiente tu revisión.</strong>',urgency:'info',days:0},
+        ].map(a=>`
+          <div style="display:flex;gap:14px;padding:14px 18px;border-bottom:1px solid var(--border2);align-items:flex-start;">
+            <div style="font-size:22px;flex-shrink:0;">${a.icon}</div>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px;">${a.title}</div>
+              <div style="font-size:11px;color:var(--txt2);">${a.desc}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <span class="tag tag-${a.urgency}" style="font-size:9px;">${a.days>0?'en '+a.days+'d':a.days===0?'Hoy':Math.abs(a.days)+'d vencido'}</span>
+              <div style="margin-top:6px;"><button class="btn btn-ghost" style="font-size:10px;padding:4px 8px;" onclick="toast('✓ Marcado como gestionado')">✓ Gestionar</button></div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }
+}
+
+function gestorAsk(q){
+  document.getElementById('gestor-in').value=q;
+  gestorSend();
+}
+function gestorSend(){
+  const inp=document.getElementById('gestor-in');
+  const q=inp.value.trim();if(!q)return;
+  const msgs=document.getElementById('gestor-msgs');
+  const now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  msgs.innerHTML+=`<div style="align-self:flex-end;max-width:80%;background:var(--ocean);color:var(--sand);padding:10px 14px;border-radius:12px 12px 3px 12px;font-size:13px;">${q}<div style="font-size:9px;color:rgba(245,237,214,.6);margin-top:4px;text-align:right;">Tú · ${now}</div></div>`;
+  inp.value='';
+  const resp=gestorResponse(q.toLowerCase());
+  setTimeout(()=>{
+    msgs.innerHTML+=`<div style="align-self:flex-start;max-width:85%;background:var(--surface);padding:12px 16px;border-radius:12px 12px 12px 3px;font-size:13px;color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.06);">${resp}<div style="font-size:9px;color:var(--txt3);margin-top:6px;">Ana · ${now}</div></div>`;
+    msgs.scrollTop=99999;
+  },600);
+  msgs.scrollTop=99999;
+}
+function gestorResponse(q){
+  const q2sel=document.getElementById('rpt-period')?.value||'q2';
+  const monthsIdx=q2sel==='q1'?[0,1,2]:q2sel==='q2'?[3,4,5]:q2sel==='month'?[5]:[0,1,2,3,4,5];
+  const sel=CONTABILIDAD.months.filter((_,i)=>monthsIdx.includes(i));
+  const ivaLiq=sel.reduce((a,m)=>a+m.iva_liq,0);
+  const totIng=sel.reduce((a,m)=>a+m.ingresos,0);
+  const totBen=sel.reduce((a,m)=>a+m.beneficio,0);
+  const irpfP=Math.round(totBen*0.20);const irpfR=Math.round(totIng*0.07);
+  if(q.includes('iva'))return`El IVA a liquidar para el <strong>2T 2026</strong> es de <strong style="color:var(--coral);">${fmt(Math.round(ivaLiq))}</strong>. IVA repercutido ${fmt(Math.round(sel.reduce((a,m)=>a+m.iva_rep,0)))} menos IVA soportado ${fmt(Math.round(sel.reduce((a,m)=>a+m.iva_sop,0)))}. Presenta el <strong>Modelo 303 antes del 20 de julio</strong>. ¿Quieres que genere el borrador?`;
+  if(q.includes('130')||q.includes('irpf'))return`Pago fraccionado IRPF: 20% sobre rendimiento neto = <strong>${fmt(irpfP)}</strong>, menos retenciones soportadas ${fmt(irpfR)} = <strong style="color:var(--coral);">${fmt(Math.max(0,irpfP-irpfR))}</strong> a ingresar. Presenta el <strong>Modelo 130 antes del 20/07/2026</strong>.`;
+  if(q.includes('gastos'))return`Tienes <strong>${EXPENSES.filter(g=>g.state==='Pendiente').length} gastos pendientes</strong> de registrar. Total deducible este periodo: <strong>${fmt(EXPENSES.filter(g=>g.deductible).reduce((a,g)=>a+g.total,0))}</strong>. Recuerda que las nóminas son deducibles al 100%, y el local al 100% si es uso exclusivo negocio.`;
+  if(q.includes('hacienda')||q.includes('pago')||q.includes('fecha'))return`Próximos vencimientos:<br>📅 <strong>20 Jul 2026</strong> → Mod. 303 IVA 2T: ${fmt(Math.round(ivaLiq))}<br>📅 <strong>20 Jul 2026</strong> → Mod. 130 IRPF 2T: ${fmt(Math.max(0,irpfP-irpfR))}<br>📅 <strong>30 Sep 2026</strong> → Mod. 303 IVA 3T<br>📅 <strong>20 Oct 2026</strong> → Mod. 130 IRPF 3T`;
+  if(q.includes('rectificativa'))return`Tienes 1 factura marcada como <strong>Rectificada</strong> (${(INVOICES.find(i=>i.state==='Rectificada')||{num:'—'}).num}). Las facturas rectificativas deben emitirse en el mismo periodo para compensar el IVA en el 303. ¿Necesitas ayuda para generarla?`;
+  if(q.includes('extracto')||q.includes('resumen'))return`Generando extracto mensual...<br><br>📊 <strong>Junio 2026</strong><br>Ingresos: ${fmt(CONTABILIDAD.months[5].ingresos)}<br>Gastos: ${fmt(CONTABILIDAD.months[5].gastos)}<br>Beneficio: ${fmt(CONTABILIDAD.months[5].beneficio)}<br>IVA a liquidar: ${fmt(CONTABILIDAD.months[5].iva_liq)}<br><br><button class="btn btn-ghost" style="font-size:11px;padding:6px 10px;" onclick="toast('📄 Extracto enviado al gestor')">📄 Enviar al gestor</button>`;
+  if(q.includes('margen'))return`Margen neto actual: <strong style="color:var(--leaf);">${Math.round(totBen/totIng*100)}%</strong> antes de impuestos. Después de IRPF estimado: ~${Math.round(totBen*0.80/totIng*100)}%. <br>Línea más rentable: <strong>Escuela de surf</strong> con margen bruto del 75%.`;
+  return`Entendido. Estoy analizando tus datos del periodo seleccionado... Ingresos: <strong>${fmt(totIng)}</strong>, gastos: <strong>${fmt(sel.reduce((a,m)=>a+m.gastos,0))}</strong>, beneficio: <strong style="color:var(--leaf);">${fmt(totBen)}</strong>. ¿Quieres que profundice en algún aspecto concreto? Puedo revisar facturas, gastos deducibles, o preparar los modelos tributarios.`;
+}
+
+function renderGastos(){
+  const totalGast=EXPENSES.reduce((a,g)=>a+g.total,0);
+  const deducible=EXPENSES.filter(g=>g.deductible).reduce((a,g)=>a+g.total,0);
+  const ivaSop=EXPENSES.reduce((a,g)=>a+g.vat,0);
+  const pend=EXPENSES.filter(g=>g.state==='Pendiente').length;
+  document.getElementById('gastos-kpis').innerHTML=[
+    {l:'Total gastos mes',v:fmt(totalGast),t:EXPENSES.length+' registros',cls:''},
+    {l:'IVA soportado',v:fmt(Math.round(ivaSop)),t:'deducible en 303',cls:'up'},
+    {l:'Total deducible',v:fmt(Math.round(deducible)),t:Math.round(deducible/totalGast*100)+'% del total',cls:'up'},
+    {l:'Pendientes doc.',v:String(pend),t:'sin factura adjunta',cls:pend?'warn':''},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val" style="font-size:20px;">${k.v}</div><div class="kpi-trend ${k.cls}">${k.t}</div></div>`).join('');
+  filterGastos('all');
+}
+let GASTOS_FILTER='all';
+function filterGastos(f,tabEl){
+  GASTOS_FILTER=f;
+  if(tabEl){document.querySelectorAll('#page-gastos .tabs .tab').forEach(t=>t.classList.remove('active'));tabEl.classList.add('active');}
+  let list=f==='all'?EXPENSES:EXPENSES.filter(g=>g.category===f);
+  const catColors={Personal:'coral',Suministros:'info',Reparaciones:'warn',Marketing:'ocean',Software:'ocean',Limpieza:'ok',Seguros:'info',Banco:'info',Proveedores:'info'};
+  document.getElementById('gastos-tbody').innerHTML=list.map((g)=>{
+    const ri=EXPENSES.indexOf(g);
+    return `<tr onclick="editGasto(${ri})" style="cursor:pointer;">
+      <td>${g.date}</td>
+      <td><strong>${g.vendor}</strong></td>
+      <td>${g.concept}</td>
+      <td><span class="tag tag-${catColors[g.category]||'info'}" style="font-size:9px;">${g.category}</span></td>
+      <td>${fmt(g.base)}</td>
+      <td style="color:var(--txt3);">${g.vatPct>0?fmt(g.vat)+' ('+g.vatPct+'%)':'exento'}</td>
+      <td><strong>${fmt(g.total)}</strong></td>
+      <td>${g.deductible?'<span class="tag tag-ok" style="font-size:9px;">100%</span>':'<span class="tag tag-warn" style="font-size:9px;">Parcial</span>'}</td>
+      <td><span class="tag tag-${g.state==='Registrado'?'ok':'warn'}" style="font-size:9px;">${g.doc}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('gastos-count').textContent=list.length+' gastos';
+}
+function editGasto(i){
+  const g=EXPENSES[i];
+  openModal('Gasto · '+g.vendor,`
+    ${fLbl('Proveedor')}${fInp('g-vendor',g.vendor)}
+    ${fLbl('Concepto')}${fInp('g-concept',g.concept)}
+    ${fRow(fLbl('Fecha')+fInp('g-date',g.date), fLbl('Categoría')+fSel('g-cat',g.category,['Personal','Suministros','Reparaciones','Proveedores','Seguros','Marketing','Software','Limpieza','Banco']))}
+    ${fRow(fLbl('Base imponible (€)')+fInp('g-base',g.base,'number'), fLbl('IVA %')+fSel('g-vat',String(g.vatPct),['0','4','10','21']))}
+    ${fRow(fLbl('Forma de pago')+fSel('g-pay',g.payMethod||'Tarjeta',['Tarjeta','Efectivo','Transferencia','Domiciliación']), fLbl('Tipo documento')+fSel('g-doc',g.doc,['Factura','Ticket','Recibo','Contrato']))}
+    <label style="display:flex;align-items:center;gap:8px;padding:10px 0;font-size:12px;font-weight:600;cursor:pointer;"><input type="checkbox" id="g-ded" ${g.deductible?'checked':''} style="margin:0;"> Gasto 100% deducible</label>
+    <div style="background:rgba(93,189,211,.06);border:1px solid var(--aqua);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--txt2);margin-top:6px;">
+      💡 Son deducibles: personal, alquiler, suministros del negocio, reparaciones de inmuebles arrendados, seguros, publicidad, software profesional.
+    </div>
+    ${fActions('Guardar','saveGasto('+i+')','deleteGasto('+i+')')}
+  `);
+}
+function saveGasto(i){
+  const g=EXPENSES[i];
+  g.vendor=document.getElementById('g-vendor').value;
+  g.concept=document.getElementById('g-concept').value;
+  g.date=document.getElementById('g-date').value;
+  g.category=document.getElementById('g-cat').value;
+  g.base=+document.getElementById('g-base').value;
+  g.vatPct=+document.getElementById('g-vat').value;
+  g.vat=Math.round(g.base*g.vatPct/100);
+  g.total=g.base+g.vat;
+  g.payMethod=document.getElementById('g-pay').value;
+  g.doc=document.getElementById('g-doc').value;
+  g.deductible=document.getElementById('g-ded').checked;
+  g.state='Registrado';
+  toast('✓ Gasto guardado');closeModal();renderGastos();renderReports();
+}
+function deleteGasto(i){if(confirm('¿Eliminar gasto?')){EXPENSES.splice(i,1);toast('Eliminado');closeModal();renderGastos();}}
+function newGastoModal(){
+  EXPENSES.unshift({vendor:'',concept:'',date:new Date().toLocaleDateString('es-ES'),category:'Suministros',base:0,vatPct:21,vat:0,total:0,payMethod:'Tarjeta',doc:'Factura',deductible:true,state:'Pendiente'});
+  editGasto(0);
+}
+function exportGastosCSV(){toast('📊 CSV gastos descargado · compatible con gestor');}
+function exportFacturasCSV(){toast('📊 CSV facturas exportado · formato Hacienda AEAT');}
+function newInvoiceModal(){toast('📝 Módulo nueva factura · próximamente');}
 
 function renderInbox(){
   document.getElementById('inbox-threads').innerHTML=THREADS.map((t,i)=>`
