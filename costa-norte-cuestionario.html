@@ -16,7 +16,29 @@
   th { background: #0a2540; color: #f5edd6; font-weight: 600; letter-spacing: 0.04em; font-size: 11px; text-transform: uppercase; }
   tr:hover { background: #fdf8f0; }
   td:first-child { width: 45%; color: #555; font-weight: 500; }
-  td.answer { background: #fffbf4; min-height: 24px; border-left: 2px dashed #ddd; }
+  td.answer { background: #fffbf4; min-height: 24px; border-left: 2px dashed #ddd; outline: none; cursor: text; }
+  td.answer:focus { background: #fff8e1; border-left: 2px solid #ff5e3a; box-shadow: inset 0 0 0 1px #ffd591; }
+  .bigfree .line { cursor: text; outline: none; }
+  .bigfree .line:focus { border-bottom-color: #ff5e3a; background: #fff8e1; }
+  .submit-box { background: linear-gradient(135deg, #ff5e3a 0%, #ff8c42 100%); padding: 32px 28px; border-radius: 12px; margin: 40px 0 20px; text-align: center; color: white; box-shadow: 0 6px 20px rgba(255,94,58,0.25); }
+  .submit-box h3 { color: white; margin: 0 0 8px; font-size: 22px; }
+  .submit-box p { margin: 0 0 18px; opacity: 0.95; }
+  .submit-btn { background: white; color: #ff5e3a; border: none; padding: 16px 42px; font-size: 17px; font-weight: 700; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.15s; font-family: inherit; }
+  .submit-btn:hover { transform: translateY(-2px); }
+  .submit-btn:disabled { opacity: 0.6; cursor: wait; }
+  .meta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 0 18px; }
+  .meta-row input { width: 100%; padding: 10px 12px; border: none; border-radius: 6px; font-size: 14px; font-family: inherit; color: #333; }
+  .meta-row label { display: block; font-size: 12px; font-weight: 600; color: white; margin-bottom: 4px; text-align: left; opacity: 0.95; }
+  .save-indicator { position: fixed; bottom: 18px; right: 18px; background: #0a2540; color: white; padding: 10px 16px; border-radius: 20px; font-size: 12px; opacity: 0; transition: opacity 0.3s; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .save-indicator.show { opacity: 1; }
+  .thanks { display: none; background: white; padding: 60px 40px; border-radius: 12px; text-align: center; margin: 40px 0; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+  .thanks.show { display: block; }
+  .thanks .check { font-size: 80px; line-height: 1; margin-bottom: 12px; }
+  .thanks h2 { color: #0a2540; border: none; font-size: 30px; margin: 0 0 12px; padding: 0; }
+  .progress-bar { position: sticky; top: 0; background: #fafaf7; padding: 10px 0; z-index: 50; border-bottom: 1px solid #eee; margin: -30px -20px 18px; padding: 12px 20px; }
+  .progress-bar .track { height: 6px; background: #eee; border-radius: 4px; overflow: hidden; }
+  .progress-bar .fill { height: 100%; background: linear-gradient(90deg, #ff5e3a, #ff8c42); width: 0%; transition: width 0.3s; }
+  .progress-bar .lbl { font-size: 11px; color: #777; margin-top: 4px; text-align: right; }
   .bigfree { background: #fff; padding: 14px 18px; border-radius: 8px; border-left: 3px solid #5dbdd3; margin: 8px 0; min-height: 48px; }
   .bigfree label { font-weight: 600; color: #1d5a7d; display: block; margin-bottom: 8px; font-size: 13px; }
   .bigfree .line { display: block; min-height: 44px; border-bottom: 1px solid #e8e3d8; }
@@ -37,6 +59,11 @@
 </style>
 </head>
 <body>
+
+<div class="progress-bar">
+  <div class="track"><div class="fill" id="progFill"></div></div>
+  <div class="lbl"><span id="progTxt">0 de 0 campos rellenados</span> · <span style="color:#ff5e3a;font-weight:600">se guarda automático en este navegador</span></div>
+</div>
 
 <h1>📋 Cuestionario Costa Norte</h1>
 <p style="color: #777; margin: 0 0 18px; font-size: 14px;">Setup del panel CRM Airmate · Junio 2026</p>
@@ -410,6 +437,189 @@
   <tr><td>Contacto principal para dudas</td><td class="answer"></td></tr>
   <tr><td>Canal preferido para hablar</td><td class="answer">□ WhatsApp · □ Email · □ Llamada · □ Presencial</td></tr>
 </table>
+
+<div class="submit-box" id="submitBox">
+  <h3>✉️ Cuando hayáis terminado (o lo que tengáis)</h3>
+  <p>Pulsad el botón y se me envía automáticamente todo lo que hayáis rellenado.<br>No hace falta que esté completo · podéis volver a enviar más tarde.</p>
+  <div class="meta-row">
+    <div><label>Tu nombre (quien rellena)</label><input type="text" id="quienRellena" placeholder="Ej: María, secretaria"></div>
+    <div><label>Email para devuelta</label><input type="email" id="emailRellena" placeholder="tu@email.com"></div>
+  </div>
+  <button class="submit-btn" id="sendBtn" onclick="enviarCuestionario()">📤 Enviar a Fabio</button>
+  <p style="margin-top:14px;font-size:12px;opacity:0.9">Se envía a airmateai@gmail.com</p>
+</div>
+
+<div class="thanks" id="thanks">
+  <div class="check">✅</div>
+  <h2>¡Recibido, gracias!</h2>
+  <p style="color:#555;font-size:15px;max-width:480px;margin:0 auto">Fabio ha recibido todas las respuestas. Si necesita aclarar algo os escribirá por WhatsApp. ¡Buen trabajo!</p>
+  <p style="margin-top:24px;font-size:13px;color:#888">Podéis cerrar esta pestaña.</p>
+</div>
+
+<div class="save-indicator" id="saveInd">💾 Guardado automático</div>
+
+<script>
+const STORAGE_KEY = 'costa-norte-cuestionario-v1';
+
+// Hacer todas las celdas "answer" y las líneas libres editables
+document.querySelectorAll('td.answer').forEach((td, i) => {
+  td.contentEditable = 'true';
+  td.spellcheck = false;
+  td.dataset.idx = 'a' + i;
+  td.addEventListener('input', debounceSave);
+  td.addEventListener('blur', updateProgress);
+});
+document.querySelectorAll('.bigfree .line').forEach((sp, i) => {
+  sp.contentEditable = 'true';
+  sp.dataset.idx = 'b' + i;
+  sp.addEventListener('input', debounceSave);
+  sp.addEventListener('blur', updateProgress);
+});
+
+// Restaurar de localStorage
+try {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  if (saved.fields) {
+    document.querySelectorAll('[data-idx]').forEach(el => {
+      if (saved.fields[el.dataset.idx]) el.textContent = saved.fields[el.dataset.idx];
+    });
+  }
+  if (saved.meta) {
+    if (saved.meta.quien) document.getElementById('quienRellena').value = saved.meta.quien;
+    if (saved.meta.email) document.getElementById('emailRellena').value = saved.meta.email;
+  }
+} catch(e) {}
+
+let saveTimer;
+function debounceSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    const fields = {};
+    document.querySelectorAll('[data-idx]').forEach(el => {
+      const v = el.textContent.trim();
+      if (v) fields[el.dataset.idx] = v;
+    });
+    const meta = {
+      quien: document.getElementById('quienRellena').value,
+      email: document.getElementById('emailRellena').value
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({fields, meta, savedAt: Date.now()}));
+    showSaved();
+    updateProgress();
+  }, 600);
+}
+
+document.getElementById('quienRellena').addEventListener('input', debounceSave);
+document.getElementById('emailRellena').addEventListener('input', debounceSave);
+
+function showSaved() {
+  const i = document.getElementById('saveInd');
+  i.classList.add('show');
+  clearTimeout(showSaved._t);
+  showSaved._t = setTimeout(() => i.classList.remove('show'), 1500);
+}
+
+function updateProgress() {
+  const all = document.querySelectorAll('[data-idx]');
+  let filled = 0;
+  all.forEach(el => { if (el.textContent.trim().length > 0) filled++; });
+  const pct = all.length ? Math.round(filled / all.length * 100) : 0;
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progTxt').textContent = `${filled} de ${all.length} campos rellenados (${pct}%)`;
+}
+updateProgress();
+
+function buildReport() {
+  let out = '═══════════════════════════════════════\n';
+  out += '  CUESTIONARIO COSTA NORTE · Respuestas\n';
+  out += '═══════════════════════════════════════\n\n';
+  out += 'Rellenado por: ' + (document.getElementById('quienRellena').value || '—') + '\n';
+  out += 'Email contacto: ' + (document.getElementById('emailRellena').value || '—') + '\n';
+  out += 'Fecha envío: ' + new Date().toLocaleString('es-ES') + '\n\n';
+
+  let currentH2 = '', currentH3 = '';
+  document.querySelectorAll('h2, h3, table, .bigfree, .photo-list').forEach(node => {
+    if (node.tagName === 'H2') {
+      currentH2 = node.textContent.trim();
+      out += '\n\n━━━ ' + currentH2 + ' ━━━\n';
+    } else if (node.tagName === 'H3') {
+      currentH3 = node.textContent.trim();
+      out += '\n· ' + currentH3 + '\n';
+    } else if (node.tagName === 'TABLE') {
+      const rows = node.querySelectorAll('tr');
+      rows.forEach(r => {
+        const cells = r.querySelectorAll('td, th');
+        if (cells.length === 0) return;
+        if (cells[0].tagName === 'TH') return;
+        const q = cells[0].textContent.trim();
+        const answers = [];
+        for (let i = 1; i < cells.length; i++) {
+          const v = cells[i].textContent.trim();
+          if (v) answers.push(v);
+        }
+        if (answers.length) {
+          out += '  · ' + q + ': ' + answers.join(' | ') + '\n';
+        }
+      });
+    } else if (node.classList.contains('bigfree')) {
+      const label = node.querySelector('label')?.textContent.trim() || '';
+      const lines = Array.from(node.querySelectorAll('.line')).map(l => l.textContent.trim()).filter(t => t);
+      if (lines.length) out += '  ⚡ ' + label + '\n     ' + lines.join(' / ') + '\n';
+    }
+  });
+  out += '\n═══════════════════════════════════════\n';
+  out += '              FIN DEL CUESTIONARIO\n';
+  out += '═══════════════════════════════════════\n';
+  return out;
+}
+
+async function enviarCuestionario() {
+  const btn = document.getElementById('sendBtn');
+  const quien = document.getElementById('quienRellena').value.trim();
+  if (!quien) {
+    alert('Por favor poned vuestro nombre antes de enviar 🙂');
+    document.getElementById('quienRellena').focus();
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando…';
+
+  const reportText = buildReport();
+  const payload = {
+    _subject: '📋 Cuestionario Costa Norte · respuestas de ' + quien,
+    _replyto: document.getElementById('emailRellena').value || 'sin-email',
+    _template: 'box',
+    rellenado_por: quien,
+    email_contacto: document.getElementById('emailRellena').value || '—',
+    fecha: new Date().toLocaleString('es-ES'),
+    respuestas: reportText
+  };
+
+  try {
+    const r = await fetch('https://formsubmit.co/ajax/airmateai@gmail.com', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (r.ok) {
+      document.getElementById('submitBox').style.display = 'none';
+      document.getElementById('thanks').classList.add('show');
+      window.scrollTo({top: document.getElementById('thanks').offsetTop - 40, behavior: 'smooth'});
+      return;
+    }
+    throw new Error('HTTP ' + r.status);
+  } catch (err) {
+    // Fallback: mailto:
+    const body = encodeURIComponent(reportText);
+    const mail = `mailto:airmateai@gmail.com?subject=${encodeURIComponent('Cuestionario Costa Norte · ' + quien)}&body=${body}`;
+    if (confirm('No se pudo enviar automáticamente. ¿Quieres abrir tu correo para enviarlo manualmente?')) {
+      window.location.href = mail;
+    }
+    btn.disabled = false;
+    btn.textContent = '📤 Enviar a Fabio';
+  }
+}
+</script>
 
 <div class="footer">
   <h3>Gracias por el tiempo</h3>
