@@ -4069,19 +4069,7 @@ function deleteClient(i){if(confirm('¿Eliminar cliente?')){CLIENTS.splice(i,1);
 
 let INV_FILTER='all', INV_SEARCH='';
 function renderInvoices(){
-  const totalMes=INVOICES.reduce((a,i)=>a+i.total,0);
-  const cobrado=INVOICES.filter(i=>i.state==='Pagada').reduce((a,i)=>a+i.total,0);
-  const pendiente=INVOICES.filter(i=>i.state==='Pendiente'||i.state==='Enviada').reduce((a,i)=>a+i.total,0);
-  const ivaRep=INVOICES.reduce((a,i)=>a+i.vat,0);
-  const nFact=INVOICES.length;
   const pendCount=INVOICES.filter(i=>i.state==='Pendiente'||i.state==='Enviada').length;
-  document.getElementById('inv-kpis').innerHTML=[
-    {l:'Total facturado',v:fmt(totalMes),t:'Jun 2026',cls:''},
-    {l:'Cobrado',v:fmt(cobrado),t:'✓ '+Math.round(cobrado/totalMes*100)+'%',cls:'up'},
-    {l:'Pendiente cobro',v:fmt(pendiente),t:pendCount+' facturas',cls:'warn'},
-    {l:'IVA repercutido',v:fmt(Math.round(ivaRep)),t:'a liquidar en Jul',cls:''},
-    {l:'Facturas emitidas',v:String(nFact),t:'este mes',cls:''},
-  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val" style="font-size:20px;">${k.v}</div><div class="kpi-trend ${k.cls}">${k.t}</div></div>`).join('');
   const pc=document.getElementById('inv-pend-count');
   if(pc)pc.textContent=pendCount?'('+pendCount+')':'';
   filterInv(INV_FILTER);
@@ -4095,6 +4083,23 @@ function filterInv(f,tabEl){
   else if(f==='shop')list=INVOICES.filter(i=>i.channel==='Tienda');
   else if(f==='pending')list=INVOICES.filter(i=>i.state==='Pendiente'||i.state==='Enviada');
   else if(f==='overdue')list=INVOICES.filter(i=>i.state==='Vencida');
+  // Recalcular KPIs según la pestaña activa
+  const kpiList=(f==='pending'||f==='overdue')?list:list;
+  const kpiBase=f==='all'?INVOICES:list.filter(i=>f!=='pending'&&f!=='overdue'?true:true);
+  const _base=f==='apt'?INVOICES.filter(i=>i.channel==='Airbnb'||i.channel==='Booking'||(i.channel==='Directo'&&i.concept.toLowerCase().includes('apto'))):f==='school'?INVOICES.filter(i=>i.channel==='Escuela'):f==='shop'?INVOICES.filter(i=>i.channel==='Tienda'):INVOICES;
+  const totalMes=_base.reduce((a,i)=>a+i.total,0);
+  const cobrado=_base.filter(i=>i.state==='Pagada').reduce((a,i)=>a+i.total,0);
+  const pendiente=_base.filter(i=>i.state==='Pendiente'||i.state==='Enviada').reduce((a,i)=>a+i.total,0);
+  const ivaRep=_base.reduce((a,i)=>a+i.vat,0);
+  const nFact=_base.length;
+  const pendCount=_base.filter(i=>i.state==='Pendiente'||i.state==='Enviada').length;
+  document.getElementById('inv-kpis').innerHTML=[
+    {l:'Total facturado',v:fmt(totalMes),t:f==='all'?'Jun 2026':f==='apt'?'Apartamentos':f==='school'?'Escuela surf':f==='shop'?'Tienda':'Jun 2026',cls:''},
+    {l:'Cobrado',v:fmt(cobrado),t:totalMes>0?'✓ '+Math.round(cobrado/totalMes*100)+'%':'—',cls:'up'},
+    {l:'Pendiente cobro',v:fmt(pendiente),t:pendCount+' facturas',cls:'warn'},
+    {l:'IVA repercutido',v:fmt(Math.round(ivaRep)),t:'a liquidar en Jul',cls:''},
+    {l:'Facturas emitidas',v:String(nFact),t:'este mes',cls:''},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val" style="font-size:20px;">${k.v}</div><div class="kpi-trend ${k.cls}">${k.t}</div></div>`).join('');
   if(INV_SEARCH)list=list.filter(i=>i.client.toLowerCase().includes(INV_SEARCH)||i.num.toLowerCase().includes(INV_SEARCH));
   const chColors={Airbnb:'#ff5a5f',Booking:'#003580',Directo:'var(--coral)',Escuela:'var(--aqua-dk)',Tienda:'var(--ocean-mid)'};
   const payIcons={Tarjeta:'💳',Efectivo:'💵',Bizum:'📱',Transferencia:'🏦'};
