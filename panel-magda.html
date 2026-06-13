@@ -219,16 +219,7 @@ textarea.form-control{resize:vertical;min-height:80px;}
     <div class="login-box">
       <h2>Bienvenida, Magda 🌺</h2>
       <div class="login-box-sub">Accede a tu panel de gestión</div>
-      <div class="field-group">
-        <label class="field-label">Usuario</label>
-        <input class="field-input" id="login-slug" value="magda-punta-hidalgo" readonly style="background:#f8f8f8;color:#888;">
-      </div>
-      <div class="field-group">
-        <label class="field-label">Contraseña</label>
-        <input class="field-input" id="login-pass" type="password" placeholder="Tu contraseña" autofocus>
-      </div>
-      <button class="login-btn" onclick="doLogin()">Entrar al panel</button>
-      <div id="login-err">Contraseña incorrecta. Inténtalo de nuevo.</div>
+      <button class="login-btn" onclick="doLogin()">Entrar al panel →</button>
     </div>
   </div>
 </div>
@@ -555,26 +546,11 @@ let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 
 // ── AUTH ──────────────────────────────────────
-async function doLogin() {
-  const pass = document.getElementById('login-pass').value.trim();
-  if (!pass) return;
-  const hash = await sha256(pass);
-  const { data } = await _sb.from('bot_configs').select('slug').eq('slug', SLUG).eq('password_hash', hash);
-  if (data && data.length > 0) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    initApp();
-  } else {
-    document.getElementById('login-err').style.display = 'block';
-  }
+function doLogin() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  initApp();
 }
-
-async function sha256(msg) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-
-document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 
 // ── INIT ──────────────────────────────────────
 async function initApp() {
