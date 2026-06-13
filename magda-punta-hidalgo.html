@@ -984,15 +984,11 @@ async function submitBooking() {
   // Enviar email de notificación
   const noches2 = salida ? Math.round((new Date(salida)-new Date(entrada))/86400000) : 0;
   emailjs.send('service_ns3b7dd', 'template_6arpdfi', {
-    to_email: 'tomybeauh@gmail.com',
-    to_name: 'Magda',
+    name: nombre,
     from_name: nombre,
     client_name: nombre,
     client_phone: tel,
     client_email: email || 'No indicado',
-    service: 'Bungalow Punta del Hidalgo',
-    date: entrada,
-    appointment_date: entrada,
     start_date: entrada,
     end_date: salida || 'No indicada',
     nights: noches2,
@@ -1000,8 +996,13 @@ async function submitBooking() {
     language: idioma,
     notes: notas || 'Ninguna',
     total: importe ? importe.toLocaleString('es-ES')+'€' : 'Por confirmar',
-    message: `Nueva solicitud de reserva:\n\nHuésped: ${nombre}\nTeléfono: ${tel}\nEmail: ${email||'No indicado'}\nLlegada: ${entrada}\nSalida: ${salida||'No indicada'}\nNoches: ${noches2}\nPersonas: ${personas}\nIdioma: ${idioma}\nComentarios: ${notas||'Ninguno'}\nImporte aprox: ${importe?importe.toLocaleString('es-ES')+'€':'Por confirmar'}`
-  }).catch(() => {}); // silencioso si falla
+    message: `Nueva reserva Bungalow Punta del Hidalgo\n\nHuésped: ${nombre}\nTeléfono: ${tel}\nEmail: ${email||'No indicado'}\nLlegada: ${entrada}\nSalida: ${salida||'No indicada'}\nNoches: ${noches2}\nPersonas: ${personas}\nIdioma: ${idioma}\nComentarios: ${notas||'Ninguno'}\nImporte aprox: ${importe?importe.toLocaleString('es-ES')+'€':'Por confirmar'}`
+  }).then(() => {
+    console.log('Email enviado OK');
+  }).catch(err => {
+    console.error('EmailJS error:', JSON.stringify(err));
+    alert('Error email: ' + JSON.stringify(err));
+  }); // silencioso si falla
 
   document.getElementById('modal-form-content').style.display = 'none';
   document.querySelector('.modal-foot').style.display = 'none';
