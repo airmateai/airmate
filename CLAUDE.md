@@ -140,6 +140,21 @@ Carpeta con plantillas y guías operativas:
 - **Booksy:** https://booksy.com/es-es/138264_custom-work_barberia_70903_los-andenes
 - **TODOs pendientes:** 3 (ver memoria `cliente_customwork.md`)
 
+### Magda — Bungalow Punta del Hidalgo (Tenerife)
+- **Slug:** `magda-punta-hidalgo`
+- **Web:** `airmate.es/magda-punta-hidalgo.html` (en construcción)
+- **Panel:** `airmate.es/panel-magda.html` (en construcción)
+- **Airbnb:** https://www.airbnb.es/rooms/9981845
+- **Ubicación:** Punta del Hidalgo, noreste de Tenerife (pueblo pesquero y de surf)
+- **Descripción:** Bungalow en finca de plátanos con jardín de palmeras reales. Zona privada, acceso al mar a 5 min a pie, charcos y piscinas naturales.
+- **Anfitriona:** Magda — Superanfitrión, 10 años en Airbnb, profesora de Arte. Habla español, inglés, francés e italiano. Vive enfrente y recibe a los huéspedes personalmente.
+- **Capacidad:** 5 viajeros · 1 dormitorio · 4 camas (1 matrimonio grande + 2 individuales + 1 sofá cama) · 1 baño
+- **Precio Airbnb:** ~103€/noche (5 noches = 516€ total)
+- **Rating:** 4.97/5 con 90 reseñas (top 10% Airbnb)
+- **Servicios:** WiFi, cocina completa, aparcamiento gratuito, secadora, zona de trabajo, acceso privado playa, cuna disponible, trona
+- **Identidad visual:** natural, tropical, cálido — verdes, tierra, madera, crema
+- **Pendiente:** nombre comercial propio (ahora solo "Bungalow Punta del Hidalgo"), precio directo sin Airbnb, si tiene más apartamentos
+
 ### El Maestro Eduardo Enrique — Tarotista / Tenerife
 - **Landing:** `airmate.es/demo-maestro.html`
 - **Panel:** `airmate.es/panel-maestro.html`
