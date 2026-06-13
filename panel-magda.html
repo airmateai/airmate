@@ -185,13 +185,72 @@ textarea.form-control{resize:vertical;min-height:80px;}
 .kanban-card-name{font-size:13px;font-weight:600;margin-bottom:4px;}
 .kanban-card-sub{font-size:11px;color:var(--txt3);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 
+/* ── MOBILE APP STYLES ── */
 @media(max-width:768px){
-  .sidebar{transform:translateX(-100%);transition:transform .25s;}
-  .sidebar.open{transform:translateX(0);}
-  .main-content{margin-left:0;}
-  .kpi-grid{grid-template-columns:1fr 1fr;}
+  /* Hide sidebar, show bottom nav */
+  .sidebar{display:none;}
+  .main-content{margin-left:0;padding:16px 16px 90px;}
+
+  /* KPIs 2 col */
+  .kpi-grid{grid-template-columns:1fr 1fr;gap:10px;}
+  .kpi{padding:14px;}
+  .kpi-value{font-size:22px;}
+
+  /* Forms 1 col */
   .form-row{grid-template-columns:1fr;}
+
+  /* Kanban vertical */
   .kanban-board{grid-template-columns:1fr;}
+
+  /* Table scroll */
+  .table-wrap{-webkit-overflow-scrolling:touch;}
+  table{min-width:600px;}
+
+  /* Page header */
+  .page-header{flex-direction:column;align-items:flex-start;gap:10px;}
+  .page-title{font-size:18px;}
+
+  /* Calendar bigger touch */
+  .cal-day{font-size:15px;}
+
+  /* Toast above bottom nav */
+  #toast{bottom:80px;right:12px;left:12px;text-align:center;}
+
+  /* Modal full screen on mobile */
+  .modal{max-width:100%;max-height:100vh;border-radius:20px 20px 0 0;position:fixed;bottom:0;left:0;right:0;}
+  .modal-overlay{align-items:flex-end;padding:0;}
+
+  /* Login mobile */
+  .login-left{display:none;}
+  .login-right{width:100%;background:linear-gradient(160deg,#1a2e1a,#2d4a2d);}
+  .login-box *{color:#fff!important;}
+  .login-box input{background:rgba(255,255,255,.1)!important;border-color:rgba(255,255,255,.2)!important;}
+  .login-btn{background:rgba(255,255,255,.15)!important;border:1px solid rgba(255,255,255,.3)!important;}
+}
+
+/* BOTTOM NAV */
+#bottom-nav{display:none;}
+@media(max-width:768px){
+  #bottom-nav{
+    display:flex;
+    position:fixed;bottom:0;left:0;right:0;
+    background:#fff;
+    border-top:1px solid #e8ece8;
+    z-index:200;
+    box-shadow:0 -4px 20px rgba(0,0,0,.08);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .bn-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:10px 4px 8px;
+    border:none;background:none;cursor:pointer;
+    font-size:10px;font-weight:600;color:#8a9a8a;
+    transition:color .15s;
+    position:relative;
+  }
+  .bn-item.active{color:var(--acc);}
+  .bn-item .bn-icon{font-size:1.3rem;line-height:1;}
+  .bn-badge{position:absolute;top:6px;right:calc(50% - 18px);background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:20px;display:none;}
 }
 </style>
 </head>
@@ -534,6 +593,26 @@ textarea.form-control{resize:vertical;min-height:80px;}
 <!-- TOAST -->
 <div id="toast"></div>
 
+<!-- BOTTOM NAV (mobile only) -->
+<nav id="bottom-nav">
+  <button class="bn-item active" onclick="navTo('dashboard',this)" data-page="dashboard">
+    <span class="bn-icon">📊</span>Inicio
+  </button>
+  <button class="bn-item" onclick="navTo('calendario',this)" data-page="calendario">
+    <span class="bn-icon">📅</span>Calendario
+  </button>
+  <button class="bn-item" onclick="navTo('reservas',this)" data-page="reservas">
+    <span class="bn-icon">🏠</span>Reservas
+  </button>
+  <button class="bn-item" onclick="navTo('consultas',this)" data-page="consultas">
+    <span class="bn-icon">💬</span>Consultas
+    <span class="bn-badge" id="bn-badge-leads">0</span>
+  </button>
+  <button class="bn-item" onclick="navTo('ingresos',this)" data-page="ingresos">
+    <span class="bn-icon">💰</span>Ingresos
+  </button>
+</nav>
+
 <script>
 const SB_URL = 'https://vjofxmfwdybktpwiuanc.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
@@ -585,9 +664,14 @@ function subscribeRealtime() {
 function navTo(page, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.bn-item').forEach(i => i.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   el.classList.add('active');
+  // sync bottom nav
+  const bn = document.querySelector(`.bn-item[data-page="${page}"]`);
+  if (bn) bn.classList.add('active');
   if (page === 'calendario') renderCalendar();
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 // ── DASHBOARD ─────────────────────────────────
@@ -613,6 +697,8 @@ function renderDashboard() {
   const badgeEl = document.getElementById('badge-leads');
   badgeEl.textContent = leadsNuevos;
   badgeEl.style.display = leadsNuevos > 0 ? '' : 'none';
+  const bnBadge = document.getElementById('bn-badge-leads');
+  if (bnBadge) { bnBadge.textContent = leadsNuevos; bnBadge.style.display = leadsNuevos > 0 ? '' : 'none'; }
 
   // próximas llegadas
   const proximas = RESERVAS.filter(r => new Date(r.start_time) >= now && r.status !== 'cancelada').slice(0, 8);
