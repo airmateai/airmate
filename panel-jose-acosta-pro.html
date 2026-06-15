@@ -1099,6 +1099,8 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
               </div>
               <button class="btn btn-ghost" onclick="exportClientesCSV()" id="cli-btn-csv"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> CSV</button>
               <button class="btn btn-ghost" onclick="sincronizarContactosHolded()" id="cli-btn-sync" title="Enriquecer fichas con NIF, IBAN, dirección y teléfono desde Holded"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Importar Holded</button>
+              <button class="btn btn-ghost" onclick="crmFiltrarFidelizados()" id="cli-btn-fid" title="Ver solo clientes fidelizados">⭐ Fidelizados</button>
+              <button class="btn btn-ghost" onclick="abrirCorreosMasivos()" title="Enviar email a clientes">✉ Email masivo</button>
               <button class="btn btn-accent" id="cli-btn-new" onclick="crmOpenClienteModal()">+ Nuevo cliente</button>
             </div>
           </div>
@@ -1251,6 +1253,7 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
                 </select>
                 <select class="ctrl-select" id="igic-year"></select>
                 <button class="btn btn-accent" onclick="calcIGIC()">Calcular</button>
+                <button class="btn btn-ghost" onclick="exportLibroTrimestral()"> Exportar libro CSV</button>
                 <button class="btn btn-ghost" id="igic-print-btn" style="display:none" onclick="printIGIC()"> Generar informe PDF</button>
               </div>
             </div>
@@ -1405,6 +1408,7 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
               <button class="btn btn-ghost btn-sm" onclick="tpvVista('historial')" id="tpv-btn-hist"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M9 2h6a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v0a2 2 0 0 1 2-2z"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Historial</button>
               <button onclick="tpvVista('caja')" id="tpv-btn-caja" style="background:#0a0a0a;color:#c4a35a;border:1px solid rgba(196,163,90,.35);padding:7px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg> Nueva venta</button>
               <button onclick="tpvTrajeAMedida()" style="background:#1a1208;color:#c4a35a;border:1px solid rgba(196,163,90,.35);padding:7px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg> Traje a Medida</button>
+              <button onclick="abrirCierreCaja()" style="background:#1a1208;color:#c4a35a;border:1px solid rgba(196,163,90,.35);padding:7px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg> Cierre de caja</button>
             </div>
           </div>
 
@@ -2520,7 +2524,7 @@ function crmRenderClientes(list){
     const m=c.measurements||{};
     const medShort=Object.keys(m).length?`T${m.talla||'—'} · P${m.pecho||'—'} · C${m.cintura||'—'}`:'—';
     return `<tr>
-      <td><button class="btn btn-ghost btn-xs" style="font-weight:700;text-align:left" onclick="crmVerCliente('${c.id}')">${esc(c.name)}</button></td>
+      <td><button class="btn btn-ghost btn-xs" style="font-weight:700;text-align:left" onclick="crmVerCliente('${c.id}')">${esc(c.name)}</button>${(c.tags||'').includes('fidelizado')?'<span style="font-size:10px;background:#fef9c3;color:#854d0e;border:1px solid #fde68a;border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle">⭐ Fidelizado</span>':''}</td>
       <td>${esc(c.phone||'—')}</td>
       <td>${esc(c.email||'—')}</td>
       <td style="font-size:11px;color:var(--txt3)">${medShort}</td>
@@ -2621,7 +2625,34 @@ async function crmVerCliente(id){
     </div>
   </div>` : '';
 
-  // <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M12 3l1.9 5.8L20 11l-6.1 1.2L12 19l-2-6.8L4 11l6-2.2z"/></svg> Timeline cronológico (citas + encargos + facturas mezclados)
+  // Fondos de cliente (wallet)
+  const walletMovs=await fondoVerMovimientos(id);
+  const walletSaldo=fondoSaldo(walletMovs);
+  const walletHtml=`<div style="margin-bottom:20px;padding:16px;border:1px solid ${walletSaldo>0?'#bbf7d0':walletSaldo<0?'#fecaca':'#e2e8f0'};border-radius:12px;background:${walletSaldo>0?'#f0fdf4':walletSaldo<0?'#fff1f2':'#f8fafc'}">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em"> Fondos del cliente</div>
+      <span style="font-size:18px;font-weight:800;color:${walletSaldo>=0?'#16a34a':'#dc2626'}">${walletSaldo.toLocaleString('es-ES',{minimumFractionDigits:2})} €</span>
+    </div>
+    ${walletMovs.length?`<div style="max-height:120px;overflow-y:auto;margin-bottom:10px">${walletMovs.slice(0,5).map(m=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.05)"><span style="color:#475569">${m.created_at?m.created_at.split('T')[0]:'—'} · ${esc(m.title)}</span><span style="font-weight:700;color:${Number(m.price)>=0?'#16a34a':'#dc2626'}">${Number(m.price)>=0?'+':''}${Number(m.price).toLocaleString('es-ES',{minimumFractionDigits:2})} €</span></div>`).join('')}</div>`:'<div style="font-size:12px;color:#94a3b8;margin-bottom:10px">Sin movimientos registrados</div>'}
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-xs" onclick="fondoDepositar('${id}','${esc(c.name)}')">+ Depositar</button>
+      <button class="btn btn-ghost btn-xs" onclick="fondoDescontar('${id}','${esc(c.name)}')">− Descontar</button>
+      ${c.email?`<button class="btn btn-ghost btn-xs" onclick="fondoEnviarResumen('${id}')">✉ Enviar resumen</button>`:''}
+    </div>
+  </div>`;
+
+  // Préstamos de trajes
+  const [prestData]=await Promise.all([_sb.from('crm_orders').select('id,title,status,created_at,notes').eq('business_slug',BIZ_SLUG).eq('client_id',id).in('status',['prestamo','prestamo-devuelto']).order('created_at',{ascending:false})]);
+  const prests=prestData.data||[];
+  const prestamosHtml=`<div style="margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em"> Préstamo de trajes</div>
+      <button class="btn btn-ghost btn-xs" onclick="prestamoNuevo('${id}','${esc(c.name)}')">+ Nuevo préstamo</button>
+    </div>
+    ${prests.length?prests.map(p=>{let nd={};try{nd=JSON.parse(p.notes||'{}')}catch{}return`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8fafc;border-radius:8px;margin-bottom:6px;border:1px solid #e2e8f0"><div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(p.title)}</div><div style="font-size:11px;color:#64748b">Salida: ${nd.fecha_salida||'—'} · Retorno: ${nd.fecha_retorno||'—'}</div></div><span style="font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;${p.status==='prestamo-devuelto'?'background:#f0fdf4;color:#16a34a':'background:#fff7ed;color:#c2410c'}">${p.status==='prestamo-devuelto'?'Devuelto':'En préstamo'}</span>${p.status==='prestamo'?`<button class="btn btn-ghost btn-xs" onclick="prestamoDevolver('${p.id}','${id}')">Devuelto</button>`:''}</div>`}).join(''):'<div style="font-size:12px;color:#94a3b8">Sin préstamos registrados</div>'}
+  </div>`;
+
+  // Timeline cronológico (citas + encargos + facturas mezclados)
   const events=[];
   (ords.data||[]).forEach(o=>events.push({type:'enc',date:o.created_at||new Date().toISOString(),icon:'',color:'#c4a35a',title:o.title,sub:'Encargo · '+(o.status||'')+(o.price?' · '+crmFmt(o.price):'')}));
   factsArr.forEach(f=>events.push({type:'fac',date:f.issue_date||new Date().toISOString(),icon:f.type==='factura'?'':'',color:f.status==='pagado'?'#16a34a':'#94a3b8',title:f.invoice_number||'—',sub:(f.type==='factura'?'Factura':'Presupuesto')+' · '+(f.status||'')+' · '+crmFmt(f.total||0)}));
@@ -2653,7 +2684,7 @@ async function crmVerCliente(id){
     </div>`+
     siluetaHtml+
     `<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px"> Medidas detalladas</div>`+
-    medHtml+saldoHtml+timelineHtml+ordsHtml+factsHtml,
+    medHtml+saldoHtml+walletHtml+prestamosHtml+timelineHtml+ordsHtml+factsHtml,
     `<button class="btn btn-ghost" onclick="crmCloseModal()">Cerrar</button>
      <button class="btn btn-ghost" onclick="compartirPortalCliente('${id}','${esc(c.name)}','${esc(c.phone||'')}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Portal cliente</button>
      <button class="btn btn-ghost" onclick="crmCloseModal();crmOpenFacturaModalForClient('${id}','${esc(c.name)}')">+ Presupuesto</button>
@@ -2701,6 +2732,10 @@ function crmClienteForm(c={}){
   <div class="crm-form-group"><label class="crm-form-label">Dirección fiscal</label><input class="crm-form-ctrl" id="cf-direccion" value="${esc(c.direccion||'')}"/></div>
   <div class="crm-form-row">
     <div class="crm-form-group"><label class="crm-form-label">Etiquetas (separadas por coma)</label><input class="crm-form-ctrl" id="cf-tags" value="${esc(c.tags||'')}" placeholder="novio, corporativo, vip..."/></div>
+    <div class="crm-form-group" style="display:flex;align-items:center;gap:10px;padding-top:22px">
+      <input type="checkbox" id="cf-fidelizado" ${(c.tags||'').includes('fidelizado')?'checked':''} style="width:18px;height:18px;accent-color:#c4a35a;cursor:pointer">
+      <label for="cf-fidelizado" style="font-size:13px;font-weight:700;color:#c4a35a;cursor:pointer">⭐ Cliente fidelizado</label>
+    </div>
   </div>
   <div class="crm-form-group"><label class="crm-form-label">Notas</label><textarea class="crm-form-ctrl" id="cf-notes">${esc(c.notes||'')}</textarea></div>
   <div class="crm-form-group"><label class="crm-form-label">Medidas (cm)</label>
@@ -2740,12 +2775,174 @@ async function crmSaveCliente(){
   ['pecho','cintura','cadera'].forEach(f=>{const v=cv('cf-'+f);if(v)m[f]=Number(v);});
   const lp=cv('cf-lpant');if(lp)m.largo_pantalon=Number(lp);
   const lc=cv('cf-lchaq');if(lc)m.largo_chaqueta=Number(lc);
-  const payload={business_slug:BIZ_SLUG,name,tipo:cv('cf-tipo')||'particular',empresa:cv('cf-empresa')||null,phone:cv('cf-phone')||null,email:cv('cf-email')||null,nif:cv('cf-nif')||null,iban:cv('cf-iban')||null,direccion:cv('cf-direccion')||null,tags:cv('cf-tags')||null,notes:cv('cf-notes')||null,measurements:Object.keys(m).length?m:null};
+  let tagsVal=cv('cf-tags')||'';
+  const fidEl=document.getElementById('cf-fidelizado');
+  if(fidEl&&fidEl.checked){if(!tagsVal.includes('fidelizado'))tagsVal=(tagsVal?tagsVal+',fidelizado':'fidelizado');}
+  else{tagsVal=tagsVal.split(',').map(s=>s.trim()).filter(s=>s&&s!=='fidelizado').join(',');}
+  const payload={business_slug:BIZ_SLUG,name,tipo:cv('cf-tipo')||'particular',empresa:cv('cf-empresa')||null,phone:cv('cf-phone')||null,email:cv('cf-email')||null,nif:cv('cf-nif')||null,iban:cv('cf-iban')||null,direccion:cv('cf-direccion')||null,tags:tagsVal||null,notes:cv('cf-notes')||null,measurements:Object.keys(m).length?m:null};
   if(_crmEditId)await _sb.from('crm_clients').update(payload).eq('id',_crmEditId);
   else await _sb.from('crm_clients').insert(payload);
   crmCloseModal();crmLoadClientes();showToast('Cliente guardado');
 }
 async function crmDeleteCliente(id){if(!confirm('¿Eliminar cliente?'))return;await _sb.from('crm_clients').delete().eq('id',id);crmLoadClientes();}
+
+// ── FIDELIZADOS ─────────────────────────────────────────────────────────────
+let _filtrFidelizados=false;
+function crmFiltrarFidelizados(){
+  _filtrFidelizados=!_filtrFidelizados;
+  const btn=document.getElementById('cli-btn-fid');
+  btn.style.background=_filtrFidelizados?'#fef9c3':'';
+  btn.style.color=_filtrFidelizados?'#854d0e':'';
+  const lista=_filtrFidelizados?_crmClientes.filter(c=>(c.tags||'').includes('fidelizado')):_crmClientes;
+  crmRenderClientes(lista);
+}
+
+// ── CORREOS MASIVOS ──────────────────────────────────────────────────────────
+function abrirCorreosMasivos(){
+  const emails=_crmClientes.filter(c=>c.email).map(c=>c.email);
+  const fidelizados=_crmClientes.filter(c=>c.email&&(c.tags||'').includes('fidelizado')).map(c=>c.email);
+  crmOpenModal('✉ Email masivo a clientes',`
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;color:#64748b;margin-bottom:8px">${emails.length} clientes con email · ${fidelizados.length} fidelizados</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('em-dest').value='todos'">Todos (${emails.length})</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('em-dest').value='fidelizados'">Fidelizados (${fidelizados.length})</button>
+      </div>
+      <input type="hidden" id="em-dest" value="todos">
+    </div>
+    <div class="crm-form-group"><label class="crm-form-label">Asunto</label><input class="crm-form-ctrl" id="em-asunto" placeholder="Nuevas colecciones Jose Acosta Style..."/></div>
+    <div class="crm-form-group"><label class="crm-form-label">Mensaje</label><textarea class="crm-form-ctrl" id="em-cuerpo" rows="5" placeholder="Estimado cliente,&#10;&#10;Queremos informarle..."></textarea></div>`,
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button><button class="btn btn-accent" onclick="enviarEmailMasivo()">✉ Abrir en email</button>`);
+}
+function enviarEmailMasivo(){
+  const dest=document.getElementById('em-dest').value;
+  const emails=dest==='fidelizados'?_crmClientes.filter(c=>c.email&&(c.tags||'').includes('fidelizado')).map(c=>c.email):_crmClientes.filter(c=>c.email).map(c=>c.email);
+  if(!emails.length){showToast('No hay emails disponibles');return;}
+  const asunto=encodeURIComponent(document.getElementById('em-asunto').value||'Jose Acosta Style');
+  const cuerpo=encodeURIComponent(document.getElementById('em-cuerpo').value||'');
+  window.location.href=`mailto:?bcc=${emails.join(',')}&subject=${asunto}&body=${cuerpo}`;
+  crmCloseModal();showToast('Abriendo cliente de email...');
+}
+
+// ── FONDOS DE CLIENTE (WALLET) ───────────────────────────────────────────────
+async function fondoVerMovimientos(clienteId){
+  const {data}=await _sb.from('crm_orders').select('id,title,price,created_at,notes').eq('business_slug',BIZ_SLUG).eq('client_id',clienteId).eq('status','fondo').order('created_at',{ascending:false});
+  return data||[];
+}
+function fondoSaldo(movs){return movs.reduce((s,m)=>s+Number(m.price||0),0);}
+async function fondoDepositar(clienteId,clienteNombre){
+  const importe=parseFloat(prompt('Importe a depositar (€):'));if(!importe||importe<=0)return;
+  const notas=prompt('Notas (opcional):');
+  await _sb.from('crm_orders').insert({business_slug:BIZ_SLUG,client_id:clienteId,client_name:clienteNombre,title:'Depósito fondo cliente',status:'fondo',price:importe,notes:notas||null});
+  showToast('Depósito registrado: '+importe.toFixed(2)+' €');
+  crmVerCliente(clienteId);
+}
+async function fondoDescontar(clienteId,clienteNombre){
+  const movs=await fondoVerMovimientos(clienteId);
+  const saldo=fondoSaldo(movs);
+  if(saldo<=0){showToast('Sin saldo disponible');return;}
+  const importe=parseFloat(prompt(`Saldo disponible: ${saldo.toFixed(2)} €\nImporte a descontar (€):`));if(!importe||importe<=0)return;
+  if(importe>saldo){if(!confirm(`El descuento (${importe}€) supera el saldo (${saldo.toFixed(2)}€). ¿Continuar con saldo negativo?`))return;}
+  const notas=prompt('Concepto del descuento:');
+  await _sb.from('crm_orders').insert({business_slug:BIZ_SLUG,client_id:clienteId,client_name:clienteNombre,title:'Descuento fondo cliente',status:'fondo',price:-Math.abs(importe),notes:notas||null});
+  showToast('Descuento registrado: -'+importe.toFixed(2)+' €');
+  crmVerCliente(clienteId);
+}
+async function fondoEnviarResumen(clienteId){
+  const c=_crmClientes.find(x=>x.id===clienteId);
+  if(!c||!c.email){alert('El cliente no tiene email registrado');return;}
+  const movs=await fondoVerMovimientos(clienteId);
+  const saldo=fondoSaldo(movs);
+  const asunto=encodeURIComponent('Resumen de fondos — Jose Acosta Style');
+  let cuerpo=`Estimado/a ${c.name},\n\nSaldo disponible en su cuenta: ${saldo.toFixed(2)} €\n\nMovimientos:\n`;
+  movs.forEach(m=>{const fecha=m.created_at?m.created_at.split('T')[0]:'—';const tipo=m.price>=0?'Depósito':'Descuento';cuerpo+=`${fecha} — ${tipo}: ${Number(m.price||0).toFixed(2)} € ${m.notes?'('+m.notes+')':''}\n`;});
+  cuerpo+='\nGracias por su confianza.\n\nJose Acosta Style';
+  window.location.href=`mailto:${c.email}?subject=${asunto}&body=${encodeURIComponent(cuerpo)}`;
+}
+
+// ── PRÉSTAMO DE TRAJES ───────────────────────────────────────────────────────
+async function prestamoNuevo(clienteId,clienteNombre){
+  const prenda=prompt('Prenda a prestar (ej: Traje azul marino):');if(!prenda)return;
+  const fechaSalida=prompt('Fecha de salida (YYYY-MM-DD):',new Date().toISOString().split('T')[0]);
+  const fechaRetorno=prompt('Fecha prevista de retorno (YYYY-MM-DD):');
+  const notas=JSON.stringify({tipo:'prestamo',fecha_salida:fechaSalida,fecha_retorno:fechaRetorno||null});
+  await _sb.from('crm_orders').insert({business_slug:BIZ_SLUG,client_id:clienteId,client_name:clienteNombre,title:`Préstamo: ${prenda}`,status:'prestamo',price:0,notes:notas});
+  showToast('Préstamo registrado');crmVerCliente(clienteId);
+}
+async function prestamoDevolver(id,clienteId){
+  if(!confirm('¿Marcar como devuelto?'))return;
+  await _sb.from('crm_orders').update({status:'prestamo-devuelto',updated_at:new Date().toISOString()}).eq('id',id);
+  showToast('Préstamo marcado como devuelto');crmVerCliente(clienteId);
+}
+
+// ── CIERRE DE CAJA ───────────────────────────────────────────────────────────
+function abrirCierreCaja(){
+  const hoy=new Date().toISOString().split('T')[0];
+  crmOpenModal('Cierre de caja — '+hoy,`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="crm-form-group"><label class="crm-form-label">Efectivo en caja (€)</label><input type="number" class="crm-form-ctrl" id="cc-efectivo" step="0.01" min="0" placeholder="0.00" oninput="calcCierreDiferencia()"/></div>
+      <div class="crm-form-group"><label class="crm-form-label">Cobros por tarjeta (€)</label><input type="number" class="crm-form-ctrl" id="cc-tarjeta" step="0.01" min="0" placeholder="0.00" oninput="calcCierreDiferencia()"/></div>
+      <div class="crm-form-group"><label class="crm-form-label">Cobros por Bizum (€)</label><input type="number" class="crm-form-ctrl" id="cc-bizum" step="0.01" min="0" placeholder="0.00" oninput="calcCierreDiferencia()"/></div>
+      <div class="crm-form-group"><label class="crm-form-label">Cobros por transferencia (€)</label><input type="number" class="crm-form-ctrl" id="cc-transf" step="0.01" min="0" placeholder="0.00" oninput="calcCierreDiferencia()"/></div>
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:#16a34a;font-weight:600">Total recaudado</span><span id="cc-total" style="font-size:16px;font-weight:800;color:#16a34a">0,00 €</span></div>
+    </div>
+    <div class="crm-form-group"><label class="crm-form-label">Observaciones</label><input class="crm-form-ctrl" id="cc-notas" placeholder="Incidencias, descuadres..."/></div>`,
+    `<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button><button class="btn btn-accent" onclick="guardarCierreCaja()">Guardar cierre</button>`);
+}
+function calcCierreDiferencia(){
+  const ef=parseFloat(document.getElementById('cc-efectivo')?.value)||0;
+  const ta=parseFloat(document.getElementById('cc-tarjeta')?.value)||0;
+  const bi=parseFloat(document.getElementById('cc-bizum')?.value)||0;
+  const tr=parseFloat(document.getElementById('cc-transf')?.value)||0;
+  const tot=ef+ta+bi+tr;
+  const el=document.getElementById('cc-total');if(el)el.textContent=tot.toLocaleString('es-ES',{minimumFractionDigits:2})+' €';
+}
+async function guardarCierreCaja(){
+  const hoy=new Date().toISOString().split('T')[0];
+  const ef=parseFloat(document.getElementById('cc-efectivo')?.value)||0;
+  const ta=parseFloat(document.getElementById('cc-tarjeta')?.value)||0;
+  const bi=parseFloat(document.getElementById('cc-bizum')?.value)||0;
+  const tr=parseFloat(document.getElementById('cc-transf')?.value)||0;
+  const tot=ef+ta+bi+tr;
+  const notas=JSON.stringify({tipo:'cierre_caja',efectivo:ef,tarjeta:ta,bizum:bi,transferencia:tr,total:tot,obs:document.getElementById('cc-notas')?.value||''});
+  await _sbSrv.from('facturas_compra').insert({business_slug:BIZ_SLUG,proveedor:'CIERRE DE CAJA',concepto:`Cierre caja ${hoy}`,importe:tot,fecha:hoy,categoria:'Cierre de Caja',notas});
+  showToast('Cierre de caja guardado — '+tot.toLocaleString('es-ES',{minimumFractionDigits:2})+' €');
+  crmCloseModal();
+}
+
+// ── LIBRO TRIMESTRAL ─────────────────────────────────────────────────────────
+async function exportLibroTrimestral(){
+  const q=parseInt(document.getElementById('igic-trimestre')?.value||new Date().getMonth()/3+1);
+  const year=new Date().getFullYear();
+  const meses=[[1,3],[4,6],[7,9],[10,12]][q-1];
+  const desde=`${year}-${String(meses[0]).padStart(2,'0')}-01`;
+  const hasta=`${year}-${String(meses[1]).padStart(2,'0')}-${[0,31,28,31,30,31,30,31,31,30,31,30,31][meses[1]]}`;
+  const [fEmit,fComp]=await Promise.all([
+    _sb.from('crm_invoices').select('*').eq('business_slug',BIZ_SLUG).gte('issue_date',desde).lte('issue_date',hasta).order('issue_date'),
+    _sbSrv.from('facturas_compra').select('*').eq('business_slug',BIZ_SLUG).gte('fecha',desde).lte('fecha',hasta).order('fecha')
+  ]);
+  const rows=[['LIBRO DE FACTURAS — Q'+q+' '+year,'','','','','',''],
+    ['TIPO','Fecha','Número/Proveedor','Concepto/Cliente','Base Imponible (€)','IGIC (€)','Total (€)']];
+  const biz=getBizInfo();const igicPct=biz.iva_pct||7;
+  (fEmit.data||[]).forEach(f=>{
+    const tot=Number(f.total||0);const base=tot/(1+igicPct/100);const igic=tot-base;
+    rows.push(['EMITIDA',f.issue_date||'',f.invoice_number||'',f.client_name||'',base.toFixed(2),igic.toFixed(2),tot.toFixed(2)]);
+  });
+  (fComp.data||[]).filter(c=>c.categoria!=='Cierre de Caja').forEach(c=>{
+    const imp=Number(c.importe||0);rows.push(['RECIBIDA',c.fecha||'',c.proveedor||'',c.concepto||'',imp.toFixed(2),'0.00',imp.toFixed(2)]);
+  });
+  const totEmit=(fEmit.data||[]).reduce((s,f)=>s+Number(f.total||0),0);
+  const totComp=(fComp.data||[]).filter(c=>c.categoria!=='Cierre de Caja').reduce((s,c)=>s+Number(c.importe||0),0);
+  rows.push(['','','','TOTAL EMITIDAS',(totEmit/(1+igicPct/100)).toFixed(2),(totEmit-(totEmit/(1+igicPct/100))).toFixed(2),totEmit.toFixed(2)]);
+  rows.push(['','','','TOTAL RECIBIDAS',totComp.toFixed(2),'0.00',totComp.toFixed(2)]);
+  const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv);
+  a.download=`libro-trimestral-Q${q}-${year}.csv`;a.click();
+  showToast('Libro trimestral exportado — '+rows.length+' registros');
+}
 
 // ── CORPORATIVOS ────────────────────────────────────────────────────────────
 let _corpGroups=[];
@@ -3990,7 +4187,35 @@ function compraForm(c={}){
       </select>
     </div>
   </div>
+  <div class="crm-form-row">
+    <div class="crm-form-group"><label class="crm-form-label">Divisa</label>
+      <select class="crm-form-ctrl" id="cp-divisa">
+        ${['EUR','USD','GBP','MAD','CNY'].map(d=>`<option value="${d}"${(c._divisa||'EUR')===d?' selected':''}>${d}</option>`).join('')}
+      </select>
+    </div>
+    <div class="crm-form-group"><label class="crm-form-label">Tipo de cambio (1 divisa = X €)</label>
+      <input type="number" class="crm-form-ctrl" id="cp-cambio" step="0.0001" min="0" value="${c._cambio||1}" placeholder="1.0000"/>
+    </div>
+  </div>
+  <div class="crm-form-row">
+    <div class="crm-form-group"><label class="crm-form-label">Coste transporte (€)</label>
+      <input type="number" class="crm-form-ctrl" id="cp-transporte" step="0.01" min="0" value="${c._transporte||''}" placeholder="0.00" oninput="calcCosteTotal()"/>
+    </div>
+    <div class="crm-form-group"><label class="crm-form-label">Coste total (producto + transporte)</label>
+      <input type="number" class="crm-form-ctrl" id="cp-coste-total" step="0.01" readonly style="background:#f8fafc;color:#64748b" placeholder="Se calcula automáticamente"/>
+    </div>
+  </div>
+  <div class="crm-form-group"><label class="crm-form-label">Proveedor factura transporte (referencia)</label>
+    <input class="crm-form-ctrl" id="cp-transporte-ref" value="${esc(c._transporte_ref||'')}" placeholder="Ej: Seur, MRW, referencia factura..."/>
+  </div>
   <div class="crm-form-group"><label class="crm-form-label">Notas</label><textarea class="crm-form-ctrl" id="cp-notas">${esc(nota)}</textarea></div>`;}
+
+function calcCosteTotal(){
+  const importe=parseFloat(document.getElementById('cp-importe')?.value)||0;
+  const transporte=parseFloat(document.getElementById('cp-transporte')?.value)||0;
+  const el=document.getElementById('cp-coste-total');
+  if(el)el.value=(importe+transporte).toFixed(2);
+}
 
 async function cpUploadImg(input){
   const file=input.files[0];if(!file)return;
@@ -4032,7 +4257,13 @@ async function saveCompra(){
   const concepto=cv('cp-concepto').trim()||'Sin concepto';
   const importe=parseFloat(cv('cp-importe'))||0;
   const imgUrl=document.getElementById('cp-img-url')?.value||'';
-  const notasRaw=_compraStringifyNotas(cv('cp-notas'),imgUrl);
+  const divisa=cv('cp-divisa')||'EUR';
+  const cambio=parseFloat(cv('cp-cambio'))||1;
+  const transporte=parseFloat(document.getElementById('cp-transporte')?.value)||0;
+  const transRef=cv('cp-transporte-ref')||'';
+  const costeTotal=importe+transporte;
+  const notasExtra=divisa!=='EUR'||transporte>0?`|divisa:${divisa}|cambio:${cambio}|transporte:${transporte}|transporte_ref:${transRef}|coste_total:${costeTotal}`:'';
+  const notasRaw=_compraStringifyNotas(cv('cp-notas'),imgUrl)+notasExtra;
   const payload={business_slug:BIZ_SLUG,proveedor:cv('cp-proveedor')||null,concepto,importe,fecha:cv('cp-fecha')||null,metodo:cv('cp-metodo')||null,categoria:cv('cp-cat')||null,notas:notasRaw};
   let saveErr;
   if(_crmEditId){const r=await _sbSrv.from('facturas_compra').update(payload).eq('id',_crmEditId);saveErr=r.error;}
