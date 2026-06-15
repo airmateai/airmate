@@ -1434,16 +1434,8 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
               <div style="border-top:1px solid rgba(196,163,90,.25);margin-top:14px;padding-top:14px">
                 <span id="tpv-subtotal" style="display:none"></span>
                 <span id="tpv-igic" style="display:none"></span>
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                  <span style="font-size:11px;color:rgba(255,255,255,.4);font-weight:600;letter-spacing:.05em;text-transform:uppercase">IGIC</span>
-                  <div style="display:flex;gap:6px">
-                    <button id="tpv-igic-off" onclick="tpvSetIGIC(0)" style="padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:rgba(196,163,90,.25);color:#c4a35a;border:1px solid rgba(196,163,90,.3)">Sin IGIC</button>
-                    <button id="tpv-igic-3" onclick="tpvSetIGIC(3)" style="padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.1)">3%</button>
-                    <button id="tpv-igic-7" onclick="tpvSetIGIC(7)" style="padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.1)">7%</button>
-                  </div>
-                </div>
                 <div id="tpv-igic-desglose" style="display:none;justify-content:space-between;margin-bottom:8px">
-                  <span style="font-size:12px;color:rgba(255,255,255,.5)">Base + IGIC <span id="tpv-igic-pct"></span></span>
+                  <span style="font-size:11px;color:rgba(255,255,255,.4);font-weight:600;letter-spacing:.05em;text-transform:uppercase">IGIC 7% <span id="tpv-igic-pct" style="font-weight:400;font-size:10px"></span></span>
                   <span id="tpv-igic-amt" style="font-size:12px;color:rgba(255,255,255,.5)"></span>
                 </div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:16px">
@@ -4299,9 +4291,13 @@ function crmViewFactura(id,idx=0){
   const client=_crmClientes.find(x=>x.id===f.client_id);
   const medSection='';
   const biz=getBizInfo();
-  const ivaPct=biz.iva_pct||0;
-  const baseIVA=total/(1+ivaPct/100);
-  const iva=total-baseIVA;
+  const ivaPct=biz.iva_pct||7;
+  // Sastrería: IGIC 7% añadido encima (precio = base, total = base × 1.07)
+  // Retail: IGIC 7% incluido en precio (base = precio / 1.07)
+  const isSastreria=items.every(l=>{const n=(l.nombre||l.name||'').toLowerCase();return n.includes('traje')||n.includes('medida')||n.includes('sast');});
+  const baseReal=isSastreria?total:Math.round(total/(1+ivaPct/100)*100)/100;
+  const iva=Math.round((total-baseReal)*100)/100;
+  const baseIVA=baseReal;
   const safeStatus=(f.status||'borrador').toString();
   const statusColor={borrador:'#94a3b8',enviado:'#3b82f6',pagado:'#16a34a',cancelado:'#ef4444'}[safeStatus]||'#94a3b8';
   const statusLabel={borrador:'BORRADOR',enviado:'ENVIADO',pagado:'PAGADO',cancelado:'CANCELADO'}[safeStatus]||safeStatus.toUpperCase();
@@ -5883,7 +5879,8 @@ async function tpvLoadProductos() {
     stock:parseFloat(p.stock||0)||0,
     emoji:tpvEmojiCategoria(p.category),
     imagen:(()=>{try{const v=p.image_url;if(!v)return null;if(v.startsWith('[')){const arr=JSON.parse(v);return arr[0]||null;}return v;}catch(e){return p.image_url||null;}})(),
-    fotos:(()=>{try{const v=p.image_url;if(!v)return [];if(v.startsWith('[')){return JSON.parse(v)||[];}return [v];}catch(e){return p.image_url?[p.image_url]:[];}})()
+    fotos:(()=>{try{const v=p.image_url;if(!v)return [];if(v.startsWith('[')){return JSON.parse(v)||[];}return [v];}catch(e){return p.image_url?[p.image_url]:[];}})(),
+    igicTipo:(()=>{const cat=(p.category||'').toLowerCase();return(cat.includes('sast')||cat.includes('traje')||cat.includes('medida'))?'añadido':'incluido';})()
   }));
   dbg.textContent=TPV_PRODUCTOS.length+' productos cargados, renderizando...';
   console.log('TPV cargados:',TPV_PRODUCTOS.length,TPV_PRODUCTOS);
@@ -6081,35 +6078,54 @@ function tpvQuitarLinea(id) {
   tpvRenderCatalogo();
 }
 
+function tpvCalcLineaIGIC(c){
+  // Busca el producto en catálogo para saber su igicTipo
+  var prod=TPV_PRODUCTOS.find(function(p){return String(p.id)===String(c.id);});
+  var igicTipo=(prod&&prod.igicTipo)||'incluido';
+  var lineTotal=c.precio*c.qty;
+  var base,igic;
+  if(igicTipo==='añadido'){
+    // Sastrería: precio es base sin IGIC, se añade 7%
+    base=lineTotal;igic=Math.round(base*0.07*100)/100;
+  } else {
+    // Retail: precio ya incluye IGIC 7%
+    base=Math.round((lineTotal/1.07)*100)/100;igic=Math.round((lineTotal-base)*100)/100;
+  }
+  return{base,igic,total:igicTipo==='añadido'?lineTotal+igic:lineTotal,igicTipo};
+}
+
 function tpvRenderTicket() {
   var el=document.getElementById('tpv-lineas');
   if(_tpvCarrito.length===0){
     el.innerHTML='<div style="text-align:center;padding:24px 0;color:rgba(255,255,255,.25);font-size:13px">Toca un producto para añadir</div>';
   } else {
     el.innerHTML=_tpvCarrito.map(function(c){
+      var li=tpvCalcLineaIGIC(c);
+      var igicLabel=li.igicTipo==='añadido'?'<span style="font-size:9px;background:rgba(196,163,90,.2);color:#c4a35a;border-radius:3px;padding:1px 4px;margin-left:4px">+IGIC 7%</span>':'<span style="font-size:9px;background:rgba(148,163,184,.15);color:rgba(255,255,255,.35);border-radius:3px;padding:1px 4px;margin-left:4px">IGIC inc.</span>';
       return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)">'
         +'<div style="flex:1">'
-        +'<div style="font-size:12px;font-weight:600;color:#fff">'+c.nombre+'</div>'
-        +'<div style="font-size:11px;color:rgba(255,255,255,.4)">'+c.precio+' € × '+c.qty+'</div>'
+        +'<div style="font-size:12px;font-weight:600;color:#fff">'+c.nombre+igicLabel+'</div>'
+        +'<div style="font-size:11px;color:rgba(255,255,255,.4)">'+c.precio+' € × '+c.qty+' · base '+li.base.toFixed(2)+'€ + IGIC '+li.igic.toFixed(2)+'€</div>'
         +'</div>'
         +'<div style="display:flex;align-items:center;gap:6px">'
-        +'<span style="font-size:13px;font-weight:700;color:#c4a35a">'+(c.precio*c.qty)+' €</span>'
+        +'<span style="font-size:13px;font-weight:700;color:#c4a35a">'+li.total.toFixed(2)+' €</span>'
         +'<button onclick="tpvQuitarLinea('+c.id+')" style="background:rgba(248,113,113,.15);color:#f87171;border:none;border-radius:6px;width:22px;height:22px;cursor:pointer;font-size:14px;line-height:1">×</button>'
         +'</div></div>';
     }).join('');
   }
-  var base=_tpvCarrito.reduce(function(s,c){return s+c.precio*c.qty;},0);
-  var igicAmt=(_tpvIGIC||0)?Math.round(base*(_tpvIGIC/100)*100)/100:0;
-  var total=base+igicAmt;
-  document.getElementById('tpv-subtotal').textContent=base.toFixed(2)+' €';
-  document.getElementById('tpv-igic').textContent=igicAmt.toFixed(2)+' €';
-  document.getElementById('tpv-total').textContent=total.toFixed(2).replace('.',',')+' €';
+  // Totales agregados
+  var totBase=0,totIgic=0,totTotal=0;
+  _tpvCarrito.forEach(function(c){var li=tpvCalcLineaIGIC(c);totBase+=li.base;totIgic+=li.igic;totTotal+=li.total;});
+  totBase=Math.round(totBase*100)/100;totIgic=Math.round(totIgic*100)/100;totTotal=Math.round(totTotal*100)/100;
+  document.getElementById('tpv-subtotal').textContent=totBase.toFixed(2)+' €';
+  document.getElementById('tpv-igic').textContent=totIgic.toFixed(2)+' €';
+  document.getElementById('tpv-total').textContent=totTotal.toFixed(2).replace('.',',')+' €';
   var desg=document.getElementById('tpv-igic-desglose');
   var amt=document.getElementById('tpv-igic-amt');
   var pct=document.getElementById('tpv-igic-pct');
-  if(desg){desg.style.display=(_tpvIGIC&&igicAmt)?'flex':'none';}
-  if(amt&&_tpvIGIC){amt.textContent='Base: '+base.toFixed(2).replace('.',',')+'€ + '+igicAmt.toFixed(2).replace('.',',')+'€';}
-  if(pct&&_tpvIGIC){pct.textContent='('+_tpvIGIC+'%)';}
+  if(desg){desg.style.display=_tpvCarrito.length?'flex':'none';}
+  if(amt){amt.textContent='Base: '+totBase.toFixed(2).replace('.',',')+'€ + IGIC: '+totIgic.toFixed(2).replace('.',',')+'€';}
+  if(pct){pct.textContent='(mixto)';}
 }
 
 var _tpvIGIC=0;
@@ -6140,10 +6156,12 @@ function tpvSetPago(tipo) {
 
 async function tpvCobrar() {
   if(_tpvCarrito.length===0){showToast('Añade productos al ticket');return;}
-  // Comercio al menor: IGIC 3% INCLUIDO en el precio (no se desglosa al cliente)
-  var total=_tpvCarrito.reduce(function(s,c){return s+c.precio*c.qty;},0);
-  var sub=Math.round((total/1.03)*100)/100;
-  var igic=Math.round((total-sub)*100)/100;
+  // IGIC mixto: retail=incluido 7%, sastrería=añadido 7%
+  var totBase=0,totIgic=0,totTotal=0;
+  _tpvCarrito.forEach(function(c){var li=tpvCalcLineaIGIC(c);totBase+=li.base;totIgic+=li.igic;totTotal+=li.total;});
+  var sub=Math.round(totBase*100)/100;
+  var igic=Math.round(totIgic*100)/100;
+  var total=Math.round(totTotal*100)/100;
   var lineas=_tpvCarrito.map(function(c){return {id:c.id,nombre:c.nombre,precio:c.precio,qty:c.qty};});
   var prods=_tpvCarrito.map(function(c){return c.nombre+(c.qty>1?' ×'+c.qty:'');}).join(', ');
 
