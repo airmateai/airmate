@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smartbytes · CRM Pro</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07080f;--bg2:#0c0e1a;--bg3:#111422;--card:#0f1120;
+  --border:rgba(99,102,241,.18);--border2:rgba(99,102,241,.08);
+  --p:#6366f1;--p2:#818cf8;--p3:#a5b4fc;
+  --gold:#c4a35a;--gold2:#f0d48a;
+  --w:#f1f5f9;--gray:#64748b;--gray2:#475569;
+  --green:#10b981;--red:#ef4444;--orange:#f59e0b;--cyan:#06b6d4;
+  --sb:224px;
+}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--w);font-size:13px;height:100vh;display:flex;overflow:hidden}
+
+/* SIDEBAR */
+.sb{width:var(--sb);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sb-logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px}
+.sb-logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--p),#8b5cf6);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 4px 14px rgba(99,102,241,.45);flex-shrink:0}
+.sb-brand{font-size:15px;font-weight:800;color:var(--w)}
+.sb-brand span{color:var(--p2)}
+.sb-version{font-size:9px;color:var(--gray);margin-top:1px}
+.sb-nav{flex:1;overflow-y:auto;padding:10px 10px}
+.sb-sec{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gray);padding:14px 10px 6px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;cursor:pointer;color:var(--gray);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:2px;position:relative}
+.sb-item:hover{background:rgba(99,102,241,.08);color:var(--w)}
+.sb-item.on{background:rgba(99,102,241,.14);color:var(--p2);font-weight:600}
+.sb-item.on::before{content:'';position:absolute;left:0;top:22%;bottom:22%;width:3px;background:var(--p);border-radius:0 3px 3px 0}
+.sb-icon{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.7}
+.sb-item.on .sb-icon,.sb-item:hover .sb-icon{opacity:1}
+.si-dash,.si-pipe,.si-cli,.si-proj,.si-fac,.si-rec,.si-tck,.si-hrs,.si-ia{width:14px;height:14px;border-radius:3px;display:block}
+.si-dash{background:linear-gradient(135deg,var(--p2),var(--p))}
+.si-pipe{width:14px;height:14px;border:2px solid currentColor;border-radius:3px;position:relative}
+.si-pipe::after{content:'';position:absolute;left:2px;top:2px;right:2px;bottom:2px;background:currentColor;border-radius:1px;opacity:.4}
+.si-cli{border:2px solid currentColor;border-radius:50%;width:13px;height:13px}
+.si-proj{border:2px solid currentColor;border-radius:2px;width:12px;height:14px}
+.si-fac{width:13px;height:14px;border:2px solid currentColor;border-radius:2px;border-top-left-radius:5px}
+.si-rec{width:14px;height:14px;border:2px solid currentColor;border-radius:50%;clip-path:polygon(50% 0%,100% 38%,82% 100%,18% 100%,0% 38%)}
+.si-tck{width:14px;height:10px;border:2px solid currentColor;border-radius:2px;margin-top:2px}
+.si-hrs{width:13px;height:13px;border:2px solid currentColor;border-radius:50%}
+.si-ia{width:12px;height:12px;background:currentColor;border-radius:50%;box-shadow:0 0 0 2px transparent,0 0 0 3px currentColor;opacity:.6}
+.sb-badge{margin-left:auto;background:var(--p);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px}
+.sb-badge.or{background:var(--orange)}
+.sb-badge.gr{background:var(--green)}
+.sb-user{padding:13px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sb-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--p),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.sb-uname{font-size:12px;font-weight:600;color:var(--w)}
+.sb-urole{font-size:10px;color:var(--gray)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:56px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;padding:0 26px;gap:12px;flex-shrink:0}
+.tb-title{font-size:15px;font-weight:700;color:var(--w);flex:1}
+.tb-sub{font-size:11px;color:var(--gray)}
+.searchbox{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 13px;color:var(--gray);font-size:12px;width:190px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.btn-p{background:linear-gradient(135deg,var(--p),#7c3aed);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.4)}
+.btn-p:hover{filter:brightness(1.1)}
+.btn-g{background:transparent;color:var(--gray);border:1px solid var(--border)}
+.btn-g:hover{color:var(--w);border-color:rgba(99,102,241,.4)}
+.btn-sm{padding:6px 13px;font-size:11px}
+.btn-green{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.btn-red{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.content{flex:1;overflow-y:auto;padding:22px 26px}
+.view{display:none}.view.on{display:block}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.card-h{padding:15px 20px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
+.card-t{font-size:13px;font-weight:700;color:var(--w)}
+.card-b{padding:16px 20px}
+
+/* BADGES */
+.badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px}
+.b-green{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2)}
+.b-blue{background:rgba(99,102,241,.12);color:var(--p2);border:1px solid rgba(99,102,241,.2)}
+.b-orange{background:rgba(245,158,11,.12);color:var(--orange);border:1px solid rgba(245,158,11,.2)}
+.b-gray{background:rgba(100,116,139,.12);color:var(--gray);border:1px solid rgba(100,116,139,.2)}
+.b-red{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.b-cyan{background:rgba(6,182,212,.12);color:var(--cyan);border:1px solid rgba(6,182,212,.2)}
+.b-gold{background:rgba(196,163,90,.12);color:var(--gold);border:1px solid rgba(196,163,90,.2)}
+
+/* GLOW ORB */
+.orb{position:absolute;border-radius:50%;pointer-events:none}
+
+/* DASHBOARD */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden;cursor:default}
+.kpi::after{content:'';position:absolute;top:-50px;right:-50px;width:140px;height:140px;background:radial-gradient(ellipse,var(--kc,var(--p)) 0%,transparent 70%);opacity:.1;border-radius:50%}
+.kpi-lbl{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gray);margin-bottom:10px}
+.kpi-val{font-size:30px;font-weight:900;color:var(--kc,var(--p2));line-height:1}
+.kpi-sub{font-size:11px;color:var(--gray);margin-top:6px}
+.kpi-trend{font-size:11px;font-weight:600;margin-top:4px}
+
+.dash-grid{display:grid;grid-template-columns:1fr 320px;gap:16px}
+.dcol{display:flex;flex-direction:column;gap:16px}
+
+/* TABLAS */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray);padding:10px 15px;border-bottom:1px solid var(--border)}
+.tbl td{padding:12px 15px;border-bottom:1px solid var(--border2);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr{cursor:pointer;transition:background .1s}
+.tbl tbody tr:hover td{background:rgba(99,102,241,.04)}
+
+/* PIPELINE */
+.pipe-wrap{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;min-height:500px}
+.pipe-col{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:13px;display:flex;flex-direction:column;gap:8px}
+.pipe-col-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.pipe-col-name{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px}
+.pipe-col-cnt{font-size:10px;background:rgba(255,255,255,.07);color:var(--gray);padding:2px 7px;border-radius:8px}
+.pipe-total{font-size:11px;color:var(--gray);padding:0 2px;margin-bottom:4px}
+.opp{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px;cursor:pointer;transition:all .15s}
+.opp:hover{border-color:var(--p);box-shadow:0 4px 18px rgba(99,102,241,.18);transform:translateY(-1px)}
+.opp-co{font-size:12px;font-weight:700;color:var(--w);margin-bottom:3px}
+.opp-n{font-size:11px;color:var(--gray);margin-bottom:8px;line-height:1.4}
+.opp-foot{display:flex;align-items:center;justify-content:space-between}
+.opp-amt{font-size:13px;font-weight:800;color:var(--p2)}
+.opp-dt{font-size:10px;color:var(--gray);margin-top:5px}
+.prob-a{background:rgba(16,185,129,.12);color:var(--green);font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px}
+.prob-m{background:rgba(245,158,11,.12);color:var(--orange);font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px}
+.prob-b{background:rgba(239,68,68,.12);color:var(--red);font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px}
+
+/* FICHA */
+.ficha-lay{display:grid;grid-template-columns:300px 1fr;gap:16px}
+.ficha-av{width:52px;height:52px;border-radius:13px;background:linear-gradient(135deg,var(--p),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;flex-shrink:0;box-shadow:0 4px 16px rgba(99,102,241,.4)}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat-box{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.stat-v{font-size:20px;font-weight:900;color:var(--p2)}
+.stat-l{font-size:10px;color:var(--gray);margin-top:3px}
+
+/* TIMELINE */
+.tl{display:flex;flex-direction:column;gap:0}
+.tl-e{display:flex;gap:11px;padding-bottom:14px;position:relative}
+.tl-e::before{content:'';position:absolute;left:12px;top:25px;bottom:0;width:1px;background:var(--border)}
+.tl-e:last-child::before{display:none}
+.tl-d{width:25px;height:25px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px}
+.tl-t{font-size:12px;color:var(--w);font-weight:500}
+.tl-m{font-size:10px;color:var(--gray);margin-top:2px}
+
+/* PROYECTOS */
+.proj-row{display:grid;grid-template-columns:22px 1fr 110px 90px 80px 70px;gap:14px;padding:14px 17px;border-bottom:1px solid var(--border2);align-items:center;cursor:pointer;transition:background .1s}
+.proj-row:hover{background:rgba(99,102,241,.04)}
+.proj-row:last-child{border-bottom:none}
+.pbar{height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:5px;width:100%}
+.pfill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--p),var(--p2))}
+
+/* RECURRENTES */
+.recur-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.recur-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden;transition:border-color .15s}
+.recur-card:hover{border-color:var(--p)}
+.recur-card::after{content:'';position:absolute;top:-50px;right:-40px;width:120px;height:120px;background:radial-gradient(ellipse,var(--rc,var(--p)) 0%,transparent 70%);opacity:.1;border-radius:50%}
+
+/* IA */
+.ia-lay{display:grid;grid-template-columns:1fr 340px;gap:16px}
+.ia-chat{background:var(--card);border:1px solid var(--border);border-radius:14px;display:flex;flex-direction:column;height:520px}
+.ia-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:11px}
+.ia-msg.user{align-self:flex-end}
+.ia-msg.bot{align-self:flex-start}
+.ia-bub{padding:10px 14px;border-radius:11px;font-size:12px;line-height:1.6;max-width:85%}
+.ia-msg.user .ia-bub{background:linear-gradient(135deg,var(--p),#7c3aed);color:#fff;border-radius:11px 11px 3px 11px}
+.ia-msg.bot .ia-bub{background:var(--bg3);color:var(--w);border:1px solid var(--border);border-radius:11px 11px 11px 3px}
+.ia-meta{font-size:10px;color:var(--gray);margin-top:3px}
+.ia-msg.user .ia-meta{text-align:right}
+.ia-in-row{padding:13px;border-top:1px solid var(--border);display:flex;gap:9px}
+.ia-in{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--w);font-size:12px;outline:none;font-family:inherit}
+.ia-in:focus{border-color:var(--p)}
+.ia-in::placeholder{color:var(--gray)}
+.ia-sug{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:all .15s;font-size:12px;color:var(--gray);margin-bottom:8px}
+.ia-sug:hover{border-color:var(--p);color:var(--w);background:rgba(99,102,241,.08)}
+.ia-sug strong{display:block;font-size:12px;color:var(--w);margin-bottom:2px}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
+.overlay.on{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:18px;width:580px;max-height:88vh;overflow-y:auto;padding:30px;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.6)}
+.modal-x{position:absolute;top:15px;right:15px;background:var(--bg3);border:none;color:var(--gray);width:29px;height:29px;border-radius:50%;cursor:pointer;font-size:15px;font-family:inherit}
+.modal-x:hover{color:var(--w)}
+.modal-t{font-size:18px;font-weight:800;color:var(--w);margin-bottom:4px}
+.modal-s{font-size:12px;color:var(--gray);margin-bottom:22px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg.full{grid-column:1/-1}
+.flbl{font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px}
+.fin,.fsel,.fta{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--w);font-size:13px;outline:none;font-family:inherit;width:100%}
+.fin:focus,.fsel:focus,.fta:focus{border-color:var(--p)}
+.fta{min-height:76px;resize:vertical}
+.fsel option{background:var(--bg2)}
+
+/* NOTIF */
+.notif{position:fixed;top:16px;right:16px;z-index:9999;background:linear-gradient(135deg,var(--p),#7c3aed);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 30px rgba(99,102,241,.45);transform:translateY(-90px);transition:transform .3s}
+.notif.on{transform:translateY(0)}
+
+/* EXCLUSIVE DESIGN */
+.card-t{display:flex;align-items:center;gap:8px}
+.card-t::before{content:'';display:inline-block;width:3px;height:13px;background:var(--p);border-radius:2px;flex-shrink:0}
+.pipe-col-name{display:flex;align-items:center;gap:6px}
+.pipe-col-name::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.pipe-col:nth-child(1) .pipe-col-name::before{background:var(--gray)}
+.pipe-col:nth-child(2) .pipe-col-name::before{background:var(--orange)}
+.pipe-col:nth-child(3) .pipe-col-name::before{background:var(--cyan)}
+.pipe-col:nth-child(4) .pipe-col-name::before{background:var(--green)}
+.pipe-col:nth-child(5) .pipe-col-name::before{background:var(--red)}
+.kpi-lbl{display:flex;align-items:center;gap:5px}
+.kpi-lbl::before{content:'';display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--kc,var(--p));flex-shrink:0}
+.tl-d{background:var(--bg3)!important;border:1px solid var(--border)!important}
+.tb-title{letter-spacing:-.3px}
+.sb-sec{letter-spacing:2.5px}
+.opp-dt{font-size:10px;color:var(--gray);margin-top:5px;padding-top:5px;border-top:1px solid var(--border2)}
+
+/* BAR CHART */
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.bar-lbl{font-size:11px;color:var(--gray);width:36px;flex-shrink:0;text-align:right}
+.bar-wrap{flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .8s}
+.bar-val{font-size:11px;font-weight:700;width:60px;text-align:right;flex-shrink:0}
+
+/* DIVIDER */
+.div{height:1px;background:var(--border2);margin:13px 0}
+
+/* SCROLL */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(99,102,241,.3);border-radius:2px}
+
+/* FEATURE PILL */
+.fpill{display:flex;align-items:flex-start;gap:13px;padding:13px;background:var(--bg3);border:1px solid var(--border);border-radius:11px;margin-bottom:9px;transition:border-color .15s}
+.fpill:hover{border-color:var(--p)}
+.fpill-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.fpill-t{font-size:12px;font-weight:700;color:var(--w);margin-bottom:2px}
+.fpill-s{font-size:11px;color:var(--gray);line-height:1.5}
+
+/* PROGRESS RING */
+.pring{position:relative;width:56px;height:56px;flex-shrink:0}
+.pring svg{transform:rotate(-90deg)}
+.pring-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--p2)}
+
+/* ALERTA */
+.alert{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;gap:11px;font-size:12px}
+.alert-icon{font-size:18px}
+.alert-t{color:var(--w);font-weight:600;margin-bottom:2px}
+.alert-s{color:var(--gray)}
+.alert-badge{margin-left:auto;flex-shrink:0}
+.alert.warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2)}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sb">
+  <div class="sb-logo">
+    <img src="https://www.smartbytes.es/img/logo-sb.png" style="height:32px;object-fit:contain;filter:brightness(0) invert(1)">
+    <div>
+      <div class="sb-version" style="margin-top:2px">CRM Pro · Airmate</div>
+    </div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-sec">Principal</div>
+    <div class="sb-item on" onclick="nav('dash',this)"><span class="sb-icon si-dash"></span>Dashboard</div>
+    <div class="sb-item" onclick="nav('pipeline',this)"><span class="sb-icon si-pipe"></span>Pipeline<span class="sb-badge">8</span></div>
+    <div class="sb-item" onclick="nav('clientes',this)"><span class="sb-icon si-cli"></span>Clientes</div>
+    <div class="sb-item" onclick="nav('proyectos',this)"><span class="sb-icon si-proj"></span>Proyectos<span class="sb-badge or">3</span></div>
+    <div class="sb-sec">Gestión</div>
+    <div class="sb-item" onclick="nav('facturas',this)"><span class="sb-icon si-fac"></span>Facturación</div>
+    <div class="sb-item" onclick="nav('recurrentes',this)"><span class="sb-icon si-rec"></span>Recurrentes<span class="sb-badge gr">4</span></div>
+    <div class="sb-sec">Soporte & Equipo</div>
+    <div class="sb-item" onclick="nav('tickets',this)"><span class="sb-icon si-tck"></span>Tickets<span class="sb-badge or">5</span></div>
+    <div class="sb-item" onclick="nav('horas',this)"><span class="sb-icon si-hrs"></span>Horas</div>
+    <div class="sb-sec">Inteligencia</div>
+    <div class="sb-item" onclick="nav('ia',this)"><span class="sb-icon si-ia"></span>Asistente IA</div>
+  </div>
+  <div class="sb-user">
+    <div class="sb-av">S</div>
+    <div>
+      <div class="sb-uname">Smartbytes</div>
+      <div class="sb-urole">Admin · Las Palmas GC</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="tb-title" id="tb-t">Dashboard</div>
+      <div class="tb-sub" id="tb-s">Resumen general · Junio 2026</div>
+    </div>
+    <div class="searchbox"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.5" stroke="#64748b" stroke-width="1.3"/><line x1="7.8" y1="7.8" x2="10.5" y2="10.5" stroke="#64748b" stroke-width="1.3" stroke-linecap="round"/></svg>&nbsp;Buscar cliente, proyecto…</div>
+    <button class="btn btn-g btn-sm">Config</button>
+    <button class="btn btn-p btn-sm" id="btn-new" onclick="openM('nueva-opp')">+ Nueva oportunidad</button>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="view on" id="v-dash">
+      <div class="kpis">
+        <div class="kpi" style="--kc:var(--p2)">
+          <div class="kpi-lbl">Facturado Q2</div>
+          <div class="kpi-val" id="kpi1">87.4k €</div>
+          <div class="kpi-sub">41 facturas emitidas</div>
+          <div class="kpi-trend" style="color:var(--green)">↑ +23% vs Q1</div>
+        </div>
+        <div class="kpi" style="--kc:var(--green)">
+          <div class="kpi-lbl">Pipeline activo</div>
+          <div class="kpi-val">142k €</div>
+          <div class="kpi-sub">8 oportunidades abiertas</div>
+          <div class="kpi-trend" style="color:var(--green)">↑ 3 leads nuevos este mes</div>
+        </div>
+        <div class="kpi" style="--kc:var(--orange)">
+          <div class="kpi-lbl">Proyectos activos</div>
+          <div class="kpi-val">6</div>
+          <div class="kpi-sub">3 en plazo · 2 en riesgo</div>
+          <div class="kpi-trend" style="color:var(--orange)"> 1 entrega esta semana</div>
+        </div>
+        <div class="kpi" style="--kc:var(--cyan)">
+          <div class="kpi-lbl">MRR recurrente</div>
+          <div class="kpi-val">4.800 €</div>
+          <div class="kpi-sub">4 contratos activos</div>
+          <div class="kpi-trend" style="color:var(--green)">↑ SmartLex +2 este mes</div>
+        </div>
+      </div>
+
+      <!-- SERVICIOS VISUALES -->
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px">
+        <div style="border-radius:11px;overflow:hidden;position:relative;height:72px;cursor:pointer" onclick="nav('tickets',document.querySelectorAll('.sb-item')[7])">
+          <img src="https://www.smartbytes.es/img/portfolio/servicio-tecnico.jpeg" style="width:100%;height:100%;object-fit:cover;filter:brightness(.5)">
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
+            <div style="font-size:16px"></div>
+            <div style="font-size:9px;font-weight:700;color:#fff;text-align:center;letter-spacing:.5px">Soporte</div>
+          </div>
+        </div>
+        <div style="border-radius:11px;overflow:hidden;position:relative;height:72px;cursor:pointer" onclick="nav('proyectos',document.querySelectorAll('.sb-item')[3])">
+          <img src="https://www.smartbytes.es/img/portfolio/mantenimiento-informatico.jpeg" style="width:100%;height:100%;object-fit:cover;filter:brightness(.5)">
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
+            <div style="font-size:16px"></div>
+            <div style="font-size:9px;font-weight:700;color:#fff;text-align:center;letter-spacing:.5px">Mantenimiento</div>
+          </div>
+        </div>
+        <div style="border-radius:11px;overflow:hidden;position:relative;height:72px;cursor:pointer" onclick="nav('proyectos',document.querySelectorAll('.sb-item')[3])">
+          <img src="https://www.smartbytes.es/img/portfolio/desarrollo-software.jpeg" style="width:100%;height:100%;object-fit:cover;filter:brightness(.5)">
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
+            <div style="font-size:16px"></div>
+            <div style="font-size:9px;font-weight:700;color:#fff;text-align:center;letter-spacing:.5px">Desarrollo</div>
+          </div>
+        </div>
+        <div style="border-radius:11px;overflow:hidden;position:relative;height:72px;cursor:pointer" onclick="nav('recurrentes',document.querySelectorAll('.sb-item')[5])">
+          <img src="https://www.smartbytes.es/img/portfolio/ciberseguridad.jpeg" style="width:100%;height:100%;object-fit:cover;filter:brightness(.5)">
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
+            <div style="font-size:16px"></div>
+            <div style="font-size:9px;font-weight:700;color:#fff;text-align:center;letter-spacing:.5px">MSSP</div>
+          </div>
+        </div>
+        <div style="border-radius:11px;overflow:hidden;position:relative;height:72px;cursor:pointer" onclick="nav('recurrentes',document.querySelectorAll('.sb-item')[5])">
+          <img src="https://www.smartbytes.es/img/portfolio/smartlex.jpeg" style="width:100%;height:100%;object-fit:cover;filter:brightness(.5)">
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
+            <div style="font-size:16px"></div>
+            <div style="font-size:9px;font-weight:700;color:#fff;text-align:center;letter-spacing:.5px">SmartLex</div>
+          </div>
+        </div>
+        <div style="border-radius:11px;overflow:hidden;position:relative;height:72px;cursor:pointer">
+          <img src="https://www.smartbytes.es/img/portfolio/informatica-forense.jpeg" style="width:100%;height:100%;object-fit:cover;filter:brightness(.5)">
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
+            <div style="font-size:16px"></div>
+            <div style="font-size:9px;font-weight:700;color:#fff;text-align:center;letter-spacing:.5px">Forense</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALERTAS -->
+      <div style="margin-bottom:16px">
+        <div class="alert">
+          <span class="alert-icon" style="width:10px;height:10px;border-radius:50%;background:var(--red);display:inline-block;flex-shrink:0"></span>
+          <div><div class="alert-t">Construcciones Morales — Sin respuesta 5 días</div><div class="alert-s">Propuesta CRM enviada el 10 Jun · 18.000 €</div></div>
+          <div class="alert-badge"><button class="btn btn-red btn-sm" onclick="iaQuery('Escribe un email de seguimiento a Construcciones Morales que lleva 5 días sin responder la propuesta de 18.000€')">IA redacta email</button></div>
+        </div>
+        <div class="alert warn">
+          <span class="alert-icon" style="width:10px;height:10px;border-radius:50%;background:var(--orange);display:inline-block;flex-shrink:0"></span>
+          <div><div class="alert-t">Bufete Armas — SmartLex Pro vence en 12 días</div><div class="alert-s">Renovación pendiente · 650 €/mes</div></div>
+          <div class="alert-badge"><button class="btn btn-sm btn-g" onclick="nav('recurrentes',document.querySelectorAll('.sb-item')[5])">Ver contrato →</button></div>
+        </div>
+        <div class="alert warn">
+          <span class="alert-icon" style="width:10px;height:10px;border-radius:50%;background:var(--p2);display:inline-block;flex-shrink:0"></span>
+          <div><div class="alert-t">Clínica Norte — FAC-2026-029 vencida hace 8 días</div><div class="alert-s">4.200 € pendientes de cobro</div></div>
+          <div class="alert-badge"><button class="btn btn-sm btn-g">Enviar recordatorio</button></div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="dcol">
+          <!-- Actividad -->
+          <div class="card">
+            <div class="card-h"><div class="card-t">Actividad reciente</div></div>
+            <div class="card-b">
+              <div class="tl">
+                <div class="tl-e"><div class="tl-d" style="background:rgba(16,185,129,.12)"></div><div><div class="tl-t">App Móvil Lopesan — Fase 1 completada · 38.5h registradas</div><div class="tl-m">Hace 2 horas · Fase 2 en QA</div></div></div>
+                <div class="tl-e"><div class="tl-d" style="background:rgba(99,102,241,.12)"></div><div><div class="tl-t">FAC-2026-041 enviada — Clínica Norte · 6.800 €</div><div class="tl-m">Hace 4 horas</div></div></div>
+                <div class="tl-e"><div class="tl-d" style="background:rgba(6,182,212,.12)"></div><div><div class="tl-t">Bufete Delgado firma SmartLex Pro · 12 licencias · 650 €/mes</div><div class="tl-m">Ayer · Nuevo contrato recurrente</div></div></div>
+                <div class="tl-e"><div class="tl-d" style="background:rgba(245,158,11,.12)"></div><div><div class="tl-t">Demo CRM presentada a Construcciones Morales</div><div class="tl-m">Ayer · 45 min · Sin respuesta aún</div></div></div>
+                <div class="tl-e"><div class="tl-d" style="background:rgba(239,68,68,.12)"></div><div><div class="tl-t">Auditoría ciberseguridad completada — Mercado Las Palmas</div><div class="tl-m">Hace 2 días · Informe entregado</div></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Proyectos resumen -->
+          <div class="card">
+            <div class="card-h"><div class="card-t">Estado de proyectos</div><button class="btn btn-g btn-sm" onclick="nav('proyectos',document.querySelectorAll('.sb-item')[3])">Ver todos →</button></div>
+            <div style="padding:0">
+              <div class="proj-row" onclick="nav('proyectos',document.querySelectorAll('.sb-item')[3])">
+                <span style="font-size:16px"></span>
+                <div><div style="font-size:12px;font-weight:700;color:var(--w)">App Móvil Reservas Fase 2</div><div style="font-size:10px;color:var(--gray)">Lopesan Hotels · QA pendiente</div><div class="pbar"><div class="pfill" style="width:65%"></div></div></div>
+                <div><span class="badge b-orange">En curso</span></div>
+                <div style="font-size:11px;color:var(--gray);text-align:center">156/240h</div>
+                <div style="font-size:13px;font-weight:800;color:var(--p2);text-align:right">28.500 €</div>
+                <div style="font-size:12px;font-weight:700;color:var(--green);text-align:right">65%</div>
+              </div>
+              <div class="proj-row" onclick="nav('proyectos',document.querySelectorAll('.sb-item')[3])">
+                <span style="font-size:16px"></span>
+                <div><div style="font-size:12px;font-weight:700;color:var(--w)">Historia Clínica Digital</div><div style="font-size:10px;color:var(--gray)">Clínica Norte LP · Retrasado</div><div class="pbar"><div class="pfill" style="width:28%;background:linear-gradient(90deg,var(--orange),#f97316)"></div></div></div>
+                <div><span class="badge b-red">En riesgo</span></div>
+                <div style="font-size:11px;color:var(--gray);text-align:center">88/320h</div>
+                <div style="font-size:13px;font-weight:800;color:var(--p2);text-align:right">42.000 €</div>
+                <div style="font-size:12px;font-weight:700;color:var(--orange);text-align:right">28%</div>
+              </div>
+              <div class="proj-row" onclick="nav('proyectos',document.querySelectorAll('.sb-item')[3])">
+                <span style="font-size:16px"></span>
+                <div><div style="font-size:12px;font-weight:700;color:var(--w)">SmartLex Pro Onboarding</div><div style="font-size:10px;color:var(--gray)">Bufete Delgado · Inicio</div><div class="pbar"><div class="pfill" style="width:18%"></div></div></div>
+                <div><span class="badge b-cyan">Inicio</span></div>
+                <div style="font-size:11px;color:var(--gray);text-align:center">12/60h</div>
+                <div style="font-size:13px;font-weight:800;color:var(--p2);text-align:right">7.800 €</div>
+                <div style="font-size:12px;font-weight:700;color:var(--p2);text-align:right">18%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dcol">
+          <!-- MRR por cliente -->
+          <div class="card">
+            <div class="card-h"><div class="card-t">Top clientes MRR</div><span class="badge b-green" style="font-size:10px">4.800 €/mes</span></div>
+            <div class="card-b" style="padding:0">
+              <table class="tbl">
+                <tbody>
+                  <tr><td><div style="font-size:12px;font-weight:700;color:var(--w)">Lopesan Hotels</div><div style="font-size:10px;color:var(--gray)">MSSP + Desarrollo</div></td><td style="text-align:right;font-size:14px;font-weight:800;color:var(--p2)">1.800 €</td></tr>
+                  <tr><td><div style="font-size:12px;font-weight:700;color:var(--w)">Clínica Norte LP</div><div style="font-size:10px;color:var(--gray)">MSSP + Soporte</div></td><td style="text-align:right;font-size:14px;font-weight:800;color:var(--p2)">1.200 €</td></tr>
+                  <tr><td><div style="font-size:12px;font-weight:700;color:var(--w)">Bufete Armas</div><div style="font-size:10px;color:var(--gray)">SmartLex Pro</div></td><td style="text-align:right;font-size:14px;font-weight:800;color:var(--p2)">650 €</td></tr>
+                  <tr><td><div style="font-size:12px;font-weight:700;color:var(--w)">Bufete Delgado</div><div style="font-size:10px;color:var(--gray)">SmartLex Pro · Nuevo</div></td><td style="text-align:right;font-size:14px;font-weight:800;color:var(--green)">650 €</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Facturación mensual -->
+          <div class="card">
+            <div class="card-h"><div class="card-t">Facturación mensual 2026</div></div>
+            <div class="card-b">
+              <div class="bar-row"><div class="bar-lbl">Ene</div><div class="bar-wrap"><div class="bar-fill" style="width:52%;background:var(--border)"></div></div><div class="bar-val" style="color:var(--gray)">22.1k €</div></div>
+              <div class="bar-row"><div class="bar-lbl">Feb</div><div class="bar-wrap"><div class="bar-fill" style="width:63%;background:var(--border)"></div></div><div class="bar-val" style="color:var(--gray)">26.4k €</div></div>
+              <div class="bar-row"><div class="bar-lbl">Mar</div><div class="bar-wrap"><div class="bar-fill" style="width:58%;background:var(--border)"></div></div><div class="bar-val" style="color:var(--gray)">24.9k €</div></div>
+              <div class="bar-row"><div class="bar-lbl">Abr</div><div class="bar-wrap"><div class="bar-fill" style="width:69%;background:linear-gradient(90deg,var(--p),var(--p2))"></div></div><div class="bar-val" style="color:var(--p2)">28.8k €</div></div>
+              <div class="bar-row"><div class="bar-lbl">May</div><div class="bar-wrap"><div class="bar-fill" style="width:74%;background:linear-gradient(90deg,var(--p),var(--p2))"></div></div><div class="bar-val" style="color:var(--p2)">30.5k €</div></div>
+              <div class="bar-row"><div class="bar-lbl">Jun</div><div class="bar-wrap"><div class="bar-fill" style="width:34%;background:linear-gradient(90deg,var(--green),#34d399)"></div></div><div class="bar-val" style="color:var(--green)">14.1k €</div></div>
+            </div>
+          </div>
+
+          <!-- Conversión -->
+          <div class="card">
+            <div class="card-h"><div class="card-t">Tasa de cierre</div></div>
+            <div class="card-b" style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;color:var(--gray)">Leads → Propuesta</span>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="width:80px;height:5px;background:rgba(255,255,255,.07);border-radius:3px"><div style="width:71%;height:100%;border-radius:3px;background:var(--p)"></div></div>
+                  <span style="font-size:12px;font-weight:700;color:var(--p2)">71%</span>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;color:var(--gray)">Propuesta → Cierre</span>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="width:80px;height:5px;background:rgba(255,255,255,.07);border-radius:3px"><div style="width:48%;height:100%;border-radius:3px;background:var(--orange)"></div></div>
+                  <span style="font-size:12px;font-weight:700;color:var(--orange)">48%</span>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;color:var(--gray)">Tickets soporte</span>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="width:80px;height:5px;background:rgba(255,255,255,.07);border-radius:3px"><div style="width:94%;height:100%;border-radius:3px;background:var(--green)"></div></div>
+                  <span style="font-size:12px;font-weight:700;color:var(--green)">94% SLA</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div class="view" id="v-pipeline">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:12px;color:var(--gray)">Total pipeline: <strong style="color:var(--p2)">142.000 €</strong> · 8 oportunidades activas</div>
+        <button class="btn btn-p btn-sm" onclick="openM('nueva-opp')">+ Nueva oportunidad</button>
+      </div>
+      <div class="pipe-wrap">
+        <div class="pipe-col">
+          <div class="pipe-col-h"><span class="pipe-col-name" style="color:var(--gray)">Lead</span><span class="pipe-col-cnt">2</span></div>
+          <div class="pipe-total">32.000 €</div>
+          <div class="opp" onclick="openM('ver-opp')"><div class="opp-co">Construcciones Morales</div><div class="opp-n">CRM gestión de obras y proveedores</div><div class="opp-foot"><span class="opp-amt">18.000 €</span><span class="prob-m">60%</span></div><div class="opp-dt">Demo hecha · 5 días sin respuesta</div></div>
+          <div class="opp"><div class="opp-co">Academia Náutica GC</div><div class="opp-n">App reservas cursos + web corporativa</div><div class="opp-foot"><span class="opp-amt">14.000 €</span><span class="prob-b">30%</span></div><div class="opp-dt">Primer contacto: 8 Jun</div></div>
+        </div>
+        <div class="pipe-col">
+          <div class="pipe-col-h"><span class="pipe-col-name" style="color:var(--orange)">Propuesta</span><span class="pipe-col-cnt">3</span></div>
+          <div class="pipe-total">67.500 €</div>
+          <div class="opp"><div class="opp-co">Grupo Médico Tamaraceite</div><div class="opp-n">Historia clínica digital + MSSP anual</div><div class="opp-foot"><span class="opp-amt">32.500 €</span><span class="prob-a">75%</span></div><div class="opp-dt">Enviada: 5 Jun · Revisando</div></div>
+          <div class="opp"><div class="opp-co">Mayorista Canario S.L.</div><div class="opp-n">ERP distribución + app repartidores</div><div class="opp-foot"><span class="opp-amt">22.000 €</span><span class="prob-m">55%</span></div><div class="opp-dt">En negociación de precio</div></div>
+          <div class="opp"><div class="opp-co">Colegio Español LP</div><div class="opp-n">Plataforma e-learning + intranet</div><div class="opp-foot"><span class="opp-amt">13.000 €</span><span class="prob-m">50%</span></div><div class="opp-dt">Reunión: 18 Jun</div></div>
+        </div>
+        <div class="pipe-col">
+          <div class="pipe-col-h"><span class="pipe-col-name" style="color:var(--cyan)">Negociación</span><span class="pipe-col-cnt">2</span></div>
+          <div class="pipe-total">31.500 €</div>
+          <div class="opp"><div class="opp-co">Hotel Palm Beach</div><div class="opp-n">Ciberseguridad gestionada MSSP</div><div class="opp-foot"><span class="opp-amt">18.000 €/año</span><span class="prob-a">85%</span></div><div class="opp-dt">Firma prevista: 20 Jun</div></div>
+          <div class="opp"><div class="opp-co">Notaría Pérez & Asoc.</div><div class="opp-n">SmartLex Enterprise + formación</div><div class="opp-foot"><span class="opp-amt">13.500 €</span><span class="prob-a">80%</span></div><div class="opp-dt">Revisando contrato</div></div>
+        </div>
+        <div class="pipe-col">
+          <div class="pipe-col-h"><span class="pipe-col-name" style="color:var(--green)">Ganado</span><span class="pipe-col-cnt">1</span></div>
+          <div class="pipe-total">7.800 €</div>
+          <div class="opp" style="border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.03)"><div class="opp-co">Bufete Delgado</div><div class="opp-n">SmartLex Pro · 12 licencias</div><div class="opp-foot"><span class="opp-amt">7.800 € + 650/mes</span><span class="prob-a">Firmado</span></div><div class="opp-dt">Cerrado: 14 Jun 2026</div></div>
+        </div>
+        <div class="pipe-col">
+          <div class="pipe-col-h"><span class="pipe-col-name" style="color:var(--red)">Perdido</span><span class="pipe-col-cnt">0</span></div>
+          <div class="pipe-total">—</div>
+          <div style="text-align:center;padding:24px 10px;color:var(--gray);font-size:12px">Sin oportunidades perdidas este mes</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div class="view" id="v-clientes">
+      <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
+        <button class="btn btn-p btn-sm">Todos</button>
+        <button class="btn btn-g btn-sm">MSSP</button>
+        <button class="btn btn-g btn-sm">SmartLex</button>
+        <button class="btn btn-g btn-sm">Proyecto</button>
+        <div style="margin-left:auto"><button class="btn btn-p btn-sm" onclick="openM('nuevo-cliente')">+ Nuevo cliente</button></div>
+      </div>
+      <div class="card">
+        <table class="tbl">
+          <thead><tr><th>Empresa</th><th>Sector</th><th>Servicios</th><th>MRR</th><th>Total facturado</th><th>Estado</th><th></th></tr></thead>
+          <tbody>
+            <tr onclick="verCliente('lopesan')"><td><div style="font-size:13px;font-weight:700;color:var(--w)">Lopesan Hotels</div><div style="font-size:11px;color:var(--gray)">contacto@lopesan.com · +34 928 123 456</div></td><td><span class="badge b-blue">Hostelería</span></td><td><span class="badge b-red">MSSP</span> <span class="badge b-cyan">Desarrollo</span></td><td style="font-size:14px;font-weight:800;color:var(--p2)">1.800 €</td><td style="font-weight:700;color:var(--w)">48.200 €</td><td><span class="badge b-green">Activo VIP</span></td><td><button class="btn btn-g btn-sm" onclick="event.stopPropagation();verCliente('lopesan')">Ver →</button></td></tr>
+            <tr onclick="verCliente('clinica')"><td><div style="font-size:13px;font-weight:700;color:var(--w)">Clínica Norte Las Palmas</div><div style="font-size:11px;color:var(--gray)">admin@clinicanorte.es · +34 928 654 321</div></td><td><span class="badge b-green">Salud</span></td><td><span class="badge b-red">MSSP</span> <span class="badge b-gray">Soporte</span></td><td style="font-size:14px;font-weight:800;color:var(--p2)">1.200 €</td><td style="font-weight:700;color:var(--w)">32.600 €</td><td><span class="badge b-green">Activo</span></td><td><button class="btn btn-g btn-sm" onclick="event.stopPropagation();verCliente('clinica')">Ver →</button></td></tr>
+            <tr><td><div style="font-size:13px;font-weight:700;color:var(--w)">Bufete Armas & Asociados</div><div style="font-size:11px;color:var(--gray)">juridico@bufelearmas.es</div></td><td><span class="badge b-orange">Legal</span></td><td><span class="badge b-cyan">SmartLex</span></td><td style="font-size:14px;font-weight:800;color:var(--p2)">650 €</td><td style="font-weight:700;color:var(--w)">12.400 €</td><td><span class="badge b-orange">Renueva pronto</span></td><td><button class="btn btn-g btn-sm">Ver →</button></td></tr>
+            <tr><td><div style="font-size:13px;font-weight:700;color:var(--w)">Bufete Delgado</div><div style="font-size:11px;color:var(--gray)">delgado@bufetedelgado.com</div></td><td><span class="badge b-orange">Legal</span></td><td><span class="badge b-cyan">SmartLex</span></td><td style="font-size:14px;font-weight:800;color:var(--green)">650 €</td><td style="font-weight:700;color:var(--w)">7.800 €</td><td><span class="badge b-green">Nuevo</span></td><td><button class="btn btn-g btn-sm">Ver →</button></td></tr>
+            <tr><td><div style="font-size:13px;font-weight:700;color:var(--w)">Mercado Artesanal LP</div><div style="font-size:11px;color:var(--gray)">gerencia@mercadolp.es</div></td><td><span class="badge b-gray">Comercio</span></td><td><span class="badge b-gray">Soporte</span></td><td style="color:var(--gray)">—</td><td style="font-weight:700;color:var(--w)">8.900 €</td><td><span class="badge b-gray">Proyecto cerrado</span></td><td><button class="btn btn-g btn-sm">Ver →</button></td></tr>
+            <tr><td><div style="font-size:13px;font-weight:700;color:var(--w)">Construcciones Morales</div><div style="font-size:11px;color:var(--gray)">morales@construcciones.es</div></td><td><span class="badge b-gray">Construcción</span></td><td><span class="badge b-orange">Lead activo</span></td><td style="color:var(--gray)">—</td><td style="color:var(--gray)">—</td><td><span class="badge b-orange">Lead</span></td><td><button class="btn btn-g btn-sm">Ver →</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FICHA CLIENTE -->
+    <div class="view" id="v-ficha">
+      <div style="margin-bottom:14px"><button class="btn btn-g btn-sm" onclick="nav('clientes',document.querySelectorAll('.sb-item')[2])">← Volver</button></div>
+      <div class="ficha-lay">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="card">
+            <div class="card-b">
+              <div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:14px">
+                <div class="ficha-av" id="fa">L</div>
+                <div>
+                  <div style="font-size:17px;font-weight:800;color:var(--w)" id="fn">Lopesan Hotels</div>
+                  <div style="font-size:11px;color:var(--gray);margin-top:3px" id="fs">Hostelería · Gran Canaria</div>
+                  <div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap" id="fb"><span class="badge b-red">MSSP</span><span class="badge b-cyan">Desarrollo</span><span class="badge b-gold">VIP</span></div>
+                </div>
+              </div>
+              <div class="div"></div>
+              <div style="display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--gray)">
+                <div><span id="fe">contacto@lopesan.com</span></div>
+                <div> <span id="ftel">+34 928 123 456</span></div>
+                <div><span id="fc">Marcos Santana · Director IT</span></div>
+                <div>Las Palmas de Gran Canaria</div>
+              </div>
+              <div style="margin-top:14px;display:flex;gap:7px">
+                <button class="btn btn-p btn-sm" style="flex:1">Email</button>
+                <button class="btn btn-g btn-sm" style="flex:1" onclick="openM('nuevo-proyecto')">+ Proyecto</button>
+              </div>
+            </div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-box"><div class="stat-v" id="ff">48.2k</div><div class="stat-l">facturado</div></div>
+            <div class="stat-box"><div class="stat-v" id="fp">4</div><div class="stat-l">proyectos</div></div>
+            <div class="stat-box"><div class="stat-v" id="fm">1.8k</div><div class="stat-l">MRR €/mes</div></div>
+          </div>
+          <div class="card">
+            <div class="card-h"><div class="card-t">Historial</div></div>
+            <div class="card-b">
+              <div class="tl">
+                <div class="tl-e"><div class="tl-d" style="background:rgba(16,185,129,.12)"></div><div><div class="tl-t">App Reservas Fase 1 completada</div><div class="tl-m">Hace 2 días</div></div></div>
+                <div class="tl-e"><div class="tl-d" style="background:rgba(99,102,241,.12)"></div><div><div class="tl-t">Factura 14.200 € emitida y cobrada</div><div class="tl-m">Hace 5 días</div></div></div>
+                <div class="tl-e"><div class="tl-d" style="background:rgba(245,158,11,.12)"></div><div><div class="tl-t">Reunión renovación MSSP 2027</div><div class="tl-m">Hace 2 semanas · Positiva</div></div></div>
+                <div class="tl-e" style="padding-bottom:0"><div class="tl-d" style="background:rgba(6,182,212,.12)"></div><div><div class="tl-t">Contrato MSSP firmado Ene 2026</div><div class="tl-m">Hace 6 meses · 1.800 €/mes</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="card">
+            <div class="card-h"><div class="card-t">Proyectos activos</div><button class="btn btn-p btn-sm" onclick="openM('nuevo-proyecto')">+ Nuevo</button></div>
+            <div style="padding:0">
+              <div style="padding:15px 18px;border-bottom:1px solid var(--border2)">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+                  <div><div style="font-size:13px;font-weight:700;color:var(--w)">App Móvil Reservas · Fase 2</div><div style="font-size:11px;color:var(--gray);margin-top:2px">QA pendiente · Entrega esta semana</div></div>
+                  <span class="badge b-orange">En curso</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray);margin-bottom:5px"><span>Progreso</span><span style="font-weight:600;color:var(--p2)">65%</span></div>
+                <div class="pbar"><div class="pfill" style="width:65%"></div></div>
+                <div style="display:flex;justify-content:space-between;margin-top:8px"><span style="font-size:11px;color:var(--gray)">156h / 240h</span><span style="font-size:14px;font-weight:800;color:var(--p2)">28.500 €</span></div>
+              </div>
+              <div style="padding:15px 18px">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                  <div><div style="font-size:13px;font-weight:700;color:var(--w)">MSSP Ciberseguridad 2026</div><div style="font-size:11px;color:var(--gray);margin-top:2px">Contrato anual · Renueva Ene 2027</div></div>
+                  <span class="badge b-green">Activo</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:10px"><span style="font-size:11px;color:var(--gray)">Monitorización 24/7 · SLA 99.9%</span><span style="font-size:14px;font-weight:800;color:var(--p2)">1.800 €/mes</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h"><div class="card-t">Facturas recientes</div><button class="btn btn-g btn-sm" onclick="openM('nueva-factura')">+ Nueva</button></div>
+            <div style="padding:0">
+              <table class="tbl">
+                <tbody>
+                  <tr><td><div style="font-size:12px;font-weight:600;color:var(--p2)">FAC-2026-039</div><div style="font-size:10px;color:var(--gray)">App Móvil Fase 1</div></td><td style="font-weight:800;color:var(--w)">14.200 €</td><td><span class="badge b-green">Pagada</span></td><td><button class="btn btn-g btn-sm">PDF</button></td></tr>
+                  <tr><td><div style="font-size:12px;font-weight:600;color:var(--p2)">FAC-2026-034</div><div style="font-size:10px;color:var(--gray)">MSSP Mayo 2026</div></td><td style="font-weight:800;color:var(--w)">1.800 €</td><td><span class="badge b-green">Pagada</span></td><td><button class="btn btn-g btn-sm">PDF</button></td></tr>
+                  <tr><td><div style="font-size:12px;font-weight:600;color:var(--p2)">FAC-2026-022</div><div style="font-size:10px;color:var(--gray)">MSSP Abril 2026</div></td><td style="font-weight:800;color:var(--w)">1.800 €</td><td><span class="badge b-green">Pagada</span></td><td><button class="btn btn-g btn-sm">PDF</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h"><div class="card-t">Oportunidades vinculadas</div></div>
+            <div class="card-b">
+              <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:9px;padding:12px;display:flex;justify-content:space-between;align-items:center">
+                <div><div style="font-size:12px;font-weight:700;color:var(--w)">App Móvil Fase 3 — Potencial</div><div style="font-size:11px;color:var(--gray);margin-top:2px">Integración PMS + loyalty app</div></div>
+                <span style="font-size:13px;font-weight:800;color:var(--green)">~18k €</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROYECTOS -->
+    <div class="view" id="v-proyectos">
+      <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
+        <button class="btn btn-p btn-sm">Todos</button>
+        <button class="btn btn-g btn-sm">En curso</button>
+        <button class="btn btn-g btn-sm">En riesgo</button>
+        <button class="btn btn-g btn-sm">Completados</button>
+        <div style="margin-left:auto"><button class="btn btn-p btn-sm" onclick="openM('nuevo-proyecto')">+ Nuevo proyecto</button></div>
+      </div>
+      <!-- KPIs proyectos -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px"><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">Horas registradas</div><div style="font-size:24px;font-weight:900;color:var(--p2)">356h</div><div style="font-size:10px;color:var(--gray);margin-top:4px">de 894h totales estimadas</div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px"><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">Facturado proyectos</div><div style="font-size:24px;font-weight:900;color:var(--green)">62.100 €</div><div style="font-size:10px;color:var(--gray);margin-top:4px">de 102.100 € totales</div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px"><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">Margen medio</div><div style="font-size:24px;font-weight:900;color:var(--p2)">67%</div><div style="font-size:10px;color:var(--gray);margin-top:4px">sobre coste de horas</div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px"><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">En riesgo</div><div style="font-size:24px;font-weight:900;color:var(--red)">2</div><div style="font-size:10px;color:var(--gray);margin-top:4px">Historia Clínica + Mercado</div></div>
+      </div>
+      <div class="card">
+        <div style="display:grid;grid-template-columns:22px 1fr 110px 90px 80px 70px;gap:14px;padding:10px 17px;border-bottom:1px solid var(--border)">
+          <div></div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray)">Proyecto / Cliente</div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray)">Estado</div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray);text-align:center">Horas</div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray);text-align:right">Importe</div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray);text-align:right">Margen</div>
+        </div>
+        <div class="proj-row"><span style="font-size:16px"></span><div><div style="font-size:12px;font-weight:700;color:var(--w)">App Móvil Reservas Fase 2</div><div style="font-size:10px;color:var(--gray)">Lopesan Hotels · Entrega esta semana</div><div class="pbar"><div class="pfill" style="width:65%"></div></div></div><div><span class="badge b-orange">En curso</span></div><div style="text-align:center;font-size:11px;color:var(--gray)">156/240h</div><div style="text-align:right;font-size:13px;font-weight:800;color:var(--p2)">28.500 €</div><div style="text-align:right;font-size:12px;font-weight:700;color:var(--green)">68%</div></div>
+        <div class="proj-row"><span style="font-size:16px"></span><div><div style="font-size:12px;font-weight:700;color:var(--w)">Historia Clínica Digital</div><div style="font-size:10px;color:var(--gray)">Clínica Norte LP · Retrasado 3 semanas</div><div class="pbar"><div class="pfill" style="width:28%;background:linear-gradient(90deg,var(--orange),#f97316)"></div></div></div><div><span class="badge b-red">En riesgo</span></div><div style="text-align:center;font-size:11px;color:var(--gray)">88/320h</div><div style="text-align:right;font-size:13px;font-weight:800;color:var(--p2)">42.000 €</div><div style="text-align:right;font-size:12px;font-weight:700;color:var(--orange)">54%</div></div>
+        <div class="proj-row"><span style="font-size:16px"></span><div><div style="font-size:12px;font-weight:700;color:var(--w)">SmartLex Pro Onboarding</div><div style="font-size:10px;color:var(--gray)">Bufete Delgado · Inicio esta semana</div><div class="pbar"><div class="pfill" style="width:18%"></div></div></div><div><span class="badge b-cyan">Inicio</span></div><div style="text-align:center;font-size:11px;color:var(--gray)">12/60h</div><div style="text-align:right;font-size:13px;font-weight:800;color:var(--p2)">7.800 €</div><div style="text-align:right;font-size:12px;font-weight:700;color:var(--green)">72%</div></div>
+        <div class="proj-row"><span style="font-size:16px"></span><div><div style="font-size:12px;font-weight:700;color:var(--w)">Auditoría Ciberseguridad</div><div style="font-size:10px;color:var(--gray)">Mercado Las Palmas · Completado</div><div class="pbar"><div class="pfill" style="width:100%;background:linear-gradient(90deg,var(--green),#34d399)"></div></div></div><div><span class="badge b-green">Completado</span></div><div style="text-align:center;font-size:11px;color:var(--gray)">24/24h</div><div style="text-align:right;font-size:13px;font-weight:800;color:var(--p2)">4.800 €</div><div style="text-align:right;font-size:12px;font-weight:700;color:var(--green)">81%</div></div>
+        <div class="proj-row" style="opacity:.6"><span style="font-size:16px"></span><div><div style="font-size:12px;font-weight:700;color:var(--w)">ERP Obras y Proveedores</div><div style="font-size:10px;color:var(--gray)">Construcciones Morales · Pendiente firma</div><div class="pbar"><div class="pfill" style="width:0%"></div></div></div><div><span class="badge b-gray">En espera</span></div><div style="text-align:center;font-size:11px;color:var(--gray)">0/200h</div><div style="text-align:right;font-size:13px;font-weight:800;color:var(--gray)">18.000 €</div><div style="text-align:right;font-size:12px;color:var(--gray)">—</div></div>
+      </div>
+    </div>
+
+    <!-- FACTURAS -->
+    <div class="view" id="v-facturas">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden"><div style="position:absolute;top:-30px;right:-30px;width:100px;height:100px;background:radial-gradient(ellipse,var(--p) 0%,transparent 70%);opacity:.1;border-radius:50%"></div><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">Emitido Q2</div><div style="font-size:26px;font-weight:900;color:var(--p2)">87.400 €</div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden"><div style="position:absolute;top:-30px;right:-30px;width:100px;height:100px;background:radial-gradient(ellipse,var(--green) 0%,transparent 70%);opacity:.1;border-radius:50%"></div><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">Cobrado</div><div style="font-size:26px;font-weight:900;color:var(--green)">71.200 €</div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden"><div style="position:absolute;top:-30px;right:-30px;width:100px;height:100px;background:radial-gradient(ellipse,var(--orange) 0%,transparent 70%);opacity:.1;border-radius:50%"></div><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">Pendiente</div><div style="font-size:26px;font-weight:900;color:var(--orange)">16.200 €</div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden"><div style="position:absolute;top:-30px;right:-30px;width:100px;height:100px;background:radial-gradient(ellipse,var(--red) 0%,transparent 70%);opacity:.1;border-radius:50%"></div><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">Vencidas</div><div style="font-size:26px;font-weight:900;color:var(--red)">4.200 €</div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+        <button class="btn btn-p btn-sm">Todas</button>
+        <button class="btn btn-g btn-sm">Pendientes</button>
+        <button class="btn btn-g btn-sm">Pagadas</button>
+        <button class="btn btn-g btn-sm">Vencidas</button>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn btn-g btn-sm">Exportar CSV gestor</button>
+          <button class="btn btn-p btn-sm" onclick="openM('nueva-factura')">+ Nueva factura</button>
+        </div>
+      </div>
+      <div class="card">
+        <table class="tbl">
+          <thead><tr><th>Número</th><th>Cliente</th><th>Concepto</th><th>Fecha</th><th>Importe</th><th>IGIC</th><th>Estado</th><th></th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:700;color:var(--p2)">FAC-2026-041</td><td>Clínica Norte</td><td>Historia Clínica · Fase 1</td><td style="color:var(--gray)">12 Jun 2026</td><td style="font-weight:800;color:var(--w)">6.800 €</td><td style="font-size:11px;color:var(--gray)">476 €</td><td><span class="badge b-orange">Pendiente</span></td><td><button class="btn btn-g btn-sm">PDF</button></td></tr>
+            <tr><td style="font-weight:700;color:var(--p2)">FAC-2026-040</td><td>Bufete Delgado</td><td>SmartLex Pro · Setup</td><td style="color:var(--gray)">14 Jun 2026</td><td style="font-weight:800;color:var(--w)">7.800 €</td><td style="font-size:11px;color:var(--gray)">546 €</td><td><span class="badge b-orange">Pendiente</span></td><td><button class="btn btn-g btn-sm">PDF</button></td></tr>
+            <tr><td style="font-weight:700;color:var(--p2)">FAC-2026-039</td><td>Lopesan Hotels</td><td>App Móvil Fase 1</td><td style="color:var(--gray)">5 Jun 2026</td><td style="font-weight:800;color:var(--w)">14.200 €</td><td style="font-size:11px;color:var(--gray)">994 €</td><td><span class="badge b-green">Pagada</span></td><td><button class="btn btn-g btn-sm">PDF</button></td></tr>
+            <tr><td style="font-weight:700;color:var(--p2)">FAC-2026-038</td><td>Clínica Norte</td><td>MSSP Junio 2026</td><td style="color:var(--gray)">1 Jun 2026</td><td style="font-weight:800;color:var(--w)">1.200 €</td><td style="font-size:11px;color:var(--gray)">84 €</td><td><span class="badge b-green">Pagada</span></td><td><button class="btn btn-g btn-sm">PDF</button></td></tr>
+            <tr><td style="font-weight:700;color:var(--p2)">FAC-2026-034</td><td>Lopesan Hotels</td><td>MSSP Junio 2026</td><td style="color:var(--gray)">1 Jun 2026</td><td style="font-weight:800;color:var(--w)">1.800 €</td><td style="font-size:11px;color:var(--gray)">126 €</td><td><span class="badge b-green">Pagada</span></td><td><button class="btn btn-g btn-sm">PDF</button></td></tr>
+            <tr><td style="font-weight:700;color:var(--p2)">FAC-2026-029</td><td>Clínica Norte</td><td>Auditoría seguridad</td><td style="color:var(--gray)">4 May 2026</td><td style="font-weight:800;color:var(--red)">4.200 €</td><td style="font-size:11px;color:var(--gray)">294 €</td><td><span class="badge b-red">Vencida 8d</span></td><td><button class="btn btn-red btn-sm">Recordar</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RECURRENTES -->
+    <div class="view" id="v-recurrentes">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div><div style="font-size:14px;font-weight:700;color:var(--w)">MRR total: <span style="color:var(--p2)">4.800 €/mes</span></div><div style="font-size:12px;color:var(--gray);margin-top:3px">ARR estimado · 57.600 € · 4 contratos activos</div></div>
+        <button class="btn btn-p btn-sm" onclick="openM('nuevo-recurrente')">+ Nuevo contrato</button>
+      </div>
+      <div class="recur-grid">
+        <div class="recur-card" style="--rc:var(--red);padding:0;overflow:hidden">
+          <div style="height:80px;overflow:hidden;position:relative"><img src="https://www.smartbytes.es/img/portfolio/ciberseguridad.jpeg" style="width:100%;height:100%;object-fit:cover;filter:brightness(.4)"><div style="position:absolute;inset:0;padding:12px;display:flex;align-items:flex-end"><span class="badge b-green">Activo</span></div></div>
+          <div style="padding:14px"><div style="font-size:14px;font-weight:800;color:var(--w);margin-bottom:3px">Lopesan Hotels</div><div style="font-size:11px;color:var(--gray);margin-bottom:12px">MSSP · Ciberseguridad gestionada 24/7</div><div style="font-size:24px;font-weight:900;color:var(--p2)">1.800 € <span style="font-size:13px;color:var(--gray);font-weight:400">/mes</span></div><div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--gray)">Renueva Ene 2027</div></div>
+        </div>
+        <div class="recur-card" style="--rc:var(--red);padding:0;overflow:hidden">
+          <div style="height:80px;overflow:hidden;position:relative"><img src="https://www.smartbytes.es/img/portfolio/servicio-tecnico.jpeg" style="width:100%;height:100%;object-fit:cover;filter:brightness(.4)"><div style="position:absolute;inset:0;padding:12px;display:flex;align-items:flex-end"><span class="badge b-green">Activo</span></div></div>
+          <div style="padding:14px"><div style="font-size:14px;font-weight:800;color:var(--w);margin-bottom:3px">Clínica Norte LP</div><div style="font-size:11px;color:var(--gray);margin-bottom:12px">MSSP + Soporte IT prioritario · SLA 4h</div><div style="font-size:24px;font-weight:900;color:var(--p2)">1.200 € <span style="font-size:13px;color:var(--gray);font-weight:400">/mes</span></div><div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--gray)">Renueva Mar 2027</div></div>
+        </div>
+        <div class="recur-card" style="--rc:var(--cyan);border-color:rgba(245,158,11,.35);padding:0;overflow:hidden">
+          <div style="height:80px;overflow:hidden;position:relative"><img src="https://www.smartbytes.es/img/portfolio/smartlex.jpeg" style="width:100%;height:100%;object-fit:cover;filter:brightness(.4)"><div style="position:absolute;inset:0;padding:12px;display:flex;align-items:flex-end"><span class="badge b-orange">Renovar</span></div></div>
+          <div style="padding:14px"><div style="font-size:14px;font-weight:800;color:var(--w);margin-bottom:3px">Bufete Armas</div><div style="font-size:11px;color:var(--gray);margin-bottom:12px">SmartLex Pro · 8 licencias</div><div style="font-size:24px;font-weight:900;color:var(--p2)">650 € <span style="font-size:13px;color:var(--gray);font-weight:400">/mes</span></div><div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(245,158,11,.3);font-size:11px;color:var(--orange)">Vence en 12 días</div></div>
+        </div>
+        <div class="recur-card" style="--rc:var(--cyan);padding:0;overflow:hidden">
+          <div style="height:80px;overflow:hidden;position:relative"><img src="https://www.smartbytes.es/img/portfolio/smartlex.jpeg" style="width:100%;height:100%;object-fit:cover;filter:brightness(.4)"><div style="position:absolute;inset:0;padding:12px;display:flex;align-items:flex-end"><span class="badge b-green">Nuevo</span></div></div>
+          <div style="padding:14px"><div style="font-size:14px;font-weight:800;color:var(--w);margin-bottom:3px">Bufete Delgado</div><div style="font-size:11px;color:var(--gray);margin-bottom:12px">SmartLex Pro · 12 licencias</div><div style="font-size:24px;font-weight:900;color:var(--green)">650 € <span style="font-size:13px;color:var(--gray);font-weight:400">/mes</span></div><div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--gray)">Renueva Jun 2027</div></div>
+        </div>
+        <div class="recur-card" style="border-style:dashed;opacity:.6;cursor:pointer" onclick="openM('nuevo-recurrente')"><div style="text-align:center;padding:24px 0;color:var(--gray)"><div style="font-size:34px;margin-bottom:10px">+</div><div style="font-size:13px;font-weight:700;color:var(--w)">Añadir contrato</div><div style="font-size:11px;margin-top:5px">MSSP · SmartLex · Soporte</div></div></div>
+      </div>
+    </div>
+
+    <!-- IA -->
+    <div class="view" id="v-ia">
+      <div class="ia-lay">
+        <div class="ia-chat">
+          <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:13px;font-weight:700;color:var(--w)">Asistente IA Smartbytes</div>
+            <span class="badge b-green">Activo</span>
+          </div>
+          <div class="ia-msgs" id="ia-msgs">
+            <div class="ia-msg bot"><div class="ia-bub">Hola, soy tu asistente IA. Puedo redactar propuestas, analizar tu pipeline, resumir clientes antes de reuniones, o escribir emails de seguimiento. ¿En qué te ayudo?</div><div class="ia-meta">Asistente IA · ahora</div></div>
+          </div>
+          <div class="ia-in-row">
+            <input class="ia-in" id="ia-in" placeholder="Escribe aquí…" onkeydown="if(event.key==='Enter')sendIA()">
+            <button class="btn btn-p" onclick="sendIA()">Enviar</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:12px">Acciones rápidas</div>
+          <div class="ia-sug" onclick="iaQ('Redacta una propuesta comercial para Construcciones Morales para un ERP de gestión de obras y proveedores de 18.000 €')"><strong>Redactar propuesta</strong>Construcciones Morales · ERP obras 18k €</div>
+          <div class="ia-sug" onclick="iaQ('Dame un brief completo de Lopesan Hotels para mi reunión de mañana')"><strong>Brief de cliente</strong>Lopesan Hotels · Reunión mañana</div>
+          <div class="ia-sug" onclick="iaQ('Analiza el pipeline actual y dime qué oportunidades priorizar esta semana para cerrar antes de fin de mes')"><strong>Priorizar pipeline</strong>Análisis de oportunidades activas</div>
+          <div class="ia-sug" onclick="iaQ('Escribe un email de seguimiento profesional a Construcciones Morales que lleva 5 días sin responder la propuesta de 18.000€')"><strong>Email seguimiento</strong>Construcciones Morales · 5 días sin respuesta</div>
+          <div class="ia-sug" onclick="iaQ('¿Qué contratos recurrentes tienen riesgo de no renovarse y qué puedo hacer para retenerlos?')"><strong>Riesgo renovaciones</strong>Bufete Armas vence en 12 días</div>
+          <div class="ia-sug" onclick="iaQ('¿Cómo puedo vender SmartLex Enterprise a Bufete Armas cuando llame para renovar el contrato?')"><strong>Upsell inteligente</strong>Bufete Armas → SmartLex Enterprise</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+    <!-- TICKETS -->
+    <div class="view" id="v-tickets">
+      <!-- KPIs -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px;position:relative;overflow:hidden"><div style="position:absolute;top:-30px;right:-30px;width:90px;height:90px;background:radial-gradient(ellipse,var(--orange) 0%,transparent 70%);opacity:.12;border-radius:50%"></div><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">Abiertos</div><div style="font-size:28px;font-weight:900;color:var(--orange)">5</div><div style="font-size:10px;color:var(--gray);margin-top:4px">2 urgentes · 3 normales</div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px;position:relative;overflow:hidden"><div style="position:absolute;top:-30px;right:-30px;width:90px;height:90px;background:radial-gradient(ellipse,var(--green) 0%,transparent 70%);opacity:.12;border-radius:50%"></div><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">Resueltos este mes</div><div style="font-size:28px;font-weight:900;color:var(--green)">38</div><div style="font-size:10px;color:var(--gray);margin-top:4px">↑ +12% vs mayo</div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px;position:relative;overflow:hidden"><div style="position:absolute;top:-30px;right:-30px;width:90px;height:90px;background:radial-gradient(ellipse,var(--p) 0%,transparent 70%);opacity:.12;border-radius:50%"></div><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">Tiempo medio respuesta</div><div style="font-size:28px;font-weight:900;color:var(--p2)">1.8h</div><div style="font-size:10px;color:var(--green);margin-top:4px">SLA cumplido 94%</div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px;position:relative;overflow:hidden"><div style="position:absolute;top:-30px;right:-30px;width:90px;height:90px;background:radial-gradient(ellipse,var(--red) 0%,transparent 70%);opacity:.12;border-radius:50%"></div><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">SLA en riesgo</div><div style="font-size:28px;font-weight:900;color:var(--red)">1</div><div style="font-size:10px;color:var(--gray);margin-top:4px">Clínica Norte · vence en 1h</div></div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+        <button class="btn btn-p btn-sm">Abiertos</button>
+        <button class="btn btn-g btn-sm">En curso</button>
+        <button class="btn btn-g btn-sm">Resueltos</button>
+        <button class="btn btn-g btn-sm">Todos</button>
+        <div style="margin-left:auto"><button class="btn btn-p btn-sm" onclick="openM('nuevo-ticket')">+ Nuevo ticket</button></div>
+      </div>
+
+      <div class="card">
+        <table class="tbl">
+          <thead><tr><th>ID</th><th>Cliente</th><th>Asunto</th><th>Prioridad</th><th>Técnico</th><th>Abierto hace</th><th>SLA</th><th>Estado</th><th></th></tr></thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:700;color:var(--p2)">#1042</td>
+              <td><div style="font-size:12px;font-weight:600;color:var(--w)">Clínica Norte</div><div style="font-size:10px;color:var(--gray)">MSSP</div></td>
+              <td><div style="font-size:12px;color:var(--w)">Servidor caído — sala de urgencias sin acceso</div><div style="font-size:10px;color:var(--gray)">Reinicio fallido tras actualización</div></td>
+              <td><span class="badge b-red">Crítico</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--p),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">JM</div><span style="font-size:11px;color:var(--gray)">Jorge M.</span></div></td>
+              <td style="font-size:11px;color:var(--red);font-weight:600">23 min</td>
+              <td><div style="font-size:11px;color:var(--red);font-weight:700">1h restante</div><div style="width:80px;height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:4px"><div style="width:80%;height:100%;border-radius:2px;background:var(--red)"></div></div></td>
+              <td><span class="badge b-orange">En curso</span></td>
+              <td><button class="btn btn-g btn-sm" onclick="openM('ver-ticket')">Ver →</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;color:var(--p2)">#1041</td>
+              <td><div style="font-size:12px;font-weight:600;color:var(--w)">Lopesan Hotels</div><div style="font-size:10px;color:var(--gray)">MSSP</div></td>
+              <td><div style="font-size:12px;color:var(--w)">VPN corporativa sin conexión en sede norte</div><div style="font-size:10px;color:var(--gray)">3 usuarios afectados</div></td>
+              <td><span class="badge b-orange">Alta</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--green),#059669);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">AL</div><span style="font-size:11px;color:var(--gray)">Ana L.</span></div></td>
+              <td style="font-size:11px;color:var(--orange);font-weight:600">1h 15min</td>
+              <td><div style="font-size:11px;color:var(--green)">3h restantes</div><div style="width:80px;height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:4px"><div style="width:35%;height:100%;border-radius:2px;background:var(--orange)"></div></div></td>
+              <td><span class="badge b-orange">En curso</span></td>
+              <td><button class="btn btn-g btn-sm">Ver →</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;color:var(--p2)">#1040</td>
+              <td><div style="font-size:12px;font-weight:600;color:var(--w)">Bufete Armas</div><div style="font-size:10px;color:var(--gray)">SmartLex</div></td>
+              <td><div style="font-size:12px;color:var(--w)">No carga módulo de expedientes en Safari</div><div style="font-size:10px;color:var(--gray)">2 abogados afectados · Mac</div></td>
+              <td><span class="badge b-blue">Normal</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),#0891b2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">PR</div><span style="font-size:11px;color:var(--gray)">Pedro R.</span></div></td>
+              <td style="font-size:11px;color:var(--gray)">3h 40min</td>
+              <td><div style="font-size:11px;color:var(--green)">20h restantes</div><div style="width:80px;height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:4px"><div style="width:15%;height:100%;border-radius:2px;background:var(--green)"></div></div></td>
+              <td><span class="badge b-blue">Abierto</span></td>
+              <td><button class="btn btn-g btn-sm">Ver →</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;color:var(--p2)">#1039</td>
+              <td><div style="font-size:12px;font-weight:600;color:var(--w)">Clínica Norte</div><div style="font-size:10px;color:var(--gray)">MSSP</div></td>
+              <td><div style="font-size:12px;color:var(--w)">Impresora radiología no responde en red</div><div style="font-size:10px;color:var(--gray)">Driver desactualizado posiblemente</div></td>
+              <td><span class="badge b-blue">Normal</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#d97706);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">JM</div><span style="font-size:11px;color:var(--gray)">Jorge M.</span></div></td>
+              <td style="font-size:11px;color:var(--gray)">5h 10min</td>
+              <td><div style="font-size:11px;color:var(--green)">18h restantes</div><div style="width:80px;height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:4px"><div style="width:22%;height:100%;border-radius:2px;background:var(--green)"></div></div></td>
+              <td><span class="badge b-blue">Abierto</span></td>
+              <td><button class="btn btn-g btn-sm">Ver →</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;color:var(--p2)">#1038</td>
+              <td><div style="font-size:12px;font-weight:600;color:var(--w)">Lopesan Hotels</div><div style="font-size:10px;color:var(--gray)">MSSP</div></td>
+              <td><div style="font-size:12px;color:var(--w)">Actualización Windows bloqueada en 12 equipos</div><div style="font-size:10px;color:var(--gray)">GPO conflicto — pendiente revisión</div></td>
+              <td><span class="badge b-gray">Baja</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--p),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">AL</div><span style="font-size:11px;color:var(--gray)">Ana L.</span></div></td>
+              <td style="font-size:11px;color:var(--gray)">1 día</td>
+              <td><div style="font-size:11px;color:var(--green)">3 días restantes</div><div style="width:80px;height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:4px"><div style="width:8%;height:100%;border-radius:2px;background:var(--p)"></div></div></td>
+              <td><span class="badge b-blue">Abierto</span></td>
+              <td><button class="btn btn-g btn-sm">Ver →</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Últimos resueltos -->
+      <div style="margin-top:16px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:10px">Resueltos hoy</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          <div style="background:var(--card);border:1px solid rgba(16,185,129,.15);border-radius:11px;padding:13px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px"><span style="font-size:11px;font-weight:700;color:var(--p2)">#1037</span><span class="badge b-green">Resuelto</span></div><div style="font-size:12px;color:var(--w);margin-bottom:3px">Lopesan · Firewall bloqueo falso positivo</div><div style="font-size:10px;color:var(--gray)">Resuelto en <strong style="color:var(--green)">45min</strong> · Jorge M.</div></div>
+          <div style="background:var(--card);border:1px solid rgba(16,185,129,.15);border-radius:11px;padding:13px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px"><span style="font-size:11px;font-weight:700;color:var(--p2)">#1036</span><span class="badge b-green">Resuelto</span></div><div style="font-size:12px;color:var(--w);margin-bottom:3px">Bufete Delgado · Error importación PDF</div><div style="font-size:10px;color:var(--gray)">Resuelto en <strong style="color:var(--green)">2h 10min</strong> · Pedro R.</div></div>
+          <div style="background:var(--card);border:1px solid rgba(16,185,129,.15);border-radius:11px;padding:13px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px"><span style="font-size:11px;font-weight:700;color:var(--p2)">#1035</span><span class="badge b-green">Resuelto</span></div><div style="font-size:12px;color:var(--w);margin-bottom:3px">Clínica Norte · Backup nocturno fallido</div><div style="font-size:10px;color:var(--gray)">Resuelto en <strong style="color:var(--green)">30min</strong> · Ana L.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HORAS -->
+    <div class="view" id="v-horas">
+      <!-- KPIs horas -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px;position:relative;overflow:hidden"><div style="position:absolute;top:-30px;right:-30px;width:90px;height:90px;background:radial-gradient(ellipse,var(--p) 0%,transparent 70%);opacity:.12;border-radius:50%"></div><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">Horas este mes</div><div style="font-size:28px;font-weight:900;color:var(--p2)">312h</div><div style="font-size:10px;color:var(--gray);margin-top:4px">3 técnicos · Junio 2026</div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px;position:relative;overflow:hidden"><div style="position:absolute;top:-30px;right:-30px;width:90px;height:90px;background:radial-gradient(ellipse,var(--gold) 0%,transparent 70%);opacity:.12;border-radius:50%"></div><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">Facturables</div><div style="font-size:28px;font-weight:900;color:var(--gold)">248h</div><div style="font-size:10px;color:var(--gray);margin-top:4px">79% del total</div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px;position:relative;overflow:hidden"><div style="position:absolute;top:-30px;right:-30px;width:90px;height:90px;background:radial-gradient(ellipse,var(--green) 0%,transparent 70%);opacity:.12;border-radius:50%"></div><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">Coste hora medio</div><div style="font-size:28px;font-weight:900;color:var(--green)">65 €</div><div style="font-size:10px;color:var(--gray);margin-top:4px">Precio venta: 85 €/h</div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px;position:relative;overflow:hidden"><div style="position:absolute;top:-30px;right:-30px;width:90px;height:90px;background:radial-gradient(ellipse,var(--cyan) 0%,transparent 70%);opacity:.12;border-radius:50%"></div><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase;margin-bottom:7px">Margen horas</div><div style="font-size:28px;font-weight:900;color:var(--cyan)">23.4%</div><div style="font-size:10px;color:var(--green);margin-top:4px">↑ +3.2% vs mayo</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:16px">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <!-- Registro horas -->
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);text-transform:uppercase">Últimas entradas</div>
+            <button class="btn btn-p btn-sm" onclick="openM('nueva-hora')">+ Registrar horas</button>
+          </div>
+          <div class="card">
+            <table class="tbl">
+              <thead><tr><th>Fecha</th><th>Técnico</th><th>Cliente · Proyecto</th><th>Tarea</th><th>Horas</th><th>Tipo</th><th>Importe</th></tr></thead>
+              <tbody>
+                <tr><td style="font-size:11px;color:var(--gray)">16 Jun</td><td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--p),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">JM</div><span style="font-size:11px">Jorge M.</span></div></td><td><div style="font-size:12px;font-weight:600;color:var(--w)">Clínica Norte</div><div style="font-size:10px;color:var(--gray)">Historia Clínica Digital</div></td><td style="font-size:11px;color:var(--gray)">Desarrollo módulo admisiones</td><td style="font-weight:800;color:var(--p2)">6h</td><td><span class="badge b-blue">Proyecto</span></td><td style="font-weight:700;color:var(--green)">510 €</td></tr>
+                <tr><td style="font-size:11px;color:var(--gray)">16 Jun</td><td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--green),#059669);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">AL</div><span style="font-size:11px">Ana L.</span></div></td><td><div style="font-size:12px;font-weight:600;color:var(--w)">Lopesan Hotels</div><div style="font-size:10px;color:var(--gray)">App Móvil Reservas</div></td><td style="font-size:11px;color:var(--gray)">Testing y QA Fase 2</td><td style="font-weight:800;color:var(--p2)">7.5h</td><td><span class="badge b-blue">Proyecto</span></td><td style="font-weight:700;color:var(--green)">637 €</td></tr>
+                <tr><td style="font-size:11px;color:var(--gray)">16 Jun</td><td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--p),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">JM</div><span style="font-size:11px">Jorge M.</span></div></td><td><div style="font-size:12px;font-weight:600;color:var(--w)">Clínica Norte</div><div style="font-size:10px;color:var(--gray)">MSSP · Ticket #1042</div></td><td style="font-size:11px;color:var(--gray)">Incidencia servidor urgencias</td><td style="font-weight:800;color:var(--orange)">1h</td><td><span class="badge b-red">Soporte</span></td><td style="font-size:11px;color:var(--gray)">Incluido MSSP</td></tr>
+                <tr><td style="font-size:11px;color:var(--gray)">15 Jun</td><td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),#0891b2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">PR</div><span style="font-size:11px">Pedro R.</span></div></td><td><div style="font-size:12px;font-weight:600;color:var(--w)">Bufete Delgado</div><div style="font-size:10px;color:var(--gray)">SmartLex Onboarding</div></td><td style="font-size:11px;color:var(--gray)">Formación inicial equipo</td><td style="font-weight:800;color:var(--p2)">3h</td><td><span class="badge b-cyan">Formación</span></td><td style="font-weight:700;color:var(--green)">255 €</td></tr>
+                <tr><td style="font-size:11px;color:var(--gray)">15 Jun</td><td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--green),#059669);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">AL</div><span style="font-size:11px">Ana L.</span></div></td><td><div style="font-size:12px;font-weight:600;color:var(--w)">Lopesan Hotels</div><div style="font-size:10px;color:var(--gray)">MSSP · Ticket #1041</div></td><td style="font-size:11px;color:var(--gray)">VPN sede norte — diagnóstico</td><td style="font-weight:800;color:var(--orange)">1.5h</td><td><span class="badge b-red">Soporte</span></td><td style="font-size:11px;color:var(--gray)">Incluido MSSP</td></tr>
+                <tr><td style="font-size:11px;color:var(--gray)">14 Jun</td><td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),#0891b2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">PR</div><span style="font-size:11px">Pedro R.</span></div></td><td><div style="font-size:12px;font-weight:600;color:var(--w)">Clínica Norte</div><div style="font-size:10px;color:var(--gray)">Historia Clínica Digital</div></td><td style="font-size:11px;color:var(--gray)">Diseño BD pacientes</td><td style="font-weight:800;color:var(--p2)">5h</td><td><span class="badge b-blue">Proyecto</span></td><td style="font-weight:700;color:var(--green)">425 €</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Columna derecha -->
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <!-- Carga por técnico -->
+          <div class="card">
+            <div class="card-h"><div class="card-t">Carga por técnico</div></div>
+            <div class="card-b" style="display:flex;flex-direction:column;gap:14px">
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">JM</div><div><div style="font-size:12px;font-weight:600;color:var(--w)">Jorge M.</div><div style="font-size:10px;color:var(--gray)">Senior IT</div></div></div>
+                  <span style="font-size:13px;font-weight:800;color:var(--p2)">118h</span>
+                </div>
+                <div style="height:5px;background:rgba(255,255,255,.07);border-radius:3px"><div style="width:88%;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--p),var(--p2))"></div></div>
+                <div style="font-size:10px;color:var(--orange);margin-top:4px">88% capacidad — casi al límite</div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--green),#059669);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">AL</div><div><div style="font-size:12px;font-weight:600;color:var(--w)">Ana L.</div><div style="font-size:10px;color:var(--gray)">Técnica IT</div></div></div>
+                  <span style="font-size:13px;font-weight:800;color:var(--p2)">104h</span>
+                </div>
+                <div style="height:5px;background:rgba(255,255,255,.07);border-radius:3px"><div style="width:72%;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--green),#34d399)"></div></div>
+                <div style="font-size:10px;color:var(--green);margin-top:4px">72% capacidad — disponible</div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),#0891b2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">PR</div><div><div style="font-size:12px;font-weight:600;color:var(--w)">Pedro R.</div><div style="font-size:10px;color:var(--gray)">Developer</div></div></div>
+                  <span style="font-size:13px;font-weight:800;color:var(--p2)">90h</span>
+                </div>
+                <div style="height:5px;background:rgba(255,255,255,.07);border-radius:3px"><div style="width:60%;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--cyan),#22d3ee)"></div></div>
+                <div style="font-size:10px;color:var(--green);margin-top:4px">60% capacidad — disponible</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Horas por cliente -->
+          <div class="card">
+            <div class="card-h"><div class="card-t">Horas por cliente (mes)</div></div>
+            <div class="card-b" style="display:flex;flex-direction:column;gap:9px">
+              <div class="bar-row"><div class="bar-lbl" style="width:70px;text-align:left;font-size:11px;color:var(--gray)">Lopesan</div><div class="bar-wrap"><div class="bar-fill" style="width:74%;background:linear-gradient(90deg,var(--p),var(--p2))"></div></div><div class="bar-val" style="color:var(--p2)">112h</div></div>
+              <div class="bar-row"><div class="bar-lbl" style="width:70px;text-align:left;font-size:11px;color:var(--gray)">Clínica</div><div class="bar-wrap"><div class="bar-fill" style="width:86%;background:linear-gradient(90deg,var(--p),var(--p2))"></div></div><div class="bar-val" style="color:var(--p2)">130h</div></div>
+              <div class="bar-row"><div class="bar-lbl" style="width:70px;text-align:left;font-size:11px;color:var(--gray)">B. Armas</div><div class="bar-wrap"><div class="bar-fill" style="width:22%;background:var(--cyan)"></div></div><div class="bar-val" style="color:var(--cyan)">34h</div></div>
+              <div class="bar-row"><div class="bar-lbl" style="width:70px;text-align:left;font-size:11px;color:var(--gray)">B. Delgado</div><div class="bar-wrap"><div class="bar-fill" style="width:15%;background:var(--green)"></div></div><div class="bar-val" style="color:var(--green)">24h</div></div>
+              <div class="bar-row"><div class="bar-lbl" style="width:70px;text-align:left;font-size:11px;color:var(--gray)">Interno</div><div class="bar-wrap"><div class="bar-fill" style="width:8%;background:var(--gray)"></div></div><div class="bar-val" style="color:var(--gray)">12h</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<!-- MODALES -->
+<div class="overlay" id="m-nueva-opp"><div class="modal"><button class="modal-x" onclick="closeM('nueva-opp')">×</button><div class="modal-t">Nueva oportunidad</div><div class="modal-s">Añade un lead o propuesta al pipeline</div><div class="fgrid"><div class="fg full"><div class="flbl">Empresa</div><input class="fin" placeholder="Nombre del cliente…"></div><div class="fg"><div class="flbl">Etapa</div><select class="fsel"><option>Lead</option><option>Propuesta enviada</option><option>Negociación</option></select></div><div class="fg"><div class="flbl">Probabilidad</div><select class="fsel"><option>30%</option><option>50%</option><option>60%</option><option>75%</option><option>85%</option></select></div><div class="fg full"><div class="flbl">Servicio / Descripción</div><input class="fin" placeholder="CRM, MSSP, SmartLex, App móvil…"></div><div class="fg"><div class="flbl">Importe estimado €</div><input class="fin" type="number" placeholder="0"></div><div class="fg"><div class="flbl">Próximo paso</div><input class="fin" placeholder="Demo, Reunión, Llamada…"></div><div class="fg"><div class="flbl">Fecha próximo paso</div><input class="fin" type="date"></div><div class="fg"><div class="flbl">Contacto</div><input class="fin" placeholder="Nombre · Cargo"></div><div class="fg full"><div class="flbl">Notas</div><textarea class="fta" placeholder="Contexto, necesidades, pain points…"></textarea></div></div><div style="display:flex;gap:9px;margin-top:18px;justify-content:flex-end"><button class="btn btn-g" onclick="closeM('nueva-opp')">Cancelar</button><button class="btn btn-p" onclick="saveAndClose('nueva-opp','Oportunidad añadida al pipeline')">Guardar oportunidad</button></div></div></div>
+
+<div class="overlay" id="m-nuevo-cliente"><div class="modal"><button class="modal-x" onclick="closeM('nuevo-cliente')">×</button><div class="modal-t">Nuevo cliente</div><div class="modal-s">Empresa o despacho</div><div class="fgrid"><div class="fg full"><div class="flbl">Nombre empresa</div><input class="fin" placeholder="Empresa S.L."></div><div class="fg"><div class="flbl">Sector</div><select class="fsel"><option>IT / Tecnología</option><option>Legal</option><option>Salud</option><option>Hostelería</option><option>Construcción</option><option>Educación</option><option>Comercio</option><option>Otro</option></select></div><div class="fg"><div class="flbl">Tipo</div><select class="fsel"><option>Lead</option><option>Cliente proyecto</option><option>Cliente recurrente</option></select></div><div class="fg"><div class="flbl">Email</div><input class="fin" type="email" placeholder="contacto@empresa.es"></div><div class="fg"><div class="flbl">Teléfono</div><input class="fin" placeholder="+34 928…"></div><div class="fg full"><div class="flbl">Persona de contacto</div><input class="fin" placeholder="Nombre · Cargo"></div><div class="fg full"><div class="flbl">Servicios iniciales</div><input class="fin" placeholder="MSSP, SmartLex, Desarrollo, Soporte…"></div></div><div style="display:flex;gap:9px;margin-top:18px;justify-content:flex-end"><button class="btn btn-g" onclick="closeM('nuevo-cliente')">Cancelar</button><button class="btn btn-p" onclick="saveAndClose('nuevo-cliente','Cliente guardado correctamente')">Guardar cliente</button></div></div></div>
+
+<div class="overlay" id="m-nuevo-proyecto"><div class="modal"><button class="modal-x" onclick="closeM('nuevo-proyecto')">×</button><div class="modal-t">Nuevo proyecto</div><div class="modal-s">Vincula un proyecto a un cliente</div><div class="fgrid"><div class="fg full"><div class="flbl">Nombre del proyecto</div><input class="fin" placeholder="App móvil, ERP, Auditoría ciberseguridad…"></div><div class="fg"><div class="flbl">Cliente</div><select class="fsel"><option>Lopesan Hotels</option><option>Clínica Norte</option><option>Bufete Armas</option><option>Bufete Delgado</option><option>Otro…</option></select></div><div class="fg"><div class="flbl">Tipo</div><select class="fsel"><option>Desarrollo a medida</option><option>MSSP</option><option>SmartLex</option><option>Consultoría</option><option>Soporte</option></select></div><div class="fg"><div class="flbl">Importe total €</div><input class="fin" type="number" placeholder="0"></div><div class="fg"><div class="flbl">Horas estimadas</div><input class="fin" type="number" placeholder="0"></div><div class="fg"><div class="flbl">Fecha inicio</div><input class="fin" type="date"></div><div class="fg"><div class="flbl">Fecha entrega</div><input class="fin" type="date"></div><div class="fg full"><div class="flbl">Descripción del alcance</div><textarea class="fta" placeholder="Módulos, entregables, tecnología…"></textarea></div></div><div style="display:flex;gap:9px;margin-top:18px;justify-content:flex-end"><button class="btn btn-g" onclick="closeM('nuevo-proyecto')">Cancelar</button><button class="btn btn-p" onclick="saveAndClose('nuevo-proyecto','Proyecto creado y asignado')">Guardar proyecto</button></div></div></div>
+
+<div class="overlay" id="m-nueva-factura"><div class="modal"><button class="modal-x" onclick="closeM('nueva-factura')">×</button><div class="modal-t">Nueva factura</div><div class="modal-s">Genera una factura para un cliente</div><div class="fgrid"><div class="fg"><div class="flbl">Cliente</div><select class="fsel"><option>Lopesan Hotels</option><option>Clínica Norte</option><option>Bufete Armas</option><option>Bufete Delgado</option></select></div><div class="fg"><div class="flbl">Proyecto asociado</div><select class="fsel"><option>App Móvil Reservas</option><option>Historia Clínica</option><option>MSSP Mensual</option><option>SmartLex Pro</option></select></div><div class="fg full"><div class="flbl">Concepto</div><input class="fin" placeholder="Descripción del servicio facturado…"></div><div class="fg"><div class="flbl">Base imponible €</div><input class="fin" type="number" placeholder="0"></div><div class="fg"><div class="flbl">IGIC</div><select class="fsel"><option>7% General</option><option>3% Reducido</option><option>0% Exento</option></select></div><div class="fg"><div class="flbl">Fecha emisión</div><input class="fin" type="date"></div><div class="fg"><div class="flbl">Vencimiento</div><input class="fin" type="date"></div></div><div style="display:flex;gap:9px;margin-top:18px;justify-content:flex-end"><button class="btn btn-g" onclick="closeM('nueva-factura')">Cancelar</button><button class="btn btn-p" onclick="saveAndClose('nueva-factura','Factura generada · PDF disponible')">Generar factura</button></div></div></div>
+
+<div class="overlay" id="m-nuevo-recurrente"><div class="modal"><button class="modal-x" onclick="closeM('nuevo-recurrente')">×</button><div class="modal-t">Nuevo contrato recurrente</div><div class="modal-s">MSSP, SmartLex o soporte mensual</div><div class="fgrid"><div class="fg"><div class="flbl">Cliente</div><select class="fsel"><option>Lopesan Hotels</option><option>Clínica Norte</option><option>Bufete Armas</option><option>Otro…</option></select></div><div class="fg"><div class="flbl">Tipo contrato</div><select class="fsel"><option>MSSP Ciberseguridad</option><option>SmartLex Pro</option><option>SmartLex Enterprise</option><option>Soporte IT</option></select></div><div class="fg"><div class="flbl">Importe €/mes</div><input class="fin" type="number" placeholder="0"></div><div class="fg"><div class="flbl">Facturación</div><select class="fsel"><option>Mensual</option><option>Trimestral</option><option>Anual</option></select></div><div class="fg"><div class="flbl">Fecha inicio</div><input class="fin" type="date"></div><div class="fg"><div class="flbl">Fecha vencimiento</div><input class="fin" type="date"></div></div><div style="display:flex;gap:9px;margin-top:18px;justify-content:flex-end"><button class="btn btn-g" onclick="closeM('nuevo-recurrente')">Cancelar</button><button class="btn btn-p" onclick="saveAndClose('nuevo-recurrente','Contrato recurrente activado')">Activar contrato</button></div></div></div>
+
+<div class="overlay" id="m-ver-opp"><div class="modal"><button class="modal-x" onclick="closeM('ver-opp')">×</button><div class="modal-t">Construcciones Morales</div><div class="modal-s">CRM gestión de obras y proveedores · 18.000 €</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px"><div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px;text-align:center"><div style="font-size:18px;font-weight:900;color:var(--p2)">18.000 €</div><div style="font-size:10px;color:var(--gray);margin-top:3px">Importe</div></div><div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px;text-align:center"><div style="font-size:18px;font-weight:900;color:var(--orange)">60%</div><div style="font-size:10px;color:var(--gray);margin-top:3px">Probabilidad</div></div><div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px;text-align:center"><div style="font-size:18px;font-weight:900;color:var(--red)">5 días</div><div style="font-size:10px;color:var(--gray);margin-top:3px">Sin respuesta</div></div></div><div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--gray);margin-bottom:16px"><div>Construcciones Morales S.L. · Sector: Construcción</div><div>Carlos Morales · Gerente</div><div>+34 928 445 678 · morales@construcciones.es</div><div>Demo realizada: 10 Jun · Propuesta enviada: 10 Jun</div></div><div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:9px;padding:12px;font-size:12px;color:var(--gray);margin-bottom:16px"><strong style="color:var(--orange)">Acción recomendada:</strong> Llamar hoy o enviar email de seguimiento. Llevan 5 días sin responder. Probabilidad de enfriamiento alta.</div><div style="display:flex;gap:8px"><button class="btn btn-p" style="flex:1" onclick="closeM('ver-opp');nav('ia',document.querySelectorAll('.sb-item')[7]);iaQ('Escribe un email de seguimiento profesional a Construcciones Morales que lleva 5 días sin responder la propuesta de 18.000€')">IA redacta email seguimiento</button><button class="btn btn-g" onclick="closeM('ver-opp')">Cerrar</button></div></div></div>
+
+<div class="overlay" id="m-nuevo-ticket"><div class="modal"><button class="modal-x" onclick="closeM('nuevo-ticket')">×</button><div class="modal-t">Nuevo ticket de soporte</div><div class="modal-s">Registra una incidencia o solicitud</div><div class="fgrid"><div class="fg"><div class="flbl">Cliente</div><select class="fsel"><option>Lopesan Hotels</option><option>Clínica Norte</option><option>Bufete Armas</option><option>Bufete Delgado</option></select></div><div class="fg"><div class="flbl">Prioridad</div><select class="fsel"><option>Crítico — SLA 2h</option><option>Alta — SLA 4h</option><option>Normal — SLA 24h</option><option>Baja — SLA 72h</option></select></div><div class="fg full"><div class="flbl">Asunto</div><input class="fin" placeholder="Descripción breve del problema…"></div><div class="fg full"><div class="flbl">Descripción detallada</div><textarea class="fta" placeholder="Pasos para reproducir, usuarios afectados, mensajes de error…"></textarea></div><div class="fg"><div class="flbl">Asignar técnico</div><select class="fsel"><option>Jorge M.</option><option>Ana L.</option><option>Pedro R.</option><option>Sin asignar</option></select></div><div class="fg"><div class="flbl">Tipo</div><select class="fsel"><option>Incidencia</option><option>Solicitud de servicio</option><option>Mantenimiento</option><option>Consulta</option></select></div></div><div style="display:flex;gap:9px;margin-top:18px;justify-content:flex-end"><button class="btn btn-g" onclick="closeM('nuevo-ticket')">Cancelar</button><button class="btn btn-p" onclick="saveAndClose('nuevo-ticket','Ticket #1043 abierto y asignado')">Abrir ticket</button></div></div></div>
+
+<div class="overlay" id="m-ver-ticket"><div class="modal"><button class="modal-x" onclick="closeM('ver-ticket')">×</button><div class="modal-t">#1042 · Servidor caído — sala urgencias</div><div class="modal-s">Clínica Norte · Crítico · Abierto hace 23 min</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px"><div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:9px;padding:12px;text-align:center"><div style="font-size:16px;font-weight:900;color:var(--red)">Crítico</div><div style="font-size:10px;color:var(--gray);margin-top:3px">Prioridad</div></div><div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px;text-align:center"><div style="font-size:16px;font-weight:900;color:var(--orange)">23 min</div><div style="font-size:10px;color:var(--gray);margin-top:3px">Tiempo abierto</div></div><div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:9px;padding:12px;text-align:center"><div style="font-size:16px;font-weight:900;color:var(--red)">1h 37min</div><div style="font-size:10px;color:var(--gray);margin-top:3px">Restante SLA</div></div></div><div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;font-size:12px;color:var(--gray);line-height:1.7"><strong style="color:var(--w)">Descripción:</strong><br>El servidor principal de la sala de urgencias no responde tras la actualización automática de Windows Server las 02:30h. 4 puestos de trabajo sin acceso al historial clínico. Médicos usando papel de forma temporal.<br><br><strong style="color:var(--w)">Técnico asignado:</strong> Jorge M. — conectado en remoto desde las 08:14h</div><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"><div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:8px;padding:10px 13px;font-size:12px"><strong style="color:var(--p2)">08:14</strong> <span style="color:var(--gray)">Jorge M. — Conexión remota establecida. Revisando logs de evento.</span></div><div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:8px;padding:10px 13px;font-size:12px"><strong style="color:var(--p2)">08:29</strong> <span style="color:var(--gray)">Identificado: actualización KB5034441 rompió el servicio de AD. Iniciando rollback.</span></div></div><div class="fg full" style="margin-bottom:14px"><div class="flbl">Añadir nota</div><textarea class="fta" placeholder="Actualización de estado, pasos tomados…" style="min-height:60px"></textarea></div><div style="display:flex;gap:8px"><button class="btn btn-green btn-sm" style="flex:1" onclick="closeM('ver-ticket');toast('Ticket #1042 marcado como resuelto · 38min')">Marcar resuelto</button><button class="btn btn-p btn-sm" onclick="closeM('ver-ticket');toast('Nota enviada al cliente')">Enviar nota cliente</button><button class="btn btn-g btn-sm" onclick="closeM('ver-ticket')">Cerrar</button></div></div></div>
+
+<div class="overlay" id="m-nueva-hora"><div class="modal"><button class="modal-x" onclick="closeM('nueva-hora')">×</button><div class="modal-t">Registrar horas</div><div class="modal-s">Añade tiempo trabajado a un proyecto o incidencia</div><div class="fgrid"><div class="fg"><div class="flbl">Técnico</div><select class="fsel"><option>Jorge M.</option><option>Ana L.</option><option>Pedro R.</option></select></div><div class="fg"><div class="flbl">Fecha</div><input class="fin" type="date"></div><div class="fg"><div class="flbl">Cliente</div><select class="fsel"><option>Lopesan Hotels</option><option>Clínica Norte</option><option>Bufete Armas</option><option>Bufete Delgado</option></select></div><div class="fg"><div class="flbl">Proyecto / Ticket</div><select class="fsel"><option>App Móvil Reservas</option><option>Historia Clínica Digital</option><option>SmartLex Onboarding</option><option>MSSP · Ticket #1042</option><option>MSSP · Ticket #1041</option></select></div><div class="fg"><div class="flbl">Horas</div><input class="fin" type="number" step="0.5" placeholder="0.0"></div><div class="fg"><div class="flbl">Tipo</div><select class="fsel"><option>Proyecto · Facturable</option><option>Soporte MSSP · Incluido</option><option>Formación</option><option>Interno / Reunión</option></select></div><div class="fg full"><div class="flbl">Descripción de la tarea</div><input class="fin" placeholder="¿Qué se hizo en estas horas?"></div></div><div style="display:flex;gap:9px;margin-top:18px;justify-content:flex-end"><button class="btn btn-g" onclick="closeM('nueva-hora')">Cancelar</button><button class="btn btn-p" onclick="saveAndClose('nueva-hora','Horas registradas correctamente')">Guardar horas</button></div></div></div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+const VIEWS={tickets:{t:'Tickets de soporte',s:'Incidencias y SLA por cliente MSSP',btn:'+ Nuevo ticket',m:'nuevo-ticket'},horas:{t:'Control de horas',s:'Registro por técnico · proyecto · cliente',btn:'+ Registrar horas',m:'nueva-hora'},dash:{t:'Dashboard',s:'Resumen general · Junio 2026',btn:'+ Nueva oportunidad',m:'nueva-opp'},pipeline:{t:'Pipeline de ventas',s:'8 oportunidades · 142.000 € en juego',btn:'+ Nueva oportunidad',m:'nueva-opp'},clientes:{t:'Clientes',s:'6 empresas · 4.800 €/mes MRR',btn:'+ Nuevo cliente',m:'nuevo-cliente'},ficha:{t:'Ficha de cliente',s:'',btn:null},proyectos:{t:'Proyectos',s:'6 activos · 2 en riesgo',btn:'+ Nuevo proyecto',m:'nuevo-proyecto'},facturas:{t:'Facturación',s:'Q2: 87.400 € emitidos · Pendiente: 16.200 €',btn:'+ Nueva factura',m:'nueva-factura'},recurrentes:{t:'Contratos recurrentes',s:'MRR 4.800 € · 4 activos',btn:'+ Nuevo contrato',m:'nuevo-recurrente'},ia:{t:'Asistente IA',s:'Propuestas, análisis y seguimiento inteligente',btn:null}};
+
+function nav(id,el,noScroll){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('on'));
+  const v=document.getElementById('v-'+id);
+  if(v)v.classList.add('on');
+  if(el)el.classList.add('on');
+  const c=VIEWS[id]||{};
+  document.getElementById('tb-t').textContent=c.t||'';
+  document.getElementById('tb-s').textContent=c.s||'';
+  const bn=document.getElementById('btn-new');
+  if(c.btn){bn.textContent=c.btn;bn.style.display='';bn.onclick=c.m?()=>openM(c.m):null;}
+  else bn.style.display='none';
+}
+
+const CDATA={
+  lopesan:{av:'L',n:'Lopesan Hotels',s:'Hostelería · Gran Canaria',b:'<span class="badge b-red">MSSP</span><span class="badge b-cyan">Desarrollo</span><span class="badge b-gold">VIP</span>',e:'contacto@lopesan.com',tel:'+34 928 123 456',c:'Marcos Santana · Director IT',f:'48.2k',p:'4',m:'1.8k'},
+  clinica:{av:'C',n:'Clínica Norte LP',s:'Salud · Gran Canaria',b:'<span class="badge b-red">MSSP</span><span class="badge b-gray">Soporte IT</span>',e:'admin@clinicanorte.es',tel:'+34 928 654 321',c:'Dra. Fátima Torres · Gerente',f:'32.6k',p:'2',m:'1.2k'},
+};
+function verCliente(id){
+  const c=CDATA[id];if(!c)return;
+  document.getElementById('fa').textContent=c.av;
+  document.getElementById('fn').textContent=c.n;
+  document.getElementById('fs').textContent=c.s;
+  document.getElementById('fb').innerHTML=c.b;
+  document.getElementById('fe').textContent=c.e;
+  document.getElementById('ftel').textContent=c.tel;
+  document.getElementById('fc').textContent=c.c;
+  document.getElementById('ff').textContent=c.f;
+  document.getElementById('fp').textContent=c.p;
+  document.getElementById('fm').textContent=c.m;
+  document.getElementById('tb-s').textContent=c.n;
+  nav('ficha');
+  document.querySelectorAll('.sb-item')[2].classList.add('on');
+}
+
+function openM(id){const e=document.getElementById('m-'+id);if(e)e.classList.add('on');}
+function closeM(id){const e=document.getElementById('m-'+id);if(e)e.classList.remove('on');}
+document.querySelectorAll('.overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('on')}));
+
+function toast(msg){const n=document.getElementById('notif');n.textContent=msg;n.classList.add('on');setTimeout(()=>n.classList.remove('on'),2800);}
+function saveAndClose(id,msg){closeM(id);toast(msg);}
+
+const IA_R={
+  propuesta:`Aquí tienes la propuesta para Construcciones Morales:\n\n**Propuesta ERP Gestión de Obras — Smartbytes**\n\nEstimado equipo de Construcciones Morales,\n\nTras nuestra reunión del 10 de junio, os presentamos nuestra solución ERP personalizada para el sector de la construcción en Canarias.\n\n**Módulos propuestos:**\n• Gestión de obras y fases de proyecto\n• Control de proveedores y pedidos\n• Seguimiento de costes vs presupuesto\n• App para jefes de obra (móvil)\n• Informes de rentabilidad por obra\n• Panel de gestión para dirección\n\n**Inversión:** 18.000 € setup único + 297 €/mes\n**Plazo de entrega:** 6 semanas\n**Garantía:** 12 meses de soporte incluido\n\n¿Ajusto algo o la enviamos hoy?`,
+  brief:`**Brief Lopesan Hotels — Reunión de mañana:**\n\n**Cliente:** Grupo hotelero Gran Canaria\n**Contacto:** Marcos Santana, Director IT\n**Teléfono:** +34 928 123 456\n\n**Estado actual:**\n• App Móvil Reservas Fase 2 — 65% completada, QA esta semana\n• MSSP Ciberseguridad — activo y funcionando bien\n\n**Financiero:**\n• Facturado total: 48.200 €\n• MRR actual: 1.800 €/mes\n• Factura pendiente: 14.200 € (cobrada)\n\n**Próximos pasos naturales:**\n• Cierre Fase 2 App → abrir Fase 3 (~18k)\n• Renovación MSSP Ene 2027 (anticipar conversación)\n\n**Tip:** Menciona la Fase 3 de integración con su sistema PMS de hotel.`,
+  pipeline:`**Análisis pipeline — Prioridades esta semana:**\n\n**Cerrar YA (esta semana):**\n1. **Hotel Palm Beach** — 85% prob, 18.000 €/año, firma prevista 20 Jun. Llamar hoy para confirmar.\n2. **Notaría Pérez** — 80% prob, 13.500 €, revisando contrato. Preguntar si tienen dudas.\n\n**Activar esta semana:**\n3. **Construcciones Morales** — 5 días sin respuesta. Enviar email hoy + llamada mañana.\n4. **Grupo Médico Tamaraceite** — 75%, preguntar si revisaron propuesta.\n\n**Si cierras Hotel Palm Beach + Notaría esta semana = 31.500 € + 18.000 €/año recurrente**\n\n**Recomendación:** Foco total en cierre. No iniciar nuevos leads hasta cerrar estos 2.`,
+  seguimiento:`**Email de seguimiento para Construcciones Morales:**\n\n---\nAsunto: ERP Gestión de Obras — Consulta sobre la propuesta\n\nHola Carlos,\n\nEspero que estés bien. Te escribo para ver si habéis tenido oportunidad de revisar la propuesta que te envié el 10 de junio.\n\nEntiendo que tenéis mucho en marcha con la temporada, por lo que si necesitáis más tiempo o queréis ajustar algún módulo del ERP, estoy disponible para hablarlo cuando os venga bien.\n\nSi os surge alguna duda sobre el alcance técnico, el plazo o el precio, me decís y lo resolvemos en una llamada rápida de 15 minutos.\n\nUn saludo,\nSmartbytes · +34 928 XXX XXX\n---\n\n¿Envío así o le añado algún dato concreto de su empresa?`,
+  riesgo:`**Riesgo de renovaciones — Acciones:**\n\n**URGENTE — Bufete Armas (12 días):**\n• Llamar esta semana sin falta\n• Ofrecerles SmartLex Enterprise (+200€/mes, más módulos de gestión documental)\n• Probabilidad de renovación: 90% (llevan 2 años, muy satisfechos)\n• Oportunidad upsell: +2.400 €/año adicionales\n\n**Sin riesgo inmediato:**\n• Lopesan Hotels → Ene 2027\n• Clínica Norte → Mar 2027\n• Bufete Delgado → Jun 2027 (nuevo)\n\n**Cuando llames a Bufete Armas, pídeles que te recomienden** a otros despachos. Bufete Delgado llegó por referido.`,
+  upsell:`**Estrategia upsell Bufete Armas → SmartLex Enterprise:**\n\n**Abre la llamada así:**\n"Carlos, te llamo porque vuestro contrato de SmartLex Pro se renueva en 12 días y quería aprovechar para contaros las novedades de la versión Enterprise antes de renovar, por si os interesa."\n\n**Lo que Enterprise añade sobre Pro:**\n• Módulo de gestión documental avanzado\n•  Firma digital integrada (Docusign)\n•  Expedientes automatizados\n•  Integración con sistemas judiciales\n•  Usuarios ilimitados (vs 8 de Pro)\n\n**Precio Enterprise:** 850 €/mes (vs 650 €/mes actual)\n**Diferencia:** +200 €/mes → +2.400 €/año para Smartbytes\n\n**Argumento clave:** "Con la firma digital ya no necesitáis DocuSign aparte, que os cuesta 120€/mes."`,
+};
+
+function iaQ(q){document.getElementById('ia-in').value=q;sendIA();}
+function sendIA(){
+  const input=document.getElementById('ia-in');
+  const q=input.value.trim();if(!q)return;
+  const msgs=document.getElementById('ia-msgs');
+  msgs.innerHTML+=`<div class="ia-msg user"><div class="ia-bub">${q}</div><div class="ia-meta">Tú · ahora</div></div>`;
+  input.value='';msgs.scrollTop=msgs.scrollHeight;
+  setTimeout(()=>{
+    let r='Entendido. En la versión conectada a Supabase respondería con datos reales de Smartbytes en tiempo real.';
+    const ql=q.toLowerCase();
+    if(ql.includes('propuesta')||ql.includes('erp')||ql.includes('morales'))r=IA_R.propuesta;
+    else if(ql.includes('brief')||ql.includes('lopesan')||ql.includes('reuni'))r=IA_R.brief;
+    else if(ql.includes('pipeline')||ql.includes('priorizar')||ql.includes('semana'))r=IA_R.pipeline;
+    else if(ql.includes('seguimiento')||ql.includes('email')||ql.includes('responde'))r=IA_R.seguimiento;
+    else if(ql.includes('renov')||ql.includes('venc')||ql.includes('riesgo'))r=IA_R.riesgo;
+    else if(ql.includes('upsell')||ql.includes('enterprise')||ql.includes('armas'))r=IA_R.upsell;
+    r=r.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    msgs.innerHTML+=`<div class="ia-msg bot"><div class="ia-bub">${r}</div><div class="ia-meta">Asistente IA · ahora</div></div>`;
+    msgs.scrollTop=msgs.scrollHeight;
+  },800);
+}
+</script>
+</body>
+</html>
