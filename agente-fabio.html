@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agente Airmate · Fabio</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07080f;--bg2:#0c0e1a;--bg3:#111422;--card:#0f1120;
+  --p:#6366f1;--p2:#818cf8;--border:rgba(99,102,241,.18);
+  --w:#f1f5f9;--gray:#64748b;--green:#10b981;--red:#ef4444;--orange:#f59e0b;
+}
+body{font-family:-apple-system,'Inter',sans-serif;background:var(--bg);color:var(--w);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+
+/* HEADER */
+.header{width:100%;background:var(--bg2);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;gap:14px}
+.logo{width:38px;height:38px;background:linear-gradient(135deg,var(--p),#7c3aed);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(99,102,241,.4);flex-shrink:0}
+.header-text h1{font-size:15px;font-weight:800;color:var(--w)}
+.header-text p{font-size:11px;color:var(--gray);margin-top:1px}
+.status{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* MAIN */
+.main{width:100%;max-width:720px;padding:24px 16px;flex:1;display:flex;flex-direction:column;gap:16px}
+
+/* CONTEXTO RÁPIDO */
+.context-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.ctx-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:border-color .15s}
+.ctx-card:hover{border-color:var(--p)}
+.ctx-val{font-size:20px;font-weight:900;color:var(--p2);line-height:1}
+.ctx-lbl{font-size:10px;color:var(--gray);margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+.ctx-trend{font-size:10px;color:var(--green);margin-top:3px}
+
+/* CHAT */
+.chat-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:380px}
+.msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.msg{display:flex;gap:10px;align-items:flex-start;max-width:92%}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.av{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.av.bot{background:linear-gradient(135deg,var(--p),#7c3aed)}
+.av.user{background:linear-gradient(135deg,#475569,#334155);font-size:10px}
+.bub{padding:11px 15px;border-radius:12px;font-size:13px;line-height:1.65}
+.msg.bot .bub{background:var(--bg3);border:1px solid var(--border);border-radius:4px 12px 12px 12px;color:var(--w)}
+.msg.user .bub{background:linear-gradient(135deg,var(--p),#7c3aed);color:#fff;border-radius:12px 4px 12px 12px}
+.msg-time{font-size:9px;color:var(--gray);margin-top:4px;text-align:right}
+.msg.bot .msg-time{text-align:left}
+
+/* TYPING */
+.typing .bub{display:flex;gap:4px;align-items:center;padding:14px 18px}
+.typing .bub span{width:6px;height:6px;border-radius:50%;background:var(--gray);animation:bounce .9s infinite}
+.typing .bub span:nth-child(2){animation-delay:.15s}
+.typing .bub span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+/* INPUT AREA */
+.input-area{border-top:1px solid var(--border);padding:14px 16px;display:flex;gap:10px;align-items:center;background:var(--bg2)}
+.txt-in{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--w);font-size:13px;outline:none;font-family:inherit;resize:none;max-height:100px;line-height:1.5}
+.txt-in:focus{border-color:var(--p)}
+.txt-in::placeholder{color:var(--gray)}
+.btn-send{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--p),#7c3aed);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px rgba(99,102,241,.4);transition:filter .15s}
+.btn-send:hover{filter:brightness(1.15)}
+.btn-send svg{width:16px;height:16px;fill:#fff}
+.btn-mic{width:40px;height:40px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.btn-mic:hover{border-color:var(--p)}
+.btn-mic.on{background:rgba(239,68,68,.15);border-color:var(--red);animation:ring .8s infinite}
+@keyframes ring{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 6px rgba(239,68,68,0)}}
+.btn-mic svg{width:16px;height:16px;stroke:var(--gray);fill:none;stroke-width:1.5}
+.btn-mic.on svg{stroke:var(--red)}
+
+/* SUGERENCIAS */
+.sugs{display:flex;flex-wrap:wrap;gap:7px;padding:0 4px}
+.sug{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:6px 13px;font-size:11px;color:var(--gray);cursor:pointer;transition:all .15s;white-space:nowrap}
+.sug:hover{border-color:var(--p);color:var(--w);background:rgba(99,102,241,.08)}
+
+/* SPEAKING INDICATOR */
+.speaking-bar{height:3px;background:linear-gradient(90deg,var(--p),var(--p2),var(--green));background-size:200% 100%;animation:slide 1.5s linear infinite;border-radius:2px;display:none}
+.speaking-bar.on{display:block}
+@keyframes slide{0%{background-position:0% 0%}100%{background-position:200% 0%}}
+
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(99,102,241,.3);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">A</div>
+  <div class="header-text">
+    <h1>Agente Airmate</h1>
+    <p>Tu asistente de agencia · voz + texto</p>
+  </div>
+  <div class="status">
+    <div class="dot"></div>
+    Activo
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- KPIs rápidos -->
+  <div class="context-strip">
+    <div class="ctx-card" onclick="ask('¿Cuánto llevo facturado este mes?')">
+      <div class="ctx-val" id="kpi-mrr">—</div>
+      <div class="ctx-lbl">MRR activo</div>
+      <div class="ctx-trend" id="kpi-mrr-sub">Cargando…</div>
+    </div>
+    <div class="ctx-card" onclick="ask('¿Qué clientes tengo activos?')">
+      <div class="ctx-val" id="kpi-cli">—</div>
+      <div class="ctx-lbl">Clientes</div>
+      <div class="ctx-trend" id="kpi-cli-sub">activos</div>
+    </div>
+    <div class="ctx-card" onclick="ask('¿Qué tareas tengo pendientes hoy?')">
+      <div class="ctx-val" id="kpi-tasks">—</div>
+      <div class="ctx-lbl">Leads pipeline</div>
+      <div class="ctx-trend" id="kpi-tasks-sub">en seguimiento</div>
+    </div>
+    <div class="ctx-card" onclick="ask('¿Cómo va el negocio este mes?')">
+      <div class="ctx-val" style="color:var(--green)">IA</div>
+      <div class="ctx-lbl">Modo agente</div>
+      <div class="ctx-trend">Pregúntame lo que sea</div>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat-wrap">
+    <div class="speaking-bar" id="speaking-bar"></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="sugs" id="sugs-wrap" style="padding:10px 16px 12px">
+      <span class="sug" onclick="ask('¿Cómo va el negocio hoy?')">¿Cómo va el negocio hoy?</span>
+      <span class="sug" onclick="ask('¿Qué clientes tengo que seguir esta semana?')">Clientes a seguir esta semana</span>
+      <span class="sug" onclick="ask('Dame un resumen de Airmate')">Resumen de Airmate</span>
+      <span class="sug" onclick="ask('¿Qué tengo pendiente?')">¿Qué tengo pendiente?</span>
+      <span class="sug" onclick="ask('¿Cuánto MRR tengo activo?')">MRR activo</span>
+      <span class="sug" onclick="ask('Dame ideas para conseguir más clientes')">Ideas para captar clientes</span>
+    </div>
+    <div class="input-area">
+      <textarea class="txt-in" id="inp" placeholder="Escribe o pulsa el micro…" rows="1" onkeydown="onKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="btn-mic" id="btn-mic" onclick="toggleMic()" title="Hablar">
+        <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="19" x2="12" y2="22" stroke-linecap="round"/><line x1="8" y1="22" x2="16" y2="22" stroke-linecap="round"/></svg>
+      </button>
+      <button class="btn-send" onclick="send()" title="Enviar">
+        <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SB = supabase.createClient(
+  'https://vjofxmfwdybktpwiuanc.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE'
+);
+const PROXY = 'https://bot-airmate-1.vercel.app/api/chat';
+
+// ── CONTEXTO DINÁMICO DE AIRMATE ──────────────────────────────
+let CTX = {
+  clientes: [],
+  leads: [],
+  citas: [],
+  configs: []
+};
+
+async function cargarContexto() {
+  try {
+    const [clis, leads, citas, cfgs] = await Promise.all([
+      SB.from('clients').select('name,phone,email,business_slug').limit(50),
+      SB.from('leads').select('name,phone,interest,business_slug,created_at').order('created_at',{ascending:false}).limit(30),
+      SB.from('appointments').select('name,service,starts_at,business_slug').gte('starts_at', new Date(Date.now()-7*86400000).toISOString()).limit(30),
+      SB.from('bot_configs').select('slug,bot_name,owner_email').limit(20)
+    ]);
+    if(clis.data) CTX.clientes = clis.data;
+    if(leads.data) CTX.leads = leads.data;
+    if(citas.data) CTX.citas = citas.data;
+    if(cfgs.data) CTX.configs = cfgs.data;
+
+    // KPIs
+    document.getElementById('kpi-cli').textContent = CTX.configs.length || '—';
+    document.getElementById('kpi-cli-sub').textContent = (CTX.configs.length > 0 ? CTX.configs.map(c=>c.slug).join(', ') : 'Sin datos');
+    document.getElementById('kpi-tasks').textContent = CTX.leads.length || '0';
+    document.getElementById('kpi-tasks-sub').textContent = 'leads en BD';
+    document.getElementById('kpi-mrr').textContent = CTX.configs.length * 197 + '€';
+    document.getElementById('kpi-mrr-sub').textContent = CTX.configs.length + ' clientes activos';
+  } catch(e) {
+    console.log('Supabase:', e);
+  }
+}
+cargarContexto();
+
+function buildSystemPrompt() {
+  const hoy = new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const clientes_txt = CTX.configs.length
+    ? CTX.configs.map(c=>`- ${c.slug} (${c.bot_name||'—'}) · ${c.owner_email||'sin email'}`).join('\n')
+    : '- Sin clientes registrados aún';
+  const leads_txt = CTX.leads.length
+    ? CTX.leads.slice(0,10).map(l=>`- ${l.name} → interés: ${l.interest||'general'} · negocio: ${l.business_slug} · ${new Date(l.created_at).toLocaleDateString('es-ES')}`).join('\n')
+    : '- Sin leads recientes';
+  const citas_txt = CTX.citas.length
+    ? CTX.citas.slice(0,10).map(c=>`- ${c.name} · ${c.service} · ${new Date(c.starts_at).toLocaleString('es-ES')} · negocio: ${c.business_slug}`).join('\n')
+    : '- Sin citas recientes';
+
+  return `Eres el agente personal de Fabio Bueno, fundador de Airmate — una agencia de IA en Canarias que construye CRMs personalizados con agente IA para negocios locales.
+
+HOY ES: ${hoy}
+
+TU ROL:
+- Eres el cerebro centralizado de la agencia
+- Conoces todos los clientes, leads, citas y el estado del negocio
+- Respondes de forma directa, útil y sin rodeos — como un COO inteligente
+- Cuando Fabio pregunta algo, le das la respuesta con los datos reales que tienes
+- Si no tienes el dato exacto, díselo y sugiere cómo conseguirlo
+- Eres proactivo: si ves algo importante, lo mencionas
+
+SOBRE AIRMATE:
+- Producto: CRM personalizado + agente IA conversacional para negocios locales
+- Incluye: gestión de citas, clientes, facturación, Verifactu integrado
+- Stack: React/Remotion para demos, Supabase como BD, GitHub Pages para hosting, Vercel para proxy IA
+- Precio aprox: 997€ setup + 197€/mes por cliente
+- Canales de captación: LinkedIn (Sales Navigator activo), Instagram, demos personalizadas
+- Fabio hace todo: desarrollo, ventas, demos, onboarding
+
+CLIENTES ACTIVOS EN SUPABASE (bot_configs):
+${clientes_txt}
+
+ÚLTIMOS LEADS RECIBIDOS:
+${leads_txt}
+
+ÚLTIMAS CITAS/RESERVAS (todos los negocios):
+${citas_txt}
+
+CLIENTES CLAVE QUE FABIO MANEJA:
+- Jose Acosta Pro: CRM demo activo, panel subido a GitHub
+- Costa Norte: Escuela surf + apartamentos San Vicente de la Barquera, formulario onboarding enviado
+- House of Tailors: Dubai, propuesta AED 8.500+850/mes enviada, pendiente TRN + WA Business API
+- Smartbytes: MSSP + desarrollo Las Palmas, demo enviada hoy a Alberto Benítez (Ingeniero)
+- Karolyn Garcia: Lead LinkedIn respondió hoy "¿de qué se trata?"
+
+TAREAS Y PROYECTOS ACTIVOS:
+- Panel Jose Acosta: live en GitHub
+- Demo Smartbytes: enviada hoy, esperando respuesta llamada
+- Costa Norte: formulario onboarding activo, esperando respuesta secretaria
+- LinkedIn captación: Sales Navigator activo, mensajes en curso hoy
+
+REGLAS DE RESPUESTA:
+- Responde en español siempre
+- Máximo 3-4 frases por respuesta salvo que pidan un análisis largo
+- Si te preguntan por un cliente específico, da todos los detalles que tengas
+- Si te piden una tarea ("recuérdame", "añade", "organiza"), confirma y sugiere cómo ejecutarla
+- Cuando hables por voz, usa frases cortas sin listas largas`;
+}
+
+// ── HISTORIAL ─────────────────────────────────────────────────
+const history = [];
+
+function now() {
+  return new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+}
+
+function addMsg(role, text) {
+  const msgs = document.getElementById('msgs');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  const initials = role === 'bot' ? 'A' : 'F';
+  div.innerHTML = `
+    <div class="av ${role}">${initials}</div>
+    <div>
+      <div class="bub">${text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>')}</div>
+      <div class="msg-time">${now()}</div>
+    </div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  document.getElementById('sugs-wrap').style.display = 'none';
+  return div;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('msgs');
+  const div = document.createElement('div');
+  div.className = 'msg bot typing';
+  div.innerHTML = `<div class="av bot">A</div><div class="bub"><span></span><span></span><span></span></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+// ── ENVÍO ─────────────────────────────────────────────────────
+async function send() {
+  const inp = document.getElementById('inp');
+  const q = inp.value.trim();
+  if (!q) return;
+  inp.value = ''; autoResize(inp);
+  addMsg('user', q);
+  history.push({role:'user', content:q});
+  const typing = addTyping();
+  try {
+    const res = await fetch(PROXY, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        system_prompt: buildSystemPrompt(),
+        messages: history.slice(-12)
+      })
+    });
+    const data = await res.json();
+    typing.remove();
+    const reply = data.content?.[0]?.text || data.reply || data.message || 'No pude procesar la respuesta.';
+    history.push({role:'assistant', content:reply});
+    addMsg('bot', reply);
+    speak(reply);
+  } catch(e) {
+    typing.remove();
+    addMsg('bot', 'Error de conexión. Comprueba el proxy de Vercel.');
+  }
+}
+
+function ask(q) {
+  document.getElementById('inp').value = q;
+  send();
+}
+
+function onKey(e) {
+  if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+}
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+// ── VOZ: ENTRADA (STT) ────────────────────────────────────────
+let recognition = null;
+let recActive = false;
+
+function toggleMic() {
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome.');
+    return;
+  }
+  if (recActive) {
+    recognition?.stop();
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'es-ES';
+  recognition.interimResults = false;
+  recognition.continuous = false;
+
+  recognition.onstart = () => {
+    recActive = true;
+    document.getElementById('btn-mic').classList.add('on');
+  };
+  recognition.onresult = (e) => {
+    const txt = e.results[0][0].transcript;
+    document.getElementById('inp').value = txt;
+    send();
+  };
+  recognition.onend = () => {
+    recActive = false;
+    document.getElementById('btn-mic').classList.remove('on');
+  };
+  recognition.onerror = () => {
+    recActive = false;
+    document.getElementById('btn-mic').classList.remove('on');
+  };
+  recognition.start();
+}
+
+// ── VOZ: SALIDA (TTS) ─────────────────────────────────────────
+let speaking = false;
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  // Limpiar markdown y acortar para voz
+  const clean = text
+    .replace(/\*\*(.*?)\*\*/g,'$1')
+    .replace(/\*(.*?)\*/g,'$1')
+    .replace(/<br>/g,' ')
+    .replace(/<[^>]+>/g,'')
+    .substring(0, 300);
+  const utt = new SpeechSynthesisUtterance(clean);
+  utt.lang = 'es-ES';
+  utt.rate = 1.05;
+  utt.pitch = 1;
+  // Intentar voz española
+  const voices = window.speechSynthesis.getVoices();
+  const esVoice = voices.find(v => v.lang.startsWith('es') && v.name.includes('Google'))
+    || voices.find(v => v.lang.startsWith('es'));
+  if (esVoice) utt.voice = esVoice;
+  utt.onstart = () => { document.getElementById('speaking-bar').classList.add('on'); };
+  utt.onend = () => { document.getElementById('speaking-bar').classList.remove('on'); };
+  window.speechSynthesis.speak(utt);
+}
+// Cargar voces
+window.speechSynthesis?.getVoices();
+window.speechSynthesis?.addEventListener?.('voiceschanged', () => window.speechSynthesis.getVoices());
+
+// ── MENSAJE INICIAL ───────────────────────────────────────────
+setTimeout(() => {
+  addMsg('bot', `Hola Fabio. Soy tu agente de Airmate. Tengo acceso a tus clientes, leads y citas en tiempo real.\n\n¿Qué quieres saber o hacer?`);
+}, 400);
+</script>
+</body>
+</html>
