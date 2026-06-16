@@ -271,6 +271,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
       <input id="custom-voice-id" type="text" placeholder="ej: abc123xyz..." style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:12px;font-family:inherit;outline:none" oninput="this.style.borderColor=this.value?'rgba(99,102,241,.5)':''" onfocus="this.style.borderColor='rgba(99,102,241,.4)'" onblur="this.style.borderColor=this.value?'rgba(99,102,241,.5)':'var(--border)'">
     </div>
 
+    <button onclick="testVoice()" style="margin:16px 22px 0;padding:10px;border-radius:9px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);color:var(--accent2);font-size:13px;font-weight:500;cursor:pointer;width:calc(100% - 44px);font-family:inherit" id="btn-test-voice">▶ Probar voz actual</button>
     <button class="sp-save" onclick="saveSettings()">Guardar ajustes</button>
   </div>
 </div>
@@ -888,6 +889,29 @@ function toggleSettings(){
   if(o.classList.contains('open')){applySettingsUI();loadELVoices();}
 }
 function closeSettingsOutside(e){if(e.target===document.getElementById('settings-overlay'))toggleSettings();}
+async function testVoice(){
+  const btn=document.getElementById('btn-test-voice');
+  const manualId=document.getElementById('custom-voice-id')?.value.trim();
+  const voiceId=manualId||document.querySelector('.voice-opt.active')?.dataset.voice||CFG.voice;
+  btn.textContent='⏳ Probando…';btn.disabled=true;
+  try{
+    const resp=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,{
+      method:'POST',
+      headers:{'xi-api-key':EL_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({text:'Hola Mister Bueno, soy Sofia.',model_id:'eleven_multilingual_v2',voice_settings:{stability:0.3,similarity_boost:0.85,style:0.4,use_speaker_boost:true}})
+    });
+    if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error((err.detail?.message||err.detail||resp.status)+' · ID: '+voiceId);}
+    const blob=await resp.blob();
+    const url=URL.createObjectURL(blob);
+    new Audio(url).play();
+    btn.textContent='✓ Voz OK — guardando…';
+    CFG.voice=voiceId;localStorage.setItem(SETTINGS_KEY,JSON.stringify(CFG));
+    setTimeout(()=>{btn.textContent='▶ Probar voz actual';btn.disabled=false;},2000);
+  }catch(e){
+    btn.textContent='✗ Error: '+e.message;btn.disabled=false;
+    setTimeout(()=>{btn.textContent='▶ Probar voz actual';},4000);
+  }
+}
 loadSettings();
 
 // buildPrompt inyecta tipo de respuesta desde CFG
