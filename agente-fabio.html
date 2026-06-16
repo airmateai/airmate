@@ -352,7 +352,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 const SB=supabase.createClient('https://vjofxmfwdybktpwiuanc.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE');
 const PROXY='https://bot-airmate-1.vercel.app/api/chat';
 const EL_KEY='sk_f1c7d026f9f540e6ce1a7b982fe8b8d55577086399bc3dec';
-const EL_VOICE='jBpfuIE2acCO8z3wKNLl'; // Gigi — joven, dulce, expresiva
+// voz controlada por CFG.voice (ver ajustes)
 
 // ── HISTORIAL
 const HIST_KEY='sofia_history_v1';
@@ -527,7 +527,7 @@ async function sendText(q){
 function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendText();}}
 function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,88)+'px';}
 
-// ── TTS — ElevenLabs + fallback Web Speech
+// ── TTS — usa siempre CFG.voice de ajustes
 let currentAudio=null;
 async function speak(text,vmode=true){
   if(currentAudio){currentAudio.pause();URL.revokeObjectURL(currentAudio._url||'');currentAudio=null;}
@@ -542,13 +542,15 @@ async function speak(text,vmode=true){
     setPState('idle');
     if(mode==='voice'){setStatus('En espera');document.getElementById('wave-zone').classList.remove('on');setTx('',true);}
   };
+  const voiceId=CFG?.voice||'EXAVITQu4vr4xnSDxMaL';
+  const stab=CFG?.stab??0.32,sty=CFG?.style??0.42,sim=CFG?.sim??0.85;
   try{
-    const resp=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${EL_VOICE}`,{
+    const resp=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,{
       method:'POST',
       headers:{'xi-api-key':EL_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({text:clean,model_id:'eleven_multilingual_v2',voice_settings:{stability:0.32,similarity_boost:0.88,style:0.42,use_speaker_boost:true}})
+      body:JSON.stringify({text:clean,model_id:'eleven_multilingual_v2',voice_settings:{stability:stab,similarity_boost:sim,style:sty,use_speaker_boost:true}})
     });
-    if(!resp.ok)throw new Error('EL '+resp.status);
+    if(!resp.ok)throw new Error('EL '+resp.status+' voice:'+voiceId);
     const blob=await resp.blob();
     const url=URL.createObjectURL(blob);
     const audio=new Audio(url);audio._url=url;currentAudio=audio;
@@ -556,7 +558,7 @@ async function speak(text,vmode=true){
     audio.onended=()=>{currentAudio=null;URL.revokeObjectURL(url);onEnd();};
     audio.onerror=()=>{currentAudio=null;onEnd();};
     audio.play();
-  }catch(e){console.warn('ElevenLabs error:',e.message);speakWebSpeech(clean,onStart,onEnd);}
+  }catch(e){console.warn('ElevenLabs:',e.message);speakWebSpeech(clean,onStart,onEnd);}
 }
 function speakWebSpeech(clean,onStart,onEnd){
   if(!('speechSynthesis'in window))return;
@@ -803,8 +805,8 @@ function pDraw(){
 pDraw();
 
 // ══ AJUSTES ══
-const SETTINGS_KEY='sofia_settings_v1';
-let CFG={voice:'cgSgspJ2msm6clMCkdW9',stab:0.28,style:0.55,sim:0.85,resp:'concisa'};
+const SETTINGS_KEY='sofia_settings_v2'; // v2 = resetea settings viejos
+let CFG={voice:'EXAVITQu4vr4xnSDxMaL',stab:0.28,style:0.50,sim:0.85,resp:'concisa'};
 
 const RESP_PROMPTS={
   concisa:'Máx 3 frases. Directo al punto.',
@@ -880,41 +882,10 @@ function toggleSettings(){
 function closeSettingsOutside(e){if(e.target===document.getElementById('settings-overlay'))toggleSettings();}
 loadSettings();
 
-// Sobrescribir speak para usar CFG dinámico
-const _origSpeak=speak;
-speak=async function(text,vmode=true){
-  if(currentAudio){currentAudio.pause();URL.revokeObjectURL(currentAudio._url||'');currentAudio=null;}
-  window.speechSynthesis?.cancel();
-  const clean=text.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').replace(/<br>/g,' ').replace(/<[^>]+>/g,'').substring(0,600);
-  const onStart=()=>{
-    setPState('speaking');
-    if(vmode||mode==='voice'){setStatus('Hablando','speaking');setTx(clean.substring(0,160)+(clean.length>160?'…':''));document.getElementById('wave-zone').classList.add('on');}
-    window._thinking=false;
-  };
-  const onEnd=()=>{
-    setPState('idle');
-    if(mode==='voice'){setStatus('En espera');document.getElementById('wave-zone').classList.remove('on');setTx('',true);}
-  };
-  try{
-    const resp=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${CFG.voice}`,{
-      method:'POST',
-      headers:{'xi-api-key':EL_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({text:clean,model_id:'eleven_multilingual_v2',voice_settings:{stability:CFG.stab,similarity_boost:CFG.sim,style:CFG.style,use_speaker_boost:true}})
-    });
-    if(!resp.ok)throw new Error('EL '+resp.status);
-    const blob=await resp.blob();const url=URL.createObjectURL(blob);
-    const audio=new Audio(url);audio._url=url;currentAudio=audio;
-    audio.onplay=onStart;
-    audio.onended=()=>{currentAudio=null;URL.revokeObjectURL(url);onEnd();};
-    audio.onerror=()=>{currentAudio=null;onEnd();};
-    audio.play();
-  }catch(e){console.warn('ElevenLabs:',e.message);speakWebSpeech(clean,onStart,onEnd);}
-};
-
-// Inyectar tipo de respuesta en buildPrompt
+// buildPrompt inyecta tipo de respuesta desde CFG
 const _origBuildPrompt=buildPrompt;
 buildPrompt=function(){
-  return _origBuildPrompt()+'\nMODO RESPUESTA: '+( RESP_PROMPTS[CFG.resp]||RESP_PROMPTS.concisa);
+  return _origBuildPrompt()+'\nMODO RESPUESTA: '+(RESP_PROMPTS[CFG?.resp]||RESP_PROMPTS.concisa);
 };
 
 // ── BIENVENIDA
