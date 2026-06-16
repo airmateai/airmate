@@ -441,6 +441,10 @@ body{font-family:'Inter',-apple-system,sans-serif;color:var(--t);display:flex;fl
       <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
       Llamar a Sofia
     </button>
+    <button class="call-mode-btn" id="btn-listen" onclick="toggleListenMode()" style="margin-top:8px;background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.3);color:rgba(52,211,153,.9)">
+      <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="19" x2="12" y2="22" stroke-linecap="round"/></svg>
+      Escucha continua
+    </button>
   </div>
   <div class="v-chips">
     <button class="v-chip" onclick="askVoice('¿Cómo va el negocio hoy?')">Estado del negocio</button>
@@ -987,6 +991,67 @@ function toggleCallMode(){
     vrec?.stop();setSts('En espera');setPState('idle');
     showToast('Llamada terminada');
   }
+}
+
+// ══════════════════════════════════════════
+// MODO ESCUCHA CONTINUA (acumula todo, manda al parar)
+// ══════════════════════════════════════════
+let listenMode=false;
+let listenAccum='';
+let listenRec=null;
+
+function toggleListenMode(){
+  if(!hasSTT){showToast('Micro no disponible en este navegador');return;}
+  listenMode=!listenMode;
+  const btn=document.getElementById('btn-listen');
+  if(listenMode){
+    listenAccum='';
+    btn.style.background='rgba(52,211,153,.3)';
+    btn.style.borderColor='rgba(52,211,153,.7)';
+    btn.innerHTML='<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5"><rect x="5" y="5" width="14" height="14" rx="1"/></svg> Parar y enviar';
+    setSts('Escuchando todo…','ls');setPState('listening');
+    showToast('Escucha activa — habla todo lo que quieras');
+    startListenRec();
+  }else{
+    btn.style.background='rgba(52,211,153,.12)';
+    btn.style.borderColor='rgba(52,211,153,.3)';
+    btn.innerHTML='<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="19" x2="12" y2="22" stroke-linecap="round"/></svg> Escucha continua';
+    listenRec?.stop();
+    setSts('Procesando…','tk');setPState('thinking');
+    if(listenAccum.trim()){
+      showToast('Enviando a Sofia…');
+      askVoice(listenAccum.trim());
+    }else{
+      setSts('En espera');setPState('idle');
+      showToast('Sin contenido grabado');
+    }
+    listenAccum='';
+  }
+}
+
+function startListenRec(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  listenRec=new SR();
+  listenRec.lang='es-ES';
+  listenRec.interimResults=true;
+  listenRec.continuous=true;
+  listenRec.onresult=(e)=>{
+    // Muestra fragmento actual en pantalla
+    const last=e.results[e.results.length-1];
+    setTx(last[0].transcript);
+    // Acumula solo resultados finales
+    if(last.isFinal){
+      listenAccum+=(listenAccum?' ':'')+last[0].transcript;
+    }
+  };
+  listenRec.onend=()=>{
+    // Si sigue en listenMode (p.ej. el navegador cortó), reiniciar
+    if(listenMode){setTimeout(startListenRec,300);}
+  };
+  listenRec.onerror=()=>{
+    if(listenMode){setTimeout(startListenRec,500);}
+  };
+  listenRec.start();
 }
 
 async function askVoice(q){
