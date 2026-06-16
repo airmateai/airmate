@@ -946,10 +946,17 @@ function startRec(cont){
   vrec=new SR();vrec.lang='es-ES';vrec.interimResults=true;vrec.continuous=!!cont;
   vrec.onstart=()=>{vactive=true;document.getElementById('btn-mic').classList.add('on');document.getElementById('mh').textContent='Escuchando…';setSts('Escuchando','ls');setTx('');setPState('listening');};
   vrec.onresult=(e)=>{
-    const t=Array.from(e.results).map(r=>r[0].transcript).join('');
-    setTx(t);
-    if(!cont&&e.results[e.results.length-1].isFinal){vrec.stop();askVoice(t);}
-    if(cont&&e.results[e.results.length-1].isFinal){askVoice(t);}
+    const last=e.results[e.results.length-1];
+    const t=last[0].transcript;
+    if(cont){
+      // En modo continuo solo mostramos el fragmento actual, no acumulamos
+      setTx(t);
+      if(last.isFinal){askVoice(t);}
+    }else{
+      const full=Array.from(e.results).map(r=>r[0].transcript).join('');
+      setTx(full);
+      if(last.isFinal){vrec.stop();askVoice(full);}
+    }
   };
   const end=()=>{
     vactive=false;document.getElementById('btn-mic').classList.remove('on');document.getElementById('mh').textContent=callMode?'Llamada activa — habla cuando quieras':'Pulse para hablar';
