@@ -659,28 +659,33 @@ async function sendText(q){
   if(!q){inp.value='';autoResize(inp);}
   addMsg('user',txt);history.push({role:'user',content:txt});
   const ty=addTyping();
-  let done=false;
+  // Failsafe: quitar typing dots pase lo que pase tras 30s
+  const failsafe=setTimeout(()=>{try{ty.remove();}catch(e){}addMsg('bot','Sin respuesta (30s). Compruebe conexión.');},30000);
   try{
-    const r=await fetchWithTimeout(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_prompt:buildPrompt(),messages:history.slice(-12)})},25000);
+    const payload={system_prompt:buildPrompt(),messages:history.slice(-8)};
+    const r=await fetchWithTimeout(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)},25000);
+    clearTimeout(failsafe);
     let raw='';
     try{
       const d=await r.json();
       raw=d.reply||d.content?.[0]?.text||d.message||'';
     }catch(je){
-      const txt2=await r.text().catch(()=>'');
-      raw=txt2||'Error al parsear respuesta.';
+      raw=await r.text().catch(()=>'Error al parsear respuesta (HTTP '+r.status+').');
     }
-    if(!raw)raw='Sin respuesta del servidor.';
+    if(!raw)raw='Respuesta vacía del servidor (HTTP '+r.status+').';
     const{clean,actions}=parseActions(raw);
     history.push({role:'assistant',content:raw});saveHistory();
     if(actions.length)executeActions(actions);
-    done=true;ty.remove();
+    ty.remove();
     addMsg('bot',clean,actions);speak(clean,false);
   }catch(e){
-    if(!done)ty.remove();
-    const msg=e.name==='AbortError'?'Sin respuesta (25s). Compruebe su conexión.':'Error: '+e.message;
+    clearTimeout(failsafe);
+    try{ty.remove();}catch(_){}
+    const msg=e.name==='AbortError'
+      ?'Sin respuesta en 25s — el servidor tardó demasiado.'
+      :'Error de red: '+e.message;
     addMsg('bot',msg);
-    console.error('sendText error:',e);
+    showToast('⚠ '+msg,5000);
   }
 }
 function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendText();}}
