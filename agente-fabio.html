@@ -602,14 +602,18 @@ async function askVoice(q){
   setStatus('Pensando…','thinking');setTx(q);window._thinking=true;setPState('thinking');
   history.push({role:'user',content:q});
   try{
-    const r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_prompt:buildPrompt(),messages:history.slice(-12)})});
+    const r=await fetchWithTimeout(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_prompt:buildPrompt(),messages:history.slice(-12)})});
     const d=await r.json();
     const raw=d.reply||d.content?.[0]?.text||d.message||'Sin respuesta.';
     const{clean,actions}=parseActions(raw);
     history.push({role:'assistant',content:raw});saveHistory();
     if(actions.length)executeActions(actions);
     speak(clean,true);
-  }catch(e){setStatus('Error de conexión');window._thinking=false;setPState('idle');}
+  }catch(e){
+    const msg=e.name==='AbortError'?'Tiempo de espera agotado.':'Error de conexión.';
+    setStatus(msg);window._thinking=false;setPState('idle');
+    setTimeout(()=>setStatus('En espera'),3000);
+  }
 }
 
 // ── TEXT
@@ -644,6 +648,11 @@ function addTyping(){
   d.innerHTML=`<div class="msg-av bot">S</div><div class="msg-body"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
   m.appendChild(d);m.scrollTop=m.scrollHeight;return d;
 }
+async function fetchWithTimeout(url,opts,ms=20000){
+  const ctrl=new AbortController();
+  const tid=setTimeout(()=>ctrl.abort(),ms);
+  try{return await fetch(url,{...opts,signal:ctrl.signal});}finally{clearTimeout(tid);}
+}
 async function sendText(q){
   const inp=document.getElementById('inp');
   const txt=q||inp.value.trim();if(!txt)return;
@@ -651,14 +660,18 @@ async function sendText(q){
   addMsg('user',txt);history.push({role:'user',content:txt});
   const ty=addTyping();
   try{
-    const r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_prompt:buildPrompt(),messages:history.slice(-12)})});
+    const r=await fetchWithTimeout(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_prompt:buildPrompt(),messages:history.slice(-12)})});
     const d=await r.json();ty.remove();
     const raw=d.reply||d.content?.[0]?.text||d.message||'Sin respuesta.';
     const{clean,actions}=parseActions(raw);
     history.push({role:'assistant',content:raw});saveHistory();
     if(actions.length)executeActions(actions);
     addMsg('bot',clean,actions);speak(clean,false);
-  }catch(e){ty.remove();addMsg('bot','Error de conexión.');}
+  }catch(e){
+    ty.remove();
+    const msg=e.name==='AbortError'?'Sin respuesta del servidor. Inténtelo de nuevo.':'Error de conexión.';
+    addMsg('bot',msg);
+  }
 }
 function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendText();}}
 function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,88)+'px';}
@@ -731,7 +744,7 @@ async function runBriefing(){
   else{addMsg('user','☀ Briefing del día');history.push({role:'user',content:q});
     const ty=addTyping();
     try{
-      const r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_prompt:buildPrompt(),messages:history.slice(-12)})});
+      const r=await fetchWithTimeout(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_prompt:buildPrompt(),messages:history.slice(-12)})});
       const d=await r.json();ty.remove();
       const raw=d.reply||d.content?.[0]?.text||'Sin respuesta.';
       const{clean}=parseActions(raw);
