@@ -659,18 +659,28 @@ async function sendText(q){
   if(!q){inp.value='';autoResize(inp);}
   addMsg('user',txt);history.push({role:'user',content:txt});
   const ty=addTyping();
+  let done=false;
   try{
-    const r=await fetchWithTimeout(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_prompt:buildPrompt(),messages:history.slice(-12)})});
-    const d=await r.json();ty.remove();
-    const raw=d.reply||d.content?.[0]?.text||d.message||'Sin respuesta.';
+    const r=await fetchWithTimeout(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_prompt:buildPrompt(),messages:history.slice(-12)})},25000);
+    let raw='';
+    try{
+      const d=await r.json();
+      raw=d.reply||d.content?.[0]?.text||d.message||'';
+    }catch(je){
+      const txt2=await r.text().catch(()=>'');
+      raw=txt2||'Error al parsear respuesta.';
+    }
+    if(!raw)raw='Sin respuesta del servidor.';
     const{clean,actions}=parseActions(raw);
     history.push({role:'assistant',content:raw});saveHistory();
     if(actions.length)executeActions(actions);
+    done=true;ty.remove();
     addMsg('bot',clean,actions);speak(clean,false);
   }catch(e){
-    ty.remove();
-    const msg=e.name==='AbortError'?'Sin respuesta del servidor. Inténtelo de nuevo.':'Error de conexión.';
+    if(!done)ty.remove();
+    const msg=e.name==='AbortError'?'Sin respuesta (25s). Compruebe su conexión.':'Error: '+e.message;
     addMsg('bot',msg);
+    console.error('sendText error:',e);
   }
 }
 function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendText();}}
@@ -1054,6 +1064,12 @@ async function testVoice(){
   }
 }
 loadSettings();
+// Test de conectividad al arrancar en móvil
+if(isMobile){
+  fetchWithTimeout(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_prompt:'test',messages:[{role:'user',content:'hola'}]})},10000)
+    .then(r=>r.json()).then(d=>{if(!d.reply&&!d.content)showToast('⚠ Proxy sin respuesta válida',4000);})
+    .catch(e=>showToast('⚠ Error de red: '+e.message,5000));
+}
 
 // buildPrompt inyecta tipo de respuesta desde CFG
 const _origBuildPrompt=buildPrompt;
