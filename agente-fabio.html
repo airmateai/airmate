@@ -443,8 +443,17 @@ const vView=()=>document.getElementById('view-voice');
 const setStatus=(s,cls='')=>{const e=document.getElementById('v-status');e.textContent=s;e.className='v-status'+(cls?' '+cls:'');};
 const setTx=(t,empty=false)=>{const e=document.getElementById('v-transcript');e.textContent=t;e.classList.toggle('empty',!t||empty);};
 
+function stopSpeaking(){
+  if(currentAudio){currentAudio.pause();URL.revokeObjectURL(currentAudio._url||'');currentAudio=null;}
+  window.speechSynthesis?.cancel();
+  setPState('idle');
+  if(mode==='voice'){setStatus('En espera');document.getElementById('wave-zone').classList.remove('on');setTx('',true);}
+  window._thinking=false;
+}
 function toggleMic(){
   if(!('webkitSpeechRecognition'in window||'SpeechRecognition'in window)){alert('Necesitas Chrome.');return;}
+  // Si está hablando, callarla primero
+  if(currentAudio||window.speechSynthesis?.speaking){stopSpeaking();return;}
   if(vactive){vrec?.stop();return;}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   vrec=new SR();vrec.lang='es-ES';vrec.interimResults=true;vrec.continuous=false;
@@ -457,6 +466,7 @@ function toggleMic(){
 }
 
 async function askVoice(q){
+  if(/^(cállate|calla|para|silencio|stop|basta|suficiente|cálmate|para ya)/i.test(q.trim())){stopSpeaking();return;}
   if(/^anota[r]?\s/i.test(q)){saveNota(q.replace(/^anota[r]?\s/i,'').trim());return;}
   setStatus('Pensando…','thinking');setTx(q);window._thinking=true;setPState('thinking');
   history.push({role:'user',content:q});
