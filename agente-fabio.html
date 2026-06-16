@@ -426,8 +426,12 @@ let fsOn=false;
 function toggleFullscreen(){fsOn=!fsOn;document.getElementById('btn-fs').classList.toggle('on',fsOn);document.getElementById('brand-overlay').classList.toggle('on',fsOn);if(fsOn)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}
 document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&fsOn){fsOn=false;document.getElementById('btn-fs').classList.remove('on');document.getElementById('brand-overlay').classList.remove('on');}});
 
-let mode='voice';
+const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const hasSTT='webkitSpeechRecognition'in window||'SpeechRecognition'in window;
+let mode=isMobile?'text':'voice';
 function setMode(m){mode=m;['voice','text'].forEach(x=>{document.getElementById('view-'+x).classList.toggle('active',x===m);document.getElementById('btn-'+x[0]).classList.toggle('active',x===m);});}
+// Arrancar en el modo correcto desde el principio
+setMode(mode);
 
 // ── EMAILJS
 emailjs.init('i4iBVVP-BkUOOwBE9');
@@ -578,7 +582,7 @@ function stopSpeaking(){
   window._thinking=false;
 }
 function toggleMic(){
-  if(!('webkitSpeechRecognition'in window||'SpeechRecognition'in window)){alert('Necesitas Chrome.');return;}
+  if(!hasSTT){showToast('Micrófono no disponible en este navegador. Use el chat de texto.',4000);setMode('text');return;}
   // Si está hablando, callarla primero
   if(currentAudio||window.speechSynthesis?.speaking){stopSpeaking();return;}
   if(vactive){vrec?.stop();return;}
@@ -613,7 +617,7 @@ let trec=null,tactive=false;
 function toggleMicText(){
   if(tactive){trec?.stop();return;}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){alert('Necesitas Chrome.');return;}
+  if(!SR){showToast('Micrófono no disponible en iOS Safari.',3000);return;}
   trec=new SR();trec.lang='es-ES';trec.interimResults=false;trec.continuous=false;
   trec.onstart=()=>{tactive=true;document.getElementById('ibtn-mic').classList.add('on');};
   trec.onresult=(e)=>{document.getElementById('inp').value=e.results[0][0].transcript;sendText();};
@@ -1049,7 +1053,7 @@ setTimeout(()=>{
   const h=new Date().getHours();
   const g=h<13?'Buenos días':h<20?'Buenas tardes':'Buenas noches';
   const msg=`${g}, Mister Bueno. Soy Sofia, su asistente personal. ¿En qué puedo ayudarle hoy?`;
-  setTx(msg);speak(msg,true);
+  if(isMobile){addMsg('bot',msg);}else{setTx(msg);speak(msg,true);}
   const today=new Date().toDateString();
   if(localStorage.getItem('sofia_brief_date')!==today){
     localStorage.setItem('sofia_brief_date',today);
