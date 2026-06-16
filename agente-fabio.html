@@ -264,6 +264,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
       </div>
     </div>
 
+    <div class="sp-sep"></div>
+    <div class="sp-section">
+      <div class="sp-label">ID de voz manual</div>
+      <div style="font-size:11px;color:var(--muted2);margin-bottom:8px">Pega aquí el ID de cualquier voz de ElevenLabs</div>
+      <input id="custom-voice-id" type="text" placeholder="ej: abc123xyz..." style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:12px;font-family:inherit;outline:none" oninput="this.style.borderColor=this.value?'rgba(99,102,241,.5)':''" onfocus="this.style.borderColor='rgba(99,102,241,.4)'" onblur="this.style.borderColor=this.value?'rgba(99,102,241,.5)':'var(--border)'">
+    </div>
+
     <button class="sp-save" onclick="saveSettings()">Guardar ajustes</button>
   </div>
 </div>
@@ -834,7 +841,8 @@ function applySettingsUI(){
   const h=loadHistory();document.getElementById('mem-count').textContent=h.length;
 }
 function saveSettings(){
-  CFG.voice=document.querySelector('.voice-opt.active')?.dataset.voice||CFG.voice;
+  const manualId=document.getElementById('custom-voice-id')?.value.trim();
+  CFG.voice=manualId||document.querySelector('.voice-opt.active')?.dataset.voice||CFG.voice;
   CFG.stab=parseInt(document.getElementById('sl-stab').value)/100;
   CFG.style=parseInt(document.getElementById('sl-style').value)/100;
   CFG.sim=parseInt(document.getElementById('sl-sim').value)/100;
