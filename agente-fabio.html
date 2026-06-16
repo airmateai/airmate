@@ -728,8 +728,23 @@ async function loadCtx(){
     setSBVal('sb-mrr',n*197+'€');setSBVal('sb-cli',n);setSBVal('sb-leads',CTX.leads.length);
     const ec=document.getElementById('sb-cold');if(ec)ec.textContent=CTX.coldLeads.length||'0';
     if(CTX.coldLeads.length>0)setTimeout(()=>showToast(`⚠ ${CTX.coldLeads.length} leads fríos +3 días`),3000);
+    await migrateLocalToSB();
     await syncFromSB();
   }catch(e){console.log('CTX err',e);}
+}
+async function migrateLocalToSB(){
+  if(!SB)return;
+  if(localStorage.getItem('sb_migrated_v1'))return;
+  try{
+    const notes=JSON.parse(localStorage.getItem(NOTES_KEY)||'[]');
+    const tasks=JSON.parse(localStorage.getItem(TASKS_KEY)||'[]');
+    const recs=JSON.parse(localStorage.getItem('sofia_recs_v1')||'[]');
+    for(const n of notes)await SB.from('sofia_memory').insert({type:'nota',data:n,ts:n.ts||new Date().toISOString()});
+    for(const t of tasks)await SB.from('sofia_memory').insert({type:'tarea',data:t,ts:t.ts||new Date().toISOString()});
+    for(const r of recs)await SB.from('sofia_memory').insert({type:'rec',data:r,ts:r.ts||new Date().toISOString()});
+    localStorage.setItem('sb_migrated_v1','1');
+    if(notes.length||tasks.length||recs.length)showToast('✓ Memoria sincronizada con la nube');
+  }catch(e){console.log('migrate err',e);}
 }
 function setSBVal(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 
