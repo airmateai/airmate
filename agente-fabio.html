@@ -8,218 +8,294 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#080810;
-  --surface:rgba(255,255,255,.03);
-  --border:rgba(255,255,255,.06);
-  --border2:rgba(255,255,255,.1);
-  --text:#e8e8f0;
-  --muted:#5a5a72;
+  --bg:#07070f;
+  --surface:rgba(255,255,255,.04);
+  --border:rgba(255,255,255,.07);
+  --text:#e8e8f2;
+  --muted:#4a4a62;
+  --muted2:#6b6b88;
   --accent:#6366f1;
   --accent2:#818cf8;
   --green:#34d399;
   --red:#f87171;
 }
-html,body{height:100%}
-body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
 
 /* TOP BAR */
-.topbar{height:52px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0}
-.topbar-left{display:flex;align-items:center;gap:10px}
-.logo-mark{width:24px;height:24px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center}
-.logo-mark svg{width:12px;height:12px;fill:#fff}
-.brand{font-size:13px;font-weight:500;color:rgba(255,255,255,.5);letter-spacing:.3px}
-.brand span{color:var(--text)}
-.topbar-right{display:flex;align-items:center;gap:20px}
-.status-dot{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
-.dot{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 3s infinite}
+.topbar{height:50px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;position:relative;z-index:10}
+.brand{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted2)}
+.logo-sq{width:20px;height:20px;background:var(--accent);border-radius:5px;display:flex;align-items:center;justify-content:center}
+.logo-sq svg{width:10px;height:10px;fill:#fff}
+.brand strong{color:var(--text);font-weight:500}
+.mode-switch{display:flex;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px;gap:2px}
+.mode-btn{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--muted2);transition:all .2s;font-family:inherit}
+.mode-btn.active{background:rgba(99,102,241,.18);color:var(--accent2)}
+.topbar-right{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 3s infinite;flex-shrink:0}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.topbar-date{font-size:11px;color:var(--muted)}
 
-/* LAYOUT */
-.layout{display:flex;flex:1;overflow:hidden}
+/* VIEWS */
+.view{display:none;flex:1;overflow:hidden}
+.view.active{display:flex}
 
-/* SIDEBAR */
-.sidebar{width:240px;border-right:1px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;gap:4px;flex-shrink:0}
-.sidebar-label{font-size:10px;font-weight:500;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;padding:0 8px;margin:16px 0 6px}
-.sidebar-label:first-child{margin-top:0}
-.s-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background .15s;font-size:12.5px;color:var(--muted)}
-.s-item:hover{background:var(--surface);color:var(--text)}
-.s-item.active{background:rgba(99,102,241,.1);color:var(--accent2)}
-.s-ico{width:16px;height:16px;opacity:.6;flex-shrink:0}
-.s-item.active .s-ico{opacity:1}
-.s-val{margin-left:auto;font-size:11px;font-weight:600;color:var(--muted)}
-.s-item.active .s-val{color:var(--accent2)}
-.sidebar-sep{height:1px;background:var(--border);margin:8px 0}
+/* ══════════════════════════════════
+   VOICE VIEW
+══════════════════════════════════ */
+.voice-view{flex-direction:column;align-items:center;justify-content:center;position:relative}
 
-/* MAIN CHAT AREA */
-.chat-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+/* ORBE SOFIA */
+.sofia-orb-wrap{position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:36px}
+.sofia-orb{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed,#9333ea);display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:300;letter-spacing:-2px;position:relative;z-index:2;transition:transform .3s,box-shadow .3s;box-shadow:0 0 0 1px rgba(99,102,241,.2),0 20px 60px rgba(99,102,241,.15)}
+.sofia-orb.speaking{transform:scale(1.06);box-shadow:0 0 0 2px rgba(129,140,248,.4),0 30px 80px rgba(99,102,241,.35)}
+.sofia-orb.listening{transform:scale(1.03);box-shadow:0 0 0 2px rgba(248,113,113,.4),0 20px 60px rgba(248,113,113,.2)}
+/* Anillos pulsantes */
+.ring{position:absolute;border-radius:50%;border:1px solid rgba(99,102,241,.15);animation:ring-pulse 3s ease-out infinite}
+.ring:nth-child(1){width:160px;height:160px;animation-delay:0s}
+.ring:nth-child(2){width:200px;height:200px;animation-delay:.6s}
+.ring:nth-child(3){width:240px;height:240px;animation-delay:1.2s}
+.sofia-orb.speaking .ring{border-color:rgba(129,140,248,.2);animation-duration:1.5s}
+.sofia-orb.listening .ring{border-color:rgba(248,113,113,.2);animation-duration:1s}
+@keyframes ring-pulse{0%{transform:scale(.9);opacity:0}30%{opacity:1}100%{transform:scale(1.1);opacity:0}}
 
-/* SOFIA HERO — top of chat */
-.sofia-hero{padding:28px 36px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:18px;flex-shrink:0}
-.sofia-ring{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a78bfa 100%);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;letter-spacing:-.5px;flex-shrink:0;box-shadow:0 0 0 1px rgba(99,102,241,.3),0 8px 32px rgba(99,102,241,.2)}
-.sofia-text h2{font-size:15px;font-weight:500;color:var(--text);letter-spacing:-.2px}
-.sofia-text p{font-size:12px;color:var(--muted);margin-top:2px}
-.sofia-clock{margin-left:auto;text-align:right}
-.sofia-clock .time{font-size:20px;font-weight:300;color:rgba(255,255,255,.4);letter-spacing:-.5px;font-variant-numeric:tabular-nums}
-.sofia-clock .date{font-size:10px;color:var(--muted);margin-top:1px;letter-spacing:.5px}
+/* ESTADO Y TRANSCRIPCIÓN */
+.sofia-status{font-size:13px;color:var(--muted2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px;height:18px;transition:color .3s}
+.sofia-status.listening{color:var(--red)}
+.sofia-status.speaking{color:var(--accent2)}
+.sofia-transcript{max-width:480px;text-align:center;font-size:16px;font-weight:300;color:rgba(255,255,255,.6);line-height:1.7;min-height:52px;padding:0 24px;transition:opacity .3s}
+.sofia-transcript.empty{opacity:0}
 
-/* SPEAKING INDICATOR */
-.speaking-line{height:1px;background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),var(--accent),transparent);background-size:200% 100%;display:none;flex-shrink:0}
-.speaking-line.on{display:block;animation:wave 2s linear infinite}
-@keyframes wave{0%{background-position:0%}100%{background-position:200%}}
+/* WAVE BARS — cuando habla */
+.wave-bars{display:flex;align-items:center;gap:3px;height:24px;margin-top:20px;opacity:0;transition:opacity .3s}
+.wave-bars.on{opacity:1}
+.wave-bars span{width:3px;border-radius:3px;background:var(--accent2);animation:wave-up 1s ease-in-out infinite}
+.wave-bars span:nth-child(1){height:6px;animation-delay:0s}
+.wave-bars span:nth-child(2){height:14px;animation-delay:.1s}
+.wave-bars span:nth-child(3){height:20px;animation-delay:.2s}
+.wave-bars span:nth-child(4){height:24px;animation-delay:.3s}
+.wave-bars span:nth-child(5){height:18px;animation-delay:.4s}
+.wave-bars span:nth-child(6){height:10px;animation-delay:.5s}
+.wave-bars span:nth-child(7){height:16px;animation-delay:.35s}
+.wave-bars span:nth-child(8){height:22px;animation-delay:.25s}
+.wave-bars span:nth-child(9){height:12px;animation-delay:.15s}
+@keyframes wave-up{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
 
-/* MESSAGES */
-.msgs{flex:1;overflow-y:auto;padding:28px 36px;display:flex;flex-direction:column;gap:20px}
+/* MIC BUTTON */
+.mic-area{margin-top:48px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.btn-mic-big{width:72px;height:72px;border-radius:50%;background:var(--surface);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;position:relative}
+.btn-mic-big:hover{border-color:rgba(99,102,241,.4);background:rgba(99,102,241,.06)}
+.btn-mic-big.on{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.5);box-shadow:0 0 0 6px rgba(248,113,113,.08)}
+.btn-mic-big svg{width:24px;height:24px;stroke:var(--muted2);fill:none;stroke-width:1.5;transition:stroke .2s}
+.btn-mic-big.on svg{stroke:var(--red)}
+.mic-label{font-size:11px;color:var(--muted);letter-spacing:.5px}
+.btn-mic-big.on .mic-label{color:var(--red)}
+
+/* ACCESOS RÁPIDOS voz */
+.voice-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:480px;margin-top:32px}
+.v-chip{padding:6px 14px;border:1px solid var(--border);border-radius:20px;font-size:11.5px;color:var(--muted2);cursor:pointer;transition:all .15s;background:none}
+.v-chip:hover{border-color:rgba(99,102,241,.35);color:var(--accent2);background:rgba(99,102,241,.05)}
+
+/* CANVAS */
+#neuro{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0;transition:opacity .5s}
+
+/* ══════════════════════════════════
+   TEXT VIEW
+══════════════════════════════════ */
+.text-view{flex-direction:row}
+
+.sidebar{width:220px;border-right:1px solid var(--border);padding:20px 14px;display:flex;flex-direction:column;gap:3px;flex-shrink:0;overflow-y:auto}
+.sb-label{font-size:9.5px;font-weight:600;color:var(--muted);letter-spacing:1.8px;text-transform:uppercase;padding:0 8px;margin:14px 0 5px}
+.sb-label:first-child{margin-top:0}
+.sb-item{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:7px;cursor:pointer;font-size:12.5px;color:var(--muted2);transition:all .15s}
+.sb-item:hover{background:var(--surface);color:var(--text)}
+.sb-item svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;flex-shrink:0;opacity:.7}
+.sb-val{margin-left:auto;font-size:10.5px;font-weight:600;color:var(--muted)}
+.sb-sep{height:1px;background:var(--border);margin:6px 0}
+
+.chat-col{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.chat-top{padding:18px 28px 14px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:12px}
+.sofia-mini{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0}
+.chat-top-text h3{font-size:13.5px;font-weight:500}
+.chat-top-text p{font-size:11px;color:var(--muted2);margin-top:1px}
+.chat-top-right{margin-left:auto;font-size:11px;color:var(--muted)}
+
+.msgs{flex:1;overflow-y:auto;padding:24px 28px;display:flex;flex-direction:column;gap:18px}
 .msgs::-webkit-scrollbar{width:0}
-
-.msg-row{display:flex;gap:12px;max-width:680px}
+.msg-row{display:flex;gap:10px;max-width:640px}
 .msg-row.user{align-self:flex-end;flex-direction:row-reverse}
-.msg-av{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;margin-top:2px}
-.msg-av.bot{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 4px 12px rgba(99,102,241,.2)}
-.msg-av.user{background:var(--surface);border:1px solid var(--border2);color:var(--muted)}
-.msg-body{}
-.bub{font-size:13.5px;line-height:1.75;font-weight:400}
-.msg-row.bot .bub{color:rgba(255,255,255,.85)}
-.msg-row.user .bub{color:rgba(255,255,255,.7);text-align:right}
-.msg-time{font-size:10px;color:var(--muted);margin-top:4px}
+.msg-av{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;margin-top:3px}
+.msg-av.bot{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+.msg-av.user{background:var(--surface);border:1px solid var(--border);color:var(--muted2)}
+.bub{font-size:13.5px;line-height:1.75;color:rgba(255,255,255,.82)}
+.msg-row.user .bub{color:rgba(255,255,255,.6);text-align:right}
+.msg-time{font-size:9.5px;color:var(--muted);margin-top:4px}
 .msg-row.user .msg-time{text-align:right}
-
-/* TYPING */
-.typing-dots{display:flex;gap:4px;align-items:center;padding:6px 0}
+.typing-dots{display:flex;gap:4px;align-items:center;padding:4px 0}
 .typing-dots span{width:4px;height:4px;border-radius:50%;background:var(--muted);animation:bounce .8s infinite}
 .typing-dots span:nth-child(2){animation-delay:.15s}
 .typing-dots span:nth-child(3){animation-delay:.3s}
-@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 
-/* SUGGESTIONS */
-.sugs-area{padding:0 36px 16px;display:flex;flex-wrap:wrap;gap:8px}
-.sug{font-size:12px;color:var(--muted);cursor:pointer;padding:4px 0;border-bottom:1px solid transparent;transition:all .15s;white-space:nowrap}
+.sugs-area{padding:0 28px 14px;display:flex;flex-wrap:wrap;gap:10px}
+.sug{font-size:11.5px;color:var(--muted2);cursor:pointer;padding:3px 0;border-bottom:1px solid transparent;transition:all .15s}
 .sug:hover{color:var(--accent2);border-bottom-color:rgba(129,140,248,.3)}
 
-/* INPUT */
-.input-wrap{border-top:1px solid var(--border);padding:16px 36px 20px;flex-shrink:0}
-.input-row{display:flex;align-items:flex-end;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;transition:border-color .2s}
-.input-row:focus-within{border-color:rgba(99,102,241,.3)}
-.inp{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:13px;font-family:inherit;resize:none;max-height:100px;line-height:1.6;padding:2px 0}
+.input-wrap{border-top:1px solid var(--border);padding:14px 28px 18px;flex-shrink:0}
+.input-row{display:flex;align-items:flex-end;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 12px;transition:border-color .2s}
+.input-row:focus-within{border-color:rgba(99,102,241,.28)}
+.inp{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:13px;font-family:inherit;resize:none;max-height:90px;line-height:1.6;padding:2px 0}
 .inp::placeholder{color:var(--muted)}
-.inp-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.btn-ico{width:32px;height:32px;border-radius:8px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;color:var(--muted)}
-.btn-ico:hover{background:rgba(255,255,255,.05);color:var(--text)}
-.btn-ico svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5}
-.btn-ico.mic-on{color:var(--red);background:rgba(248,113,113,.08)}
-.btn-send{width:32px;height:32px;border-radius:8px;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .15s}
-.btn-send:hover{opacity:.85}
-.btn-send svg{width:13px;height:13px;fill:#fff}
-
-/* CANVAS NEURONAS */
-#neuro{position:fixed;inset:0;pointer-events:none;z-index:99;opacity:0;transition:opacity .5s}
+.inp-actions{display:flex;align-items:center;gap:4px}
+.ibtn{width:30px;height:30px;border-radius:7px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted2);transition:all .15s}
+.ibtn:hover{background:var(--surface);color:var(--text)}
+.ibtn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5}
+.ibtn.on{color:var(--red);background:rgba(248,113,113,.08)}
+.ibtn-send{background:var(--accent);border:none;border-radius:7px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .15s}
+.ibtn-send:hover{opacity:.8}
+.ibtn-send svg{width:12px;height:12px;fill:#fff}
 </style>
 </head>
 <body>
-
 <canvas id="neuro"></canvas>
 
 <!-- TOP BAR -->
 <div class="topbar">
-  <div class="topbar-left">
-    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-    <span class="brand"><span>Airmate</span> · Sistema interno</span>
+  <div class="brand">
+    <div class="logo-sq"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+    <strong>Sofia</strong> · Airmate
   </div>
+
+  <div class="mode-switch">
+    <button class="mode-btn active" id="btn-mode-voice" onclick="setMode('voice')">
+      <svg style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.8;display:inline;vertical-align:middle;margin-right:5px" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/></svg>Voz
+    </button>
+    <button class="mode-btn" id="btn-mode-text" onclick="setMode('text')">
+      <svg style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.8;display:inline;vertical-align:middle;margin-right:5px" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Texto
+    </button>
+  </div>
+
   <div class="topbar-right">
-    <div class="topbar-date" id="topbar-date"></div>
-    <div class="status-dot"><div class="dot"></div>Sofia activa</div>
+    <div class="live-dot"></div>
+    <span id="topbar-date"></span>
   </div>
 </div>
 
-<div class="layout">
+<!-- ══ VOICE VIEW ══ -->
+<div class="view voice-view active" id="view-voice">
+  <div class="sofia-orb-wrap">
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="sofia-orb" id="sofia-orb">S</div>
+  </div>
 
-  <!-- SIDEBAR -->
+  <div class="sofia-status" id="v-status">En espera</div>
+  <div class="sofia-transcript" id="v-transcript">
+    <!-- lo que Sofia dice o el usuario habló -->
+  </div>
+
+  <div class="wave-bars" id="wave-bars">
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span>
+  </div>
+
+  <div class="mic-area">
+    <button class="btn-mic-big" id="btn-mic-big" onclick="toggleMic()">
+      <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="19" x2="12" y2="22" stroke-linecap="round"/><line x1="8" y1="22" x2="16" y2="22" stroke-linecap="round"/></svg>
+    </button>
+    <span class="mic-label" id="mic-label">Pulse para hablar</span>
+  </div>
+
+  <div class="voice-chips">
+    <button class="v-chip" onclick="askVoice('¿Cómo va el negocio hoy?')">Estado del negocio</button>
+    <button class="v-chip" onclick="askVoice('¿Qué tengo pendiente hoy?')">Pendientes</button>
+    <button class="v-chip" onclick="askVoice('¿Cuánto MRR tengo activo?')">MRR activo</button>
+    <button class="v-chip" onclick="askVoice('¿Qué clientes necesitan seguimiento?')">Seguimientos</button>
+    <button class="v-chip" onclick="askVoice('Dame estrategia de captación para esta semana')">Captación</button>
+  </div>
+</div>
+
+<!-- ══ TEXT VIEW ══ -->
+<div class="view text-view" id="view-text">
   <div class="sidebar">
-    <div class="sidebar-label">Contexto</div>
-    <div class="s-item active" onclick="ask('¿Cómo va el negocio hoy?')">
-      <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      Resumen agencia
+    <div class="sb-label">Métricas</div>
+    <div class="sb-item" onclick="sendText('¿Cuánto MRR tengo activo y cuánto podría facturar este mes?')">
+      <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke-linecap="round"/></svg>
+      MRR activo
+      <span class="sb-val" id="sb-mrr">—</span>
     </div>
-    <div class="s-item" onclick="ask('¿Qué clientes tengo activos y cuál es su estado?')">
-      <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="7" r="4"/><path d="M2 20c0-4 3.1-7 7-7s7 3 7 7"/><path d="M19 11v6m-3-3h6" stroke-linecap="round"/></svg>
+    <div class="sb-item" onclick="sendText('¿Qué clientes tengo activos y cuál es su estado?')">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M2 20c0-4 3.1-7 7-7s7 3 7 7"/><path d="M19 11v6m-3-3h6" stroke-linecap="round"/></svg>
       Clientes
-      <span class="s-val" id="sb-cli">—</span>
+      <span class="sb-val" id="sb-cli">—</span>
     </div>
-    <div class="s-item" onclick="ask('Muéstrame el pipeline de leads con el estado de cada uno')">
-      <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M7 12h14M11 18h10" stroke-linecap="round"/></svg>
-      Leads pipeline
-      <span class="s-val" id="sb-leads">—</span>
-    </div>
-    <div class="s-item" onclick="ask('¿Cuánto MRR tengo activo y cuánto podría facturar este mes?')">
-      <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke-linecap="round"/></svg>
-      MRR
-      <span class="s-val" id="sb-mrr">—</span>
+    <div class="sb-item" onclick="sendText('Muéstrame el pipeline de leads')">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18M7 12h14M11 18h10" stroke-linecap="round"/></svg>
+      Leads
+      <span class="sb-val" id="sb-leads">—</span>
     </div>
 
-    <div class="sidebar-sep"></div>
-    <div class="sidebar-label">Proyectos</div>
-    <div class="s-item" onclick="ask('¿Cuál es el estado de Jose Acosta? ¿Qué falta por hacer?')">
-      <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15" stroke-linecap="round"/></svg>
+    <div class="sb-sep"></div>
+    <div class="sb-label">Proyectos</div>
+    <div class="sb-item" onclick="sendText('¿Cuál es el estado de Jose Acosta? ¿Qué falta?')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15" stroke-linecap="round"/></svg>
       Jose Acosta
     </div>
-    <div class="s-item" onclick="ask('¿Cómo va Costa Norte? ¿Respondió la secretaria al formulario?')">
-      <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <div class="sb-item" onclick="sendText('¿Cómo va Costa Norte? ¿Respondió la secretaria?')">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       Costa Norte
     </div>
-    <div class="s-item" onclick="ask('¿Qué está pasando con House of Tailors Dubai?')">
-      <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/></svg>
+    <div class="sb-item" onclick="sendText('¿Qué está pasando con House of Tailors Dubai?')">
+      <svg viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/></svg>
       House of Tailors
     </div>
+    <div class="sb-item" onclick="sendText('¿Qué necesito hacer con Vitorio Milano esta semana?')">
+      <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM16 3H8l-2 4h12l-2-4z"/></svg>
+      Vitorio Milano
+    </div>
 
-    <div class="sidebar-sep"></div>
-    <div class="sidebar-label">Captación</div>
-    <div class="s-item" onclick="ask('Dame un resumen de cómo va LinkedIn y qué debo hacer hoy para conseguir clientes')">
-      <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M7 10v7M7 7v.5M12 17v-4c0-1.1.9-2 2-2s2 .9 2 2v4M12 10v7" stroke-linecap="round"/></svg>
+    <div class="sb-sep"></div>
+    <div class="sb-label">Captación</div>
+    <div class="sb-item" onclick="sendText('¿Cómo va LinkedIn y qué debo hacer hoy para conseguir clientes?')">
+      <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M7 10v7M7 7v.5M12 17v-4c0-1.1.9-2 2-2s2 .9 2 2v4M12 10v7" stroke-linecap="round"/></svg>
       LinkedIn
     </div>
   </div>
 
-  <!-- CHAT AREA -->
-  <div class="chat-area">
-    <div class="sofia-hero">
-      <div class="sofia-ring">S</div>
-      <div class="sofia-text">
-        <h2 id="greeting">Buenos días, Sr. Bueno</h2>
-        <p>Asistente personal · Airmate Intelligence</p>
+  <div class="chat-col">
+    <div class="chat-top">
+      <div class="sofia-mini">S</div>
+      <div class="chat-top-text">
+        <h3 id="chat-greeting">Sofia · Asistente personal</h3>
+        <p>Airmate Intelligence · acceso completo</p>
       </div>
-      <div class="sofia-clock">
-        <div class="time" id="hero-time">--:--</div>
-        <div class="date" id="hero-date"></div>
-      </div>
+      <div class="chat-top-right" id="chat-time"></div>
     </div>
-
-    <div class="speaking-line" id="speaking-line"></div>
 
     <div class="msgs" id="msgs"></div>
 
     <div class="sugs-area" id="sugs-wrap">
-      <span class="sug" onclick="ask('¿Cómo va el negocio hoy?')">Estado del negocio</span>
-      <span class="sug" onclick="ask('¿Qué tengo pendiente de hacer hoy?')">Pendientes de hoy</span>
-      <span class="sug" onclick="ask('Dame una estrategia para cerrar más clientes este mes')">Estrategia captación</span>
-      <span class="sug" onclick="ask('¿Cuánto MRR tengo activo?')">MRR activo</span>
-      <span class="sug" onclick="ask('¿Qué clientes necesitan seguimiento urgente?')">Seguimientos urgentes</span>
+      <span class="sug" onclick="sendText('¿Cómo va el negocio hoy?')">Estado del negocio</span>
+      <span class="sug" onclick="sendText('¿Qué tengo pendiente de hacer hoy?')">Pendientes de hoy</span>
+      <span class="sug" onclick="sendText('Dame estrategia de captación para esta semana')">Estrategia captación</span>
+      <span class="sug" onclick="sendText('¿Cuánto MRR tengo activo?')">MRR activo</span>
+      <span class="sug" onclick="sendText('¿Qué clientes necesitan seguimiento urgente?')">Seguimientos urgentes</span>
     </div>
 
     <div class="input-wrap">
       <div class="input-row">
-        <textarea class="inp" id="inp" placeholder="Escríbale a Sofia…" rows="1" onkeydown="onKey(event)" oninput="autoResize(this)"></textarea>
+        <textarea class="inp" id="inp" placeholder="Escriba a Sofia…" rows="1" onkeydown="onKey(event)" oninput="autoResize(this)"></textarea>
         <div class="inp-actions">
-          <button class="btn-ico" id="btn-mic" onclick="toggleMic()" title="Hablar">
-            <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="19" x2="12" y2="22" stroke-linecap="round"/><line x1="8" y1="22" x2="16" y2="22" stroke-linecap="round"/></svg>
+          <button class="ibtn" id="ibtn-mic" onclick="toggleMicText()" title="Dictar">
+            <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="19" x2="12" y2="22" stroke-linecap="round"/></svg>
           </button>
-          <button class="btn-send" onclick="send()" title="Enviar">
+          <button class="ibtn-send" onclick="sendText()" title="Enviar">
             <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
           </button>
         </div>
       </div>
     </div>
   </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -230,189 +306,262 @@ const SB = supabase.createClient(
 );
 const PROXY = 'https://bot-airmate-1.vercel.app/api/chat';
 
-let CTX = { clientes:[], leads:[], citas:[], configs:[] };
+// ── MODO
+let currentMode = 'voice';
+function setMode(m) {
+  currentMode = m;
+  document.getElementById('view-voice').classList.toggle('active', m==='voice');
+  document.getElementById('view-text').classList.toggle('active', m==='text');
+  document.getElementById('btn-mode-voice').classList.toggle('active', m==='voice');
+  document.getElementById('btn-mode-text').classList.toggle('active', m==='text');
+}
+
+// ── CONTEXTO SUPABASE
+let CTX = { configs:[], leads:[], citas:[] };
 
 async function cargarContexto() {
   try {
-    const [clis,leads,citas,cfgs] = await Promise.all([
-      SB.from('clients').select('name,phone,email,business_slug').limit(50),
-      SB.from('leads').select('name,phone,interest,business_slug,created_at').order('created_at',{ascending:false}).limit(30),
-      SB.from('appointments').select('name,service,starts_at,business_slug').gte('starts_at',new Date(Date.now()-7*86400000).toISOString()).limit(30),
-      SB.from('bot_configs').select('slug,bot_name,owner_email').limit(20)
+    const [cfgs,leads,citas] = await Promise.all([
+      SB.from('bot_configs').select('slug,bot_name,owner_email').limit(20),
+      SB.from('leads').select('name,interest,business_slug,created_at').order('created_at',{ascending:false}).limit(30),
+      SB.from('appointments').select('name,service,starts_at,business_slug').gte('starts_at',new Date(Date.now()-7*86400000).toISOString()).limit(20)
     ]);
-    if(clis.data) CTX.clientes=clis.data;
+    if(cfgs.data) CTX.configs=cfgs.data;
     if(leads.data) CTX.leads=leads.data;
     if(citas.data) CTX.citas=citas.data;
-    if(cfgs.data) CTX.configs=cfgs.data;
-    // Sidebar
-    const n = CTX.configs.length;
-    document.getElementById('sb-cli').textContent = n;
-    document.getElementById('sb-leads').textContent = CTX.leads.length;
-    document.getElementById('sb-mrr').textContent = (n*197)+'€';
-  } catch(e){ console.log('Supabase:',e); }
+    const n=CTX.configs.length;
+    ['sb-mrr','sb-cli','sb-leads'].forEach((id,i)=>{
+      const el=document.getElementById(id);
+      if(el) el.textContent=[n*197+'€', n, CTX.leads.length][i];
+    });
+  } catch(e){ console.log('SB:',e); }
 }
 cargarContexto();
 
 function buildSystemPrompt() {
-  const hoy = new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const clientes_txt = CTX.configs.length
-    ? CTX.configs.map(c=>`- ${c.slug} (${c.bot_name||'—'}) · ${c.owner_email||'sin email'}`).join('\n')
-    : '- Sin clientes registrados aún';
-  const leads_txt = CTX.leads.length
-    ? CTX.leads.slice(0,10).map(l=>`- ${l.name} → interés: ${l.interest||'general'} · negocio: ${l.business_slug} · ${new Date(l.created_at).toLocaleDateString('es-ES')}`).join('\n')
-    : '- Sin leads recientes';
-  const citas_txt = CTX.citas.length
-    ? CTX.citas.slice(0,10).map(c=>`- ${c.name} · ${c.service} · ${new Date(c.starts_at).toLocaleString('es-ES')} · negocio: ${c.business_slug}`).join('\n')
-    : '- Sin citas recientes';
+  const hoy=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const c_txt=CTX.configs.length?CTX.configs.map(c=>`- ${c.slug} (${c.bot_name||'—'})`).join('\n'):'- Sin clientes';
+  const l_txt=CTX.leads.length?CTX.leads.slice(0,10).map(l=>`- ${l.name} → ${l.interest||'general'} · ${l.business_slug}`).join('\n'):'- Sin leads';
+  const a_txt=CTX.citas.length?CTX.citas.slice(0,8).map(c=>`- ${c.name} · ${c.service} · ${new Date(c.starts_at).toLocaleString('es-ES')}`).join('\n'):'- Sin citas';
+  return `Eres Sofia, la asistente personal de Fabio Bueno, fundador de Airmate — agencia de IA en Canarias que crea CRMs con agente IA para negocios locales.
 
-  return `Eres el agente personal de Fabio Bueno, fundador de Airmate — una agencia de IA en Canarias que construye CRMs personalizados con agente IA para negocios locales.
+HOY: ${hoy}
 
-HOY ES: ${hoy}
+ROL: Cerebro centralizado de la agencia. Respondes de forma directa como un COO inteligente. Tienes acceso a datos reales.
 
-TU ROL:
-- Eres el cerebro centralizado de la agencia
-- Conoces todos los clientes, leads, citas y el estado del negocio
-- Respondes de forma directa, útil y sin rodeos — como un COO inteligente
-- Cuando Fabio pregunta algo, le das la respuesta con los datos reales que tienes
-- Si no tienes el dato exacto, díselo y sugiere cómo conseguirlo
-- Eres proactivo: si ves algo importante, lo mencionas
+AIRMATE: CRM personalizado + agente IA. Precio: 997€ setup + 197€/mes. Stack: Supabase, GitHub Pages, Vercel. Fabio lo hace todo.
 
-SOBRE AIRMATE:
-- Producto: CRM personalizado + agente IA conversacional para negocios locales
-- Incluye: gestión de citas, clientes, facturación, Verifactu integrado
-- Stack: React/Remotion para demos, Supabase como BD, GitHub Pages para hosting, Vercel para proxy IA
-- Precio aprox: 997€ setup + 197€/mes por cliente
-- Canales de captación: LinkedIn (Sales Navigator activo), Instagram, demos personalizadas
-- Fabio hace todo: desarrollo, ventas, demos, onboarding
+CLIENTES (bot_configs):
+${c_txt}
 
-CLIENTES ACTIVOS EN SUPABASE (bot_configs):
-${clientes_txt}
+LEADS RECIENTES:
+${l_txt}
 
-ÚLTIMOS LEADS RECIBIDOS:
-${leads_txt}
+CITAS SEMANA:
+${a_txt}
 
-ÚLTIMAS CITAS/RESERVAS (todos los negocios):
-${citas_txt}
+PROYECTOS ACTIVOS:
+- Jose Acosta: CRM live. Reunión con Richard (gestor) lunes 10:30. Pendiente fotos TPV.
+- Costa Norte: formulario onboarding enviado, esperando respuesta secretaria. Web completa PRO si confirman.
+- House of Tailors Dubai: propuesta AED 8.500+850/mes, pendiente TRN + WA Business API.
+- Vitorio Milano: web lista, pendiente fotos del cliente. Cobro pendiente 900 AED.
+- Magda: Bungalow Punta del Hidalgo, panel pendiente.
+- LinkedIn: Sales Navigator activo, equipo comisión: Adonai, Unai, Matias.
 
-CLIENTES CLAVE QUE FABIO MANEJA:
-- Jose Acosta Pro: CRM demo activo, panel subido a GitHub. Reunión con Richard (gestor) lunes 10:30. Pendiente: fotos productos para TPV.
-- Costa Norte: Escuela surf + apartamentos San Vicente de la Barquera, formulario onboarding enviado, esperando respuesta.
-- House of Tailors: Dubai, propuesta AED 8.500+850/mes enviada, pendiente TRN + WA Business API.
-- Smartbytes: MSSP + desarrollo Las Palmas, demo enviada a Alberto Benítez.
-- Vitorio Milano: web/landing lista, pendiente fotos del cliente, cobro pendiente 900 AED.
-- Magda: Bungalow Punta del Hidalgo, panel pendiente de expansión.
-
-TAREAS Y PROYECTOS ACTIVOS:
-- Panel Jose Acosta: live en GitHub, reunión gestor lunes 10:30
-- Costa Norte: formulario onboarding activo, esperando respuesta secretaria
-- Vitorio Milano: presionar para que mande fotos esta semana
-- LinkedIn captación: Sales Navigator activo, equipo comisión (Adonai, Unai, Matias)
-
-FORMA DE HABLAR Y TONO:
-- Eres Sofia, asistente ejecutiva de Fabio Bueno
-- Trátale siempre de "usted" — nunca de tú
-- Tono: profesional, cálido, eficiente. Como una secretaria de alto nivel.
-- Nunca uses emojis
-- Empiezas las respuestas con frases como: "Por supuesto, Sr. Bueno.", "Entendido.", "Permítame informarle que…"
-- Máximo 3-4 frases por respuesta salvo análisis largo
-- Si piden una tarea, confirma con "Anotado." o "Queda registrado."
-- Cuando respondas para ser leído en voz alta, usa frases cortas y naturales, sin listas ni guiones`;
+TONO Y FORMA:
+- Trate siempre de "usted" — nunca de tú
+- Profesional, cálido, eficiente. Secretaria de alto nivel.
+- Sin emojis. Empiezar con: "Por supuesto, Sr. Bueno.", "Entendido.", "Permítame informarle…"
+- Máximo 3-4 frases salvo análisis
+- Para voz: frases cortas y naturales, sin listas ni guiones`;
 }
 
-// ── HISTORIAL
+// ── HISTORIAL COMPARTIDO
 const history = [];
 
-function now() {
-  return new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+// ═══ VOZ ═══
+let voiceRecActive = false, voiceRec = null;
+
+function setVStatus(s, cls='') {
+  const el=document.getElementById('v-status');
+  el.textContent=s; el.className='sofia-status'+(cls?' '+cls:'');
+}
+function setVTranscript(t, empty=false) {
+  const el=document.getElementById('v-transcript');
+  el.textContent=t; el.classList.toggle('empty',empty||!t);
 }
 
-function addMsg(role, text) {
-  const msgs = document.getElementById('msgs');
-  const row = document.createElement('div');
-  row.className = 'msg-row ' + role;
-  const initials = role === 'bot' ? 'S' : 'F';
-  const formattedText = text
-    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g,'<em>$1</em>')
-    .replace(/\n/g,'<br>');
-  row.innerHTML = `
-    <div class="msg-av ${role}">${initials}</div>
-    <div class="msg-body">
-      <div class="bub">${formattedText}</div>
-      <div class="msg-time">${now()}</div>
-    </div>`;
-  msgs.appendChild(row);
-  msgs.scrollTop = msgs.scrollHeight;
-  document.getElementById('sugs-wrap').style.display = 'none';
-  return row;
+function toggleMic() {
+  if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){
+    alert('Usa Chrome para el micrófono.'); return;
+  }
+  if(voiceRecActive){ voiceRec?.stop(); return; }
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  voiceRec=new SR();
+  voiceRec.lang='es-ES'; voiceRec.interimResults=true; voiceRec.continuous=false;
+
+  voiceRec.onstart=()=>{
+    voiceRecActive=true;
+    document.getElementById('btn-mic-big').classList.add('on');
+    document.getElementById('sofia-orb').classList.add('listening');
+    document.getElementById('mic-label').textContent='Escuchando…';
+    setVStatus('Escuchando','listening');
+    setVTranscript('');
+  };
+  voiceRec.onresult=(e)=>{
+    const interim=Array.from(e.results).map(r=>r[0].transcript).join('');
+    setVTranscript(interim);
+    if(e.results[e.results.length-1].isFinal){
+      voiceRec.stop();
+      askVoice(interim);
+    }
+  };
+  voiceRec.onend=()=>{
+    voiceRecActive=false;
+    document.getElementById('btn-mic-big').classList.remove('on');
+    document.getElementById('sofia-orb').classList.remove('listening');
+    document.getElementById('mic-label').textContent='Pulse para hablar';
+    if(!window._sofiaThinking) setVStatus('En espera');
+  };
+  voiceRec.onerror=()=>{
+    voiceRecActive=false;
+    document.getElementById('btn-mic-big').classList.remove('on');
+    document.getElementById('sofia-orb').classList.remove('listening');
+    setVStatus('En espera');
+    document.getElementById('mic-label').textContent='Pulse para hablar';
+  };
+  voiceRec.start();
 }
 
-function addTyping() {
-  const msgs = document.getElementById('msgs');
-  const row = document.createElement('div');
-  row.className = 'msg-row bot';
-  row.innerHTML = `<div class="msg-av bot">S</div><div class="msg-body"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
-  msgs.appendChild(row);
-  msgs.scrollTop = msgs.scrollHeight;
-  return row;
-}
-
-// ── ENVÍO
-async function send() {
-  const inp = document.getElementById('inp');
-  const q = inp.value.trim();
-  if (!q) return;
-  inp.value = ''; autoResize(inp);
-  addMsg('user', q);
-  history.push({role:'user', content:q});
-  const typing = addTyping();
+async function askVoice(q) {
+  setVStatus('Pensando…');
+  setVTranscript(q);
+  window._sofiaThinking=true;
+  history.push({role:'user',content:q});
   try {
-    const res = await fetch(PROXY, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system_prompt: buildSystemPrompt(), messages: history.slice(-12) })
-    });
-    const data = await res.json();
-    typing.remove();
-    const reply = data.content?.[0]?.text || data.reply || data.message || 'No pude procesar la respuesta.';
-    history.push({role:'assistant', content:reply});
-    addMsg('bot', reply);
+    const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system_prompt:buildSystemPrompt(),messages:history.slice(-12)})});
+    const data=await res.json();
+    const reply=data.content?.[0]?.text||data.reply||data.message||'No pude procesar la respuesta.';
+    history.push({role:'assistant',content:reply});
     speak(reply);
   } catch(e) {
-    typing.remove();
-    addMsg('bot', 'Error de conexión con el proxy de Vercel.');
+    setVStatus('Error de conexión');
+    window._sofiaThinking=false;
   }
 }
 
-function ask(q) { document.getElementById('inp').value = q; send(); }
-function onKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} }
-function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
+// ═══ TEXTO ═══
+let textRecActive=false, textRec=null;
 
-// ── STT
-let recognition=null, recActive=false;
-
-function toggleMic() {
-  if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){alert('Usa Chrome para el micrófono.');return;}
-  if(recActive){recognition?.stop();return;}
+function toggleMicText() {
+  if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){alert('Usa Chrome.');return;}
+  if(textRecActive){textRec?.stop();return;}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  recognition=new SR();
-  recognition.lang='es-ES'; recognition.interimResults=false; recognition.continuous=false;
-  recognition.onstart=()=>{recActive=true;document.getElementById('btn-mic').classList.add('mic-on');};
-  recognition.onresult=(e)=>{document.getElementById('inp').value=e.results[0][0].transcript;send();};
-  recognition.onend=()=>{recActive=false;document.getElementById('btn-mic').classList.remove('mic-on');};
-  recognition.onerror=()=>{recActive=false;document.getElementById('btn-mic').classList.remove('mic-on');};
-  recognition.start();
+  textRec=new SR();
+  textRec.lang='es-ES'; textRec.interimResults=false; textRec.continuous=false;
+  textRec.onstart=()=>{textRecActive=true;document.getElementById('ibtn-mic').classList.add('on');};
+  textRec.onresult=(e)=>{document.getElementById('inp').value=e.results[0][0].transcript;sendText();};
+  textRec.onend=()=>{textRecActive=false;document.getElementById('ibtn-mic').classList.remove('on');};
+  textRec.onerror=()=>{textRecActive=false;document.getElementById('ibtn-mic').classList.remove('on');};
+  textRec.start();
 }
 
-// ── NEURONAS CANVAS
-let nCanvas,nCtx,nAnim,nNodes=[],nActive=false;
+function nowStr(){return new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});}
+
+function addMsg(role,text){
+  const msgs=document.getElementById('msgs');
+  const row=document.createElement('div');
+  row.className='msg-row '+role;
+  const initials=role==='bot'?'S':'F';
+  const html=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>');
+  row.innerHTML=`<div class="msg-av ${role}">${initials}</div><div class="msg-body"><div class="bub">${html}</div><div class="msg-time">${nowStr()}</div></div>`;
+  msgs.appendChild(row);
+  msgs.scrollTop=msgs.scrollHeight;
+  document.getElementById('sugs-wrap').style.display='none';
+  return row;
+}
+function addTyping(){
+  const msgs=document.getElementById('msgs');
+  const row=document.createElement('div');
+  row.className='msg-row bot';
+  row.innerHTML=`<div class="msg-av bot">S</div><div class="msg-body"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(row); msgs.scrollTop=msgs.scrollHeight; return row;
+}
+
+async function sendText(q) {
+  const inp=document.getElementById('inp');
+  const txt=q||inp.value.trim();
+  if(!txt) return;
+  if(!q){inp.value='';autoResize(inp);}
+  addMsg('user',txt);
+  history.push({role:'user',content:txt});
+  const typing=addTyping();
+  try {
+    const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system_prompt:buildSystemPrompt(),messages:history.slice(-12)})});
+    const data=await res.json();
+    typing.remove();
+    const reply=data.content?.[0]?.text||data.reply||data.message||'No pude procesar la respuesta.';
+    history.push({role:'assistant',content:reply});
+    addMsg('bot',reply);
+    speak(reply, false);
+  } catch(e) {
+    typing.remove();
+    addMsg('bot','Error de conexión con el proxy.');
+  }
+}
+
+function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendText();}}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,90)+'px';}
+
+// ═══ TTS ═══
+function speak(text, isVoiceMode=true) {
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const clean=text.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').replace(/<br>/g,' ').replace(/<[^>]+>/g,'').substring(0,450);
+  const utt=new SpeechSynthesisUtterance(clean);
+  utt.lang='es-ES'; utt.rate=0.97; utt.pitch=1.1;
+  const voices=window.speechSynthesis.getVoices();
+  const fem=voices.find(v=>v.lang.startsWith('es')&&/Monica|Paulina|Laura|Mónica|female|Woman/i.test(v.name))
+    ||voices.find(v=>v.lang.startsWith('es')&&v.name.includes('Google')&&!/male|man/i.test(v.name))
+    ||voices.find(v=>v.lang==='es-ES')
+    ||voices.find(v=>v.lang.startsWith('es'));
+  if(fem) utt.voice=fem;
+  utt.onstart=()=>{
+    showNeuro();
+    if(isVoiceMode||currentMode==='voice'){
+      setVStatus('Hablando','speaking');
+      setVTranscript(clean.substring(0,120)+(clean.length>120?'…':''));
+      document.getElementById('sofia-orb').classList.add('speaking');
+      document.getElementById('wave-bars').classList.add('on');
+    }
+    window._sofiaThinking=false;
+  };
+  utt.onend=()=>{
+    hideNeuro();
+    if(currentMode==='voice'){
+      setVStatus('En espera');
+      document.getElementById('sofia-orb').classList.remove('speaking');
+      document.getElementById('wave-bars').classList.remove('on');
+      setVTranscript('',true);
+    }
+  };
+  utt.onerror=()=>hideNeuro();
+  window.speechSynthesis.speak(utt);
+}
+window.speechSynthesis?.getVoices();
+window.speechSynthesis?.addEventListener?.('voiceschanged',()=>window.speechSynthesis.getVoices());
+
+// ═══ CANVAS NEURONAS ═══
+const nCanvas=document.getElementById('neuro');
+let nCtx,nAnim,nNodes=[],nActive=false;
 
 function initNeuro(){
-  nCanvas=document.getElementById('neuro');
+  nCanvas.width=innerWidth; nCanvas.height=innerHeight;
+  nCtx=nCanvas.getContext('2d');
   window.addEventListener('resize',()=>{nCanvas.width=innerWidth;nCanvas.height=innerHeight;nCtx=nCanvas.getContext('2d');});
-  nCanvas.width=innerWidth; nCanvas.height=innerHeight; nCtx=nCanvas.getContext('2d');
 }
-
 function createNodes(n=50){
   nNodes=Array.from({length:n},()=>({
     x:Math.random()*innerWidth, y:Math.random()*innerHeight,
@@ -421,7 +570,6 @@ function createNodes(n=50){
     c:Math.random()>.5?'#6366f1':'#818cf8'
   }));
 }
-
 function drawNeuro(){
   nCtx.clearRect(0,0,nCanvas.width,nCanvas.height);
   nNodes.forEach(n=>{
@@ -434,75 +582,47 @@ function drawNeuro(){
       const dx=nNodes[i].x-nNodes[j].x, dy=nNodes[i].y-nNodes[j].y;
       const d=Math.sqrt(dx*dx+dy*dy);
       if(d<150){
-        nCtx.beginPath();
-        nCtx.moveTo(nNodes[i].x,nNodes[i].y);
-        nCtx.lineTo(nNodes[j].x,nNodes[j].y);
-        nCtx.strokeStyle=`rgba(99,102,241,${(1-d/150)*.25})`;
-        nCtx.lineWidth=.6; nCtx.stroke();
+        nCtx.beginPath(); nCtx.moveTo(nNodes[i].x,nNodes[i].y); nCtx.lineTo(nNodes[j].x,nNodes[j].y);
+        nCtx.strokeStyle=`rgba(99,102,241,${(1-d/150)*.2})`; nCtx.lineWidth=.6; nCtx.stroke();
       }
     }
   }
   nNodes.forEach(n=>{
     const p=.6+Math.sin(n.pulse)*.4;
-    nCtx.beginPath();
-    nCtx.arc(n.x,n.y,n.r*p,0,Math.PI*2);
-    nCtx.fillStyle=n.c;
-    nCtx.shadowBlur=12; nCtx.shadowColor=n.c;
-    nCtx.fill(); nCtx.shadowBlur=0;
+    nCtx.beginPath(); nCtx.arc(n.x,n.y,n.r*p,0,Math.PI*2);
+    nCtx.fillStyle=n.c; nCtx.shadowBlur=12; nCtx.shadowColor=n.c; nCtx.fill(); nCtx.shadowBlur=0;
   });
   if(nActive) nAnim=requestAnimationFrame(drawNeuro);
 }
-
-function showNeuro(){ createNodes(50); nActive=true; nCanvas.style.opacity='.8'; nAnim=requestAnimationFrame(drawNeuro); }
+function showNeuro(){ createNodes(50); nActive=true; nCanvas.style.opacity='.75'; nAnim=requestAnimationFrame(drawNeuro); }
 function hideNeuro(){ nActive=false; nCanvas.style.opacity='0'; if(nAnim) cancelAnimationFrame(nAnim); }
-
 initNeuro();
 
-// ── TTS
-function speak(text) {
-  if(!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const clean = text.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').replace(/<br>/g,' ').replace(/<[^>]+>/g,'').substring(0,400);
-  const utt = new SpeechSynthesisUtterance(clean);
-  utt.lang='es-ES'; utt.rate=0.97; utt.pitch=1.1;
-  const voices=window.speechSynthesis.getVoices();
-  const fem=voices.find(v=>v.lang.startsWith('es')&&/Monica|Paulina|Laura|Mónica|female|Woman|mujer/i.test(v.name))
-    ||voices.find(v=>v.lang.startsWith('es')&&v.name.includes('Google')&&!/male|man/i.test(v.name))
-    ||voices.find(v=>v.lang==='es-ES')
-    ||voices.find(v=>v.lang.startsWith('es'));
-  if(fem) utt.voice=fem;
-  utt.onstart=()=>{ document.getElementById('speaking-line').classList.add('on'); showNeuro(); };
-  utt.onend=()=>{ document.getElementById('speaking-line').classList.remove('on'); hideNeuro(); };
-  utt.onerror=()=>hideNeuro();
-  window.speechSynthesis.speak(utt);
-}
-window.speechSynthesis?.getVoices();
-window.speechSynthesis?.addEventListener?.('voiceschanged',()=>window.speechSynthesis.getVoices());
-
-// ── RELOJ
+// ═══ RELOJ ═══
 function updateClock(){
   const n=new Date();
   const days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
   const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  const timeStr=n.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
   const dateStr=`${days[n.getDay()]} ${n.getDate()} ${months[n.getMonth()]}`;
-  document.getElementById('hero-time').textContent=timeStr;
-  document.getElementById('hero-date').textContent=dateStr;
+  const timeStr=n.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('topbar-date').textContent=dateStr;
+  document.getElementById('chat-time').textContent=timeStr;
   const h=n.getHours();
-  const greeting=h<13?'Buenos días':h<20?'Buenas tardes':'Buenas noches';
-  document.getElementById('greeting').textContent=`${greeting}, Sr. Bueno`;
+  const g=h<13?'Buenos días':h<20?'Buenas tardes':'Buenas noches';
+  const el=document.getElementById('chat-greeting');
+  if(el) el.textContent=`${g}, Sr. Bueno`;
 }
 updateClock();
 setInterval(updateClock,30000);
 
-// ── MENSAJE INICIAL
+// ═══ BIENVENIDA VOZ ═══
 setTimeout(()=>{
   const h=new Date().getHours();
   const g=h<13?'Buenos días':h<20?'Buenas tardes':'Buenas noches';
-  addMsg('bot',`${g}, Sr. Bueno. Tengo acceso a todos sus clientes, proyectos y leads en tiempo real.\n\n¿En qué puedo ayudarle hoy?`);
-  speak(`${g}, Sr. Bueno. ¿En qué puedo ayudarle hoy?`);
-},600);
+  const msg=`${g}, Sr. Bueno. Soy Sofia, su asistente personal. ¿En qué puedo ayudarle hoy?`;
+  setVTranscript(msg);
+  speak(msg, true);
+},700);
 </script>
 </body>
 </html>
