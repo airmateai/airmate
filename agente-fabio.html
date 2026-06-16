@@ -728,18 +728,46 @@ async function loadCtx(){
     setSBVal('sb-mrr',n*197+'€');setSBVal('sb-cli',n);setSBVal('sb-leads',CTX.leads.length);
     const ec=document.getElementById('sb-cold');if(ec)ec.textContent=CTX.coldLeads.length||'0';
     if(CTX.coldLeads.length>0)setTimeout(()=>showToast(`⚠ ${CTX.coldLeads.length} leads fríos +3 días`),3000);
+    await syncFromSB();
   }catch(e){console.log('CTX err',e);}
 }
 function setSBVal(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 
 // ══════════════════════════════════════════
-// TAREAS (localStorage)
+// SUPABASE MEMORY SYNC
+// ══════════════════════════════════════════
+async function sbSave(type, data){
+  if(!SB)return;
+  try{ await SB.from('sofia_memory').insert({type, data, ts:new Date().toISOString()}); }catch(e){}
+}
+async function sbDelete(type, ts){
+  if(!SB)return;
+  try{ await SB.from('sofia_memory').delete().eq('type',type).eq('data->>ts',ts); }catch(e){}
+}
+async function syncFromSB(){
+  if(!SB)return;
+  try{
+    const {data}=await SB.from('sofia_memory').select('*').order('ts',{ascending:false}).limit(300);
+    if(!data||!data.length)return;
+    const notes=data.filter(r=>r.type==='nota').map(r=>r.data);
+    const tasks=data.filter(r=>r.type==='tarea').map(r=>r.data);
+    const recs=data.filter(r=>r.type==='rec').map(r=>r.data);
+    if(notes.length)localStorage.setItem(NOTES_KEY,JSON.stringify(notes));
+    if(tasks.length)localStorage.setItem(TASKS_KEY,JSON.stringify(tasks));
+    if(recs.length)localStorage.setItem('sofia_recs_v1',JSON.stringify(recs));
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════
+// TAREAS
 // ══════════════════════════════════════════
 const TASKS_KEY='sofia_tasks_v2';
 function getTasks(){try{return JSON.parse(localStorage.getItem(TASKS_KEY)||'[]');}catch(e){return[];}}
 function saveTask(txt,proj=''){
-  const t=getTasks();t.unshift({txt,proj,done:false,ts:new Date().toISOString()});
+  const obj={txt,proj,done:false,ts:new Date().toISOString()};
+  const t=getTasks();t.unshift(obj);
   localStorage.setItem(TASKS_KEY,JSON.stringify(t.slice(0,100)));
+  sbSave('tarea',obj);
 }
 
 // ══════════════════════════════════════════
@@ -856,16 +884,20 @@ async function execActions(actions){
     const[type,...args]=parts;
     try{
       if(type==='nota'){
+        const obj={txt:args[0]||'',ts:new Date().toISOString()};
         const n=JSON.parse(localStorage.getItem(NOTES_KEY)||'[]');
-        n.unshift({txt:args[0]||'',ts:new Date().toISOString()});
+        n.unshift(obj);
         localStorage.setItem(NOTES_KEY,JSON.stringify(n.slice(0,50)));
+        sbSave('nota',obj);
         showToast('✓ Nota guardada');
       }else if(type==='tarea'){
         saveTask(args[0]||'',args[1]||'');showToast('✓ Tarea: '+args[0]);
       }else if(type==='recordatorio'){
+        const obj={txt:args[0]||'',fecha:args[1]||'',ts:new Date().toISOString()};
         const r=JSON.parse(localStorage.getItem('sofia_recs_v1')||'[]');
-        r.push({txt:args[0]||'',fecha:args[1]||'',ts:new Date().toISOString()});
+        r.push(obj);
         localStorage.setItem('sofia_recs_v1',JSON.stringify(r.slice(0,50)));
+        sbSave('rec',obj);
         showToast('✓ Recordatorio '+args[1]);
       }else if(type==='lead'){
         if(SB)await SB.from('leads').insert({name:args[0]||'Lead',business_slug:args[1]||'airmate',interest:args[2]||'',created_at:new Date().toISOString()});
