@@ -370,7 +370,16 @@ body{font-family:'Inter',-apple-system,sans-serif;color:var(--t);display:flex;fl
       <div class="sp-lbl">ID voz manual (ElevenLabs)</div>
       <input id="custom-vid" type="text" placeholder="ej: EXAVITQu4vr4xnSDxMaL" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--b);border-radius:8px;padding:9px 12px;color:var(--t);font-size:12px;font-family:inherit;outline:none;margin-top:6px">
     </div>
-    <button onclick="testVoice()" style="margin:14px 20px 0;padding:10px;border-radius:9px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);color:var(--a2);font-size:13px;cursor:pointer;width:calc(100%-40px);font-family:inherit;width:calc(100% - 40px)" id="btn-tv">▶ Probar voz</button>
+    <button onclick="testVoice()" style="margin:14px 20px 0;padding:10px;border-radius:9px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);color:var(--a2);font-size:13px;cursor:pointer;font-family:inherit;width:calc(100% - 40px)" id="btn-tv">▶ Probar voz ElevenLabs</button>
+
+    <div class="sp-sep"></div>
+    <div class="sp-sec">
+      <div class="sp-lbl">Voces del sistema (gratis)</div>
+      <div style="font-size:10px;color:var(--m2);margin-bottom:10px">Voces nativas de su dispositivo. En Mac: Mónica suena muy bien. En iPhone: active voces mejoradas en Ajustes → Accesibilidad → Contenido hablado → Voces.</div>
+      <div id="ws-voice-list" style="display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:11px;color:var(--m)">Cargando voces del sistema…</div>
+      </div>
+    </div>
     <button class="sp-save" onclick="saveSettings()">Guardar ajustes</button>
   </div>
 </div>
@@ -599,7 +608,7 @@ setView(currentView);
 // AJUSTES
 // ══════════════════════════════════════════
 const CFG_KEY='sofia_cfg_v4';
-let CFG={voice:'EXAVITQu4vr4xnSDxMaL',stab:.28,style:.50,sim:.85,resp:'concisa'};
+let CFG={voice:'EXAVITQu4vr4xnSDxMaL',stab:.28,style:.50,sim:.85,resp:'concisa',_wsVoice:null};
 const RESP_PROMPTS={
   concisa:'Máx 3 frases cortas. Directo al grano.',
   detallada:'Responde con detalle, hasta 8 frases.',
@@ -632,8 +641,46 @@ function saveSettings(){
 function selVoice(el){document.querySelectorAll('.voice-opt').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
 function selResp(el){document.querySelectorAll('.resp-opt').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
 function clearMem(){history.length=0;saveHist();document.getElementById('mem-cnt').textContent='0';showToast('✓ Memoria borrada');}
-function toggleSettings(){document.getElementById('sp-overlay').classList.toggle('open');applyUI();}
+function toggleSettings(){
+  document.getElementById('sp-overlay').classList.toggle('open');
+  applyUI();
+  if(document.getElementById('sp-overlay').classList.contains('open'))loadWSVoiceList();
+}
 function closeSpOutside(e){if(e.target===document.getElementById('sp-overlay'))toggleSettings();}
+
+async function loadWSVoiceList(){
+  const list=document.getElementById('ws-voice-list');
+  const vs=await loadWSVoices();
+  const spanish=vs.filter(v=>v.lang.startsWith('es')||v.lang.startsWith('Es'));
+  if(!spanish.length){list.innerHTML='<div style="font-size:11px;color:var(--m)">No hay voces en español instaladas en este dispositivo.</div>';return;}
+  list.innerHTML='';
+  spanish.forEach(v=>{
+    const isActive=CFG._wsVoice===v.name;
+    const row=document.createElement('div');
+    row.style.cssText=`display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid ${isActive?'rgba(99,102,241,.5)':'var(--b)'};background:${isActive?'rgba(99,102,241,.1)':'rgba(255,255,255,.02)'};cursor:pointer;transition:all .2s`;
+    row.innerHTML=`<div style="flex:1"><div style="font-size:12.5px;color:${isActive?'var(--a2)':'rgba(255,255,255,.8)'};font-weight:${isActive?'500':'400'}">${v.name}</div><div style="font-size:10px;color:var(--m2);margin-top:2px">${v.lang}${v.localService?' · sistema':' · red'}</div></div><button style="padding:4px 10px;border-radius:6px;border:1px solid var(--b);background:none;color:var(--m2);font-size:11px;cursor:pointer;font-family:inherit;touch-action:manipulation" onclick="event.stopPropagation();previewWSVoice('${v.name.replace(/'/g,"\\'")}')">▶</button>`;
+    row.addEventListener('click',()=>{
+      CFG._wsVoice=CFG._wsVoice===v.name?null:v.name;
+      loadWSVoiceList();
+    });
+    list.appendChild(row);
+  });
+  const best=getBestSpanishVoice();
+  if(best&&!CFG._wsVoice){
+    const note=document.createElement('div');
+    note.style.cssText='font-size:10px;color:var(--g);margin-top:6px;padding:6px 8px;background:rgba(52,211,153,.08);border-radius:6px';
+    note.textContent='Auto-detectada: '+best.name;
+    list.appendChild(note);
+  }
+}
+function previewWSVoice(name){
+  window.speechSynthesis?.cancel();
+  const u=new SpeechSynthesisUtterance('Hola Mister Bueno, soy Sofia.');
+  u.lang='es-ES';u.rate=.94;u.pitch=1.08;
+  const v=window.speechSynthesis.getVoices().find(x=>x.name===name);
+  if(v)u.voice=v;
+  window.speechSynthesis.speak(u);
+}
 async function testVoice(){
   const btn=document.getElementById('btn-tv');
   const vid=document.getElementById('custom-vid').value.trim()||document.querySelector('.voice-opt.active')?.dataset.voice||CFG.voice;
@@ -825,14 +872,34 @@ async function speak(text,vmode=true){
     a.play();
   }catch(e){webSpeech(clean,onStart,onEnd);}
 }
+function getBestSpanishVoice(){
+  const vs=window.speechSynthesis?.getVoices()||[];
+  const prio=[
+    v=>/Mónica|Monica/i.test(v.name)&&v.lang.startsWith('es'),
+    v=>/Paulina|Laura|Luciana|Valeria|Isabella/i.test(v.name)&&v.lang.startsWith('es'),
+    v=>v.lang==='es-ES'&&!/male|man|Jorge|Juan|Carlos/i.test(v.name),
+    v=>v.lang.startsWith('es-')&&!/male|man|Jorge|Juan|Carlos/i.test(v.name),
+    v=>v.lang.startsWith('es'),
+  ];
+  for(const fn of prio){const found=vs.find(fn);if(found)return found;}
+  return null;
+}
 function webSpeech(t,onS,onE){
   if(!window.speechSynthesis)return;
-  const u=new SpeechSynthesisUtterance(t);u.lang='es-ES';u.rate=.96;u.pitch=1.05;
-  const vs=window.speechSynthesis.getVoices();
-  const f=vs.find(v=>v.lang.startsWith('es')&&/Monica|Paulina|Laura|Mónica/i.test(v.name))||vs.find(v=>v.lang==='es-ES');
-  if(f)u.voice=f;
+  const u=new SpeechSynthesisUtterance(t);
+  u.lang='es-ES';u.rate=.94;u.pitch=1.08;
+  const v=CFG._wsVoice?window.speechSynthesis.getVoices().find(x=>x.name===CFG._wsVoice):getBestSpanishVoice();
+  if(v)u.voice=v;
   u.onstart=onS;u.onend=onE;u.onerror=onE;
   window.speechSynthesis.speak(u);
+}
+// Cargar voces — necesario en algunos navegadores
+function loadWSVoices(){
+  return new Promise(res=>{
+    const vs=window.speechSynthesis?.getVoices()||[];
+    if(vs.length>0){res(vs);return;}
+    window.speechSynthesis?.addEventListener('voiceschanged',()=>res(window.speechSynthesis.getVoices()),{once:true});
+  });
 }
 window.speechSynthesis?.getVoices();
 
