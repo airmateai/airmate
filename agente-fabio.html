@@ -130,6 +130,40 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .ibtn-send:hover{opacity:.8}
 .ibtn-send svg{width:12px;height:12px;fill:#fff}
 
+/* ══ AJUSTES PANEL ══ */
+.settings-overlay{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:none;align-items:flex-start;justify-content:flex-end}
+.settings-overlay.open{display:flex}
+.settings-panel{width:320px;height:100vh;background:rgba(8,8,20,.97);border-left:1px solid var(--border);backdrop-filter:blur(30px);overflow-y:auto;padding:0 0 40px;display:flex;flex-direction:column}
+.sp-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sp-head h2{font-size:13px;font-weight:600;letter-spacing:.3px}
+.sp-close{width:28px;height:28px;border-radius:7px;background:none;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted2);transition:all .15s}
+.sp-close:hover{background:var(--surface);color:var(--text)}
+.sp-close svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
+.sp-section{padding:20px 22px 0}
+.sp-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.sp-row{margin-bottom:14px}
+.sp-row label{font-size:12px;color:var(--muted2);display:flex;justify-content:space-between;margin-bottom:7px}
+.sp-row label span{color:var(--accent2);font-weight:600}
+.sp-slider{width:100%;appearance:none;height:3px;border-radius:10px;background:var(--border);outline:none;cursor:pointer}
+.sp-slider::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent2);cursor:pointer;box-shadow:0 0 8px rgba(129,140,248,.5)}
+.sp-sep{height:1px;background:var(--border);margin:18px 0 0}
+.voice-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.voice-opt{padding:9px 10px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-size:11.5px;color:var(--muted2);background:none;text-align:left;transition:all .2s;font-family:inherit;line-height:1.3}
+.voice-opt:hover{border-color:rgba(99,102,241,.4);color:var(--text)}
+.voice-opt.active{border-color:var(--accent);background:rgba(99,102,241,.12);color:var(--accent2)}
+.voice-opt small{display:block;font-size:9.5px;color:var(--muted);margin-top:2px}
+.resp-grid{display:flex;flex-wrap:wrap;gap:6px}
+.resp-opt{padding:6px 13px;border-radius:20px;border:1px solid var(--border);cursor:pointer;font-size:11px;color:var(--muted2);background:none;transition:all .2s;font-family:inherit}
+.resp-opt:hover{border-color:rgba(99,102,241,.4);color:var(--text)}
+.resp-opt.active{border-color:var(--accent);background:rgba(99,102,241,.12);color:var(--accent2)}
+.mem-bar{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+.mem-info{font-size:12px;color:var(--muted2)}
+.mem-info strong{color:var(--text)}
+.mem-clear{padding:6px 13px;border-radius:7px;border:1px solid rgba(248,113,113,.3);background:none;color:var(--red);font-size:11px;cursor:pointer;font-family:inherit;transition:all .15s}
+.mem-clear:hover{background:rgba(248,113,113,.08)}
+.sp-save{margin:22px 22px 0;padding:11px;border-radius:9px;background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:500;cursor:pointer;width:calc(100% - 44px);font-family:inherit;transition:opacity .15s}
+.sp-save:hover{opacity:.85}
+
 .brand-overlay{position:fixed;inset:0;z-index:200;pointer-events:none;display:none}
 .brand-overlay.on{display:block}
 .brand-overlay .watermark{position:absolute;bottom:28px;right:32px;display:flex;align-items:center;gap:10px;opacity:.55}
@@ -165,12 +199,77 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
       <button class="tb-btn" onclick="runBriefing()" title="Briefing diario">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15" stroke-linecap="round"/></svg>
       </button>
+      <button class="tb-btn" onclick="toggleSettings()" title="Ajustes">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
       <button class="tb-btn" id="btn-fs" onclick="toggleFullscreen()" title="Modo grabación">
         <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
       </button>
     </div>
     <div class="ldot"></div>
     <span id="hdr-date"></span>
+  </div>
+</div>
+
+<!-- PANEL AJUSTES -->
+<div class="settings-overlay" id="settings-overlay" onclick="closeSettingsOutside(event)">
+  <div class="settings-panel" id="settings-panel">
+    <div class="sp-head">
+      <h2>Ajustes de Sofia</h2>
+      <button class="sp-close" onclick="toggleSettings()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+
+    <div class="sp-section">
+      <div class="sp-label">Voz</div>
+      <div class="voice-grid" id="voice-grid">
+        <button class="voice-opt" data-voice="jBpfuIE2acCO8z3wKNLl" onclick="selectVoice(this)">Gigi<small>Joven · dulce</small></button>
+        <button class="voice-opt" data-voice="pFZP5JQG7iQjIQuC4Bku" onclick="selectVoice(this)">Lily<small>Suave · cálida</small></button>
+        <button class="voice-opt" data-voice="EXAVITQu4vr4xnSDxMaL" onclick="selectVoice(this)">Sarah<small>Natural · clara</small></button>
+        <button class="voice-opt" data-voice="Xb7hH8MSUJpSbSDYk0k2" onclick="selectVoice(this)">Alice<small>Española · firme</small></button>
+        <button class="voice-opt" data-voice="piTKgcLEGmPE4e6mEKli" onclick="selectVoice(this)">Nicole<small>Íntima · susurrante</small></button>
+        <button class="voice-opt" data-voice="XrExE9yKIg1WjnnlVkGX" onclick="selectVoice(this)">Matilda<small>Cálida · madura</small></button>
+      </div>
+    </div>
+
+    <div class="sp-sep"></div>
+    <div class="sp-section">
+      <div class="sp-label">Intensidad de voz</div>
+      <div class="sp-row">
+        <label>Estabilidad <span id="lbl-stab">32%</span></label>
+        <input type="range" class="sp-slider" id="sl-stab" min="0" max="100" value="32" oninput="document.getElementById('lbl-stab').textContent=this.value+'%'">
+      </div>
+      <div class="sp-row">
+        <label>Expresividad <span id="lbl-style">42%</span></label>
+        <input type="range" class="sp-slider" id="sl-style" min="0" max="100" value="42" oninput="document.getElementById('lbl-style').textContent=this.value+'%'">
+      </div>
+      <div class="sp-row">
+        <label>Claridad <span id="lbl-sim">88%</span></label>
+        <input type="range" class="sp-slider" id="sl-sim" min="0" max="100" value="88" oninput="document.getElementById('lbl-sim').textContent=this.value+'%'">
+      </div>
+    </div>
+
+    <div class="sp-sep"></div>
+    <div class="sp-section">
+      <div class="sp-label">Tipo de respuesta</div>
+      <div class="resp-grid" id="resp-grid">
+        <button class="resp-opt active" data-resp="concisa" onclick="selectResp(this)">Concisa</button>
+        <button class="resp-opt" data-resp="detallada" onclick="selectResp(this)">Detallada</button>
+        <button class="resp-opt" data-resp="datos" onclick="selectResp(this)">Solo datos</button>
+        <button class="resp-opt" data-resp="estrategia" onclick="selectResp(this)">Estratégica</button>
+        <button class="resp-opt" data-resp="coaching" onclick="selectResp(this)">Coaching</button>
+      </div>
+    </div>
+
+    <div class="sp-sep"></div>
+    <div class="sp-section">
+      <div class="sp-label">Memoria de conversación</div>
+      <div class="mem-bar">
+        <div class="mem-info">Mensajes guardados: <strong id="mem-count">0</strong></div>
+        <button class="mem-clear" onclick="clearMemory()">Borrar todo</button>
+      </div>
+    </div>
+
+    <button class="sp-save" onclick="saveSettings()">Guardar ajustes</button>
   </div>
 </div>
 
@@ -697,6 +796,93 @@ function pDraw(){
   requestAnimationFrame(pDraw);
 }
 pDraw();
+
+// ══ AJUSTES ══
+const SETTINGS_KEY='sofia_settings_v1';
+let CFG={voice:'jBpfuIE2acCO8z3wKNLl',stab:0.32,style:0.42,sim:0.88,resp:'concisa'};
+
+const RESP_PROMPTS={
+  concisa:'Máx 3 frases. Directo al punto.',
+  detallada:'Responde con detalle, explica el razonamiento, hasta 8 frases.',
+  datos:'Solo datos y números, sin explicaciones. Formato: dato · dato · dato.',
+  estrategia:'Responde siempre con una acción concreta que ejecutar hoy. Piensa como un estratega de negocio.',
+  coaching:'Responde como mentor: valora lo que está bien, señala lo que mejorar, propone siguiente paso.'
+};
+
+function loadSettings(){
+  try{const s=JSON.parse(localStorage.getItem(SETTINGS_KEY));if(s)Object.assign(CFG,s);}catch(e){}
+  applySettingsUI();
+}
+function applySettingsUI(){
+  // Voz activa
+  document.querySelectorAll('.voice-opt').forEach(b=>b.classList.toggle('active',b.dataset.voice===CFG.voice));
+  // Sliders
+  const stab=Math.round(CFG.stab*100),sty=Math.round(CFG.style*100),sim=Math.round(CFG.sim*100);
+  document.getElementById('sl-stab').value=stab;document.getElementById('lbl-stab').textContent=stab+'%';
+  document.getElementById('sl-style').value=sty;document.getElementById('lbl-style').textContent=sty+'%';
+  document.getElementById('sl-sim').value=sim;document.getElementById('lbl-sim').textContent=sim+'%';
+  // Resp
+  document.querySelectorAll('.resp-opt').forEach(b=>b.classList.toggle('active',b.dataset.resp===CFG.resp));
+  // Memoria
+  const h=loadHistory();document.getElementById('mem-count').textContent=h.length;
+}
+function saveSettings(){
+  CFG.voice=document.querySelector('.voice-opt.active')?.dataset.voice||CFG.voice;
+  CFG.stab=parseInt(document.getElementById('sl-stab').value)/100;
+  CFG.style=parseInt(document.getElementById('sl-style').value)/100;
+  CFG.sim=parseInt(document.getElementById('sl-sim').value)/100;
+  CFG.resp=document.querySelector('.resp-opt.active')?.dataset.resp||CFG.resp;
+  localStorage.setItem(SETTINGS_KEY,JSON.stringify(CFG));
+  toggleSettings();
+  showToast('✓ Ajustes guardados');
+}
+function selectVoice(el){document.querySelectorAll('.voice-opt').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function selectResp(el){document.querySelectorAll('.resp-opt').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function clearMemory(){history.length=0;saveHistory();document.getElementById('mem-count').textContent='0';showToast('✓ Memoria borrada');}
+function toggleSettings(){
+  const o=document.getElementById('settings-overlay');
+  o.classList.toggle('open');
+  if(o.classList.contains('open'))applySettingsUI();
+}
+function closeSettingsOutside(e){if(e.target===document.getElementById('settings-overlay'))toggleSettings();}
+loadSettings();
+
+// Sobrescribir speak para usar CFG dinámico
+const _origSpeak=speak;
+speak=async function(text,vmode=true){
+  if(currentAudio){currentAudio.pause();URL.revokeObjectURL(currentAudio._url||'');currentAudio=null;}
+  window.speechSynthesis?.cancel();
+  const clean=text.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').replace(/<br>/g,' ').replace(/<[^>]+>/g,'').substring(0,600);
+  const onStart=()=>{
+    setPState('speaking');
+    if(vmode||mode==='voice'){setStatus('Hablando','speaking');setTx(clean.substring(0,160)+(clean.length>160?'…':''));document.getElementById('wave-zone').classList.add('on');}
+    window._thinking=false;
+  };
+  const onEnd=()=>{
+    setPState('idle');
+    if(mode==='voice'){setStatus('En espera');document.getElementById('wave-zone').classList.remove('on');setTx('',true);}
+  };
+  try{
+    const resp=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${CFG.voice}`,{
+      method:'POST',
+      headers:{'xi-api-key':EL_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({text:clean,model_id:'eleven_multilingual_v2',voice_settings:{stability:CFG.stab,similarity_boost:CFG.sim,style:CFG.style,use_speaker_boost:true}})
+    });
+    if(!resp.ok)throw new Error('EL '+resp.status);
+    const blob=await resp.blob();const url=URL.createObjectURL(blob);
+    const audio=new Audio(url);audio._url=url;currentAudio=audio;
+    audio.onplay=onStart;
+    audio.onended=()=>{currentAudio=null;URL.revokeObjectURL(url);onEnd();};
+    audio.onerror=()=>{currentAudio=null;onEnd();};
+    audio.play();
+  }catch(e){console.warn('ElevenLabs:',e.message);speakWebSpeech(clean,onStart,onEnd);}
+};
+
+// Inyectar tipo de respuesta en buildPrompt
+const _origBuildPrompt=buildPrompt;
+buildPrompt=function(){
+  return _origBuildPrompt()+'\nMODO RESPUESTA: '+( RESP_PROMPTS[CFG.resp]||RESP_PROMPTS.concisa);
+};
 
 // ── BIENVENIDA
 setTimeout(()=>{
