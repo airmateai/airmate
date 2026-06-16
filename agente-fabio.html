@@ -407,13 +407,34 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
-const SB=supabase.createClient('https://vjofxmfwdybktpwiuanc.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE');
+// Carga segura de Supabase y EmailJS — si fallan, el chat sigue funcionando
 const PROXY='https://bot-airmate-1.vercel.app/api/chat';
 const EL_KEY='sk_f1c7d026f9f540e6ce1a7b982fe8b8d55577086399bc3dec';
-// voz controlada por CFG.voice (ver ajustes)
+const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+let SB=null;
+
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');s.src=src;
+    s.onload=res;s.onerror=rej;
+    document.head.appendChild(s);
+  });
+}
+
+async function initLibs(){
+  try{
+    await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js');
+    SB=window.supabase.createClient(SB_URL,SB_KEY);
+  }catch(e){console.warn('Supabase no disponible:',e.message);}
+  try{
+    await loadScript('https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js');
+    window.emailjs?.init('i4iBVVP-BkUOOwBE9');
+  }catch(e){console.warn('EmailJS no disponible:',e.message);}
+}
+initLibs().then(()=>{loadCtx();}).catch(()=>{});
+
 
 // ── HISTORIAL
 const HIST_KEY='sofia_history_v1';
@@ -433,8 +454,7 @@ function setMode(m){mode=m;['voice','text'].forEach(x=>{document.getElementById(
 // Arrancar en el modo correcto desde el principio
 setMode(mode);
 
-// ── EMAILJS
-emailjs.init('i4iBVVP-BkUOOwBE9');
+// EmailJS se inicializa en initLibs()
 
 // ── TAREAS
 const TASKS_KEY='sofia_tareas_v1';
@@ -448,9 +468,9 @@ function saveTarea(txt,proyecto=''){
 // ── SUPABASE CTX
 let CTX={configs:[],leads:[],citas:[],coldLeads:[],semana:[]};
 async function loadCtx(){
+  if(!SB)return;
   try{
     const ahora=new Date();
-    const hace3dias=new Date(Date.now()-3*86400000).toISOString();
     const finSemana=new Date(Date.now()+7*86400000).toISOString();
     const[c,l,a,prox]=await Promise.all([
       SB.from('bot_configs').select('slug,bot_name,owner_email').limit(20),
@@ -472,7 +492,6 @@ async function loadCtx(){
     if(CTX.coldLeads.length>0)setTimeout(()=>showToast(`⚠ ${CTX.coldLeads.length} leads sin respuesta hace +3 días`,5000),3000);
   }catch(e){console.log(e);}
 }
-loadCtx();
 
 function buildPrompt(){
   const hoy=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -537,19 +556,16 @@ async function executeActions(actions){
         showToast('✓ Nota guardada');
 
       }else if(type==='lead'){
-        await SB.from('leads').insert({name:args[0]||'Lead Sofia',business_slug:args[1]||'airmate-sofia',interest:args[2]||'',created_at:new Date().toISOString()});
-        showToast('✓ Lead: '+(args[0]||''));loadCtx();
+        if(SB){await SB.from('leads').insert({name:args[0]||'Lead Sofia',business_slug:args[1]||'airmate-sofia',interest:args[2]||'',created_at:new Date().toISOString()});loadCtx();}
+        showToast('✓ Lead: '+(args[0]||''));
 
       }else if(type==='cita'){
-        const fecha=args[2]||new Date().toISOString().split('T')[0];
-        const hora=args[3]||'10:00';
-        const starts_at=new Date(fecha+'T'+hora+':00').toISOString();
-        await SB.from('appointments').insert({name:args[0]||'Cita',service:args[1]||'Consulta',starts_at,business_slug:args[4]||'airmate-fabio',created_at:new Date().toISOString()});
-        showToast('✓ Cita creada: '+args[0]+' · '+fecha+' '+hora);loadCtx();
+        if(SB){const fecha=args[2]||new Date().toISOString().split('T')[0];const hora=args[3]||'10:00';const starts_at=new Date(fecha+'T'+hora+':00').toISOString();await SB.from('appointments').insert({name:args[0]||'Cita',service:args[1]||'Consulta',starts_at,business_slug:args[4]||'airmate-fabio',created_at:new Date().toISOString()});loadCtx();}
+        showToast('✓ Cita creada: '+args[0]);
 
       }else if(type==='email'){
-        await emailjs.send('service_npmjvvf','template_qnip0mc',{to_email:args[0],subject:args[1]||'Mensaje de Airmate',message:args[2]||''});
-        showToast('✓ Email enviado a '+args[0],4000);
+        if(window.emailjs){await window.emailjs.send('service_npmjvvf','template_qnip0mc',{to_email:args[0],subject:args[1]||'Mensaje de Airmate',message:args[2]||''});showToast('✓ Email enviado a '+args[0],4000);}
+        else{showToast('⚠ Email no disponible',3000);}
 
       }else if(type==='tarea'){
         saveTarea(args[0]||'',args[1]||'');
