@@ -518,6 +518,7 @@ body{font-family:'Inter',-apple-system,sans-serif;color:var(--t);display:flex;fl
       <button class="av-tab active" id="avt-day" onclick="setAgView('day')">Día</button>
       <button class="av-tab" id="avt-week" onclick="setAgView('week')">Semana</button>
       <button class="av-tab" id="avt-month" onclick="setAgView('month')">Mes</button>
+      <button class="av-tab" id="avt-notes" onclick="setAgView('notes')">Notas</button>
     </div>
   </div>
   <div class="agenda-body" id="agenda-body"></div>
@@ -1058,7 +1059,10 @@ function getEventsToday(){return getEvents(dateStr(new Date()));}
 
 function setAgView(v){
   agView=v;
-  ['day','week','month'].forEach(x=>document.getElementById('avt-'+x).classList.toggle('active',x===v));
+  ['day','week','month','notes'].forEach(x=>{const el=document.getElementById('avt-'+x);if(el)el.classList.toggle('active',x===v);});
+  // Ocultar nav en notas
+  const nav=document.querySelector('.agenda-nav');
+  if(nav)nav.style.display=v==='notes'?'none':'flex';
   renderAgenda();
 }
 function agNav(dir){
@@ -1110,10 +1114,90 @@ function openEditEvent(ds,idx){
 // ── RENDER PRINCIPAL
 function renderAgenda(){
   const body=document.getElementById('agenda-body');
-  body.innerHTML='';
+  body.innerHTML='';body.style.padding='';body.style.overflow='';body.style.display='';body.style.flexDirection='';
   if(agView==='day')renderDay(body);
   else if(agView==='week')renderWeek(body);
-  else renderMonth(body);
+  else if(agView==='month')renderMonth(body);
+  else renderNotes(body);
+}
+
+function renderNotes(body){
+  document.getElementById('ag-date').textContent='Notas de Sofia';
+  document.getElementById('ag-sub').textContent='Todo lo que Sofia ha anotado';
+  body.style.padding='14px 16px';body.style.overflow='auto';
+
+  const notes=JSON.parse(localStorage.getItem(NOTES_KEY)||'[]');
+  const tasks=getTasks();
+  const recs=JSON.parse(localStorage.getItem('sofia_recs_v1')||'[]');
+
+  // Botón añadir nota manual
+  const addBtn=document.createElement('button');
+  addBtn.style.cssText='width:100%;padding:11px;border-radius:10px;border:1px dashed rgba(99,102,241,.3);background:rgba(99,102,241,.05);color:var(--a2);font-size:13px;cursor:pointer;font-family:inherit;margin-bottom:14px;touch-action:manipulation';
+  addBtn.textContent='+ Añadir nota manualmente';
+  addBtn.onclick=()=>{
+    const txt=prompt('Nota:');
+    if(txt){
+      const n=JSON.parse(localStorage.getItem(NOTES_KEY)||'[]');
+      n.unshift({txt,ts:new Date().toISOString()});
+      localStorage.setItem(NOTES_KEY,JSON.stringify(n.slice(0,100)));
+      renderAgenda();showToast('✓ Nota guardada');
+    }
+  };
+  body.appendChild(addBtn);
+
+  function makeSection(title,items,renderItem){
+    if(!items.length)return;
+    const sec=document.createElement('div');
+    sec.style.cssText='margin-bottom:18px';
+    sec.innerHTML=`<div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--m);margin-bottom:8px">${title} (${items.length})</div>`;
+    items.forEach((item,i)=>{
+      const row=renderItem(item,i);
+      sec.appendChild(row);
+    });
+    body.appendChild(sec);
+  }
+
+  // Notas de Sofia
+  makeSection('Notas',notes,(n,i)=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;gap:10px;padding:11px 13px;background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:10px;margin-bottom:7px;align-items:flex-start';
+    const d=new Date(n.ts);
+    row.innerHTML=`<div style="flex:1"><div style="font-size:13px;color:rgba(255,255,255,.85);line-height:1.6">${n.txt}</div><div style="font-size:10px;color:var(--m2);margin-top:5px">${d.toLocaleDateString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div><button onclick="deleteNote(${i})" style="background:none;border:none;color:var(--m);font-size:14px;cursor:pointer;padding:2px;touch-action:manipulation;flex-shrink:0">✕</button>`;
+    return row;
+  });
+
+  // Tareas
+  makeSection('Tareas pendientes',tasks.filter(t=>!t.done),(t,i)=>{
+    const idx=tasks.indexOf(t);
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;gap:10px;padding:10px 13px;background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:10px;margin-bottom:7px;align-items:center';
+    row.innerHTML=`<div style="flex:1"><div style="font-size:13px;color:rgba(255,255,255,.85)">${t.txt}</div>${t.proj?`<div style="font-size:10px;color:var(--m2);margin-top:3px">${t.proj}</div>`:''}</div><button onclick="doneTask(${idx})" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:6px;color:var(--g);font-size:11px;cursor:pointer;padding:4px 9px;font-family:inherit;touch-action:manipulation">✓</button>`;
+    return row;
+  });
+
+  // Recordatorios
+  makeSection('Recordatorios',recs,(r,i)=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;gap:10px;padding:10px 13px;background:rgba(251,191,36,.05);border:1px solid rgba(251,191,36,.15);border-radius:10px;margin-bottom:7px;align-items:center';
+    row.innerHTML=`<div style="flex:1"><div style="font-size:13px;color:rgba(255,255,255,.85)">${r.txt}</div>${r.fecha?`<div style="font-size:10px;color:#fbbf24;margin-top:3px">${r.fecha}</div>`:''}</div><button onclick="deleteRec(${i})" style="background:none;border:none;color:var(--m);font-size:14px;cursor:pointer;touch-action:manipulation">✕</button>`;
+    return row;
+  });
+
+  if(!notes.length&&!tasks.length&&!recs.length){
+    body.innerHTML+='<div style="text-align:center;color:var(--m2);font-size:13px;padding:40px 20px">Todavía no hay notas.<br><br>Habla con Sofia y dile<br>"anota que..." o "recuérdame que..."</div>';
+  }
+}
+
+function deleteNote(i){
+  const n=JSON.parse(localStorage.getItem(NOTES_KEY)||'[]');n.splice(i,1);
+  localStorage.setItem(NOTES_KEY,JSON.stringify(n));renderAgenda();showToast('Nota eliminada');
+}
+function doneTask(i){
+  const t=getTasks();t[i].done=true;localStorage.setItem(TASKS_KEY,JSON.stringify(t));renderAgenda();showToast('✓ Tarea completada');
+}
+function deleteRec(i){
+  const r=JSON.parse(localStorage.getItem('sofia_recs_v1')||'[]');r.splice(i,1);
+  localStorage.setItem('sofia_recs_v1',JSON.stringify(r));renderAgenda();showToast('Recordatorio eliminado');
 }
 
 // ── VISTA DÍA
