@@ -247,6 +247,30 @@ canvas.bg{position:fixed;inset:0;pointer-events:none;z-index:0}
 .ibtn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5}
 .ibtn.on{color:var(--red)}
 .ibtn-send{background:var(--accent);border:none;border-radius:7px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .15s;box-shadow:0 4px 14px rgba(99,102,241,.35)}
+
+/* FULLSCREEN BRAND OVERLAY */
+.brand-overlay{position:fixed;inset:0;z-index:200;pointer-events:none;display:none}
+.brand-overlay.on{display:block}
+.brand-overlay .watermark{position:absolute;bottom:28px;right:32px;display:flex;align-items:center;gap:10px;opacity:.55}
+.brand-overlay .wm-logo{width:28px;height:28px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.brand-overlay .wm-logo svg{width:14px;height:14px;fill:#fff}
+.brand-overlay .wm-text{font-size:13px;font-weight:500;color:#fff;letter-spacing:.5px}
+.brand-overlay .wm-sub{font-size:10px;color:rgba(255,255,255,.4);letter-spacing:1px;margin-top:1px;text-transform:uppercase}
+.topbar-fs{display:none}
+
+/* BOTONES TOPBAR EXTRA */
+.topbar-actions{display:flex;align-items:center;gap:6px;margin-left:12px}
+.tb-btn{width:30px;height:30px;border-radius:7px;background:none;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted2);transition:all .15s}
+.tb-btn:hover{background:var(--surface);color:var(--text)}
+.tb-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.5}
+.tb-btn.on{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.4);color:var(--accent2)}
+
+/* NOTA RÁPIDA TOAST */
+.note-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(20,20,36,.95);border:1px solid var(--border);border-radius:12px;padding:14px 20px;font-size:13px;color:var(--text);backdrop-filter:blur(20px);opacity:0;transition:all .3s;z-index:100;pointer-events:none;min-width:260px;text-align:center}
+.note-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* BRIEFING TAG */
+.briefing-tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;background:rgba(99,102,241,.15);color:var(--accent2);border-radius:4px;padding:2px 7px;margin-bottom:6px}
 .ibtn-send:hover{opacity:.8}
 .ibtn-send svg{width:12px;height:12px;fill:#fff}
 </style>
@@ -272,10 +296,29 @@ canvas.bg{position:fixed;inset:0;pointer-events:none;z-index:0}
     </button>
   </div>
   <div class="topbar-right">
+    <div class="topbar-actions">
+      <button class="tb-btn" id="btn-brief" onclick="runBriefing()" title="Briefing diario">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15" stroke-linecap="round"/></svg>
+      </button>
+      <button class="tb-btn" id="btn-fs" onclick="toggleFullscreen()" title="Modo grabación">
+        <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      </button>
+    </div>
     <div class="ldot"></div>
     <span id="hdr-date"></span>
   </div>
 </div>
+
+<!-- BRAND OVERLAY (modo grabación) -->
+<div class="brand-overlay" id="brand-overlay">
+  <div class="watermark">
+    <div class="wm-logo"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+    <div><div class="wm-text">Airmate</div><div class="wm-sub">AI Agency · Sofia</div></div>
+  </div>
+</div>
+
+<!-- NOTA TOAST -->
+<div class="note-toast" id="note-toast"></div>
 
 <!-- VOICE VIEW -->
 <div class="view voice-view active" id="view-voice">
@@ -360,6 +403,30 @@ canvas.bg{position:fixed;inset:0;pointer-events:none;z-index:0}
 const SB=supabase.createClient('https://vjofxmfwdybktpwiuanc.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE');
 const PROXY='https://bot-airmate-1.vercel.app/api/chat';
 
+// ── HISTORIAL PERSISTENTE (localStorage)
+const HIST_KEY='sofia_history_v1';
+function saveHistory(){try{localStorage.setItem(HIST_KEY,JSON.stringify(history.slice(-30)));}catch(e){}}
+function loadHistory(){try{return JSON.parse(localStorage.getItem(HIST_KEY)||'[]');}catch(e){return[];}}
+
+// ── NOTA RÁPIDA
+function showToast(msg,ms=3000){
+  const t=document.getElementById('note-toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),ms);
+}
+
+// ── FULLSCREEN / MODO GRABACIÓN
+let fsOn=false;
+function toggleFullscreen(){
+  fsOn=!fsOn;
+  const btn=document.getElementById('btn-fs');
+  const overlay=document.getElementById('brand-overlay');
+  btn.classList.toggle('on',fsOn);
+  overlay.classList.toggle('on',fsOn);
+  if(fsOn){document.documentElement.requestFullscreen?.();}
+  else{document.exitFullscreen?.();}
+}
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&fsOn){fsOn=false;document.getElementById('btn-fs').classList.remove('on');document.getElementById('brand-overlay').classList.remove('on');}});
+
 // ── MODO
 let mode='voice';
 function setMode(m){
@@ -397,7 +464,7 @@ PROYECTOS: Jose Acosta (CRM live, reunión Richard lunes 10:30, pendiente fotos 
 TONO: Trate de "usted". Profesional, cálido. Sin emojis. Máx 3-4 frases. Para voz: frases cortas, sin listas. Llámele siempre "Mister Bueno" — nunca "Mister Bueno" ni "señor Bueno".`;
 }
 
-const history=[];
+const history=loadHistory();
 
 // ── VOICE
 let vrec=null,vactive=false;
@@ -434,14 +501,20 @@ function toggleMic(){
 }
 
 async function askVoice(q){
+  // Detectar comando "anota"
+  if(/^anota[r]?\s/i.test(q)){
+    const nota=q.replace(/^anota[r]?\s/i,'').trim();
+    saveNota(nota);return;
+  }
   setStatus('Pensando…','thinking');
   setTx(q);window._thinking=true;
   history.push({role:'user',content:q});
   try{
     const r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_prompt:buildPrompt(),messages:history.slice(-12)})});
     const d=await r.json();
-    const rep=d.content?.[0]?.text||d.reply||d.message||'Error.';
+    const rep=d.reply||d.content?.[0]?.text||d.message||d.error?.message||'Sin respuesta del servidor.';
     history.push({role:'assistant',content:rep});
+    saveHistory();
     speak(rep,true);
   }catch(e){setStatus('Error de conexión');window._thinking=false;}
 }
@@ -481,8 +554,9 @@ async function sendText(q){
   try{
     const r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_prompt:buildPrompt(),messages:history.slice(-12)})});
     const d=await r.json();ty.remove();
-    const rep=d.content?.[0]?.text||d.reply||d.message||'Error.';
+    const rep=d.reply||d.content?.[0]?.text||d.message||d.error?.message||'Sin respuesta del servidor.';
     history.push({role:'assistant',content:rep});
+    saveHistory();
     addMsg('bot',rep);speak(rep,false);
   }catch(e){ty.remove();addMsg('bot','Error de conexión.');}
 }
@@ -613,6 +687,39 @@ function brightenNeuro(){nC.style.transition='opacity .5s';nC.style.opacity='.92
 function dimNeuro(){nC.style.transition='opacity 1.5s';nC.style.opacity='.15';}
 initNeuro();
 
+// ── NOTAS RÁPIDAS
+const NOTES_KEY='sofia_notes_v1';
+function saveNota(txt){
+  const notas=JSON.parse(localStorage.getItem(NOTES_KEY)||'[]');
+  notas.unshift({txt,ts:new Date().toISOString()});
+  localStorage.setItem(NOTES_KEY,JSON.stringify(notas.slice(0,50)));
+  const rep=`Anotado, Mister Bueno. "${txt}" — guardado a las ${new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}.`;
+  showToast('Nota guardada');
+  if(mode==='voice'){setTx(rep);speak(rep,true);}
+  else addMsg('bot',rep);
+}
+
+// ── BRIEFING DIARIO
+let briefingHecho=false;
+async function runBriefing(){
+  if(briefingHecho&&mode==='text')document.getElementById('sugs-wrap').style.display='flex';
+  briefingHecho=true;
+  const q='Dame el briefing ejecutivo del día: proyectos con acción urgente, leads calientes y lo más importante que debo hacer en las próximas 3 horas. Sé conciso.';
+  if(mode==='voice'){setMode('voice');askVoice(q);}
+  else{addMsg('user','☀ Briefing del día');history.push({role:'user',content:q});
+    const ty=addTyping();
+    try{
+      const r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_prompt:buildPrompt(),messages:history.slice(-12)})});
+      const d=await r.json();ty.remove();
+      const rep=d.reply||d.content?.[0]?.text||'Sin respuesta.';
+      history.push({role:'assistant',content:rep});saveHistory();
+      const row=addMsg('bot',rep);
+      row.querySelector('.msg-body').insertAdjacentHTML('afterbegin','<div class="briefing-tag">Briefing diario</div>');
+      speak(rep,false);
+    }catch(e){ty.remove();addMsg('bot','Error al generar briefing.');}
+  }
+}
+
 // ── RELOJ
 function tick(){
   const n=new Date();
@@ -626,12 +733,18 @@ function tick(){
 }
 tick();setInterval(tick,30000);
 
-// ── BIENVENIDA
+// ── BIENVENIDA + BRIEFING AUTOMÁTICO
 setTimeout(()=>{
   const h=new Date().getHours();
   const g=h<13?'Buenos días':h<20?'Buenas tardes':'Buenas noches';
   const msg=`${g}, Mister Bueno. Soy Sofia, su asistente personal. ¿En qué puedo ayudarle hoy?`;
   setTx(msg);speak(msg,true);
+  // briefing auto una vez al día
+  const today=new Date().toDateString();
+  if(localStorage.getItem('sofia_brief_date')!==today){
+    localStorage.setItem('sofia_brief_date',today);
+    setTimeout(()=>runBriefing(),6000);
+  }
 },800);
 </script>
 </body>
