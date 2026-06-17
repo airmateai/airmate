@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agencia Kultur · Panel de Gestión</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --nav:#0d0a05;--nav2:#1a1408;--nav-txt:rgba(255,255,255,.45);
+  --acc:#8B6914;--acc-d:#6B5010;--acc-light:rgba(139,105,20,.08);
+  --terra:#C4956A;
+  --bg:#f7f4ef;--surface:#fff;--border:#e8e2d9;--border2:#f0ebe3;
+  --txt:#1a1408;--txt2:#5c4f3a;--txt3:#9a8a72;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);display:flex;height:100vh;overflow:hidden}
+
+/* CURSOR */
+#kc{position:fixed;width:10px;height:10px;background:var(--acc);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform .15s ease,opacity .2s;mix-blend-mode:multiply}
+#kc2{position:fixed;width:28px;height:28px;border:1.5px solid var(--acc);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all .22s ease;opacity:.5}
+
+/* SIDEBAR */
+.sidebar{width:230px;min-width:230px;background:var(--nav);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-logo .logo-mark{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#fff;letter-spacing:2px}
+.sb-logo .logo-sub{font-size:9px;color:var(--nav-txt);letter-spacing:3px;text-transform:uppercase;margin-top:2px}
+.sb-nav{flex:1;overflow-y:auto;padding:12px 0}
+.sb-nav::-webkit-scrollbar{width:0}
+.sb-section{font-size:9px;color:rgba(255,255,255,.2);letter-spacing:2.5px;text-transform:uppercase;padding:14px 20px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--nav-txt);font-size:12.5px;font-weight:400;cursor:pointer;transition:all .2s;border-left:2px solid transparent;user-select:none}
+.nav-item:hover{color:rgba(255,255,255,.75);background:rgba(255,255,255,.03)}
+.nav-item.active{color:#fff;border-left-color:var(--acc);background:rgba(139,105,20,.1)}
+.nav-item svg{width:15px;height:15px;opacity:.7;flex-shrink:0}
+.nav-item.active svg{opacity:1}
+.sb-bottom{padding:16px 20px;border-top:1px solid rgba(255,255,255,.06)}
+.sb-user{display:flex;align-items:center;gap:10px}
+.sb-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--terra));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.sb-user-info .name{font-size:12px;color:#fff;font-weight:500}
+.sb-user-info .role{font-size:10px;color:var(--nav-txt)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:14px;flex-shrink:0}
+.topbar-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:var(--txt);flex:1}
+.topbar-title span{color:var(--acc)}
+.tb-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;border:none}
+.tb-btn-ghost{background:transparent;color:var(--txt2);border:1px solid var(--border)}
+.tb-btn-ghost:hover{background:var(--bg)}
+.tb-btn-acc{background:linear-gradient(135deg,var(--acc),var(--acc-d));color:#fff;box-shadow:0 2px 8px rgba(139,105,20,.3)}
+.tb-btn-acc:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(139,105,20,.35)}
+.tb-search{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;color:var(--txt3);cursor:pointer;min-width:180px}
+.content{flex:1;overflow-y:auto;padding:28px}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:linear-gradient(145deg,#111008,#0d0a05);border:1px solid rgba(139,105,20,.3);border-radius:14px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 1px 0 rgba(139,105,20,.1);transition:all .25s;cursor:default}
+.stat-card:hover{border-color:rgba(139,105,20,.6);transform:translateY(-2px)}
+.stat-label{font-size:10px;color:rgba(255,255,255,.4);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:32px;color:#fff;font-weight:500;line-height:1}
+.stat-sub{font-size:10px;color:rgba(139,105,20,.8);margin-top:6px}
+.stat-icon{float:right;margin-top:-4px;opacity:.5}
+
+/* CARDS */
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-style:italic;color:var(--txt)}
+.section-title span{color:var(--acc)}
+.see-all{font-size:11px;color:var(--acc);cursor:pointer;font-weight:500}
+.see-all:hover{text-decoration:underline}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:24px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;transition:all .2s}
+.card:hover{border-color:rgba(139,105,20,.25);box-shadow:0 4px 20px rgba(0,0,0,.06)}
+
+/* TABLE */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--acc);padding:11px 16px;background:#faf6ef;border-bottom:1px solid rgba(139,105,20,.1);text-align:left}
+td{font-size:12.5px;padding:11px 16px;border-bottom:1px solid var(--border2);color:var(--txt2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#faf8f4}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:500}
+.badge-green{background:#e6f5ec;color:#1a7f4b}
+.badge-amber{background:#fff3e0;color:#b45309}
+.badge-blue{background:#e8f0fe;color:#1a56a8}
+.badge-red{background:#fee2e2;color:#b91c1c}
+.badge-purple{background:#f3e8ff;color:#7c3aed}
+.badge-terra{background:rgba(196,149,106,.12);color:#8B5E3C}
+
+/* TERRITORY CARDS */
+.territory-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.territory-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;cursor:pointer;transition:all .25s}
+.territory-card:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:0 8px 24px rgba(139,105,20,.12)}
+.territory-card.active-t{border-color:var(--acc);background:#faf6ef}
+.territory-flag{font-size:28px;margin-bottom:8px}
+.territory-name{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--txt);margin-bottom:4px}
+.territory-sub{font-size:10px;color:var(--txt3)}
+.territory-count{font-size:20px;font-weight:600;color:var(--acc);margin-top:8px}
+
+/* PROJECT CARD */
+.proj-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;transition:all .2s;cursor:pointer}
+.proj-card:hover{border-color:rgba(139,105,20,.3);box-shadow:0 4px 16px rgba(0,0,0,.07)}
+.proj-title{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--txt);margin-bottom:6px}
+.proj-meta{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.proj-body{font-size:12px;color:var(--txt3);line-height:1.5;margin-bottom:12px}
+.proj-progress{background:var(--border2);border-radius:4px;height:4px;margin-bottom:8px}
+.proj-progress-fill{height:4px;border-radius:4px;background:linear-gradient(90deg,var(--acc),var(--terra))}
+.proj-footer{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--txt3)}
+
+/* FINANCIACION */
+.fin-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:flex-start;gap:14px;transition:all .2s;margin-bottom:10px}
+.fin-card:hover{border-color:rgba(139,105,20,.25)}
+.fin-icon{width:38px;height:38px;border-radius:10px;background:var(--acc-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.fin-body{flex:1}
+.fin-name{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:3px}
+.fin-org{font-size:11px;color:var(--txt3);margin-bottom:6px}
+.fin-footer{display:flex;align-items:center;justify-content:space-between}
+.fin-amount{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--acc)}
+.fin-deadline{font-size:10px;color:var(--txt3)}
+
+/* AI CHAT */
+.chat-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;display:flex;flex-direction:column;height:420px}
+.chat-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.chat-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--terra));display:flex;align-items:center;justify-content:center;font-size:14px}
+.chat-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.chat-msgs::-webkit-scrollbar{width:0}
+.msg{max-width:80%;padding:10px 14px;border-radius:12px;font-size:12.5px;line-height:1.5}
+.msg-ai{background:#f5f1ea;color:var(--txt);border-bottom-left-radius:3px;align-self:flex-start}
+.msg-user{background:linear-gradient(135deg,var(--acc),var(--acc-d));color:#fff;border-bottom-right-radius:3px;align-self:flex-end}
+.chat-chips{padding:8px 16px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border2)}
+.chip{padding:5px 11px;border-radius:20px;border:1px solid var(--border);font-size:11px;color:var(--txt2);cursor:pointer;transition:all .18s;white-space:nowrap}
+.chip:hover{border-color:var(--acc);color:var(--acc);background:var(--acc-light)}
+.chat-input-row{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px}
+.chat-input{flex:1;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;outline:none;font-family:'Inter',sans-serif;color:var(--txt)}
+.chat-input:focus{border-color:var(--acc)}
+.chat-send{background:linear-gradient(135deg,var(--acc),var(--acc-d));color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:500}
+
+/* MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--surface);border-radius:16px;width:580px;max-height:80vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);animation:modalIn .25s ease}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.modal-hdr{padding:24px 24px 0;display:flex;align-items:flex-start;justify-content:space-between}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--txt3);padding:4px}
+.modal-body{padding:20px 24px 24px}
+
+/* CMD+K */
+.search-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:none;align-items:flex-start;justify-content:center;padding-top:120px;backdrop-filter:blur(6px)}
+.search-backdrop.open{display:flex}
+.search-box{background:var(--surface);border-radius:14px;width:560px;box-shadow:0 24px 64px rgba(0,0,0,.3);overflow:hidden}
+.search-input-row{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--border)}
+.search-input-row input{flex:1;border:none;outline:none;font-size:15px;color:var(--txt);font-family:'Inter',sans-serif}
+.search-results{max-height:320px;overflow-y:auto}
+.search-result{display:flex;align-items:center;gap:12px;padding:11px 18px;cursor:pointer;font-size:13px;color:var(--txt2)}
+.search-result:hover{background:var(--bg)}
+.sr-icon{width:28px;height:28px;border-radius:7px;background:var(--acc-light);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+
+/* AGENDA */
+.agenda-item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border2)}
+.agenda-item:last-child{border-bottom:none}
+.agenda-date{text-align:center;min-width:44px}
+.agenda-day{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--acc);line-height:1}
+.agenda-month{font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:1px}
+.agenda-body{flex:1}
+.agenda-title{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:3px}
+.agenda-meta{font-size:11px;color:var(--txt3)}
+
+/* MAP VISUAL */
+.map-card{background:linear-gradient(145deg,#0d0a05,#1a1408);border:1px solid rgba(139,105,20,.25);border-radius:14px;padding:24px;position:relative;overflow:hidden;margin-bottom:24px}
+.map-title{font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;margin-bottom:6px;font-style:italic}
+.map-sub{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:20px}
+.map-territories{display:flex;gap:20px;flex-wrap:wrap}
+.map-t{display:flex;align-items:center;gap:10px}
+.map-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.map-t-name{font-size:12px;color:rgba(255,255,255,.7)}
+.map-line{position:absolute;opacity:.12}
+.connections-visual{margin-top:16px;display:flex;align-items:center;gap:8px;font-size:11px;color:rgba(255,255,255,.4)}
+.conn-pill{background:rgba(139,105,20,.2);border:1px solid rgba(139,105,20,.3);padding:4px 10px;border-radius:12px;color:rgba(139,105,20,.9);font-size:11px}
+
+/* ANIMATIONS */
+@keyframes fadeInScale{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes skShimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.view-anim{animation:slideUp .3s ease}
+.sk{background:linear-gradient(90deg,#f0ebe3 25%,#e8e2d9 50%,#f0ebe3 75%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite;border-radius:8px}
+
+/* LOGIN */
+.login-screen{position:fixed;inset:0;z-index:5000;background:#0d0a05;display:flex;align-items:center;justify-content:center}
+.login-bg{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1547721064-da6cfb341d50?w=1600&q=80') center/cover;opacity:.12}
+.login-card{position:relative;z-index:1;width:380px;text-align:center}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:600;color:#fff;letter-spacing:4px;margin-bottom:4px}
+.login-tagline{font-size:11px;color:rgba(255,255,255,.35);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+.login-line{height:1px;background:linear-gradient(90deg,transparent,var(--acc),transparent);width:0;opacity:0;margin:0 auto 32px;transition:width 1.2s ease,opacity .4s ease}
+.login-field{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:13px 16px;width:100%;margin-bottom:10px;color:#fff;font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.login-field:focus{border-color:rgba(139,105,20,.6)}
+.login-field::placeholder{color:rgba(255,255,255,.3)}
+.login-btn{width:100%;background:linear-gradient(135deg,var(--acc),var(--acc-d));color:#fff;border:none;border-radius:10px;padding:13px;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px;font-family:'Inter',sans-serif;letter-spacing:.5px;transition:all .2s}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(139,105,20,.4)}
+.login-hint{font-size:10px;color:rgba(255,255,255,.2);margin-top:16px}
+
+/* MOBILE */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .territory-grid{grid-template-columns:1fr 1fr}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .mobile-nav{display:flex}
+}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--nav);border-top:1px solid rgba(255,255,255,.06);z-index:100;height:60px;align-items:center;justify-content:space-around}
+.mn-item{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--nav-txt);font-size:9px;cursor:pointer;padding:8px}
+.mn-item.active{color:var(--acc)}
+</style>
+</head>
+<body>
+
+<div id="kc"></div><div id="kc2"></div>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-bg"></div>
+  <div class="login-card">
+    <div class="login-logo">KULTUR</div>
+    <div class="login-tagline">Consultoría Intercultural</div>
+    <div class="login-line" id="loginLine"></div>
+    <input class="login-field" type="email" placeholder="usuario@agenciakultur.com" id="loginEmail" value="jpr@agenciakultur.com">
+    <input class="login-field" type="password" placeholder="Contraseña" id="loginPass" value="········">
+    <button class="login-btn" onclick="doLogin()">Acceder al panel</button>
+    <div class="login-hint">jpr@agenciakultur.com · demo Airmate</div>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div class="search-backdrop" id="searchBackdrop" onclick="if(event.target===this)closeSearch()">
+  <div class="search-box">
+    <div class="search-input-row">
+      <svg width="16" height="16" fill="none" stroke="#9a8a72" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="Buscar proyectos, colaboradores, financiación..." id="searchInput" oninput="doSearch(this.value)">
+      <span style="font-size:10px;color:var(--txt3);background:var(--bg);padding:3px 7px;border-radius:5px">ESC</span>
+    </div>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-logo">
+    <div class="logo-mark">KULTUR</div>
+    <div class="logo-sub">Panel de Gestión</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Principal</div>
+    <div class="nav-item active" onclick="setView('dashboard',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="setView('proyectos',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
+      Proyectos
+    </div>
+    <div class="nav-item" onclick="setView('red',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M12 7v4M12 11 5 17M12 11l7 6"/></svg>
+      Red de Colaboradores
+    </div>
+    <div class="nav-item" onclick="setView('financiacion',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Financiación
+    </div>
+    <div class="nav-item" onclick="setView('agenda',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Agenda
+    </div>
+    <div class="sb-section">Territorios</div>
+    <div class="nav-item" onclick="setView('territorios',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      Mapa Tricontinental
+    </div>
+    <div class="nav-item" onclick="setView('contactos',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Contactos
+    </div>
+    <div class="sb-section">IA</div>
+    <div class="nav-item" onclick="setView('agente',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Asistente Kultur IA
+    </div>
+    <div class="nav-item" onclick="setView('documentos',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      Documentos
+    </div>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-avatar">JP</div>
+      <div class="sb-user-info">
+        <div class="name">Jorge Padrón</div>
+        <div class="role">CEO · Agencia Kultur</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbarTitle">Panel <span>principal</span></div>
+    <div class="tb-search" onclick="openSearch()">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Buscar... <span style="margin-left:auto;font-size:10px;background:var(--border);padding:2px 6px;border-radius:4px">⌘K</span>
+    </div>
+    <button class="tb-btn tb-btn-ghost" onclick="toggleDark()">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      Modo claro
+    </button>
+    <button class="tb-btn tb-btn-acc" onclick="openNewProject()">+ Nuevo proyecto</button>
+  </div>
+  <div class="content" id="mainContent"></div>
+</div>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav">
+  <div class="mn-item active" onclick="setView('dashboard',this)">🏠<span>Inicio</span></div>
+  <div class="mn-item" onclick="setView('proyectos',this)">📋<span>Proyectos</span></div>
+  <div class="mn-item" onclick="setView('red',this)">🌐<span>Red</span></div>
+  <div class="mn-item" onclick="setView('financiacion',this)">💰<span>Fondos</span></div>
+  <div class="mn-item" onclick="setView('agente',this)">🤖<span>IA</span></div>
+</div>
+
+<script>
+// CURSOR
+const kc=document.getElementById('kc'),kc2=document.getElementById('kc2');
+document.addEventListener('mousemove',e=>{kc.style.left=e.clientX+'px';kc.style.top=e.clientY+'px';kc2.style.left=e.clientX+'px';kc2.style.top=e.clientY+'px'});
+
+// LOGIN
+let darkMode=false;
+function doLogin(){
+  const s=document.getElementById('loginScreen');
+  s.style.opacity='0';s.style.transition='opacity .5s ease';
+  setTimeout(()=>{s.style.display='none';renderView('dashboard');},500);
+}
+setTimeout(()=>{
+  const l=document.getElementById('loginLine');
+  l.style.width='120px';l.style.opacity='1';
+},300);
+
+// DATA
+const PROYECTOS=[
+  {id:1,nombre:'Puentes Culturales Canarias-Senegal 2026',territorio:['Canarias','Senegal'],estado:'Activo',prog:65,presupuesto:'48.000€',financiador:'AECID',inicio:'Ene 2026',fin:'Dic 2026',desc:'Intercambio artístico y formativo entre colectivos culturales de Las Palmas y Dakar. Movilidad de 12 artistas.'},
+  {id:2,nombre:'Macaronesia Art Residency',territorio:['Canarias','Cabo Verde'],estado:'En desarrollo',prog:35,presupuesto:'22.000€',financiador:'Cabildo GC',inicio:'Mar 2026',fin:'Sep 2026',desc:'Residencia artística conjunta entre Canarias y Santiago de Cabo Verde. 8 artistas seleccionados.'},
+  {id:3,nombre:'Talento Joven Mauritania',territorio:['Canarias','Mauritania'],estado:'Pendiente',prog:15,presupuesto:'31.500€',financiador:'UE Creatividad',inicio:'Jul 2026',fin:'Jun 2027',desc:'Programa de movilidad laboral para jóvenes creadores mauritanos hacia Canarias y Europa.'},
+  {id:4,nombre:'Ubuntu School Network',territorio:['Canarias','Senegal','Cabo Verde'],estado:'Activo',prog:80,presupuesto:'15.000€',financiador:'Propio',inicio:'Sep 2025',fin:'Jun 2026',desc:'Red de escuelas que comparten metodologías educativas interculturales y recursos didácticos.'},
+  {id:5,nombre:'Festival Tricontinental Las Palmas',territorio:['Canarias','Senegal','Mauritania'],estado:'Activo',prog:50,presupuesto:'67.000€',financiador:'Cabildo GC + UE',inicio:'Ene 2026',fin:'Nov 2026',desc:'Festival cultural de tres continentes en Las Palmas de Gran Canaria. Edición 2026.'},
+];
+const COLABORADORES=[
+  {nombre:'Casa África',pais:'España (Canarias)',tipo:'Institución',contacto:'direccion@casaafrica.es',proyectos:3,flag:'🇪🇸'},
+  {nombre:'Institut Français Dakar',pais:'Senegal',tipo:'Cultural',contacto:'dakar@institutfrancais.sn',proyectos:2,flag:'🇸🇳'},
+  {nombre:'Cidade Velha Foundation',pais:'Cabo Verde',tipo:'Patrimonio',contacto:'info@cidadevelha.cv',proyectos:2,flag:'🇨🇻'},
+  {nombre:'Centre Culturel Mauritanien',pais:'Mauritania',tipo:'Cultural',contacto:'ccm@culture.mr',proyectos:1,flag:'🇲🇷'},
+  {nombre:'Cabildo de Gran Canaria',pais:'España',tipo:'Administración',contacto:'cultura@grancanaria.com',proyectos:4,flag:'🇪🇸'},
+  {nombre:'AECID',pais:'España',tipo:'Financiador',contacto:'info@aecid.es',proyectos:3,flag:'🇪🇸'},
+  {nombre:'Université Cheikh Anta Diop',pais:'Senegal',tipo:'Universidad',contacto:'info@ucad.sn',proyectos:1,flag:'🇸🇳'},
+  {nombre:'Câmara de Santiago',pais:'Cabo Verde',tipo:'Administración',contacto:'cultura@camara-santiago.cv',proyectos:2,flag:'🇨🇻'},
+];
+const FINANCIACION=[
+  {nombre:'Programa Europa Creativa',org:'Unión Europea',icono:'🇪🇺',importe:'75.000€',estado:'Solicitado',plazo:'30 Jun 2026',tipo:'badge-blue'},
+  {nombre:'Convocatoria Cooperación AECID',org:'AECID',icono:'🏛️',importe:'48.000€',estado:'Concedido',plazo:'Concedido',tipo:'badge-green'},
+  {nombre:'Becas Culturales Cabildo GC',org:'Cabildo Gran Canaria',icono:'🌋',importe:'22.000€',estado:'Concedido',plazo:'Concedido',tipo:'badge-green'},
+  {nombre:'Fondo Macaronesia 2026',org:'Gobierno de Canarias',icono:'🏝️',importe:'35.000€',estado:'Pendiente',plazo:'15 Sep 2026',tipo:'badge-amber'},
+  {nombre:'Creative Africa Network',org:'African Development Bank',icono:'🌍',importe:'60.000€',estado:'Investigando',plazo:'Dic 2026',tipo:'badge-purple'},
+];
+const AGENDA=[
+  {dia:'18',mes:'Jun',titulo:'Reunión Red Tricontinental (Zoom)',lugar:'Online · 10:00h',tipo:'Reunión'},
+  {dia:'22',mes:'Jun',titulo:'Presentación proyecto Dakar',lugar:'Dakar, Senegal · Presencial',tipo:'Viaje'},
+  {dia:'25',mes:'Jun',titulo:'Entrega documentación AECID',lugar:'Online · Plazo límite',tipo:'Gestión'},
+  {dia:'3',mes:'Jul',titulo:'Festival Tricontinental — Apertura',lugar:'Las Palmas de GC · CAAM',tipo:'Evento'},
+  {dia:'10',mes:'Jul',titulo:'Visita delegación Cabo Verde',lugar:'Las Palmas de GC · Oficina',tipo:'Reunión'},
+  {dia:'15',mes:'Jul',titulo:'Webinar Movilidad Laboral Cultural',lugar:'Online · 17:00h',tipo:'Formación'},
+];
+const CONTACTOS=[
+  {nombre:'Moussa Diallo',cargo:'Director Cultural',org:'Institut Français Dakar',pais:'Senegal',email:'m.diallo@institutfrancais.sn',flag:'🇸🇳'},
+  {nombre:'Ana Rodrigues',cargo:'Coordinadora',org:'Cidade Velha Foundation',pais:'Cabo Verde',email:'a.rodrigues@cidadevelha.cv',flag:'🇨🇻'},
+  {nombre:'Fatimata Mint Ahmed',cargo:'Secretaria General',org:'Centre Culturel Mauritanien',pais:'Mauritania',email:'f.ahmed@ccm.mr',flag:'🇲🇷'},
+  {nombre:'Carmen Santana',cargo:'Técnica Cooperación',org:'Casa África',pais:'España',email:'c.santana@casaafrica.es',flag:'🇪🇸'},
+  {nombre:'Ibrahima Ndiaye',cargo:'Profesor Investigador',org:'Université Cheikh Anta Diop',pais:'Senegal',email:'i.ndiaye@ucad.sn',flag:'🇸🇳'},
+  {nombre:'Lena Fischer',cargo:'Project Officer',org:'Creative Europe Desk',pais:'Alemania',email:'l.fischer@creativeeurope.eu',flag:'🇩🇪'},
+];
+
+const AI_MSGS=[
+  {r:true,t:'Buenos días Jorge. Tienes 2 proyectos activos esta semana y un plazo de financiación el 30 de junio. ¿Quieres que te ayude con algo concreto?'},
+];
+
+// VIEWS
+let currentView='dashboard';
+function setView(v,el){
+  currentView=v;
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  if(el)el.classList.add('active');
+  const c=document.getElementById('mainContent');
+  c.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">${Array(4).fill(0).map(()=>`<div class="sk" style="height:90px"></div>`).join('')}</div><div class="sk" style="height:200px;margin-bottom:16px"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">${Array(2).fill(0).map(()=>`<div class="sk" style="height:180px"></div>`).join('')}</div>`;
+  setTimeout(()=>{renderView(v);},320);
+}
+function renderView(v){
+  const c=document.getElementById('mainContent');
+  c.innerHTML='';
+  const titles={dashboard:'Panel <span>principal</span>',proyectos:'Gestión de <span>proyectos</span>',red:'Red de <span>colaboradores</span>',financiacion:'Financiación <span>y ayudas</span>',agenda:'<span>Agenda</span> cultural',territorios:'Mapa <span>tricontinental</span>',contactos:'<span>Contactos</span> clave',agente:'Asistente <span>Kultur IA</span>',documentos:'<span>Documentos</span>'};
+  document.getElementById('topbarTitle').innerHTML=titles[v]||v;
+  const wrap=document.createElement('div');
+  wrap.className='view-anim';
+  if(v==='dashboard')wrap.innerHTML=dashboardHTML();
+  else if(v==='proyectos')wrap.innerHTML=proyectosHTML();
+  else if(v==='red')wrap.innerHTML=redHTML();
+  else if(v==='financiacion')wrap.innerHTML=financiacionHTML();
+  else if(v==='agenda')wrap.innerHTML=agendaHTML();
+  else if(v==='territorios')wrap.innerHTML=territoriosHTML();
+  else if(v==='contactos')wrap.innerHTML=contactosHTML();
+  else if(v==='agente')wrap.innerHTML=agenteHTML();
+  else if(v==='documentos')wrap.innerHTML=documentosHTML();
+  c.appendChild(wrap);
+  if(v==='dashboard')setTimeout(drawChart,100);
+  if(v==='agente')setTimeout(()=>{renderAIMsgs();},100);
+}
+
+function dashboardHTML(){
+  return `
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Proyectos activos</div><div class="stat-val">5</div><div class="stat-sub">+2 este trimestre</div></div>
+    <div class="stat-card"><div class="stat-label">Colaboradores</div><div class="stat-val">24</div><div class="stat-sub">4 territorios</div></div>
+    <div class="stat-card"><div class="stat-label">Financiación gestionada</div><div class="stat-val">183K</div><div class="stat-sub">€ en 2026</div></div>
+    <div class="stat-card"><div class="stat-label">Movilidad cultural</div><div class="stat-val">38</div><div class="stat-sub">personas este año</div></div>
+  </div>
+
+  <div class="map-card">
+    <div class="map-title">Red Tricontinental activa</div>
+    <div class="map-sub">Canarias · Macaronesia · África Occidental</div>
+    <div class="map-territories">
+      <div class="map-t"><div class="map-dot" style="background:#8B6914"></div><span class="map-t-name">Canarias — 12 proyectos</span></div>
+      <div class="map-t"><div class="map-dot" style="background:#C4956A"></div><span class="map-t-name">Cabo Verde — 7 proyectos</span></div>
+      <div class="map-t"><div class="map-dot" style="background:#4ade80"></div><span class="map-t-name">Senegal — 9 proyectos</span></div>
+      <div class="map-t"><div class="map-dot" style="background:#60a5fa"></div><span class="map-t-name">Mauritania — 3 proyectos</span></div>
+    </div>
+    <div class="connections-visual">
+      <span>Conexiones activas:</span>
+      <span class="conn-pill">Canarias ↔ Dakar</span>
+      <span class="conn-pill">Las Palmas ↔ Praia</span>
+      <span class="conn-pill">GC ↔ Nouakchott</span>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="section-hdr"><div class="section-title">Proyectos <span>recientes</span></div><div class="see-all" onclick="setView('proyectos',null)">Ver todos →</div></div>
+      ${PROYECTOS.slice(0,3).map(p=>`
+      <div class="proj-card" style="margin-bottom:10px" onclick="openProjectModal(${p.id})">
+        <div class="proj-title">${p.nombre}</div>
+        <div class="proj-meta">
+          <span class="badge ${p.estado==='Activo'?'badge-green':p.estado==='En desarrollo'?'badge-amber':'badge-blue'}">${p.estado}</span>
+          ${p.territorio.map(t=>`<span class="badge badge-terra">${t}</span>`).join('')}
+        </div>
+        <div class="proj-progress"><div class="proj-progress-fill" style="width:${p.prog}%"></div></div>
+        <div class="proj-footer"><span>${p.prog}% completado</span><span>${p.presupuesto}</span></div>
+      </div>`).join('')}
+    </div>
+    <div>
+      <div class="section-hdr"><div class="section-title">Próxima <span>agenda</span></div><div class="see-all" onclick="setView('agenda',null)">Ver toda →</div></div>
+      <div class="card">
+        ${AGENDA.slice(0,4).map(a=>`
+        <div class="agenda-item">
+          <div class="agenda-date"><div class="agenda-day">${a.dia}</div><div class="agenda-month">${a.mes}</div></div>
+          <div class="agenda-body"><div class="agenda-title">${a.titulo}</div><div class="agenda-meta">${a.lugar}</div></div>
+          <span class="badge badge-terra" style="align-self:flex-start;margin-top:2px">${a.tipo}</span>
+        </div>`).join('')}
+      </div>
+
+      <div class="section-hdr" style="margin-top:18px"><div class="section-title">Financiación <span>activa</span></div></div>
+      <div class="card">
+        ${FINANCIACION.filter(f=>f.estado==='Concedido').map(f=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border2)">
+          <div style="font-size:12px;color:var(--txt2)">${f.icono} ${f.nombre}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--acc);font-weight:600">${f.importe}</div>
+        </div>`).join('')}
+        <div style="text-align:center;padding-top:10px;font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--acc)">70.000€ <span style="font-size:11px;color:var(--txt3)">concedidos en 2026</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-hdr"><div class="section-title">Distribución por <span>territorio</span></div></div>
+  <div class="card"><canvas id="chartTerritorios" height="80"></canvas></div>
+  `;
+}
+
+function proyectosHTML(){
+  return `
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Total proyectos</div><div class="stat-val">5</div><div class="stat-sub">2026</div></div>
+    <div class="stat-card"><div class="stat-label">En activo</div><div class="stat-val">3</div><div class="stat-sub">ejecutándose</div></div>
+    <div class="stat-card"><div class="stat-label">Presupuesto total</div><div class="stat-val">183K</div><div class="stat-sub">€ gestionados</div></div>
+    <div class="stat-card"><div class="stat-label">Territorios</div><div class="stat-val">4</div><div class="stat-sub">países</div></div>
+  </div>
+  <div class="grid-3">
+    ${PROYECTOS.map(p=>`
+    <div class="proj-card" onclick="openProjectModal(${p.id})">
+      <div class="proj-title">${p.nombre}</div>
+      <div class="proj-meta">
+        <span class="badge ${p.estado==='Activo'?'badge-green':p.estado==='En desarrollo'?'badge-amber':p.estado==='Pendiente'?'badge-blue':'badge-purple'}">${p.estado}</span>
+      </div>
+      <div class="proj-body">${p.desc}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px">${p.territorio.map(t=>`<span class="badge badge-terra">${t}</span>`).join('')}</div>
+      <div class="proj-progress"><div class="proj-progress-fill" style="width:${p.prog}%"></div></div>
+      <div class="proj-footer">
+        <span>${p.prog}% · ${p.inicio} → ${p.fin}</span>
+        <span style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--acc)">${p.presupuesto}</span>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function redHTML(){
+  return `
+  <div class="territory-grid">
+    <div class="territory-card"><div class="territory-flag">🇪🇸</div><div class="territory-name">Canarias</div><div class="territory-sub">España / Europa</div><div class="territory-count">8</div><div style="font-size:10px;color:var(--txt3)">colaboradores</div></div>
+    <div class="territory-card"><div class="territory-flag">🇨🇻</div><div class="territory-name">Cabo Verde</div><div class="territory-sub">Macaronesia</div><div class="territory-count">6</div><div style="font-size:10px;color:var(--txt3)">colaboradores</div></div>
+    <div class="territory-card"><div class="territory-flag">🇸🇳</div><div class="territory-name">Senegal</div><div class="territory-sub">África Occidental</div><div class="territory-count">7</div><div style="font-size:10px;color:var(--txt3)">colaboradores</div></div>
+    <div class="territory-card"><div class="territory-flag">🇲🇷</div><div class="territory-name">Mauritania</div><div class="territory-sub">África Occidental</div><div class="territory-count">3</div><div style="font-size:10px;color:var(--txt3)">colaboradores</div></div>
+  </div>
+  <div class="section-hdr"><div class="section-title">Todos los <span>colaboradores</span></div><button class="tb-btn tb-btn-acc" style="font-size:11px;padding:6px 12px">+ Añadir</button></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Organización</th><th>País</th><th>Tipo</th><th>Contacto</th><th>Proyectos</th></tr></thead>
+      <tbody>
+        ${COLABORADORES.map(c=>`
+        <tr>
+          <td><strong>${c.flag} ${c.nombre}</strong></td>
+          <td style="color:var(--txt3)">${c.pais}</td>
+          <td><span class="badge badge-terra">${c.tipo}</span></td>
+          <td style="color:var(--acc);font-size:11px">${c.contacto}</td>
+          <td style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--acc)">${c.proyectos}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function financiacionHTML(){
+  return `
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Total convocatorias</div><div class="stat-val">5</div><div class="stat-sub">activas</div></div>
+    <div class="stat-card"><div class="stat-label">Concedido</div><div class="stat-val">70K€</div><div class="stat-sub">confirmado</div></div>
+    <div class="stat-card"><div class="stat-label">En solicitud</div><div class="stat-val">75K€</div><div class="stat-sub">pendiente</div></div>
+    <div class="stat-card"><div class="stat-label">Potencial 2026</div><div class="stat-val">275K€</div><div class="stat-sub">total buscado</div></div>
+  </div>
+  <div class="section-hdr"><div class="section-title">Convocatorias y <span>ayudas</span></div><button class="tb-btn tb-btn-acc" style="font-size:11px;padding:6px 12px">+ Nueva</button></div>
+  ${FINANCIACION.map(f=>`
+  <div class="fin-card">
+    <div class="fin-icon">${f.icono}</div>
+    <div class="fin-body">
+      <div class="fin-name">${f.nombre}</div>
+      <div class="fin-org">${f.org}</div>
+      <div class="fin-footer">
+        <div class="fin-amount">${f.importe}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge ${f.tipo}">${f.estado}</span>
+          <span class="fin-deadline">Plazo: ${f.plazo}</span>
+        </div>
+      </div>
+    </div>
+  </div>`).join('')}`;
+}
+
+function agendaHTML(){
+  return `
+  <div class="grid-2">
+    <div>
+      <div class="section-hdr"><div class="section-title">Próximos <span>eventos</span></div><button class="tb-btn tb-btn-acc" style="font-size:11px;padding:6px 12px">+ Añadir</button></div>
+      <div class="card">
+        ${AGENDA.map(a=>`
+        <div class="agenda-item">
+          <div class="agenda-date"><div class="agenda-day">${a.dia}</div><div class="agenda-month">${a.mes}</div></div>
+          <div class="agenda-body"><div class="agenda-title">${a.titulo}</div><div class="agenda-meta">${a.lugar}</div></div>
+          <span class="badge badge-terra" style="align-self:flex-start;margin-top:2px;white-space:nowrap">${a.tipo}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div>
+      <div class="section-hdr"><div class="section-title">Resumen <span>junio</span></div></div>
+      <div class="card" style="margin-bottom:14px">
+        ${[{l:'Reuniones',v:4},{l:'Viajes',v:1},{l:'Eventos',v:1},{l:'Gestiones',v:3}].map(i=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border2)">
+          <span style="font-size:12px;color:var(--txt2)">${i.l}</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--acc)">${i.v}</span>
+        </div>`).join('')}
+      </div>
+      <div class="card">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;margin-bottom:12px;color:var(--txt)">Próxima salida</div>
+        <div style="background:var(--acc-light);border:1px solid rgba(139,105,20,.2);border-radius:10px;padding:14px">
+          <div style="font-size:13px;font-weight:600;color:var(--txt);margin-bottom:4px">✈️ Dakar, Senegal</div>
+          <div style="font-size:11px;color:var(--txt3)">22 Junio 2026 · 5 días</div>
+          <div style="font-size:11px;color:var(--txt3);margin-top:4px">Presentación proyecto + reunión Institut Français</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function territoriosHTML(){
+  const ts=[
+    {flag:'🇪🇸',nombre:'Canarias',sub:'España · Europa',col:'#8B6914',proyectos:12,colab:8,desc:'Hub principal de la agencia. Sede en Las Palmas de Gran Canaria. Centro de coordinación de la red tricontinental.'},
+    {flag:'🇨🇻',nombre:'Cabo Verde',sub:'Macaronesia · Atlántico',col:'#C4956A',proyectos:7,colab:6,desc:'Nexo entre Europa y África. Conexión morabeza · filosofía de hospitalidad caboverdiana como eje de colaboración.'},
+    {flag:'🇸🇳',nombre:'Senegal',sub:'África Occidental',col:'#4ade80',proyectos:9,colab:7,desc:'Dakar como capital cultural de África Occidental. Alianzas con Institut Français y Universidad Cheikh Anta Diop.'},
+    {flag:'🇲🇷',nombre:'Mauritania',sub:'África Occidental',col:'#60a5fa',proyectos:3,colab:3,desc:'Territorio emergente. Programa de movilidad de talento joven hacia Canarias y Europa.'},
+  ];
+  return `
+  <div class="map-card">
+    <div class="map-title">Puente vivo, circular y regenerativo</div>
+    <div class="map-sub">Canarias · Macaronesia · África Occidental · Europa</div>
+    <div class="map-territories" style="gap:24px">
+      ${ts.map(t=>`<div class="map-t"><div class="map-dot" style="background:${t.col}"></div><span class="map-t-name">${t.flag} ${t.nombre}</span></div>`).join('')}
+    </div>
+    <div style="margin-top:16px;font-size:11px;color:rgba(255,255,255,.3);line-height:1.6">
+      La filosofía Ubuntu · morabeza · teranga · hospitalidad canaria como principios de cuidado, vecindad y cooperación.
+    </div>
+  </div>
+  <div class="territory-grid">
+    ${ts.map(t=>`
+    <div class="card" style="text-align:center">
+      <div style="font-size:36px;margin-bottom:8px">${t.flag}</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--txt);margin-bottom:4px">${t.nombre}</div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:12px">${t.sub}</div>
+      <div style="font-size:11px;color:var(--txt3);line-height:1.5;margin-bottom:14px">${t.desc}</div>
+      <div style="display:flex;justify-content:center;gap:16px">
+        <div><div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:${t.col}">${t.proyectos}</div><div style="font-size:10px;color:var(--txt3)">proyectos</div></div>
+        <div><div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:${t.col}">${t.colab}</div><div style="font-size:10px;color:var(--txt3)">colaboradores</div></div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function contactosHTML(){
+  return `
+  <div class="section-hdr"><div class="section-title">Contactos <span>clave</span></div><button class="tb-btn tb-btn-acc" style="font-size:11px;padding:6px 12px">+ Añadir</button></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Nombre</th><th>Cargo</th><th>Organización</th><th>País</th><th>Email</th></tr></thead>
+      <tbody>
+        ${CONTACTOS.map(c=>`
+        <tr>
+          <td><div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:var(--acc-light);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--acc)">${c.nombre.split(' ').map(w=>w[0]).join('').slice(0,2)}</div><strong>${c.nombre}</strong></div></td>
+          <td style="color:var(--txt3)">${c.cargo}</td>
+          <td>${c.flag} ${c.org}</td>
+          <td><span class="badge badge-terra">${c.pais}</span></td>
+          <td style="color:var(--acc);font-size:11px">${c.email}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function agenteHTML(){
+  return `
+  <div class="grid-2">
+    <div>
+      <div class="chat-wrap">
+        <div class="chat-hdr">
+          <div class="chat-avatar">🌍</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--txt)">Asistente Kultur IA</div>
+            <div style="font-size:10px;color:var(--txt3)">Gestión · Financiación · Redacción</div>
+          </div>
+          <div style="margin-left:auto;width:7px;height:7px;border-radius:50%;background:#22c55e"></div>
+        </div>
+        <div class="chat-msgs" id="chatMsgs"></div>
+        <div class="chat-chips">
+          <div class="chip" onclick="sendChip('¿Qué financiación puedo solicitar esta semana?')">Financiación disponible</div>
+          <div class="chip" onclick="sendChip('Redacta un resumen ejecutivo del Festival Tricontinental')">Resumen ejecutivo</div>
+          <div class="chip" onclick="sendChip('¿Cómo está el progreso de Ubuntu School Network?')">Estado proyectos</div>
+          <div class="chip" onclick="sendChip('Busca convocatorias UE para cooperación cultural África')">Buscar convocatorias</div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" placeholder="Pregunta sobre proyectos, financiación, contactos..." id="chatIn" onkeydown="if(event.key==='Enter')sendMsg()">
+          <button class="chat-send" onclick="sendMsg()">Enviar</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-hdr"><div class="section-title">Lo que puede <span>hacer</span></div></div>
+      ${[
+        {i:'📋',t:'Gestión de proyectos',d:'Seguimiento de estados, plazos, presupuestos y progreso por territorio.'},
+        {i:'💰',t:'Radar de financiación',d:'Busca convocatorias activas de UE, AECID, Cabildo y fondos internacionales.'},
+        {i:'✍️',t:'Redacción de propuestas',d:'Genera memorias, resúmenes ejecutivos y cartas de presentación.'},
+        {i:'🌍',t:'Inteligencia territorial',d:'Información actualizada sobre colaboradores, tendencias y oportunidades por región.'},
+      ].map(f=>`
+      <div class="card" style="display:flex;gap:12px;margin-bottom:10px">
+        <div style="font-size:22px">${f.i}</div>
+        <div><div style="font-size:13px;font-weight:600;color:var(--txt);margin-bottom:3px">${f.t}</div><div style="font-size:11px;color:var(--txt3);line-height:1.4">${f.d}</div></div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function documentosHTML(){
+  const docs=[
+    {nombre:'Memoria AECID 2026',tipo:'PDF',fecha:'12 Jun 2026',estado:'Enviado',icono:'📄'},
+    {nombre:'Convenio Casa África',tipo:'Word',fecha:'5 Jun 2026',estado:'Firmado',icono:'📝'},
+    {nombre:'Presupuesto Festival Tricontinental',tipo:'Excel',fecha:'1 Jun 2026',estado:'Aprobado',icono:'📊'},
+    {nombre:'Informe Movilidad Q1 2026',tipo:'PDF',fecha:'31 Mar 2026',estado:'Cerrado',icono:'📋'},
+    {nombre:'Carta presentación UE Creatividad',tipo:'PDF',fecha:'28 May 2026',estado:'Enviado',icono:'📄'},
+  ];
+  return `
+  <div class="section-hdr"><div class="section-title"><span>Documentos</span> del proyecto</div><button class="tb-btn tb-btn-acc" style="font-size:11px;padding:6px 12px">+ Subir</button></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Documento</th><th>Tipo</th><th>Fecha</th><th>Estado</th></tr></thead>
+      <tbody>
+        ${docs.map(d=>`
+        <tr style="cursor:pointer">
+          <td><div style="display:flex;align-items:center;gap:8px">${d.icono} <strong>${d.nombre}</strong></div></td>
+          <td><span class="badge badge-terra">${d.tipo}</span></td>
+          <td style="color:var(--txt3)">${d.fecha}</td>
+          <td><span class="badge ${d.estado==='Firmado'||d.estado==='Aprobado'?'badge-green':d.estado==='Enviado'?'badge-blue':'badge-amber'}">${d.estado}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+// CHART
+function drawChart(){
+  const ctx=document.getElementById('chartTerritorios');
+  if(!ctx)return;
+  new Chart(ctx,{type:'bar',data:{labels:['Canarias','Cabo Verde','Senegal','Mauritania'],datasets:[{label:'Proyectos',data:[12,7,9,3],backgroundColor:['rgba(139,105,20,.7)','rgba(196,149,106,.7)','rgba(74,222,128,.5)','rgba(96,165,250,.5)'],borderColor:['#8B6914','#C4956A','#4ade80','#60a5fa'],borderWidth:1.5,borderRadius:6}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#9a8a72',font:{size:11}}},x:{grid:{display:false},ticks:{color:'#9a8a72',font:{size:11}}}}}});
+}
+
+// PROJECT MODAL
+function openProjectModal(id){
+  const p=PROYECTOS.find(x=>x.id===id);
+  if(!p)return;
+  document.querySelector('.modal-backdrop').classList.add('open');
+  document.querySelector('.modal-body').innerHTML=`
+    <div style="margin-bottom:6px"><span class="badge ${p.estado==='Activo'?'badge-green':p.estado==='En desarrollo'?'badge-amber':'badge-blue'}">${p.estado}</span></div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--txt);margin:10px 0 6px">${p.nombre}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">${p.territorio.map(t=>`<span class="badge badge-terra">${t}</span>`).join('')}</div>
+    <div style="font-size:13px;color:var(--txt3);line-height:1.6;margin-bottom:18px">${p.desc}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
+      ${[['Presupuesto',p.presupuesto],['Financiador',p.financiador],['Inicio',p.inicio],['Fin',p.fin]].map(([l,v])=>`
+      <div style="background:var(--bg);border-radius:8px;padding:12px">
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">${l}</div>
+        <div style="font-size:14px;font-weight:600;color:var(--txt)">${v}</div>
+      </div>`).join('')}
+    </div>
+    <div style="margin-bottom:6px;font-size:11px;color:var(--txt3)">Progreso: ${p.prog}%</div>
+    <div class="proj-progress" style="height:6px"><div class="proj-progress-fill" style="width:${p.prog}%"></div></div>
+  `;
+}
+function closeModal(){document.querySelector('.modal-backdrop').classList.remove('open')}
+
+// AI CHAT
+function renderAIMsgs(){
+  const el=document.getElementById('chatMsgs');
+  if(!el)return;
+  el.innerHTML=AI_MSGS.map(m=>`<div class="msg ${m.r?'msg-ai':'msg-user'}">${m.t}</div>`).join('');
+  el.scrollTop=el.scrollHeight;
+}
+function sendMsg(){
+  const inp=document.getElementById('chatIn');
+  if(!inp||!inp.value.trim())return;
+  sendChip(inp.value);inp.value='';
+}
+function sendChip(txt){
+  AI_MSGS.push({r:false,t:txt});
+  renderAIMsgs();
+  const responses={
+    'financiación':'Esta semana cierra la convocatoria de Europa Creativa (30 Jun). Te recomiendo revisar también el Fondo Macaronesia 2026, plazo septiembre. ¿Quieres que prepare un borrador de solicitud?',
+    'resumen':'Aquí tienes el resumen ejecutivo del Festival Tricontinental Las Palmas 2026: evento cultural de tres continentes previsto para noviembre, presupuesto 67.000€ cofinanciado por Cabildo GC y UE. ¿Lo exporto como PDF?',
+    'ubuntu':'Ubuntu School Network está al 80% de ejecución. Fin previsto en junio. Todo en plazo. Pendiente: informe final y memoria justificativa para el Cabildo.',
+    'convocatorias':'He encontrado 3 convocatorias activas UE para cooperación cultural con África: 1) Europa Creativa (cierra 30 Jun) 2) NDICI-Global Europe hasta dic. 3) AfriCulture Fund. ¿Profundizo en alguna?',
+  };
+  const k=Object.keys(responses).find(k=>txt.toLowerCase().includes(k));
+  setTimeout(()=>{
+    AI_MSGS.push({r:true,t:k?responses[k]:`Entendido. Analizando tu consulta sobre "${txt.slice(0,40)}..."  Dame un momento para revisar los datos del proyecto.`});
+    renderAIMsgs();
+  },900);
+}
+
+// SEARCH
+function openSearch(){document.getElementById('searchBackdrop').classList.add('open');document.getElementById('searchInput').focus();doSearch('');}
+function closeSearch(){document.getElementById('searchBackdrop').classList.remove('open')}
+function doSearch(q){
+  const el=document.getElementById('searchResults');
+  const all=[
+    ...PROYECTOS.map(p=>({t:'Proyecto',n:p.nombre,i:'📋',v:'proyectos'})),
+    ...COLABORADORES.map(c=>({t:'Colaborador',n:c.nombre,i:'🤝',v:'red'})),
+    ...FINANCIACION.map(f=>({t:'Financiación',n:f.nombre,i:'💰',v:'financiacion'})),
+    ...CONTACTOS.map(c=>({t:'Contacto',n:c.nombre,i:'👤',v:'contactos'})),
+  ];
+  const hits=q?all.filter(x=>x.n.toLowerCase().includes(q.toLowerCase())):all.slice(0,8);
+  el.innerHTML=hits.map(h=>`<div class="search-result" onclick="closeSearch();setView('${h.v}',null)"><div class="sr-icon">${h.i}</div><div><div style="font-size:13px;font-weight:500">${h.n}</div><div style="font-size:10px;color:var(--txt3)">${h.t}</div></div></div>`).join('')||'<div style="padding:20px;text-align:center;color:var(--txt3);font-size:13px">Sin resultados</div>';
+}
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();openSearch();}
+  if(e.key==='Escape'){closeSearch();closeModal();}
+});
+
+function toggleDark(){
+  darkMode=!darkMode;
+  document.documentElement.setAttribute('data-theme',darkMode?'dark':'');
+}
+function openNewProject(){
+  document.querySelector('.modal-backdrop').classList.add('open');
+  document.querySelector('.modal-body').innerHTML=`
+    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;margin-bottom:16px">Nuevo <span style="color:var(--acc)">proyecto</span></div>
+    ${[['Nombre del proyecto','text'],['Presupuesto','text'],['Financiador','text']].map(([l,t])=>`<div style="margin-bottom:12px"><label style="font-size:11px;color:var(--txt3);display:block;margin-bottom:4px">${l}</label><input type="${t}" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;outline:none;font-family:'Inter',sans-serif;color:var(--txt)"></div>`).join('')}
+    <div style="margin-bottom:12px"><label style="font-size:11px;color:var(--txt3);display:block;margin-bottom:4px">Descripción</label><textarea rows="3" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;outline:none;font-family:'Inter',sans-serif;resize:none;color:var(--txt)"></textarea></div>
+    <button class="tb-btn tb-btn-acc" style="width:100%;justify-content:center" onclick="closeModal()">Guardar proyecto</button>
+  `;
+}
+</script>
+
+<!-- MODAL -->
+<div class="modal-backdrop" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-hdr"><div></div><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body"></div>
+  </div>
+</div>
+
+</body>
+</html>
