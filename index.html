@@ -10466,8 +10466,108 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#f4f6fa;color:#1a2
  <div class="footer-right">Contrato nº ${num}<br><span style="color:#2a5cff;font-weight:600;">Confidencial</span></div>
  </div>
 </div>
+
+<!-- ═══ AIRMATE LEAD CAPTURE ═══ -->
+<style>
+#lc-fab{position:fixed;bottom:24px;right:24px;z-index:9999;background:linear-gradient(135deg,#c4a35a,#a8873e);color:#fff;border:none;border-radius:50px;padding:14px 22px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 24px rgba(196,163,90,.5);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:8px;transition:transform .2s,box-shadow .2s;}
+#lc-fab:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(196,163,90,.6);}
+#lc-modal{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+#lc-modal.open{display:flex;}
+#lc-box{background:#fff;border-radius:20px;padding:36px 32px;max-width:440px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.2);position:relative;}
+#lc-box h2{font-family:'DM Serif Display',serif;font-size:26px;color:#0d1c35;margin-bottom:6px;}
+#lc-box p{color:#7a7a72;font-size:14px;margin-bottom:24px;}
+.lc-inp{width:100%;border:1.5px solid #e8e8e3;border-radius:10px;padding:12px 14px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;margin-bottom:12px;color:#0d1c35;}
+.lc-inp:focus{border-color:#c4a35a;}
+#lc-submit{width:100%;background:linear-gradient(135deg,#0d1c35,#162848);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px;}
+#lc-submit:hover{opacity:.9;}
+#lc-close{position:absolute;top:16px;right:18px;background:none;border:none;font-size:20px;cursor:pointer;color:#b8b8b0;}
+#lc-ok{display:none;text-align:center;padding:20px 0;}
+#lc-ok svg{width:52px;height:52px;margin-bottom:12px;}
+#lc-ok h3{font-family:'DM Serif Display',serif;font-size:22px;color:#0d1c35;margin-bottom:6px;}
+#lc-ok p{color:#7a7a72;font-size:14px;}
+</style>
+
+<button id="lc-fab" onclick="lcOpen()">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 0112 18.69 19.5 19.5 0 015.31 12 19.79 19.79 0 012.32 4.22 2 2 0 014.31 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+  Hablemos
+</button>
+
+<div id="lc-modal">
+  <div id="lc-box">
+    <button id="lc-close" onclick="lcClose()">✕</button>
+    <div id="lc-form">
+      <h2>Cuéntenos su negocio</h2>
+      <p>Le llamamos en menos de 24h para ver cómo podemos ayudarle.</p>
+      <input class="lc-inp" id="lc-nombre" placeholder="Su nombre" type="text">
+      <input class="lc-inp" id="lc-tel" placeholder="Teléfono o WhatsApp" type="tel">
+      <input class="lc-inp" id="lc-negocio" placeholder="Tipo de negocio (ej: sastrería, clínica…)" type="text">
+      <input class="lc-inp" id="lc-interes" placeholder="¿Qué necesita? (ej: CRM, web, agente IA…)" type="text">
+      <button id="lc-submit" onclick="lcSubmit()">Quiero que me llamen →</button>
+    </div>
+    <div id="lc-ok">
+      <svg viewBox="0 0 52 52" fill="none"><circle cx="26" cy="26" r="25" stroke="#c4a35a" stroke-width="2"/><path d="M14 26l8 8 16-16" stroke="#c4a35a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h3>Recibido, gracias.</h3>
+      <p>Le contactamos en menos de 24 horas.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
+  const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+
+  window.lcOpen=function(){document.getElementById('lc-modal').classList.add('open');}
+  window.lcClose=function(){document.getElementById('lc-modal').classList.remove('open');}
+
+  // Interceptar botones "Reservar llamada" existentes
+  document.addEventListener('DOMContentLoaded',function(){
+    document.querySelectorAll('a,button').forEach(el=>{
+      if(el.textContent.includes('Reservar llamada')||el.textContent.includes('llamada gratuita')){
+        el.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();lcOpen();});
+      }
+    });
+  });
+
+  window.lcSubmit=async function(){
+    const nombre=document.getElementById('lc-nombre').value.trim();
+    const tel=document.getElementById('lc-tel').value.trim();
+    const negocio=document.getElementById('lc-negocio').value.trim();
+    const interes=document.getElementById('lc-interes').value.trim();
+    if(!nombre||!tel){alert('Por favor, rellene nombre y teléfono.');return;}
+    const btn=document.getElementById('lc-submit');
+    btn.textContent='Enviando…';btn.disabled=true;
+    try{
+      await fetch(SB_URL+'/rest/v1/leads',{
+        method:'POST',
+        headers:{
+          'apikey':SB_KEY,
+          'Authorization':'Bearer '+SB_KEY,
+          'Content-Type':'application/json',
+          'Prefer':'return=minimal'
+        },
+        body:JSON.stringify({
+          name:nombre,
+          business_slug:'airmate-web',
+          interest:(negocio?negocio+' — ':'')+interes,
+          phone:tel,
+          created_at:new Date().toISOString()
+        })
+      });
+      document.getElementById('lc-form').style.display='none';
+      document.getElementById('lc-ok').style.display='block';
+      setTimeout(lcClose,3000);
+    }catch(e){
+      btn.textContent='Quiero que me llamen →';btn.disabled=false;
+      alert('Error al enviar. Escríbanos a airmateai@gmail.com');
+    }
+  };
+})();
+</script>
+<!-- ═══ FIN LEAD CAPTURE ═══ -->
 </body>
-</html>`;
+</html>
+`;
 
  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
  const url = URL.createObjectURL(blob);
@@ -13287,5 +13387,105 @@ document.getElementById('modal-presupuesto').addEventListener('click', function(
 }
 </style>
 
+
+<!-- ═══ AIRMATE LEAD CAPTURE ═══ -->
+<style>
+#lc-fab{position:fixed;bottom:24px;right:24px;z-index:9999;background:linear-gradient(135deg,#c4a35a,#a8873e);color:#fff;border:none;border-radius:50px;padding:14px 22px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 24px rgba(196,163,90,.5);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:8px;transition:transform .2s,box-shadow .2s;}
+#lc-fab:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(196,163,90,.6);}
+#lc-modal{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+#lc-modal.open{display:flex;}
+#lc-box{background:#fff;border-radius:20px;padding:36px 32px;max-width:440px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.2);position:relative;}
+#lc-box h2{font-family:'DM Serif Display',serif;font-size:26px;color:#0d1c35;margin-bottom:6px;}
+#lc-box p{color:#7a7a72;font-size:14px;margin-bottom:24px;}
+.lc-inp{width:100%;border:1.5px solid #e8e8e3;border-radius:10px;padding:12px 14px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;margin-bottom:12px;color:#0d1c35;}
+.lc-inp:focus{border-color:#c4a35a;}
+#lc-submit{width:100%;background:linear-gradient(135deg,#0d1c35,#162848);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px;}
+#lc-submit:hover{opacity:.9;}
+#lc-close{position:absolute;top:16px;right:18px;background:none;border:none;font-size:20px;cursor:pointer;color:#b8b8b0;}
+#lc-ok{display:none;text-align:center;padding:20px 0;}
+#lc-ok svg{width:52px;height:52px;margin-bottom:12px;}
+#lc-ok h3{font-family:'DM Serif Display',serif;font-size:22px;color:#0d1c35;margin-bottom:6px;}
+#lc-ok p{color:#7a7a72;font-size:14px;}
+</style>
+
+<button id="lc-fab" onclick="lcOpen()">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 0112 18.69 19.5 19.5 0 015.31 12 19.79 19.79 0 012.32 4.22 2 2 0 014.31 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+  Hablemos
+</button>
+
+<div id="lc-modal">
+  <div id="lc-box">
+    <button id="lc-close" onclick="lcClose()">✕</button>
+    <div id="lc-form">
+      <h2>Cuéntenos su negocio</h2>
+      <p>Le llamamos en menos de 24h para ver cómo podemos ayudarle.</p>
+      <input class="lc-inp" id="lc-nombre" placeholder="Su nombre" type="text">
+      <input class="lc-inp" id="lc-tel" placeholder="Teléfono o WhatsApp" type="tel">
+      <input class="lc-inp" id="lc-negocio" placeholder="Tipo de negocio (ej: sastrería, clínica…)" type="text">
+      <input class="lc-inp" id="lc-interes" placeholder="¿Qué necesita? (ej: CRM, web, agente IA…)" type="text">
+      <button id="lc-submit" onclick="lcSubmit()">Quiero que me llamen →</button>
+    </div>
+    <div id="lc-ok">
+      <svg viewBox="0 0 52 52" fill="none"><circle cx="26" cy="26" r="25" stroke="#c4a35a" stroke-width="2"/><path d="M14 26l8 8 16-16" stroke="#c4a35a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h3>Recibido, gracias.</h3>
+      <p>Le contactamos en menos de 24 horas.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
+  const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+
+  window.lcOpen=function(){document.getElementById('lc-modal').classList.add('open');}
+  window.lcClose=function(){document.getElementById('lc-modal').classList.remove('open');}
+
+  // Interceptar botones "Reservar llamada" existentes
+  document.addEventListener('DOMContentLoaded',function(){
+    document.querySelectorAll('a,button').forEach(el=>{
+      if(el.textContent.includes('Reservar llamada')||el.textContent.includes('llamada gratuita')){
+        el.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();lcOpen();});
+      }
+    });
+  });
+
+  window.lcSubmit=async function(){
+    const nombre=document.getElementById('lc-nombre').value.trim();
+    const tel=document.getElementById('lc-tel').value.trim();
+    const negocio=document.getElementById('lc-negocio').value.trim();
+    const interes=document.getElementById('lc-interes').value.trim();
+    if(!nombre||!tel){alert('Por favor, rellene nombre y teléfono.');return;}
+    const btn=document.getElementById('lc-submit');
+    btn.textContent='Enviando…';btn.disabled=true;
+    try{
+      await fetch(SB_URL+'/rest/v1/leads',{
+        method:'POST',
+        headers:{
+          'apikey':SB_KEY,
+          'Authorization':'Bearer '+SB_KEY,
+          'Content-Type':'application/json',
+          'Prefer':'return=minimal'
+        },
+        body:JSON.stringify({
+          name:nombre,
+          business_slug:'airmate-web',
+          interest:(negocio?negocio+' — ':'')+interes,
+          phone:tel,
+          created_at:new Date().toISOString()
+        })
+      });
+      document.getElementById('lc-form').style.display='none';
+      document.getElementById('lc-ok').style.display='block';
+      setTimeout(lcClose,3000);
+    }catch(e){
+      btn.textContent='Quiero que me llamen →';btn.disabled=false;
+      alert('Error al enviar. Escríbanos a airmateai@gmail.com');
+    }
+  };
+})();
+</script>
+<!-- ═══ FIN LEAD CAPTURE ═══ -->
 </body>
 </html>
+
