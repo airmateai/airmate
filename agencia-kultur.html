@@ -445,72 +445,95 @@ function renderView(v){
 
 function dashboardHTML(){
   return `
+  <!-- HERO BANNER -->
+  <div style="border-radius:18px;overflow:hidden;position:relative;margin-bottom:22px;height:220px">
+    <img src="https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=1400&q=85" style="width:100%;height:100%;object-fit:cover;display:block">
+    <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,10,5,.88) 0%,rgba(13,10,5,.5) 60%,rgba(13,10,5,.1) 100%)"></div>
+    <div style="position:absolute;inset:0;padding:32px 36px;display:flex;flex-direction:column;justify-content:center">
+      <div style="font-size:10px;color:rgba(139,105,20,.9);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px">Buenos días, Jorge</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:32px;color:#fff;font-weight:500;line-height:1.15;margin-bottom:10px">Construyendo puentes<br><span style="color:var(--terra)">entre tres continentes.</span></div>
+      <div style="font-size:11px;color:rgba(255,255,255,.45);margin-bottom:20px">Canarias · Macaronesia · África Occidental</div>
+      <div style="display:flex;gap:24px">
+        ${[['5','Proyectos activos'],['24','Colaboradores'],['183K€','Financiación 2026'],['38','Personas en movilidad']].map(([v,l])=>`
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#fff;font-weight:500;line-height:1">${v}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:2px">${l}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <!-- STAT CARDS -->
   <div class="stats-grid">
     <div class="stat-card"><div class="stat-label">Proyectos activos</div><div class="stat-val">5</div><div class="stat-sub">+2 este trimestre</div></div>
-    <div class="stat-card"><div class="stat-label">Colaboradores</div><div class="stat-val">24</div><div class="stat-sub">4 territorios</div></div>
-    <div class="stat-card"><div class="stat-label">Financiación gestionada</div><div class="stat-val">183K</div><div class="stat-sub">€ en 2026</div></div>
+    <div class="stat-card"><div class="stat-label">Colaboradores</div><div class="stat-val">24</div><div class="stat-sub">en 4 territorios</div></div>
+    <div class="stat-card"><div class="stat-label">Financiación 2026</div><div class="stat-val">183K</div><div class="stat-sub">€ gestionados</div></div>
     <div class="stat-card"><div class="stat-label">Movilidad cultural</div><div class="stat-val">38</div><div class="stat-sub">personas este año</div></div>
   </div>
 
-  <div class="map-card">
-    <div class="map-title">Red Tricontinental activa</div>
-    <div class="map-sub">Canarias · Macaronesia · África Occidental</div>
-    <div class="map-territories">
-      <div class="map-t"><div class="map-dot" style="background:#8B6914"></div><span class="map-t-name">Canarias — 12 proyectos</span></div>
-      <div class="map-t"><div class="map-dot" style="background:#C4956A"></div><span class="map-t-name">Cabo Verde — 7 proyectos</span></div>
-      <div class="map-t"><div class="map-dot" style="background:#4ade80"></div><span class="map-t-name">Senegal — 9 proyectos</span></div>
-      <div class="map-t"><div class="map-dot" style="background:#60a5fa"></div><span class="map-t-name">Mauritania — 3 proyectos</span></div>
-    </div>
-    <div class="connections-visual">
-      <span>Conexiones activas:</span>
-      <span class="conn-pill">Canarias ↔ Dakar</span>
-      <span class="conn-pill">Las Palmas ↔ Praia</span>
-      <span class="conn-pill">GC ↔ Nouakchott</span>
-    </div>
+  <!-- TERRITORIES PHOTO STRIP -->
+  <div class="section-hdr"><div class="section-title">Red <span>tricontinental</span></div><div class="see-all" onclick="setView('territorios',null)">Ver mapa →</div></div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
+    ${[
+      {flag:'🇪🇸',n:'Canarias',img:'https://images.unsplash.com/photo-1548625361-58a9d17f629c?w=400&q=80',v:12,c:'#8B6914'},
+      {flag:'🇨🇻',n:'Cabo Verde',img:'https://images.unsplash.com/photo-1590736704728-f4730bb30770?w=400&q=80',v:7,c:'#C4956A'},
+      {flag:'🇸🇳',n:'Senegal',img:'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=400&q=80',v:9,c:'#4ade80'},
+      {flag:'🇲🇷',n:'Mauritania',img:'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&q=80',v:3,c:'#60a5fa'},
+    ].map(t=>`
+    <div style="border-radius:14px;overflow:hidden;position:relative;height:130px;cursor:none;transition:transform .2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''" onclick="setView('territorios',null)">
+      <img src="${t.img}" style="width:100%;height:100%;object-fit:cover;display:block">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.1) 0%,rgba(0,0,0,.7) 100%)"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;padding:12px">
+        <div style="font-size:16px;margin-bottom:2px">${t.flag}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:#fff;font-weight:600">${t.n}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.6)">${t.v} proyectos</div>
+      </div>
+    </div>`).join('')}
   </div>
 
+  <!-- PROJECTS + AGENDA -->
   <div class="grid-2">
     <div>
-      <div class="section-hdr"><div class="section-title">Proyectos <span>recientes</span></div><div class="see-all" onclick="setView('proyectos',null)">Ver todos →</div></div>
+      <div class="section-hdr"><div class="section-title">Proyectos <span>activos</span></div><div class="see-all" onclick="setView('proyectos',null)">Ver todos →</div></div>
       ${PROYECTOS.slice(0,3).map(p=>`
       <div class="proj-card" style="margin-bottom:10px" onclick="openProjectModal(${p.id})">
-        <img class="proj-img" src="${p.img}" alt="" loading="lazy" style="height:80px">
+        <img class="proj-img" src="${p.img}" alt="" loading="lazy" style="height:90px">
         <div class="proj-body-pad" style="padding:12px">
-          <div class="proj-meta" style="margin-bottom:6px">
+          <div class="proj-meta" style="margin-bottom:5px">
             <span class="badge ${p.estado==='Activo'?'badge-green':p.estado==='En desarrollo'?'badge-amber':'badge-blue'}">${p.estado}</span>
             ${p.territorio.map(t=>`<span class="badge badge-terra">${t}</span>`).join('')}
           </div>
           <div class="proj-title" style="font-size:14px;margin-bottom:6px">${p.nombre}</div>
           <div class="proj-progress"><div class="proj-progress-fill" style="width:${p.prog}%"></div></div>
-          <div class="proj-footer" style="margin-top:4px"><span>${p.prog}% completado</span><span style="font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--acc)">${p.presupuesto}</span></div>
+          <div class="proj-footer" style="margin-top:5px"><span>${p.prog}% completado</span><span style="font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--acc)">${p.presupuesto}</span></div>
         </div>
       </div>`).join('')}
     </div>
     <div>
       <div class="section-hdr"><div class="section-title">Próxima <span>agenda</span></div><div class="see-all" onclick="setView('agenda',null)">Ver toda →</div></div>
-      <div class="card">
+      <div class="card" style="margin-bottom:16px">
         ${AGENDA.slice(0,4).map(a=>`
         <div class="agenda-item">
           <div class="agenda-date"><div class="agenda-day">${a.dia}</div><div class="agenda-month">${a.mes}</div></div>
           <div class="agenda-body"><div class="agenda-title">${a.titulo}</div><div class="agenda-meta">${a.lugar}</div></div>
-          <span class="badge badge-terra" style="align-self:flex-start;margin-top:2px">${a.tipo}</span>
+          <span class="badge badge-terra" style="align-self:flex-start;margin-top:2px;white-space:nowrap">${a.tipo}</span>
         </div>`).join('')}
       </div>
 
-      <div class="section-hdr" style="margin-top:18px"><div class="section-title">Financiación <span>activa</span></div></div>
+      <div class="section-hdr"><div class="section-title">Financiación <span>concedida</span></div></div>
       <div class="card">
         ${FINANCIACION.filter(f=>f.estado==='Concedido').map(f=>`
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border2)">
-          <div style="font-size:12px;color:var(--txt2)">${f.icono} ${f.nombre}</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--acc);font-weight:600">${f.importe}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border2)">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2)">${f.icono} ${f.nombre}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--acc);font-weight:600">${f.importe}</div>
         </div>`).join('')}
-        <div style="text-align:center;padding-top:10px;font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--acc)">70.000€ <span style="font-size:11px;color:var(--txt3)">concedidos en 2026</span></div>
+        <div style="text-align:center;padding-top:12px;font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--acc)">70.000€ <span style="font-size:11px;color:var(--txt3);font-family:'Inter',sans-serif">concedidos este año</span></div>
       </div>
     </div>
   </div>
 
-  <div class="section-hdr"><div class="section-title">Distribución por <span>territorio</span></div></div>
-  <div class="card"><canvas id="chartTerritorios" height="80"></canvas></div>
+  <div class="section-hdr"><div class="section-title">Actividad por <span>territorio</span></div></div>
+  <div class="card"><canvas id="chartTerritorios" height="70"></canvas></div>
   `;
 }
 
@@ -632,10 +655,10 @@ function agendaHTML(){
 
 function territoriosHTML(){
   const ts=[
-    {flag:'🇪🇸',nombre:'Canarias',sub:'España · Europa',col:'#8B6914',proyectos:12,colab:8,desc:'Hub principal de la agencia. Sede en Las Palmas de Gran Canaria. Centro de coordinación de la red tricontinental.'},
-    {flag:'🇨🇻',nombre:'Cabo Verde',sub:'Macaronesia · Atlántico',col:'#C4956A',proyectos:7,colab:6,desc:'Nexo entre Europa y África. Conexión morabeza · filosofía de hospitalidad caboverdiana como eje de colaboración.'},
-    {flag:'🇸🇳',nombre:'Senegal',sub:'África Occidental',col:'#4ade80',proyectos:9,colab:7,desc:'Dakar como capital cultural de África Occidental. Alianzas con Institut Français y Universidad Cheikh Anta Diop.'},
-    {flag:'🇲🇷',nombre:'Mauritania',sub:'África Occidental',col:'#60a5fa',proyectos:3,colab:3,desc:'Territorio emergente. Programa de movilidad de talento joven hacia Canarias y Europa.'},
+    {flag:'🇪🇸',nombre:'Canarias',sub:'España · Europa',col:'#8B6914',proyectos:12,colab:8,img:'https://images.unsplash.com/photo-1548625361-58a9d17f629c?w=600&q=80',desc:'Hub principal de la agencia. Sede en Las Palmas de Gran Canaria. Centro de coordinación de la red tricontinental.'},
+    {flag:'🇨🇻',nombre:'Cabo Verde',sub:'Macaronesia · Atlántico',col:'#C4956A',proyectos:7,colab:6,img:'https://images.unsplash.com/photo-1590736704728-f4730bb30770?w=600&q=80',desc:'Nexo entre Europa y África. Morabeza caboverdiana como filosofía de hospitalidad y colaboración en el Atlántico.'},
+    {flag:'🇸🇳',nombre:'Senegal',sub:'África Occidental',col:'#4ade80',proyectos:9,colab:7,img:'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=600&q=80',desc:'Dakar como capital cultural de África Occidental. Alianzas con Institut Français y Universidad Cheikh Anta Diop.'},
+    {flag:'🇲🇷',nombre:'Mauritania',sub:'África Occidental',col:'#60a5fa',proyectos:3,colab:3,img:'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&q=80',desc:'Territorio emergente. Programa de movilidad de talento joven hacia Canarias y Europa en auge.'},
   ];
   return `
   <div class="map-card">
@@ -650,14 +673,28 @@ function territoriosHTML(){
   </div>
   <div class="territory-grid">
     ${ts.map(t=>`
-    <div class="card" style="text-align:center">
-      <div style="font-size:36px;margin-bottom:8px">${t.flag}</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--txt);margin-bottom:4px">${t.nombre}</div>
-      <div style="font-size:10px;color:var(--txt3);margin-bottom:12px">${t.sub}</div>
-      <div style="font-size:11px;color:var(--txt3);line-height:1.5;margin-bottom:14px">${t.desc}</div>
-      <div style="display:flex;justify-content:center;gap:16px">
-        <div><div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:${t.col}">${t.proyectos}</div><div style="font-size:10px;color:var(--txt3)">proyectos</div></div>
-        <div><div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:${t.col}">${t.colab}</div><div style="font-size:10px;color:var(--txt3)">colaboradores</div></div>
+    <div style="border-radius:16px;overflow:hidden;border:1px solid var(--border);background:var(--surface);transition:all .25s;cursor:none" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 32px rgba(0,0,0,.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+      <div style="position:relative;height:160px">
+        <img src="${t.img}" style="width:100%;height:100%;object-fit:cover;display:block">
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(0,0,0,.65) 100%)"></div>
+        <div style="position:absolute;bottom:12px;left:14px;right:14px">
+          <div style="font-size:20px;margin-bottom:2px">${t.flag}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;font-weight:600">${t.nombre}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.6);letter-spacing:1px;text-transform:uppercase">${t.sub}</div>
+        </div>
+      </div>
+      <div style="padding:14px">
+        <div style="font-size:11px;color:var(--txt3);line-height:1.5;margin-bottom:12px">${t.desc}</div>
+        <div style="display:flex;gap:0;border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+          <div style="flex:1;padding:10px;text-align:center;border-right:1px solid var(--border)">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:${t.col}">${t.proyectos}</div>
+            <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px">proyectos</div>
+          </div>
+          <div style="flex:1;padding:10px;text-align:center">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:${t.col}">${t.colab}</div>
+            <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px">colaboradores</div>
+          </div>
+        </div>
       </div>
     </div>`).join('')}
   </div>`;
