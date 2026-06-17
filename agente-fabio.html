@@ -367,6 +367,17 @@ body{font-family:'Inter',-apple-system,sans-serif;color:var(--t);display:flex;fl
     </div>
     <div class="sp-sep"></div>
     <div class="sp-sec">
+      <div class="sp-lbl">Voz Cristina (ElevenLabs)</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+        <div>
+          <div style="font-size:13px;color:rgba(255,255,255,.85)">Cristina</div>
+          <div style="font-size:10px;color:var(--m2);margin-top:2px">Voz premium · consume créditos ElevenLabs</div>
+        </div>
+        <button id="btn-cristina" onclick="toggleCristina()" style="padding:8px 18px;border-radius:20px;border:1px solid rgba(99,102,241,.4);background:rgba(99,102,241,.08);color:var(--a2);font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;min-width:64px">OFF</button>
+      </div>
+    </div>
+    <div class="sp-sep"></div>
+    <div class="sp-sec">
       <div class="sp-lbl">ID voz manual (ElevenLabs)</div>
       <input id="custom-vid" type="text" placeholder="ej: EXAVITQu4vr4xnSDxMaL" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--b);border-radius:8px;padding:9px 12px;color:var(--t);font-size:12px;font-family:inherit;outline:none;margin-top:6px">
     </div>
@@ -552,6 +563,7 @@ body{font-family:'Inter',-apple-system,sans-serif;color:var(--t);display:flex;fl
 // ══════════════════════════════════════════
 const PROXY='https://bot-airmate-1.vercel.app/api/chat';
 const EL_KEY='sk_f1c7d026f9f540e6ce1a7b982fe8b8d55577086399bc3dec';
+const CRISTINA_ID='dNjJKg63Fr5AXwIdkATa';
 const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
 const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -613,7 +625,7 @@ setView(currentView);
 // AJUSTES
 // ══════════════════════════════════════════
 const CFG_KEY='sofia_cfg_v4';
-let CFG={voice:'EXAVITQu4vr4xnSDxMaL',stab:.28,style:.50,sim:.85,resp:'concisa',_wsVoice:null};
+let CFG={voice:'EXAVITQu4vr4xnSDxMaL',stab:.28,style:.50,sim:.85,resp:'concisa',_wsVoice:null,cristina:false};
 const RESP_PROMPTS={
   concisa:'Máx 3 frases cortas. Directo al grano.',
   detallada:'Responde con detalle, hasta 8 frases.',
@@ -632,6 +644,8 @@ function applyUI(){
   document.getElementById('sl-sim').value=Math.round(CFG.sim*100);document.getElementById('l-sim').textContent=Math.round(CFG.sim*100)+'%';
   document.querySelectorAll('.resp-opt').forEach(b=>b.classList.toggle('active',b.dataset.resp===CFG.resp));
   document.getElementById('mem-cnt').textContent=loadHist().length;
+  const bc=document.getElementById('btn-cristina');
+  if(bc){bc.textContent=CFG.cristina?'ON':'OFF';bc.style.background=CFG.cristina?'rgba(99,102,241,.35)':'rgba(99,102,241,.08)';bc.style.borderColor=CFG.cristina?'rgba(99,102,241,.8)':'rgba(99,102,241,.4)';}
 }
 function saveSettings(){
   const mid=document.getElementById('custom-vid').value.trim();
@@ -645,6 +659,12 @@ function saveSettings(){
 }
 function selVoice(el){document.querySelectorAll('.voice-opt').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
 function selResp(el){document.querySelectorAll('.resp-opt').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function toggleCristina(){
+  CFG.cristina=!CFG.cristina;
+  localStorage.setItem(CFG_KEY,JSON.stringify(CFG));
+  applyUI();
+  showToast(CFG.cristina?'✓ Voz Cristina activada':'Voz del sistema activada (sin créditos)');
+}
 function clearMem(){history.length=0;saveHist();document.getElementById('mem-cnt').textContent='0';showToast('✓ Memoria borrada');}
 function toggleSettings(){
   document.getElementById('sp-overlay').classList.toggle('open');
@@ -963,6 +983,21 @@ async function speak(text,vmode=true){
   const clean=text.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').replace(/<[^>]+>/g,'').substring(0,600);
   const onStart=()=>{setPState('speaking');if(vmode||currentView==='voice'){setSts('Hablando','sp');setTx(clean.substring(0,160)+(clean.length>160?'…':''));document.getElementById('wv').classList.add('on');}window._thinking=false;};
   const onEnd=()=>{setPState('idle');if(currentView==='voice'){setSts('En espera');document.getElementById('wv').classList.remove('on');setTx('',true);}};
+  if(CFG.cristina){
+    try{
+      const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${CRISTINA_ID}`,{
+        method:'POST',headers:{'xi-api-key':EL_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({text:clean,model_id:'eleven_multilingual_v2',voice_settings:{stability:.35,similarity_boost:.85,style:.45,use_speaker_boost:true}})
+      });
+      if(!r.ok)throw new Error('EL '+r.status);
+      const url=URL.createObjectURL(await r.blob());
+      const a=new Audio(url);currentAudio=a;
+      a.onplay=onStart;
+      a.onended=()=>{currentAudio=null;URL.revokeObjectURL(url);onEnd();};
+      a.onerror=()=>{currentAudio=null;onEnd();};
+      a.play();return;
+    }catch(e){webSpeech(clean,onStart,onEnd);return;}
+  }
   try{
     const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${CFG.voice}`,{
       method:'POST',headers:{'xi-api-key':EL_KEY,'Content-Type':'application/json'},
