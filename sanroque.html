@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#0a0a0a">
 <title>Hospitales San Roque · Panel de Gestión</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{
   --nav:#0a0a0a;--nav2:#1a1a1a;--nav-txt:rgba(255,255,255,.5);--nav-active:rgba(26,95,168,.15);
@@ -357,6 +358,25 @@ tbody tr:hover td{background:rgba(26,95,168,.035);}
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             Equipo médico
           </button>
+          <button class="nav-item" onclick="setView('centros',this)">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            Dos centros
+          </button>
+          <button class="nav-item" onclick="setView('aseguradoras',this)">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Aseguradoras
+          </button>
+          <button class="nav-item" onclick="setView('grafico',this)">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Facturación anual
+          </button>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-label">Preferencias</div>
+          <button id="dark-toggle" class="nav-item" onclick="toggleDark()">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            Modo oscuro
+          </button>
         </div>
       </div>
       <div class="sidebar-bottom">
@@ -375,7 +395,12 @@ tbody tr:hover td{background:rgba(26,95,168,.035);}
       <div class="topbar">
         <div class="topbar-title" id="page-title">Resumen general</div>
         <div class="topbar-right">
-          <span style="font-size:11.5px;color:var(--txt3);">Martes, 17 de junio de 2026</span>
+          <button class="topbar-btn" onclick="openSearch()" style="gap:8px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>Buscar</span>
+            <kbd style="font-size:10px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;padding:1px 6px;color:#64748b">⌘K</kbd>
+          </button>
+          <span style="font-size:11.5px;color:var(--txt3);">17 jun 2026</span>
           <button class="topbar-btn" onclick="setView('agente',null)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <span>Consultar IA</span>
@@ -416,7 +441,7 @@ tbody tr:hover td{background:rgba(26,95,168,.035);}
       </div>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-        <button class="btn btn-accent" onclick="closeModal();showToast('Paciente registrado correctamente')">Registrar paciente</button>
+        <button class="btn btn-accent" onclick="closeModal();showToast('Paciente registrado correctamente');confetti()">Registrar paciente</button>
       </div>
     </div>
   </div>
@@ -656,7 +681,7 @@ function rowPac(p){
     <td style="color:var(--txt3);font-size:12px">${p.ingreso}</td>
     <td><span class="tag ${estadoTag(p.estado)}">${p.estado}</span></td>
     <td><div style="font-weight:700;color:var(--acc)">${fmt(p.factura)} €</div><span class="tag ${p.pagado?'tag-green':'tag-amber'}" style="margin-top:3px;display:inline-flex">${p.pagado?'Cobrado':'Pendiente'}</span></td>
-    <td><button class="btn btn-ghost btn-sm" onclick="showToast('Abriendo ficha de ${p.nombre}…')">Ver ficha</button></td>
+    <td><button class="btn btn-ghost btn-sm" onclick="openFicha(PACIENTES.find(x=>x.id==='${p.id}'))">Ver ficha</button></td>
   </tr>`;
 }
 function filterPac(q){
@@ -757,7 +782,7 @@ function renderFacturacion(c){
             <td style="font-weight:700;color:var(--acc)">${fmt(f.importe)} €</td>
             <td style="color:var(--txt3);font-size:12px">${f.fecha}</td>
             <td><span class="tag ${f.estado==='Cobrada'?'tag-green':'tag-amber'}">${f.estado}</span></td>
-            <td><button class="btn btn-ghost btn-sm">Ver</button></td>
+            <td><button class="btn btn-ghost btn-sm" onclick="openFact(FACTURAS.find(x=>x.ref==='${f.ref}'))">Ver / imprimir</button></td>
           </tr>`).join('')}
         </tbody>
       </table>
@@ -979,6 +1004,379 @@ setTimeout(()=>{
   const l=document.getElementById('sr-login-line');
   if(l){l.style.width='100%';l.style.opacity='1';}
 },300);
+
+// ═══════════ DARK MODE ═══════════════════════════════════
+let darkMode=false;
+function toggleDark(){
+  darkMode=!darkMode;
+  document.documentElement.setAttribute('data-theme',darkMode?'dark':'');
+  document.getElementById('dark-toggle').textContent=darkMode?'Modo claro':'Modo oscuro';
+}
+
+// ═══════════ CONFETTI ════════════════════════════════════
+function confetti(){
+  const colors=['#1a5fa8','#4ade80','#f59e0b','#c4a35a','#7c3aed','#fff'];
+  for(let i=0;i<55;i++){
+    const el=document.createElement('div');
+    el.style.cssText=`position:fixed;width:9px;height:14px;top:-20px;left:${Math.random()*100}vw;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:1px;z-index:99999;pointer-events:none;animation:confettiFall ${1.2+Math.random()*1.4}s ease ${Math.random()*.6}s forwards;transform:rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),3000);
+  }
+}
+
+// ═══════════ CMD+K BUSCADOR GLOBAL ═══════════════════════
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();openSearch();}
+  if(e.key==='Escape'){closeSearch();closeModal();closeFicha();closeFact();}
+});
+function openSearch(){
+  document.getElementById('gsearch-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('gsearch-inp').focus(),50);
+}
+function closeSearch(){document.getElementById('gsearch-overlay').classList.remove('open');}
+function doSearch(q){
+  const res=document.getElementById('gsearch-results');
+  if(!q){res.innerHTML='';return;}
+  const hits=[
+    ...PACIENTES.filter(p=>p.nombre.toLowerCase().includes(q.toLowerCase())||p.id.toLowerCase().includes(q.toLowerCase())).map(p=>({type:'Paciente',label:p.nombre,sub:`${p.id} · ${p.servicio} · ${p.seguro}`,action:()=>{closeSearch();setView('pacientes',null);}})),
+    ...FACTURAS.filter(f=>f.paciente.toLowerCase().includes(q.toLowerCase())||f.ref.toLowerCase().includes(q.toLowerCase())).map(f=>({type:'Factura',label:f.ref,sub:`${f.paciente} · ${fmt(f.importe)} € · ${f.estado}`,action:()=>{closeSearch();setView('facturacion',null);}})),
+    ...EQUIPO.filter(e=>e.nombre.toLowerCase().includes(q.toLowerCase())).map(e=>({type:'Médico',label:e.nombre,sub:e.rol,action:()=>{closeSearch();setView('equipo',null);}})),
+  ];
+  res.innerHTML=hits.length?hits.map((h,i)=>`<div class="gsearch-item" onclick="SEARCH_HITS[${i}].action()" tabindex="0">
+    <span class="gsearch-type">${h.type}</span>
+    <div><div style="font-weight:600;font-size:13px">${h.label}</div><div style="font-size:11.5px;color:var(--txt3);margin-top:1px">${h.sub}</div></div>
+  </div>`).join(''):`<div style="padding:24px;text-align:center;color:var(--txt3);font-size:13px">Sin resultados para "${q}"</div>`;
+  window.SEARCH_HITS=hits;
+}
+
+// ═══════════ FICHA PACIENTE ══════════════════════════════
+function openFicha(p){
+  const o=document.getElementById('ficha-overlay');
+  o.querySelector('#ficha-body').innerHTML=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
+    ${[['ID','id'],['Nombre completo','nombre'],['Edad','edad'],['Servicio','servicio'],['Médico responsable','medico'],['Seguro','seguro'],['Fecha de ingreso','ingreso'],['Estado','estado']].map(([l,k])=>`
+    <div><div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">${l}</div>
+    <div style="font-size:13.5px;font-weight:${k==='nombre'?700:500}">${p[k]}</div></div>`).join('')}
+    <div style="grid-column:1/-1"><div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Facturación</div>
+    <div style="font-size:15px;font-weight:800;color:var(--acc)">${fmt(p.factura)} €</div>
+    <span style="display:inline-flex;margin-top:4px" class="tag ${p.pagado?'tag-green':'tag-amber'}">${p.pagado?'Cobrado':'Pendiente de cobro'}</span></div>
+  </div>
+  <div style="border-top:1px solid var(--border2);padding-top:16px">
+    <div style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Historial reciente</div>
+    ${[
+      {fecha:'17/06/2026',acto:'Revisión de control',medico:p.medico},
+      {fecha:'12/06/2026',acto:'Analítica completa',medico:'Lab. Central'},
+      {fecha:'08/06/2026',acto:'Primera consulta / ingreso',medico:p.medico},
+    ].map(h=>`<div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--border2)">
+      <div style="font-size:11.5px;color:var(--txt3);min-width:90px">${h.fecha}</div>
+      <div style="flex:1;font-size:13px">${h.acto}</div>
+      <div style="font-size:11.5px;color:var(--txt3)">${h.medico}</div>
+    </div>`).join('')}
+  </div>`;
+  o.querySelector('#ficha-title').textContent=p.nombre;
+  o.classList.add('open');
+}
+function closeFicha(){document.getElementById('ficha-overlay').classList.remove('open');}
+
+// ═══════════ IMPRIMIR FACTURA ════════════════════════════
+function openFact(f){
+  const o=document.getElementById('fact-overlay');
+  o.querySelector('#fact-body').innerHTML=`
+  <div style="max-width:640px;margin:0 auto;background:#fff;padding:40px 44px;border-radius:10px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px">
+      <div>
+        <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:24px;font-weight:600">Hospitales Universitarios San Roque</div>
+        <div style="font-size:12px;color:#64748b;margin-top:4px">Las Palmas de Gran Canaria · sanroque.es</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:2px">CIF: A-35000000</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:22px;font-weight:800;color:var(--acc)">${f.ref}</div>
+        <div style="font-size:12px;color:#64748b;margin-top:3px">Fecha: ${f.fecha}</div>
+      </div>
+    </div>
+    <div style="background:#f8fafd;border-radius:8px;padding:16px 20px;margin-bottom:24px">
+      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Datos del paciente / aseguradora</div>
+      <div style="font-size:14px;font-weight:600">${f.paciente}</div>
+      <div style="font-size:13px;color:#475569;margin-top:2px">${f.seguro}</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+      <thead><tr style="background:#f8fafd">
+        <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.12em;border-bottom:2px solid #e2e8f0">Concepto</th>
+        <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.12em;border-bottom:2px solid #e2e8f0">Importe</th>
+      </tr></thead>
+      <tbody>
+        <tr><td style="padding:12px 14px;font-size:13px;border-bottom:1px solid #f1f5f9">${f.concepto}</td><td style="padding:12px 14px;text-align:right;font-weight:700;font-size:14px">${fmt(f.importe)} €</td></tr>
+        <tr><td style="padding:12px 14px;font-size:13px;color:#64748b;border-bottom:1px solid #f1f5f9">IGIC (7%)</td><td style="padding:12px 14px;text-align:right;font-size:13px;color:#64748b">${fmt(Math.round(f.importe*.07))} €</td></tr>
+      </tbody>
+      <tfoot><tr style="background:#f8fafd">
+        <td style="padding:14px;font-weight:700;font-size:15px">TOTAL</td>
+        <td style="padding:14px;text-align:right;font-weight:800;font-size:18px;color:var(--acc)">${fmt(Math.round(f.importe*1.07))} €</td>
+      </tr></tfoot>
+    </table>
+    <div style="display:flex;justify-content:space-between;padding-top:16px;border-top:1px solid #e2e8f0">
+      <span class="tag ${f.estado==='Cobrada'?'tag-green':'tag-amber'}" style="font-size:13px;padding:5px 14px">${f.estado}</span>
+      <div style="font-size:11px;color:#94a3b8">Documento generado el ${new Date().toLocaleDateString('es-ES')}</div>
+    </div>
+  </div>`;
+  o.classList.add('open');
+}
+function closeFact(){document.getElementById('fact-overlay').classList.remove('open');}
+
+// ═══════════ VISTA DOS CENTROS ═══════════════════════════
+function renderCentros(c){
+  c.innerHTML=`
+  <div class="page-hd"><div class="page-hd-row"><div>
+    <div class="page-title">Dos centros</div>
+    <div class="page-sub">Las Palmas · Maspalomas · Comparativa junio 2026</div>
+  </div></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+    ${[
+      {nombre:'San Roque Las Palmas',img:'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&q=80&auto=format&fit=crop',camas:210,ocupacion:87,pacientes:147,factura:'107.200',rma:'0.71'},
+      {nombre:'San Roque Maspalomas',img:'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=600&q=80&auto=format&fit=crop',camas:160,ocupacion:82,pacientes:100,factura:'75.200',rma:'0.66'},
+    ].map(centro=>`
+    <div class="card" style="margin-bottom:0;overflow:hidden">
+      <img src="${centro.img}" alt="${centro.nombre}" style="width:100%;height:130px;object-fit:cover">
+      <div class="card-hd"><div class="card-hd-title">${centro.nombre}</div></div>
+      <div style="padding:0 0 4px">
+        ${[['Camas totales',centro.camas,''],['Ocupación',centro.ocupacion+'%','color:#4ade80'],['Pacientes activos',centro.pacientes,'color:var(--acc)'],['Facturación junio',centro.factura+' €','color:var(--gold)'],['RMA actual',centro.rma,'color:#4ade80']].map(([l,v,s])=>`
+        <div class="dash-row"><div style="flex:1;font-size:13px;color:var(--txt2)">${l}</div><div style="font-weight:700;font-size:14px;${s}">${v}</div></div>`).join('')}
+      </div>
+      <div style="padding:10px 18px 16px">
+        <div style="height:7px;background:#f1f5f9;border-radius:4px;overflow:hidden">
+          <div style="width:${centro.ocupacion}%;height:100%;background:linear-gradient(90deg,var(--acc),#4ade80);border-radius:4px"></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:5px">${centro.ocupacion}% de ocupación</div>
+      </div>
+    </div>`).join('')}
+  </div>
+  <div class="card" style="margin-top:18px">
+    <div class="card-hd"><div class="card-hd-title">Comparativa de indicadores</div></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Indicador</th><th>Las Palmas</th><th>Maspalomas</th><th>Grupo</th></tr></thead>
+      <tbody>
+        ${[['RMA','0.71','0.66','0.69'],['Satisfacción paciente','91.8%','93.1%','92.4%'],['Estancia media','4.3 días','3.8 días','4.1 días'],['Reingresos 30d','3.4%','2.9%','3.2%'],['Facturación junio','107.200 €','75.200 €','182.400 €']].map(([k,a,b,t])=>`
+        <tr><td style="font-weight:500">${k}</td><td>${a}</td><td>${b}</td><td style="font-weight:700;color:var(--acc)">${t}</td></tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+// ═══════════ PANEL ASEGURADORAS ══════════════════════════
+function renderAseguradoras(c){
+  const segs=[
+    {nombre:'Adeslas',pendiente:0,cobrado:48200,facturas:62,dias:14,color:'#1a5fa8'},
+    {nombre:'Sanitas',pendiente:1850,cobrado:34850,facturas:45,dias:21,color:'#7c3aed'},
+    {nombre:'Mapfre',pendiente:0,cobrado:29400,facturas:38,dias:12,color:'#16a34a'},
+    {nombre:'DKV',pendiente:0,cobrado:18700,facturas:24,dias:9,color:'#d97706'},
+    {nombre:'Asisa',pendiente:540,cobrado:12100,facturas:18,dias:28,color:'#dc2626'},
+    {nombre:'Particular',pendiente:0,cobrado:41100,facturas:61,dias:0,color:'#64748b'},
+  ];
+  c.innerHTML=`
+  <div class="page-hd"><div class="page-hd-row"><div>
+    <div class="page-title">Aseguradoras</div>
+    <div class="page-sub">Estado de cobros por compañía · Junio 2026</div>
+  </div></div></div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val gold">${fmt(segs.reduce((a,s)=>a+s.cobrado,0))} €</div><div class="stat-label">Total cobrado</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#fbbf24">${fmt(segs.reduce((a,s)=>a+s.pendiente,0))} €</div><div class="stat-label">Pendiente total</div></div>
+    <div class="stat-card"><div class="stat-val">${segs.reduce((a,s)=>a+s.facturas,0)}</div><div class="stat-label">Facturas emitidas</div></div>
+    <div class="stat-card"><div class="stat-val red">${segs.filter(s=>s.pendiente>0).length}</div><div class="stat-label">Con deuda activa</div></div>
+  </div>
+  <div class="card" style="margin-bottom:0">
+    <div class="card-hd"><div class="card-hd-title">Detalle por aseguradora</div></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Aseguradora</th><th>Cobrado</th><th>Pendiente</th><th>Facturas</th><th>Días medio cobro</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        ${segs.map(s=>`<tr>
+          <td><div style="display:flex;align-items:center;gap:8px">
+            <div style="width:10px;height:10px;border-radius:50%;background:${s.color};flex-shrink:0"></div>
+            <span style="font-weight:600">${s.nombre}</span>
+          </div></td>
+          <td style="font-weight:700;color:var(--green)">${fmt(s.cobrado)} €</td>
+          <td style="font-weight:700;color:${s.pendiente>0?'var(--amber)':'var(--txt3)'}">${s.pendiente>0?fmt(s.pendiente)+' €':'—'}</td>
+          <td>${s.facturas}</td>
+          <td>${s.dias>0?s.dias+' días':'Inmediato'}</td>
+          <td><span class="tag ${s.pendiente>0?'tag-amber':'tag-green'}">${s.pendiente>0?'Deuda activa':'Al corriente'}</span></td>
+          <td><button class="btn btn-ghost btn-sm" onclick="showToast('Abriendo historial de ${s.nombre}…')">Ver historial</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+// ═══════════ GRÁFICO FACTURACIÓN (Chart.js) ══════════════
+function renderGrafico(c){
+  c.innerHTML=`
+  <div class="page-hd"><div class="page-hd-row"><div>
+    <div class="page-title">Evolución financiera</div>
+    <div class="page-sub">Facturación mensual · Últimos 6 meses</div>
+  </div></div></div>
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:18px">
+    <div class="card">
+      <div class="card-hd"><div class="card-hd-title">Facturación mensual — Grupo San Roque</div></div>
+      <div style="padding:20px"><canvas id="chart-fact" height="200"></canvas></div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Resumen semestral</div></div>
+        <div>
+          ${[['Enero','148.200 €'],['Febrero','155.400 €'],['Marzo','162.100 €'],['Abril','169.800 €'],['Mayo','168.400 €'],['Junio','182.400 €']].map(([m,v])=>`
+          <div class="dash-row"><div style="flex:1;font-size:13px">${m}</div><div style="font-weight:700;color:var(--acc)">${v}</div></div>`).join('')}
+        </div>
+      </div>
+      <div class="stat-card" style="margin-top:0">
+        <div class="stat-val gold">985.300 €</div>
+        <div class="stat-label">Total semestre</div>
+        <div class="stat-sub">+14.2% vs. mismo periodo 2025</div>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(()=>{
+    const ctx=document.getElementById('chart-fact');
+    if(!ctx||!window.Chart)return;
+    new Chart(ctx,{
+      type:'bar',
+      data:{
+        labels:['Ene','Feb','Mar','Abr','May','Jun'],
+        datasets:[{
+          label:'Facturación (€)',
+          data:[148200,155400,162100,169800,168400,182400],
+          backgroundColor:'rgba(26,95,168,.18)',
+          borderColor:'#1a5fa8',
+          borderWidth:2,
+          borderRadius:6,
+        }]
+      },
+      options:{
+        responsive:true,plugins:{legend:{display:false}},
+        scales:{y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{callback:v=>(v/1000).toFixed(0)+'k €'}},x:{grid:{display:false}}},
+      }
+    });
+  },100);
+}
+
+// ═══════════ SKELETON LOADING ════════════════════════════
+function skeletonView(c){
+  c.innerHTML=`<div style="animation:slideUp .3s ease">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">
+      ${Array(4).fill(0).map(()=>`<div style="background:linear-gradient(90deg,rgba(26,95,168,.06) 0%,rgba(26,95,168,.14) 50%,rgba(26,95,168,.06) 100%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite;border-radius:8px;height:88px;border:1px solid rgba(26,95,168,.15)"></div>`).join('')}
+    </div>
+    <div style="background:linear-gradient(90deg,rgba(26,95,168,.06) 0%,rgba(26,95,168,.14) 50%,rgba(26,95,168,.06) 100%);background-size:200% 100%;animation:skShimmer 1.6s linear infinite;border-radius:8px;height:320px;border:1px solid var(--border)"></div>
+  </div>`;
+}
+
+// ═══════════ SETVIEW ACTUALIZADO CON SKELETON ════════════
+const _oldSetView=setView;
+function setView(v,el){
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  if(el)el.classList.add('active');
+  else{const map={dashboard:0,pacientes:1,agenda:2,facturacion:3,informes:4,agente:5,alertas:6,equipo:7,centros:8,aseguradoras:9,grafico:10};document.querySelectorAll('.nav-item')[map[v]]?.classList.add('active');}
+  const titles={dashboard:'Resumen general',pacientes:'Pacientes',agenda:'Agenda',facturacion:'Facturación',informes:'Informes y calidad',agente:'Agente IA',alertas:'Alertas del sistema',equipo:'Equipo médico',centros:'Dos centros',aseguradoras:'Aseguradoras',grafico:'Evolución financiera'};
+  document.getElementById('page-title').textContent=titles[v]||v;
+  const c=document.getElementById('content');
+  skeletonView(c);
+  setTimeout(()=>{
+    c.style.animation='none';c.innerHTML='';
+    c.style.animation='fadeInScale .3s ease both';
+    ({dashboard:renderDashboard,pacientes:renderPacientes,agenda:renderAgenda,facturacion:renderFacturacion,informes:renderInformes,agente:renderAgente,alertas:renderAlertas,equipo:renderEquipo,centros:renderCentros,aseguradoras:renderAseguradoras,grafico:renderGrafico}[v]||renderDashboard)(c);
+  },340);
+}
+
+// Fix login line animation
+setTimeout(()=>{
+  const l=document.getElementById('sr-login-line');
+  if(l){l.style.width='100%';l.style.opacity='1';}
+},300);
 </script>
+
+<!-- ═══ CMD+K OVERLAY ═══ -->
+<div id="gsearch-overlay" style="position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:600;display:none;align-items:flex-start;justify-content:center;padding-top:12vh;backdrop-filter:blur(4px)">
+  <div id="gsearch-box" style="background:#fff;border-radius:14px;width:580px;max-width:94vw;box-shadow:0 24px 64px rgba(0,0,0,.2);overflow:hidden">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border2)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="gsearch-inp" placeholder="Buscar paciente, factura, médico…" oninput="doSearch(this.value)" style="flex:1;border:none;outline:none;font-size:15px;font-family:'Inter',sans-serif;color:var(--txt)">
+      <kbd style="font-size:11px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:2px 7px;color:#64748b">Esc</kbd>
+    </div>
+    <div id="gsearch-results" style="max-height:360px;overflow-y:auto;padding:8px"></div>
+  </div>
+</div>
+
+<!-- ═══ FICHA PACIENTE ═══ -->
+<div id="ficha-overlay" style="position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:50px 20px;backdrop-filter:blur(4px)">
+  <div style="background:#fff;border-radius:14px;width:600px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18)">
+    <div style="padding:18px 22px 14px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff">
+      <div style="font-size:16px;font-weight:700" id="ficha-title">Ficha del paciente</div>
+      <button onclick="closeFicha()" style="width:28px;height:28px;border-radius:7px;background:var(--bg);border:1px solid var(--border);color:var(--txt2);display:grid;place-items:center;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:20px 22px" id="ficha-body"></div>
+  </div>
+</div>
+
+<!-- ═══ FACTURA IMPRIMIBLE ═══ -->
+<div id="fact-overlay" style="position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:40px 20px;backdrop-filter:blur(4px);overflow-y:auto">
+  <div style="width:700px;max-width:95vw">
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px">
+      <button class="btn btn-ghost" onclick="window.print()" style="background:#fff">Imprimir</button>
+      <button class="btn btn-ghost" onclick="closeFact()" style="background:#fff">Cerrar</button>
+    </div>
+    <div id="fact-body"></div>
+  </div>
+</div>
+
+<style>
+.gsearch-overlay.open,.gsearch-overlay[style*="display:none"]{display:flex!important;}
+#gsearch-overlay.open{display:flex!important;}
+#ficha-overlay.open{display:flex!important;}
+#fact-overlay.open{display:flex!important;}
+.gsearch-item{display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer;border-radius:8px;margin:2px 4px;transition:background .1s;}
+.gsearch-item:hover{background:var(--bg);}
+.gsearch-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--acc);background:var(--acc-light);padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0;}
+@keyframes confettiFall{0%{transform:translateY(-10vh) rotate(0deg);opacity:1;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+[data-theme="dark"]{--bg:#0d1117;--surface:#161b22;--border:#21262d;--border2:#1c2128;--txt:#e6edf3;--txt2:#8b949e;--txt3:#484f58;}
+[data-theme="dark"] .card,[data-theme="dark"] .topbar,[data-theme="dark"] #gsearch-box,[data-theme="dark"] .modal{background:var(--surface)!important;}
+[data-theme="dark"] td{background:transparent!important;border-color:#21262d!important;color:var(--txt)!important;}
+[data-theme="dark"] th{background:#161b22!important;border-color:#30363d!important;}
+[data-theme="dark"] .card-hd{background:#1c2128!important;}
+[data-theme="dark"] input,[data-theme="dark"] select{background:#0d1117!important;color:var(--txt)!important;border-color:#30363d!important;}
+<!-- MOBILE BOTTOM NAV -->
+<nav id="mob-bottom-nav">
+  <button class="mob-nav-btn active" onclick="setView('dashboard',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Inicio
+  </button>
+  <button class="mob-nav-btn" onclick="setView('pacientes',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+    Pacientes
+  </button>
+  <button class="mob-nav-btn" onclick="setView('facturacion',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Facturación
+  </button>
+  <button class="mob-nav-btn" onclick="setView('agenda',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Agenda
+  </button>
+  <button class="mob-nav-btn" onclick="openSearch()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    Buscar
+  </button>
+</nav>
+
+<style>
+@media print{body>*:not(#fact-overlay){display:none!important;}#fact-overlay{position:static!important;background:none!important;padding:0!important;}#fact-overlay>div>div:first-child{display:none!important;}}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);position:fixed;z-index:200;}
+  .sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.5);}
+  .main{margin-left:0;}
+  .content{padding:16px 14px 88px;}
+  #mob-bottom-nav{display:flex!important;}
+  .topbar{padding:0 14px;}
+  .stats-grid{grid-template-columns:1fr 1fr!important;}
+}
+#mob-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--nav);border-top:1px solid rgba(26,95,168,.2);z-index:98;height:calc(60px + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -4px 20px rgba(0,0,0,.3);}
+.mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;background:none;border:none;font-family:inherit;font-size:9px;font-weight:600;color:var(--nav-txt);cursor:pointer;}
+.mob-nav-btn.active{color:var(--acc);}
+.mob-nav-btn svg{width:20px;height:20px;}
+</style>
 </body>
 </html>
