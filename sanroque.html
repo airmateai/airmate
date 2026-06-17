@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>Hospitales San Roque · Panel de Gestión</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --nav:#0d1117;--nav2:#161b22;
+  --nav-txt:rgba(255,255,255,.45);--nav-active:rgba(255,255,255,.06);
+  --acc:#1e6fb5;--acc-d:#155fa0;--acc-light:#e8f1fb;
+  --bg:#f5f7fa;--surface:#ffffff;--border:#e2e8f0;--border2:#f0f4f8;
+  --txt:#0d1117;--txt2:#475569;--txt3:#94a3b8;
+  --green:#16a34a;--green-bg:#f0fdf4;
+  --amber:#d97706;--amber-bg:#fffbeb;
+  --red:#dc2626;--red-bg:#fef2f2;
+  --rad:8px;--shadow:0 1px 3px rgba(0,0,0,.07);--shadow-md:0 4px 12px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);font-size:13.5px;line-height:1.5;}
+button,input,select{font-family:inherit;}
+a{text-decoration:none;color:inherit;}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;z-index:9999;display:flex;background:#0d1117;}
+.login-left{flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:64px;background:#0d1117;border-right:1px solid rgba(255,255,255,.06);}
+.login-right{width:460px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:60px;background:#fff;}
+.login-logo-row{display:flex;align-items:center;gap:12px;margin-bottom:48px;}
+.login-logo-icon{width:42px;height:42px;background:var(--acc);border-radius:10px;display:grid;place-items:center;}
+.login-logo-icon svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.login-brand-name{font-size:18px;font-weight:700;color:#fff;}
+.login-brand-sub{font-size:12px;color:rgba(255,255,255,.35);letter-spacing:.04em;}
+.login-left h1{font-size:32px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:14px;}
+.login-left p{font-size:15px;color:rgba(255,255,255,.45);line-height:1.7;max-width:420px;}
+.login-feat-list{margin-top:36px;display:flex;flex-direction:column;gap:10px;}
+.login-feat{display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,.5);}
+.login-feat-dot{width:5px;height:5px;border-radius:50%;background:var(--acc);flex-shrink:0;}
+.login-box{width:100%;max-width:380px;}
+.login-box h2{font-size:22px;font-weight:700;color:var(--txt);margin-bottom:4px;}
+.login-box-sub{font-size:13px;color:var(--txt2);margin-bottom:28px;}
+.field-group{margin-bottom:14px;}
+.field-label{display:block;font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.field-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--rad);font-size:14px;color:var(--txt);outline:none;transition:border-color .15s;background:#fff;}
+.field-input:focus{border-color:var(--acc);}
+.login-btn{width:100%;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rad);font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;margin-top:6px;}
+.login-btn:hover{background:var(--acc-d);}
+#login-err{color:var(--red);font-size:12px;margin-top:8px;display:none;}
+@media(max-width:720px){.login-left{display:none;}.login-right{width:100%;}}
+
+/* LAYOUT */
+#app{display:none;min-height:100vh;}
+.app-layout{display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{width:236px;flex-shrink:0;background:var(--nav);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+.sidebar-top{padding:18px 14px 14px;border-bottom:1px solid rgba(255,255,255,.06);}
+.sidebar-brand{display:flex;align-items:center;gap:9px;}
+.sidebar-brand-icon{width:30px;height:30px;background:var(--acc);border-radius:7px;display:grid;place-items:center;flex-shrink:0;}
+.sidebar-brand-icon svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.sidebar-brand-name{font-size:14px;font-weight:700;color:#fff;}
+.sidebar-biz{font-size:11px;color:var(--nav-txt);margin-top:5px;padding-left:2px;}
+.sidebar-nav{flex:1;padding:8px 0;overflow-y:auto;}
+.nav-section{padding:14px 16px 4px;font-size:9px;font-weight:600;color:rgba(255,255,255,.2);letter-spacing:.14em;text-transform:uppercase;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 14px;cursor:pointer;font-size:12.5px;color:var(--nav-txt);transition:all .12s;border-radius:6px;margin:1px 6px;border:none;background:transparent;width:calc(100% - 12px);text-align:left;}
+.nav-item:hover{color:#fff;background:var(--nav-active);}
+.nav-item.active{color:#fff;background:rgba(30,111,181,.18);border-left:2px solid var(--acc);}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7;}
+.nav-item.active svg{opacity:1;}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;}
+.sidebar-bottom{padding:12px 14px;border-top:1px solid rgba(255,255,255,.06);}
+.sidebar-user{display:flex;align-items:center;gap:9px;}
+.sidebar-avatar{width:30px;height:30px;border-radius:50%;background:var(--acc);display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.sidebar-user-name{font-size:12px;font-weight:500;color:#fff;}
+.sidebar-user-role{font-size:10px;color:var(--nav-txt);}
+
+/* TOPBAR */
+.main{margin-left:236px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+.topbar{height:54px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50;}
+.topbar-title{font-size:15px;font-weight:600;}
+.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.btn{padding:8px 16px;border-radius:var(--rad);font-size:12.5px;font-weight:500;cursor:pointer;border:none;transition:all .12s;display:inline-flex;align-items:center;gap:7px;}
+.btn-primary{background:var(--acc);color:#fff;}
+.btn-primary:hover{background:var(--acc-d);}
+.btn-secondary{background:var(--surface);color:var(--txt);border:1.5px solid var(--border);}
+.btn-secondary:hover{background:var(--bg);border-color:#cbd5e1;}
+.content{flex:1;padding:24px;}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;box-shadow:var(--shadow);}
+.stat-label{font-size:11px;font-weight:500;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+.stat-val{font-size:26px;font-weight:700;line-height:1;color:var(--txt);}
+.stat-sub{font-size:11px;color:var(--txt3);margin-top:6px;display:flex;align-items:center;gap:4px;}
+.stat-up{color:var(--green);font-weight:600;}
+.stat-dn{color:var(--red);font-weight:600;}
+.stat-accent{color:var(--acc);font-weight:600;}
+
+/* CARD / TABLE */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);overflow:hidden;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border2);}
+.card-title{font-size:13.5px;font-weight:600;}
+.card-sub{font-size:11.5px;color:var(--txt3);margin-top:1px;}
+table{width:100%;border-collapse:collapse;}
+th{padding:10px 16px;text-align:left;font-size:10.5px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border2);white-space:nowrap;}
+td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border2);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr{transition:background .1s;}
+tbody tr:hover{background:var(--bg);}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;}
+.badge-green{background:var(--green-bg);color:var(--green);}
+.badge-amber{background:var(--amber-bg);color:var(--amber);}
+.badge-red{background:var(--red-bg);color:var(--red);}
+.badge-blue{background:var(--acc-light);color:var(--acc);}
+.badge-gray{background:#f1f5f9;color:#64748b;}
+
+/* SEARCH */
+.search-input{padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--rad);font-size:12.5px;color:var(--txt);outline:none;width:220px;transition:border-color .15s;}
+.search-input:focus{border-color:var(--acc);}
+
+/* TWO COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+.three-col{display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+
+/* PANEL LIST */
+.panel-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border2);}
+.panel-row:last-child{border-bottom:none;}
+.panel-row-label{font-size:12.5px;color:var(--txt2);}
+.panel-row-val{font-size:13px;font-weight:600;}
+.panel-body{padding:16px 20px;}
+
+/* AGENDA ITEMS */
+.agenda-item{display:flex;gap:14px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--border2);}
+.agenda-item:last-child{border-bottom:none;}
+.agenda-time{font-size:12px;font-weight:600;color:var(--acc);min-width:48px;}
+.agenda-bar{width:3px;border-radius:2px;height:36px;flex-shrink:0;margin-top:2px;}
+.agenda-name{font-size:13px;font-weight:500;}
+.agenda-detail{font-size:11.5px;color:var(--txt3);margin-top:2px;}
+
+/* AGENTE IA */
+.ia-wrap{max-width:720px;margin:0 auto;}
+.ia-header{text-align:center;margin-bottom:28px;}
+.ia-icon{width:48px;height:48px;background:var(--acc);border-radius:12px;display:grid;place-items:center;margin:0 auto 12px;}
+.ia-icon svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.ia-title{font-size:17px;font-weight:700;margin-bottom:4px;}
+.ia-sub{font-size:13px;color:var(--txt3);}
+.ia-messages{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+.ia-bubble{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-size:13.5px;line-height:1.6;}
+.ia-bubble.user{background:var(--acc-light);border-color:rgba(30,111,181,.15);align-self:flex-end;max-width:85%;}
+.ia-bubble-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:6px;}
+.ia-input-row{display:flex;gap:8px;}
+.ia-input{flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--rad);font-size:13.5px;color:var(--txt);outline:none;transition:border-color .15s;}
+.ia-input:focus{border-color:var(--acc);}
+.ia-send{background:var(--acc);color:#fff;border:none;border-radius:var(--rad);padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;}
+.ia-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.ia-chip{background:var(--surface);border:1.5px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--txt2);cursor:pointer;transition:all .12s;}
+.ia-chip:hover{border-color:var(--acc);color:var(--acc);}
+
+/* FACTURACION RESUMEN */
+.fact-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.fact-kpi-item{background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:14px 16px;}
+
+/* BAR CHART simple */
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:11px;}
+.bar-row:last-child{margin-bottom:0;}
+.bar-label{font-size:12px;color:var(--txt2);min-width:130px;}
+.bar-track{flex:1;height:7px;background:#f1f5f9;border-radius:4px;}
+.bar-fill{height:100%;border-radius:4px;}
+.bar-pct{font-size:11px;font-weight:600;color:var(--txt3);min-width:34px;text-align:right;}
+
+/* NOTIFICACIONES */
+.notif-item{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--border2);}
+.notif-item:last-child{border-bottom:none;}
+.notif-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.notif-text{flex:1;font-size:13px;}
+.notif-time{font-size:11px;color:var(--txt3);white-space:nowrap;}
+
+/* EQUIPO */
+.member-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border2);}
+.member-row:last-child{border-bottom:none;}
+.member-avatar{width:34px;height:34px;border-radius:50%;background:var(--acc);display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:28px;width:500px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.15);}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:4px;}
+.modal-sub{font-size:12.5px;color:var(--txt3);margin-bottom:22px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:22px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--txt);color:#fff;font-size:13px;padding:12px 18px;border-radius:8px;z-index:9999;display:none;box-shadow:var(--shadow-md);}
+
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}.three-col{grid-template-columns:1fr}.sidebar{display:none}.main{margin-left:0}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-left">
+    <div class="login-logo-row">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <div>
+        <div class="login-brand-name">Airmate</div>
+        <div class="login-brand-sub">SISTEMA DE GESTION HOSPITALARIA</div>
+      </div>
+    </div>
+    <h1>Hospitales Universitarios<br>San Roque</h1>
+    <p>Gestión centralizada de pacientes, agenda, facturación e informes clínicos para el grupo hospitalario.</p>
+    <div class="login-feat-list">
+      <div class="login-feat"><div class="login-feat-dot"></div>Gestión de pacientes y expedientes</div>
+      <div class="login-feat"><div class="login-feat-dot"></div>Facturación por aseguradora</div>
+      <div class="login-feat"><div class="login-feat-dot"></div>Agenda médica en tiempo real</div>
+      <div class="login-feat"><div class="login-feat-dot"></div>Informes de calidad y RMA</div>
+      <div class="login-feat"><div class="login-feat-dot"></div>Agente IA integrado</div>
+    </div>
+  </div>
+  <div class="login-right">
+    <div class="login-box">
+      <h2>Acceso al panel</h2>
+      <p class="login-box-sub">Introduzca sus credenciales para continuar</p>
+      <div class="field-group">
+        <label class="field-label">Usuario</label>
+        <input class="field-input" type="text" id="l-user" placeholder="usuario@sanroque.es" value="direccion@sanroque.es">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Contraseña</label>
+        <input class="field-input" type="password" id="l-pass" placeholder="••••••••" value="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="login-btn" onclick="doLogin()">Entrar</button>
+      <div id="login-err">Credenciales incorrectas.</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-brand">
+          <div class="sidebar-brand-icon">
+            <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <div>
+            <div class="sidebar-brand-name">San Roque</div>
+          </div>
+        </div>
+        <div class="sidebar-biz">Panel de gestión · PRO</div>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-section">Principal</div>
+        <button class="nav-item active" onclick="setView('dashboard')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Resumen general
+        </button>
+        <button class="nav-item" onclick="setView('pacientes')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Pacientes
+          <span class="nav-badge">3</span>
+        </button>
+        <button class="nav-item" onclick="setView('agenda')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Agenda
+        </button>
+        <div class="nav-section">Administración</div>
+        <button class="nav-item" onclick="setView('facturacion')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Facturación
+        </button>
+        <button class="nav-item" onclick="setView('informes')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Informes y calidad
+        </button>
+        <div class="nav-section">Sistema</div>
+        <button class="nav-item" onclick="setView('agente')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          Agente IA
+        </button>
+        <button class="nav-item" onclick="setView('notificaciones')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Alertas
+          <span class="nav-badge">5</span>
+        </button>
+        <button class="nav-item" onclick="setView('equipo')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Equipo médico
+        </button>
+      </div>
+      <div class="sidebar-bottom">
+        <div class="sidebar-user">
+          <div class="sidebar-avatar">SS</div>
+          <div>
+            <div class="sidebar-user-name">Sebastián Sansó</div>
+            <div class="sidebar-user-role">Director General</div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title" id="page-title">Resumen general</div>
+        </div>
+        <div class="topbar-actions">
+          <span style="font-size:11.5px;color:var(--txt3)">Martes, 17 de junio de 2026</span>
+          <button class="btn btn-secondary" onclick="setView('agente')">Consultar IA</button>
+          <button class="btn btn-primary" onclick="openModal('nuevo-paciente')">Nuevo paciente</button>
+        </div>
+      </div>
+      <div class="content" id="content"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL NUEVO PACIENTE -->
+<div class="modal-overlay" id="modal-nuevo-paciente">
+  <div class="modal">
+    <div class="modal-title">Nuevo paciente</div>
+    <div class="modal-sub">Registro de ingreso o consulta</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field-group"><label class="field-label">Nombre completo</label><input class="field-input" placeholder="Nombre y apellidos"></div>
+      <div class="field-group"><label class="field-label">Fecha de nacimiento</label><input class="field-input" type="date"></div>
+      <div class="field-group"><label class="field-label">Servicio</label>
+        <select class="field-input"><option>Medicina Interna</option><option>Cardiología</option><option>Oncología</option><option>Traumatología</option><option>Ginecología</option><option>Geriatría</option><option>Neurología</option></select>
+      </div>
+      <div class="field-group"><label class="field-label">Aseguradora</label>
+        <select class="field-input"><option>Adeslas</option><option>Sanitas</option><option>Mapfre</option><option>DKV</option><option>Asisa</option><option>Particular</option></select>
+      </div>
+      <div class="field-group" style="grid-column:1/-1"><label class="field-label">Motivo de ingreso</label><input class="field-input" placeholder="Diagnóstico o motivo de consulta"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('nuevo-paciente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="closeModal('nuevo-paciente');showToast('Paciente registrado correctamente')">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATOS ───────────────────────────────────────────────
+const PACIENTES=[
+  {id:'P-2241',nombre:'Carmen Reyes Díaz',edad:58,servicio:'Cardiología',medico:'Dr. Parra',estado:'Ingresado',ingreso:'17/06/2026',factura:3200,pagado:true,seguro:'Adeslas'},
+  {id:'P-2240',nombre:'José Luis Martín Cabrera',edad:72,servicio:'Medicina Interna',medico:'Dr. Acosta',estado:'Alta pendiente',ingreso:'15/06/2026',factura:1850,pagado:false,seguro:'Sanitas'},
+  {id:'P-2239',nombre:'Ana González Ruiz',edad:45,servicio:'Oncología',medico:'Dr. Lara',estado:'En tratamiento',ingreso:'02/06/2026',factura:6400,pagado:true,seguro:'Mapfre'},
+  {id:'P-2238',nombre:'Miguel Hernández Suárez',edad:63,servicio:'Traumatología',medico:'Dra. Vega',estado:'Revisión',ingreso:'10/06/2026',factura:920,pagado:true,seguro:'DKV'},
+  {id:'P-2237',nombre:'Lucía Pérez Torres',edad:39,servicio:'Ginecología',medico:'Dra. Castro',estado:'Programado',ingreso:'17/06/2026',factura:540,pagado:false,seguro:'Asisa'},
+  {id:'P-2236',nombre:'Roberto Sánchez Medina',edad:81,servicio:'Geriatría',medico:'Dr. Medina',estado:'Ingresado',ingreso:'13/06/2026',factura:4100,pagado:true,seguro:'Particular'},
+];
+const AGENDA=[
+  {hora:'08:30',nombre:'Carmen Reyes Díaz',motivo:'Ecocardiograma',medico:'Dr. Parra',color:'#1e6fb5'},
+  {hora:'09:00',nombre:'Ronda UCI — Medicina Interna',motivo:'5 pacientes ingresados',medico:'Dr. Acosta',color:'#d97706'},
+  {hora:'10:00',nombre:'Ana González Ruiz',motivo:'Sesión radioterapia #8',medico:'Dr. Lara',color:'#7c3aed'},
+  {hora:'11:30',nombre:'Primera consulta — Neurología',motivo:'Paciente nuevo derivado',medico:'Dr. Ruiz',color:'#16a34a'},
+  {hora:'13:00',nombre:'Comisión de Mortalidad',motivo:'Revisión RMA mensual',medico:'Dirección médica',color:'#dc2626'},
+  {hora:'16:00',nombre:'Miguel Hernández Suárez',motivo:'Control postoperatorio',medico:'Dra. Vega',color:'#1e6fb5'},
+  {hora:'17:30',nombre:'Formación interna',motivo:'Codificación diagnóstica — internistas',medico:'Dr. Parra',color:'#16a34a'},
+];
+const FACTURAS=[
+  {ref:'FAC-2026-0891',paciente:'Carmen Reyes Díaz',concepto:'Ingreso + ecocardiograma + medicación',importe:3200,estado:'Cobrada',seguro:'Adeslas',fecha:'15/06/2026'},
+  {ref:'FAC-2026-0890',paciente:'José Luis Martín',concepto:'Ingreso Medicina Interna 6 días',importe:1850,estado:'Pendiente',seguro:'Sanitas',fecha:'16/06/2026'},
+  {ref:'FAC-2026-0889',paciente:'Ana González Ruiz',concepto:'Ciclo radioterapia completo — 10 sesiones',importe:6400,estado:'Cobrada',seguro:'Mapfre',fecha:'12/06/2026'},
+  {ref:'FAC-2026-0888',paciente:'Miguel Hernández Suárez',concepto:'Artroscopia rodilla + anestesia',importe:920,estado:'Cobrada',seguro:'DKV',fecha:'10/06/2026'},
+  {ref:'FAC-2026-0887',paciente:'Lucía Pérez Torres',concepto:'Consulta + pruebas ginecológicas',importe:540,estado:'Pendiente',seguro:'Asisa',fecha:'17/06/2026'},
+  {ref:'FAC-2026-0886',paciente:'Roberto Sánchez Medina',concepto:'Ingreso geriátrico + fisioterapia 5 días',importe:4100,estado:'Cobrada',seguro:'Particular',fecha:'14/06/2026'},
+];
+const EQUIPO=[
+  {nombre:'Dr. Jorge Parra Montiel',rol:'Jefe de Medicina Interna',citas:8,estado:'Activo'},
+  {nombre:'Dr. Pedro Lara Estévez',rol:'Director de Oncología',citas:5,estado:'Activo'},
+  {nombre:'Dra. Carmen Vega Ruiz',rol:'Traumatología y Ortopedia',citas:4,estado:'Activo'},
+  {nombre:'Dr. Luis Acosta Ferreiro',rol:'Medicina Interna',citas:6,estado:'Activo'},
+  {nombre:'Dra. Elena Castro Noda',rol:'Ginecología y Obstetricia',citas:3,estado:'Activo'},
+  {nombre:'Dr. Antonio Medina Torres',rol:'Geriatría',citas:2,estado:'Guardia'},
+];
+
+// ─── NAVEGACIÓN ──────────────────────────────────────────
+function setView(v){
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const idx={dashboard:0,pacientes:1,agenda:2,facturacion:3,informes:4,agente:5,notificaciones:6,equipo:7};
+  const items=document.querySelectorAll('.nav-item');
+  if(items[idx[v]!==undefined?idx[v]:0])items[idx[v]].classList.add('active');
+  const titles={dashboard:'Resumen general',pacientes:'Pacientes',agenda:'Agenda',facturacion:'Facturación',informes:'Informes y calidad',agente:'Agente IA',notificaciones:'Alertas del sistema',equipo:'Equipo médico'};
+  document.getElementById('page-title').textContent=titles[v]||v;
+  const c=document.getElementById('content');
+  c.innerHTML='';
+  ({dashboard:renderDashboard,pacientes:renderPacientes,agenda:renderAgenda,facturacion:renderFacturacion,informes:renderInformes,agente:renderAgente,notificaciones:renderNotificaciones,equipo:renderEquipo}[v]||renderDashboard)(c);
+}
+
+// ─── VISTAS ──────────────────────────────────────────────
+function renderDashboard(c){
+  c.innerHTML=`
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Pacientes activos</div>
+      <div class="stat-val">247</div>
+      <div class="stat-sub"><span class="stat-up">+12%</span>&nbsp;vs. mes anterior</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Facturación junio</div>
+      <div class="stat-val" style="color:var(--acc)">182.400 €</div>
+      <div class="stat-sub"><span class="stat-up">+8.3%</span>&nbsp;vs. mayo</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">RMA actual</div>
+      <div class="stat-val" style="color:var(--green)">0.69</div>
+      <div class="stat-sub"><span class="stat-up">Mínimo histórico</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Citas hoy</div>
+      <div class="stat-val">34</div>
+      <div class="stat-sub"><span style="color:var(--amber);font-weight:600">2 urgentes</span>&nbsp;· 7 pendientes</div>
+    </div>
+  </div>
+  <div class="three-col">
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Últimos pacientes</div></div>
+          <button class="btn btn-secondary" onclick="setView('pacientes')" style="font-size:12px;padding:6px 12px;">Ver todos</button>
+        </div>
+        <table>
+          <thead><tr><th>Paciente</th><th>Servicio</th><th>Estado</th><th>Seguro</th><th>Factura</th></tr></thead>
+          <tbody>
+          ${PACIENTES.slice(0,5).map(p=>`<tr style="cursor:pointer" onclick="setView('pacientes')">
+            <td><div style="font-weight:500">${p.nombre}</div><div style="font-size:11px;color:var(--txt3)">${p.id} · ${p.edad} años</div></td>
+            <td style="color:var(--txt2)">${p.servicio}</td>
+            <td><span class="badge ${estadoBadge(p.estado)}">${p.estado}</span></td>
+            <td style="color:var(--txt3);font-size:12px">${p.seguro}</td>
+            <td style="font-weight:600">${p.factura.toLocaleString('es-ES')} €</td>
+          </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="two-col" style="margin-top:16px">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Por servicio</div></div>
+          <div class="panel-body">
+            ${[['Medicina Interna',38,'#1e6fb5'],['Cardiología',22,'#dc2626'],['Oncología',18,'#7c3aed'],['Traumatología',14,'#d97706'],['Otros',8,'#16a34a']].map(([s,p,c])=>`
+            <div class="bar-row">
+              <div class="bar-label">${s}</div>
+              <div class="bar-track"><div class="bar-fill" style="width:${p}%;background:${c}"></div></div>
+              <div class="bar-pct">${p}%</div>
+            </div>`).join('')}
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Por aseguradora</div></div>
+          <div class="panel-body">
+            ${[['Adeslas','48.200 €'],['Sanitas','36.700 €'],['Mapfre','29.400 €'],['Particular','41.100 €'],['Otras','27.000 €']].map(([s,i])=>`
+            <div class="panel-row"><div class="panel-row-label">${s}</div><div class="panel-row-val" style="color:var(--acc)">${i}</div></div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Agenda — hoy</div></div>
+          <button class="btn btn-secondary" onclick="setView('agenda')" style="font-size:12px;padding:6px 12px;">Completa</button>
+        </div>
+        <div class="panel-body">
+          ${AGENDA.slice(0,6).map(a=>`
+          <div class="agenda-item">
+            <div class="agenda-time">${a.hora}</div>
+            <div class="agenda-bar" style="background:${a.color}"></div>
+            <div>
+              <div class="agenda-name">${a.nombre}</div>
+              <div class="agenda-detail">${a.motivo} · ${a.medico}</div>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-header"><div class="card-title">Ocupación hospitalaria</div></div>
+        <div class="panel-body">
+          <div style="font-size:30px;font-weight:700;color:var(--green)">87%</div>
+          <div style="font-size:12px;color:var(--txt3);margin:4px 0 12px">182 / 210 camas ocupadas</div>
+          <div style="height:8px;background:#f1f5f9;border-radius:4px"><div style="width:87%;height:100%;background:linear-gradient(90deg,var(--green),var(--acc));border-radius:4px"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function estadoBadge(e){
+  return{Ingresado:'badge-amber','Alta pendiente':'badge-red','En tratamiento':'badge-blue',Revisión:'badge-gray',Programado:'badge-gray'}[e]||'badge-gray';
+}
+
+function renderPacientes(c){
+  c.innerHTML=`
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">Pacientes registrados</div><div class="card-sub">${PACIENTES.length} en el sistema</div></div>
+      <div style="display:flex;gap:10px">
+        <input class="search-input" placeholder="Buscar por nombre o servicio…" oninput="filterPacientes(this.value)">
+        <button class="btn btn-primary" onclick="openModal('nuevo-paciente')">Nuevo paciente</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Ref.</th><th>Paciente</th><th>Servicio</th><th>Médico responsable</th><th>Seguro</th><th>Ingreso</th><th>Estado</th><th>Factura</th><th></th></tr></thead>
+      <tbody id="tbody-pacientes">
+        ${PACIENTES.map(rowPaciente).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+function rowPaciente(p){
+  return`<tr>
+    <td style="font-size:11.5px;color:var(--txt3);font-weight:500">${p.id}</td>
+    <td><div style="font-weight:500">${p.nombre}</div><div style="font-size:11px;color:var(--txt3)">${p.edad} años</div></td>
+    <td style="color:var(--txt2)">${p.servicio}</td>
+    <td style="color:var(--txt2);font-size:12.5px">${p.medico}</td>
+    <td>${p.seguro}</td>
+    <td style="color:var(--txt3);font-size:12px">${p.ingreso}</td>
+    <td><span class="badge ${estadoBadge(p.estado)}">${p.estado}</span></td>
+    <td>
+      <div style="font-weight:600">${p.factura.toLocaleString('es-ES')} €</div>
+      <span class="badge ${p.pagado?'badge-green':'badge-amber'}" style="margin-top:3px">${p.pagado?'Cobrado':'Pendiente'}</span>
+    </td>
+    <td><button class="btn btn-secondary" style="font-size:11.5px;padding:5px 10px">Ver ficha</button></td>
+  </tr>`;
+}
+function filterPacientes(q){
+  const rows=PACIENTES.filter(p=>p.nombre.toLowerCase().includes(q.toLowerCase())||p.servicio.toLowerCase().includes(q.toLowerCase()));
+  document.getElementById('tbody-pacientes').innerHTML=rows.map(rowPaciente).join('');
+}
+
+function renderAgenda(c){
+  c.innerHTML=`
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+    <div>
+      <div style="font-size:18px;font-weight:700">Martes, 17 de junio de 2026</div>
+      <div style="font-size:12px;color:var(--txt3);margin-top:2px">34 citas programadas · 7 pendientes de confirmar</div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="btn btn-secondary">Ayer</button>
+      <button class="btn btn-primary">Hoy</button>
+      <button class="btn btn-secondary">Mañana</button>
+      <button class="btn btn-secondary">Nueva cita</button>
+    </div>
+  </div>
+  <div class="three-col">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Citas del día</div></div>
+      ${AGENDA.map(a=>`
+      <div style="display:flex;gap:14px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--border2)">
+        <div style="font-size:12.5px;font-weight:600;color:var(--acc);min-width:48px">${a.hora}</div>
+        <div style="width:3px;height:40px;background:${a.color};border-radius:2px;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">${a.nombre}</div>
+          <div style="font-size:11.5px;color:var(--txt3);margin-top:2px">${a.motivo} · ${a.medico}</div>
+        </div>
+        <button class="btn btn-secondary" style="font-size:11.5px;padding:5px 10px">Gestionar</button>
+      </div>`).join('')}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Resumen del día</div></div>
+        <div class="panel-body">
+          <div class="panel-row"><div class="panel-row-label">Total citas</div><div class="panel-row-val">${AGENDA.length}</div></div>
+          <div class="panel-row"><div class="panel-row-label">Ingresos</div><div class="panel-row-val">3</div></div>
+          <div class="panel-row"><div class="panel-row-label">Altas previstas</div><div class="panel-row-val">2</div></div>
+          <div class="panel-row"><div class="panel-row-label">Urgencias activas</div><div class="panel-row-val" style="color:var(--red)">2</div></div>
+          <div class="panel-row"><div class="panel-row-label">Ocupación</div><div class="panel-row-val" style="color:var(--green)">87%</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Disponibilidad por servicio</div></div>
+        <div class="panel-body">
+          ${[['Medicina Interna','2 camas libres'],['Cardiología','1 cama libre'],['Oncología','Completo'],['Traumatología','3 camas libres'],['Geriatría','1 cama libre']].map(([s,d])=>`
+          <div class="panel-row">
+            <div class="panel-row-label">${s}</div>
+            <div style="font-size:12px;font-weight:500;color:${d==='Completo'?'var(--red)':'var(--green)'}">${d}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderFacturacion(c){
+  const total=FACTURAS.reduce((a,f)=>a+f.importe,0);
+  const cobrado=FACTURAS.filter(f=>f.estado==='Cobrada').reduce((a,f)=>a+f.importe,0);
+  const pendiente=FACTURAS.filter(f=>f.estado==='Pendiente').reduce((a,f)=>a+f.importe,0);
+  c.innerHTML=`
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Total facturado (junio)</div><div class="stat-val" style="color:var(--acc)">${total.toLocaleString('es-ES')} €</div></div>
+    <div class="stat-card"><div class="stat-label">Importe cobrado</div><div class="stat-val" style="color:var(--green)">${cobrado.toLocaleString('es-ES')} €</div></div>
+    <div class="stat-card"><div class="stat-label">Pendiente de cobro</div><div class="stat-val" style="color:var(--amber)">${pendiente.toLocaleString('es-ES')} €</div></div>
+    <div class="stat-card"><div class="stat-label">Facturas este mes</div><div class="stat-val">248</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">Registro de facturas</div></div>
+      <div style="display:flex;gap:10px">
+        <input class="search-input" placeholder="Buscar por paciente o referencia…">
+        <button class="btn btn-secondary">Exportar</button>
+        <button class="btn btn-primary">Nueva factura</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Referencia</th><th>Paciente</th><th>Concepto</th><th>Aseguradora</th><th>Importe</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        ${FACTURAS.map(f=>`<tr>
+          <td style="font-size:11.5px;color:var(--txt3);font-weight:600">${f.ref}</td>
+          <td style="font-weight:500">${f.paciente}</td>
+          <td style="color:var(--txt2);font-size:12.5px">${f.concepto}</td>
+          <td>${f.seguro}</td>
+          <td style="font-weight:700;color:var(--acc)">${f.importe.toLocaleString('es-ES')} €</td>
+          <td style="color:var(--txt3);font-size:12px">${f.fecha}</td>
+          <td><span class="badge ${f.estado==='Cobrada'?'badge-green':'badge-amber'}">${f.estado}</span></td>
+          <td><button class="btn btn-secondary" style="font-size:11.5px;padding:5px 10px">Ver</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function renderInformes(c){
+  c.innerHTML=`
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">RMA 2024</div><div class="stat-val" style="color:var(--red)">1.54</div><div class="stat-sub">Referencia anterior</div></div>
+    <div class="stat-card"><div class="stat-label">RMA 2025</div><div class="stat-val" style="color:var(--amber)">1.17</div><div class="stat-sub"><span class="stat-up">Mejora sostenida</span></div></div>
+    <div class="stat-card"><div class="stat-label">RMA sept–dic 2025</div><div class="stat-val" style="color:var(--acc)">0.72</div><div class="stat-sub">Por debajo de 1 por primera vez</div></div>
+    <div class="stat-card"><div class="stat-label">RMA actual</div><div class="stat-val" style="color:var(--green)">0.69</div><div class="stat-sub"><span class="stat-up">Mínimo histórico</span></div></div>
+  </div>
+  <div class="three-col">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Evolución del RMA — Hospitales San Roque</div></div>
+      <div class="panel-body">
+        <div style="display:flex;gap:6px;align-items:flex-end;height:160px;margin-bottom:10px">
+          ${[['2024',1.54,100,'#dc2626'],['Q1 25',1.28,83,'#d97706'],['Q2 25',1.17,76,'#d97706'],['Sep',0.85,55,'#1e6fb5'],['Oct',0.78,50,'#1e6fb5'],['Nov',0.72,46,'#1e6fb5'],['Dic',0.71,46,'#16a34a'],['Ene',0.70,45,'#16a34a'],['Jun',0.69,44,'#16a34a']].map(([l,v,h,col])=>`
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="font-size:9.5px;font-weight:700;color:${col}">${v}</div>
+            <div style="width:100%;height:${h}px;background:${col};border-radius:3px 3px 0 0;opacity:.8"></div>
+            <div style="font-size:9px;color:var(--txt3)">${l}</div>
+          </div>`).join('')}
+        </div>
+        <div style="font-size:11.5px;color:var(--txt3);text-align:center">Razón de Mortalidad Ajustada · objetivo &lt; 1.0 · ambos hospitales del grupo</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Satisfacción del paciente</div></div>
+        <div class="panel-body">
+          <div style="font-size:34px;font-weight:700;color:var(--green)">92.4%</div>
+          <div style="font-size:12px;color:var(--txt3);margin:4px 0 10px">ISG · Monitor Reputación Sanitario 2025</div>
+          <div style="height:7px;background:#f1f5f9;border-radius:4px"><div style="width:92%;height:100%;background:var(--green);border-radius:4px"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Posición nacional</div></div>
+        <div class="panel-body">
+          <div style="font-size:13.5px;color:var(--txt2);line-height:1.7">San Roque Las Palmas y San Roque Maspalomas figuran en el <strong>Top 100 hospitales privados de España</strong>, siendo los únicos de la provincia de Las Palmas en el ranking.</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderAgente(c){
+  c.innerHTML=`
+  <div class="ia-wrap">
+    <div class="ia-header">
+      <div class="ia-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <div class="ia-title">Asistente IA — San Roque</div>
+      <div class="ia-sub">Acceso directo a datos de pacientes, facturación y calidad asistencial</div>
+    </div>
+    <div class="ia-messages" id="ia-msgs">
+      <div class="ia-bubble">
+        <div class="ia-bubble-label">Asistente</div>
+        Buenos días, Director Sansó. Hoy tiene 34 citas programadas y la ocupación está al 87%. El RMA actual es 0.69, mínimo histórico del grupo. Hay 2 facturas pendientes de cobro por un total de 2.390 €. ¿En qué puede ayudarle?
+      </div>
+    </div>
+    <div class="ia-input-row">
+      <input class="ia-input" id="ia-inp" placeholder="Consulte sobre pacientes, facturación, agenda, calidad…" onkeydown="if(event.key==='Enter')iaSend()">
+      <button class="ia-send" onclick="iaSend()">Enviar</button>
+    </div>
+    <div class="ia-chips">
+      ${['¿Cuánto hemos facturado este mes?','¿Qué pacientes tienen alta pendiente?','RMA comparado con el año anterior','¿Qué citas hay esta tarde?','Facturas pendientes de cobro'].map(s=>`<div class="ia-chip" onclick="document.getElementById('ia-inp').value='${s}';iaSend()">${s}</div>`).join('')}
+    </div>
+  </div>`;
+}
+
+const IA_RESP={
+  'facturado':'Junio lleva 182.400 € facturados, un 8.3% más que mayo. Adeslas representa el 26% del total con 48.200 €. Quedan 2.390 € pendientes de cobro en dos facturas.',
+  'alta pendiente':'José Luis Martín Cabrera (P-2240, Medicina Interna, Sanitas) lleva 28 horas con alta pendiente. La factura de 1.850 € está sin procesar.',
+  'rma':'El RMA actual es 0.69, mínimo histórico del grupo. En 2024 era 1.54. La mejora sostenida se inició en septiembre de 2025 con el protocolo de codificación diagnóstica. Llevamos 12 meses consecutivos por debajo de 1.0.',
+  'tarde':'Esta tarde: 16:00 control postoperatorio de Miguel Hernández Suárez con Dra. Vega, y 17:30 sesión de formación en codificación diagnóstica con el equipo de internistas.',
+  'pendientes':'Dos facturas pendientes: José Luis Martín 1.850 € (Sanitas, 16/06) y Lucía Pérez Torres 540 € (Asisa, 17/06). Total: 2.390 €.',
+};
+function iaSend(){
+  const inp=document.getElementById('ia-inp');
+  const q=inp.value.trim();if(!q)return;
+  const msgs=document.getElementById('ia-msgs');
+  msgs.innerHTML+=`<div class="ia-bubble user"><div class="ia-bubble-label" style="text-align:right">Usted</div>${q}</div>`;
+  inp.value='';
+  const key=Object.keys(IA_RESP).find(k=>q.toLowerCase().includes(k));
+  const resp=IA_RESP[key]||'Analizando los datos del sistema… Con 247 pacientes activos, facturación de 182.400 € en junio y RMA de 0.69. ¿Puede concretar su consulta?';
+  setTimeout(()=>{
+    msgs.innerHTML+=`<div class="ia-bubble"><div class="ia-bubble-label">Asistente</div>${resp}</div>`;
+    msgs.scrollTop=msgs.scrollHeight;
+  },500);
+}
+
+function renderNotificaciones(c){
+  const notifs=[
+    {color:'var(--red)',texto:'José Luis Martín Cabrera lleva 28 horas con alta pendiente. Factura sin procesar.',tiempo:'Hace 2 horas'},
+    {color:'var(--amber)',texto:'2 facturas pendientes de cobro — total 2.390 €.',tiempo:'Hace 3 horas'},
+    {color:'var(--acc)',texto:'Comisión de Mortalidad programada hoy a las 13:00 — RMA a revisar.',tiempo:'Hoy 08:00'},
+    {color:'var(--green)',texto:'Ana González Ruiz completó sesión de radioterapia número 8. Quedan 2 sesiones.',tiempo:'Hoy 10:30'},
+    {color:'#7c3aed',texto:'Ocupación al 87%. Alta prevista de 2 pacientes esta tarde.',tiempo:'Ayer 20:00'},
+  ];
+  c.innerHTML=`
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">Alertas activas</div><div class="card-sub">${notifs.length} notificaciones pendientes</div></div>
+      <button class="btn btn-secondary">Marcar todas como leídas</button>
+    </div>
+    <div class="panel-body">
+      ${notifs.map(n=>`
+      <div class="notif-item">
+        <div class="notif-dot" style="background:${n.color}"></div>
+        <div class="notif-text">${n.texto}</div>
+        <div class="notif-time">${n.tiempo}</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderEquipo(c){
+  c.innerHTML=`
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">Equipo médico</div><div class="card-sub">${EQUIPO.length} profesionales activos</div></div>
+      <button class="btn btn-primary">Añadir profesional</button>
+    </div>
+    <div class="panel-body">
+      ${EQUIPO.map(e=>`
+      <div class="member-row">
+        <div class="member-avatar">${e.nombre.split(' ').slice(-2).map(n=>n[0]).join('')}</div>
+        <div style="flex:1">
+          <div style="font-weight:500;font-size:13.5px">${e.nombre}</div>
+          <div style="font-size:12px;color:var(--txt3);margin-top:1px">${e.rol}</div>
+        </div>
+        <span class="badge ${e.estado==='Activo'?'badge-green':'badge-amber'}">${e.estado}</span>
+        <div style="font-size:12.5px;color:var(--txt2);min-width:80px;text-align:right">${e.citas} citas hoy</div>
+        <button class="btn btn-secondary" style="font-size:11.5px;padding:5px 10px;margin-left:10px">Ver agenda</button>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ─── UTILIDADES ──────────────────────────────────────────
+function doLogin(){
+  const u=document.getElementById('l-user').value;
+  const p=document.getElementById('l-pass').value;
+  if(!u||!p){document.getElementById('login-err').style.display='block';return;}
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  setView('dashboard');
+}
+function openModal(id){document.getElementById('modal-'+id).classList.add('open');}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('open');}
+document.addEventListener('click',e=>{if(e.target.classList.contains('modal-overlay'))e.target.classList.remove('open');});
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
+document.getElementById('l-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+</script>
+</body>
+</html>
