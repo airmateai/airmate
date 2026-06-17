@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airmate PRO — Demo Clínica Privada</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07090f;--bg2:#0d1018;--bg3:#131620;--bg4:#181c28;
+  --blue:#3b82f6;--blue2:#60a5fa;--blue3:#1d4ed8;
+  --green:#10b981;--red:#ef4444;--amber:#f59e0b;--purple:#8b5cf6;
+  --white:#f8fafc;--muted:rgba(248,250,252,.45);--muted2:rgba(248,250,252,.2);
+  --border:rgba(59,130,246,.15);--border2:rgba(59,130,246,.07);
+}
+body{background:var(--bg);color:var(--white);font-family:'Inter',sans-serif;display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:230px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:10px}
+.sidebar-logo .logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--blue3),var(--blue));border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0}
+.sidebar-logo .logo-text{font-size:15px;font-weight:700;color:var(--white)}
+.sidebar-logo .logo-sub{font-size:10px;color:var(--muted);letter-spacing:.06em}
+.sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-section{padding:6px 16px 4px;font-size:9px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-top:10px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .15s;border-left:2px solid transparent;user-select:none}
+.nav-item:hover{color:var(--white);background:rgba(59,130,246,.06)}
+.nav-item.active{color:var(--blue2);background:rgba(59,130,246,.1);border-left-color:var(--blue)}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px}
+.sidebar-bottom{padding:16px;border-top:1px solid var(--border2)}
+.sidebar-user{display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue3),var(--blue));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:58px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;flex-shrink:0}
+.topbar-title{font-size:16px;font-weight:600;flex:1}
+.topbar-badge{background:linear-gradient(135deg,var(--blue3),var(--blue));color:#fff;font-size:10px;font-weight:700;padding:3px 12px;border-radius:20px;letter-spacing:.06em}
+.btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-blue{background:linear-gradient(135deg,var(--blue3),var(--blue));color:#fff}
+.btn-blue:hover{opacity:.9;transform:translateY(-1px)}
+.btn-ghost{background:rgba(59,130,246,.08);color:var(--blue2);border:1px solid var(--border)}
+.content{flex:1;overflow-y:auto;padding:24px}
+
+/* TABS */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border2);margin-bottom:24px}
+.tab{padding:10px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.tab:hover{color:var(--white)}
+.tab.active{color:var(--blue2);border-bottom-color:var(--blue)}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.stat-val{font-size:28px;font-weight:700;line-height:1}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:6px}
+.stat-up{color:var(--green)}
+.stat-down{color:var(--red)}
+
+/* TABLE */
+.table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.table-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border2)}
+.table-title{font-size:14px;font-weight:600}
+.search{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;color:var(--white);outline:none;width:220px;font-family:'Inter',sans-serif}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 16px;text-align:left;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid var(--border2)}
+td{padding:13px 16px;font-size:13px;border-bottom:1px solid var(--border2)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(59,130,246,.04)}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:rgba(16,185,129,.12);color:var(--green)}
+.badge-amber{background:rgba(245,158,11,.12);color:var(--amber)}
+.badge-red{background:rgba(239,68,68,.12);color:var(--red)}
+.badge-blue{background:rgba(59,130,246,.12);color:var(--blue2)}
+.badge-purple{background:rgba(139,92,246,.12);color:var(--purple)}
+
+/* PANELS */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px}
+.panel-title{font-size:13px;font-weight:600;margin-bottom:16px;color:var(--muted)}
+
+/* FACTURACION */
+.fact-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border2)}
+.fact-row:last-child{border-bottom:none}
+.fact-concept{font-size:13px}
+.fact-amount{font-size:14px;font-weight:700;color:var(--blue2)}
+.fact-status{font-size:11px;margin-top:3px;color:var(--muted)}
+
+/* AGENDA */
+.agenda-slot{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid var(--border2);align-items:flex-start}
+.agenda-slot:last-child{border-bottom:none}
+.agenda-time{font-size:12px;font-weight:600;color:var(--blue2);min-width:52px}
+.agenda-info{flex:1}
+.agenda-name{font-size:13px;font-weight:500}
+.agenda-detail{font-size:11px;color:var(--muted);margin-top:2px}
+.agenda-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+
+/* AGENTE IA */
+.ia-bubble{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;font-size:13px;line-height:1.6;position:relative}
+.ia-bubble.user{background:rgba(59,130,246,.08);border-color:rgba(59,130,246,.2);text-align:right}
+.ia-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;color:var(--muted)}
+.ia-input-row{display:flex;gap:8px;margin-top:12px}
+.ia-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:10px 14px;font-size:13px;color:var(--white);outline:none;font-family:'Inter',sans-serif}
+.ia-send{background:linear-gradient(135deg,var(--blue3),var(--blue));color:#fff;border:none;border-radius:9px;padding:10px 18px;font-size:13px;cursor:pointer;font-weight:600}
+
+/* KPI bar */
+.kpi-bar{display:flex;gap:4px;margin-top:8px}
+.kpi-seg{height:6px;border-radius:3px}
+
+/* NOTIF */
+.notif{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border2);align-items:flex-start}
+.notif:last-child{border-bottom:none}
+.notif-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.notif-text{font-size:13px;flex:1}
+.notif-time{font-size:11px;color:var(--muted);white-space:nowrap}
+
+/* MOBILE HIDDEN */
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}.sidebar{display:none}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">A</div>
+    <div>
+      <div class="logo-text">Airmate PRO</div>
+      <div class="logo-sub">San Roque · Demo</div>
+    </div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="setView('dashboard')">
+      <span>📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="setView('pacientes')">
+      <span>👥</span> Pacientes <span class="nav-badge">3</span>
+    </div>
+    <div class="nav-item" onclick="setView('agenda')">
+      <span>📅</span> Agenda
+    </div>
+    <div class="nav-section">Gestión</div>
+    <div class="nav-item" onclick="setView('facturacion')">
+      <span>💶</span> Facturación
+    </div>
+    <div class="nav-item" onclick="setView('informes')">
+      <span>📈</span> Informes
+    </div>
+    <div class="nav-section">IA</div>
+    <div class="nav-item" onclick="setView('agente')">
+      <span>🤖</span> Agente IA
+    </div>
+    <div class="nav-item" onclick="setView('notificaciones')">
+      <span>🔔</span> Alertas <span class="nav-badge">5</span>
+    </div>
+    <div class="nav-section">Configuración</div>
+    <div class="nav-item" onclick="setView('equipo')">
+      <span>👤</span> Equipo
+    </div>
+    <div class="nav-item" onclick="setView('ajustes')">
+      <span>⚙️</span> Ajustes
+    </div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="sidebar-user">
+      <div class="avatar">S</div>
+      <div>
+        <div style="font-size:13px;font-weight:500">Sebastián S.</div>
+        <div style="font-size:11px;color:var(--muted)">Director General</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <span class="topbar-badge">PRO</span>
+    <div style="font-size:12px;color:var(--muted);margin-left:8px">Hospitales San Roque · Las Palmas</div>
+    <div style="margin-left:auto;display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="setView('agente')">🤖 Preguntar a IA</button>
+      <button class="btn btn-blue" onclick="setView('pacientes')">+ Nuevo paciente</button>
+    </div>
+  </div>
+
+  <div class="content" id="content">
+    <!-- renderizado por JS -->
+  </div>
+</div>
+
+<script>
+let currentView='dashboard';
+
+const PACIENTES=[
+  {id:'P-2241',nombre:'Carmen Reyes Díaz',edad:58,servicio:'Cardiología',medico:'Dr. Parra',estado:'Ingresado',ultima:'Hoy 08:30',factura:3200,pagado:true,seguro:'Adeslas'},
+  {id:'P-2240',nombre:'José Luis Martín',edad:72,servicio:'Medicina Interna',medico:'Dr. Acosta',estado:'Alta pendiente',ultima:'Ayer 14:00',factura:1850,pagado:false,seguro:'Sanitas'},
+  {id:'P-2239',nombre:'Ana González Ruiz',edad:45,servicio:'Oncología',medico:'Dr. Lara',estado:'En tratamiento',ultima:'Hoy 10:00',factura:6400,pagado:true,seguro:'Mapfre'},
+  {id:'P-2238',nombre:'Miguel Hernández',edad:63,servicio:'Traumatología',medico:'Dra. Vega',estado:'Revisión',ultima:'16/06 09:15',factura:920,pagado:true,seguro:'DKV'},
+  {id:'P-2237',nombre:'Lucía Pérez Torres',edad:39,servicio:'Ginecología',medico:'Dra. Castro',estado:'Programado',ultima:'15/06 16:30',factura:540,pagado:false,seguro:'Asisa'},
+  {id:'P-2236',nombre:'Roberto Sánchez',edad:81,servicio:'Geriatría',medico:'Dr. Medina',estado:'Ingresado',ultima:'Hoy 07:45',factura:4100,pagado:true,seguro:'Particular'},
+];
+
+const AGENDA_HOY=[
+  {hora:'08:30',nombre:'Carmen Reyes Díaz',motivo:'Ecocardiograma',medico:'Dr. Parra',color:'var(--blue)'},
+  {hora:'09:00',nombre:'Revisión UCI — Ronda',motivo:'5 pacientes · Medicina Interna',medico:'Dr. Acosta',color:'var(--amber)'},
+  {hora:'10:00',nombre:'Ana González Ruiz',motivo:'Sesión radioterapia #8',medico:'Dr. Lara',color:'var(--purple)'},
+  {hora:'11:30',nombre:'Consulta nueva · Neurología',motivo:'Primera visita',medico:'Dr. Ruiz',color:'var(--green)'},
+  {hora:'13:00',nombre:'Comisión de Mortalidad',motivo:'Revisión RMA mensual',medico:'Dirección médica',color:'var(--red)'},
+  {hora:'16:00',nombre:'Miguel Hernández',motivo:'Revisión postoperatorio',medico:'Dra. Vega',color:'var(--blue)'},
+  {hora:'17:30',nombre:'Sesión formación',motivo:'Codificación diagnóstica — equipo internistas',medico:'Dr. Parra',color:'var(--green)'},
+];
+
+const FACTURAS=[
+  {ref:'FAC-2026-0891',paciente:'Carmen Reyes Díaz',concepto:'Ingreso + ecocardiograma + medicación',importe:3200,estado:'Cobrada',seguro:'Adeslas',fecha:'15/06/2026'},
+  {ref:'FAC-2026-0890',paciente:'José Luis Martín',concepto:'Ingreso Medicina Interna 6 días',importe:1850,estado:'Pendiente',seguro:'Sanitas',fecha:'16/06/2026'},
+  {ref:'FAC-2026-0889',paciente:'Ana González Ruiz',concepto:'Ciclo radioterapia completo (10 sesiones)',importe:6400,estado:'Cobrada',seguro:'Mapfre',fecha:'12/06/2026'},
+  {ref:'FAC-2026-0888',paciente:'Miguel Hernández',concepto:'Artroscopia rodilla + anestesia',importe:920,estado:'Cobrada',seguro:'DKV',fecha:'10/06/2026'},
+  {ref:'FAC-2026-0887',paciente:'Lucía Pérez Torres',concepto:'Consulta + pruebas ginecológicas',importe:540,estado:'Pendiente',seguro:'Asisa',fecha:'17/06/2026'},
+  {ref:'FAC-2026-0886',paciente:'Roberto Sánchez',concepto:'Ingreso geriátrico + fisioterapia',importe:4100,estado:'Cobrada',seguro:'Particular',fecha:'14/06/2026'},
+];
+
+function setView(v){
+  currentView=v;
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const map={dashboard:0,pacientes:1,agenda:2,facturacion:3,informes:4,agente:5,notificaciones:6,equipo:7,ajustes:8};
+  document.querySelectorAll('.nav-item')[map[v]||0].classList.add('active');
+  const titles={dashboard:'Dashboard',pacientes:'Pacientes',agenda:'Agenda',facturacion:'Facturación',informes:'Informes',agente:'Agente IA',notificaciones:'Notificaciones',equipo:'Equipo',ajustes:'Ajustes'};
+  document.getElementById('page-title').textContent=titles[v]||v;
+  const c=document.getElementById('content');
+  c.innerHTML='';
+  if(v==='dashboard')renderDashboard(c);
+  else if(v==='pacientes')renderPacientes(c);
+  else if(v==='agenda')renderAgenda(c);
+  else if(v==='facturacion')renderFacturacion(c);
+  else if(v==='informes')renderInformes(c);
+  else if(v==='agente')renderAgente(c);
+  else if(v==='notificaciones')renderNotificaciones(c);
+  else if(v==='equipo')renderEquipo(c);
+  else if(v==='ajustes')renderAjustes(c);
+}
+
+function renderDashboard(c){
+  c.innerHTML=`
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Pacientes activos</div>
+      <div class="stat-val">247</div>
+      <div class="stat-sub"><span class="stat-up">↑ 12%</span> vs mes anterior</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Facturación junio</div>
+      <div class="stat-val" style="color:var(--blue2)">€182.400</div>
+      <div class="stat-sub"><span class="stat-up">↑ 8.3%</span> vs mayo</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">RMA actual</div>
+      <div class="stat-val" style="color:var(--green)">0.69</div>
+      <div class="stat-sub"><span class="stat-up">↓ Mejora</span> desde 1.54 en 2024</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Citas hoy</div>
+      <div class="stat-val">34</div>
+      <div class="stat-sub">7 pendientes · <span style="color:var(--amber)">2 urgentes</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active">Actividad reciente</div>
+    <div class="tab">Alertas IA</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="table-title">Últimos pacientes</div>
+        <button class="btn btn-ghost" onclick="setView('pacientes')">Ver todos →</button>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Paciente</th><th>Servicio</th><th>Estado</th><th>Seguro</th><th>Factura</th>
+        </tr></thead>
+        <tbody>
+          ${PACIENTES.slice(0,5).map(p=>`<tr onclick="setView('pacientes')" style="cursor:pointer">
+            <td><div style="font-weight:500">${p.nombre}</div><div style="font-size:11px;color:var(--muted)">${p.id} · ${p.edad} años</div></td>
+            <td>${p.servicio}</td>
+            <td><span class="badge ${p.estado==='Ingresado'?'badge-amber':p.estado==='Alta pendiente'?'badge-red':p.estado==='En tratamiento'?'badge-blue':'badge-green'}">${p.estado}</span></td>
+            <td style="font-size:12px;color:var(--muted)">${p.seguro}</td>
+            <td style="font-weight:600;color:var(--blue2)">€${p.factura.toLocaleString()}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Agenda de hoy</div>
+      ${AGENDA_HOY.slice(0,5).map(a=>`
+        <div class="agenda-slot">
+          <div class="agenda-time">${a.hora}</div>
+          <div class="agenda-dot" style="background:${a.color}"></div>
+          <div class="agenda-info">
+            <div class="agenda-name">${a.nombre}</div>
+            <div class="agenda-detail">${a.motivo}</div>
+          </div>
+        </div>
+      `).join('')}
+      <button class="btn btn-ghost" style="width:100%;margin-top:12px" onclick="setView('agenda')">Ver agenda completa →</button>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-title">Distribución por servicio</div>
+      ${[['Medicina Interna',38,'var(--blue)'],['Cardiología',22,'var(--red)'],['Oncología',18,'var(--purple)'],['Traumatología',14,'var(--amber)'],['Otros',8,'var(--green)']].map(([s,p,c])=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:13px">${s}</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:120px;height:6px;background:var(--bg4);border-radius:3px">
+              <div style="width:${p}%;height:100%;border-radius:3px;background:${c}"></div>
+            </div>
+            <div style="font-size:12px;font-weight:600;color:${c};min-width:28px;text-align:right">${p}%</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="panel">
+      <div class="panel-title">Facturación por aseguradora</div>
+      ${[['Adeslas','€48.200','badge-blue'],['Sanitas','€36.700','badge-purple'],['Mapfre','€29.400','badge-green'],['Particular','€41.100','badge-amber'],['Otras','€27.000','badge-red']].map(([s,i,b])=>`
+        <div class="fact-row">
+          <div><div class="fact-concept">${s}</div></div>
+          <div><span class="badge ${b}">${i}</span></div>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+function renderPacientes(c){
+  c.innerHTML=`
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-title">Pacientes (${PACIENTES.length})</div>
+      <div style="display:flex;gap:10px">
+        <input class="search" placeholder="Buscar paciente, servicio…">
+        <button class="btn btn-blue">+ Nuevo paciente</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Ref.</th><th>Paciente</th><th>Servicio</th><th>Médico</th><th>Seguro</th><th>Estado</th><th>Factura</th><th>Acción</th>
+      </tr></thead>
+      <tbody>
+        ${PACIENTES.map(p=>`<tr>
+          <td style="font-size:11px;color:var(--muted)">${p.id}</td>
+          <td><div style="font-weight:500">${p.nombre}</div><div style="font-size:11px;color:var(--muted)">${p.edad} años · Última: ${p.ultima}</div></td>
+          <td>${p.servicio}</td>
+          <td style="font-size:12px;color:var(--muted)">${p.medico}</td>
+          <td>${p.seguro}</td>
+          <td><span class="badge ${p.estado==='Ingresado'?'badge-amber':p.estado==='Alta pendiente'?'badge-red':p.estado==='En tratamiento'?'badge-blue':p.estado==='Revisión'?'badge-purple':'badge-green'}">${p.estado}</span></td>
+          <td><div style="font-weight:600;color:var(--blue2)">€${p.factura.toLocaleString()}</div><div style="font-size:10px;margin-top:2px"><span class="badge ${p.pagado?'badge-green':'badge-amber'}">${p.pagado?'Cobrado':'Pendiente'}</span></div></td>
+          <td><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px">Ver ficha</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function renderAgenda(c){
+  c.innerHTML=`
+  <div style="display:flex;gap:10px;margin-bottom:20px;align-items:center">
+    <div style="font-size:20px;font-weight:700">Martes, 17 de junio de 2026</div>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="btn btn-ghost">‹ Ayer</button>
+      <button class="btn btn-blue">Hoy</button>
+      <button class="btn btn-ghost">Mañana ›</button>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="table-title">Citas del día — ${AGENDA_HOY.length} programadas</div>
+        <button class="btn btn-blue">+ Nueva cita</button>
+      </div>
+      ${AGENDA_HOY.map(a=>`
+        <div style="display:flex;gap:16px;padding:14px 20px;border-bottom:1px solid var(--border2);align-items:center">
+          <div style="font-size:13px;font-weight:700;color:var(--blue2);min-width:52px">${a.hora}</div>
+          <div style="width:3px;height:40px;border-radius:2px;background:${a.color};flex-shrink:0"></div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500">${a.nombre}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">${a.motivo} · ${a.medico}</div>
+          </div>
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px">Gestionar</button>
+        </div>
+      `).join('')}
+    </div>
+    <div>
+      <div class="panel" style="margin-bottom:16px">
+        <div class="panel-title">Resumen del día</div>
+        <div class="fact-row"><div class="fact-concept">Total citas</div><div class="fact-amount">${AGENDA_HOY.length}</div></div>
+        <div class="fact-row"><div class="fact-concept">Ingresos</div><div class="fact-amount">3</div></div>
+        <div class="fact-row"><div class="fact-concept">Altas previstas</div><div class="fact-amount">2</div></div>
+        <div class="fact-row"><div class="fact-concept">Urgencias</div><div class="fact-amount" style="color:var(--red)">2</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Ocupación hospitalaria</div>
+        <div style="font-size:32px;font-weight:700;color:var(--green)">87%</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">182 / 210 camas ocupadas</div>
+        <div style="margin-top:12px;height:8px;background:var(--bg4);border-radius:4px">
+          <div style="width:87%;height:100%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:4px"></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderFacturacion(c){
+  const total=FACTURAS.reduce((a,f)=>a+f.importe,0);
+  const cobrado=FACTURAS.filter(f=>f.estado==='Cobrada').reduce((a,f)=>a+f.importe,0);
+  const pendiente=FACTURAS.filter(f=>f.estado==='Pendiente').reduce((a,f)=>a+f.importe,0);
+  c.innerHTML=`
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Total facturado</div><div class="stat-val" style="color:var(--blue2)">€${total.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label">Cobrado</div><div class="stat-val" style="color:var(--green)">€${cobrado.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label">Pendiente</div><div class="stat-val" style="color:var(--amber)">€${pendiente.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label">Facturas este mes</div><div class="stat-val">248</div></div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-title">Facturas recientes</div>
+      <div style="display:flex;gap:10px">
+        <input class="search" placeholder="Buscar factura, paciente…">
+        <button class="btn btn-blue">+ Nueva factura</button>
+        <button class="btn btn-ghost">⬇ Exportar</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Referencia</th><th>Paciente</th><th>Concepto</th><th>Aseguradora</th><th>Importe</th><th>Fecha</th><th>Estado</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${FACTURAS.map(f=>`<tr>
+          <td style="font-size:11px;color:var(--muted);font-weight:600">${f.ref}</td>
+          <td style="font-weight:500">${f.paciente}</td>
+          <td style="font-size:12px;color:var(--muted)">${f.concepto}</td>
+          <td>${f.seguro}</td>
+          <td style="font-weight:700;color:var(--blue2)">€${f.importe.toLocaleString()}</td>
+          <td style="font-size:12px;color:var(--muted)">${f.fecha}</td>
+          <td><span class="badge ${f.estado==='Cobrada'?'badge-green':'badge-amber'}">${f.estado}</span></td>
+          <td><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px">Ver</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function renderInformes(c){
+  c.innerHTML=`
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">RMA 2024</div><div class="stat-val" style="color:var(--red)">1.54</div><div class="stat-sub">Antes de la mejora</div></div>
+    <div class="stat-card"><div class="stat-label">RMA 2025 completo</div><div class="stat-val" style="color:var(--amber)">1.17</div><div class="stat-sub">↓ Mejora significativa</div></div>
+    <div class="stat-card"><div class="stat-label">RMA Sept–Dic 2025</div><div class="stat-val" style="color:var(--blue2)">0.72</div><div class="stat-sub">↓ Bajo 1 por primera vez</div></div>
+    <div class="stat-card"><div class="stat-label">RMA actual</div><div class="stat-val" style="color:var(--green)">0.69</div><div class="stat-sub"><span class="stat-up">↓ Mínimo histórico</span></div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-top:4px">
+    <div class="panel">
+      <div class="panel-title">Evolución RMA — Hospital San Roque Maspalomas</div>
+      <div style="display:flex;gap:8px;align-items:flex-end;height:140px;margin:20px 0 8px">
+        ${[['2024',1.54,80,'var(--red)'],['Q1 25',1.28,66,'var(--amber)'],['Q2 25',1.17,60,'var(--amber)'],['Sept',0.85,44,'var(--blue2)'],['Oct',0.78,40,'var(--blue2)'],['Nov',0.72,37,'var(--blue2)'],['Dic',0.71,36,'var(--blue)'],['Ene 26',0.70,36,'var(--green)'],['Feb 26',0.69,35,'var(--green)']].map(([l,v,h,col])=>`
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="font-size:9px;font-weight:700;color:${col}">${v}</div>
+            <div style="width:100%;height:${h}px;background:${col};border-radius:4px 4px 0 0;opacity:.85"></div>
+            <div style="font-size:9px;color:var(--muted);text-align:center">${l}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="font-size:11px;color:var(--muted);text-align:center">Razón de Mortalidad Ajustada — objetivo &lt;1.0</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="panel">
+        <div class="panel-title">Satisfacción del paciente</div>
+        <div style="font-size:36px;font-weight:700;color:var(--green)">92.4%</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">ISG · Monitor Reputación Sanitario</div>
+        <div style="margin-top:10px;height:6px;background:var(--bg4);border-radius:3px"><div style="width:92%;height:100%;background:var(--green);border-radius:3px"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Top 100 hospitales privados</div>
+        <div style="font-size:13px;line-height:1.7">San Roque Las Palmas y San Roque Maspalomas — <strong style="color:var(--blue2)">únicos de la provincia</strong> en el ranking nacional.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderAgente(c){
+  c.innerHTML=`
+  <div style="max-width:760px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="width:52px;height:52px;background:linear-gradient(135deg,var(--blue3),var(--blue));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 12px">🤖</div>
+      <div style="font-size:18px;font-weight:700">Agente IA — San Roque</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px">Accede a todos los datos del hospital en tiempo real</div>
+    </div>
+    <div id="chat-area">
+      <div class="ia-bubble">
+        <div class="ia-label">Agente IA</div>
+        Buenas, Director. Hoy tiene 34 citas programadas. La ocupación está al 87% con 182 camas activas. El RMA actual es 0.69 — mínimo histórico. Hay 2 facturas pendientes de cobro por un total de €2.390. ¿Qué necesita analizar?
+      </div>
+    </div>
+    <div class="ia-input-row">
+      <input class="ia-input" id="ia-inp" placeholder="Pregunte sobre pacientes, facturación, agenda, informes…" onkeydown="if(event.key==='Enter')iaSend()">
+      <button class="ia-send" onclick="iaSend()">Enviar</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
+      ${['¿Cuánto hemos facturado este mes?','¿Qué pacientes tienen alta pendiente?','RMA comparado con año anterior','¿Qué citas hay esta tarde?','Facturas pendientes de cobro'].map(s=>`
+        <button onclick="document.getElementById('ia-inp').value='${s}';iaSend()" style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif">${s}</button>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+const IA_RESPUESTAS={
+  'facturado':'Este mes de junio llevamos €182.400 facturados, un 8.3% más que mayo. Adeslas representa el 26% del total. Quedan €2.390 pendientes de cobro en 2 facturas.',
+  'alta pendiente':'José Luis Martín (P-2240, Medicina Interna, Sanitas) tiene alta pendiente desde ayer. La factura de €1.850 está en estado "Pendiente". ¿Quiere que avise al equipo de enfermería?',
+  'rma':'El RMA actual es 0.69 — el mínimo histórico del grupo. En 2024 era 1.54. La mejora se inició en septiembre de 2025 con el protocolo de codificación diagnóstica del equipo de internistas. Actualmente estamos 12 meses consecutivos por debajo de 1.0.',
+  'tarde':'Esta tarde tiene: 16:00 revisión de Miguel Hernández con Dra. Vega (postoperatorio), y 17:30 sesión de formación en codificación diagnóstica con el equipo de internistas.',
+  'pendientes':'Hay 2 facturas pendientes: José Luis Martín €1.850 (Sanitas, 16/06) y Lucía Pérez Torres €540 (Asisa, 17/06). Total: €2.390.',
+};
+
+function iaSend(){
+  const inp=document.getElementById('ia-inp');
+  const q=inp.value.trim();if(!q)return;
+  const area=document.getElementById('chat-area');
+  area.innerHTML+=`<div class="ia-bubble user"><div class="ia-label" style="text-align:right">Usted</div>${q}</div>`;
+  inp.value='';
+  const key=Object.keys(IA_RESPUESTAS).find(k=>q.toLowerCase().includes(k));
+  const resp=IA_RESPUESTAS[key]||'Analizando los datos del hospital… En Hospitales San Roque tenemos 247 pacientes activos, facturación mensual de €182.400 y RMA de 0.69. ¿Puede concretar su consulta?';
+  setTimeout(()=>{
+    area.innerHTML+=`<div class="ia-bubble"><div class="ia-label">Agente IA</div>${resp}</div>`;
+    area.scrollTop=area.scrollHeight;
+  },600);
+}
+
+function renderNotificaciones(c){
+  const notifs=[
+    {color:'var(--red)',texto:'José Luis Martín lleva 28h con alta pendiente — factura sin procesar',tiempo:'Hace 2h'},
+    {color:'var(--amber)',texto:'2 facturas pendientes de cobro — total €2.390',tiempo:'Hace 3h'},
+    {color:'var(--blue)',texto:'Comisión de Mortalidad programada hoy 13:00 — RMA a revisar',tiempo:'Hoy 08:00'},
+    {color:'var(--green)',texto:'Ana González Ruiz completó sesión de radioterapia #8 — 2 sesiones restantes',tiempo:'Hoy 10:30'},
+    {color:'var(--purple)',texto:'Ocupación al 87% — prevista alta de 2 pacientes esta tarde',tiempo:'Ayer 20:00'},
+  ];
+  c.innerHTML=`<div class="table-wrap"><div class="table-header"><div class="table-title">Alertas del sistema (${notifs.length})</div><button class="btn btn-ghost">Marcar todas como leídas</button></div><div style="padding:4px 20px">
+    ${notifs.map(n=>`<div class="notif"><div class="notif-dot" style="background:${n.color}"></div><div class="notif-text">${n.texto}</div><div class="notif-time">${n.tiempo}</div></div>`).join('')}
+  </div></div>`;
+}
+
+function renderEquipo(c){
+  const equipo=[
+    {nombre:'Dr. Jorge Parra',rol:'Jefe Medicina Interna',estado:'Activo',citas:8},
+    {nombre:'Dr. Pedro Lara',rol:'Director Oncología',estado:'Activo',citas:5},
+    {nombre:'Dra. Carmen Vega',rol:'Traumatología',estado:'Activo',citas:4},
+    {nombre:'Dr. Luis Acosta',rol:'Medicina Interna',estado:'Activo',citas:6},
+    {nombre:'Dra. Elena Castro',rol:'Ginecología',estado:'Activo',citas:3},
+    {nombre:'Dr. Antonio Medina',rol:'Geriatría',estado:'Guardia',citas:2},
+  ];
+  c.innerHTML=`<div class="table-wrap"><div class="table-header"><div class="table-title">Equipo médico (${equipo.length})</div><button class="btn btn-blue">+ Añadir médico</button></div><table>
+    <thead><tr><th>Médico</th><th>Especialidad</th><th>Estado</th><th>Citas hoy</th><th></th></tr></thead>
+    <tbody>${equipo.map(e=>`<tr>
+      <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="width:30px;height:30px;font-size:11px">${e.nombre.split(' ').slice(-2).map(n=>n[0]).join('')}</div><div style="font-weight:500">${e.nombre}</div></div></td>
+      <td style="color:var(--muted);font-size:13px">${e.rol}</td>
+      <td><span class="badge ${e.estado==='Activo'?'badge-green':'badge-amber'}">${e.estado}</span></td>
+      <td style="font-weight:600">${e.citas}</td>
+      <td><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px">Ver agenda</button></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function renderAjustes(c){
+  c.innerHTML=`<div style="max-width:600px"><div class="panel" style="margin-bottom:16px">
+    <div class="panel-title">Información del centro</div>
+    ${[['Nombre','Hospitales Universitarios San Roque'],['Sede','Las Palmas de Gran Canaria'],['Director','Sebastián Sansó Marrero'],['Plan','Airmate PRO — Todo incluido'],['Camas','210'],['Servicios','12 especialidades']].map(([k,v])=>`
+      <div class="fact-row"><div class="fact-concept" style="color:var(--muted)">${k}</div><div style="font-size:13px;font-weight:500">${v}</div></div>
+    `).join('')}
+  </div>
+  <div class="panel">
+    <div class="panel-title">Módulos activos</div>
+    ${[['Gestión de pacientes','✓'],['Facturación y cobros','✓'],['Agenda médica','✓'],['Informes y analítica','✓'],['Agente IA 24/7','✓'],['Alertas automáticas','✓'],['Multi-usuario','✓'],['App móvil','✓']].map(([m,a])=>`
+      <div class="fact-row"><div class="fact-concept">${m}</div><span class="badge badge-green">${a} Activo</span></div>
+    `).join('')}
+  </div></div>`;
+}
+
+// INIT
+setView('dashboard');
+</script>
+</body>
+</html>
