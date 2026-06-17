@@ -1661,15 +1661,49 @@ tick();setInterval(tick,30000);
 loadSettings();
 renderAgenda();
 
-setTimeout(()=>{
+// ── BRIEFING DIARIO ──
+const BRIEFING_KEY='sofia_briefing_v1';
+async function checkBriefing(){
+  const today=dateStr(new Date());
+  const last=localStorage.getItem(BRIEFING_KEY);
+  if(last===today)return; // ya se generó hoy
+  localStorage.setItem(BRIEFING_KEY,today);
+  // Generar briefing con leads nuevos de las últimas 24h
+  if(!SB)return;
+  try{
+    const ayer=new Date(Date.now()-864e5).toISOString();
+    const{data:newLeads}=await SB.from('leads').select('name,interest,created_at').gte('created_at',ayer).order('created_at',{ascending:false});
+    if(newLeads&&newLeads.length>0){
+      const resumen=newLeads.map(l=>`• ${l.name}: ${l.interest}`).join('\n');
+      const briefingTxt=`📋 LEADS NUEVOS (últimas 24h):\n${resumen}`;
+      // Guardar en notas para que Sofia lo tenga
+      const n=JSON.parse(localStorage.getItem(NOTES_KEY)||'[]');
+      n.unshift({txt:briefingTxt,ts:new Date().toISOString(),auto:true});
+      localStorage.setItem(NOTES_KEY,JSON.stringify(n.slice(0,100)));
+      if(SB)await SB.from('sofia_memory').insert({type:'nota',data:{txt:briefingTxt,ts:new Date().toISOString(),auto:true}});
+    }
+  }catch(e){}
+}
+
+setTimeout(async()=>{
   const h=new Date().getHours();
   const franja=h<6?'noche':h<13?'mañana':h<20?'tarde':'noche';
+  // Verificar leads nuevos
+  let extraMsg='';
+  if(SB){
+    try{
+      const ayer=new Date(Date.now()-864e5).toISOString();
+      const{data:nl}=await SB.from('leads').select('name').gte('created_at',ayer).eq('business_slug','airmate-web');
+      if(nl&&nl.length>0)extraMsg=` Hay ${nl.length} lead${nl.length>1?'s':''} nuevo${nl.length>1?'s':''} de airmate.es.`;
+    }catch(e){}
+  }
+  await checkBriefing();
   const saludos=[
-    `Mister Bueno. Sofia en línea. Lista para lo que necesite.`,
-    `Buenas ${franja}, Mister Bueno. Sistemas operativos. A sus órdenes.`,
-    `Mister Bueno. Aquí Sofia. Todo bajo control — ¿por dónde empezamos?`,
-    `${h<13?'Buenos días':'Buenas '+franja}, Mister Bueno. Sofia activa. El día es suyo.`,
-    `Mister Bueno. Sofia conectada. Inteligencia, agenda y negocio — listos.`,
+    `Mister Bueno. Sofia en línea. Lista para lo que necesite.${extraMsg}`,
+    `Buenas ${franja}, Mister Bueno. Sistemas operativos. A sus órdenes.${extraMsg}`,
+    `Mister Bueno. Aquí Sofia. Todo bajo control — ¿por dónde empezamos?${extraMsg}`,
+    `${h<13?'Buenos días':'Buenas '+franja}, Mister Bueno. Sofia activa. El día es suyo.${extraMsg}`,
+    `Mister Bueno. Sofia conectada. Negocio, agenda e inteligencia — listos.${extraMsg}`,
   ];
   const msg=saludos[Math.floor(Math.random()*saludos.length)];
   if(currentView==='voice'){setTx(msg);speak(msg,true);}
