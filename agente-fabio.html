@@ -364,6 +364,7 @@ body{font-family:'Inter',-apple-system,sans-serif;color:var(--t);display:flex;fl
         <div class="mem-info">Mensajes: <strong id="mem-cnt">0</strong></div>
         <button class="mem-clear" onclick="clearMem()">Borrar todo</button>
       </div>
+      <button onclick="exportarConversacion()" style="width:100%;margin-top:10px;padding:10px;border-radius:9px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);color:rgba(52,211,153,.9);font-size:13px;cursor:pointer;font-family:inherit">📋 Exportar conversación de hoy</button>
     </div>
     <div class="sp-sep"></div>
     <div class="sp-sec">
@@ -666,6 +667,35 @@ function toggleCristina(){
   showToast(CFG.cristina?'✓ Voz Cristina activada':'Voz del sistema activada (sin créditos)');
 }
 function clearMem(){history.length=0;saveHist();document.getElementById('mem-cnt').textContent='0';showToast('✓ Memoria borrada');}
+function exportarConversacion(){
+  const h=loadHist();
+  if(!h.length){showToast('No hay conversación guardada');return;}
+  const hoy=new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+  let txt=`CONVERSACIÓN CON SOFIA — ${hoy}\n${'─'.repeat(50)}\n\n`;
+  h.forEach(m=>{
+    const rol=m.role==='user'?'FABIO':'SOFIA';
+    // Limpiar tags de acción
+    const content=(m.content||'').replace(/\[\[ACCION:[^\]]+\]\]/g,'').trim();
+    if(content)txt+=`${rol}: ${content}\n\n`;
+  });
+  // Añadir notas del día
+  const notas=JSON.parse(localStorage.getItem(NOTES_KEY)||'[]');
+  const hoyStr=dateStr(new Date());
+  const notasHoy=notas.filter(n=>n.ts&&n.ts.startsWith(hoyStr));
+  if(notasHoy.length){
+    txt+=`${'─'.repeat(50)}\nNOTAS GUARDADAS HOY:\n`;
+    notasHoy.forEach(n=>txt+=`• ${n.txt}\n`);
+  }
+  // Copiar al portapapeles
+  navigator.clipboard.writeText(txt).then(()=>{
+    showToast('✓ Copiado al portapapeles — pégalo en Claude');
+    toggleSettings();
+  }).catch(()=>{
+    // Fallback: mostrar en modal
+    const w=window.open('','_blank','width=600,height=500');
+    w.document.write(`<pre style="font-family:monospace;padding:20px;white-space:pre-wrap">${txt}</pre>`);
+  });
+}
 function toggleSettings(){
   document.getElementById('sp-overlay').classList.toggle('open');
   applyUI();
