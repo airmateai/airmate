@@ -1764,7 +1764,12 @@ const PROD_KEY='sofia_producciones_v1';
 const GH_TOKEN=localStorage.getItem('sofia_gh_token')||'';
 const GH_REPO='airmateai/airmate';
 const CLAUDE_KEY=''; // Usar proxy existente
-const PROD_TRIGGERS=['hazme una demo','crea una demo','genera una demo','hazme un panel','crea un panel','genera una web','hazme una web','crea una landing','hazme una landing'];
+function isDemoRequest(txt){
+  const t=txt.toLowerCase();
+  const tieneAccion=/(haz|hazme|crea|cre[aá]me|genera|gen[eé]rame|quiero|necesito|puedes hacer|puede hacer|haces|hacer)[^.]*?(demo|panel|web|landing|p[aá]gina)/i.test(t)
+    ||(/(demo|panel|landing)/i.test(t)&&/(para|de|del|de la|de un|de una)/i.test(t));
+  return tieneAccion;
+}
 
 function saveProd(p){
   const all=JSON.parse(localStorage.getItem(PROD_KEY)||'[]');
@@ -1810,11 +1815,6 @@ function copyLink(url){
 function sendLinkToChat(url,nombre){
   setView('text');
   setTimeout(()=>addMsg('bot',`Aquí tienes el link de "${nombre}":\n${url}\n\nPuedes mandárselo directamente al cliente.`),300);
-}
-
-function isDemoRequest(txt){
-  const t=txt.toLowerCase();
-  return PROD_TRIGGERS.some(tr=>t.includes(tr));
 }
 
 function extractNegocio(txt){
