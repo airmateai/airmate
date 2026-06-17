@@ -313,6 +313,10 @@ body{font-family:'Inter',-apple-system,sans-serif;color:var(--t);display:flex;fl
     <button class="mode-btn" id="btn-a" onclick="setView('agenda')">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Agenda
     </button>
+    <button class="mode-btn" id="btn-p" onclick="setView('prod')" style="position:relative">
+      <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Producciones
+      <span id="prod-badge" style="display:none;position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:#34d399"></span>
+    </button>
   </div>
   <div class="tb-right">
     <div class="ldot"></div>
@@ -391,6 +395,13 @@ body{font-family:'Inter',-apple-system,sans-serif;color:var(--t);display:flex;fl
       <div id="ws-voice-list" style="display:flex;flex-direction:column;gap:6px">
         <div style="font-size:11px;color:var(--m)">Cargando voces del sistema…</div>
       </div>
+    </div>
+    <div class="sp-sep"></div>
+    <div class="sp-sec">
+      <div class="sp-lbl">GitHub Token (Producciones)</div>
+      <div style="font-size:10px;color:var(--m2);margin-bottom:8px">Necesario para que Sofia suba demos a GitHub Pages automáticamente.</div>
+      <input id="gh-token-inp" type="password" placeholder="ghp_..." style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--b);border-radius:8px;padding:9px 12px;color:var(--t);font-size:12px;font-family:inherit;outline:none;margin-bottom:6px">
+      <button onclick="saveGHToken()" style="width:100%;padding:9px;border-radius:8px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:rgba(52,211,153,.9);font-size:12px;cursor:pointer;font-family:inherit">Guardar token</button>
     </div>
     <button class="sp-save" onclick="saveSettings()">Guardar ajustes</button>
   </div>
@@ -540,6 +551,24 @@ body{font-family:'Inter',-apple-system,sans-serif;color:var(--t);display:flex;fl
   <div class="agenda-body" id="agenda-body"></div>
 </div>
 
+<!-- PRODUCCIONES VIEW -->
+<div class="view" id="view-prod" style="flex-direction:column;overflow:hidden;background:var(--bg)">
+  <div style="padding:16px 20px 12px;border-bottom:1px solid var(--b);background:rgba(4,4,12,.6);backdrop-filter:blur(20px);flex-shrink:0;display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <div style="font-size:15px;font-weight:500;color:var(--t)">Producciones</div>
+      <div style="font-size:11px;color:var(--m2);margin-top:2px">Demos y archivos generados por Sofia</div>
+    </div>
+    <button onclick="setView('text')" style="padding:7px 14px;border-radius:8px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:var(--a2);font-size:12px;cursor:pointer;font-family:inherit">+ Generar nueva</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:16px 20px;-webkit-overflow-scrolling:touch" id="prod-list">
+    <div style="text-align:center;padding:60px 20px;color:var(--m2)">
+      <div style="font-size:32px;margin-bottom:12px">🚀</div>
+      <div style="font-size:14px;margin-bottom:6px;color:var(--t)">Nada generado todavía</div>
+      <div style="font-size:12px">Dile a Sofia "hazme una demo para [tipo de negocio]"</div>
+    </div>
+  </div>
+</div>
+
 <!-- MOBILE NAV -->
 <div class="mob-nav">
   <div class="mob-nav-inner">
@@ -551,6 +580,9 @@ body{font-family:'Inter',-apple-system,sans-serif;color:var(--t);display:flex;fl
     </button>
     <button class="mn-btn" id="mn-agenda" onclick="setView('agenda')">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Agenda
+    </button>
+    <button class="mn-btn" id="mn-prod" onclick="setView('prod')">
+      <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Prod.
     </button>
     <button class="mn-btn" onclick="toggleSettings()">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Ajustes
@@ -611,7 +643,7 @@ function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrol
 let currentView=isMobile?'text':'voice';
 function setView(v){
   currentView=v;
-  ['voice','text','agenda'].forEach(x=>{
+  ['voice','text','agenda','prod'].forEach(x=>{
     document.getElementById('view-'+x).classList.toggle('active',x===v);
     const mb=document.getElementById('mn-'+x);
     if(mb)mb.classList.toggle('active',x===v);
@@ -619,6 +651,7 @@ function setView(v){
     if(tb)tb.classList.toggle('active',x===v);
   });
   if(v==='agenda')renderAgenda();
+  if(v==='prod'){document.getElementById('prod-badge').style.display='none';renderProdList();}
 }
 setView(currentView);
 
@@ -1253,6 +1286,15 @@ async function sendText(q){
   const inp=document.getElementById('inp');
   const txt=(q||inp.value).trim();if(!txt)return;
   if(!q){inp.value='';autoResize(inp);}
+
+  // Detectar petición de generación de demo
+  if(isDemoRequest(txt)){
+    addMsg('user',txt);
+    const negocio=extractNegocio(txt);
+    await generarDemo(negocio,txt);
+    return;
+  }
+
   addMsg('user',txt);
   history.push({role:'user',content:txt});
   const ty=addTyping();
@@ -1713,6 +1755,189 @@ async function checkBriefing(){
       if(SB)await SB.from('sofia_memory').insert({type:'nota',data:{txt:briefingTxt,ts:new Date().toISOString(),auto:true}});
     }
   }catch(e){}
+}
+
+// ══════════════════════════════════════════
+// PRODUCCIONES — generación real con Claude + GitHub
+// ══════════════════════════════════════════
+const PROD_KEY='sofia_producciones_v1';
+const GH_TOKEN=localStorage.getItem('sofia_gh_token')||'';
+const GH_REPO='airmateai/airmate';
+const CLAUDE_KEY=''; // Usar proxy existente
+const PROD_TRIGGERS=['hazme una demo','crea una demo','genera una demo','hazme un panel','crea un panel','genera una web','hazme una web','crea una landing','hazme una landing'];
+
+function saveProd(p){
+  const all=JSON.parse(localStorage.getItem(PROD_KEY)||'[]');
+  all.unshift(p);
+  localStorage.setItem(PROD_KEY,JSON.stringify(all.slice(0,50)));
+  document.getElementById('prod-badge').style.display='block';
+}
+function loadProds(){
+  try{return JSON.parse(localStorage.getItem(PROD_KEY)||'[]');}catch(e){return[];}
+}
+
+function renderProdList(){
+  const el=document.getElementById('prod-list');
+  if(!el)return;
+  const prods=loadProds();
+  if(!prods.length){
+    el.innerHTML=`<div style="text-align:center;padding:60px 20px;color:var(--m2)"><div style="font-size:32px;margin-bottom:12px">🚀</div><div style="font-size:14px;margin-bottom:6px;color:var(--t)">Nada generado todavía</div><div style="font-size:12px">Dile a Sofia "hazme una demo para [tipo de negocio]"</div></div>`;
+    return;
+  }
+  el.innerHTML=prods.map((p,i)=>`
+  <div style="background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:14px;padding:16px;margin-bottom:12px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(99,102,241,.35)'" onmouseout="this.style.borderColor='var(--b)'">
+    <div style="display:flex;align-items:flex-start;gap:12px">
+      <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,rgba(99,102,241,.3),rgba(139,92,246,.3));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${p.tipo==='demo'?'🎯':p.tipo==='landing'?'🌐':p.tipo==='panel'?'📊':'📄'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;color:var(--t);margin-bottom:3px">${p.nombre}</div>
+        <div style="font-size:11px;color:var(--m2);margin-bottom:10px">${p.desc} · ${new Date(p.ts).toLocaleDateString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a href="${p.url}" target="_blank" style="padding:6px 14px;border-radius:8px;background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.4);color:var(--a2);font-size:11px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:5px">
+            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Ver demo
+          </a>
+          <button onclick="copyLink('${p.url}')" style="padding:6px 14px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--b);color:var(--m2);font-size:11px;cursor:pointer;font-family:inherit">Copiar link</button>
+          <button onclick="sendLinkToChat('${p.url}','${p.nombre}')" style="padding:6px 14px;border-radius:8px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);color:rgba(52,211,153,.9);font-size:11px;cursor:pointer;font-family:inherit">Mandar por chat</button>
+        </div>
+      </div>
+    </div>
+  </div>`).join('');
+}
+
+function copyLink(url){
+  navigator.clipboard.writeText(url).then(()=>showToast('✓ Link copiado'));
+}
+function sendLinkToChat(url,nombre){
+  setView('text');
+  setTimeout(()=>addMsg('bot',`Aquí tienes el link de "${nombre}":\n${url}\n\nPuedes mandárselo directamente al cliente.`),300);
+}
+
+function isDemoRequest(txt){
+  const t=txt.toLowerCase();
+  return PROD_TRIGGERS.some(tr=>t.includes(tr));
+}
+
+function extractNegocio(txt){
+  const t=txt.toLowerCase();
+  const patterns=[
+    /(?:demo|panel|web|landing)\s+(?:para\s+)?(?:un[ao]?\s+)?(.+?)(?:\s*[.,!?]|$)/i,
+    /(?:para)\s+(?:un[ao]?\s+)?(.+?)(?:\s*[.,!?]|$)/i,
+  ];
+  for(const p of patterns){
+    const m=txt.match(p);
+    if(m&&m[1]&&m[1].trim().length>2)return m[1].trim();
+  }
+  return txt.replace(/hazme|crea|genera|una|demo|panel|web|landing|para|un|una/gi,'').trim()||'negocio';
+}
+
+async function pushToGitHub(filename, content){
+  const url=`https://api.github.com/repos/${GH_REPO}/contents/${filename}`;
+  const b64=btoa(unescape(encodeURIComponent(content)));
+  // Check if file exists to get SHA
+  let sha=null;
+  try{
+    const r=await fetch(url,{headers:{'Authorization':`token ${GH_TOKEN}`,'Accept':'application/vnd.github.v3+json'}});
+    if(r.ok){const d=await r.json();sha=d.sha;}
+  }catch(e){}
+  const body={message:`Sofia: genera ${filename}`,content:b64};
+  if(sha)body.sha=sha;
+  const res=await fetch(url,{method:'PUT',headers:{'Authorization':`token ${GH_TOKEN}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify(body)});
+  if(!res.ok)throw new Error('GitHub push failed: '+res.status);
+  return `https://airmateai.github.io/airmate/${filename}`;
+}
+
+async function generarDemo(negocio, txtOriginal){
+  const slug=negocio.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const filename=`demo-${slug}-${Date.now()}.html`;
+
+  // Mensaje de estado
+  const statusMsg=addMsg('bot',`⚡ Generando demo para "${negocio}"... esto tarda ~30 segundos.`);
+
+  const prompt=`Genera un panel CRM/demo de gestión profesional para: "${negocio}".
+
+REQUISITOS TÉCNICOS OBLIGATORIOS:
+- Un único archivo HTML completo (CSS + JS inline, sin imports externos excepto Google Fonts y Chart.js CDN)
+- Google Fonts: Inter + Cormorant Garamond
+- Chart.js: https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js
+- Sin frameworks, sin bundlers
+
+DISEÑO (sigue este sistema exacto):
+- Sidebar oscuro: background #0d0a05
+- Fondo contenido: #f7f4ef (crema cálido)
+- Acento dorado: #8B6914
+- Terra: #C4956A
+- Tipografía títulos: Cormorant Garamond, italic
+- Stat cards: fondo oscuro #161009 con borde rgba(139,105,20,.25) y línea superior gradiente dorado
+- Cursor personalizado (requestAnimationFrame trailing)
+- Hero banner: foto Unsplash relevante al negocio (full width, gradiente oscuro encima)
+- Strip de fotos Unsplash (4-5 imágenes relacionadas al sector)
+
+VISTAS MÍNIMAS (sidebar nav):
+- Dashboard con hero foto + 4 stat cards oscuras + 2 gráficos Chart.js + tabla
+- Vista principal del negocio (clientes/productos/reservas según sector)
+- Pipeline/leads Kanban (4 columnas)
+- Agenda con citas próximas
+- Al menos 1 vista más relevante para el negocio
+
+FUNCIONALIDADES:
+- setView() con skeleton loading (320ms delay)
+- Animación fadeInScale en cada vista
+- Datos de ejemplo realistas para "${negocio}"
+- Botones funcionales con hover states
+
+Devuelve SOLO el HTML completo, sin explicaciones, sin markdown, empezando con <!DOCTYPE html>.`;
+
+  try{
+    // Llamar al proxy que ya tiene Claude configurado
+    const resp=await fetch(PROXY,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        messages:[{role:'user',content:prompt}],
+        system:`Eres un experto en desarrollo web. Genera código HTML/CSS/JS de alta calidad. Responde SOLO con el código HTML completo, sin texto adicional, sin bloques de código markdown.`,
+        max_tokens:8000
+      })
+    });
+    if(!resp.ok)throw new Error('Error llamando a la IA: '+resp.status);
+    const data=await resp.json();
+    let html=data.content||data.message||data.choices?.[0]?.message?.content||'';
+    // Limpiar markdown si viene con backticks
+    html=html.replace(/^```html\n?/,'').replace(/\n?```$/,'').trim();
+    if(!html.includes('<!DOCTYPE'))throw new Error('La IA no devolvió HTML válido');
+
+    // Subir a GitHub
+    const liveUrl=await pushToGitHub(filename,html);
+
+    // Guardar en producciones
+    const prod={
+      id:Date.now(),
+      nombre:`Demo ${negocio.charAt(0).toUpperCase()+negocio.slice(1)}`,
+      desc:`Panel generado por Sofia`,
+      tipo:'demo',
+      url:liveUrl,
+      filename,
+      ts:new Date().toISOString()
+    };
+    saveProd(prod);
+
+    // Actualizar mensaje de estado
+    try{statusMsg.querySelector('.bub').innerHTML=`✅ Demo lista para "<strong>${negocio}</strong>"<br><br><a href="${liveUrl}" target="_blank" style="color:var(--a2);font-weight:600">${liveUrl}</a><br><br><span style="font-size:12px;color:var(--m2)">Puedes verla en Producciones o compartir el link directamente.</span>`;}catch(e){}
+
+    history.push({role:'assistant',content:`Demo generada: ${liveUrl}`});
+    saveHist();
+    showToast('✓ Demo publicada en GitHub Pages');
+
+  }catch(e){
+    try{statusMsg.querySelector('.bub').textContent='❌ Error generando la demo: '+e.message;}catch(_){}
+  }
+}
+
+function saveGHToken(){
+  const v=document.getElementById('gh-token-inp').value.trim();
+  if(!v){showToast('Pega el token primero');return;}
+  localStorage.setItem('sofia_gh_token',v);
+  document.getElementById('gh-token-inp').value='';
+  showToast('✓ Token GitHub guardado');
 }
 
 setTimeout(async()=>{
