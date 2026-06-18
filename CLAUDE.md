@@ -202,7 +202,40 @@ git push
 
 ---
 
-## 9. PENDIENTES GLOBALES
+## 9. SEMANA 16 JUNIO 2026 — TRABAJO ACTIVO
+
+### Reuniones / urgente
+- **Lunes 10:30** — Reunión con Richard (gestor de Jose Acosta) en la tienda de Jose
+  - Temas: CRM facturación, estado del panel
+  - Tema extra: SL de 1€ en España — Richard puede ayudar a constituirla
+
+### Jose Acosta — deadline julio
+- Panel CRM listo, falta: **fotos de productos de stock y trajes** para el TPV
+- Flujo: sacar fotos en tienda → pasar por IA → imagen limpia → subir a panel
+
+### Costa Norte — esperando lunes
+- Fabio mandó formulario, llega respuesta por mail el lunes
+- Posible web completa: **apartamentos + tienda + clases de surf** → tramo PRO (997€+ setup, 99€+/mes)
+
+### Vitorio Milano — presionar esta semana
+- Web y landing lista, solo faltan sus **fotos**
+- Cobro pendiente: **900 AED** (Dubai cobra 1.500 setup / 150 mes — España 800-1k / 79 mes)
+- Mandarle mensaje de presión para que mande las fotos ya
+
+### Magda — panel pendiente
+- panel-magda.html necesita expansión (interrumpido, ver tarea pendiente)
+
+### Equipo por comisión (captación, no en Tenerife)
+- **Adonai** — negocio de ads/Facebook, incorporado por comisión
+- **Unai** — ídem, comisión por cliente
+- **Matias** (Perú) — ídem
+- Los 3 con tiempo limitado (estudian o trabajan)
+- Canal que funciona: **LinkedIn**
+- Fabio es el jefe y trabaja todo el día desde Tenerife, objetivo: volver a Dubai
+
+---
+
+## 10. PENDIENTES GLOBALES
 
 - [ ] **Jose Acosta — Verifactu:** API con Invocash (verifactuapi.es). Contacto: Luis. Documentación: https://drive.google.com/drive/folders/1aA_nuF2USCE_me4Pzm-Iovg4jtwcguL1 — Pendiente: hacer SET-UP/CheckPoint (certificación software) antes de producción. Sin coste hasta enviar facturas reales a la AEAT.
 - [ ] **Custom Work — Ricardo:** 3 TODOs pendientes (ver memoria)
