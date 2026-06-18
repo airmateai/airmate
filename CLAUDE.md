@@ -25,6 +25,13 @@ Airmate es una agencia/producto SaaS de Fabio Bueno que ofrece a negocios locale
 - **Anon key:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE`
 - **Service role key** (solo en index.html admin): `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDQ3NTk0NiwiZXhwIjoyMDkwMDUxOTQ2fQ.08g-CtdJ0BvgE3U4v9JppA_114EN24KBs7iBpUaw9cs`
 
+### Stripe
+- **Publishable key:** `pk_live_51Qkl30Hz33yY3chRhEVzFIpcNgJcOobGfN8q15DHGybIeKEqhFZall4FHYA94uv6oRjYjxArlm5MsOnEJgdXGXq600ZtWFG2yG`
+- **Secret key:** en Vercel → STRIPE_SECRET_KEY (no guardar en repo)
+- **Webhook secret (curso):** en Vercel → STRIPE_WEBHOOK_SECRET_CURSO (no guardar en repo)
+- **Buy button curso 47€:** `buy_btn_1TjhgjHz33yY3chRh9hlRMyn`
+- **Payment link curso:** `https://buy.stripe.com/cNi28r4595dW3MOc2d2Ry0j`
+
 ### Tablas Supabase principales
 | Tabla | Uso |
 |-------|-----|
