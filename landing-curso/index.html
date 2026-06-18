@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lo que aprendí montando una agencia de IA — Fabio Bueno</title>
+  <meta name="description" content="No soy gurú. Solo llevo un año en esto, he cometido errores y he conseguido clientes reales. Esto es lo que haría si empezara hoy." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0c0c0c;
+      --bg2: #111111;
+      --bg3: #161616;
+      --white: #f5f5f0;
+      --white-dim: rgba(245,245,240,0.7);
+      --white-muted: rgba(245,245,240,0.35);
+      --line: rgba(245,245,240,0.08);
+      --accent: #c9a96e;
+      --accent-dim: rgba(201,169,110,0.15);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--white);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 18px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(12,12,12,0.9);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: 0.2px;
+    }
+    .nav-name span { color: var(--accent); }
+    .nav-cta {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+      border: 1px solid rgba(201,169,110,0.4);
+      padding: 8px 18px;
+      border-radius: 6px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .nav-cta:hover {
+      background: var(--accent-dim);
+    }
+
+    /* ── LAYOUT ── */
+    .section { padding: 88px 24px; }
+    .section-sm { padding: 64px 24px; }
+    .container { max-width: 680px; margin: 0 auto; }
+    .container-md { max-width: 840px; margin: 0 auto; }
+    .divider { height: 1px; background: var(--line); }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    /* foto: solo ocupa la mitad derecha */
+    .hero-bg {
+      position: absolute;
+      top: 0; right: 0; bottom: 0;
+      width: 50%;
+      z-index: 0;
+    }
+    .hero-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+      opacity: 0.95;
+      filter: saturate(0.85) brightness(1.0);
+    }
+    /* difuminado: negro sólido izquierda → imagen derecha */
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to right, var(--bg) 0%, rgba(12,12,12,0.85) 20%, rgba(12,12,12,0.3) 55%, transparent 100%),
+        linear-gradient(to top, var(--bg) 0%, transparent 18%);
+    }
+    /* texto: izquierda, sobre fondo negro */
+    .hero-text {
+      position: relative;
+      z-index: 2;
+      padding: 120px 52px 80px 56px;
+      max-width: 560px;
+    }
+    @media (max-width: 768px) {
+      .hero-bg { width: 100%; }
+      .hero-text { padding: 120px 24px 72px; max-width: 100%; }
+    }
+    .hero-eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -1.5px;
+      margin-bottom: 22px;
+      color: var(--white);
+    }
+    .hero h1 em {
+      font-style: italic;
+      font-weight: 400;
+      color: rgba(245,245,240,0.55);
+    }
+    .hero-intro {
+      font-size: 17px;
+      color: rgba(245,245,240,0.65);
+      line-height: 1.65;
+      max-width: 420px;
+      margin-bottom: 40px;
+    }
+    .hero-cta-group {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .btn-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      color: #0c0c0c;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 16px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-main:hover { opacity: 0.88; transform: translateY(-1px); }
+    .hero-price {
+      font-size: 14px;
+      color: rgba(245,245,240,0.35);
+    }
+    .hero-price strong { color: rgba(245,245,240,0.65); }
+    .hero-caption {
+      position: absolute;
+      bottom: 24px;
+      right: 32px;
+      z-index: 2;
+      font-size: 11px;
+      color: rgba(245,245,240,0.25);
+      letter-spacing: 0.5px;
+    }
+
+    /* ── VIDEO PLACEHOLDER ── */
+    .video-wrap {
+      aspect-ratio: 9/16;
+      max-width: 360px;
+      margin: 0 auto;
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--bg3);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .video-placeholder {
+      text-align: center;
+      color: var(--white-muted);
+    }
+    .video-placeholder .play-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .video-placeholder p {
+      font-size: 13px;
+    }
+    /* When you have the real Instagram embed, replace the div.video-wrap content with:
+       <blockquote class="instagram-media" ...></blockquote>
+       <script async src="//www.instagram.com/embed.js"></script>
+    */
+
+    /* ── STORY ── */
+    .story-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+    @media (max-width: 640px) {
+      .story-grid { grid-template-columns: 1fr; gap: 32px; }
+    }
+    .story-text h2 {
+      font-size: clamp(26px, 4vw, 38px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.15;
+      margin-bottom: 24px;
+    }
+    .story-text p {
+      font-size: 16px;
+      color: var(--white-dim);
+      line-height: 1.75;
+      margin-bottom: 16px;
+    }
+    .story-text p:last-child { margin-bottom: 0; }
+    .story-text p strong { color: var(--white); font-weight: 600; }
+    .story-photo {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+    .story-photo img {
+      width: 100%;
+      display: block;
+      filter: brightness(0.85) saturate(0.9);
+    }
+
+    /* ── TIMELINE STORY ── */
+    .tl-block {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+      margin-bottom: 72px;
+    }
+    .tl-reverse { direction: rtl; }
+    .tl-reverse > * { direction: ltr; }
+    .tl-imgs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .tl-img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      filter: brightness(0.88) saturate(0.9);
+      display: block;
+    }
+    .tl-imgs .tl-img:first-child { margin-top: 0; }
+    .tl-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .tl-text h3 {
+      font-size: clamp(20px, 3vw, 28px);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      margin-bottom: 14px;
+    }
+    .tl-text p {
+      font-size: 15px;
+      color: var(--white-dim);
+      line-height: 1.75;
+    }
+    @media (max-width: 640px) {
+      .tl-block, .tl-reverse { grid-template-columns: 1fr; direction: ltr; gap: 24px; margin-bottom: 56px; }
+      .tl-imgs { grid-template-columns: 1fr 1fr; }
+      .tl-imgs .tl-img:first-child { margin-top: 0; }
+    }
+
+    /* ── WHAT'S INSIDE ── */
+    .inside { background: var(--bg2); }
+    .inside-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .inside h2 {
+      font-size: clamp(26px, 4vw, 40px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.15;
+      margin-bottom: 12px;
+    }
+    .inside-sub {
+      font-size: 16px;
+      color: var(--white-dim);
+      margin-bottom: 56px;
+      max-width: 480px;
+    }
+    .inside-items {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .inside-item {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      align-items: center;
+      gap: 20px;
+      padding: 24px 20px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .inside-item:hover {
+      background: rgba(255,255,255,0.02);
+      border-color: var(--line);
+    }
+    .inside-item.highlight {
+      background: var(--accent-dim);
+      border-color: rgba(201,169,110,0.2);
+    }
+    .inside-num {
+      font-size: 24px;
+      text-align: center;
+    }
+    .inside-item h3 {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      margin-bottom: 4px;
+    }
+    .inside-item p {
+      font-size: 13px;
+      color: var(--white-muted);
+      line-height: 1.5;
+    }
+    .inside-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 5px;
+      white-space: nowrap;
+      text-align: right;
+    }
+    .inside-tag.free {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid rgba(201,169,110,0.3);
+    }
+    .inside-tag.included {
+      color: var(--white-muted);
+      border: 1px solid var(--line);
+    }
+
+    /* ── WHAT YOU'LL LEARN ── */
+    .learn h2 {
+      font-size: clamp(26px, 4vw, 40px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+    }
+    .learn-sub {
+      font-size: 16px;
+      color: var(--white-dim);
+      margin-bottom: 48px;
+    }
+    .learn-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .learn-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--line);
+    }
+    .learn-item:last-child { border-bottom: none; }
+    .learn-item:hover { background: rgba(255,255,255,0.015); }
+    .learn-n {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      padding-top: 3px;
+      min-width: 20px;
+      letter-spacing: 1px;
+    }
+    .learn-item h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      letter-spacing: -0.2px;
+    }
+    .learn-item p {
+      font-size: 13px;
+      color: var(--white-muted);
+      line-height: 1.5;
+    }
+
+    /* ── PHOTO ROW ── */
+    .photo-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .photo-row img {
+      width: 100%;
+      border-radius: 10px;
+      display: block;
+      filter: brightness(0.8) saturate(0.85);
+      border: 1px solid var(--line);
+    }
+    .photo-row img:first-child {
+      grid-row: span 2;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* ── FOR WHO ── */
+    .for-who { background: var(--bg2); }
+    .for-who h2 {
+      font-size: clamp(26px, 4vw, 40px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 40px;
+    }
+    .fw-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 580px) { .fw-grid { grid-template-columns: 1fr; } }
+    .fw-card {
+      padding: 28px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--bg3);
+    }
+    .fw-card h3 {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .fw-card.yes h3 { color: #86efac; }
+    .fw-card.no h3 { color: var(--white-muted); }
+    .fw-card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .fw-card ul li {
+      font-size: 14px;
+      color: var(--white-dim);
+      padding-left: 20px;
+      position: relative;
+      line-height: 1.45;
+    }
+    .fw-card ul li::before {
+      position: absolute; left: 0;
+      font-size: 11px;
+    }
+    .fw-card.yes ul li::before { content: '→'; color: #86efac; }
+    .fw-card.no ul li::before { content: '—'; color: var(--white-muted); }
+
+    /* ── PRICING ── */
+    .pricing { text-align: center; }
+    .pricing h2 {
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 800;
+      letter-spacing: -1.2px;
+      margin-bottom: 12px;
+    }
+    .pricing-sub {
+      font-size: 16px;
+      color: var(--white-dim);
+      margin-bottom: 48px;
+      max-width: 440px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .price-card {
+      max-width: 440px;
+      margin: 0 auto;
+      border: 1px solid rgba(201,169,110,0.25);
+      border-radius: 16px;
+      padding: 44px 36px;
+      text-align: left;
+      background: var(--bg2);
+    }
+    .price-amount {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+    .price-amount .eur { font-size: 22px; font-weight: 700; color: var(--accent); padding-bottom: 8px; }
+    .price-amount .num { font-size: 72px; font-weight: 900; letter-spacing: -3px; line-height: 1; }
+    .price-was {
+      font-size: 14px;
+      color: var(--white-muted);
+      text-decoration: line-through;
+      margin-bottom: 32px;
+    }
+    .price-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 36px;
+      padding-bottom: 36px;
+      border-bottom: 1px solid var(--line);
+    }
+    .price-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--white-dim);
+    }
+    .price-line .dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+    .price-line.gift { color: var(--white); }
+    .price-line.gift .dot { background: var(--accent); width: 7px; height: 7px; }
+    .btn-pay {
+      display: block;
+      width: 100%;
+      background: var(--accent);
+      color: #0c0c0c;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      text-align: center;
+      transition: opacity 0.2s;
+      letter-spacing: -0.2px;
+    }
+    .btn-pay:hover { opacity: 0.85; }
+    .price-secure {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--white-muted);
+    }
+
+    /* ── FAQ ── */
+    .faq { background: var(--bg2); }
+    .faq h2 {
+      font-size: clamp(24px, 3.5vw, 36px);
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      margin-bottom: 40px;
+    }
+    .faq-items {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .faq-item {
+      padding: 24px;
+      border-bottom: 1px solid var(--line);
+    }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-item h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+    }
+    .faq-item p {
+      font-size: 14px;
+      color: var(--white-dim);
+      line-height: 1.65;
+    }
+
+    /* ── FINAL ── */
+    .final {
+      text-align: center;
+      padding: 100px 24px;
+    }
+    .final p.note {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+    .final h2 {
+      font-size: clamp(30px, 5vw, 52px);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1.08;
+      margin-bottom: 20px;
+    }
+    .final .sub {
+      font-size: 17px;
+      color: var(--white-dim);
+      max-width: 400px;
+      margin: 0 auto 40px;
+      line-height: 1.6;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 32px 24px;
+      border-top: 1px solid var(--line);
+      text-align: center;
+    }
+    footer p { font-size: 13px; color: var(--white-muted); }
+    footer a { color: var(--white-dim); text-decoration: none; }
+    footer a:hover { color: var(--white); }
+
+    @media (max-width: 480px) {
+      nav { padding: 16px 20px; }
+      .inside-item { grid-template-columns: 36px 1fr; }
+      .inside-tag { display: none; }
+    }
+
+    /* ── HERO GLOW ── */
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -120px; left: -120px;
+      width: 480px; height: 480px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,169,110,0.12) 0%, transparent 70%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      background: var(--bg2);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      padding: 28px 24px;
+    }
+    .stats-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-around;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: -2px;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--white-muted);
+      line-height: 1.4;
+    }
+
+    /* ── URGENCY BADGE ── */
+    /* ── BANNER TOP urgencia ── */
+    .top-urgency {
+      background: #c0392b;
+      color: #fff;
+      text-align: center;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      position: relative;
+      z-index: 200;
+    }
+    .top-urgency strong { font-weight: 800; }
+    .top-urgency .countdown-inline {
+      display: inline-block;
+      background: rgba(0,0,0,0.25);
+      border-radius: 4px;
+      padding: 1px 8px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-left: 4px;
+    }
+
+    .urgency-banner {
+      background: rgba(192,57,43,0.1);
+      border: 1px solid rgba(192,57,43,0.4);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .urgency-banner .dot-live {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #f87171;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 0 rgba(248,113,113,0.5);
+      animation: pulse-red 1.5s infinite;
+    }
+    @keyframes pulse-red {
+      0%   { box-shadow: 0 0 0 0 rgba(248,113,113,0.5); }
+      70%  { box-shadow: 0 0 0 7px rgba(248,113,113,0); }
+      100% { box-shadow: 0 0 0 0 rgba(248,113,113,0); }
+    }
+    @keyframes pulse-green {
+      0%   { box-shadow: 0 0 0 0 rgba(134,239,172,0.4); }
+      70%  { box-shadow: 0 0 0 6px rgba(134,239,172,0); }
+      100% { box-shadow: 0 0 0 0 rgba(134,239,172,0); }
+    }
+    .urgency-banner p {
+      font-size: 13px;
+      color: #fca5a5;
+      line-height: 1.5;
+    }
+    .urgency-banner p strong { color: #fff; }
+
+    /* cuenta atrás precio */
+    .price-launch-badge {
+      display: inline-block;
+      background: #c0392b;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+    .price-strikethrough {
+      font-size: 18px;
+      color: #666;
+      text-decoration: line-through;
+      margin-bottom: 4px;
+    }
+    .countdown-box {
+      background: rgba(192,57,43,0.12);
+      border: 1px solid rgba(192,57,43,0.3);
+      border-radius: 10px;
+      padding: 14px 20px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .countdown-box p { font-size: 12px; color: #fca5a5; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .countdown-digits {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      align-items: center;
+    }
+    .cd-unit { text-align: center; }
+    .cd-num {
+      display: block;
+      font-size: 28px;
+      font-weight: 900;
+      color: #f87171;
+      line-height: 1;
+      min-width: 44px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 6px;
+      padding: 6px 4px;
+    }
+    .cd-label { font-size: 10px; color: #999; margin-top: 4px; display: block; }
+    .cd-sep { font-size: 22px; color: #f87171; font-weight: 900; padding-bottom: 16px; }
+
+    /* ── SPOTS BADGE en inside-item highlight ── */
+    .spots-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fbbf24;
+      background: rgba(251,191,36,0.1);
+      border: 1px solid rgba(251,191,36,0.25);
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin-top: 6px;
+    }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ── STICKY MOBILE CTA ── */
+    .sticky-cta {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 200;
+      background: rgba(12,12,12,0.96);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(201,169,110,0.2);
+      padding: 12px 20px;
+    }
+    .sticky-cta a {
+      display: block;
+      background: var(--accent);
+      color: #0c0c0c;
+      font-size: 15px;
+      font-weight: 700;
+      text-align: center;
+      padding: 15px;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+    .sticky-cta-sub {
+      text-align: center;
+      font-size: 11px;
+      color: var(--white-muted);
+      margin-top: 6px;
+    }
+    @media (max-width: 640px) {
+      .sticky-cta { display: block; }
+      body { padding-bottom: 90px; }
+    }
+
+    /* ── SOCIAL PROOF ── */
+    .proof-strip {
+      background: var(--bg3);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      padding: 20px 24px;
+      overflow: hidden;
+    }
+    .proof-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      gap: 32px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .proof-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--white-dim);
+      white-space: nowrap;
+    }
+    .proof-item span.icon { font-size: 15px; }
+
+    /* ── PRICE PULSE ── */
+    .btn-pay {
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-pay::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 0; height: 0;
+      background: rgba(255,255,255,0.15);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.4s ease, height 0.4s ease, opacity 0.4s ease;
+      opacity: 0;
+    }
+    .btn-pay:hover::after {
+      width: 300px; height: 300px; opacity: 1;
+    }
+  </style>
+  <script async src="https://js.stripe.com/v3/buy-button.js"></script>
+</head>
+<body>
+<div class="top-urgency">
+  🔴 <strong>PRECIO DE LANZAMIENTO:</strong> 47€/mes — incluye 1 mentoría mensual de 30 min (mentorías adicionales: 50€).
+  El precio sube cuando se agoten las plazas. Tiempo restante: <span class="countdown-inline" id="top-cd">--:--:--</span>
+</div>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-name">Fabio <span>Bueno</span></span>
+  <a href="#precio" class="nav-cta">Acceder → 47€ <span style="font-size:10px;text-decoration:line-through;opacity:0.6;margin-left:4px">97€</span></a>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-bg">
+    <img src="fabio-hero.jpg" alt="Fabio Bueno en Dubai" />
+  </div>
+
+  <div class="hero-text">
+    <p class="hero-eyebrow">De Canarias a Dubai · Agencia de IA</p>
+    <h1>Lo que aprendí<br />montando una<br /><em>agencia de IA</em><br />desde cero</h1>
+    <p class="hero-intro">
+      No soy gurú. He cometido errores caros y he conseguido clientes reales. Todo lo que haría si empezara hoy está aquí.
+    </p>
+    <div class="hero-cta-group">
+      <a href="#precio" class="btn-main">Quiero acceder</a>
+      <p class="hero-price"><strong>47€/mes</strong> · 1 mentoría mensual incluida · Mentorías extra a 50€</p>
+    </div>
+  </div>
+
+  <span class="hero-caption">Dubai, 2024 — visitando a un cliente</span>
+</header>
+
+
+<div class="divider"></div>
+
+<!-- VIDEO SECTION -->
+<section class="section-sm" style="background: var(--bg2);">
+  <div class="container" style="text-align:center;">
+    <p style="font-size:12px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;">Por qué hago esto</p>
+    <h2 style="font-size:clamp(22px,3.5vw,34px);font-weight:800;letter-spacing:-0.8px;margin-bottom:12px;">Dos minutos para entender de dónde vengo</h2>
+    <p style="font-size:15px;color:var(--white-dim);margin-bottom:36px;max-width:420px;margin-left:auto;margin-right:auto;">Cómo vendo IA a negocios locales — el proceso real sin cortes.</p>
+    <!-- EMBED DEL VÍDEO — sustituir el blockquote por el embed de TikTok/Instagram -->
+    <div class="video-wrap" id="videoWrap">
+      <div class="video-placeholder">
+        <span class="play-icon">▶</span>
+        <p>Vídeo próximamente</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROOF STRIP -->
+<div class="proof-strip">
+  <div class="proof-inner">
+    <div class="proof-item"><span class="icon">✓</span> Acceso inmediato tras el pago</div>
+    <div class="proof-item"><span class="icon">✓</span> Mentoría 1:1 incluida</div>
+    <div class="proof-item"><span class="icon">✓</span> Clientes reales, no teoría</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- STORY -->
+<section class="section">
+  <div class="container-md">
+    <div class="story-grid">
+      <div class="story-text reveal">
+        <h2>3 años aprendiendo lo que nadie te enseña</h2>
+        <p>Empecé sin red. <strong>Sin cursos, sin mentores, sin contactos en el sector.</strong> Solo ganas de construir algo propio y muchas horas delante del ordenador.</p>
+        <p>Los primeros meses los gasté en cosas que no funcionaban: herramientas equivocadas, nichos malos, propuestas que nadie leía. Aprendí a golpe de ensayo y error.</p>
+        <p>Hoy tengo clientes en Canarias, en España peninsular y en Dubai. <strong>Negocios reales pagando mes a mes.</strong> No es una fortuna, pero es mío y crece.</p>
+      </div>
+      <div class="story-photo reveal reveal-delay-2">
+        <img src="foto-trabajando.jpg" alt="Fabio trabajando" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIMELINE VISUAL -->
+<section style="padding: 0 24px 80px; max-width: 900px; margin: 0 auto;">
+
+  <!-- Paso 1: primeros euros -->
+  <div class="tl-block reveal">
+    <div class="tl-imgs">
+      <img src="foto-primeros-euros-2.jpg" alt="Primeros euros revendiendo" class="tl-img" />
+      <img src="foto-primeros-euros.jpg" alt="Primeros euros de la agencia" class="tl-img" />
+    </div>
+    <div class="tl-text">
+      <span class="tl-tag">Punto de partida</span>
+      <h3>Los primeros euros — revendiendo desde casa</h3>
+      <p>Antes de la agencia, aprendí cómo funciona el dinero online revendiendo. Poco, pero suficiente para ver que se podía. Esos billetes en la mesa del ordenador fueron el primer empujón.</p>
+    </div>
+  </div>
+
+  <!-- Paso 2: primer cliente real -->
+  <div class="tl-block tl-reverse reveal">
+    <div class="tl-imgs">
+      <img src="foto-cierre-client.jpg" alt="Cierre con Josep" class="tl-img" />
+      <img src="foto-con-client.jpg" alt="Con Josep cliente" class="tl-img" />
+    </div>
+    <div class="tl-text">
+      <span class="tl-tag">Primer cliente real</span>
+      <h3>El primer cierre — con Josep, web completa</h3>
+      <p>Primer cliente de la agencia que pagó de verdad. Fui a verle en persona, le expliqué lo que podía hacer por su negocio y cerramos ahí mismo. Sin decks, sin propuestas de 20 páginas.</p>
+    </div>
+  </div>
+
+  <!-- Paso 4: estilo de vida -->
+  <div class="tl-block tl-reverse reveal">
+    <div class="tl-imgs">
+      <img src="foto-lambo.jpg" alt="Dubai lifestyle" class="tl-img" style="object-position: center top;" />
+      <img src="foto-airmate-tablet.jpg" alt="Airmate" class="tl-img" />
+    </div>
+    <div class="tl-text">
+      <span class="tl-tag">El resultado</span>
+      <h3>No es el lujo. Es la libertad.</h3>
+      <p>No te vendo el Lamborghini ni el reloj. Te vendo el proceso que me llevó a poder estar en esas situaciones. El trabajo duro que hay detrás es lo único que lo hace posible.</p>
+    </div>
+  </div>
+
+</section>
+
+<div class="divider"></div>
+
+<!-- WHAT'S INSIDE -->
+<section class="section inside">
+  <div class="container">
+    <p class="inside-label">Qué incluye</p>
+    <h2>Todo lo que viene<br />con los 47€/mes</h2>
+    <p style="color:var(--white-dim);font-size:15px;max-width:560px;margin:0 auto 40px;text-align:center;line-height:1.7;">
+      No es un curso grabado que caduca. <strong style="color:var(--white);">El contenido se actualiza en tiempo real</strong> — cuando encuentro algo nuevo que funciona, lo añado. Por eso es una suscripción: siempre tienes la última versión de lo que está funcionando ahora mismo en el mercado.
+    </p>
+
+    <div class="inside-items reveal">
+      <div class="inside-item">
+        <span style="font-size:28px;">📖</span>
+        <div>
+          <h3>La guía completa</h3>
+          <p>Desde elegir nicho hasta cerrar el primer cliente. Lo que yo hice, en orden, sin relleno.</p>
+        </div>
+        <span class="inside-tag included">PDF · Tuyo para siempre</span>
+      </div>
+
+      <div class="inside-item">
+        <span style="font-size:28px;">🎬</span>
+        <div>
+          <h3>Vídeos de implementación</h3>
+          <p>Pantalla compartida mostrando cómo montar los agentes y presentarlos al cliente.</p>
+        </div>
+        <span class="inside-tag included">Acceso de por vida</span>
+      </div>
+
+      <div class="inside-item">
+        <span style="font-size:28px;">⚡</span>
+        <div>
+          <h3>Contenido actualizado en tiempo real</h3>
+          <p>El mercado de IA cambia rápido. Cada vez que algo nuevo funciona en mi agencia, lo añado al curso. Siempre tienes lo que está funcionando ahora, no lo de hace 6 meses.</p>
+        </div>
+        <span class="inside-tag included">Siempre al día</span>
+      </div>
+
+      <div class="inside-item">
+        <span style="font-size:28px;">💬</span>
+        <div>
+          <h3>Comunidad privada</h3>
+          <p>Grupo donde comparto lo que va funcionando, respondo dudas y avisamos de oportunidades.</p>
+        </div>
+        <span class="inside-tag included">Acceso incluido</span>
+      </div>
+
+      <div class="inside-item highlight">
+        <span style="font-size:28px;">📞</span>
+        <div>
+          <h3>1 mentoría 1:1 de 30 min al mes conmigo</h3>
+          <p>Cada mes coordinamos una sesión personalizada. Tu nicho, tu propuesta, tus dudas. Te digo exactamente qué haría yo en tu lugar. Mentorías adicionales disponibles a 50€.</p>
+          <span class="spots-badge">⚡ Incluida en la suscripción</span>
+        </div>
+        <span class="inside-tag free">Mensual</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WHAT YOU LEARN -->
+<section class="section learn">
+  <div class="container">
+    <h2>Lo que vas a aprender</h2>
+    <p class="learn-sub">El orden importa. Esto está estructurado para que puedas ejecutar, no solo leer.</p>
+    <div class="learn-list reveal">
+      <div class="learn-item">
+        <span class="learn-n">01</span>
+        <div>
+          <h3>Qué es una agencia de IA y por qué tiene sentido montarla ahora</h3>
+          <p>El mercado, la ventana de oportunidad real y cómo no perderse en el hype.</p>
+        </div>
+      </div>
+      <div class="learn-item">
+        <span class="learn-n">02</span>
+        <div>
+          <h3>Cómo elegir el nicho correcto</h3>
+          <p>Los sectores donde hay dinero real y los clientes entienden el valor. Y los que debes evitar.</p>
+        </div>
+      </div>
+      <div class="learn-item">
+        <span class="learn-n">03</span>
+        <div>
+          <h3>Qué vender exactamente</h3>
+          <p>Agentes, automatizaciones, CRMs con IA. Qué se cierra mejor y cómo presentarlo sin tecnicismos.</p>
+        </div>
+      </div>
+      <div class="learn-item">
+        <span class="learn-n">04</span>
+        <div>
+          <h3>Cómo conseguir el primer cliente</h3>
+          <p>Mi sistema de outreach. Lo que hice para cerrar los primeros sin cartera ni referencias.</p>
+        </div>
+      </div>
+      <div class="learn-item">
+        <span class="learn-n">05</span>
+        <div>
+          <h3>La llamada de venta</h3>
+          <p>Estructura, objeciones más frecuentes y cómo cerrar sin presionar ni mentir.</p>
+        </div>
+      </div>
+      <div class="learn-item">
+        <span class="learn-n">06</span>
+        <div>
+          <h3>Entrega y recurrencia</h3>
+          <p>Cómo entregar sin quemarte, cómo cobrar mes a mes y cómo crecer de forma sostenida.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PHOTOS -->
+<section class="section-sm" style="background:var(--bg2);">
+  <div class="container">
+    <div class="photo-row">
+      <img src="bungalow.jpg" alt="" />
+      <img src="terraza.jpg" alt="" />
+    </div>
+    <p style="text-align:center;font-size:13px;color:var(--white-muted);margin-top:20px;">
+      Dubai, 2024 — viaje de trabajo para cerrar un cliente de Abu Dhabi
+    </p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FOR WHO -->
+<section class="section for-who">
+  <div class="container">
+    <h2>Para quién sí<br />y para quién no</h2>
+    <div class="fw-grid reveal">
+      <div class="fw-card yes">
+        <h3>Sí es para ti</h3>
+        <ul>
+          <li>Quieres ingresos propios sin depender de un jefe</li>
+          <li>Te interesa la IA pero no sabes cómo monetizarla</li>
+          <li>Puedes dedicar 1-2 horas al día a esto</li>
+          <li>Prefieres aprender de alguien que ya lo ha hecho, no de teoría</li>
+          <li>Estás dispuesto a ejecutar aunque tengas miedo</li>
+        </ul>
+      </div>
+      <div class="fw-card no">
+        <h3>No es para ti</h3>
+        <ul>
+          <li>Buscas hacerte rico sin hacer nada</li>
+          <li>Ya tienes clientes y una agencia funcionando</li>
+          <li>Quieres aprender a programar en profundidad</li>
+          <li>No tienes ni 1 hora a la semana para dedicarle</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PRICING -->
+<section class="section pricing" id="precio">
+  <div class="container">
+    <h2>Precio</h2>
+    <p class="pricing-sub">Precio de lanzamiento. Sube cuando se llenen las plazas.</p>
+
+    <div class="urgency-banner reveal">
+      <span class="dot-live"></span>
+      <p><strong>⚠️ Precio de lanzamiento — solo para los primeros accesos.</strong> Cuando se agoten las plazas de mentoría el precio sube a 97€ y la sesión 1:1 desaparece. No hay fecha fija, puede ser mañana.</p>
+    </div>
+
+    <div class="price-card reveal">
+      <div style="text-align:center;margin-bottom:4px">
+        <span class="price-launch-badge">🔴 Precio lanzamiento — plazas limitadas</span>
+      </div>
+      <div class="price-strikethrough" style="text-align:center">97€</div>
+      <div class="price-amount">
+        <span class="eur">€</span>
+        <span class="num">47</span>
+      </div>
+      <p class="price-was">Pago único · Sin renovaciones · Acceso vitalicio</p>
+
+      <div class="countdown-box">
+        <p>⏳ El precio sube en</p>
+        <div class="countdown-digits">
+          <div class="cd-unit"><span class="cd-num" id="cd-d">--</span><span class="cd-label">días</span></div>
+          <span class="cd-sep">:</span>
+          <div class="cd-unit"><span class="cd-num" id="cd-h">--</span><span class="cd-label">horas</span></div>
+          <span class="cd-sep">:</span>
+          <div class="cd-unit"><span class="cd-num" id="cd-m">--</span><span class="cd-label">min</span></div>
+          <span class="cd-sep">:</span>
+          <div class="cd-unit"><span class="cd-num" id="cd-s">--</span><span class="cd-label">seg</span></div>
+        </div>
+      </div>
+
+      <div class="price-lines">
+        <div class="price-line">
+          <span class="dot"></span>
+          Plataforma del curso completa (12 lecciones + quiz)
+        </div>
+        <div class="price-line">
+          <span class="dot"></span>
+          Acceso vitalicio + actualizaciones incluidas
+        </div>
+        <div class="price-line">
+          <span class="dot"></span>
+          Comunidad privada con Fabio
+        </div>
+        <div class="price-line gift">
+          <span class="dot"></span>
+          <strong>🎯 1 mentoría 1:1 de 30 min cada mes — incluida · Adicionales a 50€</strong>
+        </div>
+      </div>
+
+      <div style="margin:24px 0 8px;display:flex;justify-content:center;">
+        <stripe-buy-button
+          buy-button-id="buy_btn_1TjhgjHz33yY3chRh9hlRMyn"
+          publishable-key="pk_live_51Qkl30Hz33yY3chRhEVzFIpcNgJcOobGfN8q15DHGybIeKEqhFZall4FHYA94uv6oRjYjxArlm5MsOnEJgdXGXq600ZtWFG2yG"
+        ></stripe-buy-button>
+      </div>
+      <p class="price-secure" style="color:#fca5a5;font-weight:600">⚠️ Cuando se agoten las plazas, el precio sube a 97€ y sin mentoría</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FAQ -->
+<section class="section faq">
+  <div class="container">
+    <h2>Preguntas frecuentes</h2>
+    <div class="faq-items reveal">
+      <div class="faq-item">
+        <h3>¿Necesito saber de tecnología o programar?</h3>
+        <p>No. Usamos herramientas visuales que cualquier persona puede aprender. Lo que sí necesitas es ganas de aprender y capacidad de hablar con clientes.</p>
+      </div>
+      <div class="faq-item">
+        <h3>¿Cuándo se hace la mentoría 1:1?</h3>
+        <p>Tras el pago te escribo por WhatsApp y buscamos un hueco que te venga bien. La sesión dura 15 minutos por videollamada y es completamente personalizada.</p>
+      </div>
+      <div class="faq-item">
+        <h3>¿Cuánto tiempo necesito para ver resultados?</h3>
+        <p>No te voy a mentir con fechas concretas. Depende mucho de ti. Hay gente que en un mes cierra el primer cliente y gente que tarda tres. Lo que sí te puedo decir es que con consistencia funciona.</p>
+      </div>
+      <div class="faq-item">
+        <h3>¿La comunidad tiene coste mensual?</h3>
+        <p>No. El acceso es de por vida y está incluido en los 47€ de lanzamiento. Sin renovaciones.</p>
+      </div>
+      <div class="faq-item">
+        <h3>¿Cómo funciona el pago?</h3>
+        <p>Pagas directamente con tarjeta a través de Stripe (100% seguro). Tras el pago recibes acceso al curso y te escribo por WhatsApp para coordinar tu primera mentoría.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FINAL CTA -->
+<section class="final">
+  <div class="container">
+    <p class="note">Una última cosa</p>
+    <h2>El mejor momento<br />para empezar era hace un año.<br />El segundo mejor es hoy.</h2>
+    <p class="sub">La IA no va a desaparecer. La ventana de oportunidad tampoco dura para siempre.</p>
+    <div style="display:flex;justify-content:center;margin-top:24px;">
+      <stripe-buy-button
+        buy-button-id="buy_btn_1TjhgjHz33yY3chRh9hlRMyn"
+        publishable-key="pk_live_51Qkl30Hz33yY3chRhEVzFIpcNgJcOobGfN8q15DHGybIeKEqhFZall4FHYA94uv6oRjYjxArlm5MsOnEJgdXGXq600ZtWFG2yG"
+      ></stripe-buy-button>
+    </div>
+  </div>
+</section>
+
+<!-- STICKY MOBILE CTA -->
+<div class="sticky-cta" id="stickyCta">
+  <a href="https://buy.stripe.com/cNi28r4595dW3MOc2d2Ry0j" target="_blank" rel="noopener">
+    ⚠️ Acceder ahora — 47€/mes (precio sube pronto)
+  </a>
+  <p class="sticky-cta-sub">Mentoría 1:1 incluida · Acceso inmediato</p>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>
+    Fabio Bueno · Airmate AI ·
+    <a href="mailto:airmateai@gmail.com">airmateai@gmail.com</a>
+    · <a href="https://wa.me/34650110256" target="_blank">WhatsApp</a>
+  </p>
+</footer>
+
+<script>
+  // ── CUENTA ATRÁS ──
+  // Deadline: 7 días desde primera visita (guardado en localStorage)
+  (function() {
+    const KEY = 'fabio_curso_deadline';
+    let deadline = localStorage.getItem(KEY);
+    if (!deadline) {
+      deadline = Date.now() + 7 * 24 * 3600 * 1000;
+      localStorage.setItem(KEY, deadline);
+    }
+    deadline = parseInt(deadline);
+
+    function pad(n) { return String(n).padStart(2,'0'); }
+
+    function tick() {
+      const diff = deadline - Date.now();
+      if (diff <= 0) {
+        ['cd-d','cd-h','cd-m','cd-s'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = '00'; });
+        const topEl = document.getElementById('top-cd');
+        if (topEl) topEl.textContent = '00:00:00';
+        return;
+      }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+
+      const dEl = document.getElementById('cd-d'); if(dEl) dEl.textContent = pad(d);
+      const hEl = document.getElementById('cd-h'); if(hEl) hEl.textContent = pad(h);
+      const mEl = document.getElementById('cd-m'); if(mEl) mEl.textContent = pad(m);
+      const sEl = document.getElementById('cd-s'); if(sEl) sEl.textContent = pad(s);
+
+      const topEl = document.getElementById('top-cd');
+      if (topEl) topEl.textContent = `${pad(d)}d ${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
+
+    tick();
+    setInterval(tick, 1000);
+  })();
+
+  // Scroll reveal
+  const revealEls = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => observer.observe(el));
+
+  // Animated counters
+  function animateCounter(el, target, duration) {
+    let start = 0;
+    const step = target / (duration / 16);
+    const tick = () => {
+      start = Math.min(start + step, target);
+      el.textContent = Math.round(start) + (el.dataset.suffix || '');
+      if (start < target) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const el = e.target;
+        animateCounter(el, parseInt(el.dataset.target), 1200);
+        counterObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('[data-target]').forEach(el => counterObserver.observe(el));
+
+  // Sticky CTA: ocultar cuando el usuario está en la sección de precio
+  const pricingSection = document.getElementById('precio');
+  const stickyCta = document.getElementById('stickyCta');
+  const stickyObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      stickyCta.style.opacity = e.isIntersecting ? '0' : '1';
+      stickyCta.style.pointerEvents = e.isIntersecting ? 'none' : 'auto';
+    });
+  }, { threshold: 0.5 });
+  if (pricingSection) stickyObserver.observe(pricingSection);
+</script>
+</body>
+</html>

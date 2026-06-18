@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Curso — Airmate</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --bg2: #161616;
+    --card: #1c1c1c;
+    --line: #2a2a2a;
+    --accent: #7c3aed;
+    --accent2: #a78bfa;
+    --white: #f5f5f5;
+    --dim: #888;
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--white); font-family: system-ui, sans-serif; min-height: 100vh; }
+
+  /* LOGIN */
+  #loginScreen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .login-box {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 40px;
+    width: 360px;
+  }
+  .login-box h1 { font-size: 22px; margin-bottom: 8px; }
+  .login-box p { color: var(--dim); font-size: 14px; margin-bottom: 28px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; color: var(--dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 10px 14px; background: var(--bg2);
+    border: 1px solid var(--line); border-radius: 8px; color: var(--white);
+    font-size: 14px; outline: none; font-family: inherit;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .btn:hover { opacity: 0.85; }
+  #loginErr { color: var(--red); font-size: 13px; margin-top: 10px; display: none; }
+
+  /* APP */
+  #app { display: none; }
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--line);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header .logo { font-weight: 700; font-size: 16px; }
+  header .logo span { color: var(--accent2); }
+  header .hright { display: flex; align-items: center; gap: 16px; }
+  .user-badge { font-size: 13px; color: var(--dim); }
+  .btn-sm { padding: 6px 14px; background: var(--card); border: 1px solid var(--line); color: var(--white); border-radius: 6px; font-size: 13px; cursor: pointer; }
+  .btn-sm:hover { border-color: var(--accent); }
+
+  main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+
+  /* STATS */
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 28px; }
+  .stat-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .stat-card .num { font-size: 28px; font-weight: 800; }
+  .stat-card .lbl { font-size: 12px; color: var(--dim); margin-top: 4px; }
+
+  /* TOOLBAR */
+  .toolbar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .toolbar input { flex: 1; min-width: 200px; padding: 9px 14px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; color: var(--white); font-size: 14px; outline: none; }
+  .toolbar input:focus { border-color: var(--accent); }
+  .filter-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .fbtn { padding: 7px 14px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--dim); font-size: 13px; cursor: pointer; }
+  .fbtn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .btn-add { padding: 9px 18px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .btn-add:hover { opacity: 0.85; }
+
+  /* TABLE */
+  .table-wrap { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 12px 16px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); border-bottom: 1px solid var(--line); }
+  tbody tr { border-bottom: 1px solid var(--line); transition: background .15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(124,58,237,0.05); }
+  tbody td { padding: 14px 16px; font-size: 14px; vertical-align: middle; }
+  .td-name { font-weight: 600; }
+  .td-phone a { color: var(--accent2); text-decoration: none; }
+  .td-phone a:hover { text-decoration: underline; }
+  .td-notes { color: var(--dim); font-size: 13px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .td-date { color: var(--dim); font-size: 12px; white-space: nowrap; }
+
+  /* STATUS BADGES */
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-nuevo { background: rgba(59,130,246,0.15); color: #60a5fa; }
+  .badge-contactado { background: rgba(245,158,11,0.15); color: #fbbf24; }
+  .badge-link_enviado { background: rgba(124,58,237,0.15); color: #a78bfa; }
+  .badge-pagado { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .badge-descartado { background: rgba(107,114,128,0.15); color: #9ca3af; }
+
+  /* ACTION BTNS */
+  .td-actions { display: flex; gap: 6px; }
+  .act-btn { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--white); font-size: 12px; cursor: pointer; }
+  .act-btn:hover { border-color: var(--accent); color: var(--accent2); }
+  .act-btn.danger:hover { border-color: var(--red); color: var(--red); }
+  .wa-btn { padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); color: #4ade80; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+  .wa-btn:hover { background: rgba(34,197,94,0.2); }
+
+  /* MODAL */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .modal { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 28px; width: 100%; max-width: 480px; }
+  .modal h2 { font-size: 18px; margin-bottom: 20px; }
+  .modal-footer { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+  .btn-cancel { padding: 10px 20px; background: transparent; border: 1px solid var(--line); color: var(--white); border-radius: 8px; cursor: pointer; }
+  .btn-save { padding: 10px 20px; background: var(--accent); border: none; color: white; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+  /* STATUS SELECT in table */
+  select.status-select {
+    padding: 4px 8px; background: var(--bg); border: 1px solid var(--line);
+    border-radius: 6px; color: var(--white); font-size: 12px; cursor: pointer; outline: none;
+  }
+
+  .empty { padding: 60px 24px; text-align: center; color: var(--dim); }
+
+  @media (max-width: 700px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .td-notes, .td-date { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <h1>CRM Curso</h1>
+    <p>Panel de gestión de leads — Airmate</p>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn" onclick="doLogin()">Entrar</button>
+    <div id="loginErr">Contraseña incorrecta</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="logo">Airmate <span>CRM Curso</span></div>
+    <div class="hright">
+      <span class="user-badge" id="userBadge"></span>
+      <button class="btn-sm" onclick="logout()">Salir</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="num" id="s-total">–</div>
+        <div class="lbl">Total leads</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="s-nuevo" style="color:#60a5fa">–</div>
+        <div class="lbl">Nuevos</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="s-link" style="color:#a78bfa">–</div>
+        <div class="lbl">Link enviado</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="s-pagado" style="color:#4ade80">–</div>
+        <div class="lbl">Pagados</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="s-conv" style="color:#fbbf24">–</div>
+        <div class="lbl">Conversión</div>
+      </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <input type="text" id="searchInput" placeholder="Buscar por nombre o teléfono..." oninput="renderLeads()">
+      <div class="filter-btns">
+        <button class="fbtn active" data-f="todos" onclick="setFilter(this)">Todos</button>
+        <button class="fbtn" data-f="nuevo" onclick="setFilter(this)">Nuevos</button>
+        <button class="fbtn" data-f="contactado" onclick="setFilter(this)">Contactados</button>
+        <button class="fbtn" data-f="link_enviado" onclick="setFilter(this)">Link enviado</button>
+        <button class="fbtn" data-f="pagado" onclick="setFilter(this)">Pagados ✓</button>
+        <button class="fbtn" data-f="descartado" onclick="setFilter(this)">Descartados</button>
+      </div>
+      <button class="btn-add" onclick="openModal()">+ Nuevo lead</button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Teléfono</th>
+            <th>Estado</th>
+            <th>Notas</th>
+            <th>Fecha</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="leadsBody"></tbody>
+      </table>
+      <div id="emptyState" class="empty" style="display:none">No hay leads con este filtro</div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL NUEVO/EDITAR LEAD -->
+<div class="overlay" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2 id="modalTitle">Nuevo lead</h2>
+    <input type="hidden" id="editId">
+    <div class="field">
+      <label>Nombre *</label>
+      <input type="text" id="fName" placeholder="Juan García">
+    </div>
+    <div class="field">
+      <label>Teléfono *</label>
+      <input type="tel" id="fPhone" placeholder="+34 666 123 456">
+    </div>
+    <div class="field">
+      <label>Email (si lo tiene)</label>
+      <input type="email" id="fEmail" placeholder="juan@email.com">
+    </div>
+    <div class="field">
+      <label>Origen</label>
+      <select id="fSource">
+        <option value="tiktok">TikTok</option>
+        <option value="instagram">Instagram</option>
+        <option value="referido">Referido</option>
+        <option value="otro">Otro</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Estado</label>
+      <select id="fStatus">
+        <option value="nuevo">Nuevo</option>
+        <option value="contactado">Contactado</option>
+        <option value="link_enviado">Link enviado</option>
+        <option value="pagado">Pagado ✓</option>
+        <option value="descartado">Descartado</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Notas</label>
+      <textarea id="fNotes" rows="3" placeholder="Interesado en el plan básico, preguntó por mentorías..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveLead()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://vjofxmfwdybktpwiuanc.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+const _sb = supabase.createClient(SB_URL, SB_KEY);
+
+// Contraseñas (admin + Unai)
+const PASSWORDS = {
+  'airmate2025': 'Fabio (Admin)',
+  'unai2025': 'Unai'
+};
+
+// LANDING URL para enviar
+const LANDING_URL = 'https://airmate.es/curso.html';
+
+let allLeads = [];
+let currentFilter = 'todos';
+let currentUser = '';
+
+// ── AUTH ──
+function doLogin() {
+  const pass = document.getElementById('loginPass').value.trim();
+  if (PASSWORDS[pass]) {
+    currentUser = PASSWORDS[pass];
+    localStorage.setItem('crm_curso_session', pass);
+    showApp();
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('crm_curso_session');
+  location.reload();
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('userBadge').textContent = currentUser;
+  loadLeads();
+  initRealtime();
+}
+
+// Verificar sesión
+const saved = localStorage.getItem('crm_curso_session');
+if (saved && PASSWORDS[saved]) {
+  currentUser = PASSWORDS[saved];
+  showApp();
+}
+
+// ── DATOS ──
+async function loadLeads() {
+  const { data } = await _sb
+    .from('curso_leads')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  allLeads = data || [];
+  renderLeads();
+  updateStats();
+}
+
+function renderLeads() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  let filtered = allLeads;
+
+  if (currentFilter !== 'todos') filtered = filtered.filter(l => l.status === currentFilter);
+  if (search) filtered = filtered.filter(l =>
+    (l.name||'').toLowerCase().includes(search) ||
+    (l.phone||'').includes(search)
+  );
+
+  const tbody = document.getElementById('leadsBody');
+  const empty = document.getElementById('emptyState');
+
+  if (!filtered.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const waMsg = encodeURIComponent(`Hola! Te mando el link del curso de Fabio: ${LANDING_URL}`);
+
+  tbody.innerHTML = filtered.map(l => `
+    <tr>
+      <td class="td-name">${esc(l.name)}</td>
+      <td class="td-phone">
+        <a href="tel:${esc(l.phone)}">${esc(l.phone)}</a>
+      </td>
+      <td>
+        <select class="status-select" onchange="updateStatus('${l.id}', this.value)">
+          ${['nuevo','contactado','link_enviado','pagado','descartado'].map(s =>
+            `<option value="${s}" ${l.status===s?'selected':''}>${statusLabel(s)}</option>`
+          ).join('')}
+        </select>
+      </td>
+      <td class="td-notes" title="${esc(l.notes||'')}">${esc(l.notes||'–')}</td>
+      <td class="td-date">${fmtDate(l.created_at)}</td>
+      <td class="td-actions">
+        <a class="wa-btn" href="https://wa.me/${cleanPhone(l.phone)}?text=${waMsg}" target="_blank">📲 WA</a>
+        <button class="act-btn" onclick="editLead('${l.id}')">Editar</button>
+        <button class="act-btn danger" onclick="deleteLead('${l.id}')">✕</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function updateStats() {
+  const t = allLeads.length;
+  const n = allLeads.filter(l => l.status === 'nuevo').length;
+  const li = allLeads.filter(l => l.status === 'link_enviado').length;
+  const p = allLeads.filter(l => l.status === 'pagado').length;
+  const conv = t ? Math.round(p / t * 100) : 0;
+  document.getElementById('s-total').textContent = t;
+  document.getElementById('s-nuevo').textContent = n;
+  document.getElementById('s-link').textContent = li;
+  document.getElementById('s-pagado').textContent = p;
+  document.getElementById('s-conv').textContent = conv + '%';
+}
+
+// ── CRUD ──
+function openModal(id = null) {
+  document.getElementById('editId').value = id || '';
+  document.getElementById('modalTitle').textContent = id ? 'Editar lead' : 'Nuevo lead';
+  if (id) {
+    const l = allLeads.find(x => x.id === id);
+    if (l) {
+      document.getElementById('fName').value = l.name || '';
+      document.getElementById('fPhone').value = l.phone || '';
+      document.getElementById('fEmail').value = l.email || '';
+      document.getElementById('fSource').value = l.source || 'tiktok';
+      document.getElementById('fStatus').value = l.status || 'nuevo';
+      document.getElementById('fNotes').value = l.notes || '';
+    }
+  } else {
+    document.getElementById('fName').value = '';
+    document.getElementById('fPhone').value = '';
+    document.getElementById('fEmail').value = '';
+    document.getElementById('fSource').value = 'tiktok';
+    document.getElementById('fStatus').value = 'nuevo';
+    document.getElementById('fNotes').value = '';
+  }
+  document.getElementById('modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('fName').focus(), 100);
+}
+
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+async function saveLead() {
+  const id = document.getElementById('editId').value;
+  const data = {
+    name: document.getElementById('fName').value.trim(),
+    phone: document.getElementById('fPhone').value.trim(),
+    email: document.getElementById('fEmail').value.trim() || null,
+    source: document.getElementById('fSource').value,
+    status: document.getElementById('fStatus').value,
+    notes: document.getElementById('fNotes').value.trim() || null,
+  };
+  if (!data.name || !data.phone) { alert('Nombre y teléfono son obligatorios'); return; }
+
+  if (id) {
+    await _sb.from('curso_leads').update(data).eq('id', id);
+  } else {
+    await _sb.from('curso_leads').insert(data);
+  }
+  closeModal();
+  loadLeads();
+}
+
+async function updateStatus(id, status) {
+  await _sb.from('curso_leads').update({ status }).eq('id', id);
+  const lead = allLeads.find(l => l.id === id);
+  if (lead) lead.status = status;
+  updateStats();
+}
+
+function editLead(id) { openModal(id); }
+
+async function deleteLead(id) {
+  if (!confirm('¿Eliminar este lead?')) return;
+  await _sb.from('curso_leads').delete().eq('id', id);
+  loadLeads();
+}
+
+// ── REALTIME ──
+function initRealtime() {
+  _sb.channel('curso_leads_rt')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'curso_leads' }, () => loadLeads())
+    .subscribe();
+}
+
+// ── FILTROS ──
+function setFilter(btn) {
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = btn.dataset.f;
+  renderLeads();
+}
+
+// ── HELPERS ──
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(d) { return new Date(d).toLocaleDateString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }
+function cleanPhone(p) { return (p||'').replace(/[\s\-\(\)]/g,'').replace(/^\+/,''); }
+function statusLabel(s) {
+  return { nuevo:'Nuevo', contactado:'Contactado', link_enviado:'Link enviado', pagado:'Pagado ✓', descartado:'Descartado' }[s] || s;
+}
+</script>
+</body>
+</html>
