@@ -1412,17 +1412,7 @@ section{position:relative;padding:120px 5vw;}
     <div class="section-divider"></div>
     <p class="section-lead">A curated edit of garments cut and stitched in our Al Jaddaf workshop. Each one entirely bespoke &mdash; or made-to-measure on request.</p>
   </div>
-  <div class="col-tabs" id="col-tabs">
-    <button class="col-tab active" data-cat="all">All</button>
-    <button class="col-tab" data-cat="suits">Suits</button>
-    <button class="col-tab" data-cat="blacktie">Black Tie</button>
-    <button class="col-tab" data-cat="wedding">Weddings</button>
-    <button class="col-tab" data-cat="women">Women's Bespoke</button>
-    <button class="col-tab" data-cat="jacket">Jackets</button>
-    <button class="col-tab" data-cat="shirts">Shirts</button>
-    <button class="col-tab" data-cat="overcoat">Overcoats</button>
-  </div>
-  <div class="col-grid" id="col-grid"></div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;max-width:1200px;margin:40px auto 0;padding:0 5vw;" id="col-grid"></div>
 </section>
 
 <!-- ═══ CONFIGURATOR ═══ -->
@@ -2183,38 +2173,19 @@ document.querySelectorAll('.reveal').forEach(e=>io.observe(e));
 
 // ═══ COLLECTIONS ═══
 const COL_ITEMS=[
-  {cat:'suits',name:'Milano',meta:'Wool · Charcoal · 2BTN',tag:'House',img:'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=900&q=80'},
-  {cat:'suits',name:'Roma',meta:'Cashmere · Navy · Peak Lapel',tag:'',img:'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80'},
-  {cat:'suits',name:'Firenze',meta:'Three-Piece · Hopsack',tag:'',img:'https://images.unsplash.com/photo-1593030103066-0093718efeb9?w=900&q=80'},
-  {cat:'blacktie',name:'Notte',meta:'Black Tie · Shawl Lapel',tag:'Black Tie',img:'https://images.unsplash.com/photo-1543132220-3ec99c6094dc?w=900&q=80'},
-  {cat:'blacktie',name:'Galà',meta:'Midnight Tuxedo · Grosgrain',tag:'Black Tie',img:'https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?w=900&q=80'},
-  {cat:'jacket',name:'Costa',meta:'Linen Blazer · Tobacco',tag:'',img:'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=900&q=80'},
-  {cat:'shirts',name:'Sea Island Shirt',meta:'200/2 · Mother-of-Pearl buttons',tag:'',img:'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=900&q=80'},
-  {cat:'overcoat',name:'Inverno',meta:'Cashmere Overcoat · DB',tag:'Winter',img:'https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?w=900&q=80'},
-  {cat:'women',name:'Donna · Atelier',meta:'Women’s Bespoke Suit',tag:'For Her',img:'https://images.unsplash.com/photo-1551803091-e20673f15770?w=900&q=80'},
-  {cat:'women',name:'Donna · Hijab Edit',meta:'Modest Bespoke',tag:'For Her',img:'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=900&q=80'},
-  {cat:'women',name:'Sposa · Bridal',meta:'Bespoke for the bride',tag:'For Her',img:'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=900&q=80'},
-  {cat:'wedding',name:'Sherwani · Royal',meta:'Indian Wedding · Brocade',tag:'Wedding',img:'https://images.unsplash.com/photo-1583394293214-28ded15ee548?w=900&q=80'},
-  {cat:'wedding',name:'Groom · Classico',meta:'Western Wedding · 3-Piece',tag:'Wedding',img:'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80'},
+  {name:’Black Tie’,meta:’Shawl Lapel · Midnight · Grosgrain’,img:’https://images.unsplash.com/photo-1543132220-3ec99c6094dc?w=900&q=80’},
+  {name:’Bespoke Suits’,meta:’Full Canvas · Italian Wool · Hand-stitched’,img:’https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=900&q=80’},
+  {name:’Bespoke Shirts’,meta:’Sea Island Cotton · Mother-of-Pearl’,img:’https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=900&q=80’},
+  {name:’Women\’s Bespoke’,meta:’Tailored for Her · Atelier Collection’,img:’https://images.unsplash.com/photo-1551803091-e20673f15770?w=900&q=80’},
 ];
-function drawCollections(cat){
-  const list=cat==='all'?COL_ITEMS:COL_ITEMS.filter(i=>i.cat===cat);
-  document.getElementById('col-grid').innerHTML=list.map(i=>`
-    <div class="col-item">
-      ${i.tag?`<span class="col-item-tag">${i.tag}</span>`:''}
-      <img src="${i.img}" alt="${i.name}" loading="lazy">
-      <div class="col-item-veil">
-        <div class="col-item-name">${i.name.includes('·')?i.name.split('·')[0]+'<em>·'+i.name.split('·')[1]+'</em>':i.name}</div>
-        <div class="col-item-meta">${i.meta}</div>
-      </div>
-    </div>`).join('');
-}
-drawCollections('all');
-document.querySelectorAll('.col-tab').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('.col-tab').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active');
-  drawCollections(b.dataset.cat);
-}));
+document.getElementById('col-grid').innerHTML=COL_ITEMS.map(i=>`
+  <div class="col-item">
+    <img src="${i.img}" alt="${i.name}" loading="lazy">
+    <div class="col-item-veil">
+      <div class="col-item-name">${i.name}</div>
+      <div class="col-item-meta">${i.meta}</div>
+    </div>
+  </div>`).join('');
 
 // ═══ FABRICS ═══
 const FABRICS=[
