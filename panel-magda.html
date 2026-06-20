@@ -329,6 +329,12 @@ tr:hover td{background:var(--bg);}
 .prop-stat-icon{width:32px;height:32px;background:var(--acc-bg);border-radius:8px;display:grid;place-items:center;flex-shrink:0;color:var(--acc2);}
 .prop-stat-label{font-size:12px;color:var(--txt3);}
 .prop-stat-value{font-size:14px;font-weight:600;color:var(--txt);}
+/* Finca status bar */
+.finca-status-bar{display:flex;gap:8px;padding:10px 20px;background:rgba(0,0,0,.2);border-bottom:1px solid rgba(255,255,255,.06);flex-wrap:wrap;}
+.finca-sb-pill{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:100px;border:1.5px solid;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.03em;transition:all .18s;opacity:.45;user-select:none;}
+.finca-sb-pill:hover{opacity:.75;}
+.finca-sb-pill.active{opacity:1;}
+.finca-sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -448,17 +454,6 @@ tr:hover td{background:var(--bg);}
       </div>
 
       <!-- MAPA VISUAL FINCA -->
-      <style>
-        .finca-status-menu{position:absolute;top:calc(100% + 8px);right:0;background:#1a2b1a;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:6px;z-index:200;min-width:190px;box-shadow:0 16px 40px rgba(0,0,0,.45);display:none;flex-direction:column;gap:2px;}
-        .finca-status-menu.open{display:flex;}
-        .fsm-opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;color:rgba(255,255,255,.8);transition:background .15s;}
-        .fsm-opt:hover{background:rgba(255,255,255,.07);}
-        .fsm-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-        #finca-status-btn{display:flex;align-items:center;gap:7px;padding:5px 12px 5px 8px;border-radius:100px;border:1px solid;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.04em;transition:opacity .15s;user-select:none;}
-        #finca-status-btn:hover{opacity:.85;}
-        #finca-status-btn svg{opacity:.7;}
-        .finca-overlay-tint{position:absolute;inset:0;pointer-events:none;transition:background .4s,opacity .4s;opacity:0;border-radius:0;}
-      </style>
       <div id="finca-map-card" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:24px;box-shadow:0 4px 24px rgba(0,0,0,.09);">
         <!-- Top bar -->
         <div style="background:linear-gradient(135deg,#0c1a0c 0%,#152515 60%,#1c321c 100%);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
@@ -466,23 +461,24 @@ tr:hover td{background:var(--bg);}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(120,200,120,.6)" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             <div style="font-size:13px;font-weight:700;color:#fff;letter-spacing:.02em;">Bungalow Punta del Hidalgo</div>
           </div>
-          <div style="display:flex;align-items:center;gap:12px;">
-            <span style="font-size:11px;color:rgba(255,255,255,.35);">Cam. Las Traviesas 31</span>
-            <!-- Status selector button -->
-            <div style="position:relative;">
-              <div id="finca-status-btn" onclick="toggleFincaMenu(event)">
-                <span id="fsb-dot" style="width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block;flex-shrink:0;"></span>
-                <span id="fsb-label">Disponible</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-              </div>
-              <div id="finca-status-menu" class="finca-status-menu">
-                <div class="fsm-opt" onclick="setFincaStatus('disponible')"><span class="fsm-dot" style="background:#4ade80;"></span>Disponible</div>
-                <div class="fsm-opt" onclick="setFincaStatus('reservado')"><span class="fsm-dot" style="background:#60a5fa;"></span>Reservado</div>
-                <div class="fsm-opt" onclick="setFincaStatus('ocupado')"><span class="fsm-dot" style="background:#f87171;"></span>Ocupado</div>
-                <div class="fsm-opt" onclick="setFincaStatus('limpieza')"><span class="fsm-dot" style="background:#fbbf24;"></span>Limpieza</div>
-                <div class="fsm-opt" onclick="setFincaStatus('mantenimiento')"><span class="fsm-dot" style="background:#c084fc;"></span>Mantenimiento</div>
-              </div>
-            </div>
+          <span style="font-size:11px;color:rgba(255,255,255,.35);">Cam. Las Traviesas 31</span>
+        </div>
+        <!-- Estado clickable inline -->
+        <div class="finca-status-bar">
+          <div class="finca-sb-pill active" id="fsb-disponible" onclick="setFincaStatus('disponible')" style="color:#4ade80;border-color:#4ade80;background:rgba(74,222,128,.08);">
+            <span class="finca-sb-dot" style="background:#4ade80;"></span>Disponible
+          </div>
+          <div class="finca-sb-pill" id="fsb-reservado" onclick="setFincaStatus('reservado')" style="color:#60a5fa;border-color:#60a5fa;background:rgba(96,165,250,.06);">
+            <span class="finca-sb-dot" style="background:#60a5fa;"></span>Reservado
+          </div>
+          <div class="finca-sb-pill" id="fsb-ocupado" onclick="setFincaStatus('ocupado')" style="color:#f87171;border-color:#f87171;background:rgba(248,113,113,.06);">
+            <span class="finca-sb-dot" style="background:#f87171;"></span>Ocupado
+          </div>
+          <div class="finca-sb-pill" id="fsb-limpieza" onclick="setFincaStatus('limpieza')" style="color:#fbbf24;border-color:#fbbf24;background:rgba(251,191,36,.06);">
+            <span class="finca-sb-dot" style="background:#fbbf24;"></span>Limpieza
+          </div>
+          <div class="finca-sb-pill" id="fsb-mantenimiento" onclick="setFincaStatus('mantenimiento')" style="color:#c084fc;border-color:#c084fc;background:rgba(192,132,252,.06);">
+            <span class="finca-sb-dot" style="background:#c084fc;"></span>Mantenimiento
           </div>
         </div>
 
@@ -1344,36 +1340,24 @@ let _fincaManualStatus = localStorage.getItem('finca_status_magda') || null;
 
 function applyFincaStatus(key, guestInfo) {
   const cfg = FINCA_STATUS_CFG[key] || FINCA_STATUS_CFG.disponible;
-  const btn = document.getElementById('finca-status-btn');
-  const dot = document.getElementById('fsb-dot');
-  const lbl = document.getElementById('fsb-label');
   const txt = document.getElementById('finca-estado-txt');
   const sub = document.getElementById('finca-huesped-txt');
   const tint = document.getElementById('finca-bldg-tint');
-  if(btn){ btn.style.background=cfg.bg; btn.style.borderColor=cfg.border; btn.style.color=cfg.color; }
-  if(dot) dot.style.background = cfg.color;
-  if(lbl) lbl.textContent = cfg.label;
   if(txt){ txt.textContent = cfg.label; txt.style.color = cfg.color; }
   if(sub) sub.textContent = guestInfo || cfg.sub;
   if(tint){ tint.setAttribute('fill', cfg.tint); tint.setAttribute('opacity', cfg.tintOpacity); }
+  // Update pill active state
+  ['disponible','reservado','ocupado','limpieza','mantenimiento'].forEach(k => {
+    const el = document.getElementById('fsb-'+k);
+    if(el) el.classList.toggle('active', k === key);
+  });
 }
 
 function setFincaStatus(key) {
   _fincaManualStatus = key;
   localStorage.setItem('finca_status_magda', key);
   applyFincaStatus(key);
-  document.getElementById('finca-status-menu').classList.remove('open');
 }
-
-function toggleFincaMenu(e) {
-  e.stopPropagation();
-  document.getElementById('finca-status-menu').classList.toggle('open');
-}
-
-document.addEventListener('click', () => {
-  const m = document.getElementById('finca-status-menu');
-  if(m) m.classList.remove('open');
-});
 
 // =============================================
 // HELPERS
