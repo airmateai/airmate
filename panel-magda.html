@@ -332,12 +332,9 @@ tr:hover td{background:var(--bg);}
 /* Finca modal option button */
 .finca-modal-opt{width:100%;display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;border:1.5px solid var(--c);background:var(--cb);color:var(--c);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s;}
 .finca-modal-opt:hover{opacity:.8;}
-/* Finca status bar */
-.finca-status-bar{display:flex;gap:8px;padding:10px 20px;background:rgba(0,0,0,.2);border-bottom:1px solid rgba(255,255,255,.06);flex-wrap:wrap;}
-.finca-sb-pill{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:100px;border:1.5px solid;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.03em;transition:all .18s;opacity:.45;user-select:none;}
-.finca-sb-pill:hover{opacity:.75;}
-.finca-sb-pill.active{opacity:1;}
-.finca-sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+/* Finca popup options */
+.finca-popup-opt{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;cursor:pointer;font-size:12px;font-weight:600;color:var(--c);background:var(--bg);border:1px solid var(--c);transition:opacity .15s;}
+.finca-popup-opt:hover{opacity:.75;}
 </style>
 </head>
 <body>
@@ -466,27 +463,8 @@ tr:hover td{background:var(--bg);}
           </div>
           <span style="font-size:11px;color:rgba(255,255,255,.35);">Cam. Las Traviesas 31</span>
         </div>
-        <!-- Estado clickable inline -->
-        <div class="finca-status-bar">
-          <div class="finca-sb-pill active" id="fsb-disponible" onclick="setFincaStatus('disponible')" style="color:#4ade80;border-color:#4ade80;background:rgba(74,222,128,.08);">
-            <span class="finca-sb-dot" style="background:#4ade80;"></span>Disponible
-          </div>
-          <div class="finca-sb-pill" id="fsb-reservado" onclick="setFincaStatus('reservado')" style="color:#60a5fa;border-color:#60a5fa;background:rgba(96,165,250,.06);">
-            <span class="finca-sb-dot" style="background:#60a5fa;"></span>Reservado
-          </div>
-          <div class="finca-sb-pill" id="fsb-ocupado" onclick="setFincaStatus('ocupado')" style="color:#f87171;border-color:#f87171;background:rgba(248,113,113,.06);">
-            <span class="finca-sb-dot" style="background:#f87171;"></span>Ocupado
-          </div>
-          <div class="finca-sb-pill" id="fsb-limpieza" onclick="setFincaStatus('limpieza')" style="color:#fbbf24;border-color:#fbbf24;background:rgba(251,191,36,.06);">
-            <span class="finca-sb-dot" style="background:#fbbf24;"></span>Limpieza
-          </div>
-          <div class="finca-sb-pill" id="fsb-mantenimiento" onclick="setFincaStatus('mantenimiento')" style="color:#c084fc;border-color:#c084fc;background:rgba(192,132,252,.06);">
-            <span class="finca-sb-dot" style="background:#c084fc;"></span>Mantenimiento
-          </div>
-        </div>
-
         <!-- SVG Finca Scene — professional flat/architectural style -->
-        <div style="position:relative;height:300px;overflow:hidden;background:#1b2e1b;">
+        <div style="position:relative;height:300px;overflow:visible;background:#1b2e1b;">
           <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;">
             <defs>
               <linearGradient id="fSky" x1="0" y1="0" x2="0" y2="1">
@@ -690,6 +668,18 @@ tr:hover td{background:var(--bg);}
             <div style="font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px;">Estado actual</div>
             <div id="finca-estado-txt" style="font-size:13px;font-weight:700;color:#4ade80;">Disponible</div>
             <div id="finca-huesped-txt" style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;">Sin reserva activa</div>
+          </div>
+
+          <!-- Popup selector sobre la casita -->
+          <div id="finca-popup" onclick="event.stopPropagation()" style="display:none;position:absolute;left:50%;top:38%;transform:translate(-50%,-100%);z-index:50;background:rgba(10,20,10,.97);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px;box-shadow:0 20px 60px rgba(0,0,0,.7);min-width:220px;">
+            <div style="font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;text-align:center;">Cambiar estado</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div onclick="setFincaStatus('disponible')" class="finca-popup-opt" style="--c:#4ade80;--bg:rgba(74,222,128,.1);"><span style="width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block;"></span> Disponible</div>
+              <div onclick="setFincaStatus('reservado')"  class="finca-popup-opt" style="--c:#60a5fa;--bg:rgba(96,165,250,.1);"><span style="width:8px;height:8px;border-radius:50%;background:#60a5fa;display:inline-block;"></span> Reservado</div>
+              <div onclick="setFincaStatus('ocupado')"    class="finca-popup-opt" style="--c:#f87171;--bg:rgba(248,113,113,.1);"><span style="width:8px;height:8px;border-radius:50%;background:#f87171;display:inline-block;"></span> Ocupado</div>
+              <div onclick="setFincaStatus('limpieza')"   class="finca-popup-opt" style="--c:#fbbf24;--bg:rgba(251,191,36,.1);"><span style="width:8px;height:8px;border-radius:50%;background:#fbbf24;display:inline-block;"></span> Limpieza</div>
+              <div onclick="setFincaStatus('mantenimiento')" class="finca-popup-opt" style="--c:#c084fc;--bg:rgba(192,132,252,.1);"><span style="width:8px;height:8px;border-radius:50%;background:#c084fc;display:inline-block;"></span> Mantenimiento</div>
+            </div>
           </div>
         </div>
 
@@ -1387,22 +1377,28 @@ function applyFincaStatus(key, guestInfo) {
   if(txt){ txt.textContent = cfg.label; txt.style.color = cfg.color; }
   if(sub) sub.textContent = guestInfo || cfg.sub;
   if(tint){ tint.setAttribute('fill', cfg.tint); tint.setAttribute('opacity', cfg.tintOpacity); }
-  // Update pill active state
-  ['disponible','reservado','ocupado','limpieza','mantenimiento'].forEach(k => {
-    const el = document.getElementById('fsb-'+k);
-    if(el) el.classList.toggle('active', k === key);
-  });
 }
 
 function setFincaStatus(key) {
   _fincaManualStatus = key;
   localStorage.setItem('finca_status_magda', key);
   applyFincaStatus(key);
+  // Cerrar popup y modal
+  const p = document.getElementById('finca-popup');
+  if(p) p.style.display = 'none';
+  closeModal('modal-finca-estado');
 }
 
 function openFincaStatusModal() {
-  document.getElementById('modal-finca-estado').classList.add('active');
+  const p = document.getElementById('finca-popup');
+  if(!p) return;
+  p.style.display = p.style.display === 'block' ? 'none' : 'block';
 }
+
+document.addEventListener('click', () => {
+  const p = document.getElementById('finca-popup');
+  if(p) p.style.display = 'none';
+});
 
 // =============================================
 // HELPERS
