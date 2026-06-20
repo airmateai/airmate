@@ -104,10 +104,10 @@ Para reservar o consultar disponibilidad, recoge el nombre del viajero, fechas d
       const res = await fetch(PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, system: SYSTEM_PROMPT })
+        body: JSON.stringify({ messages, system_prompt: SYSTEM_PROMPT })
       });
       const data = await res.json();
-      const reply = data.content?.[0]?.text || data.reply || 'Un momento, vuelvo enseguida 🌿';
+      const reply = data.reply || data.content?.[0]?.text || '¡Hola! Ahora mismo tengo un pequeño problema técnico. Escríbenos por WhatsApp y te respondemos enseguida.';
       typingEl.remove();
       addBubble(reply, 'bot');
       messages.push({ role: 'assistant', content: reply });
