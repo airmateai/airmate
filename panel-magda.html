@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Panel · Bungalow Punta del Hidalgo</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -1415,6 +1416,73 @@ function doLogin() {
 }
 
 // =============================================
+// EMAILJS
+// =============================================
+const EJS_SERVICE = 'service_npmjvvf';
+const EJS_TPL = 'template_6arpdfi';
+emailjs.init('i4iBVVP-BkUOOwBE9');
+
+function _emailHuesped(r, tipo) {
+  if(!r.client_email) return;
+  const p = parseNotes(r.notes);
+  const nights = r.start_date&&r.end_date ? diffDays(r.start_date,r.end_date) : '?';
+  const importe = p.importe ? fmtEur(p.importe) : `${nights} noches × 103 €/noche`;
+  const cfg = getConfig();
+
+  const msgs = {
+    solicitud: {
+      asunto: '✅ Hemos recibido tu solicitud — Bungalow Punta del Hidalgo',
+      cuerpo: `Hola ${r.client_name},\n\nHemos recibido tu solicitud de reserva para el Bungalow Punta del Hidalgo.\n\n📅 Entrada: ${fmtDate(r.start_date)}\n📅 Salida: ${fmtDate(r.end_date)}\n🌙 Noches: ${nights}\n👥 Personas: ${p.personas||'—'}\n💶 Importe: ${importe}\n\nRevisaré tu solicitud y te confirmaré en breve. Cualquier duda, escríbeme por WhatsApp.\n\nUn abrazo,\nMagda 🌊`
+    },
+    confirmacion: {
+      asunto: '🎉 ¡Reserva CONFIRMADA! — Bungalow Punta del Hidalgo',
+      cuerpo: `Hola ${r.client_name},\n\n¡Tu reserva está confirmada! 🎉\n\n📅 Entrada: ${fmtDate(r.start_date)}\n📅 Salida: ${fmtDate(r.end_date)}\n🌙 Noches: ${nights}\n👥 Personas: ${p.personas||'—'}\n💶 Importe total: ${importe}\n\n📍 Dirección: Calle El Puente, Punta del Hidalgo, Tenerife\n🕐 Check-in: ${cfg.checkin||'15:00'} h\n🕐 Check-out: ${cfg.checkout||'11:00'} h\n\nTe enviaré las instrucciones de acceso y el código de la caja de llaves unos días antes de tu llegada.\n\n¡Nos vemos pronto!\nMagda 🌴`
+    },
+    cancelacion: {
+      asunto: '❌ Reserva cancelada — Bungalow Punta del Hidalgo',
+      cuerpo: `Hola ${r.client_name},\n\nLamentablemente tu reserva para las fechas ${fmtDate(r.start_date)} - ${fmtDate(r.end_date)} ha sido cancelada.\n\nSi tienes alguna duda o quieres buscar fechas alternativas, escríbeme por WhatsApp y lo gestionamos enseguida.\n\nMagda 🌊`
+    },
+    checkin: {
+      asunto: '🏠 Instrucciones de llegada — Bungalow Punta del Hidalgo',
+      cuerpo: `Hola ${r.client_name},\n\n¡Mañana es el gran día! 🎉 Aquí tienes todo lo que necesitas para tu llegada:\n\n📍 Dirección: Calle El Puente, Punta del Hidalgo, Santa Cruz de Tenerife\n🕐 Check-in: desde las ${cfg.checkin||'15:00'} h\n🔑 La llave está en la caja de seguridad junto a la puerta principal. El código te lo envío por WhatsApp.\n🚗 Puedes aparcar en la calle, normalmente hay sitio frente al bungalow.\n🌊 La playa de Punta del Hidalgo está a 3 minutos a pie.\n\nSi tienes cualquier problema al llegar, escríbeme directamente y te ayudo al momento.\n\n¡Disfruta mucho del bungalow!\nMagda 🌴`
+    },
+    resena: {
+      asunto: '⭐ ¿Cómo fue tu estancia? — Bungalow Punta del Hidalgo',
+      cuerpo: `Hola ${r.client_name},\n\nEspero que tu estancia en el Bungalow Punta del Hidalgo haya sido perfecta. ¡Ha sido un placer tenerte! 🌊\n\nSi tienes un momento, me ayudaría mucho que dejaras una reseña en Airbnb:\n👉 https://www.airbnb.es/rooms/9981845\n\nTu opinión ayuda a que otros viajeros conozcan el bungalow y significa muchísimo para mí.\n\n¡Hasta la próxima!\nMagda ⭐`
+    }
+  };
+
+  const m = msgs[tipo];
+  if(!m) return;
+  emailjs.send(EJS_SERVICE, EJS_TPL, {
+    cliente_email: r.client_email,
+    cliente_nombre: r.client_name,
+    reply_to: 'magda@bungalowpuntahidalgo.com',
+    asunto: m.asunto,
+    notes: m.cuerpo,
+    business_name: 'Bungalow Punta del Hidalgo'
+  }).then(()=>toast('📧 Email enviado a '+r.client_name)).catch(e=>toast('Email no enviado: '+e.text,'error'));
+}
+
+function _checkRecordatoriosAutomaticos() {
+  const KEY = 'magda_reminders_' + SLUG;
+  const sent = JSON.parse(localStorage.getItem(KEY)||'{}');
+  const now = Date.now();
+  const in22h = now + 22*60*60*1000;
+  const in26h = now + 26*60*60*1000;
+
+  allReservas.forEach(r => {
+    if(r.status==='cancelada'||!r.client_email||!r.start_date) return;
+    const arrivalTs = new Date(r.start_date).getTime();
+    if(arrivalTs >= in22h && arrivalTs <= in26h && !sent[r.id+'_checkin24']) {
+      _emailHuesped(r, 'checkin');
+      sent[r.id+'_checkin24'] = now;
+    }
+  });
+  localStorage.setItem(KEY, JSON.stringify(sent));
+}
+
+// =============================================
 // DATA STATE
 // =============================================
 let allReservas = [];
@@ -1437,6 +1505,7 @@ async function init() {
   renderKanban();
   renderIngresos();
   setupRealtime();
+  _checkRecordatoriosAutomaticos();
 }
 
 // =============================================
@@ -1919,8 +1988,12 @@ function calcNoches() {
     const n = diffDays(e,s);
     if(n>0) {
       const cfg = getConfig();
-      const sugerido = n * Number(cfg.precio||103);
-      disp.innerHTML = `🌙 <strong>${n} noches</strong> &bull; Precio sugerido: <strong>${fmtEur(sugerido)}</strong> (${fmtEur(cfg.precio||103)}/noche)`;
+      const entradaMes = new Date(e).getMonth()+1; // 1-12
+      const esTemporadaAlta = entradaMes>=6&&entradaMes<=9; // jun-sep
+      const precioBase = cfg.precio ? Number(cfg.precio) : (esTemporadaAlta ? 125 : 103);
+      const sugerido = n * precioBase;
+      const temporadaLabel = esTemporadaAlta ? '🌞 temporada alta' : '🍂 temporada baja';
+      disp.innerHTML = `🌙 <strong>${n} noches</strong> &bull; Precio sugerido: <strong>${fmtEur(sugerido)}</strong> (${fmtEur(precioBase)}/noche · ${temporadaLabel})`;
     } else {
       disp.textContent='⚠️ La fecha de salida debe ser posterior a la de entrada';
     }
@@ -2006,6 +2079,13 @@ function openReservaDetailModal(id) {
     ${p.notas?`<div class="detail-row"><div class="detail-label">📝 Notas</div><div class="detail-value" style="text-align:left;">${esc(p.notas)}</div></div>`:''}
     <div class="detail-row"><div class="detail-label">📆 Creada</div><div class="detail-value">${fmtDate(r.created_at?.slice(0,10))}</div></div>
     <div style="margin-top:14px;">
+      <div style="font-size:12px;font-weight:600;color:var(--txt3);margin-bottom:8px;">CONTACTAR HUÉSPED</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        ${r.client_phone?`<a href="https://wa.me/${(r.client_phone||'').replace(/\D/g,'')}" target="_blank" class="btn btn-sm btn-secondary" style="background:#25d366;color:#fff;border-color:#25d366;">💬 WhatsApp</a>`:''}
+        ${r.client_phone?`<a href="tel:${esc(r.client_phone)}" class="btn btn-sm btn-secondary">📞 Llamar</a>`:''}
+        ${r.client_email?`<button class="btn btn-sm btn-secondary" onclick="const r=allReservas.find(x=>x.id=='${r.id}');_emailHuesped(r,'checkin')">🔑 Instrucciones llegada</button>`:''}
+        ${r.client_email?`<button class="btn btn-sm btn-secondary" onclick="const r=allReservas.find(x=>x.id=='${r.id}');_emailHuesped(r,'resena')">⭐ Pedir reseña</button>`:''}
+      </div>
       <div style="font-size:12px;font-weight:600;color:var(--txt3);margin-bottom:8px;">CAMBIAR ESTADO</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn btn-sm ${r.status==='confirmada'?'btn-primary':'btn-secondary'}" onclick="changeReservaStatus('${r.id}','confirmada')">✅ Confirmada</button>
@@ -2019,12 +2099,19 @@ function openReservaDetailModal(id) {
 }
 
 async function changeReservaStatus(id, status) {
+  const r = allReservas.find(x=>x.id==id);
   const {error} = await _sb.from('appointments').update({status}).eq('id',id);
   if(error){toast('Error','error');return;}
   toast('Estado actualizado');
   closeModal('modal-reserva-detail');
   await loadReservas();
   refreshAll();
+  if(r) {
+    const updated = {...r, status};
+    if(status==='confirmada') _emailHuesped(updated, 'confirmacion');
+    if(status==='cancelada') _emailHuesped(updated, 'cancelacion');
+    if(status==='completada') setTimeout(()=>_emailHuesped(updated, 'resena'), 2000);
+  }
 }
 
 function deleteReservaFromDetail() {

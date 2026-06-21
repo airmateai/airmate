@@ -932,21 +932,26 @@ window.AIRMATE_WIDGET_CONFIG.onReservation = function(data) {
     body:JSON.stringify({business_slug:'magda-punta-hidalgo',client_name:data.nombre||data.name||'Huésped widget',start_date:data.entrada||data.checkin||new Date().toISOString().slice(0,10),end_date:data.salida||data.checkout||null,status:'pendiente',service:'Estancia bungalow',notes:'Via widget IA · '+JSON.stringify(data).slice(0,300)})
   });
   if(typeof emailjs!=='undefined'){
-    emailjs.send('service_ns3b7dd','template_6arpdfi',{
-      name:data.nombre||data.name||'Huésped',
-      from_name:data.nombre||data.name||'Huésped',
-      client_name:data.nombre||data.name||'Huésped',
-      client_phone:data.telefono||data.phone||'No indicado',
-      client_email:data.email||'No indicado',
-      start_date:data.entrada||data.checkin||'Por confirmar',
-      end_date:data.salida||data.checkout||'Por confirmar',
-      nights:data.noches||data.nights||'—',
-      guests:data.personas||data.guests||'—',
-      language:'Español',
-      notes:data.notas||data.notes||'Reserva via widget IA',
-      total:'Por confirmar',
-      message:'Nueva solicitud via Widget IA\n\nHuésped: '+(data.nombre||data.name||'—')+'\nTeléfono: '+(data.telefono||data.phone||'—')+'\nEmail: '+(data.email||'—')+'\nLlegada: '+(data.entrada||data.checkin||'—')+'\nSalida: '+(data.salida||data.checkout||'—')
+    const wNombre = data.nombre||data.name||'Huésped';
+    const wEmail = data.email||null;
+    emailjs.send('service_npmjvvf','template_6arpdfi',{
+      cliente_email:'airmateai@gmail.com',
+      cliente_nombre:'Magda',
+      reply_to: wEmail||'no-reply@bungalowpuntahidalgo.com',
+      asunto:'🏠 Nueva solicitud via Widget — '+wNombre,
+      notes:'Nueva solicitud via Widget IA\n\nHuésped: '+wNombre+'\nTeléfono: '+(data.telefono||data.phone||'—')+'\nEmail: '+(wEmail||'—')+'\nLlegada: '+(data.entrada||data.checkin||'—')+'\nSalida: '+(data.salida||data.checkout||'—'),
+      business_name:'Bungalow Punta del Hidalgo'
     }).catch(function(){});
+    if(wEmail){
+      emailjs.send('service_npmjvvf','template_6arpdfi',{
+        cliente_email:wEmail,
+        cliente_nombre:wNombre,
+        reply_to:'airmateai@gmail.com',
+        asunto:'✅ Solicitud recibida — Bungalow Punta del Hidalgo',
+        notes:'Hola '+wNombre+',\n\nHemos recibido tu solicitud de reserva. Te confirmaremos en breve.\n\nLlegada: '+(data.entrada||data.checkin||'—')+'\nSalida: '+(data.salida||data.checkout||'—')+'\n\nMagda 🌴',
+        business_name:'Bungalow Punta del Hidalgo'
+      }).catch(function(){});
+    }
   }
 };
 </script>
@@ -1026,10 +1031,34 @@ async function checkAvailability() {
   const noches = Math.round((new Date(s)-new Date(e))/86400000);
   if (noches < 1) { alert('La salida debe ser después de la entrada'); return; }
   if (noches < 3) { alert('La estancia mínima es de 3 noches'); return; }
+
+  // Check real availability against Supabase
+  const btn = document.querySelector('.booking-submit');
+  if(btn){btn.disabled=true;btn.textContent='Comprobando...';}
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/appointments?business_slug=eq.${SLUG}&status=neq.cancelada&select=start_date,end_date,status`,{
+      headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}
+    });
+    const reservas = await res.json();
+    const reqStart = new Date(e), reqEnd = new Date(s);
+    const conflict = (reservas||[]).filter(r=>r.start_date&&r.end_date).find(r=>{
+      const rs = new Date(r.start_date), re = new Date(r.end_date);
+      return reqStart < re && reqEnd > rs;
+    });
+    if(conflict){
+      alert('⚠️ Lo sentimos, esas fechas no están disponibles. Por favor elige otras fechas.');
+      if(btn){btn.disabled=false;btn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Consultar disponibilidad';}
+      return;
+    }
+  } catch(err){ /* network issue — proceed anyway */ }
+  if(btn){btn.disabled=false;btn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Consultar disponibilidad';}
+
   const personas = document.getElementById('bf-personas-sel').value;
-  const total = noches * PRECIO_NOCHE;
+  const mes = new Date(e).getMonth()+1;
+  const precioNoche = (mes>=6&&mes<=9) ? 125 : PRECIO_NOCHE;
+  const total = noches * precioNoche;
   const pr = document.getElementById('price-result');
-  document.getElementById('pr-detail').textContent = `${noches} noches × ${PRECIO_NOCHE}€ · ${personas} persona${personas>1?'s':''}`;
+  document.getElementById('pr-detail').textContent = `${noches} noches × ${precioNoche}€ · ${personas} persona${personas>1?'s':''}`;
   document.getElementById('pr-total').textContent = total.toLocaleString('es-ES')+'€ aprox.';
   pr.style.display = 'block';
   pr.scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -1103,23 +1132,28 @@ async function submitBooking() {
       body:JSON.stringify({business_slug:SLUG,email:email||null,phone:tel||null,source:'web-booking',status:'nuevo',notes:`${nombre} · ${entrada}→${salida} · ${personas}p · ${notas}`.slice(0,400)})
     });
   }
-  // Enviar email de notificación
+  // Enviar email de notificación a Magda
   const noches2 = salida ? Math.round((new Date(salida)-new Date(entrada))/86400000) : 0;
-  emailjs.send('service_ns3b7dd', 'template_6arpdfi', {
-    name: nombre,
-    from_name: nombre,
-    client_name: nombre,
-    client_phone: tel,
-    client_email: email || 'No indicado',
-    start_date: entrada,
-    end_date: salida || 'No indicada',
-    nights: noches2,
-    guests: personas,
-    language: idioma,
-    notes: notas || 'Ninguna',
-    total: importe ? importe.toLocaleString('es-ES')+'€' : 'Por confirmar',
-    message: `Nueva reserva Bungalow Punta del Hidalgo\n\nHuésped: ${nombre}\nTeléfono: ${tel}\nEmail: ${email||'No indicado'}\nLlegada: ${entrada}\nSalida: ${salida||'No indicada'}\nNoches: ${noches2}\nPersonas: ${personas}\nIdioma: ${idioma}\nComentarios: ${notas||'Ninguno'}\nImporte aprox: ${importe?importe.toLocaleString('es-ES')+'€':'Por confirmar'}`
-  }).catch(() => {}); // silencioso
+  const msgBody = `Nueva reserva Bungalow Punta del Hidalgo\n\nHuésped: ${nombre}\nTeléfono: ${tel}\nEmail: ${email||'No indicado'}\nLlegada: ${entrada}\nSalida: ${salida||'No indicada'}\nNoches: ${noches2}\nPersonas: ${personas}\nIdioma: ${idioma}\nComentarios: ${notas||'Ninguno'}\nImporte aprox: ${importe?importe.toLocaleString('es-ES')+'€':'Por confirmar'}`;
+  emailjs.send('service_npmjvvf', 'template_6arpdfi', {
+    cliente_email: 'airmateai@gmail.com',
+    cliente_nombre: 'Magda',
+    reply_to: email || 'no-reply@bungalowpuntahidalgo.com',
+    asunto: `🏠 Nueva solicitud de reserva — ${nombre}`,
+    notes: msgBody,
+    business_name: 'Bungalow Punta del Hidalgo'
+  }).catch(() => {});
+  // Enviar confirmación al huésped si tiene email
+  if(email) {
+    emailjs.send('service_npmjvvf', 'template_6arpdfi', {
+      cliente_email: email,
+      cliente_nombre: nombre,
+      reply_to: 'airmateai@gmail.com',
+      asunto: '✅ Hemos recibido tu solicitud — Bungalow Punta del Hidalgo',
+      notes: `Hola ${nombre},\n\nHemos recibido tu solicitud de reserva para el Bungalow Punta del Hidalgo. 🌊\n\n📅 Llegada: ${entrada}\n📅 Salida: ${salida||'Por confirmar'}\n🌙 Noches: ${noches2||'—'}\n👥 Personas: ${personas}\n💶 Importe aprox: ${importe?importe.toLocaleString('es-ES')+'€':'Por confirmar'}\n\nRevisaré tu solicitud en breve y te confirmaré. Cualquier pregunta, escríbeme por WhatsApp.\n\n¡Hasta pronto!\nMagda 🌴`,
+      business_name: 'Bungalow Punta del Hidalgo'
+    }).catch(() => {});
+  }
 
   document.getElementById('modal-form-content').style.display = 'none';
   document.querySelector('.modal-foot').style.display = 'none';
