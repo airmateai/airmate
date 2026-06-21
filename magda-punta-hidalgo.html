@@ -929,7 +929,7 @@ window.AIRMATE_WIDGET_CONFIG.onReservation = function(data) {
   fetch(SUPABASE_URL+'/rest/v1/appointments',{
     method:'POST',
     headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
-    body:JSON.stringify({business_slug:'magda-punta-hidalgo',client_name:data.nombre||data.name||'Huésped widget',start_time:(data.entrada||data.checkin||new Date().toISOString().slice(0,10))+'T16:00:00',status:'pendiente',service:'Estancia bungalow',notes:'Via widget IA · '+JSON.stringify(data).slice(0,300)})
+    body:JSON.stringify({business_slug:'magda-punta-hidalgo',client_name:data.nombre||data.name||'Huésped widget',start_date:data.entrada||data.checkin||new Date().toISOString().slice(0,10),end_date:data.salida||data.checkout||null,status:'pendiente',service:'Estancia bungalow',notes:'Via widget IA · '+JSON.stringify(data).slice(0,300)})
   });
   if(typeof emailjs!=='undefined'){
     emailjs.send('service_ns3b7dd','template_6arpdfi',{
@@ -1093,7 +1093,7 @@ async function submitBooking() {
   await fetch(`${SUPABASE_URL}/rest/v1/appointments`, {
     method:'POST',
     headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},
-    body:JSON.stringify({business_slug:SLUG,client_name:nombre,start_time:entrada+'T16:00:00',end_time:salida?salida+'T12:00:00':null,status:'pendiente',service:'Estancia bungalow',notes:notasCompletas})
+    body:JSON.stringify({business_slug:SLUG,client_name:nombre,client_phone:tel,client_email:email||null,start_date:entrada,end_date:salida||null,status:'pendiente',service:'Estancia bungalow',notes:notasCompletas})
   });
   // Guardar lead si hay email/tel
   if (email || tel) {
