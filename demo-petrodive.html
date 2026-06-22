@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PETRODIVE · Operations</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0a1628;--navy2:#0d1f3c;--navy3:#122448;
+  --blue:#1565c0;--blue2:#1e88e5;--blue3:#42a5f5;
+  --cyan:#00bcd4;--cyan2:#26c6da;
+  --gold:#c9a96e;--gold2:#e8c98a;
+  --green:#00c853;--orange:#ff6d00;--red:#f44336;
+  --bg:#f0f4f8;--card:#fff;--sidebar:#fff;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow2:0 4px 16px rgba(0,0,0,.08);
+  --shadow3:0 20px 60px rgba(0,0,0,.15);
+}
+html,body{height:100%;font-family:'Inter',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
+body{background:var(--bg)}
+
+/* ══ LOGIN ══ */
+#login-screen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--navy)}
+#login-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(21,101,192,.4),transparent 70%),radial-gradient(ellipse 60% 40% at 80% 100%,rgba(0,188,212,.15),transparent 60%)}
+.login-waves{position:absolute;bottom:0;left:0;right:0;height:200px;overflow:hidden}
+.login-waves svg{position:absolute;bottom:0;width:200%;animation:wave 8s linear infinite}
+.login-waves svg:nth-child(2){animation-delay:-4s;opacity:.5}
+@keyframes wave{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.login-box{position:relative;z-index:1;width:420px;padding:48px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:24px;backdrop-filter:blur(20px)}
+.login-logo{display:flex;align-items:center;gap:14px;margin-bottom:36px}
+.login-logo-icon{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#1565c0,#00bcd4);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(21,101,192,.4)}
+.login-logo-icon svg{width:26px;height:26px;color:#fff}
+.login-brand{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:.02em}
+.login-tagline{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+.login-title{font-size:26px;font-weight:700;color:#fff;margin-bottom:6px}
+.login-sub{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:32px}
+.login-field{margin-bottom:14px}
+.login-label{font-size:11px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;display:block}
+.login-input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:13px 16px;font-size:14px;color:#fff;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.login-input::placeholder{color:rgba(255,255,255,.25)}
+.login-input:focus{border-color:rgba(0,188,212,.5);background:rgba(255,255,255,.08)}
+.login-btn{width:100%;margin-top:8px;padding:15px;background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;border-radius:12px;color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.02em;transition:all .2s;box-shadow:0 8px 24px rgba(21,101,192,.3)}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 12px 32px rgba(21,101,192,.4)}
+.login-demo{margin-top:20px;text-align:center;font-size:11px;color:rgba(255,255,255,.25)}
+.login-demo span{color:rgba(0,188,212,.6);cursor:pointer}
+.login-demo span:hover{color:var(--cyan)}
+
+/* ══ APP ══ */
+#app{display:none;height:100vh;overflow:hidden}
+#app.visible{display:flex}
+
+/* ══ SIDEBAR ══ */
+.sb{width:240px;min-width:240px;background:var(--navy);display:flex;flex-direction:column;height:100vh;overflow-y:auto}
+.sb::-webkit-scrollbar{width:0}
+.sb-top{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-brand{display:flex;align-items:center;gap:12px}
+.sb-icon{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#1565c0,#00bcd4);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-icon svg{width:18px;height:18px;color:#fff}
+.sb-name{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#fff}
+.sb-role{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.04em}
+.sb-sec{padding:20px 20px 6px;font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,.2)}
+.sb-link{display:flex;align-items:center;gap:10px;padding:10px 14px;margin:1px 8px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:500;color:rgba(255,255,255,.45);transition:all .15s;text-decoration:none}
+.sb-link:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
+.sb-link.active{background:rgba(0,188,212,.12);color:#fff;border:1px solid rgba(0,188,212,.18)}
+.sb-link.active svg,.sb-link.active .sb-ico{color:var(--cyan)}
+.sb-ico{width:16px;height:16px;flex-shrink:0;opacity:.7}
+.sb-link.active .sb-ico{opacity:1}
+.sb-pill{margin-left:auto;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px}
+.pill-cyan{background:rgba(0,188,212,.15);color:var(--cyan)}
+.pill-green{background:rgba(0,200,83,.12);color:#00e676}
+.pill-orange{background:rgba(255,109,0,.12);color:#ff9100}
+.pill-red{background:rgba(244,67,54,.12);color:#ff5252}
+.sb-bottom{margin-top:auto;border-top:1px solid rgba(255,255,255,.06);padding:16px 20px}
+.sb-user{display:flex;align-items:center;gap:10px;cursor:pointer}
+.sb-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1565c0,#00bcd4);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.1)}
+.sb-uname{font-size:12px;font-weight:700;color:#fff}
+.sb-urole{font-size:10px;color:rgba(255,255,255,.3)}
+.sb-status{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2px rgba(0,200,83,.3);animation:pulse 2s ease-in-out infinite;margin-left:auto}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 2px rgba(0,200,83,.3)}50%{box-shadow:0 0 0 6px rgba(0,200,83,.1)}}
+
+/* ══ MAIN ══ */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{padding:0 28px;height:60px;display:flex;align-items:center;gap:12px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0}
+.topbar-title{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;flex:1}
+.tb-search{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:7px 14px;width:220px}
+.tb-search input{border:none;background:none;outline:none;font-size:12px;font-family:'Inter',sans-serif;color:var(--text);width:100%}
+.tb-search input::placeholder{color:var(--text3)}
+.tb-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);transition:all .15s;position:relative}
+.tb-ico:hover{background:var(--bg);color:var(--text)}
+.tb-badge{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid #fff}
+
+/* ══ CONTENT ══ */
+.content{flex:1;overflow-y:auto;padding:24px 28px 60px}
+.content::-webkit-scrollbar{width:5px}
+.content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* ══ VIEWS ══ */
+.view{display:none;animation:fadeIn .2s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══ HERO SECTION ══ */
+.page-hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 60%,#0d2a5c 100%);border-radius:20px;padding:28px 32px;margin-bottom:20px;position:relative;overflow:hidden}
+.page-hero::before{content:'';position:absolute;right:-60px;top:-60px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(0,188,212,.15),transparent 70%)}
+.page-hero::after{content:'';position:absolute;left:40%;bottom:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(21,101,192,.1),transparent 70%)}
+.ph-greeting{font-size:11px;color:rgba(255,255,255,.4);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.ph-greeting::before{content:'';width:16px;height:1px;background:var(--cyan);opacity:.6}
+.ph-title{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:800;color:#fff;margin-bottom:6px;line-height:1.1}
+.ph-sub{font-size:13px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ph-dot{width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.2)}
+.ph-live{display:flex;align-items:center;gap:5px;color:var(--green);font-size:11px;font-weight:600}
+.ph-live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+.ph-actions{margin-top:20px;display:flex;gap:8px;position:relative;z-index:1}
+
+/* ══ BUTTONS ══ */
+.btn{border:none;border-radius:10px;padding:9px 18px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .18s;display:inline-flex;align-items:center;gap:6px;letter-spacing:.01em}
+.btn svg{width:14px;height:14px}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;box-shadow:0 4px 12px rgba(21,101,192,.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(21,101,192,.4)}
+.btn-cyan{background:var(--cyan);color:#0a1628;font-weight:800}
+.btn-cyan:hover{background:var(--cyan2);transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12)}
+.btn-ghost:hover{background:rgba(255,255,255,.14);color:#fff}
+.btn-light{background:#fff;color:var(--text);border:1px solid var(--border);box-shadow:var(--shadow)}
+.btn-light:hover{background:var(--bg);border-color:var(--border2)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0a1628;font-weight:800}
+
+/* ══ STAT CARDS ══ */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:box-shadow .2s,transform .2s}
+.stat-card:hover{box-shadow:var(--shadow2);transform:translateY(-1px)}
+.stat-card::after{content:'';position:absolute;top:0;right:0;width:80px;height:80px;border-radius:50%;transform:translate(30px,-30px)}
+.stat-card.blue::after{background:radial-gradient(circle,rgba(21,101,192,.12),transparent)}
+.stat-card.cyan::after{background:radial-gradient(circle,rgba(0,188,212,.12),transparent)}
+.stat-card.gold::after{background:radial-gradient(circle,rgba(201,169,110,.15),transparent)}
+.stat-card.green::after{background:radial-gradient(circle,rgba(0,200,83,.12),transparent)}
+.stat-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.stat-val{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:800;line-height:1;margin-bottom:6px}
+.stat-card.blue .stat-val{color:var(--blue)}
+.stat-card.cyan .stat-val{color:#007b8a}
+.stat-card.gold .stat-val{color:#8a6200}
+.stat-card.green .stat-val{color:#1b5e20}
+.stat-delta{font-size:11px;font-weight:600}
+.delta-up{color:#1b5e20}
+.delta-warn{color:#bf360c}
+.stat-bar{height:3px;background:var(--bg);border-radius:2px;overflow:hidden;margin-top:12px}
+.stat-bar-fill{height:100%;border-radius:2px}
+.bar-blue{background:linear-gradient(90deg,var(--blue),var(--blue3))}
+.bar-cyan{background:linear-gradient(90deg,#007b8a,var(--cyan))}
+.bar-gold{background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.bar-green{background:linear-gradient(90deg,#1b5e20,var(--green))}
+
+/* ══ GRID ══ */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.grid3{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+
+/* ══ CARD ══ */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.card-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--text)}
+.card-title svg{width:15px;height:15px;color:var(--blue)}
+.card-body{padding:16px 20px}
+
+/* ══ PROJECT CARDS ══ */
+.proj-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.pcard{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all .2s;cursor:pointer;box-shadow:var(--shadow)}
+.pcard:hover{box-shadow:var(--shadow2);transform:translateY(-2px)}
+.pcard-stripe{height:4px}
+.s-blue{background:linear-gradient(90deg,var(--blue),var(--blue3))}
+.s-gold{background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.s-green{background:linear-gradient(90deg,#1b5e20,var(--green))}
+.s-orange{background:linear-gradient(90deg,#bf360c,var(--orange))}
+.s-cyan{background:linear-gradient(90deg,#007b8a,var(--cyan))}
+.s-gray{background:var(--border2)}
+.pcard-body{padding:16px}
+.pcard-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.pcard-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pcard-ico svg{width:18px;height:18px}
+.pcard-name{font-size:13px;font-weight:700;line-height:1.3;color:var(--text);margin-bottom:3px}
+.pcard-meta{font-size:11px;color:var(--text3);margin-bottom:12px}
+.pcard-prog-row{display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px}
+.pcard-prog-row span:first-child{color:var(--text3);font-weight:500}
+.pcard-prog-row span:last-child{font-weight:700;color:var(--blue)}
+.pcard-track{background:var(--bg);border-radius:3px;height:5px;overflow:hidden;margin-bottom:12px}
+.pcard-fill{height:100%;border-radius:3px}
+.pcard-foot{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--border)}
+.pcard-val{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:#8a6200}
+.pcard-avatars{display:flex}
+.pcard-av{width:24px;height:24px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;margin-left:-6px;color:#fff}
+.pcard-av:first-child{margin-left:0}
+
+/* ══ REVENUE CHART ══ */
+.chart-wrap{position:relative;height:160px;padding:0 4px}
+.chart-bars{display:flex;align-items:flex-end;gap:8px;height:100%}
+.ch-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+.ch-bar{width:100%;border-radius:6px 6px 0 0;transition:all .6s cubic-bezier(.34,1.56,.64,1);cursor:pointer;position:relative}
+.ch-bar:hover{filter:brightness(1.1)}
+.ch-bar-tip{position:absolute;top:-28px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none}
+.ch-bar:hover .ch-bar-tip{opacity:1}
+.ch-label{font-size:10px;color:var(--text3);font-weight:500;text-align:center}
+
+/* ══ WEATHER CARDS ══ */
+.weather-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.wcard{background:linear-gradient(135deg,var(--navy),var(--navy2));border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:16px;color:#fff;position:relative;overflow:hidden}
+.wcard::after{content:'';position:absolute;right:-20px;bottom:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.03)}
+.wcard-loc{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.wcard-temp{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:800;line-height:1;margin-bottom:4px}
+.wcard-desc{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:10px}
+.wcard-stats{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.wstat{font-size:10px;color:rgba(255,255,255,.4)}
+.wstat span{color:rgba(255,255,255,.8);font-weight:600}
+.wcard-status{font-size:9px;font-weight:700;padding:3px 8px;border-radius:5px;display:inline-block;margin-top:8px}
+.ws-ok{background:rgba(0,200,83,.15);color:#00e676}
+.ws-warn{background:rgba(255,109,0,.15);color:#ff9100}
+.ws-hold{background:rgba(244,67,54,.15);color:#ff5252}
+
+/* ══ MOBILIZATION TIMELINE ══ */
+.mob-item{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.mob-item:last-child{border-bottom:none}
+.mob-date{min-width:44px;text-align:center;background:var(--navy);color:#fff;border-radius:10px;padding:6px 4px}
+.mob-date-d{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:800;line-height:1}
+.mob-date-m{font-size:9px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em}
+.mob-info{flex:1}
+.mob-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.mob-sub{font-size:11px;color:var(--text3)}
+.mob-right{text-align:right;flex-shrink:0}
+
+/* ══ EQUIPMENT ══ */
+.eq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.eq-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);transition:all .2s}
+.eq-card:hover{box-shadow:var(--shadow2);transform:translateY(-1px)}
+.eq-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.eq-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center}
+.eq-icon svg{width:20px;height:20px}
+.eq-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.eq-model{font-size:11px;color:var(--text3)}
+.eq-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.eq-stat{background:var(--bg);border-radius:8px;padding:8px 10px}
+.eq-stat-label{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.eq-stat-val{font-size:13px;font-weight:700;color:var(--text)}
+.eq-foot{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border)}
+
+/* ══ HSE ══ */
+.hse-stat{text-align:center;padding:20px 12px}
+.hse-num{font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:900;line-height:1;margin-bottom:4px}
+.hse-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.hse-ring{position:relative;width:90px;height:90px;margin:0 auto 12px}
+.hse-ring svg{width:90px;height:90px;transform:rotate(-90deg)}
+.hse-ring-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:800}
+.hse-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.hse-row:last-child{border-bottom:none}
+.hse-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hse-ico svg{width:14px;height:14px}
+
+/* ══ DONUT CHART ══ */
+.donut-wrap{display:flex;align-items:center;gap:20px}
+.donut-legend{display:flex;flex-direction:column;gap:8px}
+.leg-item{display:flex;align-items:center;gap:8px;font-size:12px}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.leg-label{color:var(--text2);font-weight:500}
+.leg-pct{font-weight:700;color:var(--text);margin-left:auto}
+
+/* ══ BADGES ══ */
+.badge{font-size:9px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.02em;display:inline-block}
+.b-green{background:#dcfce7;color:#166534}
+.b-blue{background:#dbeafe;color:#1e40af}
+.b-orange{background:#ffedd5;color:#9a3412}
+.b-gold{background:#fef9c3;color:#854d0e}
+.b-cyan{background:#cffafe;color:#155e75}
+.b-red{background:#fee2e2;color:#991b1b}
+.b-gray{background:var(--bg);color:var(--text3)}
+
+/* ══ TABLE ══ */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:10px 14px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg)}
+td{padding:13px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(241,245,249,.6)}
+.td-main{font-weight:600;color:var(--text)}
+.td-sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* ══ ACTIVITY ══ */
+.act-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.act-item:last-child{border-bottom:none;padding-bottom:0}
+.act-item:first-child{padding-top:0}
+.act-left{display:flex;flex-direction:column;align-items:center;gap:0}
+.act-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.act-line{width:1px;flex:1;background:var(--border);margin-top:4px}
+.act-text{font-size:12px;color:var(--text2);line-height:1.6;flex:1}
+.act-text strong{color:var(--text);font-weight:600}
+.act-time{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* ══ TEAM CARD ══ */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.tcard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;transition:all .2s;box-shadow:var(--shadow)}
+.tcard:hover{box-shadow:var(--shadow2);transform:translateY(-1px)}
+.tcard-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.tcard-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
+.tcard-name{font-size:13px;font-weight:700;color:var(--text)}
+.tcard-role{font-size:10px;color:var(--text3)}
+.tcard-certs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.cert{font-size:9px;background:var(--bg);color:var(--text2);padding:2px 8px;border-radius:5px;font-weight:600;border:1px solid var(--border)}
+.tcard-foot{display:flex;align-items:center;justify-content:space-between}
+.tcard-loc{font-size:10px;color:var(--text3)}
+
+/* ══ REGION BARS ══ */
+.reg-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.reg-item:last-child{border-bottom:none}
+.reg-name{font-size:12px;font-weight:600;min-width:110px}
+.reg-track{flex:1;background:var(--bg);border-radius:3px;height:6px;overflow:hidden}
+.reg-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--blue3));transition:width .8s ease}
+.reg-pct{font-size:12px;font-weight:700;color:var(--blue);min-width:36px;text-align:right}
+
+/* ══ CERT CHIPS ══ */
+.cert-strip{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.cert-chip{display:flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:10px;font-weight:600;color:var(--text2)}
+.cert-chip .dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+
+/* ══ PROG BARS ══ */
+.prog-item{margin-bottom:14px}
+.prog-item:last-child{margin-bottom:0}
+.prog-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.prog-label span:first-child{font-weight:600;color:var(--text)}
+.prog-label span:last-child{font-weight:700;color:var(--blue)}
+.prog-track{background:var(--bg);border-radius:3px;height:6px;overflow:hidden;border:1px solid var(--border)}
+.prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--blue3))}
+.prog-fill.gold{background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.prog-fill.green{background:linear-gradient(90deg,#1b5e20,var(--green))}
+
+/* ══ FINANCE ROWS ══ */
+.inv-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}
+.inv-row:last-child{border-bottom:none}
+.inv-info{flex:1}
+.inv-name{font-size:13px;font-weight:600;color:var(--text)}
+.inv-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.inv-right{text-align:right;flex-shrink:0}
+.inv-amount{font-size:15px;font-weight:800;color:#8a6200;font-family:'Space Grotesk',sans-serif}
+
+/* ══ MODAL ══ */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.6);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:20px;width:520px;max-width:90vw;box-shadow:var(--shadow3);animation:modalIn .25s cubic-bezier(.34,1.56,.64,1)}
+@keyframes modalIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.modal-head{padding:24px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700}
+.modal-close{width:30px;height:30px;border-radius:8px;background:var(--bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:16px;transition:all .15s}
+.modal-close:hover{background:var(--border);color:var(--text)}
+.modal-body{padding:24px 28px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px;display:block}
+.form-input{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);outline:none;transition:border-color .2s;background:#fff}
+.form-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(21,101,192,.08)}
+select.form-input{cursor:pointer}
+.modal-foot{padding:16px 28px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* ══ NOTIF DROPDOWN ══ */
+.notif-drop{position:absolute;top:48px;right:0;width:320px;background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow3);z-index:100;display:none}
+.notif-drop.open{display:block;animation:fadeIn .15s ease}
+.notif-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700}
+.notif-item{display:flex;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.notif-item:hover{background:var(--bg)}
+.notif-item:last-child{border-bottom:none}
+.notif-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.notif-text{font-size:12px;color:var(--text2);line-height:1.5}
+.notif-text strong{color:var(--text);font-weight:600}
+.notif-time{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* ══ KPI ROW ══ */
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.kpi-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.kpi-val{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:800;color:var(--text)}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:3px}
+
+@media(max-width:1100px){
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .proj-grid{grid-template-columns:repeat(2,1fr)}
+  .grid3,.grid2{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .sb{display:none}
+  .content{padding:16px}
+  .proj-grid{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════ LOGIN ══════ -->
+<div id="login-screen">
+  <div class="login-waves">
+    <svg viewBox="0 0 1440 120" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,60 C180,120 360,0 540,60 C720,120 900,0 1080,60 C1260,120 1440,0 1440,60 L1440,120 L0,120 Z" fill="rgba(0,188,212,0.08)"/>
+      <path d="M0,80 C180,20 360,120 540,80 C720,20 900,120 1080,80 C1260,20 1440,120 1440,80 L1440,120 L0,120 Z" fill="rgba(21,101,192,0.06)"/>
+    </svg>
+    <svg viewBox="0 0 1440 120" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,40 C240,100 480,0 720,40 C960,100 1200,0 1440,40 L1440,120 L0,120 Z" fill="rgba(0,188,212,0.05)"/>
+    </svg>
+  </div>
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M2 12c0 0 4-6 10-6s10 6 10 6-4 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="3" fill="currentColor" opacity=".4"/></svg>
+      </div>
+      <div>
+        <div class="login-brand">PETRODIVE</div>
+        <div class="login-tagline">Offshore Operations Group</div>
+      </div>
+    </div>
+    <div class="login-title">Welcome back</div>
+    <div class="login-sub">Sign in to your operations panel</div>
+    <div class="login-field">
+      <label class="login-label">Email</label>
+      <input class="login-input" type="email" placeholder="stephane@petrodive.com" id="login-email">
+    </div>
+    <div class="login-field">
+      <label class="login-label">Password</label>
+      <input class="login-input" type="password" placeholder="••••••••" id="login-pass">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign in →</button>
+    <div class="login-demo">Demo mode — <span onclick="doLogin()">click here to enter</span></div>
+  </div>
+</div>
+
+<!-- ══════ APP ══════ -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <aside class="sb">
+    <div class="sb-top">
+      <div class="sb-brand">
+        <div class="sb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M2 12c0 0 4-5 10-5s10 5 10 5-4 5-10 5-10-5-10-5z"/><circle cx="12" cy="12" r="2.5" fill="currentColor" opacity=".5"/></svg>
+        </div>
+        <div>
+          <div class="sb-name">PETRODIVE</div>
+          <div class="sb-role">Owner Panel</div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-sec">Operations</div>
+    <div class="sb-link active" onclick="showView('dashboard',this)">
+      <svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </div>
+    <div class="sb-link" onclick="showView('projects',this)">
+      <svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+      Projects
+      <span class="sb-pill pill-cyan">8</span>
+    </div>
+    <div class="sb-link" onclick="showView('operations',this)">
+      <svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Dive Log
+      <span class="sb-pill pill-green">147</span>
+    </div>
+    <div class="sb-link" onclick="showView('team',this)">
+      <svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Dive Team
+    </div>
+    <div class="sb-sec">Business</div>
+    <div class="sb-link" onclick="showView('clients',this)">
+      <svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      Clients
+    </div>
+    <div class="sb-link" onclick="showView('contracts',this)">
+      <svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Contracts
+    </div>
+    <div class="sb-link" onclick="showView('finance',this)">
+      <svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Finance
+      <span class="sb-pill pill-orange">$380K</span>
+    </div>
+    <div class="sb-sec">Assets & Safety</div>
+    <div class="sb-link" onclick="showView('equipment',this)">
+      <svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M21 12h-2M5 12H3M18.36 18.36l-1.41-1.41M6.05 18.36l1.41-1.41M12 21v-2M12 5V3"/></svg>
+      Equipment
+      <span class="sb-pill pill-cyan">12</span>
+    </div>
+    <div class="sb-link" onclick="showView('hse',this)">
+      <svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      HSE / Safety
+      <span class="sb-pill pill-green">100%</span>
+    </div>
+    <div class="sb-bottom">
+      <div class="sb-user">
+        <div class="sb-av">ST</div>
+        <div>
+          <div class="sb-uname">Stéphane Troté</div>
+          <div class="sb-urole">Group Owner · Dubai</div>
+        </div>
+        <div class="sb-status"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="tb-search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text3);flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input placeholder="Search projects, clients...">
+      </div>
+      <div style="position:relative">
+        <div class="tb-ico" onclick="toggleNotif()" id="notif-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <div class="tb-badge"></div>
+        </div>
+        <div class="notif-drop" id="notif-drop">
+          <div class="notif-head">Notifications <span class="badge b-red">2 new</span></div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:var(--orange)"></div>
+            <div><div class="notif-text"><strong>TOTAL Gabon</strong> — Weather delay extended 48h. Dive ops suspended.</div><div class="notif-time">2 hours ago</div></div>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:var(--red)"></div>
+            <div><div class="notif-text"><strong>INV-2026-035</strong> · Petrobras invoice overdue 12 days. $90K pending.</div><div class="notif-time">1 day ago</div></div>
+          </div>
+          <div class="notif-item" style="opacity:.5">
+            <div class="notif-dot" style="background:var(--blue)"></div>
+            <div><div class="notif-text"><strong>Saudi Aramco</strong> — Tender decision expected July 10. $520K contract.</div><div class="notif-time">3 days ago</div></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal()" style="font-size:11px;padding:7px 14px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Project
+      </button>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+<!-- ════════ DASHBOARD ════════ -->
+<div id="view-dashboard" class="view active">
+  <div class="page-hero">
+    <div class="ph-greeting">Group Owner · PETRODIVE</div>
+    <div class="ph-title">Bonjour, Stéphane.</div>
+    <div class="ph-sub">
+      <span>Dubai, UAE</span>
+      <div class="ph-dot"></div>
+      <span id="today-date">Monday 22 June 2026</span>
+      <div class="ph-dot"></div>
+      <div class="ph-live"><div class="ph-live-dot"></div>847 LTI-free days</div>
+    </div>
+    <div class="ph-actions">
+      <button class="btn btn-ghost" onclick="showView('finance',document.querySelector('.sb-link:nth-child(10)'))">View finance →</button>
+      <button class="btn btn-cyan" onclick="openModal()">+ New Project</button>
+    </div>
+  </div>
+
+  <!-- WEATHER -->
+  <div class="weather-grid">
+    <div class="wcard">
+      <div class="wcard-loc"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>Abu Dhabi, UAE</div>
+      <div class="wcard-temp">38°</div>
+      <div class="wcard-desc">Sunny · Sea state 1.2m</div>
+      <div class="wcard-stats">
+        <div class="wstat">Wind <span>12 kn</span></div>
+        <div class="wstat">Swell <span>1.2m</span></div>
+        <div class="wstat">Vis <span>>10km</span></div>
+        <div class="wstat">UV <span>Extreme</span></div>
+      </div>
+      <div class="wcard-status ws-ok">Dive ops: GO</div>
+    </div>
+    <div class="wcard">
+      <div class="wcard-loc"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>Port-Gentil, Gabon</div>
+      <div class="wcard-temp">28°</div>
+      <div class="wcard-desc">Overcast · Sea state 4.2m</div>
+      <div class="wcard-stats">
+        <div class="wstat">Wind <span>28 kn</span></div>
+        <div class="wstat">Swell <span>4.2m</span></div>
+        <div class="wstat">Vis <span>4km</span></div>
+        <div class="wstat">Rain <span>Heavy</span></div>
+      </div>
+      <div class="wcard-status ws-hold">Dive ops: HOLD</div>
+    </div>
+    <div class="wcard">
+      <div class="wcard-loc"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>Pointe-Noire, Congo</div>
+      <div class="wcard-temp">26°</div>
+      <div class="wcard-desc">Partly cloudy · Sea 2.1m</div>
+      <div class="wcard-stats">
+        <div class="wstat">Wind <span>16 kn</span></div>
+        <div class="wstat">Swell <span>2.1m</span></div>
+        <div class="wstat">Vis <span>8km</span></div>
+        <div class="wstat">Current <span>0.8 kn</span></div>
+      </div>
+      <div class="wcard-status ws-warn">Sat dive: PREP</div>
+    </div>
+    <div class="wcard">
+      <div class="wcard-loc"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>Macaé, Brazil</div>
+      <div class="wcard-temp">22°</div>
+      <div class="wcard-desc">Clear · Sea state 1.8m</div>
+      <div class="wcard-stats">
+        <div class="wstat">Wind <span>10 kn</span></div>
+        <div class="wstat">Swell <span>1.8m</span></div>
+        <div class="wstat">Vis <span>>10km</span></div>
+        <div class="wstat">ROV <span>OK</span></div>
+      </div>
+      <div class="wcard-status ws-ok">ROV ops: GO</div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card blue">
+      <div class="stat-label">Revenue YTD</div>
+      <div class="stat-val" data-target="2.4" data-suffix="M" data-prefix="$">$0</div>
+      <div class="stat-delta delta-up">↑ 18% vs H1 2025</div>
+      <div class="stat-bar"><div class="stat-bar-fill bar-blue" style="width:78%"></div></div>
+    </div>
+    <div class="stat-card cyan">
+      <div class="stat-label">Active Projects</div>
+      <div class="stat-val" data-target="8" data-suffix="" data-prefix="">0</div>
+      <div class="stat-delta delta-up">↑ 2 this quarter</div>
+      <div class="stat-bar"><div class="stat-bar-fill bar-cyan" style="width:65%"></div></div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-label">Divers Deployed</div>
+      <div class="stat-val" data-target="24" data-suffix="" data-prefix="">0</div>
+      <div class="stat-delta" style="color:var(--text3)">4 active regions</div>
+      <div class="stat-bar"><div class="stat-bar-fill bar-gold" style="width:75%"></div></div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Safety Score</div>
+      <div class="stat-val" data-target="100" data-suffix="%" data-prefix="">0</div>
+      <div class="stat-delta delta-up">ISO 45001 certified</div>
+      <div class="stat-bar"><div class="stat-bar-fill bar-green" style="width:100%"></div></div>
+    </div>
+  </div>
+
+  <div class="proj-grid">
+    <div class="pcard" onclick="showView('projects',null)">
+      <div class="pcard-stripe s-blue"></div>
+      <div class="pcard-body">
+        <div class="pcard-top">
+          <div class="pcard-ico" style="background:#dbeafe"><svg viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+          <span class="badge b-green">Active</span>
+        </div>
+        <div class="pcard-name">ADNOC Pipeline Inspection</div>
+        <div class="pcard-meta">Abu Dhabi · Subsea NDT</div>
+        <div class="pcard-prog-row"><span>Phase 2 of 3</span><span>74%</span></div>
+        <div class="pcard-track"><div class="pcard-fill s-blue" style="width:74%"></div></div>
+        <div class="pcard-foot">
+          <div class="pcard-val">$480K</div>
+          <div class="pcard-avatars">
+            <div class="pcard-av" style="background:linear-gradient(135deg,#062040,#1565c0)">RL</div>
+            <div class="pcard-av" style="background:linear-gradient(135deg,#0f3d2a,#15803d)">JM</div>
+            <div class="pcard-av" style="background:#e2e8f0;color:var(--text2)">+12</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pcard" onclick="showView('projects',null)">
+      <div class="pcard-stripe s-gold"></div>
+      <div class="pcard-body">
+        <div class="pcard-top">
+          <div class="pcard-ico" style="background:#fef9c3"><svg viewBox="0 0 24 24" fill="none" stroke="#854d0e" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>
+          <span class="badge b-gold">Partnership</span>
+        </div>
+        <div class="pcard-name">Outremer EPCI Morocco</div>
+        <div class="pcard-meta">Morocco · Engineering + Installation</div>
+        <div class="pcard-prog-row"><span>Design phase</span><span style="color:#854d0e">28%</span></div>
+        <div class="pcard-track"><div class="pcard-fill s-gold" style="width:28%"></div></div>
+        <div class="pcard-foot"><div class="pcard-val">$640K</div><div style="font-size:11px;color:var(--text3)">8 engineers</div></div>
+      </div>
+    </div>
+    <div class="pcard" onclick="showView('projects',null)">
+      <div class="pcard-stripe s-orange"></div>
+      <div class="pcard-body">
+        <div class="pcard-top">
+          <div class="pcard-ico" style="background:#ffedd5"><svg viewBox="0 0 24 24" fill="none" stroke="#9a3412" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+          <span class="badge b-orange">Weather hold</span>
+        </div>
+        <div class="pcard-name">TotalEnergies Gabon Survey</div>
+        <div class="pcard-meta">Gabon · Rope Access + Diving</div>
+        <div class="pcard-prog-row"><span>Phase 1</span><span style="color:#9a3412">45%</span></div>
+        <div class="pcard-track"><div class="pcard-fill s-orange" style="width:45%"></div></div>
+        <div class="pcard-foot"><div class="pcard-val">$290K</div><div style="font-size:11px;color:var(--text3)">6 divers</div></div>
+      </div>
+    </div>
+    <div class="pcard" onclick="showView('projects',null)">
+      <div class="pcard-stripe s-green"></div>
+      <div class="pcard-body">
+        <div class="pcard-top">
+          <div class="pcard-ico" style="background:#dcfce7"><svg viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <span class="badge b-green">Active</span>
+        </div>
+        <div class="pcard-name">Petrobras ROV Support</div>
+        <div class="pcard-meta">Brazil · Deepwater ROV Ops</div>
+        <div class="pcard-prog-row"><span>Survey km 0–52</span><span>61%</span></div>
+        <div class="pcard-track"><div class="pcard-fill s-green" style="width:61%"></div></div>
+        <div class="pcard-foot"><div class="pcard-val">$320K</div><div style="font-size:11px;color:var(--text3)">3 operators</div></div>
+      </div>
+    </div>
+    <div class="pcard" onclick="showView('projects',null)">
+      <div class="pcard-stripe s-cyan"></div>
+      <div class="pcard-body">
+        <div class="pcard-top">
+          <div class="pcard-ico" style="background:#cffafe"><svg viewBox="0 0 24 24" fill="none" stroke="#155e75" stroke-width="2"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="21"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg></div>
+          <span class="badge b-blue">Mobilizing</span>
+        </div>
+        <div class="pcard-name">Congo LNG Mooring Repair</div>
+        <div class="pcard-meta">Congo · Saturation diving 80m+</div>
+        <div class="pcard-prog-row"><span>Mobilization</span><span style="color:#155e75">12%</span></div>
+        <div class="pcard-track"><div class="pcard-fill s-cyan" style="width:12%"></div></div>
+        <div class="pcard-foot"><div class="pcard-val">$195K</div><div style="font-size:11px;color:var(--text3)">Dep. Jun 25</div></div>
+      </div>
+    </div>
+    <div class="pcard" style="opacity:.6;border-style:dashed" onclick="showView('projects',null)">
+      <div class="pcard-stripe s-gray"></div>
+      <div class="pcard-body">
+        <div class="pcard-top">
+          <div class="pcard-ico" style="background:var(--bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+          <span class="badge b-gray">Tendering</span>
+        </div>
+        <div class="pcard-name">Saudi Aramco Q3 Package</div>
+        <div class="pcard-meta">Saudi Arabia · NDT + ROV</div>
+        <div class="pcard-prog-row"><span>Proposal submitted</span><span style="color:var(--text3)">—</span></div>
+        <div class="pcard-track"><div class="pcard-fill" style="width:0%;background:var(--border)"></div></div>
+        <div class="pcard-foot"><div class="pcard-val" style="color:var(--text3)">$520K est.</div><div style="font-size:11px;color:var(--text3)">Decision Jul 10</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid3">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <!-- REVENUE CHART -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Monthly Revenue 2026
+          </div>
+          <span class="badge b-green">↑ 18% YTD</span>
+        </div>
+        <div class="card-body" style="padding-top:20px">
+          <div class="chart-wrap">
+            <div class="chart-bars" id="rev-chart"></div>
+          </div>
+        </div>
+      </div>
+      <!-- ACTIVITY -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Operations Log
+          </div>
+          <span class="badge b-green">All safe</span>
+        </div>
+        <div class="card-body">
+          <div class="act-item">
+            <div class="act-left"><div class="act-dot" style="background:var(--green)"></div><div class="act-line"></div></div>
+            <div><div class="act-text"><strong>ADNOC #147</strong> — Weld inspection F7. 34m. 2h 10min. No anomalies.</div><div class="act-time">Today · 09:14</div></div>
+          </div>
+          <div class="act-item">
+            <div class="act-left"><div class="act-dot" style="background:var(--blue)"></div><div class="act-line"></div></div>
+            <div><div class="act-text"><strong>Congo LNG</strong> — Mobilization confirmed. 4 sat divers depart Jun 25.</div><div class="act-time">Today · 07:30</div></div>
+          </div>
+          <div class="act-item">
+            <div class="act-left"><div class="act-dot" style="background:#8a6200"></div><div class="act-line"></div></div>
+            <div><div class="act-text"><strong>Outremer partnership</strong> — AED 2.4M signed. Morocco kickoff Jul 3.</div><div class="act-time">Yesterday · 15:20</div></div>
+          </div>
+          <div class="act-item">
+            <div class="act-left"><div class="act-dot" style="background:var(--orange)"></div></div>
+            <div><div class="act-text"><strong>TOTAL Gabon</strong> — Weather delay 48h. Sea state 4.2m. Resume Jun 24.</div><div class="act-time">Jun 20 · 11:00</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            Revenue by Region
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="reg-item">
+            <div class="reg-name">Middle East</div>
+            <div class="reg-track"><div class="reg-fill" style="width:68%"></div></div>
+            <div class="reg-pct">68%</div>
+          </div>
+          <div class="reg-item">
+            <div class="reg-name">West Africa</div>
+            <div class="reg-track"><div class="reg-fill" style="width:22%"></div></div>
+            <div class="reg-pct">22%</div>
+          </div>
+          <div class="reg-item">
+            <div class="reg-name">Latin America</div>
+            <div class="reg-track"><div class="reg-fill" style="width:10%"></div></div>
+            <div class="reg-pct">10%</div>
+          </div>
+          <div class="cert-strip">
+            <div class="cert-chip"><div class="dot"></div>ISO 9001</div>
+            <div class="cert-chip"><div class="dot"></div>ISO 14001</div>
+            <div class="cert-chip"><div class="dot"></div>ISO 45001</div>
+            <div class="cert-chip"><div class="dot"></div>DNV</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Key Personnel
+          </div>
+          <span class="badge b-cyan">24 deployed</span>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div style="padding:0 20px">
+            <div class="act-item" style="padding:13px 0">
+              <div class="tcard-av" style="width:32px;height:32px;background:linear-gradient(135deg,#062040,#1565c0);flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff">RL</div>
+              <div style="flex:1"><div style="font-size:12px;font-weight:700">R. Leblanc</div><div style="font-size:10px;color:var(--text3)">Dive Supervisor · IMCA SR</div></div>
+              <div style="text-align:right"><div style="font-size:10px;color:var(--text3)">UAE · ADNOC</div><span class="badge b-green" style="margin-top:2px;display:block">Deployed</span></div>
+            </div>
+            <div class="act-item" style="padding:13px 0">
+              <div class="tcard-av" style="width:32px;height:32px;background:linear-gradient(135deg,#001a1a,#007b8a);flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff">AS</div>
+              <div style="flex:1"><div style="font-size:12px;font-weight:700">A. Santos</div><div style="font-size:10px;color:var(--text3)">ROV Pilot Cl.I</div></div>
+              <div style="text-align:right"><div style="font-size:10px;color:var(--text3)">Brazil</div><span class="badge b-green" style="margin-top:2px;display:block">Deployed</span></div>
+            </div>
+            <div class="act-item" style="padding:13px 0;border-bottom:none">
+              <div class="tcard-av" style="width:32px;height:32px;background:linear-gradient(135deg,#1a0a2d,#7c3aed);flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff">PL</div>
+              <div style="flex:1"><div style="font-size:12px;font-weight:700">P. Lemaire</div><div style="font-size:10px;color:var(--text3)">Saturation Diver · IMCA</div></div>
+              <div style="text-align:right"><div style="font-size:10px;color:var(--text3)">Congo</div><span class="badge b-blue" style="margin-top:2px;display:block">Mobilizing</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- BOTTOM ROW: Mobilizations + Donut + HSE quick -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:16px">
+    <!-- MOBILIZATIONS -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Upcoming Mobilizations
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="mob-item">
+          <div class="mob-date"><div class="mob-date-d">25</div><div class="mob-date-m">Jun</div></div>
+          <div class="mob-info"><div class="mob-title">Congo LNG — Sat team departs</div><div class="mob-sub">4 divers · DXB → PNR · Congo LNG</div></div>
+          <span class="badge b-blue">3 days</span>
+        </div>
+        <div class="mob-item">
+          <div class="mob-date"><div class="mob-date-d">03</div><div class="mob-date-m">Jul</div></div>
+          <div class="mob-info"><div class="mob-title">Outremer EPCI Morocco kickoff</div><div class="mob-sub">Engineering team · DXB → CMN</div></div>
+          <span class="badge b-gold">11 days</span>
+        </div>
+        <div class="mob-item">
+          <div class="mob-date"><div class="mob-date-d">10</div><div class="mob-date-m">Jul</div></div>
+          <div class="mob-info"><div class="mob-title">Saudi Aramco — Decision day</div><div class="mob-sub">$520K tender · Rapid deploy if awarded</div></div>
+          <span class="badge b-orange">18 days</span>
+        </div>
+        <div class="mob-item">
+          <div class="mob-date"><div class="mob-date-d">15</div><div class="mob-date-m">Jul</div></div>
+          <div class="mob-info"><div class="mob-title">ADNOC Phase 3 starts</div><div class="mob-sub">6 divers · Additional scope</div></div>
+          <span class="badge b-gray">23 days</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVENUE BREAKDOWN DONUT -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+          Revenue Mix
+        </div>
+        <span style="font-size:11px;color:var(--text3)">YTD 2026</span>
+      </div>
+      <div class="card-body">
+        <div class="donut-wrap">
+          <svg width="110" height="110" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="40" fill="none" stroke="var(--bg)" stroke-width="18"/>
+            <!-- ADNOC 50% -->
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#1565c0" stroke-width="18" stroke-dasharray="125.6 125.6" stroke-dashoffset="0" transform="rotate(-90 55 55)" style="transition:stroke-dasharray 1s ease"/>
+            <!-- TOTAL 21% -->
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#00897b" stroke-width="18" stroke-dasharray="52.8 198.4" stroke-dashoffset="-125.6" transform="rotate(-90 55 55)"/>
+            <!-- Petrobras 13% -->
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#c9a96e" stroke-width="18" stroke-dasharray="32.7 218.5" stroke-dashoffset="-178.4" transform="rotate(-90 55 55)"/>
+            <!-- Outremer 16% -->
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#7c3aed" stroke-width="18" stroke-dasharray="40.2 211" stroke-dashoffset="-211.1" transform="rotate(-90 55 55)"/>
+          </svg>
+          <div class="donut-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:#1565c0"></div><div class="leg-label">ADNOC</div><div class="leg-pct">50%</div></div>
+            <div class="leg-item"><div class="leg-dot" style="background:#00897b"></div><div class="leg-label">TotalEnergies</div><div class="leg-pct">21%</div></div>
+            <div class="leg-item"><div class="leg-dot" style="background:#7c3aed"></div><div class="leg-label">Outremer</div><div class="leg-pct">16%</div></div>
+            <div class="leg-item"><div class="leg-dot" style="background:#c9a96e"></div><div class="leg-label">Petrobras</div><div class="leg-pct">13%</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HSE QUICK -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          HSE Overview
+        </div>
+        <span class="badge b-green">ISO 45001</span>
+      </div>
+      <div class="card-body">
+        <div style="text-align:center;padding:10px 0 16px">
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:52px;font-weight:900;color:#1b5e20;line-height:1">847</div>
+          <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:4px">LTI-Free Days</div>
+        </div>
+        <div class="hse-row">
+          <div class="hse-ico" style="background:#dcfce7"><svg viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:600">Near-miss reports</div><div style="font-size:11px;color:var(--text3)">June 2026</div></div>
+          <div style="font-size:16px;font-weight:800;color:#166534">0</div>
+        </div>
+        <div class="hse-row">
+          <div class="hse-ico" style="background:#dbeafe"><svg viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:600">Safety meetings</div><div style="font-size:11px;color:var(--text3)">This week</div></div>
+          <div style="font-size:16px;font-weight:800;color:#1e40af">4</div>
+        </div>
+        <div class="hse-row">
+          <div class="hse-ico" style="background:#fef9c3"><svg viewBox="0 0 24 24" fill="none" stroke="#854d0e" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg></div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:600">Certs expiring <30d</div><div style="font-size:11px;color:var(--text3)">Action needed</div></div>
+          <div style="font-size:16px;font-weight:800;color:#854d0e">2</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ PROJECTS ════════ -->
+<div id="view-projects" class="view">
+  <div class="page-hero">
+    <div class="ph-greeting">Project Management</div>
+    <div class="ph-title">Projects</div>
+    <div class="ph-sub"><span>8 active</span><div class="ph-dot"></div><span>3 tendering</span><div class="ph-dot"></div><span>12 completed 2026</span></div>
+    <div class="ph-actions">
+      <button class="btn btn-ghost">Export report</button>
+      <button class="btn btn-cyan" onclick="openModal()">+ New Project</button>
+    </div>
+  </div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Total Backlog</div><div class="kpi-val">$4.2M</div><div class="kpi-sub">Confirmed contracts</div></div>
+    <div class="kpi"><div class="kpi-label">Avg Project Value</div><div class="kpi-val">$385K</div><div class="kpi-sub">↑ vs $310K in 2025</div></div>
+    <div class="kpi"><div class="kpi-label">On-Time Delivery</div><div class="kpi-val">91%</div><div class="kpi-sub">YTD 2026</div></div>
+  </div>
+  <div class="proj-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="pcard"><div class="pcard-stripe s-blue"></div><div class="pcard-body"><div class="pcard-top"><div class="pcard-ico" style="background:#dbeafe"><svg viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div><span class="badge b-green">74%</span></div><div class="pcard-name">ADNOC Pipeline Inspection</div><div class="pcard-meta">Abu Dhabi · NDT · 14 divers</div><div class="pcard-track" style="margin-bottom:8px"><div class="pcard-fill s-blue" style="width:74%"></div></div><div class="pcard-foot"><div class="pcard-val">$480K</div><div style="font-size:10px;color:var(--text3)">End Sep 26</div></div></div></div>
+    <div class="pcard"><div class="pcard-stripe s-gold"></div><div class="pcard-body"><div class="pcard-top"><div class="pcard-ico" style="background:#fef9c3"><svg viewBox="0 0 24 24" fill="none" stroke="#854d0e" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><span class="badge b-gold">28%</span></div><div class="pcard-name">Outremer EPCI Morocco</div><div class="pcard-meta">Morocco · EPCI · 8 engineers</div><div class="pcard-track" style="margin-bottom:8px"><div class="pcard-fill s-gold" style="width:28%"></div></div><div class="pcard-foot"><div class="pcard-val">$640K</div><div style="font-size:10px;color:var(--text3)">End Mar 27</div></div></div></div>
+    <div class="pcard"><div class="pcard-stripe s-green"></div><div class="pcard-body"><div class="pcard-top"><div class="pcard-ico" style="background:#dcfce7"><svg viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><span class="badge b-green">61%</span></div><div class="pcard-name">Petrobras ROV Support</div><div class="pcard-meta">Brazil · ROV Ops · 3 operators</div><div class="pcard-track" style="margin-bottom:8px"><div class="pcard-fill s-green" style="width:61%"></div></div><div class="pcard-foot"><div class="pcard-val">$320K</div><div style="font-size:10px;color:var(--text3)">End Aug 26</div></div></div></div>
+    <div class="pcard"><div class="pcard-stripe s-orange"></div><div class="pcard-body"><div class="pcard-top"><div class="pcard-ico" style="background:#ffedd5"><svg viewBox="0 0 24 24" fill="none" stroke="#9a3412" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><span class="badge b-orange">Hold</span></div><div class="pcard-name">TotalEnergies Gabon Survey</div><div class="pcard-meta">Gabon · Survey + RA · 6 divers</div><div class="pcard-track" style="margin-bottom:8px"><div class="pcard-fill s-orange" style="width:45%"></div></div><div class="pcard-foot"><div class="pcard-val">$290K</div><div style="font-size:10px;color:var(--orange)">Weather delay</div></div></div></div>
+    <div class="pcard"><div class="pcard-stripe s-cyan"></div><div class="pcard-body"><div class="pcard-top"><div class="pcard-ico" style="background:#cffafe"><svg viewBox="0 0 24 24" fill="none" stroke="#155e75" stroke-width="2"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="21"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg></div><span class="badge b-blue">Mobilizing</span></div><div class="pcard-name">Congo LNG Mooring Repair</div><div class="pcard-meta">Congo · Saturation · 4 divers</div><div class="pcard-track" style="margin-bottom:8px"><div class="pcard-fill s-cyan" style="width:12%"></div></div><div class="pcard-foot"><div class="pcard-val">$195K</div><div style="font-size:10px;color:var(--text3)">Dep. Jun 25</div></div></div></div>
+    <div class="pcard" style="opacity:.65;border-style:dashed"><div class="pcard-stripe s-gray"></div><div class="pcard-body"><div class="pcard-top"><div class="pcard-ico" style="background:var(--bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><span class="badge b-gray">Tendering</span></div><div class="pcard-name">Saudi Aramco Q3 Package</div><div class="pcard-meta">Saudi Arabia · NDT+ROV</div><div class="pcard-track" style="margin-bottom:8px"><div class="pcard-fill" style="width:0;background:var(--border)"></div></div><div class="pcard-foot"><div class="pcard-val" style="color:var(--text3)">$520K est.</div><div style="font-size:10px;color:var(--text3)">Decision Jul 10</div></div></div></div>
+  </div>
+</div>
+
+<!-- ════════ DIVE LOG ════════ -->
+<div id="view-operations" class="view">
+  <div class="page-hero">
+    <div class="ph-greeting">Safety & Operations</div>
+    <div class="ph-title">Dive Operations Log</div>
+    <div class="ph-sub"><div class="ph-live"><div class="ph-live-dot"></div>847 LTI-free days · ISO 45001</div></div>
+    <div class="ph-actions"><button class="btn btn-ghost">Export PDF</button><button class="btn btn-cyan">+ Log Dive</button></div>
+  </div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Dives This Month</div><div class="kpi-val" style="color:var(--blue)">147</div><div class="kpi-sub">Across 4 projects</div></div>
+    <div class="kpi"><div class="kpi-label">Max Depth</div><div class="kpi-val">87m</div><div class="kpi-sub">Saturation · Congo</div></div>
+    <div class="kpi"><div class="kpi-label">Dive Hours YTD</div><div class="kpi-val">1,240h</div><div class="kpi-sub">↑ 22% vs 2025</div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--blue)"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Dive Log — June 2026</div><span class="badge b-green">All safe</span></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Operation</th><th>Project</th><th>Diver / Supervisor</th><th>Depth</th><th>Duration</th><th>Date</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--text3);font-size:11px">#147</td><td><div class="td-main">Weld inspection — Segment F7</div></td><td>ADNOC</td><td>J. Martinez / R. Leblanc</td><td style="font-weight:700;color:var(--blue)">34m</td><td>2h 10min</td><td>Jun 22</td><td><span class="badge b-green">Safe</span></td></tr>
+          <tr><td style="color:var(--text3);font-size:11px">#146</td><td><div class="td-main">Anode replacement — Jacket B3</div></td><td>ADNOC</td><td>K. Osei / R. Leblanc</td><td style="font-weight:700;color:var(--blue)">28m</td><td>2h 14min</td><td>Jun 22</td><td><span class="badge b-green">Safe</span></td></tr>
+          <tr><td style="color:var(--text3);font-size:11px">#145</td><td><div class="td-main">Mooring chain inspection</div></td><td>Congo LNG</td><td>P. Lemaire / F. Dupont</td><td style="font-weight:700;color:var(--blue)">87m</td><td>4h 05min</td><td>Jun 21</td><td><span class="badge b-green">Safe</span></td></tr>
+          <tr><td style="color:var(--text3);font-size:11px">#144</td><td><div class="td-main">Flare tower inspection — RA</div></td><td>TOTAL Gabon</td><td>N. Bouaziz / M. Bouvier</td><td style="font-weight:700;color:var(--orange)">RA/45m</td><td>3h 30min</td><td>Jun 20</td><td><span class="badge b-orange">Weather stop</span></td></tr>
+          <tr><td style="color:var(--text3);font-size:11px">#143</td><td><div class="td-main">Valve actuator replacement</div></td><td>ADNOC</td><td>P. Lemaire / R. Leblanc</td><td style="font-weight:700;color:var(--blue)">41m</td><td>3h 02min</td><td>Jun 19</td><td><span class="badge b-green">Safe</span></td></tr>
+          <tr><td style="color:var(--text3);font-size:11px">#142</td><td><div class="td-main">ROV survey km 0–12</div></td><td>Petrobras</td><td>A. Santos</td><td style="font-weight:700;color:var(--text3)">ROV 120m</td><td>6h 40min</td><td>Jun 18</td><td><span class="badge b-green">Safe</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ TEAM ════════ -->
+<div id="view-team" class="view">
+  <div class="page-hero">
+    <div class="ph-greeting">Human Resources</div>
+    <div class="ph-title">Dive Team</div>
+    <div class="ph-sub"><span>32 personnel</span><div class="ph-dot"></div><span>24 deployed</span><div class="ph-dot"></div><span>8 available</span></div>
+    <div class="ph-actions"><button class="btn btn-ghost">Certifications report</button><button class="btn btn-cyan">+ Add personnel</button></div>
+  </div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Deployed</div><div class="kpi-val" style="color:var(--blue)">24</div><div class="kpi-sub">4 active locations</div></div>
+    <div class="kpi"><div class="kpi-label">Available</div><div class="kpi-val" style="color:#1b5e20">8</div><div class="kpi-sub">Ready to mobilize</div></div>
+    <div class="kpi"><div class="kpi-label">On Leave</div><div class="kpi-val" style="color:var(--text3)">4</div><div class="kpi-sub">Back July 2026</div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--blue)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Active Roster</div></div>
+    <div class="card-body">
+      <div class="team-grid">
+        <div class="tcard"><div class="tcard-top"><div class="tcard-av" style="background:linear-gradient(135deg,#062040,#1565c0)">RL</div><div><div class="tcard-name">Robert Leblanc</div><div class="tcard-role">Dive Supervisor</div></div></div><div class="tcard-certs"><span class="cert">IMCA SR</span><span class="cert">CSWIP 3.4U</span><span class="cert">BOSIET</span></div><div class="tcard-foot"><span class="tcard-loc">UAE · ADNOC</span><span class="badge b-green">Deployed</span></div></div>
+        <div class="tcard"><div class="tcard-top"><div class="tcard-av" style="background:linear-gradient(135deg,#0f3d2a,#15803d)">JM</div><div><div class="tcard-name">Jorge Martinez</div><div class="tcard-role">Commercial Diver</div></div></div><div class="tcard-certs"><span class="cert">IMCA Cl.2</span><span class="cert">NDT UT</span><span class="cert">HUET</span></div><div class="tcard-foot"><span class="tcard-loc">UAE · ADNOC</span><span class="badge b-green">Deployed</span></div></div>
+        <div class="tcard"><div class="tcard-top"><div class="tcard-av" style="background:linear-gradient(135deg,#2d1a0a,#b8860b)">KO</div><div><div class="tcard-name">Kwame Osei</div><div class="tcard-role">Commercial Diver</div></div></div><div class="tcard-certs"><span class="cert">IMCA Cl.2</span><span class="cert">BOSIET</span></div><div class="tcard-foot"><span class="tcard-loc">UAE · ADNOC</span><span class="badge b-green">Deployed</span></div></div>
+        <div class="tcard"><div class="tcard-top"><div class="tcard-av" style="background:linear-gradient(135deg,#1a0a2d,#7c3aed)">PL</div><div><div class="tcard-name">Pierre Lemaire</div><div class="tcard-role">Saturation Diver</div></div></div><div class="tcard-certs"><span class="cert">IMCA Sat</span><span class="cert">CSWIP 3.4U</span><span class="cert">BOSIET</span></div><div class="tcard-foot"><span class="tcard-loc">Congo</span><span class="badge b-blue">Mobilizing</span></div></div>
+        <div class="tcard"><div class="tcard-top"><div class="tcard-av" style="background:linear-gradient(135deg,#003d3d,#00897b)">AS</div><div><div class="tcard-name">André Santos</div><div class="tcard-role">ROV Pilot Cl.I</div></div></div><div class="tcard-certs"><span class="cert">ROV Cl.I</span><span class="cert">OPITO</span></div><div class="tcard-foot"><span class="tcard-loc">Brazil · Petrobras</span><span class="badge b-green">Deployed</span></div></div>
+        <div class="tcard"><div class="tcard-top"><div class="tcard-av" style="background:linear-gradient(135deg,#3d0a0a,#c62828)">MB</div><div><div class="tcard-name">Marc Bouvier</div><div class="tcard-role">Dive Supervisor</div></div></div><div class="tcard-certs"><span class="cert">IMCA SR</span><span class="cert">BOSIET</span></div><div class="tcard-foot"><span class="tcard-loc">Gabon · TOTAL</span><span class="badge b-orange">Hold</span></div></div>
+        <div class="tcard"><div class="tcard-top"><div class="tcard-av" style="background:linear-gradient(135deg,#062040,#1565c0)">FD</div><div><div class="tcard-name">Fabrice Dupont</div><div class="tcard-role">Commercial Diver</div></div></div><div class="tcard-certs"><span class="cert">IMCA Cl.2</span><span class="cert">NDT MT</span></div><div class="tcard-foot"><span class="tcard-loc">Dubai</span><span class="badge b-green">Available</span></div></div>
+        <div class="tcard"><div class="tcard-top"><div class="tcard-av" style="background:linear-gradient(135deg,#0a2d1a,#2e7d32)">NB</div><div><div class="tcard-name">Nabil Bouaziz</div><div class="tcard-role">Rope Access Tech.</div></div></div><div class="tcard-certs"><span class="cert">IRATA L3</span><span class="cert">BOSIET</span></div><div class="tcard-foot"><span class="tcard-loc">Morocco</span><span class="badge b-green">Deployed</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ CLIENTS ════════ -->
+<div id="view-clients" class="view">
+  <div class="page-hero">
+    <div class="ph-greeting">Client Portfolio</div>
+    <div class="ph-title">Clients</div>
+    <div class="ph-sub"><span>18 active clients · 7 countries</span></div>
+    <div class="ph-actions"><button class="btn btn-cyan">+ Add client</button></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-title">Client Register</div></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Client</th><th>Country</th><th>Sector</th><th>Active Projects</th><th>Total Value</th><th>Relationship</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><div class="td-main">ADNOC</div><div class="td-sub">Abu Dhabi National Oil Company</div></td><td>UAE</td><td>Oil &amp; Gas</td><td>3</td><td style="font-weight:700;color:#8a6200">$1.2M</td><td><span class="badge b-gold">Key Account</span></td><td><span class="badge b-green">Active</span></td></tr>
+          <tr><td><div class="td-main">TotalEnergies</div><div class="td-sub">E&amp;P Division Africa</div></td><td>Gabon</td><td>Offshore E&amp;P</td><td>1</td><td style="font-weight:700;color:#8a6200">$290K</td><td><span class="badge b-cyan">Strategic</span></td><td><span class="badge b-green">Active</span></td></tr>
+          <tr><td><div class="td-main">Petrobras</div><div class="td-sub">International Operations</div></td><td>Brazil</td><td>Deepwater</td><td>1</td><td style="font-weight:700;color:#8a6200">$320K</td><td><span class="badge b-cyan">Strategic</span></td><td><span class="badge b-green">Active</span></td></tr>
+          <tr><td><div class="td-main">Outremer Partner</div><div class="td-sub">Exclusive alliance</div></td><td>UAE / Morocco</td><td>EPCI</td><td>1</td><td style="font-weight:700;color:#8a6200">$640K</td><td><span class="badge b-gold">Partner</span></td><td><span class="badge b-green">Active</span></td></tr>
+          <tr><td><div class="td-main">Congo LNG</div><div class="td-sub">LNG Terminal Operations</div></td><td>Congo</td><td>LNG</td><td>1</td><td style="font-weight:700;color:#8a6200">$195K</td><td><span class="badge b-blue">Recurring</span></td><td><span class="badge b-green">Active</span></td></tr>
+          <tr><td><div class="td-main">Saudi Aramco</div><div class="td-sub">Tendering phase</div></td><td>Saudi Arabia</td><td>Oil &amp; Gas</td><td>0</td><td style="color:var(--text3)">$520K est.</td><td><span class="badge b-gray">New</span></td><td><span class="badge b-orange">Prospect</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ CONTRACTS ════════ -->
+<div id="view-contracts" class="view">
+  <div class="page-hero">
+    <div class="ph-greeting">Contract Management</div>
+    <div class="ph-title">Contracts</div>
+    <div class="ph-sub"><span>14 active · $4.2M total value</span></div>
+    <div class="ph-actions"><button class="btn btn-ghost">Export</button><button class="btn btn-cyan">+ New Contract</button></div>
+  </div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Signed Value</div><div class="kpi-val" style="color:#8a6200">$4.2M</div><div class="kpi-sub">Active contracts</div></div>
+    <div class="kpi"><div class="kpi-label">Invoiced YTD</div><div class="kpi-val" style="color:var(--blue)">$2.4M</div><div class="kpi-sub">57% collected</div></div>
+    <div class="kpi"><div class="kpi-label">Outstanding</div><div class="kpi-val" style="color:var(--orange)">$380K</div><div class="kpi-sub">3 invoices</div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-title">Contract Register</div></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Description</th><th>Client</th><th>Value</th><th>Period</th><th>Invoiced</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--blue);font-weight:700;font-size:11px">C-2026-014</td><td><div class="td-main">Pipeline Inspection Phase 1&amp;2</div><div class="td-sub">Subsea NDT + Anode Survey</div></td><td>ADNOC</td><td style="font-weight:700;color:#8a6200">$480K</td><td style="color:var(--text3);font-size:11px">Apr–Sep 26</td><td style="color:#1b5e20;font-weight:600">$340K</td><td><span class="badge b-green">Active</span></td></tr>
+          <tr><td style="color:var(--blue);font-weight:700;font-size:11px">C-2026-012</td><td><div class="td-main">EPCI Morocco Phase 1</div><div class="td-sub">Engineering + Installation</div></td><td>Outremer</td><td style="font-weight:700;color:#8a6200">$640K</td><td style="color:var(--text3);font-size:11px">Jun 26–Mar 27</td><td style="color:var(--orange);font-weight:600">$80K</td><td><span class="badge b-green">Active</span></td></tr>
+          <tr><td style="color:var(--blue);font-weight:700;font-size:11px">C-2026-011</td><td><div class="td-main">ROV Survey + Dive Support</div><div class="td-sub">Deepwater pipeline survey</div></td><td>Petrobras</td><td style="font-weight:700;color:#8a6200">$320K</td><td style="color:var(--text3);font-size:11px">Mar–Aug 26</td><td style="color:#1b5e20;font-weight:600">$195K</td><td><span class="badge b-green">Active</span></td></tr>
+          <tr><td style="color:var(--blue);font-weight:700;font-size:11px">C-2026-009</td><td><div class="td-main">Offshore Survey Gabon</div><div class="td-sub">Rope Access + Subsea</div></td><td>TotalEnergies</td><td style="font-weight:700;color:#8a6200">$290K</td><td style="color:var(--text3);font-size:11px">May–Jul 26</td><td style="color:var(--orange);font-weight:600">$130K</td><td><span class="badge b-orange">Hold</span></td></tr>
+          <tr><td style="color:var(--blue);font-weight:700;font-size:11px">C-2026-015</td><td><div class="td-main">Mooring System Repair</div><div class="td-sub">Saturation diving 80m+</div></td><td>Congo LNG</td><td style="font-weight:700;color:#8a6200">$195K</td><td style="color:var(--text3);font-size:11px">Jun–Aug 26</td><td style="color:var(--text3)">$0</td><td><span class="badge b-blue">Mobilizing</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ FINANCE ════════ -->
+<div id="view-finance" class="view">
+  <div class="page-hero">
+    <div class="ph-greeting">Financial Overview</div>
+    <div class="ph-title">Finance</div>
+    <div class="ph-sub"><span>FY 2026 · All figures USD</span></div>
+    <div class="ph-actions"><button class="btn btn-ghost">Export P&amp;L</button><button class="btn btn-gold">+ New Invoice</button></div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card gold"><div class="stat-label">Revenue YTD</div><div class="stat-val" style="color:#8a6200">$2.4M</div><div class="stat-delta delta-up">↑ 18% vs H1 2025</div><div class="stat-bar"><div class="stat-bar-fill bar-gold" style="width:78%"></div></div></div>
+    <div class="stat-card blue"><div class="stat-label">Gross Margin</div><div class="stat-val" style="color:var(--blue)">38%</div><div class="stat-delta delta-up">↑ 4 pts vs 2025</div><div class="stat-bar"><div class="stat-bar-fill bar-blue" style="width:38%"></div></div></div>
+    <div class="stat-card green"><div class="stat-label">Backlog H2</div><div class="stat-val" style="color:#1b5e20">$1.8M</div><div class="stat-delta" style="color:var(--text3)">Confirmed</div><div class="stat-bar"><div class="stat-bar-fill bar-green" style="width:60%"></div></div></div>
+    <div class="stat-card cyan"><div class="stat-label">Outstanding</div><div class="stat-val" style="color:#9a3412">$380K</div><div class="stat-delta delta-warn">3 invoices overdue</div><div class="stat-bar"><div class="stat-bar-fill" style="width:16%;background:linear-gradient(90deg,#c62828,var(--red))"></div></div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-head"><div class="card-title">Outstanding Invoices</div><span class="badge b-orange">$380K pending</span></div>
+      <div class="card-body">
+        <div class="inv-row">
+          <div class="inv-info"><div class="inv-name">INV-2026-041 · TotalEnergies Gabon</div><div class="inv-sub">Progress billing #2</div></div>
+          <div class="inv-right"><div class="inv-amount">$130K</div><span class="badge b-orange" style="margin-top:4px;display:inline-block">Due Jun 30</span></div>
+        </div>
+        <div class="inv-row">
+          <div class="inv-info"><div class="inv-name">INV-2026-038 · ADNOC</div><div class="inv-sub">Pipeline inspection milestone 2</div></div>
+          <div class="inv-right"><div class="inv-amount">$160K</div><span class="badge b-blue" style="margin-top:4px;display:inline-block">Due Jul 5</span></div>
+        </div>
+        <div class="inv-row" style="border-bottom:none">
+          <div class="inv-info"><div class="inv-name">INV-2026-035 · Petrobras</div><div class="inv-sub">ROV support monthly billing</div></div>
+          <div class="inv-right"><div class="inv-amount">$90K</div><span class="badge b-red" style="margin-top:4px;display:inline-block">Overdue 12d</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">Revenue by Quarter</div></div>
+      <div class="card-body">
+        <div class="prog-item"><div class="prog-label"><span>Q1 2026</span><span style="color:#8a6200">$580K</span></div><div class="prog-track"><div class="prog-fill gold" style="width:58%"></div></div></div>
+        <div class="prog-item"><div class="prog-label"><span>Q2 2026</span><span style="color:#8a6200">$820K</span></div><div class="prog-track"><div class="prog-fill gold" style="width:82%"></div></div></div>
+        <div class="prog-item"><div class="prog-label"><span>Q3 2026 <span style="color:var(--text3);font-weight:400">(proj.)</span></span><span style="color:var(--blue)">$1.0M</span></div><div class="prog-track"><div class="prog-fill" style="width:100%"></div></div></div>
+        <div class="prog-item"><div class="prog-label"><span>Q4 2026 <span style="color:var(--text3);font-weight:400">(proj.)</span></span><span style="color:var(--blue)">$800K</span></div><div class="prog-track"><div class="prog-fill" style="width:80%;opacity:.4"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ EQUIPMENT ════════ -->
+<div id="view-equipment" class="view">
+  <div class="page-hero">
+    <div class="ph-greeting">Asset Management</div>
+    <div class="ph-title">Equipment & Assets</div>
+    <div class="ph-sub"><span>12 assets tracked</span><div class="ph-dot"></div><span>9 operational</span><div class="ph-dot"></div><span>2 in maintenance</span></div>
+    <div class="ph-actions"><button class="btn btn-ghost">Maintenance report</button><button class="btn btn-cyan">+ Add asset</button></div>
+  </div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Total Fleet Value</div><div class="kpi-val" style="color:#8a6200">$3.2M</div><div class="kpi-sub">Replacement cost</div></div>
+    <div class="kpi"><div class="kpi-label">Operational</div><div class="kpi-val" style="color:#1b5e20">9</div><div class="kpi-sub">Ready to deploy</div></div>
+    <div class="kpi"><div class="kpi-label">In Maintenance</div><div class="kpi-val" style="color:var(--orange)">2</div><div class="kpi-sub">Est. back Jul 5</div></div>
+  </div>
+  <div class="eq-grid">
+
+    <div class="eq-card">
+      <div class="eq-top">
+        <div class="eq-icon" style="background:#dbeafe"><svg viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <span class="badge b-green">Operational</span>
+      </div>
+      <div class="eq-name">ROV System — VideoRay Pro 4</div>
+      <div class="eq-model">Electric ROV · Class I · 300m rated</div>
+      <div class="eq-stats">
+        <div class="eq-stat"><div class="eq-stat-label">Location</div><div class="eq-stat-val">Brazil</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Hours</div><div class="eq-stat-val">1,240h</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Next Service</div><div class="eq-stat-val">Aug 26</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Value</div><div class="eq-stat-val">$420K</div></div>
+      </div>
+      <div class="eq-foot"><span class="badge b-blue">Petrobras project</span><span style="font-size:11px;color:var(--text3)">Serial: VR4-2021-088</span></div>
+    </div>
+
+    <div class="eq-card">
+      <div class="eq-top">
+        <div class="eq-icon" style="background:#dcfce7"><svg viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></div>
+        <span class="badge b-green">Operational</span>
+      </div>
+      <div class="eq-name">Dive Control System — Divex</div>
+      <div class="eq-model">Surface-supplied · 4-man capacity · 80m</div>
+      <div class="eq-stats">
+        <div class="eq-stat"><div class="eq-stat-label">Location</div><div class="eq-stat-val">Abu Dhabi</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Dives</div><div class="eq-stat-val">147</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Next Service</div><div class="eq-stat-val">Sep 26</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Value</div><div class="eq-stat-val">$280K</div></div>
+      </div>
+      <div class="eq-foot"><span class="badge b-green">ADNOC project</span><span style="font-size:11px;color:var(--text3)">Serial: DX-SAT-019</span></div>
+    </div>
+
+    <div class="eq-card">
+      <div class="eq-top">
+        <div class="eq-icon" style="background:#fef9c3"><svg viewBox="0 0 24 24" fill="none" stroke="#854d0e" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <span class="badge b-gold">In transit</span>
+      </div>
+      <div class="eq-name">Saturation System — Unique Group</div>
+      <div class="eq-model">2-man sat bell · 300m rated · DNV certified</div>
+      <div class="eq-stats">
+        <div class="eq-stat"><div class="eq-stat-label">Location</div><div class="eq-stat-val">DXB → PNR</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Dives</div><div class="eq-stat-val">0 (new)</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Arrival</div><div class="eq-stat-val">Jun 25</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Value</div><div class="eq-stat-val">$950K</div></div>
+      </div>
+      <div class="eq-foot"><span class="badge b-blue">Congo LNG project</span><span style="font-size:11px;color:var(--text3)">Serial: UG-SAT-2024</span></div>
+    </div>
+
+    <div class="eq-card">
+      <div class="eq-top">
+        <div class="eq-icon" style="background:#ffedd5"><svg viewBox="0 0 24 24" fill="none" stroke="#9a3412" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M21 12h-2M5 12H3M18.36 18.36l-1.41-1.41M6.05 18.36l1.41-1.41M12 21v-2M12 5V3"/></svg></div>
+        <span class="badge b-orange">Maintenance</span>
+      </div>
+      <div class="eq-name">LARS System — JD Neuhaus</div>
+      <div class="eq-model">Launch & Recovery · 5T SWL · Hydraulic</div>
+      <div class="eq-stats">
+        <div class="eq-stat"><div class="eq-stat-label">Location</div><div class="eq-stat-val">Dubai HQ</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Issue</div><div class="eq-stat-val">Hydraulic</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">ETA Back</div><div class="eq-stat-val">Jul 5</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Value</div><div class="eq-stat-val">$185K</div></div>
+      </div>
+      <div class="eq-foot"><span class="badge b-orange">Under repair</span><span style="font-size:11px;color:var(--text3)">Serial: JDN-LARS-07</span></div>
+    </div>
+
+    <div class="eq-card">
+      <div class="eq-top">
+        <div class="eq-icon" style="background:#cffafe"><svg viewBox="0 0 24 24" fill="none" stroke="#155e75" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <span class="badge b-green">Operational</span>
+      </div>
+      <div class="eq-name">Diving Helmets — Kirby Morgan x6</div>
+      <div class="eq-model">KM-37 · Surface supply · 6 units</div>
+      <div class="eq-stats">
+        <div class="eq-stat"><div class="eq-stat-label">Location</div><div class="eq-stat-val">Abu Dhabi</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Condition</div><div class="eq-stat-val">Excellent</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Next service</div><div class="eq-stat-val">Oct 26</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Value</div><div class="eq-stat-val">$72K</div></div>
+      </div>
+      <div class="eq-foot"><span class="badge b-green">ADNOC project</span><span style="font-size:11px;color:var(--text3)">KM37-2022 batch</span></div>
+    </div>
+
+    <div class="eq-card">
+      <div class="eq-top">
+        <div class="eq-icon" style="background:#f3e8ff"><svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+        <span class="badge b-green">Operational</span>
+      </div>
+      <div class="eq-name">Subsea Inspection Camera</div>
+      <div class="eq-model">Imenco Bully · 4K · 500m rated</div>
+      <div class="eq-stats">
+        <div class="eq-stat"><div class="eq-stat-label">Location</div><div class="eq-stat-val">Abu Dhabi</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Projects</div><div class="eq-stat-val">ADNOC NDT</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Next service</div><div class="eq-stat-val">Dec 26</div></div>
+        <div class="eq-stat"><div class="eq-stat-label">Value</div><div class="eq-stat-val">$95K</div></div>
+      </div>
+      <div class="eq-foot"><span class="badge b-green">Active</span><span style="font-size:11px;color:var(--text3)">Serial: IME-4K-2023</span></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════ HSE ════════ -->
+<div id="view-hse" class="view">
+  <div class="page-hero">
+    <div class="ph-greeting">Health, Safety & Environment</div>
+    <div class="ph-title">HSE Dashboard</div>
+    <div class="ph-sub"><div class="ph-live"><div class="ph-live-dot"></div>Zero incidents · ISO 9001 · ISO 14001 · ISO 45001</div></div>
+    <div class="ph-actions"><button class="btn btn-ghost">Download HSE report</button><button class="btn btn-cyan">+ Log incident</button></div>
+  </div>
+
+  <!-- BIG STAT -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+    <div class="stat-card green" style="text-align:center;padding:24px 16px">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:56px;font-weight:900;color:#1b5e20;line-height:1">847</div>
+      <div class="stat-label" style="justify-content:center;margin-top:8px">LTI-Free Days</div>
+      <div class="stat-delta delta-up" style="text-align:center">Since Aug 2024</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">Lost Time Injuries</div>
+      <div class="stat-val" style="color:#1b5e20">0</div>
+      <div class="stat-delta delta-up">YTD 2026</div>
+      <div class="stat-bar"><div class="stat-bar-fill bar-green" style="width:100%"></div></div>
+    </div>
+    <div class="stat-card cyan">
+      <div class="stat-label">Near-Miss Reports</div>
+      <div class="stat-val" style="color:var(--text)">3</div>
+      <div class="stat-delta" style="color:var(--text3)">All closed out</div>
+      <div class="stat-bar"><div class="stat-bar-fill bar-blue" style="width:20%"></div></div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-label">Safety Obs. Filed</div>
+      <div class="stat-val" style="color:#8a6200">48</div>
+      <div class="stat-delta delta-up">↑ 12% vs 2025</div>
+      <div class="stat-bar"><div class="stat-bar-fill bar-gold" style="width:70%"></div></div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <!-- CERT EXPIRY TABLE -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+          Certifications Tracker
+        </div>
+        <span class="badge b-orange">2 expiring soon</span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Personnel</th><th>Certification</th><th>Expires</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td><div class="td-main">R. Leblanc</div></td><td>BOSIET</td><td>Jul 14, 2026</td><td><span class="badge b-orange">Renew &lt;30d</span></td></tr>
+            <tr><td><div class="td-main">K. Osei</div></td><td>HUET</td><td>Jul 28, 2026</td><td><span class="badge b-orange">Renew &lt;30d</span></td></tr>
+            <tr><td><div class="td-main">J. Martinez</div></td><td>IMCA Cl.2</td><td>Nov 20, 2026</td><td><span class="badge b-green">Valid</span></td></tr>
+            <tr><td><div class="td-main">P. Lemaire</div></td><td>IMCA Sat</td><td>Mar 05, 2027</td><td><span class="badge b-green">Valid</span></td></tr>
+            <tr><td><div class="td-main">A. Santos</div></td><td>ROV Pilot Cl.I</td><td>Jan 10, 2027</td><td><span class="badge b-green">Valid</span></td></tr>
+            <tr><td><div class="td-main">N. Bouaziz</div></td><td>IRATA L3</td><td>Apr 18, 2027</td><td><span class="badge b-green">Valid</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SAFETY MEETINGS + PERMITS -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Safety Meetings This Week
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="hse-row">
+            <div class="hse-ico" style="background:#dcfce7"><svg viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div style="flex:1"><div style="font-size:12px;font-weight:600">ADNOC — Daily toolbox talk</div><div style="font-size:10px;color:var(--text3)">Jun 22 · 07:00 · Abu Dhabi · 14 attended</div></div>
+            <span class="badge b-green">Done</span>
+          </div>
+          <div class="hse-row">
+            <div class="hse-ico" style="background:#dcfce7"><svg viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div style="flex:1"><div style="font-size:12px;font-weight:600">Congo LNG — Pre-mobilization safety brief</div><div style="font-size:10px;color:var(--text3)">Jun 21 · 10:00 · Dubai HQ · 6 attended</div></div>
+            <span class="badge b-green">Done</span>
+          </div>
+          <div class="hse-row" style="border-bottom:none">
+            <div class="hse-ico" style="background:#dbeafe"><svg viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div style="flex:1"><div style="font-size:12px;font-weight:600">Weekly HSE review — all sites</div><div style="font-size:10px;color:var(--text3)">Jun 24 · 09:00 · Video call</div></div>
+            <span class="badge b-blue">Scheduled</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Active Work Permits
+          </div>
+          <span class="badge b-cyan">6 open</span>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr><th style="padding:8px 14px;text-align:left;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg)">Permit</th><th style="padding:8px 14px;text-align:left;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg)">Site</th><th style="padding:8px 14px;text-align:left;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg)">Valid</th></tr></thead>
+            <tbody>
+              <tr><td style="padding:10px 14px;font-weight:600;font-size:12px">PTW-2026-147<br><span style="font-size:10px;color:var(--text3);font-weight:400">Hot work · Welding</span></td><td style="padding:10px 14px;font-size:11px;color:var(--text2)">ADNOC F7</td><td style="padding:10px 14px"><span class="badge b-green">Jun 22–23</span></td></tr>
+              <tr><td style="padding:10px 14px;font-weight:600;font-size:12px">PTW-2026-146<br><span style="font-size:10px;color:var(--text3);font-weight:400">Confined space entry</span></td><td style="padding:10px 14px;font-size:11px;color:var(--text2)">ADNOC B3</td><td style="padding:10px 14px"><span class="badge b-green">Jun 22–22</span></td></tr>
+              <tr style="border-bottom:none"><td style="padding:10px 14px;font-weight:600;font-size:12px">PTW-2026-145<br><span style="font-size:10px;color:var(--text3);font-weight:400">Saturation dive ops</span></td><td style="padding:10px 14px;font-size:11px;color:var(--text2)">Congo LNG</td><td style="padding:10px 14px"><span class="badge b-gold">Jun 25–Jul 10</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INCIDENT HISTORY -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Incident & Near-Miss History 2026
+      </div>
+      <span style="font-size:11px;color:var(--text3)">0 LTI · 3 near-miss (all closed)</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Type</th><th>Description</th><th>Location</th><th>Date</th><th>Status</th><th>Corrective Action</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--blue);font-weight:700;font-size:11px">NM-2026-003</td>
+            <td><span class="badge b-orange">Near-miss</span></td>
+            <td><div class="td-main">Dropped object — tool from scaffolding</div><div class="td-sub">Controlled zone, no injury</div></td>
+            <td>Gabon · Flare tower</td>
+            <td style="font-size:11px;color:var(--text3)">Jun 12</td>
+            <td><span class="badge b-green">Closed</span></td>
+            <td style="font-size:11px;color:var(--text2)">Tool lanyards mandatory</td>
+          </tr>
+          <tr>
+            <td style="color:var(--blue);font-weight:700;font-size:11px">NM-2026-002</td>
+            <td><span class="badge b-orange">Near-miss</span></td>
+            <td><div class="td-main">Diver decompression stop missed</div><div class="td-sub">Caught by supervisor — no DCS</div></td>
+            <td>Abu Dhabi · ADNOC</td>
+            <td style="font-size:11px;color:var(--text3)">Apr 28</td>
+            <td><span class="badge b-green">Closed</span></td>
+            <td style="font-size:11px;color:var(--text2)">Updated dive tables procedure</td>
+          </tr>
+          <tr>
+            <td style="color:var(--blue);font-weight:700;font-size:11px">NM-2026-001</td>
+            <td><span class="badge b-orange">Near-miss</span></td>
+            <td><div class="td-main">ROV tether entanglement</div><div class="td-sub">Recovered without incident</div></td>
+            <td>Brazil · Petrobras</td>
+            <td style="font-size:11px;color:var(--text3)">Mar 5</td>
+            <td><span class="badge b-green">Closed</span></td>
+            <td style="font-size:11px;color:var(--text2)">Revised ROV deployment SOP</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">New Project</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Project Name</label>
+          <input class="form-input" placeholder="e.g. ADNOC Phase 3">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Client</label>
+          <select class="form-input">
+            <option>ADNOC</option>
+            <option>TotalEnergies</option>
+            <option>Petrobras</option>
+            <option>Outremer</option>
+            <option>Congo LNG</option>
+            <option>Saudi Aramco</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Location</label>
+          <input class="form-input" placeholder="e.g. Abu Dhabi, UAE">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Project Type</label>
+          <select class="form-input">
+            <option>Subsea NDT</option>
+            <option>Saturation Diving</option>
+            <option>ROV Operations</option>
+            <option>EPCI</option>
+            <option>Rope Access</option>
+            <option>Survey</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Contract Value (USD)</label>
+          <input class="form-input" placeholder="e.g. 350000">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Team Size</label>
+          <input class="form-input" placeholder="e.g. 8 divers">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Start Date</label>
+          <input class="form-input" type="date">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">End Date</label>
+          <input class="form-input" type="date">
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-light" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal()">Create Project</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── LOGIN ──
+function doLogin(){
+  document.getElementById('login-screen').style.opacity='0';
+  document.getElementById('login-screen').style.transition='opacity .5s';
+  setTimeout(()=>{
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    setTimeout(animateCounters,300);
+    setTimeout(buildChart,500);
+  },500);
+}
+document.getElementById('login-pass').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+document.getElementById('login-email').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+
+// ── DATE ──
+const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const now=new Date();
+document.getElementById('today-date').textContent=`${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+
+// ── VIEWS ──
+const titles={dashboard:'Dashboard',projects:'Projects',operations:'Dive Log',team:'Dive Team',clients:'Clients',contracts:'Contracts',finance:'Finance',equipment:'Equipment & Assets',hse:'HSE / Safety'};
+function showView(id, el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  document.querySelectorAll('.sb-link').forEach(i=>i.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('topbar-title').textContent=titles[id]||id;
+  if(id==='dashboard'){setTimeout(animateCounters,100);setTimeout(buildChart,200);}
+}
+
+// ── COUNTERS ──
+function animateCounters(){
+  document.querySelectorAll('.stat-val[data-target]').forEach(el=>{
+    const target=parseFloat(el.dataset.target);
+    const suffix=el.dataset.suffix||'';
+    const prefix=el.dataset.prefix||'';
+    const isDecimal=String(target).includes('.');
+    let current=0;
+    const step=target/40;
+    const interval=setInterval(()=>{
+      current=Math.min(current+step,target);
+      el.textContent=prefix+(isDecimal?current.toFixed(1):Math.round(current))+suffix;
+      if(current>=target)clearInterval(interval);
+    },25);
+  });
+}
+
+// ── CHART ──
+const revData=[
+  {m:'Jan',v:180},
+  {m:'Feb',v:220},
+  {m:'Mar',v:310},
+  {m:'Apr',v:380},
+  {m:'May',v:420},
+  {m:'Jun',v:480},
+];
+function buildChart(){
+  const wrap=document.getElementById('rev-chart');
+  if(!wrap)return;
+  const max=Math.max(...revData.map(d=>d.v));
+  wrap.innerHTML=revData.map(d=>{
+    const h=Math.round((d.v/max)*130);
+    const colors=['#1565c0','#1e88e5','#42a5f5','#1565c0','#1e88e5','#0097a7'];
+    const ci=revData.indexOf(d);
+    return `<div class="ch-bar-wrap">
+      <div class="ch-bar" style="height:0;background:linear-gradient(180deg,${colors[ci]},${colors[ci]}99);border-radius:6px 6px 0 0;transition:height .6s cubic-bezier(.34,1.56,.64,1) ${ci*80}ms" data-h="${h}">
+        <div class="ch-bar-tip">$${d.v}K</div>
+      </div>
+      <div class="ch-label">${d.m}</div>
+    </div>`;
+  }).join('');
+  setTimeout(()=>{
+    wrap.querySelectorAll('.ch-bar').forEach(b=>{
+      b.style.height=b.dataset.h+'px';
+    });
+  },50);
+}
+
+// ── MODAL ──
+function openModal(){document.getElementById('modal').classList.add('open')}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+
+// ── NOTIF ──
+function toggleNotif(){
+  document.getElementById('notif-drop').classList.toggle('open');
+}
+document.addEventListener('click',e=>{
+  if(!document.getElementById('notif-btn').contains(e.target)){
+    document.getElementById('notif-drop').classList.remove('open');
+  }
+});
+</script>
+</body>
+</html>
