@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vittorio Milano · Fitting Requests</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0d12;--card:#13171f;--card2:#1a1f2a;
+  --gold:#c9a050;--gold2:#e8c97a;--gold-dim:rgba(201,160,80,.15);
+  --border:rgba(201,160,80,.12);--border2:rgba(255,255,255,.06);
+  --text:#f0ead8;--text2:#8a8070;--text3:#5a5248;
+  --green:#22c55e;--green-bg:rgba(34,197,94,.1);
+  --blue:#3b82f6;--blue-bg:rgba(59,130,246,.1);
+  --orange:#f59e0b;--orange-bg:rgba(245,158,11,.1);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.1);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ── LOGIN ── */
+#login-screen{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:24px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(201,160,80,.06) 0%,transparent 60%);
+}
+.login-box{
+  width:100%;max-width:400px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:48px 40px;text-align:center;
+}
+.login-crown{font-size:32px;margin-bottom:20px;filter:drop-shadow(0 0 12px rgba(201,160,80,.3))}
+.login-title{font-family:'Cinzel',serif;font-size:22px;color:var(--gold);letter-spacing:.08em;margin-bottom:6px}
+.login-sub{font-size:12px;color:var(--text2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:36px}
+.login-input{
+  width:100%;padding:14px 18px;background:var(--card2);
+  border:1px solid var(--border2);border-radius:10px;
+  color:var(--text);font-size:14px;font-family:'Inter',sans-serif;
+  outline:none;transition:border .2s;letter-spacing:.06em;
+  margin-bottom:14px;
+}
+.login-input:focus{border-color:rgba(201,160,80,.4)}
+.login-btn{
+  width:100%;padding:14px;background:var(--gold);color:#0a0d12;
+  font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+  border:none;border-radius:10px;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;
+}
+.login-btn:hover{background:var(--gold2)}
+.login-err{font-size:12px;color:var(--red);margin-top:10px;display:none}
+
+/* ── PANEL ── */
+#panel{display:none}
+.topbar{
+  background:var(--card);border-bottom:1px solid var(--border);
+  padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;
+  position:sticky;top:0;z-index:50;
+}
+.topbar-brand{font-family:'Cinzel',serif;font-size:14px;color:var(--gold);letter-spacing:.12em;display:flex;align-items:center;gap:10px}
+.topbar-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.btn-refresh{padding:8px 16px;background:var(--gold-dim);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn-refresh:hover{background:rgba(201,160,80,.25)}
+.btn-logout{padding:8px 16px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--text2);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn-logout:hover{color:var(--text);border-color:rgba(255,255,255,.15)}
+
+.page{max-width:1100px;margin:0 auto;padding:32px 24px}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 22px}
+.stat-num{font-family:'Cinzel',serif;font-size:32px;color:var(--gold);font-weight:700;line-height:1}
+.stat-label{font-size:11px;color:var(--text2);letter-spacing:.1em;text-transform:uppercase;margin-top:6px}
+
+/* ── FILTERS ── */
+.filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.filter-btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;border:1px solid var(--border2);background:var(--card);color:var(--text2)}
+.filter-btn.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+.filter-btn:hover:not(.active){color:var(--text);border-color:rgba(255,255,255,.15)}
+
+/* ── REQUESTS ── */
+.requests{display:flex;flex-direction:column;gap:10px}
+.req-card{
+  background:var(--card);border:1px solid var(--border2);border-radius:14px;
+  padding:20px 24px;transition:border .2s;
+}
+.req-card:hover{border-color:var(--border)}
+.req-card.status-new{border-left:3px solid var(--gold)}
+.req-card.status-contacted{border-left:3px solid var(--blue)}
+.req-card.status-confirmed{border-left:3px solid var(--green)}
+.req-card.status-done{border-left:3px solid var(--text3)}
+.req-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}
+.req-name{font-size:16px;font-weight:600;color:var(--text)}
+.req-time{font-size:11px;color:var(--text3)}
+.req-badge{font-size:10px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.badge-new{background:var(--gold-dim);color:var(--gold)}
+.badge-contacted{background:var(--blue-bg);color:var(--blue)}
+.badge-confirmed{background:var(--green-bg);color:var(--green)}
+.badge-done{background:var(--border2);color:var(--text3)}
+.req-meta{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:10px}
+.req-meta-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
+.req-meta-item svg{width:13px;height:13px;opacity:.6}
+.req-notes{font-size:12px;color:var(--text2);background:var(--card2);border-radius:8px;padding:10px 14px;margin-top:8px;line-height:1.6;border-left:2px solid var(--border)}
+.req-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.action-btn{padding:7px 14px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;border:1px solid;letter-spacing:.04em}
+.ab-contacted{background:var(--blue-bg);border-color:rgba(59,130,246,.3);color:var(--blue)}
+.ab-confirmed{background:var(--green-bg);border-color:rgba(34,197,94,.3);color:var(--green)}
+.ab-done{background:var(--border2);border-color:var(--border2);color:var(--text2)}
+.ab-whatsapp{background:rgba(37,211,102,.1);border-color:rgba(37,211,102,.3);color:#25d366;display:flex;align-items:center;gap:5px}
+.action-btn:hover{opacity:.8}
+
+.empty{text-align:center;padding:60px 20px;color:var(--text2)}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.3}
+.loading{text-align:center;padding:60px 20px;color:var(--text2);font-style:italic}
+
+@media(max-width:700px){
+  .stats{grid-template-columns:1fr 1fr}
+  .topbar{padding:0 16px}
+  .page{padding:20px 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-crown">♛</div>
+    <div class="login-title">Vittorio Milano</div>
+    <div class="login-sub">Atelier Management · Dubai</div>
+    <input class="login-input" type="password" id="login-pass" placeholder="Access code" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Enter the Atelier</button>
+    <div class="login-err" id="login-err">Incorrect access code</div>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="panel">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-dot"></div>
+      Vittorio Milano · Fitting Requests
+    </div>
+    <div class="topbar-right">
+      <button class="btn-refresh" onclick="loadRequests()">↻ Refresh</button>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="stats">
+      <div class="stat"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Total requests</div></div>
+      <div class="stat"><div class="stat-num" id="stat-new" style="color:#c9a050">—</div><div class="stat-label">New · pending</div></div>
+      <div class="stat"><div class="stat-num" id="stat-contacted" style="color:#3b82f6">—</div><div class="stat-label">Contacted</div></div>
+      <div class="stat"><div class="stat-num" id="stat-confirmed" style="color:#22c55e">—</div><div class="stat-label">Confirmed</div></div>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all" onclick="setFilter(this,'all')">All</button>
+      <button class="filter-btn" data-filter="new" onclick="setFilter(this,'new')">New</button>
+      <button class="filter-btn" data-filter="contacted" onclick="setFilter(this,'contacted')">Contacted</button>
+      <button class="filter-btn" data-filter="confirmed" onclick="setFilter(this,'confirmed')">Confirmed</button>
+      <button class="filter-btn" data-filter="done" onclick="setFilter(this,'done')">Done</button>
+    </div>
+
+    <div class="requests" id="requests-list">
+      <div class="loading">Loading requests…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://vjofxmfwdybktpwiuanc.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+const ACCESS = 'vittorio2026';
+let ALL_DATA = [];
+let CUR_FILTER = 'all';
+
+function doLogin(){
+  const v = document.getElementById('login-pass').value;
+  if(v === ACCESS){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('panel').style.display='block';
+    loadRequests();
+  } else {
+    document.getElementById('login-err').style.display='block';
+  }
+}
+function doLogout(){
+  document.getElementById('panel').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-pass').value='';
+}
+
+async function loadRequests(){
+  document.getElementById('requests-list').innerHTML='<div class="loading">Loading…</div>';
+  try{
+    const res = await fetch(SB_URL+'/rest/v1/web_requests?business_name=eq.Vittorio Milano&order=created_at.desc', {
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    });
+    ALL_DATA = await res.json();
+    renderStats();
+    renderList();
+  }catch(e){
+    document.getElementById('requests-list').innerHTML='<div class="empty"><div class="empty-icon">⚠</div>Error loading data</div>';
+  }
+}
+
+function renderStats(){
+  const total = ALL_DATA.length;
+  const nw = ALL_DATA.filter(r=>r.status==='new').length;
+  const ct = ALL_DATA.filter(r=>r.status==='contacted').length;
+  const cf = ALL_DATA.filter(r=>r.status==='confirmed').length;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-new').textContent = nw;
+  document.getElementById('stat-contacted').textContent = ct;
+  document.getElementById('stat-confirmed').textContent = cf;
+}
+
+function setFilter(btn, f){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  CUR_FILTER = f;
+  renderList();
+}
+
+function renderList(){
+  const data = CUR_FILTER==='all' ? ALL_DATA : ALL_DATA.filter(r=>r.status===CUR_FILTER);
+  if(!data.length){
+    document.getElementById('requests-list').innerHTML='<div class="empty"><div class="empty-icon">♛</div>No requests here yet</div>';
+    return;
+  }
+  document.getElementById('requests-list').innerHTML = data.map(r => {
+    const notes = r.notes || '';
+    const lines = notes.split('\n').filter(l=>l&&!l.startsWith('['));
+    const service = lines.find(l=>l.startsWith('Service:'))?.replace('Service:','').trim()||'—';
+    const location = lines.find(l=>l.startsWith('Location:'))?.replace('Location:','').trim()||'—';
+    const dateTime = lines.find(l=>l.startsWith('Date:'))?.replace('Date:','').trim()||'—';
+    const clientNotes = lines.find(l=>l.startsWith('Notes:'))?.replace('Notes:','').trim()||'';
+    const nameL = lines.find(l=>l.startsWith('Name:'))?.replace('Name:','').trim()||'—';
+    const ts = new Date(r.created_at);
+    const ago = timeAgo(ts);
+    const badgeMap={new:'badge-new',contacted:'badge-contacted',confirmed:'badge-confirmed',done:'badge-done'};
+    const labelMap={new:'New',contacted:'Contacted',confirmed:'Confirmed',done:'Done'};
+    const st = r.status||'new';
+    const wa = r.phone ? `https://wa.me/${r.phone.replace(/[^0-9]/g,'')}?text=Hi%20${encodeURIComponent(nameL)}%2C%20this%20is%20Vittorio%20Milano.%20Thank%20you%20for%20your%20fitting%20request.` : '';
+    return `<div class="req-card status-${st}" id="card-${r.id}">
+      <div class="req-top">
+        <div>
+          <div class="req-name">${nameL}</div>
+          <div class="req-time">${ago} · ${ts.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</div>
+        </div>
+        <span class="req-badge ${badgeMap[st]}">${labelMap[st]}</span>
+      </div>
+      <div class="req-meta">
+        <div class="req-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.14 6.14l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${r.phone||'—'}</div>
+        <div class="req-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${r.email||'—'}</div>
+        <div class="req-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${dateTime}</div>
+        <div class="req-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${location}</div>
+      </div>
+      <div class="req-meta"><div class="req-meta-item" style="color:var(--gold);opacity:.8"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>${service}</div></div>
+      ${clientNotes?`<div class="req-notes">"${clientNotes}"</div>`:''}
+      <div class="req-actions">
+        ${wa?`<button class="action-btn ab-whatsapp" onclick="window.open('${wa}','_blank')"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>WhatsApp</button>`:'' }
+        ${st!=='contacted'&&st!=='done'?`<button class="action-btn ab-contacted" onclick="updateStatus(${r.id},'contacted')">Mark Contacted</button>`:''}
+        ${st!=='confirmed'&&st!=='done'?`<button class="action-btn ab-confirmed" onclick="updateStatus(${r.id},'confirmed')">Confirm Fitting</button>`:''}
+        ${st!=='done'?`<button class="action-btn ab-done" onclick="updateStatus(${r.id},'done')">Done</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function updateStatus(id, status){
+  try{
+    await fetch(SB_URL+'/rest/v1/web_requests?id=eq.'+id, {
+      method:'PATCH',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body: JSON.stringify({status})
+    });
+    const r = ALL_DATA.find(x=>x.id===id);
+    if(r){ r.status=status; renderStats(); renderList(); }
+  }catch(e){ alert('Error updating status'); }
+}
+
+function timeAgo(d){
+  const s = Math.floor((Date.now()-d)/1000);
+  if(s<60) return 'Just now';
+  if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+</script>
+</body>
+</html>
