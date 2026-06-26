@@ -2542,6 +2542,16 @@ const BSD_LAPELS=[
   {key:'shawl',name:'Shawl',sub:'Tuxedo'},
 ];
 const BSD={color:'charcoal',pattern:null,lapel:'notch',btn:'2',fit:'regular',trouser:'flat',sleeve:'4',pocket:'jetted',vent:'double',lining:'Burgundy'};
+let BSD_HOUSE='naples';
+let BSD_LINING_TYPE='full';
+const BSD_LAPEL_IMGS={
+  notch:{naples:'vittorio-assets/lapel-notch-naples.png',british:'vittorio-assets/lapel-notch-british.png'},
+  peak: {naples:'vittorio-assets/lapel-peak-naples.png', british:'vittorio-assets/lapel-peak-british.png'},
+  shawl:{naples:'vittorio-assets/lapel-shawl-naples.png',british:'vittorio-assets/lapel-shawl-british.png'},
+};
+const BSD_LINING_IMGS={full:'vittorio-assets/lining-full.png',half:'vittorio-assets/lining-half.png',unlined:'vittorio-assets/lining-unlined.png'};
+const BSD_LINING_TYPE_LABELS={full:'Full Lining — Inside Excellence',half:'Half Lining — Lightness & Elegance',unlined:'Unlined — The Essence of Lightness'};
+const BSD_LAPEL_LABELS={notch:'Notch Lapel',peak:'Peak Lapel',shawl:'Shawl Lapel'};
 
 function bsdRenderFabricRow(){
   document.getElementById('bsd-fab-row').innerHTML=BSD_COLORS.map(c=>`
@@ -2563,11 +2573,11 @@ function bsdRenderPatRow(){
   document.querySelectorAll('[data-pat]').forEach(el=>el.addEventListener('click',()=>{BSD.pattern=el.dataset.pat;bsdRenderFabricRow();bsdRenderPatRow();bsdUpdate();}));
 }
 function bsdRenderLapelRow(){
-  const d=window.VM_LAPEL_DIAGRAMS||{};
+  const house = BSD_HOUSE === 'british' ? 'british' : 'naples';
   document.getElementById('bsd-lapel-row').innerHTML=BSD_LAPELS.map(l=>{
-    const img=d[l.key]||'';
+    const img = (BSD_LAPEL_IMGS[l.key]||{})[house] || '';
     return `<div class="bsd-lapel ${l.key===BSD.lapel?'active':''}" data-lapel-bsd="${l.key}">
-      <div class="bsd-lapel-img" style="background-image:url('${img}')"></div>
+      <div class="bsd-lapel-img" style="background-image:url('${img}');background-size:cover;background-position:top center;"></div>
       <div class="bsd-lapel-name">${l.name}</div>
       <div class="bsd-lapel-sub">${l.sub}</div>
     </div>`;
@@ -2689,20 +2699,6 @@ document.querySelectorAll('.nav-links a').forEach(a=>a.addEventListener('click',
 }));
 
 // ══ 3D VIEW MODAL ══
-const BSD_LAPEL_IMGS = {
-  notch:  {naples:'vittorio-assets/lapel-notch-naples.png',  british:'vittorio-assets/lapel-notch-british.png'},
-  peak:   {naples:'vittorio-assets/lapel-peak-naples.png',   british:'vittorio-assets/lapel-peak-british.png'},
-  shawl:  {naples:'vittorio-assets/lapel-shawl-naples.png',  british:'vittorio-assets/lapel-shawl-british.png'},
-};
-const BSD_LINING_IMGS = {
-  full:    'vittorio-assets/lining-full.png',
-  half:    'vittorio-assets/lining-half.png',
-  unlined: 'vittorio-assets/lining-unlined.png',
-};
-const BSD_LINING_TYPE_LABELS = {full:'Full Lining — Inside Excellence', half:'Half Lining — Lightness & Elegance', unlined:'Unlined — The Essence of Lightness'};
-const BSD_LAPEL_LABELS = {notch:'Notch Lapel', peak:'Peak Lapel', shawl:'Shawl Lapel'};
-let BSD_HOUSE = 'naples';
-let BSD_LINING_TYPE = 'full';
 
 function bsd3dOpen(src, label) {
   const ov = document.getElementById('bsd-3d-overlay');
@@ -2725,14 +2721,14 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// House style → update shoulder row visibility + which lapel images to use
+// House style → update shoulder row visibility + rerender lapel cards with correct illustrations
 document.querySelectorAll('[data-style]').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('[data-style]').forEach(x => x.classList.remove('active'));
   b.classList.add('active');
   BSD_HOUSE = b.dataset.style === 'british' ? 'british' : 'naples';
-  // Show/hide shoulder row (only for Neapolitan)
   const shoulderRow = document.getElementById('bsd-shoulder-row');
   if(shoulderRow) shoulderRow.style.display = BSD_HOUSE === 'naples' ? '' : 'none';
+  bsdRenderLapelRow();
 }));
 
 // Shoulder click → 3D view
