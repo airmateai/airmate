@@ -2031,11 +2031,11 @@ section{position:relative;padding:120px 5vw;}
       <h2>Reserve a <em>private fitting</em></h2>
       <p>Visit us in Al Jaddaf or invite our team to your residence. Either way, the cloth and the cutting board come to you.</p>
     </div>
-    <form class="book-form reveal" onsubmit="event.preventDefault();openConfirm();">
-      <div class="book-field"><label>Name</label><input required placeholder="Your full name"></div>
-      <div class="book-field"><label>Phone</label><input required placeholder="+971 ..."></div>
-      <div class="book-field full"><label>Email</label><input type="email" required placeholder="you@example.com"></div>
-      <div class="book-field"><label>Service of Interest</label><select required>
+    <form class="book-form reveal" id="vm-book-form" onsubmit="vmSubmitForm(event)">
+      <div class="book-field"><label>Name</label><input id="vf-name" required placeholder="Your full name"></div>
+      <div class="book-field"><label>Phone</label><input id="vf-phone" required placeholder="+971 ..."></div>
+      <div class="book-field full"><label>Email</label><input id="vf-email" type="email" required placeholder="you@example.com"></div>
+      <div class="book-field"><label>Service of Interest</label><select id="vf-service" required>
         <option selected>Pure Bespoke · Signature</option>
         <option>Semi-Bespoke · Faster turnaround</option>
         <option>Express Service · Tight timeline</option>
@@ -2045,20 +2045,20 @@ section{position:relative;padding:120px 5vw;}
         <option>For Her · Modest Bespoke</option>
         <option>Alterations &amp; Revival</option>
       </select></div>
-      <div class="book-field"><label>Preferred Fitting</label><select required>
+      <div class="book-field"><label>Preferred Fitting</label><select id="vf-location" required>
         <option>At the atelier · Al Jaddaf</option>
         <option>Concierge at my residence</option>
         <option>Concierge at my office</option>
         <option>Wherever convenient</option>
       </select></div>
-      <div class="book-field"><label>Preferred Date</label><input type="date" required></div>
-      <div class="book-field"><label>Preferred Time</label><select>
+      <div class="book-field"><label>Preferred Date</label><input id="vf-date" type="date" required></div>
+      <div class="book-field"><label>Preferred Time</label><select id="vf-time">
         <option>Morning · 10:00–12:00</option>
         <option>Afternoon · 14:00–17:00</option>
         <option>Evening · 18:00–21:00</option>
       </select></div>
-      <div class="book-field full"><label>Any details we should know?</label><textarea rows="3" placeholder="Occasion, garment in mind, preferred languages..."></textarea></div>
-      <button class="book-submit" type="submit">Request your Fitting</button>
+      <div class="book-field full"><label>Any details we should know?</label><textarea id="vf-notes" rows="3" placeholder="Occasion, garment in mind, preferred languages..."></textarea></div>
+      <button class="book-submit" type="submit" id="vf-btn">Request your Fitting</button>
       <div class="book-note">A member of our atelier will reach out within 12 hours to confirm. Discretion assured.</div>
     </form>
   </div>
@@ -2689,6 +2689,57 @@ tryLoadMaterials();
 // ═══ MODAL ═══
 function openConfirm(){document.getElementById('modal-confirm').classList.add('open');}
 function closeConfirm(){document.getElementById('modal-confirm').classList.remove('open');}
+
+// ══ FORM SUBMISSION → SUPABASE ══
+const VM_SB_URL = 'https://vjofxmfwdybktpwiuanc.supabase.co';
+const VM_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+
+async function vmSubmitForm(e) {
+  e.preventDefault();
+  const btn = document.getElementById('vf-btn');
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
+
+  const name  = document.getElementById('vf-name').value.trim();
+  const phone = document.getElementById('vf-phone').value.trim();
+  const email = document.getElementById('vf-email').value.trim();
+  const service  = document.getElementById('vf-service').value;
+  const location = document.getElementById('vf-location').value;
+  const date  = document.getElementById('vf-date').value;
+  const time  = document.getElementById('vf-time').value;
+  const extra = document.getElementById('vf-notes').value.trim();
+
+  const payload = {
+    business_name: 'Vittorio Milano',
+    business_type: 'bespoke-tailoring',
+    phone,
+    email,
+    notes: `[FITTING REQUEST]\nName: ${name}\nService: ${service}\nLocation: ${location}\nDate: ${date} ${time}\nNotes: ${extra}`,
+    status: 'new',
+  };
+
+  try {
+    const res = await fetch(VM_SB_URL + '/rest/v1/web_requests', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': VM_SB_KEY,
+        'Authorization': 'Bearer ' + VM_SB_KEY,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    openConfirm();
+    document.getElementById('vm-book-form').reset();
+  } catch(err) {
+    alert('Something went wrong. Please try again or WhatsApp us directly.');
+    console.error(err);
+  } finally {
+    btn.textContent = 'Request your Fitting';
+    btn.disabled = false;
+  }
+}
 
 // load real atelier material photos (Jose Acosta library)
 (function(){var s=document.createElement('script');s.src='vittorio-materials.js?v=1';s.defer=true;document.body.appendChild(s);})();
