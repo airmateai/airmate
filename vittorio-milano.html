@@ -756,6 +756,53 @@ section{position:relative;padding:120px 5vw;}
   .bsd-foot{flex-direction:column;align-items:stretch;}
 }
 
+/* ── 3D VIEW PANEL ── */
+.bsd-3d-overlay{
+  display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.6);
+  align-items:center;justify-content:center;
+}
+.bsd-3d-overlay.open{display:flex;}
+.bsd-3d-modal{
+  background:#fafaf3;border-radius:16px;overflow:hidden;
+  max-width:580px;width:90%;box-shadow:0 24px 80px rgba(0,0,0,.25);
+  position:relative;animation:bsd3dIn .25s ease;
+}
+@keyframes bsd3dIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.bsd-3d-modal img{width:100%;display:block;}
+.bsd-3d-modal-label{
+  padding:14px 20px;font-family:var(--serif);font-size:15px;color:var(--burg-ink);
+  background:#fff;border-top:1px solid rgba(201,160,92,.2);
+  font-style:italic;text-align:center;
+}
+.bsd-3d-modal-close{
+  position:absolute;top:10px;right:12px;width:30px;height:30px;
+  background:rgba(0,0,0,.45);border-radius:50%;border:none;cursor:pointer;
+  color:#fff;font-size:16px;line-height:30px;text-align:center;font-weight:700;
+}
+/* shoulder sub-row (Spalla Camicia / Con Rollino) */
+.bsd-shoulder-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.bsd-shoulder{
+  border:1.5px solid rgba(0,0,0,.1);border-radius:10px;cursor:pointer;
+  padding:8px;transition:all .2s;background:#fff;text-align:center;
+}
+.bsd-shoulder:hover{border-color:rgba(201,160,92,.5);}
+.bsd-shoulder.active{border-color:var(--gold);background:rgba(201,160,92,.06);box-shadow:0 0 0 3px rgba(201,160,92,.15);}
+.bsd-shoulder-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;display:block;margin-bottom:6px;}
+.bsd-shoulder-name{font-family:var(--serif);font-size:12px;color:var(--burg-ink);}
+/* lining type pills */
+.bsd-lining-type-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.bsd-lining-type{
+  flex:1;min-width:80px;padding:10px 12px;
+  border:1.5px solid rgba(0,0,0,.1);border-radius:10px;
+  background:#fff;color:var(--burg-ink);
+  font-size:12px;font-weight:600;letter-spacing:.04em;
+  cursor:pointer;transition:all .2s;text-align:center;
+}
+.bsd-lining-type:hover{border-color:rgba(201,160,92,.5);}
+.bsd-lining-type.active{border-color:var(--gold);background:rgba(201,160,92,.08);color:var(--gold-dk);box-shadow:0 0 0 3px rgba(201,160,92,.15);}
+/* Trouser style (Classic / Gorkha / Tuxedo) */
+.bsd-trouser-style-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+
 /* ═══════════════ FABRICS ═══════════════ */
 .fabrics{background:var(--ivory);}
 .fab-row{
@@ -1472,6 +1519,16 @@ section{position:relative;padding:120px 5vw;}
             <button class="bsd-pill active" data-style="neapolitan">Neapolitan · <em style="font-style:italic;opacity:.7">soft</em></button>
             <button class="bsd-pill" data-style="british">British · <em style="font-style:italic;opacity:.7">structured</em></button>
           </div>
+          <div class="bsd-shoulder-row" id="bsd-shoulder-row">
+            <div class="bsd-shoulder active" data-shoulder="spalla-camicia">
+              <img class="bsd-shoulder-img" src="vittorio-assets/shoulder-spalla-camicia.png" alt="Spalla Camicia">
+              <div class="bsd-shoulder-name">Spalla Camicia</div>
+            </div>
+            <div class="bsd-shoulder" data-shoulder="con-rollino">
+              <img class="bsd-shoulder-img" src="vittorio-assets/shoulder-con-rollino.png" alt="Con Rollino">
+              <div class="bsd-shoulder-name">Con Rollino</div>
+            </div>
+          </div>
         </div>
 
         <div class="bsd-section">
@@ -1545,7 +1602,12 @@ section{position:relative;padding:120px 5vw;}
         </div>
 
         <div class="bsd-section">
-          <div class="bsd-label">Lining</div>
+          <div class="bsd-label">Lining Construction</div>
+          <div class="bsd-lining-type-row" id="bsd-lining-type-row">
+            <button class="bsd-lining-type active" data-lining-type="full">Full Lining</button>
+            <button class="bsd-lining-type" data-lining-type="half">Half Lining</button>
+            <button class="bsd-lining-type" data-lining-type="unlined">Unlined</button>
+          </div>
           <div class="bsd-lining-row" id="bsd-lining-row"></div>
         </div>
 
@@ -1561,11 +1623,14 @@ section{position:relative;padding:120px 5vw;}
 
         <div class="bsd-section">
           <div class="bsd-label">Trouser Style</div>
+          <div class="bsd-pill-row" style="margin-bottom:8px">
+            <button class="bsd-pill active" data-trousers-cut="classic">Classic</button>
+            <button class="bsd-pill" data-trousers-cut="gorkha">Gorkha</button>
+            <button class="bsd-pill" data-trousers-cut="tuxedo">Tuxedo</button>
+          </div>
           <div class="bsd-pill-row">
-            <button class="bsd-pill active" data-trousers-cut="straight">Straight</button>
-            <button class="bsd-pill" data-trousers-cut="tapered">Tapered</button>
-            <button class="bsd-pill" data-trousers-cut="cropped">Cropped</button>
-            <button class="bsd-pill" data-trousers-cut="turn-up">Turn-up cuff</button>
+            <button class="bsd-pill" data-trousers-cut="bottom-cuff">Bottom cuff</button>
+            <button class="bsd-pill" data-trousers-cut="side-adjusters">Side adjusters</button>
           </div>
         </div>
 
@@ -2613,6 +2678,88 @@ function closeConfirm(){document.getElementById('modal-confirm').classList.remov
 document.querySelectorAll('.nav-links a').forEach(a=>a.addEventListener('click',()=>{
   document.getElementById('nav').classList.remove('mobile-open');
 }));
+
+// ══ 3D VIEW MODAL ══
+const BSD_LAPEL_IMGS = {
+  notch:  {naples:'vittorio-assets/lapel-notch-naples.png',  british:'vittorio-assets/lapel-notch-british.png'},
+  peak:   {naples:'vittorio-assets/lapel-peak-naples.png',   british:'vittorio-assets/lapel-peak-british.png'},
+  shawl:  {naples:'vittorio-assets/lapel-shawl-naples.png',  british:'vittorio-assets/lapel-shawl-british.png'},
+};
+const BSD_LINING_IMGS = {
+  full:    'vittorio-assets/lining-full.png',
+  half:    'vittorio-assets/lining-half.png',
+  unlined: 'vittorio-assets/lining-unlined.png',
+};
+const BSD_LINING_TYPE_LABELS = {full:'Full Lining — Inside Excellence', half:'Half Lining — Lightness & Elegance', unlined:'Unlined — The Essence of Lightness'};
+const BSD_LAPEL_LABELS = {notch:'Notch Lapel', peak:'Peak Lapel', shawl:'Shawl Lapel'};
+let BSD_HOUSE = 'naples';
+let BSD_LINING_TYPE = 'full';
+
+function bsd3dOpen(src, label) {
+  const ov = document.getElementById('bsd-3d-overlay');
+  document.getElementById('bsd-3d-img').src = src;
+  document.getElementById('bsd-3d-label').textContent = label;
+  ov.classList.add('open');
+}
+function bsd3dClose() {
+  document.getElementById('bsd-3d-overlay').classList.remove('open');
+}
+document.getElementById('bsd-3d-overlay').addEventListener('click', function(e){
+  if(e.target===this) bsd3dClose();
+});
+
+// Lapel click → 3D view
+document.addEventListener('click', function(e) {
+  const el = e.target.closest('[data-lapel-bsd]');
+  if(el) {
+    const key = el.dataset.lapelBsd;
+    const imgs = BSD_LAPEL_IMGS[key];
+    if(imgs) bsd3dOpen(imgs[BSD_HOUSE] || imgs.naples, BSD_LAPEL_LABELS[key] || key);
+  }
+});
+
+// House style → update shoulder row visibility + which lapel images to use
+document.querySelectorAll('[data-style]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-style]').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  BSD_HOUSE = b.dataset.style === 'british' ? 'british' : 'naples';
+  // Show/hide shoulder row (only for Neapolitan)
+  const shoulderRow = document.getElementById('bsd-shoulder-row');
+  if(shoulderRow) shoulderRow.style.display = BSD_HOUSE === 'naples' ? '' : 'none';
+}));
+
+// Shoulder click → 3D view
+document.querySelectorAll('[data-shoulder]').forEach(el => el.addEventListener('click', () => {
+  document.querySelectorAll('[data-shoulder]').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  const src = el.querySelector('img').src;
+  const name = el.querySelector('.bsd-shoulder-name').textContent;
+  bsd3dOpen(src, name + ' — Neapolitan Shoulder Construction');
+}));
+
+// Lining type click → 3D view
+document.querySelectorAll('[data-lining-type]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-lining-type]').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  BSD_LINING_TYPE = b.dataset.liningType;
+  const src = BSD_LINING_IMGS[BSD_LINING_TYPE];
+  if(src) bsd3dOpen(src, BSD_LINING_TYPE_LABELS[BSD_LINING_TYPE] || b.textContent);
+}));
+
+// Trouser cut click → update active (already handled by pill logic but needs refresh for new values)
+document.querySelectorAll('[data-trousers-cut]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-trousers-cut]').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+}));
 </script>
+
+<!-- 3D VIEW MODAL OVERLAY -->
+<div class="bsd-3d-overlay" id="bsd-3d-overlay">
+  <div class="bsd-3d-modal">
+    <button class="bsd-3d-modal-close" onclick="bsd3dClose()">✕</button>
+    <img id="bsd-3d-img" src="" alt="3D View">
+    <div class="bsd-3d-modal-label" id="bsd-3d-label"></div>
+  </div>
+</div>
 </body>
 </html>
