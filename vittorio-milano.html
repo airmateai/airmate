@@ -2753,10 +2753,21 @@ document.querySelectorAll('[data-lining-type]').forEach(b => b.addEventListener(
   if(src) bsd3dOpen(src, BSD_LINING_TYPE_LABELS[BSD_LINING_TYPE] || b.textContent);
 }));
 
-// Trouser cut click → update active (already handled by pill logic but needs refresh for new values)
+// Trouser cut click → show 3D image
+const BSD_TROUSER_LABELS = {
+  classic: 'Classic — Neapolitan Straight Cut',
+  gorkha: 'Gorkha — High-Rise Double Pleat',
+  tuxedo: 'Tuxedo — Silk Grosgrain Stripe',
+  'bottom-cuff': 'Bottom Cuff Detail',
+  'side-adjusters': 'Side Adjusters Detail',
+};
 document.querySelectorAll('[data-trousers-cut]').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('[data-trousers-cut]').forEach(x => x.classList.remove('active'));
   b.classList.add('active');
+  const key = b.dataset.trousersCut;
+  const imgs = window.VM_TROUSER_IMGS || {};
+  const src = imgs['trouser-' + key] || imgs['trouser-classic'] || '';
+  if(src) bsd3dOpen(src, BSD_TROUSER_LABELS[key] || key);
 }));
 </script>
 
