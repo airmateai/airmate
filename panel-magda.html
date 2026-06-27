@@ -1425,22 +1425,22 @@ emailjs.init('i4iBVVP-BkUOOwBE9');
 function _emailHuesped(r, tipo) {
   if(!r.client_email) return;
   const p = parseNotes(r.notes);
-  const nights = r.start_date&&r.end_date ? diffDays(r.start_date,r.end_date) : '?';
+  const nights = r.starts_at&&r.ends_at ? diffDays(r.starts_at,r.ends_at) : '?';
   const importe = p.importe ? fmtEur(p.importe) : `${nights} noches × 103 €/noche`;
   const cfg = getConfig();
 
   const msgs = {
     solicitud: {
       asunto: '✅ Hemos recibido tu solicitud — Bungalow Punta del Hidalgo',
-      cuerpo: `Hola ${r.client_name},\n\nHemos recibido tu solicitud de reserva para el Bungalow Punta del Hidalgo.\n\n📅 Entrada: ${fmtDate(r.start_date)}\n📅 Salida: ${fmtDate(r.end_date)}\n🌙 Noches: ${nights}\n👥 Personas: ${p.personas||'—'}\n💶 Importe: ${importe}\n\nRevisaré tu solicitud y te confirmaré en breve. Cualquier duda, escríbeme por WhatsApp.\n\nUn abrazo,\nMagda 🌊`
+      cuerpo: `Hola ${r.client_name},\n\nHemos recibido tu solicitud de reserva para el Bungalow Punta del Hidalgo.\n\n📅 Entrada: ${fmtDate(r.starts_at)}\n📅 Salida: ${fmtDate(r.ends_at)}\n🌙 Noches: ${nights}\n👥 Personas: ${p.personas||'—'}\n💶 Importe: ${importe}\n\nRevisaré tu solicitud y te confirmaré en breve. Cualquier duda, escríbeme por WhatsApp.\n\nUn abrazo,\nMagda 🌊`
     },
     confirmacion: {
       asunto: '🎉 ¡Reserva CONFIRMADA! — Bungalow Punta del Hidalgo',
-      cuerpo: `Hola ${r.client_name},\n\n¡Tu reserva está confirmada! 🎉\n\n📅 Entrada: ${fmtDate(r.start_date)}\n📅 Salida: ${fmtDate(r.end_date)}\n🌙 Noches: ${nights}\n👥 Personas: ${p.personas||'—'}\n💶 Importe total: ${importe}\n\n📍 Dirección: Calle El Puente, Punta del Hidalgo, Tenerife\n🕐 Check-in: ${cfg.checkin||'15:00'} h\n🕐 Check-out: ${cfg.checkout||'11:00'} h\n\nTe enviaré las instrucciones de acceso y el código de la caja de llaves unos días antes de tu llegada.\n\n¡Nos vemos pronto!\nMagda 🌴`
+      cuerpo: `Hola ${r.client_name},\n\n¡Tu reserva está confirmada! 🎉\n\n📅 Entrada: ${fmtDate(r.starts_at)}\n📅 Salida: ${fmtDate(r.ends_at)}\n🌙 Noches: ${nights}\n👥 Personas: ${p.personas||'—'}\n💶 Importe total: ${importe}\n\n📍 Dirección: Calle El Puente, Punta del Hidalgo, Tenerife\n🕐 Check-in: ${cfg.checkin||'15:00'} h\n🕐 Check-out: ${cfg.checkout||'11:00'} h\n\nTe enviaré las instrucciones de acceso y el código de la caja de llaves unos días antes de tu llegada.\n\n¡Nos vemos pronto!\nMagda 🌴`
     },
     cancelacion: {
       asunto: '❌ Reserva cancelada — Bungalow Punta del Hidalgo',
-      cuerpo: `Hola ${r.client_name},\n\nLamentablemente tu reserva para las fechas ${fmtDate(r.start_date)} - ${fmtDate(r.end_date)} ha sido cancelada.\n\nSi tienes alguna duda o quieres buscar fechas alternativas, escríbeme por WhatsApp y lo gestionamos enseguida.\n\nMagda 🌊`
+      cuerpo: `Hola ${r.client_name},\n\nLamentablemente tu reserva para las fechas ${fmtDate(r.starts_at)} - ${fmtDate(r.ends_at)} ha sido cancelada.\n\nSi tienes alguna duda o quieres buscar fechas alternativas, escríbeme por WhatsApp y lo gestionamos enseguida.\n\nMagda 🌊`
     },
     checkin: {
       asunto: '🏠 Instrucciones de llegada — Bungalow Punta del Hidalgo',
@@ -1472,8 +1472,8 @@ function _checkRecordatoriosAutomaticos() {
   const in26h = now + 26*60*60*1000;
 
   allReservas.forEach(r => {
-    if(r.status==='cancelada'||!r.client_email||!r.start_date) return;
-    const arrivalTs = new Date(r.start_date).getTime();
+    if(r.status==='cancelada'||!r.client_email||!r.starts_at) return;
+    const arrivalTs = new Date(r.starts_at).getTime();
     if(arrivalTs >= in22h && arrivalTs <= in26h && !sent[r.id+'_checkin24']) {
       _emailHuesped(r, 'checkin');
       sent[r.id+'_checkin24'] = now;
@@ -1515,7 +1515,7 @@ async function loadReservas() {
   const {data,error} = await _sb.from('appointments')
     .select('*')
     .eq('business_slug', SLUG)
-    .order('start_date',{ascending:true});
+    .order('starts_at',{ascending:true});
   if(error){console.error(error);return;}
   allReservas = data||[];
 }
@@ -1596,7 +1596,7 @@ function renderDashboard() {
   // Filter reservas this month (not cancelled)
   const thisMonth = allReservas.filter(r=>{
     if(r.status==='cancelada') return false;
-    const s = new Date(r.start_date);
+    const s = new Date(r.starts_at);
     return s >= startM && s <= endM;
   });
 
@@ -1616,7 +1616,7 @@ function renderDashboard() {
   let nightsOccupied = 0;
   allReservas.forEach(r=>{
     if(r.status==='cancelada') return;
-    const s = new Date(r.start_date), e = new Date(r.end_date);
+    const s = new Date(r.starts_at), e = new Date(r.ends_at);
     // clamp to month
     const clampS = s < startM ? startM : s;
     const clampE = e > endM ? endM : e;
@@ -1632,10 +1632,10 @@ function renderDashboard() {
   const today = new Date(); today.setHours(0,0,0,0);
   const todayStr = today.toISOString().slice(0,10);
   const upcoming = allReservas
-    .filter(r=>r.status!=='cancelada' && new Date(r.start_date)>=today)
-    .sort((a,b)=>new Date(a.start_date)-new Date(b.start_date));
+    .filter(r=>r.status!=='cancelada' && new Date(r.starts_at)>=today)
+    .sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at));
   if(upcoming.length>0) {
-    const days = diffDays(todayStr, upcoming[0].start_date);
+    const days = diffDays(todayStr, upcoming[0].starts_at);
     document.getElementById('kpi-proxima').textContent = days===0 ? 'Hoy' : days+' días';
     document.getElementById('kpi-proxima-sub').textContent = esc(upcoming[0].client_name||'—');
   } else {
@@ -1646,15 +1646,15 @@ function renderDashboard() {
   // MAPA FINCA: estado actual
   const activeNow = allReservas.find(r=>{
     if(r.status==='cancelada') return false;
-    return r.start_date <= todayStr && r.end_date > todayStr;
+    return r.starts_at <= todayStr && r.ends_at > todayStr;
   });
   if(_fincaManualStatus) {
     applyFincaStatus(_fincaManualStatus);
   } else if(activeNow){
-    applyFincaStatus('ocupado', esc(activeNow.client_name||'Huésped') + ' · hasta ' + (activeNow.end_date||'—'));
+    applyFincaStatus('ocupado', esc(activeNow.client_name||'Huésped') + ' · hasta ' + (activeNow.ends_at||'—'));
   } else {
     const nextRes = upcoming[0];
-    applyFincaStatus('disponible', nextRes ? 'Próx: '+esc(nextRes.client_name||'—')+' · '+nextRes.start_date : 'Sin reservas próximas');
+    applyFincaStatus('disponible', nextRes ? 'Próx: '+esc(nextRes.client_name||'—')+' · '+nextRes.starts_at : 'Sin reservas próximas');
   }
 
   // Table: próximas reservas (next 5)
@@ -1667,8 +1667,8 @@ function renderDashboard() {
       const p = parseNotes(r.notes);
       return `<tr>
         <td><strong>${esc(r.client_name)}</strong></td>
-        <td>${fmtDate(r.start_date)}</td>
-        <td>${fmtDate(r.end_date)}</td>
+        <td>${fmtDate(r.starts_at)}</td>
+        <td>${fmtDate(r.ends_at)}</td>
         <td>${esc(p.canal)||'—'}</td>
         <td>${statusBadge(r.status)}</td>
       </tr>`;
@@ -1771,8 +1771,8 @@ function renderCalendario() {
   // Include blocks from leads
   const blocks = allLeads.filter(l=>l.status==='bloqueado');
   blocks.forEach(b=>{
-    const s = new Date(b.start_date||b.created_at);
-    const e = new Date(b.end_date||b.created_at);
+    const s = new Date(b.starts_at||b.created_at);
+    const e = new Date(b.ends_at||b.created_at);
     for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)){
       const k=d.toISOString().slice(0,10);
       dayMap[k]={status:'bloqueado',name:parseNotes(b.message||'').notas||b.message||'Bloqueado',id:b.id,type:'lead'};
@@ -1780,8 +1780,8 @@ function renderCalendario() {
   });
 
   allReservas.forEach(r=>{
-    const s = new Date(r.start_date);
-    const e = new Date(r.end_date);
+    const s = new Date(r.starts_at);
+    const e = new Date(r.ends_at);
     for(let d=new Date(s);d<e;d.setDate(d.getDate()+1)){
       const k=d.toISOString().slice(0,10);
       // Don't overwrite confirmed with other
@@ -1840,12 +1840,12 @@ function showCalPopover(e, dateKey, id, type) {
     info = allReservas.find(r=>r.id==id);
     if(!info) return;
     const p = parseNotes(info.notes);
-    const nights = info.start_date&&info.end_date ? diffDays(info.start_date,info.end_date) : '?';
+    const nights = info.starts_at&&info.ends_at ? diffDays(info.starts_at,info.ends_at) : '?';
     const pop = document.createElement('div');
     pop.className = 'popover';
     pop.innerHTML = `
       <div class="popover-name">${esc(info.client_name)}</div>
-      <div class="popover-row">📅 ${fmtDate(info.start_date)} → ${fmtDate(info.end_date)} (${nights}n)</div>
+      <div class="popover-row">📅 ${fmtDate(info.starts_at)} → ${fmtDate(info.ends_at)} (${nights}n)</div>
       <div class="popover-row">👥 ${p.personas||'?'} personas &bull; ${esc(p.canal)||'—'}</div>
       <div class="popover-row">💶 ${p.importe ? fmtEur(p.importe) : '—'}</div>
       <div class="popover-row" style="margin-top:6px;">${statusBadge(info.status)}</div>
@@ -1918,12 +1918,12 @@ function renderReservas() {
 
   tbody.innerHTML = data.map(r=>{
     const p = parseNotes(r.notes);
-    const nights = r.start_date&&r.end_date ? diffDays(r.start_date,r.end_date) : '—';
+    const nights = r.starts_at&&r.ends_at ? diffDays(r.starts_at,r.ends_at) : '—';
     return `<tr>
       <td><strong>${esc(r.client_name||'—')}</strong>${r.client_email?`<br><small style="color:var(--txt3)">${esc(r.client_email)}</small>`:''}</td>
       <td>${esc(r.client_phone||'—')}</td>
-      <td>${fmtDate(r.start_date)}</td>
-      <td>${fmtDate(r.end_date)}</td>
+      <td>${fmtDate(r.starts_at)}</td>
+      <td>${fmtDate(r.ends_at)}</td>
       <td style="text-align:center;">${nights}</td>
       <td style="text-align:center;">${esc(p.personas)||'—'}</td>
       <td>${esc(p.canal)||'—'}</td>
@@ -1969,8 +1969,8 @@ function openEditReserva(id) {
   document.getElementById('res-telefono').value = r.client_phone||'';
   document.getElementById('res-email').value = r.client_email||'';
   document.getElementById('res-canal').value = p.canal||'';
-  document.getElementById('res-entrada').value = r.start_date||'';
-  document.getElementById('res-salida').value = r.end_date||'';
+  document.getElementById('res-entrada').value = r.starts_at||'';
+  document.getElementById('res-salida').value = r.ends_at||'';
   document.getElementById('res-personas').value = p.personas||'2';
   document.getElementById('res-importe').value = p.importe||'';
   document.getElementById('res-notas').value = p.notas||'';
@@ -2025,8 +2025,8 @@ async function saveReserva() {
     client_name: nombre,
     client_phone: telefono,
     client_email: email,
-    start_date: entrada,
-    end_date: salida,
+    starts_at: entrada,
+    ends_at: salida,
     notes,
     status,
     business_slug: SLUG
@@ -2062,7 +2062,7 @@ function openReservaDetailModal(id) {
   currentDetailId = id;
   currentDetailType = 'reserva';
   const p = parseNotes(r.notes);
-  const nights = r.start_date&&r.end_date ? diffDays(r.start_date,r.end_date) : '—';
+  const nights = r.starts_at&&r.ends_at ? diffDays(r.starts_at,r.ends_at) : '—';
 
   document.getElementById('res-detail-titulo').textContent = r.client_name||'Reserva';
   document.getElementById('res-detail-body').innerHTML = `
@@ -2070,8 +2070,8 @@ function openReservaDetailModal(id) {
     <div class="detail-row"><div class="detail-label">👤 Huésped</div><div class="detail-value">${esc(r.client_name||'—')}</div></div>
     <div class="detail-row"><div class="detail-label">📞 Teléfono</div><div class="detail-value"><a href="tel:${esc(r.client_phone)}">${esc(r.client_phone||'—')}</a></div></div>
     <div class="detail-row"><div class="detail-label">✉️ Email</div><div class="detail-value"><a href="mailto:${esc(r.client_email)}">${esc(r.client_email||'—')}</a></div></div>
-    <div class="detail-row"><div class="detail-label">📅 Entrada</div><div class="detail-value">${fmtDate(r.start_date)}</div></div>
-    <div class="detail-row"><div class="detail-label">📅 Salida</div><div class="detail-value">${fmtDate(r.end_date)}</div></div>
+    <div class="detail-row"><div class="detail-label">📅 Entrada</div><div class="detail-value">${fmtDate(r.starts_at)}</div></div>
+    <div class="detail-row"><div class="detail-label">📅 Salida</div><div class="detail-value">${fmtDate(r.ends_at)}</div></div>
     <div class="detail-row"><div class="detail-label">🌙 Noches</div><div class="detail-value">${nights}</div></div>
     <div class="detail-row"><div class="detail-label">👥 Personas</div><div class="detail-value">${esc(p.personas||'—')}</div></div>
     <div class="detail-row"><div class="detail-label">📡 Canal</div><div class="detail-value">${esc(p.canal||'—')}</div></div>
@@ -2148,8 +2148,8 @@ async function saveBloqueo() {
     message: motivo,
     status: 'bloqueado',
     business_slug: SLUG,
-    start_date: inicio,
-    end_date: fin
+    starts_at: inicio,
+    ends_at: fin
   };
 
   const {error} = await _sb.from('leads').insert(payload);
@@ -2313,7 +2313,7 @@ function renderIngresos() {
   const currentYear = now.getFullYear();
 
   // Filter valid reservas
-  const valid = allReservas.filter(r=>r.status!=='cancelada'&&r.start_date);
+  const valid = allReservas.filter(r=>r.status!=='cancelada'&&r.starts_at);
 
   // Monthly data for current year
   const monthlyData = Array.from({length:12},(_,i)=>({
@@ -2323,12 +2323,12 @@ function renderIngresos() {
 
   let totalYear = 0;
   valid.forEach(r=>{
-    const d = new Date(r.start_date);
+    const d = new Date(r.starts_at);
     if(d.getFullYear()!==currentYear) return;
     const m = d.getMonth();
     const p = parseNotes(r.notes);
     const ing = Number(p.importe||0);
-    const nights = r.end_date ? diffDays(r.start_date,r.end_date) : 0;
+    const nights = r.ends_at ? diffDays(r.starts_at,r.ends_at) : 0;
     monthlyData[m].reservas++;
     monthlyData[m].noches += nights;
     monthlyData[m].ingresos += ing;
@@ -2374,7 +2374,7 @@ function renderIngresos() {
   if(canalEl) {
     const canalMap = {};
     valid.forEach(r=>{
-      if(new Date(r.start_date).getFullYear()!==currentYear) return;
+      if(new Date(r.starts_at).getFullYear()!==currentYear) return;
       const p = parseNotes(r.notes);
       const c = p.canal||'Otro';
       canalMap[c] = (canalMap[c]||0)+1;
@@ -2451,8 +2451,8 @@ function exportCSV() {
   const rows = [['ID','Huésped','Teléfono','Email','Entrada','Salida','Noches','Personas','Canal','Importe','Estado']];
   allReservas.forEach(r=>{
     const p = parseNotes(r.notes);
-    const nights = r.start_date&&r.end_date ? diffDays(r.start_date,r.end_date) : '';
-    rows.push([r.id,r.client_name||'',r.client_phone||'',r.client_email||'',r.start_date||'',r.end_date||'',nights,p.personas,p.canal,p.importe,r.status]);
+    const nights = r.starts_at&&r.ends_at ? diffDays(r.starts_at,r.ends_at) : '';
+    rows.push([r.id,r.client_name||'',r.client_phone||'',r.client_email||'',r.starts_at||'',r.ends_at||'',nights,p.personas,p.canal,p.importe,r.status]);
   });
   const csv = rows.map(r=>r.map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(',')).join('\n');
   const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
