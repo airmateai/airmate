@@ -1659,8 +1659,8 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
           <button onclick="loadSolicitudes()" style="margin-left:auto;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #dde3ec;background:#fff;color:#4a5568;font-family:'Inter',sans-serif">↻ Actualizar</button>
         </div>
         <div style="background:#fff;border:1px solid #dde3ec;border-radius:12px;overflow:hidden">
-          <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr;padding:10px 20px;background:#f4f6f9;border-bottom:1px solid #dde3ec;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em">
-            <div>Cliente</div><div>Clase</div><div>Fecha</div><div>Presupuesto</div><div>Estado</div>
+          <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 1fr;padding:10px 20px;background:#f4f6f9;border-bottom:1px solid #dde3ec;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em">
+            <div>Cliente</div><div>Clase</div><div>Fecha</div><div>Presupuesto</div><div>Pago</div><div>Estado</div>
           </div>
           <div id="sol-list"><div style="padding:40px;text-align:center;color:#94a3b8;font-style:italic">Cargando...</div></div>
         </div>
@@ -3890,11 +3890,13 @@ function renderSolicitudes(){
     const dias=notes.dias_totales||1;
     const st=r.status||'pending';
     const presup=calcPresup(r.service,dias);
-    return `<div onclick="openSol('${r.id}')" style="padding:14px 20px;border-bottom:1px solid #eef1f6;cursor:pointer;transition:background .1s;display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr;align-items:center;gap:8px" onmouseover="this.style.background='#fafbfd'" onmouseout="this.style.background=''">
+    const pago=notes.payment_status==='confirmed'?'<span style="background:#f0fdf4;color:#16a34a;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px">Verificado</span>':notes.receipt_url?'<span style="background:#fef9c3;color:#ca8a04;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px">Subido</span>':'<span style="background:#fef2f2;color:#dc2626;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px">Pendiente</span>';
+    return `<div onclick="openSol('${r.id}')" style="padding:14px 20px;border-bottom:1px solid #eef1f6;cursor:pointer;transition:background .1s;display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 1fr;align-items:center;gap:8px" onmouseover="this.style.background='#fafbfd'" onmouseout="this.style.background=''">
       <div><div style="font-weight:600;color:#0f1923">${r.client_name||'—'}</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">${r.client_phone||''} · DNI: ${notes.dni||'—'}</div></div>
       <div style="font-size:13px;color:#4a5568">${r.service||'—'}<br><span style="font-size:11px;color:#94a3b8">${dias} dia${dias>1?'s':''}</span></div>
       <div style="font-size:13px;color:#4a5568">${fecha}<br><span style="font-size:11px;color:#94a3b8">${hora} h</span></div>
       <div style="font-weight:700;color:#0f2240;font-size:15px">${presup>0?presup+'€':'—'}</div>
+      <div>${pago}</div>
       <div><span style="background:${statusColor[st]}20;color:${statusColor[st]};font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px">${statusLabel[st]||st}</span></div>
     </div>`;
   }).join('');
@@ -3945,7 +3947,31 @@ function openSol(id){
   const msg=`Hola ${nombre}! 🏄‍♂️\n\nGracias por tu solicitud de reserva en Costa Norte Surf Center.\n\nHemos revisado tu peticion y tenemos disponibilidad para:\n📅 ${fecha}\n⏰ ${hora} h (2 horas de clase)\n🏄 ${r.service||''}\n\n💰 Presupuesto: ${presup>0?presup+'€':'te lo confirmamos en breve'}\n\nEl precio incluye material y seguro.\n\nConfirmanos si te viene bien y te asignamos el hueco. Si tienes alguna duda llámanos o escríbenos.\n\n¡Hasta pronto! 🌊\nEquipo Costa Norte`;
   document.getElementById('sol-msg').value=msg;
 
+  // Estado de pago
+  const pagoBox=document.getElementById('sol-pago-box');
+  const pagoPending=document.getElementById('sol-pago-pending');
+  if(notes.receipt_url){
+    pagoBox.style.display='block'; pagoPending.style.display='none';
+    document.getElementById('sol-pago-link').href=notes.receipt_url;
+  }else{
+    pagoBox.style.display='none'; pagoPending.style.display='block';
+  }
+
   document.getElementById('sol-detail-overlay').style.display='flex';
+}
+
+async function updatePayment(status){
+  if(!SOL_CUR) return;
+  const notes=solParseNotes(SOL_CUR.notes);
+  notes.payment_status=status;
+  await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
+    method:'PATCH',
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({notes:JSON.stringify(notes)})
+  });
+  toast('Pago verificado');
+  closeSolDetail();
+  loadSolicitudes();
 }
 
 function closeSolDetail(){document.getElementById('sol-detail-overlay').style.display='none';}
@@ -4012,8 +4038,22 @@ function solSetFilter(btn,f){
         </div>
       </div>
 
+      <!-- justificante pago -->
+      <div id="sol-pago-box" style="margin-top:18px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px;display:none">
+        <div style="font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Justificante de pago recibido</div>
+        <a id="sol-pago-link" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#16a34a;text-decoration:none;background:#fff;border:1px solid #bbf7d0;border-radius:7px;padding:8px 14px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Ver justificante
+        </a>
+        <button onclick="updatePayment('confirmed')" style="margin-top:10px;width:100%;padding:10px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Marcar pago como verificado</button>
+      </div>
+      <div id="sol-pago-pending" style="margin-top:18px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:#d97706;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Pago pendiente</div>
+        <div style="font-size:12px;color:#92400e">El cliente aun no ha subido el justificante</div>
+      </div>
+
       <!-- acciones -->
-      <div style="margin-top:18px;display:flex;flex-direction:column;gap:8px">
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
         <button onclick="updateSolStatus('confirmed')" style="padding:12px;background:#0f2240;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Marcar como confirmada</button>
         <button onclick="updateSolStatus('contacted')" style="padding:12px;background:#eff6ff;color:#1d6fb8;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Marcar como contactado</button>
         <button onclick="updateSolStatus('cancelled')" style="padding:12px;background:#fef2f2;color:#dc2626;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Cancelar solicitud</button>
