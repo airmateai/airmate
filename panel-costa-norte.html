@@ -3916,8 +3916,19 @@ function calcPresup(service,dias){
   return 0;
 }
 
-function openSol(id){
-  SOL_CUR=SOL_ALL.find(x=>String(x.id)===String(id)); if(!SOL_CUR)return;
+async function openSol(id){
+  // Recargar datos frescos de Supabase
+  try{
+    const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+id,
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+    const arr=await res.json();
+    if(arr&&arr[0]){
+      SOL_CUR=arr[0];
+      const idx=SOL_ALL.findIndex(x=>String(x.id)===String(id));
+      if(idx>=0) SOL_ALL[idx]=arr[0];
+    } else {SOL_CUR=SOL_ALL.find(x=>String(x.id)===String(id));}
+  }catch(e){SOL_CUR=SOL_ALL.find(x=>String(x.id)===String(id));}
+  if(!SOL_CUR)return;
   const r=SOL_CUR;
   const notes=solParseNotes(r.notes);
   const dias=notes.dias_totales||1;
@@ -3953,6 +3964,11 @@ function openSol(id){
   if(notes.receipt_url){
     pagoBox.style.display='block'; pagoPending.style.display='none';
     document.getElementById('sol-pago-link').href=notes.receipt_url;
+    const isImg=/\.(jpg|jpeg|png|gif|webp)$/i.test(notes.receipt_url);
+    const img=document.getElementById('sol-pago-img');
+    const txt=document.getElementById('sol-pago-txt');
+    if(isImg){img.src=notes.receipt_url;img.style.display='block';txt.style.display='none';}
+    else{img.style.display='none';txt.style.display='inline-flex';}
   }else{
     pagoBox.style.display='none'; pagoPending.style.display='block';
   }
@@ -4041,9 +4057,12 @@ function solSetFilter(btn,f){
       <!-- justificante pago -->
       <div id="sol-pago-box" style="margin-top:18px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px;display:none">
         <div style="font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Justificante de pago recibido</div>
-        <a id="sol-pago-link" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#16a34a;text-decoration:none;background:#fff;border:1px solid #bbf7d0;border-radius:7px;padding:8px 14px">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          Ver justificante
+        <a id="sol-pago-link" href="#" target="_blank" style="display:block;margin-bottom:10px">
+          <img id="sol-pago-img" src="" style="width:100%;border-radius:8px;border:1px solid #bbf7d0;display:none;max-height:220px;object-fit:cover">
+          <span id="sol-pago-txt" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#16a34a;text-decoration:none;background:#fff;border:1px solid #bbf7d0;border-radius:7px;padding:8px 14px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Ver / descargar justificante
+          </span>
         </a>
         <button onclick="updatePayment('confirmed')" style="margin-top:10px;width:100%;padding:10px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Marcar pago como verificado</button>
       </div>
