@@ -908,6 +908,11 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       </button>
 
       <div class="sb-section">Escuela de Surf</div>
+      <button class="nav-item" id="nav-solicitudes" onclick="go('solicitudes',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        Solicitudes web
+        <span id="sol-badge" style="background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:auto;display:none">0</span>
+      </button>
       <button class="nav-item" onclick="go('classes',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
         Horario clases
@@ -1711,7 +1716,7 @@ function go(p,el){
     const links=document.querySelectorAll('.nav-item');
     const labels={dashboard:'Dashboard',agenda:'Agenda',apt:'Mapa',cal:'Calendario',res:'Reservas',clean:'Limpieza',maint:'Mantenimiento',classes:'Clases',students:'Alumnos',packs:'Packs',instructors:'Instructores',rental:'Alquileres',shop:'TPV',stock:'Stock',clients:'Clientes',invoices:'Facturas',reports:'Informes',inbox:'Bandeja IA',widget:'Widget',team:'Equipo',settings:'Ajustes'};
   }
-  const titles={dashboard:'Dashboard',agenda:'Agenda del día',classes:'Horario de clases',students:'Alumnos',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',gastos:'Gastos deducibles',reports:'Gestor financiero',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes'};
+  const titles={dashboard:'Dashboard',solicitudes:'Solicitudes web',agenda:'Agenda del día',classes:'Horario de clases',students:'Alumnos',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',gastos:'Gastos deducibles',reports:'Gestor financiero',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes'};
   document.getElementById('tb-title').textContent=titles[p]||'';
   document.getElementById('sb').classList.remove('open');
   const ov=document.getElementById('mob-overlay');if(ov)ov.classList.remove('on');
@@ -3835,6 +3840,216 @@ function setBotNav(page){
   closeSidebar();
 }
 // ════════════ RENDER CHANNELS ════════════
+
+// ════════════ SOLICITUDES WEB ════════════
+const SB_URL_SOL='https://vjofxmfwdybktpwiuanc.supabase.co';
+const SB_KEY_SOL='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+const TARIFAS_SOL={
+  surf:{Iniciacion:{1:35,2:70,5:150,7:195,15:315,20:390},Avanzado:{1:50,2:100,5:175,7:280,15:390,20:500}},
+  particular:{'1p':{1:75,2:145},'2p':{1:60,2:115},'3p':{1:50,2:90}},
+  sup:{flat:{1:35,5:140},olas:{1:40,5:150},race:{1:35,5:140}},
+  surfskate:{1:20,4:75,8:135}
+};
+let SOL_ALL=[], SOL_FILTER='pending', SOL_CUR=null;
+
+async function loadSolicitudes(){
+  const list=document.getElementById('sol-list');
+  if(list) list.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-style:italic">Cargando...</div>';
+  try{
+    const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?business_slug=eq.costa-norte&order=starts_at.desc&limit=200',
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+    SOL_ALL=await res.json();
+    renderSolBadge();
+    renderSolicitudes();
+  }catch(e){if(list)list.innerHTML='<div style="padding:40px;text-align:center;color:#ef4444">Error al cargar</div>';}
+}
+
+function renderSolBadge(){
+  const n=SOL_ALL.filter(r=>r.status==='pending').length;
+  const b=document.getElementById('sol-badge');
+  if(b){b.textContent=n;b.style.display=n>0?'':'none';}
+}
+
+function renderSolicitudes(){
+  const list=document.getElementById('sol-list'); if(!list)return;
+  const data=SOL_FILTER==='all'?SOL_ALL:SOL_ALL.filter(r=>r.status===SOL_FILTER);
+  if(!data.length){list.innerHTML='<div style="padding:60px;text-align:center;color:#94a3b8">No hay solicitudes en esta categoria</div>';return;}
+  const statusLabel={pending:'Pendiente',contacted:'Contactado',confirmed:'Confirmada',cancelled:'Cancelada'};
+  const statusColor={pending:'#f59e0b',contacted:'#3b82f6',confirmed:'#16a34a',cancelled:'#94a3b8'};
+  list.innerHTML=data.map(r=>{
+    const notes=solParseNotes(r.notes);
+    const fecha=r.starts_at?new Date(r.starts_at).toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'}):'—';
+    const hora=r.starts_at?new Date(r.starts_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false}):'—';
+    const dias=notes.dias_totales||1;
+    const st=r.status||'pending';
+    const presup=calcPresup(r.service,dias);
+    return `<div onclick="openSol(${r.id})" style="padding:14px 20px;border-bottom:1px solid #eef1f6;cursor:pointer;transition:background .1s;display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr;align-items:center;gap:8px" onmouseover="this.style.background='#fafbfd'" onmouseout="this.style.background=''">
+      <div><div style="font-weight:600;color:#0f1923">${r.client_name||'—'}</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">${r.client_phone||''} · DNI: ${notes.dni||'—'}</div></div>
+      <div style="font-size:13px;color:#4a5568">${r.service||'—'}<br><span style="font-size:11px;color:#94a3b8">${dias} dia${dias>1?'s':''}</span></div>
+      <div style="font-size:13px;color:#4a5568">${fecha}<br><span style="font-size:11px;color:#94a3b8">${hora} h</span></div>
+      <div style="font-weight:700;color:#0f2240;font-size:15px">${presup>0?presup+'€':'—'}</div>
+      <div><span style="background:${statusColor[st]}20;color:${statusColor[st]};font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px">${statusLabel[st]||st}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function calcPresup(service,dias){
+  if(!service) return 0;
+  const s=service.toLowerCase();
+  const nivel=s.includes('avanzado')?'Avanzado':'Iniciacion';
+  let closest=dias;
+  const tiers=[1,2,5,7,15,20];
+  let best=tiers.reduce((a,b)=>Math.abs(b-dias)<Math.abs(a-dias)?b:a);
+  if(s.includes('surf - ')||s.includes('surf\n')) return (TARIFAS_SOL.surf[nivel]||TARIFAS_SOL.surf.Iniciacion)[best]||0;
+  if(s.includes('particular')) return (TARIFAS_SOL.particular['1p']||{})[Math.min(dias,2)]||0;
+  if(s.includes('sup')) return (TARIFAS_SOL.sup.flat||{})[dias<=1?1:5]||0;
+  if(s.includes('surfskate')){const t=TARIFAS_SOL.surfskate;const k=Object.keys(t).map(Number).reduce((a,b)=>Math.abs(b-dias)<Math.abs(a-dias)?b:a);return t[k]||0;}
+  return 0;
+}
+
+function openSol(id){
+  SOL_CUR=SOL_ALL.find(x=>x.id===id); if(!SOL_CUR)return;
+  const r=SOL_CUR;
+  const notes=solParseNotes(r.notes);
+  const dias=notes.dias_totales||1;
+  const presup=calcPresup(r.service,dias);
+  const fecha=r.starts_at?new Date(r.starts_at).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'—';
+  const hora=r.starts_at?new Date(r.starts_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false}):'—';
+  const nombre=(r.client_name||'').split(' ')[0];
+  const wa=r.client_phone?`https://wa.me/${r.client_phone.replace(/[^0-9]/g,'')}`:null;
+
+  document.getElementById('sol-detail-name').textContent=r.client_name||'—';
+  document.getElementById('sol-detail-sub').textContent='Solicitud recibida · '+new Date(r.created_at).toLocaleDateString('es-ES',{day:'numeric',month:'long'});
+  document.getElementById('sol-detail-rows').innerHTML=[
+    {l:'Clase',v:r.service||'—'},
+    {l:'Fecha inicio',v:fecha+' · '+hora+' h'},
+    {l:'Duracion',v:dias+' dia'+(dias>1?'s':'')},
+    {l:'Telefono',v:r.client_phone||'—'},
+    {l:'Email',v:r.client_email||'—'},
+    {l:'DNI / NIE',v:notes.dni||'—'},
+    ...(notes.notas_cliente?[{l:'Notas',v:notes.notas_cliente}]:[]),
+  ].map(x=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #eef1f6;font-size:13px"><span style="color:#4a5568">${x.l}</span><span style="font-weight:600;color:#0f1923;text-align:right;max-width:58%;word-break:break-all">${x.v}</span></div>`).join('');
+
+  // Presupuesto calculado
+  document.getElementById('sol-presup-amount').textContent=presup>0?presup+'€':'Consultar';
+  document.getElementById('sol-presup-detail').textContent=`${r.service||''} · ${dias} dia${dias>1?'s':''} · tarifa oficial`;
+
+  // Mensaje predeterminado
+  const msg=`Hola ${nombre}! 🏄‍♂️\n\nGracias por tu solicitud de reserva en Costa Norte Surf Center.\n\nHemos revisado tu peticion y tenemos disponibilidad para:\n📅 ${fecha}\n⏰ ${hora} h (2 horas de clase)\n🏄 ${r.service||''}\n\n💰 Presupuesto: ${presup>0?presup+'€':'te lo confirmamos en breve'}\n\nEl precio incluye material y seguro.\n\nConfirmanos si te viene bien y te asignamos el hueco. Si tienes alguna duda llámanos o escríbenos.\n\n¡Hasta pronto! 🌊\nEquipo Costa Norte`;
+  document.getElementById('sol-msg').value=msg;
+
+  document.getElementById('sol-detail-overlay').style.display='flex';
+}
+
+function closeSolDetail(){document.getElementById('sol-detail-overlay').style.display='none';}
+
+async function updateSolStatus(status){
+  if(!SOL_CUR)return;
+  await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
+    method:'PATCH',
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({status})
+  });
+  SOL_CUR.status=status;
+  renderSolBadge(); renderSolicitudes();
+  closeSolDetail();
+}
+
+function solParseNotes(n){try{return JSON.parse(n)||{};}catch{return{};}}
+
+function solSetFilter(btn,f){
+  SOL_FILTER=f;
+  document.querySelectorAll('.sol-filter').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSolicitudes();
+}
+
+// Cargar al ir a la sección
+const _goOrig=go;
+function go(p,el){
+  _goOrig(p,el);
+  if(p==='solicitudes') loadSolicitudes();
+}
+</script>
+
+<!-- PAGINA SOLICITUDES -->
+<div id="page-solicitudes" class="page" style="display:none">
+  <div style="max-width:1100px;margin:0 auto;padding:24px 20px 60px">
+
+    <!-- filtros -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <button class="sol-filter active" onclick="solSetFilter(this,'pending')" style="padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #0f2240;background:#0f2240;color:#fff;font-family:'Inter',sans-serif">Pendientes</button>
+      <button class="sol-filter" onclick="solSetFilter(this,'contacted')" style="padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #dde3ec;background:#fff;color:#4a5568;font-family:'Inter',sans-serif">Contactados</button>
+      <button class="sol-filter" onclick="solSetFilter(this,'confirmed')" style="padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #dde3ec;background:#fff;color:#4a5568;font-family:'Inter',sans-serif">Confirmados</button>
+      <button class="sol-filter" onclick="solSetFilter(this,'all')" style="padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #dde3ec;background:#fff;color:#4a5568;font-family:'Inter',sans-serif">Todas</button>
+      <button onclick="loadSolicitudes()" style="margin-left:auto;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #dde3ec;background:#fff;color:#4a5568;font-family:'Inter',sans-serif">↻ Actualizar</button>
+    </div>
+
+    <!-- tabla -->
+    <div style="background:#fff;border:1px solid #dde3ec;border-radius:12px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr;padding:10px 20px;background:#f4f6f9;border-bottom:1px solid #dde3ec;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em">
+        <div>Cliente</div><div>Clase</div><div>Fecha</div><div>Presupuesto</div><div>Estado</div>
+      </div>
+      <div id="sol-list"><div style="padding:40px;text-align:center;color:#94a3b8;font-style:italic">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL OVERLAY SOLICITUDES -->
+<div id="sol-detail-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-start;justify-content:flex-end" onclick="if(event.target===this)closeSolDetail()">
+  <div style="background:#fff;width:420px;height:100vh;overflow-y:auto;padding:0;box-shadow:-8px 0 40px rgba(0,0,0,.15);display:flex;flex-direction:column">
+
+    <!-- header -->
+    <div style="background:#0f2240;padding:20px 24px;flex-shrink:0">
+      <button onclick="closeSolDetail()" style="float:right;background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:16px;display:grid;place-items:center">✕</button>
+      <div id="sol-detail-name" style="font-size:17px;font-weight:700;color:#fff;margin-bottom:3px"></div>
+      <div id="sol-detail-sub" style="font-size:12px;color:rgba(255,255,255,.5)"></div>
+    </div>
+
+    <div style="padding:20px 24px;flex:1;overflow-y:auto">
+
+      <!-- datos -->
+      <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Datos de la solicitud</div>
+      <div id="sol-detail-rows"></div>
+
+      <!-- presupuesto -->
+      <div style="background:#0f2240;border-radius:12px;padding:18px 20px;margin-top:18px">
+        <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Presupuesto calculado</div>
+        <div id="sol-presup-amount" style="font-size:36px;font-weight:800;color:#fff;line-height:1"></div>
+        <div id="sol-presup-detail" style="font-size:12px;color:rgba(255,255,255,.4);margin-top:5px"></div>
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+          <span style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);font-size:11px;padding:3px 9px;border-radius:6px">✓ Material incluido</span>
+          <span style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);font-size:11px;padding:3px 9px;border-radius:6px">✓ Seguro incluido</span>
+        </div>
+      </div>
+
+      <!-- mensaje -->
+      <div style="margin-top:18px">
+        <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Mensaje para el cliente</div>
+        <textarea id="sol-msg" rows="10" style="width:100%;padding:12px;border:1.5px solid #dde3ec;border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;color:#0f1923;resize:vertical;outline:none;line-height:1.6"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button onclick="navigator.clipboard.writeText(document.getElementById('sol-msg').value).then(()=>alert('Copiado!'))" style="flex:1;padding:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:#1d6fb8;font-family:'Inter',sans-serif">Copiar mensaje</button>
+          <a id="sol-wa-btn" href="#" target="_blank" onclick="updateWaLink()" style="flex:1;padding:10px;background:#25d366;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:#fff;font-family:'Inter',sans-serif;text-decoration:none;display:grid;place-items:center">Enviar por WhatsApp</a>
+        </div>
+      </div>
+
+      <!-- acciones -->
+      <div style="margin-top:18px;display:flex;flex-direction:column;gap:8px">
+        <button onclick="updateSolStatus('confirmed')" style="padding:12px;background:#0f2240;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Marcar como confirmada</button>
+        <button onclick="updateSolStatus('contacted')" style="padding:12px;background:#eff6ff;color:#1d6fb8;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Marcar como contactado</button>
+        <button onclick="updateSolStatus('cancelled')" style="padding:12px;background:#fef2f2;color:#dc2626;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Cancelar solicitud</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function updateWaLink(){
+  if(!SOL_CUR||!SOL_CUR.client_phone)return;
+  const msg=document.getElementById('sol-msg').value;
+  const link=`https://wa.me/${SOL_CUR.client_phone.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(msg)}`;
+  document.getElementById('sol-wa-btn').href=link;
+}
 </script>
 </body>
 </html>
