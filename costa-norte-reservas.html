@@ -319,16 +319,47 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
 
   <!-- SUCCESS -->
   <div id="success" class="hidden">
-    <div class="success">
-      <div class="success-check">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    <div class="success" style="text-align:left;padding:28px">
+
+      <!-- check -->
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+        <div class="success-check" style="margin:0;flex-shrink:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div>
+          <div class="success-title" style="text-align:left;margin-bottom:2px">Solicitud recibida</div>
+          <div style="font-size:13px;color:var(--txt2)">El equipo se pondra en contacto contigo para confirmar</div>
+        </div>
       </div>
-      <div class="success-title">Solicitud recibida</div>
-      <div class="success-sub">Hemos registrado tu solicitud. El equipo de Costa Norte se pondra en contacto contigo en menos de 24 horas para confirmar el horario segun las condiciones del mar y enviarte el presupuesto.</div>
-      <div class="success-detail" id="success-detail"></div>
-      <a href="https://wa.me/34609282963" target="_blank" class="success-wa">
+
+      <!-- presupuesto -->
+      <div id="success-presup" style="background:#0f2240;border-radius:12px;padding:20px 22px;margin-bottom:16px">
+        <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Presupuesto estimado</div>
+        <div id="success-precio" style="font-size:40px;font-weight:800;color:#fff;line-height:1"></div>
+        <div id="success-precio-det" style="font-size:12px;color:rgba(255,255,255,.4);margin-top:5px"></div>
+        <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
+          <span style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);font-size:11px;padding:3px 9px;border-radius:6px">Material incluido</span>
+          <span style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);font-size:11px;padding:3px 9px;border-radius:6px">Seguro incluido</span>
+          <span style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);font-size:11px;padding:3px 9px;border-radius:6px">2h por sesion</span>
+        </div>
+      </div>
+
+      <!-- resumen -->
+      <div class="success-detail" id="success-detail" style="margin-bottom:16px"></div>
+
+      <!-- que pasa ahora -->
+      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:16px;margin-bottom:20px">
+        <div style="font-size:12px;font-weight:700;color:#0369a1;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Que pasa ahora</div>
+        <div style="font-size:13px;color:#0c4a6e;line-height:1.7">
+          1. Nuestro equipo revisa la disponibilidad y las condiciones del mar<br>
+          2. Te llamamos o escribimos en menos de 24h para confirmar el horario exacto<br>
+          3. Una vez confirmado, te enviamos los detalles definitivos
+        </div>
+      </div>
+
+      <a id="success-wa" href="https://wa.me/34609282963" target="_blank" class="success-wa" style="width:100%;justify-content:center;box-sizing:border-box">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-        Contactar por WhatsApp
+        Tienes alguna duda, escríbenos por WhatsApp
       </a>
     </div>
   </div>
@@ -586,11 +617,39 @@ async function enviar(){
     if(!res.ok) throw new Error('HTTP '+res.status);
 
     const fmt=d=>d.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+
+    // Calcular presupuesto
+    const TARIFAS={
+      surf:{Iniciacion:{1:35,2:70,5:150,7:195,15:315,20:390},Avanzado:{1:50,2:100,5:175,7:280,15:390,20:500}},
+      particular:{1:75,2:145},
+      sup:{1:35,5:140},
+      surfskate:{1:20,4:75,8:135}
+    };
+    function closestTier(tiers,n){return tiers.reduce((a,b)=>Math.abs(b-n)<Math.abs(a-n)?b:a);}
+    let presup=0, presupDet='';
+    if(S.tipo==='surf'){
+      const nv=S.nivel==='Avanzado'?'Avanzado':'Iniciacion';
+      const t=TARIFAS.surf[nv];const k=closestTier(Object.keys(t).map(Number),days);
+      presup=t[k];presupDet=`${days} dia${days>1?'s':''} · Surf ${nv}`;
+    }else if(S.tipo==='particular'){
+      const k=closestTier([1,2],days);presup=TARIFAS.particular[k]*days;
+      presupDet=`${days} dia${days>1?'s':''} · Clase particular`;
+    }else if(S.tipo==='sup'){
+      const k=closestTier([1,5],days);presup=TARIFAS.sup[k];
+      presupDet=`${days} dia${days>1?'s':''} · SUP`;
+    }else if(S.tipo==='surfskate'){
+      const k=closestTier([1,4,8],days);presup=TARIFAS.surfskate[k];
+      presupDet=`${days} dia${days>1?'s':''} · Surfskate`;
+    }
+    document.getElementById('success-precio').textContent=presup>0?presup+'€':'A consultar';
+    document.getElementById('success-precio-det').textContent=presupDet+' · precio orientativo, puede variar segun condiciones';
+
     document.getElementById('success-detail').innerHTML=[
-      {l:'Clase',v:tipoLabels[S.tipo]},
-      {l:'Fechas',v:days===1?fmt(s):`${fmt(s)} — ${fmt(e)}`},
-      {l:'Franja',v:S.franjaHora+' h'},
-      {l:'Contacto',v:email+' / '+tel},
+      {l:'Clase',v:tipoLabels[S.tipo]+(S.nivel&&(S.tipo==='surf'||S.tipo==='particular')?' - '+S.nivel:'')},
+      {l:'Fecha',v:days===1?fmt(s):`${fmt(s)} al ${fmt(e)}`},
+      {l:'Hora',v:S.franjaHora+' h (2 horas de clase)'},
+      {l:'Nombre',v:nombre+(apellidos?' '+apellidos:'')},
+      {l:'Telefono',v:tel},
     ].map(r=>`<div class="resumen-row"><span class="rr-label">${r.l}</span><span class="rr-val">${r.v}</span></div>`).join('');
 
     document.getElementById('paso3').classList.add('hidden');
