@@ -391,11 +391,9 @@ let S={tipo:'surf',nivel:'Iniciacion',rangeStart:null,rangeEnd:null,franja:null,
 let calYear, calMonth;
 
 // ── INIT CALENDAR ──
-(function(){
-  const now=new Date();
-  calYear=now.getFullYear(); calMonth=now.getMonth();
-  renderCal();
-})();
+const now=new Date();
+calYear=now.getFullYear(); calMonth=now.getMonth();
+renderCal();
 
 function calNav(dir){
   calMonth+=dir;
@@ -404,15 +402,15 @@ function calNav(dir){
   renderCal();
 }
 
-function toYMD(d){return d.toISOString().split('T')[0]}
-function fromYMD(s){return new Date(s+'T12:00:00')}
+function toYMD(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${day}`}
+function fromYMD(s){const[y,m,d]=s.split('-');return new Date(+y,+m-1,+d,12,0,0)}
 
 function renderCal(){
   const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   document.getElementById('cal-month-label').textContent=MONTHS[calMonth]+' '+calYear;
 
   const today=new Date(); today.setHours(0,0,0,0);
-  const minDate=new Date(today); minDate.setHours(today.getHours()+24);
+  const minDate=new Date(); minDate.setDate(minDate.getDate()+1); minDate.setHours(0,0,0,0);
   // first day of month (Mon=0)
   const first=new Date(calYear,calMonth,1);
   let startDow=first.getDay()-1; if(startDow<0)startDow=6;
