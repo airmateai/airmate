@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reserva tu Clase · Costa Norte Surf Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1a2744;--blue:#2563eb;--wave:#0ea5e9;
+  --sand:#f5f0e8;--sand2:#ede7d9;
+  --green:#16a34a;--green-bg:#dcfce7;
+  --gold:#f59e0b;--gold-bg:#fef3c7;
+  --border:#d4cfc5;--text:#1a1a2e;--text2:#5a5a7a;--text3:#9090a0;
+  --shadow:0 2px 8px rgba(0,0,0,.08);--shadow2:0 8px 32px rgba(0,0,0,.12);
+}
+body{font-family:'Nunito',sans-serif;background:var(--sand);color:var(--text);min-height:100vh}
+
+/* HERO */
+.hero{
+  background:linear-gradient(160deg,var(--navy) 0%,#0f3460 60%,#1a5276 100%);
+  padding:48px 24px 56px;text-align:center;position:relative;overflow:hidden;
+}
+.hero::after{
+  content:'';position:absolute;bottom:-2px;left:0;right:0;height:40px;
+  background:var(--sand);
+  clip-path:ellipse(55% 100% at 50% 100%);
+}
+.hero-logo{font-family:'Pacifico',cursive;font-size:34px;color:#fff;margin-bottom:4px}
+.hero-logo span{color:#26c6da}
+.hero-sub{font-size:12px;color:rgba(255,255,255,.55);letter-spacing:.18em;text-transform:uppercase;margin-bottom:20px}
+.hero-title{font-size:22px;font-weight:800;color:#fff;line-height:1.3;margin-bottom:8px}
+.hero-desc{font-size:13px;color:rgba(255,255,255,.65);max-width:400px;margin:0 auto}
+
+/* FORM WRAPPER */
+.wrap{max-width:640px;margin:0 auto;padding:32px 20px 60px}
+
+/* STEPS */
+.steps{display:flex;gap:0;margin-bottom:28px;border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+.step-tab{flex:1;padding:12px 8px;text-align:center;background:#fff;border-right:1px solid var(--border);transition:all .2s;cursor:default}
+.step-tab:last-child{border-right:none}
+.step-tab.active{background:var(--navy);color:#fff}
+.step-tab.done{background:var(--green-bg)}
+.step-n{font-size:18px;font-weight:900;line-height:1}
+.step-l{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:2px;opacity:.7}
+.step-tab.active .step-l{opacity:.8}
+
+/* CARD */
+.card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:28px;box-shadow:var(--shadow);margin-bottom:16px}
+.card-title{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.card-title svg{width:18px;height:18px;color:var(--wave)}
+
+/* FORM */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+.field input,.field select,.field textarea{
+  width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;
+  font-size:14px;font-family:'Nunito',sans-serif;color:var(--text);
+  background:#fff;outline:none;transition:border .2s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--wave)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* TIPO SELECTOR */
+.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tipo-card{
+  border:2px solid var(--border);border-radius:12px;padding:14px 12px;
+  cursor:pointer;transition:all .2s;background:#fff;text-align:center;
+}
+.tipo-card:hover{border-color:var(--wave);background:#f0f9ff}
+.tipo-card.selected{border-color:var(--navy);background:#eff6ff;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.tipo-card input{display:none}
+.tipo-icon{font-size:24px;margin-bottom:6px}
+.tipo-name{font-size:13px;font-weight:800;color:var(--navy)}
+.tipo-desc{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* NIVEL SELECTOR */
+.nivel-row{display:flex;gap:8px;flex-wrap:wrap}
+.nivel-btn{
+  flex:1;min-width:100px;padding:10px 12px;border:2px solid var(--border);border-radius:10px;
+  cursor:pointer;transition:all .2s;background:#fff;text-align:center;font-family:'Nunito',sans-serif;
+  font-size:13px;font-weight:700;color:var(--text2);
+}
+.nivel-btn.selected{border-color:var(--wave);background:#f0f9ff;color:var(--navy)}
+
+/* DURACION SELECTOR */
+.dur-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.dur-card{
+  border:2px solid var(--border);border-radius:10px;padding:10px 8px;
+  cursor:pointer;transition:all .2s;background:#fff;text-align:center;
+}
+.dur-card:hover{border-color:var(--wave)}
+.dur-card.selected{border-color:var(--navy);background:#eff6ff}
+.dur-days{font-size:18px;font-weight:900;color:var(--navy)}
+.dur-label{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+
+/* PERSONAS */
+.personas-row{display:flex;align-items:center;gap:12px;margin-top:4px}
+.per-btn{width:38px;height:38px;border-radius:50%;border:2px solid var(--border);background:#fff;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--navy)}
+.per-btn:hover{border-color:var(--navy);background:var(--sand2)}
+.per-num{font-size:24px;font-weight:900;color:var(--navy);width:32px;text-align:center}
+.per-label{font-size:12px;color:var(--text2)}
+
+/* PRESUPUESTO */
+.presup-box{
+  background:linear-gradient(135deg,var(--navy),#1e3a6e);
+  border-radius:16px;padding:24px;color:#fff;margin-bottom:16px;
+}
+.presup-label{font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.presup-price{font-size:48px;font-weight:900;line-height:1;color:#fff}
+.presup-price span{font-size:24px;font-weight:700;color:rgba(255,255,255,.6)}
+.presup-breakdown{margin-top:14px;display:flex;flex-direction:column;gap:5px}
+.presup-line{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.65);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.presup-line:last-child{border-bottom:none;color:#fff;font-weight:700;font-size:13px}
+.presup-includes{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.pi{background:rgba(255,255,255,.1);border-radius:6px;padding:4px 10px;font-size:11px;color:rgba(255,255,255,.7)}
+
+/* RESUMEN */
+.resumen-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.resumen-item:last-child{border-bottom:none}
+.ri-label{font-size:13px;color:var(--text2)}
+.ri-val{font-size:13px;font-weight:700;color:var(--text)}
+
+/* BTNS */
+.btn-next{
+  width:100%;padding:15px;background:var(--navy);color:#fff;
+  font-size:14px;font-weight:800;letter-spacing:.04em;
+  border:none;border-radius:12px;cursor:pointer;transition:all .2s;
+  font-family:'Nunito',sans-serif;
+}
+.btn-next:hover{background:#0f1f3d;transform:translateY(-1px)}
+.btn-back{
+  width:100%;padding:14px;background:transparent;color:var(--text2);
+  font-size:13px;font-weight:700;border:2px solid var(--border);
+  border-radius:12px;cursor:pointer;transition:all .2s;margin-bottom:10px;
+  font-family:'Nunito',sans-serif;
+}
+.btn-back:hover{border-color:var(--navy);color:var(--navy)}
+
+/* SUCCESS */
+.success-box{
+  background:#fff;border:1px solid var(--border);border-radius:20px;
+  padding:40px 28px;text-align:center;box-shadow:var(--shadow2);
+}
+.success-icon{font-size:56px;margin-bottom:16px}
+.success-title{font-size:22px;font-weight:900;color:var(--navy);margin-bottom:8px}
+.success-sub{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:20px}
+.success-price{font-size:36px;font-weight:900;color:var(--navy);margin:12px 0 4px}
+.success-note{font-size:12px;color:var(--text3)}
+.wa-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#25d366;color:#fff;padding:13px 24px;border-radius:12px;
+  font-size:14px;font-weight:800;text-decoration:none;margin-top:16px;
+  transition:all .2s;
+}
+.wa-btn:hover{background:#1da851;transform:translateY(-1px)}
+
+.hidden{display:none}
+.wave-emoji{display:inline-block;animation:wave 2s infinite}
+@keyframes wave{0%,100%{transform:rotate(0deg)}50%{transform:rotate(20deg)}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-logo">Costa <span>Norte</span> 🏄</div>
+  <div class="hero-sub">San Vicente de la Barquera · Cantabria</div>
+  <div class="hero-title">Reserva tu clase de surf</div>
+  <div class="hero-desc">Rellena el formulario y recibirás tu presupuesto personalizado al instante</div>
+</div>
+
+<div class="wrap">
+
+  <!-- STEPS BAR -->
+  <div class="steps">
+    <div class="step-tab active" id="st1"><div class="step-n">1</div><div class="step-l">Clase</div></div>
+    <div class="step-tab" id="st2"><div class="step-n">2</div><div class="step-l">Tus datos</div></div>
+    <div class="step-tab" id="st3"><div class="step-n">3</div><div class="step-l">Resumen</div></div>
+  </div>
+
+  <!-- PASO 1: CONFIGURAR CLASE -->
+  <div id="paso1">
+
+    <!-- TIPO DE CLASE -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20M6 20V10m4 10V4m4 10V8m4 12v-6"/></svg>
+        ¿Qué tipo de clase?
+      </div>
+      <div class="tipo-grid">
+        <label class="tipo-card selected" id="tc-surf" onclick="selectTipo('surf')">
+          <div class="tipo-icon">🏄‍♂️</div>
+          <div class="tipo-name">Surf</div>
+          <div class="tipo-desc">Clases grupales en ola</div>
+        </label>
+        <label class="tipo-card" id="tc-particular" onclick="selectTipo('particular')">
+          <div class="tipo-icon">🎯</div>
+          <div class="tipo-name">Clase particular</div>
+          <div class="tipo-desc">Monitor exclusivo</div>
+        </label>
+        <label class="tipo-card" id="tc-sup" onclick="selectTipo('sup')">
+          <div class="tipo-icon">🚣</div>
+          <div class="tipo-name">SUP</div>
+          <div class="tipo-desc">Stand Up Paddle</div>
+        </label>
+        <label class="tipo-card" id="tc-surfskate" onclick="selectTipo('surfskate')">
+          <div class="tipo-icon">🛹</div>
+          <div class="tipo-name">Surfskate</div>
+          <div class="tipo-desc">Entrena en tierra</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- NIVEL (solo surf/particular) -->
+    <div class="card" id="card-nivel">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Nivel
+      </div>
+      <div class="nivel-row">
+        <button class="nivel-btn selected" onclick="selectNivel(this,'iniciacion')">🌊 Iniciación</button>
+        <button class="nivel-btn" onclick="selectNivel(this,'avanzado')">⚡ Avanzado</button>
+      </div>
+    </div>
+
+    <!-- SUP MODALIDAD -->
+    <div class="card hidden" id="card-sup">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        Modalidad SUP
+      </div>
+      <div class="nivel-row">
+        <button class="nivel-btn selected" onclick="selectSupMod(this,'flat')">🏞️ Flat Water</button>
+        <button class="nivel-btn" onclick="selectSupMod(this,'olas')">🌊 SUP Olas</button>
+        <button class="nivel-btn" onclick="selectSupMod(this,'race')">🏁 SUP Race</button>
+      </div>
+    </div>
+
+    <!-- DURACIÓN -->
+    <div class="card" id="card-duracion">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Duración
+      </div>
+      <div class="dur-grid" id="dur-grid"></div>
+    </div>
+
+    <!-- PERSONAS (particular) -->
+    <div class="card hidden" id="card-personas">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        ¿Cuántas personas?
+      </div>
+      <div class="personas-row">
+        <button class="per-btn" onclick="cambiarPersonas(-1)">−</button>
+        <div class="per-num" id="per-num">1</div>
+        <button class="per-btn" onclick="cambiarPersonas(1)">+</button>
+        <div class="per-label">persona(s)<br><span style="font-size:10px;color:var(--text3)">Máx. 3 para tarifa especial</span></div>
+      </div>
+    </div>
+
+    <!-- SURFSKATE CLASES -->
+    <div class="card hidden" id="card-surfskate">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Número de clases
+      </div>
+      <div class="dur-grid">
+        <div class="dur-card selected" onclick="selectSurfskate(this,1,20)" data-clases="1">
+          <div class="dur-days">1</div><div class="dur-label">clase · 20€</div>
+        </div>
+        <div class="dur-card" onclick="selectSurfskate(this,4,75)" data-clases="4">
+          <div class="dur-days">4</div><div class="dur-label">clases · 75€</div>
+        </div>
+        <div class="dur-card" onclick="selectSurfskate(this,8,135)" data-clases="8">
+          <div class="dur-days">8</div><div class="dur-label">clases · 135€</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRESUPUESTO EN TIEMPO REAL -->
+    <div class="presup-box" id="presup-box">
+      <div class="presup-label">Presupuesto estimado</div>
+      <div class="presup-price" id="presup-total">35<span>€</span></div>
+      <div class="presup-breakdown" id="presup-break"></div>
+      <div class="presup-includes">
+        <div class="pi">✓ Material incluido</div>
+        <div class="pi">✓ Seguro incluido</div>
+        <div class="pi">✓ Monitor titulado</div>
+      </div>
+    </div>
+
+    <!-- FECHA -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Fecha preferida
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Fecha de inicio</label><input type="date" id="f-fecha" min=""></div>
+        <div class="field"><label>Hora preferida</label>
+          <select id="f-hora">
+            <option>Mañana · 9:00–11:00</option>
+            <option>Mediodía · 11:00–13:00</option>
+            <option>Tarde · 16:00–18:00</option>
+            <option>Sin preferencia</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-next" onclick="irPaso2()">Continuar →</button>
+  </div>
+
+  <!-- PASO 2: DATOS PERSONALES -->
+  <div id="paso2" class="hidden">
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Tus datos de contacto
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Nombre</label><input id="f-nombre" placeholder="Tu nombre" required></div>
+        <div class="field"><label>Apellidos</label><input id="f-apellidos" placeholder="Apellidos"></div>
+      </div>
+      <div class="field"><label>Email</label><input id="f-email" type="email" placeholder="tu@email.com" required></div>
+      <div class="field"><label>Teléfono</label><input id="f-tel" type="tel" placeholder="+34 600 000 000" required></div>
+      <div class="field"><label>¿Alguna nota adicional?</label><textarea id="f-notas" rows="3" placeholder="Edad, experiencia previa, alergias, si venís con niños..."></textarea></div>
+    </div>
+    <button class="btn-back" onclick="irPaso1()">← Volver</button>
+    <button class="btn-next" onclick="irPaso3()">Ver resumen →</button>
+  </div>
+
+  <!-- PASO 3: RESUMEN + ENVIAR -->
+  <div id="paso3" class="hidden">
+    <div class="presup-box">
+      <div class="presup-label">Tu presupuesto</div>
+      <div class="presup-price" id="resumen-precio">—<span>€</span></div>
+      <div class="presup-breakdown" id="resumen-break"></div>
+      <div class="presup-includes">
+        <div class="pi">✓ Material incluido</div>
+        <div class="pi">✓ Seguro incluido</div>
+        <div class="pi">✓ Monitor titulado</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Resumen de tu reserva</div>
+      <div id="resumen-items"></div>
+    </div>
+    <button class="btn-back" onclick="irPaso2()">← Volver</button>
+    <button class="btn-next" id="btn-enviar" onclick="enviarReserva()">✓ Confirmar y recibir presupuesto</button>
+  </div>
+
+  <!-- SUCCESS -->
+  <div id="success" class="hidden">
+    <div class="success-box">
+      <div class="success-icon">🎉</div>
+      <div class="success-title">¡Reserva recibida!</div>
+      <div class="success-sub">Hemos enviado tu presupuesto a <strong id="s-email"></strong>.<br>El equipo de Costa Norte te confirmará en menos de 24h.</div>
+      <div class="success-price" id="s-precio"></div>
+      <div class="success-note">Presupuesto total estimado · incluye material y seguro</div>
+      <a href="https://wa.me/34609282963" target="_blank" class="wa-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+        Hablar por WhatsApp
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══ SUPABASE ══
+const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+
+// ══ EMAILJS ══
+const EJS_PK='i4iBVVP-BkUOOwBE9';
+const EJS_SVC='service_npmjvvf';
+const EJS_TPL='template_costanorte'; // plantilla a crear en EmailJS
+
+// ══ TARIFAS ══
+const TARIFAS={
+  surf:{
+    iniciacion:{1:35,2:70,5:150,7:195,15:315,20:390},
+    avanzado:  {1:50,2:100,5:175,7:280,15:390,20:500}
+  },
+  particular:{
+    '1p':{1:75,2:145},
+    '2p':{1:60,2:115},
+    '3p':{1:50,2:90}
+  },
+  sup:{
+    flat: {1:35,5:140},
+    olas: {1:40,5:150},
+    race: {1:35,5:140}
+  },
+  surfskate:{1:20,4:75,8:135}
+};
+
+// ══ ESTADO ══
+let S={
+  tipo:'surf', nivel:'iniciacion', duracion:1,
+  personas:1, supMod:'flat',
+  surfskateClases:1, surfskateTotal:20,
+  fecha:'', hora:'Mañana · 9:00–11:00',
+  nombre:'', apellidos:'', email:'', tel:'', notas:'',
+  total:0, breakdown:[]
+};
+
+// ══ INIT ══
+document.getElementById('f-fecha').min = new Date().toISOString().split('T')[0];
+buildDuraciones();
+calcular();
+
+function selectTipo(t){
+  S.tipo=t;
+  ['surf','particular','sup','surfskate'].forEach(x=>document.getElementById('tc-'+x).classList.remove('selected'));
+  document.getElementById('tc-'+t).classList.add('selected');
+  document.getElementById('card-nivel').classList.toggle('hidden',t==='sup'||t==='surfskate');
+  document.getElementById('card-sup').classList.toggle('hidden',t!=='sup');
+  document.getElementById('card-personas').classList.toggle('hidden',t!=='particular');
+  document.getElementById('card-surfskate').classList.toggle('hidden',t!=='surfskate');
+  buildDuraciones();
+  calcular();
+}
+
+function selectNivel(el,n){
+  S.nivel=n;
+  document.querySelectorAll('.nivel-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  calcular();
+}
+
+function selectSupMod(el,m){
+  S.supMod=m;
+  document.querySelectorAll('#card-sup .nivel-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  buildDuraciones(); calcular();
+}
+
+function cambiarPersonas(d){
+  S.personas=Math.max(1,Math.min(3,S.personas+d));
+  document.getElementById('per-num').textContent=S.personas;
+  calcular();
+}
+
+function selectSurfskate(el,clases,total){
+  S.surfskateClases=clases; S.surfskateTotal=total;
+  document.querySelectorAll('#card-surfskate .dur-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  calcular();
+}
+
+function buildDuraciones(){
+  const grid=document.getElementById('dur-grid');
+  let opts=[];
+  if(S.tipo==='surf'){
+    opts=[{d:1,l:'1 día'},{d:2,l:'2 días'},{d:5,l:'5 días'},{d:7,l:'7 días'},{d:15,l:'15 días'},{d:20,l:'20 días'}];
+  } else if(S.tipo==='particular'){
+    opts=[{d:1,l:'1 clase'},{d:2,l:'2 clases'}];
+  } else if(S.tipo==='sup'){
+    opts=[{d:1,l:'1 día'},{d:5,l:'Bono 5 días'}];
+  }
+  if(S.tipo==='surfskate'){grid.innerHTML='';return;}
+  const first=opts[0]?.d||1;
+  if(!opts.find(o=>o.d===S.duracion)) S.duracion=first;
+  grid.innerHTML=opts.map(o=>`
+    <div class="dur-card ${o.d===S.duracion?'selected':''}" onclick="selectDur(this,${o.d})">
+      <div class="dur-days">${o.d}</div>
+      <div class="dur-label">${o.l}</div>
+    </div>`).join('');
+  document.getElementById('card-duracion').classList.toggle('hidden',S.tipo==='surfskate');
+}
+
+function selectDur(el,d){
+  S.duracion=d;
+  document.querySelectorAll('#dur-grid .dur-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  calcular();
+}
+
+function calcular(){
+  let total=0; let lines=[];
+  if(S.tipo==='surf'){
+    const t=TARIFAS.surf[S.nivel][S.duracion]||0;
+    total=t;
+    lines=[
+      {k:'Tipo',v:'Clases de Surf'},
+      {k:'Nivel',v:S.nivel==='iniciacion'?'Iniciación':'Avanzado'},
+      {k:'Duración',v:S.duracion+(S.duracion===1?' día':' días')},
+      {k:'Precio por persona',v:t+'€'},
+      {k:'Total',v:t+'€'},
+    ];
+  } else if(S.tipo==='particular'){
+    const key=S.personas+'p';
+    const t=(TARIFAS.particular[key]||{})[S.duracion]||0;
+    total=t;
+    lines=[
+      {k:'Tipo',v:'Clase Particular'},
+      {k:'Personas',v:S.personas+' persona'+(S.personas>1?'s':'')},
+      {k:'Clases',v:S.duracion+(S.duracion===1?' clase':' clases')},
+      {k:'Total',v:t+'€'},
+    ];
+  } else if(S.tipo==='sup'){
+    const t=(TARIFAS.sup[S.supMod]||{})[S.duracion]||0;
+    total=t;
+    const mods={flat:'Flat Water',olas:'SUP Olas',race:'SUP Race'};
+    lines=[
+      {k:'Tipo',v:'Clases SUP'},
+      {k:'Modalidad',v:mods[S.supMod]},
+      {k:'Duración',v:S.duracion+(S.duracion===1?' día':' días')},
+      {k:'Total',v:t+'€'},
+    ];
+  } else if(S.tipo==='surfskate'){
+    total=S.surfskateTotal;
+    lines=[
+      {k:'Tipo',v:'Surfskate'},
+      {k:'Clases',v:S.surfskateClases+' clase'+(S.surfskateClases>1?'s':'')},
+      {k:'Total',v:S.surfskateTotal+'€'},
+    ];
+  }
+  S.total=total; S.breakdown=lines;
+  document.getElementById('presup-total').innerHTML=total+'<span>€</span>';
+  document.getElementById('presup-break').innerHTML=lines.map(l=>
+    `<div class="presup-line"><span>${l.k}</span><span>${l.v}</span></div>`
+  ).join('');
+}
+
+// ══ NAVEGACIÓN ══
+function irPaso2(){
+  if(!document.getElementById('f-fecha').value){
+    alert('Por favor selecciona una fecha de inicio');return;
+  }
+  S.fecha=document.getElementById('f-fecha').value;
+  S.hora=document.getElementById('f-hora').value;
+  document.getElementById('paso1').classList.add('hidden');
+  document.getElementById('paso2').classList.remove('hidden');
+  document.getElementById('st1').classList.remove('active');
+  document.getElementById('st1').classList.add('done');
+  document.getElementById('st2').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function irPaso1(){
+  document.getElementById('paso2').classList.add('hidden');
+  document.getElementById('paso1').classList.remove('hidden');
+  document.getElementById('st2').classList.remove('active');
+  document.getElementById('st1').classList.remove('done');
+  document.getElementById('st1').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function irPaso3(){
+  const nombre=document.getElementById('f-nombre').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  const tel=document.getElementById('f-tel').value.trim();
+  if(!nombre||!email||!tel){alert('Por favor rellena nombre, email y teléfono');return;}
+  S.nombre=nombre; S.apellidos=document.getElementById('f-apellidos').value.trim();
+  S.email=email; S.tel=tel; S.notas=document.getElementById('f-notas').value.trim();
+
+  document.getElementById('resumen-precio').innerHTML=S.total+'<span>€</span>';
+  document.getElementById('resumen-break').innerHTML=S.breakdown.map(l=>
+    `<div class="presup-line"><span>${l.k}</span><span>${l.v}</span></div>`
+  ).join('');
+
+  const tipoLabels={surf:'Clases de Surf',particular:'Clase Particular',sup:'Clases SUP',surfskate:'Surfskate'};
+  document.getElementById('resumen-items').innerHTML=[
+    {l:'Nombre',v:S.nombre+' '+S.apellidos},
+    {l:'Email',v:S.email},
+    {l:'Teléfono',v:S.tel},
+    {l:'Tipo de clase',v:tipoLabels[S.tipo]},
+    {l:'Fecha',v:new Date(S.fecha+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'})},
+    {l:'Hora',v:S.hora},
+    {l:'Presupuesto total',v:S.total+'€'},
+  ].map(i=>`<div class="resumen-item"><span class="ri-label">${i.l}</span><span class="ri-val">${i.v}</span></div>`).join('');
+
+  document.getElementById('paso2').classList.add('hidden');
+  document.getElementById('paso3').classList.remove('hidden');
+  document.getElementById('st2').classList.remove('active');
+  document.getElementById('st2').classList.add('done');
+  document.getElementById('st3').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function irPaso2b(){
+  document.getElementById('paso3').classList.add('hidden');
+  document.getElementById('paso2').classList.remove('hidden');
+  document.getElementById('st3').classList.remove('active');
+  document.getElementById('st2').classList.remove('done');
+  document.getElementById('st2').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ══ ENVÍO ══
+async function enviarReserva(){
+  const btn=document.getElementById('btn-enviar');
+  btn.textContent='Enviando…'; btn.disabled=true;
+
+  const tipoLabels={surf:'Clases de Surf',particular:'Clase Particular',sup:'Clases SUP',surfskate:'Surfskate'};
+  const resumen=S.breakdown.map(l=>l.k+': '+l.v).join('\n');
+  const fechaFmt=new Date(S.fecha+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  // 1. Guardar en Supabase
+  try{
+    await fetch(SB_URL+'/rest/v1/web_requests',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({
+        business_name:'Costa Norte Surf Center',
+        business_type:'escuela-surf',
+        phone:S.tel, email:S.email,
+        notes:`[RESERVA CLASE SURF]\nNombre: ${S.nombre} ${S.apellidos}\nTipo: ${tipoLabels[S.tipo]}\nFecha: ${fechaFmt} · ${S.hora}\nPresupuesto: ${S.total}€\n\n${resumen}${S.notas?'\n\nNotas: '+S.notas:''}`,
+        status:'new'
+      })
+    });
+  }catch(e){console.warn('Supabase error',e)}
+
+  // 2. Email automático al cliente via EmailJS
+  try{
+    await emailjs.send(EJS_SVC, EJS_TPL, {
+      to_name: S.nombre,
+      to_email: S.email,
+      tipo_clase: tipoLabels[S.tipo],
+      fecha: fechaFmt,
+      hora: S.hora,
+      presupuesto: S.total+'€',
+      desglose: resumen,
+      telefono_escuela: '942 712 504 / 609 282 963',
+      reply_to: 'reservas@escueladesurfcostanorte.com'
+    });
+  }catch(e){console.warn('EmailJS error',e)}
+
+  // 3. Mostrar éxito
+  document.getElementById('paso3').classList.add('hidden');
+  document.getElementById('success').classList.remove('hidden');
+  document.getElementById('s-email').textContent=S.email;
+  document.getElementById('s-precio').textContent=S.total+'€';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// Cargar EmailJS
+(function(){
+  var s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+  s.onload=()=>emailjs.init(EJS_PK);
+  document.head.appendChild(s);
+})();
+</script>
+</body>
+</html>
