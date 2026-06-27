@@ -3836,7 +3836,7 @@ const TARIFAS_SOL={
   sup:{flat:{1:35,5:140},olas:{1:40,5:150},race:{1:35,5:140}},
   surfskate:{1:20,4:75,8:135}
 };
-let SOL_ALL=[], SOL_FILTER='pending', SOL_CUR=null;
+let SOL_ALL=[], SOL_FILTER='all', SOL_CUR=null;
 
 async function loadSolicitudes(){
   const list=document.getElementById('sol-list');
@@ -3845,9 +3845,10 @@ async function loadSolicitudes(){
     const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?business_slug=eq.costa-norte&order=starts_at.desc&limit=200',
       {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
     SOL_ALL=await res.json();
+    if(!Array.isArray(SOL_ALL)){if(list)list.innerHTML='<div style="padding:40px;text-align:center;color:#ef4444">Error: '+JSON.stringify(SOL_ALL)+'</div>';return;}
     renderSolBadge();
     renderSolicitudes();
-  }catch(e){if(list)list.innerHTML='<div style="padding:40px;text-align:center;color:#ef4444">Error al cargar</div>';}
+  }catch(e){if(list)list.innerHTML='<div style="padding:40px;text-align:center;color:#ef4444">Error: '+e.message+'</div>';}
 }
 
 function renderSolBadge(){
@@ -3958,10 +3959,10 @@ function solSetFilter(btn,f){
 
     <!-- filtros -->
     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
-      <button class="sol-filter active" onclick="solSetFilter(this,'pending')" style="padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #0f2240;background:#0f2240;color:#fff;font-family:'Inter',sans-serif">Pendientes</button>
+      <button class="sol-filter" onclick="solSetFilter(this,'pending')" style="padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #0f2240;background:#0f2240;color:#fff;font-family:'Inter',sans-serif">Pendientes</button>
       <button class="sol-filter" onclick="solSetFilter(this,'contacted')" style="padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #dde3ec;background:#fff;color:#4a5568;font-family:'Inter',sans-serif">Contactados</button>
       <button class="sol-filter" onclick="solSetFilter(this,'confirmed')" style="padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #dde3ec;background:#fff;color:#4a5568;font-family:'Inter',sans-serif">Confirmados</button>
-      <button class="sol-filter" onclick="solSetFilter(this,'all')" style="padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #dde3ec;background:#fff;color:#4a5568;font-family:'Inter',sans-serif">Todas</button>
+      <button class="sol-filter active" onclick="solSetFilter(this,'all')" style="padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #0f2240;background:#0f2240;color:#fff;font-family:'Inter',sans-serif">Todas</button>
       <button onclick="loadSolicitudes()" style="margin-left:auto;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #dde3ec;background:#fff;color:#4a5568;font-family:'Inter',sans-serif">↻ Actualizar</button>
     </div>
 
