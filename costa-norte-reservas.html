@@ -249,9 +249,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
         </div>
 
         <div class="field" id="field-franjas" style="display:none">
-          <label>Franja horaria</label>
+          <label>Horario por día</label>
           <div class="franja-loading hidden" id="franja-loading">Comprobando disponibilidad...</div>
-          <div class="franja-grid" id="franja-grid"></div>
+          <div id="franjas-por-dia"></div>
           <div class="field-hint" style="margin-top:8px">Clases de 2 horas · Aforo máximo 10 personas por franja</div>
           <div class="field-hint" style="margin-top:6px;color:#b45309;background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:9px 12px;font-size:.78rem;line-height:1.5;">⚠️ El horario puede estar sujeto a modificaciones por condiciones del mar o climatología. Nuestro equipo se pondrá en contacto contigo a través de WhatsApp o correo electrónico para confirmar o ajustar la hora de tu clase.</div>
         </div>
@@ -413,7 +413,8 @@ const FRANJAS=[
   {id:'f5',hora:'18:00',label:'Tarde'},
 ];
 
-let S={tipo:'surf',nivel:'Iniciacion',rangeStart:null,rangeEnd:null,franja:null,franjaHora:'',ocupacion:{}};
+// franjasPorDia: { 'YYYY-MM-DD': {id, hora} }
+let S={tipo:'surf',nivel:'Iniciacion',rangeStart:null,rangeEnd:null,franjasPorDia:{},ocupacionPorDia:{}};
 let calYear, calMonth;
 
 // ── INIT (al final del script) ──
@@ -473,24 +474,19 @@ function renderCal(){
 function calClick(ymd,disabled){
   if(disabled) return;
   if(!S.rangeStart||S.rangeEnd){
-    // start new selection
     S.rangeStart=ymd; S.rangeEnd=null;
   } else {
-    // set end
     const s=fromYMD(S.rangeStart), e=fromYMD(ymd);
     if(e<s){S.rangeStart=ymd;S.rangeEnd=null;}
     else{S.rangeEnd=ymd;}
   }
-  S.franja=null; S.franjaHora='';
+  S.franjasPorDia={};
   renderCal();
-  // load availability for first date
-  if(S.rangeStart){
-    cargarAforo(S.rangeStart);
-  }
+  if(S.rangeStart) cargarAforoPorDias();
 }
 
 function clearRange(){
-  S.rangeStart=null;S.rangeEnd=null;S.franja=null;S.franjaHora='';
+  S.rangeStart=null;S.rangeEnd=null;S.franjasPorDia={};S.ocupacionPorDia={};
   document.getElementById('field-franjas').style.display='none';
   renderCal();
 }
@@ -522,53 +518,94 @@ function selNivel(n,el){
   el.classList.add('sel');
 }
 
-// ── AFORO ──
-async function cargarAforo(fecha){
+// ── AFORO POR DÍAS ──
+function getDiasRango(){
+  const dias=[];
+  const s=fromYMD(S.rangeStart);
+  const e=S.rangeEnd?fromYMD(S.rangeEnd):s;
+  const n=Math.round((e-s)/(1000*60*60*24))+1;
+  for(let i=0;i<n;i++){const d=new Date(s);d.setDate(s.getDate()+i);dias.push(toYMD(d));}
+  return dias;
+}
+
+async function cargarAforoPorDias(){
   document.getElementById('field-franjas').style.display='';
   document.getElementById('franja-loading').classList.remove('hidden');
-  document.getElementById('franja-grid').innerHTML='';
+  document.getElementById('franjas-por-dia').innerHTML='';
+  const dias=getDiasRango();
+  // Query un rango que cubra todos los días
+  const fechaMin=dias[0], fechaMax=dias[dias.length-1];
   try{
     const res=await fetch(
-      `${SB_URL}/rest/v1/appointments?business_slug=eq.${SLUG}&starts_at=gte.${fecha}T00:00:00&starts_at=lte.${fecha}T23:59:59&status=neq.cancelled&select=starts_at`,
+      `${SB_URL}/rest/v1/appointments?business_slug=eq.${SLUG}&starts_at=gte.${fechaMin}T00:00:00&starts_at=lte.${fechaMax}T23:59:59&status=neq.cancelled&select=starts_at`,
       {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}
     );
     const rows=await res.json();
-    const cuenta={};
+    // Agrupar ocupación por fecha+hora
+    const oc={};
     rows.forEach(r=>{
-      const h=new Date(r.starts_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Madrid'});
-      cuenta[h]=(cuenta[h]||0)+1;
+      const dt=new Date(r.starts_at);
+      const ymd=toYMD(dt);
+      const h=dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Madrid'});
+      if(!oc[ymd]) oc[ymd]={};
+      oc[ymd][h]=(oc[ymd][h]||0)+1;
     });
-    S.ocupacion=cuenta;
-  }catch(e){S.ocupacion={}}
+    S.ocupacionPorDia=oc;
+  }catch(e){S.ocupacionPorDia={}}
   document.getElementById('franja-loading').classList.add('hidden');
-  renderFranjas();
+  renderFranjasPorDias();
 }
 
-function renderFranjas(){
-  const grid=document.getElementById('franja-grid');
-  grid.innerHTML=FRANJAS.map(f=>{
-    const ocup=S.ocupacion[f.hora]||0;
-    const llena=ocup>=AFORO_MAX;
-    const dots=Array.from({length:AFORO_MAX},(_,i)=>`<div class="af-dot ${i<ocup?(llena?'llena':'ocup'):''}"></div>`).join('');
-    return `<div class="franja-opt${llena?' llena':''}${S.franja===f.id?' sel':''}" onclick="${llena?'void(0)':'selFranja(\''+f.id+'\',\''+f.hora+'\',this)'}">
-      ${llena?'<div class="franja-tag">COMPLETO</div>':''}
-      <div class="franja-hora">${f.hora}</div>
-      <div class="franja-label">${f.label}</div>
-      <div class="franja-aforo">${dots}</div>
+const DIAS_ES=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MESES_ES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+function renderFranjasPorDias(){
+  const dias=getDiasRango();
+  const container=document.getElementById('franjas-por-dia');
+  container.innerHTML=dias.map(ymd=>{
+    const d=fromYMD(ymd);
+    const label=DIAS_ES[d.getDay()]+' '+d.getDate()+' '+MESES_ES[d.getMonth()];
+    const ocDia=S.ocupacionPorDia[ymd]||{};
+    const selFranjaId=S.franjasPorDia[ymd]?.id||null;
+    const franjas=FRANJAS.map(f=>{
+      const ocup=ocDia[f.hora]||0;
+      const llena=ocup>=AFORO_MAX;
+      const dotCount=Math.min(AFORO_MAX,10);
+      const dots=Array.from({length:dotCount},(_,i)=>`<div class="af-dot ${i<ocup?(llena?'llena':'ocup'):''}"></div>`).join('');
+      return `<div class="franja-opt${llena?' llena':''}${selFranjaId===f.id?' sel':''}" onclick="${llena?'':'selFranjaParaDia(\''+ymd+'\',\''+f.id+'\',\''+f.hora+'\',this)'}">
+        ${llena?'<div class="franja-tag">LLENO</div>':''}
+        <div class="franja-hora">${f.hora}</div>
+        <div class="franja-label">${f.label}</div>
+        <div class="franja-aforo">${dots}</div>
+      </div>`;
+    }).join('');
+    const elegida=S.franjasPorDia[ymd]?.hora||null;
+    return `<div style="margin-bottom:18px">
+      <div style="font-size:.8rem;font-weight:700;color:var(--azul);margin-bottom:8px;display:flex;align-items:center;gap:8px">
+        <span style="background:var(--azul);color:#fff;border-radius:6px;padding:2px 10px;font-size:.75rem">${label}</span>
+        ${elegida?`<span style="color:#059669;font-size:.78rem">✓ ${elegida} h</span>`:'<span style="color:#999;font-size:.75rem">Elige horario</span>'}
+      </div>
+      <div class="franja-grid" data-dia="${ymd}">${franjas}</div>
     </div>`;
   }).join('');
 }
 
-function selFranja(id,hora,el){
-  S.franja=id; S.franjaHora=hora;
-  document.querySelectorAll('.franja-opt').forEach(x=>x.classList.remove('sel'));
-  el.classList.add('sel');
+function selFranjaParaDia(ymd,id,hora,el){
+  S.franjasPorDia[ymd]={id,hora};
+  // re-render solo ese día para actualizar sel y badge
+  renderFranjasPorDias();
 }
 
 // ── NAVEGACION ──
 function irPaso2(){
   if(!S.rangeStart){showErr1('Selecciona al menos un dia en el calendario.');return;}
-  if(!S.franja){showErr1('Selecciona una franja horaria.');return;}
+  const dias=getDiasRango();
+  const sinHorario=dias.filter(d=>!S.franjasPorDia[d]);
+  if(sinHorario.length>0){
+    const d=fromYMD(sinHorario[0]);
+    showErr1('Selecciona un horario para cada día. Falta: '+DIAS_ES[d.getDay()]+' '+d.getDate()+' '+MESES_ES[d.getMonth()]+'.');
+    return;
+  }
   hideErr1(); setPaso(2);
 }
 
@@ -585,17 +622,16 @@ function irPaso3(){
 
   const apellidos=document.getElementById('f-apellidos').value.trim();
   const tipoLabels={surf:'Surf',particular:'Clase particular',sup:'SUP / Stand Up Paddle',surfskate:'Surfskate'};
-  const s=fromYMD(S.rangeStart);
-  const e=S.rangeEnd?fromYMD(S.rangeEnd):s;
-  const days=Math.round((e-s)/(1000*60*60*24))+1;
-  const fmt=d=>d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
-  const fechaTxt=days===1?fmt(s):`${fmt(s)} al ${fmt(e)} (${days} dias)`;
+  const dias=getDiasRango();
+  const days=dias.length;
+  const fmt=d=>d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+  const horariosResumen=dias.map(ymd=>{const d=fromYMD(ymd);return fmt(d)+' → '+S.franjasPorDia[ymd].hora+' h';}).join(' · ');
 
   document.getElementById('resumen-body').innerHTML=[
     {l:'Tipo de clase',v:tipoLabels[S.tipo]},
     {l:'Nivel',v:(S.tipo==='surf'||S.tipo==='particular')?S.nivel:'—'},
-    {l:'Fechas',v:fechaTxt},
-    {l:'Franja horaria',v:S.franjaHora+' h (duracion 2 horas)'},
+    {l:'Dias',v:days+' dia'+(days>1?'s':'')},
+    {l:'Horarios',v:horariosResumen},
     {l:'Nombre completo',v:nombre+' '+apellidos},
     {l:'DNI / NIE',v:dni},
     {l:'Telefono',v:tel},
@@ -617,16 +653,14 @@ async function enviar(){
   const notas=document.getElementById('f-notas').value.trim();
   const tipoLabels={surf:'Surf',particular:'Clase particular',sup:'SUP',surfskate:'Surfskate'};
 
-  const s=fromYMD(S.rangeStart);
-  const e=S.rangeEnd?fromYMD(S.rangeEnd):s;
-  const days=Math.round((e-s)/(1000*60*60*24))+1;
+  const dias=getDiasRango();
+  const days=dias.length;
 
-  // Crear una appointment por cada dia del rango
+  // Una appointment por cada dia con su propio horario
   const inserts=[];
-  for(let i=0;i<days;i++){
-    const d=new Date(s); d.setDate(s.getDate()+i);
-    const ymd=toYMD(d);
-    const startsAt=new Date(ymd+'T'+S.franjaHora+':00');
+  dias.forEach(ymd=>{
+    const hora=S.franjasPorDia[ymd]?.hora||'09:00';
+    const startsAt=new Date(ymd+'T'+hora+':00');
     const endsAt=new Date(startsAt.getTime()+2*60*60*1000);
     inserts.push({
       business_slug:SLUG,
@@ -640,7 +674,7 @@ async function enviar(){
       status:'pending',
       notes:JSON.stringify({dni,source:'web-reservas',dias_totales:days,notas_cliente:notas||null})
     });
-  }
+  });
 
   try{
     const res=await fetch(SB_URL+'/rest/v1/appointments',{
@@ -653,8 +687,6 @@ async function enviar(){
     const apt=Array.isArray(inserted)?inserted[0]:inserted;
     window._aptId=apt.id;
     window._aptNotes=JSON.parse(apt.notes||'{}');
-
-    const fmt=d=>d.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
 
     // Calcular presupuesto
     const TARIFAS={
@@ -682,12 +714,14 @@ async function enviar(){
     document.getElementById('success-precio').textContent=presup>0?presup+'€':'A consultar';
     document.getElementById('success-precio-det').textContent=presupDet+' · precio orientativo, puede variar segun condiciones';
 
+    const fmtShort=d=>d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+    const horariosDetalle=dias.map(ymd=>{const d=fromYMD(ymd);return fmtShort(d)+' → '+S.franjasPorDia[ymd].hora+' h';}).join('<br>');
     document.getElementById('success-detail').innerHTML=[
       {l:'Clase',v:tipoLabels[S.tipo]+(S.nivel&&(S.tipo==='surf'||S.tipo==='particular')?' - '+S.nivel:'')},
-      {l:'Fecha',v:days===1?fmt(s):`${fmt(s)} al ${fmt(e)}`},
-      {l:'Hora',v:S.franjaHora+' h (2 horas de clase)'},
+      {l:'Días',v:days+' día'+(days>1?'s':'')},
+      {l:'Horarios',v:horariosDetalle},
       {l:'Nombre',v:nombre+(apellidos?' '+apellidos:'')},
-      {l:'Telefono',v:tel},
+      {l:'Teléfono',v:tel},
     ].map(r=>`<div class="resumen-row"><span class="rr-label">${r.l}</span><span class="rr-val">${r.v}</span></div>`).join('');
 
     // Actualizar concepto con nombre del cliente
