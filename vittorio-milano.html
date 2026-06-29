@@ -645,11 +645,14 @@ section{position:relative;padding:120px 5vw;}
 }
 .bsd-left-eyebrow{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.42em;color:var(--gold);text-transform:uppercase;font-weight:500;}
 .bsd-preview-card{
-  background:#111;border-radius:14px;width:100%;
-  aspect-ratio:3/4;overflow:hidden;
-  box-shadow:0 16px 40px rgba(0,0,0,.35);position:relative;
+  background:linear-gradient(160deg,#1e1e1e,#111);
+  border-radius:14px;width:100%;aspect-ratio:3/4;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(201,160,32,.12);
+  position:relative;transform-style:preserve-3d;will-change:transform;
+  transition:box-shadow .3s;
 }
-#bsd-3d-canvas{width:100%!important;height:100%!important;display:block;}
+.bsd-preview-card:hover{box-shadow:0 28px 80px rgba(0,0,0,.7),0 0 0 1px rgba(201,160,32,.25);}
+#bsd-photo{transition:opacity .4s ease,transform .1s linear;}
 @keyframes bsdSpin{to{transform:rotate(360deg);}}
 .bsd-preview-card img{width:100%;height:100%;object-fit:contain;background:linear-gradient(180deg,#f8f5ee,#e8e2d2);transition:opacity .35s;animation:bsdFade .35s ease;}
 @keyframes bsdFade{from{opacity:0;}to{opacity:1;}}
@@ -1497,16 +1500,12 @@ section{position:relative;padding:120px 5vw;}
       <!-- LEFT · LIVE PREVIEW (dark) -->
       <aside class="bsd-left">
         <div class="bsd-left-eyebrow">Live Preview · 3D</div>
-        <div class="bsd-preview-card" style="position:relative;overflow:hidden;">
-          <!-- Three.js canvas -->
-          <canvas id="bsd-3d-canvas" style="width:100%;height:100%;display:block;"></canvas>
-          <!-- Fallback photo (hidden when 3D loads) -->
-          <img id="bsd-photo" alt="" loading="eager" style="opacity:0;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;">
-          <div id="bsd-loading" style="position:absolute;display:flex;flex-direction:column;align-items:center;gap:14px;font-family:var(--serif);color:#7a6020;font-style:italic;font-size:14px;">
-            <div style="width:36px;height:36px;border:1.5px solid rgba(122,96,32,.2);border-top-color:var(--gold);border-radius:50%;animation:bsdSpin .9s linear infinite;"></div>
-            <span>Loading 3D model…</span>
+        <div class="bsd-preview-card">
+          <img id="bsd-photo" alt="" loading="eager" style="opacity:0;width:100%;height:100%;object-fit:contain;display:block;will-change:transform,opacity;">
+          <div id="bsd-loading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:var(--serif);color:var(--gold);font-style:italic;font-size:13px;">
+            <div style="width:32px;height:32px;border:1.5px solid rgba(201,160,32,.2);border-top-color:var(--gold);border-radius:50%;animation:bsdSpin .9s linear infinite;"></div>
+            <span>Select an option…</span>
           </div>
-          <div id="bsd-3d-hint" style="display:none;position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.1em;white-space:nowrap;">drag to rotate · scroll to zoom</div>
         </div>
         <div class="bsd-spec">
           <div class="bsd-spec-lead"><span id="bsd-spec-color">Charcoal</span> · <span id="bsd-spec-lapel">notch lapel</span></div>
@@ -2780,11 +2779,14 @@ function bsd3dOpen(src, label) {
   const photoEl = document.getElementById('bsd-photo');
   const ld = document.getElementById('bsd-loading');
   if(ld) ld.style.display = 'none';
-  photoEl.style.animation = 'none'; void photoEl.offsetWidth; photoEl.style.animation = '';
-  photoEl.src = src;
-  photoEl.style.opacity = '1';
-  photoEl.style.objectFit = 'contain';
-  // update label below preview
+  // Crossfade: fade out → swap src → fade in
+  photoEl.style.opacity = '0';
+  setTimeout(() => {
+    photoEl.src = src;
+    photoEl.onload = () => { photoEl.style.opacity = '1'; };
+    // fallback in case already cached
+    if (photoEl.complete) photoEl.style.opacity = '1';
+  }, 200);
   const specLead = document.getElementById('bsd-spec-color');
   if(specLead) specLead.textContent = label;
 }
@@ -2875,192 +2877,37 @@ document.querySelectorAll('[data-trousers-cut]').forEach(b => b.addEventListener
 }));
 </script>
 
-<!-- ═══ THREE.JS 3D SUIT VIEWER ═══ -->
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
-  }
-}
-</script>
-<script type="module">
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+<!-- ═══ PHOTO TILT 3D EFFECT ═══ -->
+<script>
 
-const canvas = document.getElementById('bsd-3d-canvas');
-const loading = document.getElementById('bsd-loading');
-const hint = document.getElementById('bsd-3d-hint');
-const photoEl = document.getElementById('bsd-photo');
+// ── Photo tilt 3D effect ──
+(function(){
+  const card = document.querySelector('.bsd-preview-card');
+  const photo = document.getElementById('bsd-photo');
+  if (!card || !photo) return;
 
-// ── Scene ──
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  let tx = 0, ty = 0, raf;
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1208);
-
-// ── Camera ──
-const camera = new THREE.PerspectiveCamera(38, 1, 0.01, 100);
-camera.position.set(0, 0.8, 2.8);
-
-// ── Lights (atelier warm studio) ──
-const ambientLight = new THREE.AmbientLight(0xfff5e0, 0.6);
-scene.add(ambientLight);
-
-const keyLight = new THREE.DirectionalLight(0xfff8f0, 2.2);
-keyLight.position.set(2, 4, 3);
-keyLight.castShadow = true;
-scene.add(keyLight);
-
-const fillLight = new THREE.DirectionalLight(0xd4c0a0, 0.8);
-fillLight.position.set(-3, 2, -1);
-scene.add(fillLight);
-
-const rimLight = new THREE.DirectionalLight(0xc9a020, 0.4);
-rimLight.position.set(0, 3, -4);
-scene.add(rimLight);
-
-// ── Controls ──
-const controls = new OrbitControls(camera, canvas);
-controls.enableDamping = true;
-controls.dampingFactor = 0.06;
-controls.minDistance = 0.8;
-controls.maxDistance = 6;
-controls.maxPolarAngle = Math.PI * 0.85;
-controls.target.set(0, 0.6, 0);
-controls.update();
-
-// ── Resize ──
-function resizeCanvas() {
-  const card = canvas.parentElement;
-  const w = card.clientWidth;
-  const h = card.clientHeight;
-  renderer.setSize(w, h, false);
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-}
-new ResizeObserver(resizeCanvas).observe(canvas.parentElement);
-resizeCanvas();
-
-// ── Render loop ──
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene, camera);
-}
-animate();
-
-// ── Material registry (for real-time color/fabric swaps) ──
-window._bsd3dMeshes = {};
-
-// ── Load suit GLB ──
-const MODEL_URL = 'vittorio-assets/suit-model/scene.gltf';
-const loader = new GLTFLoader();
-
-loader.load(
-  MODEL_URL,
-  (gltf) => {
-    const model = gltf.scene;
-
-    // Centre & scale model
-    const box = new THREE.Box3().setFromObject(model);
-    const centre = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = 2.0 / maxDim;
-    model.scale.setScalar(scale);
-    model.position.sub(centre.multiplyScalar(scale));
-
-    // Enable shadows + collect meshes
-    model.traverse(child => {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-        const name = (child.name || '').toLowerCase();
-        window._bsd3dMeshes[name] = child;
-        // Apply initial charcoal fabric colour
-        if (child.material) {
-          child.material = child.material.clone();
-        }
-      }
-    });
-
-    scene.add(model);
-    window._bsd3dModel = model;
-
-    // Hide loading, show hint
-    if (loading) loading.style.display = 'none';
-    if (hint) hint.style.display = 'block';
-    photoEl.style.opacity = '0';
-
-    // Apply current BSD state
-    bsd3dApplyState();
-  },
-  (xhr) => {
-    const pct = Math.round(xhr.loaded / xhr.total * 100);
-    const span = loading && loading.querySelector('span');
-    if (span) span.textContent = `Loading 3D model… ${pct}%`;
-  },
-  (err) => {
-    console.warn('3D model not found — falling back to photo mode', err);
-    if (loading) loading.style.display = 'none';
-    // Fallback: show the photo that bsd3dOpen would have set
-    photoEl.style.opacity = '1';
-    canvas.style.display = 'none';
-  }
-);
-
-// ── Apply BSD configurator state to 3D model ──
-const FABRIC_COLORS = {
-  '#1a1a1a': 0x1a1a1a,
-  '#3d3d3d': 0x3d3d3d,
-  '#4a4a5a': 0x4a4a5a,
-  '#7a7a8a': 0x7a7a8a,
-  '#c4a882': 0xc4a882,
-  '#6b4423': 0x6b4423,
-  '#4a1c2b': 0x4a1c2b,
-};
-const LINING_COLORS = {
-  'Burgundy': 0x6b0f2a,
-  'Midnight Blue': 0x0a1440,
-  'Champagne': 0xe8d5a0,
-  'Charcoal': 0x2a2a2a,
-  'White': 0xf5f5f0,
-};
-
-function setMeshColor(mesh, hexInt, roughness=0.6, metalness=0.05) {
-  if (!mesh || !mesh.material) return;
-  mesh.material.color.setHex(hexInt);
-  mesh.material.roughness = roughness;
-  mesh.material.metalness = metalness;
-  mesh.material.needsUpdate = true;
-}
-
-function bsd3dApplyState() {
-  if (!window._bsd3dModel) return;
-  const meshes = window._bsd3dMeshes;
-  const fabricHex = FABRIC_COLORS[BSD.color] ?? 0x3d3d3d;
-  const liningHex = LINING_COLORS[BSD.lining] ?? 0x6b0f2a;
-  const btnHex = parseInt(BSD.bcol?.replace('#','') ?? 'e8ddd0', 16);
-
-  Object.entries(meshes).forEach(([name, mesh]) => {
-    if (name.includes('lining') || name.includes('inner') || name.includes('forro')) {
-      setMeshColor(mesh, liningHex, 0.3, 0.0);
-    } else if (name.includes('button') || name.includes('btn')) {
-      setMeshColor(mesh, btnHex, 0.4, 0.1);
-    } else {
-      setMeshColor(mesh, fabricHex, 0.72, 0.04);
-    }
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const mx = (e.clientX - r.left) / r.width  - 0.5;  // -0.5 to 0.5
+    const my = (e.clientY - r.top)  / r.height - 0.5;
+    tx = mx * 14;   // max tilt degrees
+    ty = my * -10;
   });
-}
 
-// Expose so configurator JS can call it
-window.bsd3dApplyState = bsd3dApplyState;
+  card.addEventListener('mouseleave', () => { tx = 0; ty = 0; });
+
+  let cx = 0, cy = 0;
+  function loop() {
+    cx += (tx - cx) * 0.1;
+    cy += (ty - cy) * 0.1;
+    card.style.transform = `perspective(800px) rotateY(${cx}deg) rotateX(${cy}deg)`;
+    photo.style.transform = `scale(1.04) translateX(${cx * 0.6}px) translateY(${cy * 0.6}px)`;
+    raf = requestAnimationFrame(loop);
+  }
+  loop();
+})();
 </script>
 
 </body>
