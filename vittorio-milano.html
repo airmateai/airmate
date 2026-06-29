@@ -1500,12 +1500,14 @@ section{position:relative;padding:120px 5vw;}
       <!-- LEFT · LIVE PREVIEW (dark) -->
       <aside class="bsd-left">
         <div class="bsd-left-eyebrow">Live Preview · 3D</div>
-        <div class="bsd-preview-card">
-          <img id="bsd-photo" alt="" loading="eager" style="opacity:0;width:100%;height:100%;object-fit:contain;display:block;will-change:transform,opacity;">
-          <div id="bsd-loading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:var(--serif);color:var(--gold);font-style:italic;font-size:13px;">
-            <div style="width:32px;height:32px;border:1.5px solid rgba(201,160,32,.2);border-top-color:var(--gold);border-radius:50%;animation:bsdSpin .9s linear infinite;"></div>
-            <span>Select an option…</span>
-          </div>
+        <div class="bsd-preview-card" id="bsd-spin-card">
+          <!-- 360 spin canvas -->
+          <img id="bsd-spin-img" src="vittorio-assets/suit-spin-000.jpg" alt="Suit 360°"
+            style="width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none;cursor:grab;">
+          <!-- Option detail photo (shown on top when clicking options) -->
+          <img id="bsd-photo" alt="" style="opacity:0;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;transition:opacity .4s ease;">
+          <!-- Spin hint -->
+          <div id="bsd-spin-hint" style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.12em;white-space:nowrap;font-family:'Cinzel',serif;pointer-events:none;">⟵ drag to rotate ⟶</div>
         </div>
         <div class="bsd-spec">
           <div class="bsd-spec-lead"><span id="bsd-spec-color">Charcoal</span> · <span id="bsd-spec-lapel">notch lapel</span></div>
@@ -2781,10 +2783,10 @@ function bsd3dOpen(src, label) {
   if(ld) ld.style.display = 'none';
   // Crossfade: fade out → swap src → fade in
   photoEl.style.opacity = '0';
+  if (window._bsdSpinShowDetail) window._bsdSpinShowDetail(true);
   setTimeout(() => {
     photoEl.src = src;
     photoEl.onload = () => { photoEl.style.opacity = '1'; };
-    // fallback in case already cached
     if (photoEl.complete) photoEl.style.opacity = '1';
   }, 200);
   const specLead = document.getElementById('bsd-spec-color');
@@ -2880,33 +2882,75 @@ document.querySelectorAll('[data-trousers-cut]').forEach(b => b.addEventListener
 <!-- ═══ PHOTO TILT 3D EFFECT ═══ -->
 <script>
 
-// ── Photo tilt 3D effect ──
+// ── 360° Spin viewer ──
 (function(){
-  const card = document.querySelector('.bsd-preview-card');
-  const photo = document.getElementById('bsd-photo');
-  if (!card || !photo) return;
+  const FRAMES = [
+    'vittorio-assets/suit-spin-000.jpg',
+    'vittorio-assets/suit-spin-045.jpg',
+    'vittorio-assets/suit-spin-090.jpg',
+    'vittorio-assets/suit-spin-135.jpg',
+    'vittorio-assets/suit-spin-180.jpg',
+    'vittorio-assets/suit-spin-225.jpg',
+    'vittorio-assets/suit-spin-270.jpg',
+    'vittorio-assets/suit-spin-315.jpg',
+  ];
+  const TOTAL = FRAMES.length;
 
-  let tx = 0, ty = 0, raf;
+  // Preload all frames
+  FRAMES.forEach(src => { const i = new Image(); i.src = src; });
 
-  card.addEventListener('mousemove', e => {
-    const r = card.getBoundingClientRect();
-    const mx = (e.clientX - r.left) / r.width  - 0.5;  // -0.5 to 0.5
-    const my = (e.clientY - r.top)  / r.height - 0.5;
-    tx = mx * 14;   // max tilt degrees
-    ty = my * -10;
-  });
+  const spinImg  = document.getElementById('bsd-spin-img');
+  const card     = document.getElementById('bsd-spin-card');
+  const photoEl  = document.getElementById('bsd-photo');
+  const hint     = document.getElementById('bsd-spin-hint');
+  if (!spinImg || !card) return;
 
-  card.addEventListener('mouseleave', () => { tx = 0; ty = 0; });
+  let frame = 0;
+  let dragging = false;
+  let startX = 0;
+  let startFrame = 0;
+  const PX_PER_FRAME = 40; // pixels to drag per frame change
 
-  let cx = 0, cy = 0;
-  function loop() {
-    cx += (tx - cx) * 0.1;
-    cy += (ty - cy) * 0.1;
-    card.style.transform = `perspective(800px) rotateY(${cx}deg) rotateX(${cy}deg)`;
-    photo.style.transform = `scale(1.04) translateX(${cx * 0.6}px) translateY(${cy * 0.6}px)`;
-    raf = requestAnimationFrame(loop);
+  function showFrame(f) {
+    frame = ((f % TOTAL) + TOTAL) % TOTAL;
+    spinImg.src = FRAMES[frame];
   }
-  loop();
+
+  function onStart(x) {
+    // Only spin when no option photo is shown
+    if (parseFloat(photoEl.style.opacity) > 0.5) return;
+    dragging = true;
+    startX = x;
+    startFrame = frame;
+    card.style.cursor = 'grabbing';
+    if (hint) hint.style.opacity = '0';
+  }
+  function onMove(x) {
+    if (!dragging) return;
+    const delta = x - startX;
+    const frameDelta = Math.round(delta / PX_PER_FRAME);
+    showFrame(startFrame + frameDelta);
+  }
+  function onEnd() {
+    dragging = false;
+    card.style.cursor = 'grab';
+  }
+
+  // Mouse
+  card.addEventListener('mousedown', e => onStart(e.clientX));
+  window.addEventListener('mousemove', e => onMove(e.clientX));
+  window.addEventListener('mouseup', onEnd);
+
+  // Touch
+  card.addEventListener('touchstart', e => onStart(e.touches[0].clientX), {passive:true});
+  window.addEventListener('touchmove', e => onMove(e.touches[0].clientX), {passive:true});
+  window.addEventListener('touchend', onEnd);
+
+  // Expose: when option clicked, overlay the detail photo and hide spin briefly
+  window._bsdSpinShowDetail = function(show) {
+    spinImg.style.opacity = show ? '0.15' : '1';
+    if (hint) hint.style.opacity = show ? '0' : '0.6';
+  };
 })();
 </script>
 
