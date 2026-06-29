@@ -2662,12 +2662,30 @@ function bsdUpdate(){
 
 // pill bindings
 document.querySelectorAll('[data-btn]').forEach(b=>{
-  if(b.closest('.bsd-pill-row')) b.addEventListener('click',()=>{document.querySelectorAll('[data-btn].bsd-pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');BSD.btn=b.dataset.btn;bsdUpdate();});
+  if(b.closest('.bsd-pill-row')) b.addEventListener('click',()=>{
+    document.querySelectorAll('[data-btn].bsd-pill').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); BSD.btn=b.dataset.btn;
+    const src=BSD_PHOTO_IMGS.btn[BSD.btn];
+    if(src) bsd3dOpen(src, BSD.btn+' Button');
+    else bsdUpdate();
+  });
 });
 document.querySelectorAll('[data-fit]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-fit]').forEach(x=>x.classList.remove('active'));b.classList.add('active');BSD.fit=b.dataset.fit;bsdUpdate();}));
 document.querySelectorAll('[data-trouser]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-trouser]').forEach(x=>x.classList.remove('active'));b.classList.add('active');BSD.trouser=b.dataset.trouser;bsdUpdate();}));
-document.querySelectorAll('[data-sleeve]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-sleeve]').forEach(x=>x.classList.remove('active'));b.classList.add('active');BSD.sleeve=b.dataset.sleeve;bsdUpdate();}));
-document.querySelectorAll('[data-pocket]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-pocket]').forEach(x=>x.classList.remove('active'));b.classList.add('active');BSD.pocket=b.dataset.pocket;bsdUpdate();}));
+document.querySelectorAll('[data-sleeve]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('[data-sleeve]').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active'); BSD.sleeve=b.dataset.sleeve;
+  const src=b.dataset.sleeve==='4'?BSD_PHOTO_IMGS.btn['4']:'';
+  if(src) bsd3dOpen(src, "Surgeon's Cuff — Working Buttonholes");
+  else bsdUpdate();
+}));
+document.querySelectorAll('[data-pocket]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('[data-pocket]').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active'); BSD.pocket=b.dataset.pocket;
+  const src=BSD_PHOTO_IMGS.pocket[BSD.pocket];
+  if(src) bsd3dOpen(src, b.textContent.trim()+' Pocket');
+  else bsdUpdate();
+}));
 document.querySelectorAll('[data-vent]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-vent]').forEach(x=>x.classList.remove('active'));b.classList.add('active');BSD.vent=b.dataset.vent;bsdUpdate();}));
 
 bsdRenderFabricRow();
@@ -2826,23 +2844,6 @@ document.querySelectorAll('[data-style]').forEach(b => b.addEventListener('click
   if(src) bsd3dOpen(src, BSD_HOUSE === 'british' ? 'British House — Structured Classic' : 'Neapolitan House — Soft Drape');
 }));
 
-// Button click → show photo
-document.querySelectorAll('[data-btn]').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('[data-btn]').forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
-  BSD.btn = b.dataset.btn;
-  const src = BSD_PHOTO_IMGS.btn[BSD.btn];
-  if(src) bsd3dOpen(src, BSD.btn + ' Button — ' + (BSD.btn==='1'?'Single Breasted Elegant':BSD.btn==='2'?'Classic Two Button':'Three Button Traditional'));
-}));
-
-// Pocket click → show photo
-document.querySelectorAll('[data-pocket]').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('[data-pocket]').forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
-  BSD.pocket = b.dataset.pocket;
-  const src = BSD_PHOTO_IMGS.pocket[BSD.pocket];
-  if(src) bsd3dOpen(src, BSD.pocket.charAt(0).toUpperCase()+BSD.pocket.slice(1)+' Pocket');
-}));
 
 // Shoulder click → 3D view
 document.querySelectorAll('[data-shoulder]').forEach(el => el.addEventListener('click', () => {
