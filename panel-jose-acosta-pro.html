@@ -987,6 +987,7 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
         <div id="pane-citas" class="tab-pane">
           <div class="page-hd page-hd-row">
             <div><div class="page-title">Citas</div><div class="page-sub">Agenda del agente IA</div></div>
+            <button class="btn btn-ghost" onclick="openBloqueoModal()" style="border-color:rgba(196,163,90,.4);color:#c4a35a">Bloquear días</button>
             <button class="btn btn-accent" onclick="openNuevaCitaModal()">+ Nueva cita</button>
           </div>
           <div class="card">
@@ -2073,6 +2074,14 @@ function renderCitasCalendar(){
     html+=`<div class="day-col"><div class="day-hd ${isToday?'today-hd':''}">${day.toLocaleDateString('es-ES',{weekday:'short',day:'numeric'})}</div><div class="grid-body">`;
     html+=hours.map((h)=>`<div class="grid-row" onclick="openNuevaCitaModalFechaHora('${dayStr}','${String(h).padStart(2,'0')}:00')"></div>`).join('');
     const dayCitas=allCitas.filter(c=>apptLocalDate(c.starts_at)===dayStr&&c.status!=='cancelled');
+    const isBlocked=dayCitas.some(c=>c.status==='blocked');
+    if(isBlocked){
+      const blk=dayCitas.find(c=>c.status==='blocked');
+      html+=`<div style="position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(148,163,184,.07) 0,rgba(148,163,184,.07) 4px,transparent 4px,transparent 10px);pointer-events:none;z-index:1"></div>`;
+      html+=`<div class="appt-block" style="top:0;height:100%;background:#94a3b822;border-left-color:#94a3b8;z-index:2" onclick="openCitaModal('${blk.id}')">
+        <div class="appt-name" style="color:#94a3b8">🔒 ${esc(blk.service)}</div>
+      </div>`;
+    } else {
     dayCitas.forEach(c=>{
       const dt=new Date(c.starts_at);
       const top=(dt.getHours()*60+dt.getMinutes())*60/60;
@@ -2083,6 +2092,7 @@ function renderCitasCalendar(){
         <div class="appt-svc">${esc(c.service)}</div>
       </div>`;
     });
+    }
     if(isToday){const now=new Date();html+=`<div class="now-line" style="top:${(now.getHours()*60+now.getMinutes())*60/60}px"></div>`;}
     html+='</div></div>';
   }
@@ -2101,9 +2111,12 @@ function renderCitasMonth(){
     const date=new Date(y,m,d);
     const ds=localDateStr(date);
     const dayCitas=allCitas.filter(c=>apptLocalDate(c.starts_at)===ds&&c.status!=='cancelled');
-    html+=`<div class="month-cell ${ds===today?'today-cell':''}" onclick="openNuevaCitaModalFecha('${ds}')"><div class="month-num">${d}</div>
-      ${dayCitas.slice(0,3).map(c=>`<div class="month-appt-pill" style="background:${svcColor(c.service)}22;color:${svcColor(c.service)}" onclick="event.stopPropagation();openCitaModal('${c.id}')">${esc(c.client_name)}</div>`).join('')}
-      ${dayCitas.length>3?`<div style="font-size:10px;color:var(--txt3)">+${dayCitas.length-3} más</div>`:''}
+    const dayBlk=dayCitas.find(c=>c.status==='blocked');
+    const normalCitas=dayCitas.filter(c=>c.status!=='blocked');
+    html+=`<div class="month-cell ${ds===today?'today-cell':''}" style="${dayBlk?'background:repeating-linear-gradient(-45deg,rgba(148,163,184,.06) 0,rgba(148,163,184,.06) 4px,transparent 4px,transparent 10px)':''}" onclick="openNuevaCitaModalFecha('${ds}')"><div class="month-num">${d}</div>
+      ${dayBlk?`<div class="month-appt-pill" style="background:#94a3b822;color:#94a3b8" onclick="event.stopPropagation();openCitaModal('${dayBlk.id}')">🔒 ${esc(dayBlk.service)}</div>`:''}
+      ${normalCitas.slice(0,2).map(c=>`<div class="month-appt-pill" style="background:${svcColor(c.service)}22;color:${svcColor(c.service)}" onclick="event.stopPropagation();openCitaModal('${c.id}')">${esc(c.client_name)}</div>`).join('')}
+      ${normalCitas.length>2?`<div style="font-size:10px;color:var(--txt3)">+${normalCitas.length-2} más</div>`:''}
     </div>`;
   }
   html+='</div>';
@@ -2273,7 +2286,15 @@ function openNuevaCitaModal(prefillDate, prefillTime){
         <div class="modal-field full"><label>Nombre del cliente *</label><input id="nc-name" placeholder="Ej: Juan García"/></div>
         <div class="modal-field"><label>Teléfono</label><input id="nc-phone" type="tel" placeholder="600 000 000"/></div>
         <div class="modal-field"><label>Email</label><input id="nc-email" type="email"/></div>
-        <div class="modal-field full"><label>Servicio *</label><input id="nc-service" placeholder="Ej: Toma de medidas"/></div>
+        <div class="modal-field full"><label>Servicio *</label>
+          <select id="nc-service" onchange="(function(){const s=document.getElementById('nc-service').value;const d=document.getElementById('nc-dur');if(s==='Traje de novios'||s==='Traje a medida')d.value=45;else if(s==='Camisa a medida'||s==='Otros')d.value=20;else d.value=60;})()">
+            <option value="">— Seleccionar servicio —</option>
+            <option value="Traje de novios">Traje de novios</option>
+            <option value="Traje a medida">Traje a medida</option>
+            <option value="Camisa a medida">Camisa a medida</option>
+            <option value="Otros">Otros</option>
+          </select>
+        </div>
         <div class="modal-field"><label>Fecha *</label><input id="nc-date" type="date" value="${defDate}"/></div>
         <div class="modal-field"><label>Hora *</label><input id="nc-time" type="time" value="${defTime}"/></div>
         <div class="modal-field"><label>Duración (min)</label><input id="nc-dur" type="number" value="60" min="15" step="15"/></div>
@@ -2301,6 +2322,43 @@ async function saveCita(){
   const payload={business_slug:BIZ_SLUG,client_name:name,client_phone:document.getElementById('nc-phone').value||null,client_email:document.getElementById('nc-email').value||null,service,starts_at,ends_at,duration_minutes:dur,status:document.getElementById('nc-status').value,notes:document.getElementById('nc-notes').value||null};
   await _sb.from('appointments').insert(payload);
   closeModal();loadAll();showToast('Cita creada');
+}
+function openBloqueoModal(){
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const hoy=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  document.getElementById('modal-box').innerHTML=`
+    <div class="modal-hd"><div><h3>Bloquear días</h3><p style="font-size:12px;color:#94a3b8;margin:4px 0 0">Vacaciones, eventos o cierres. Los clientes no podrán reservar en este período.</p></div><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="modal-field"><label>Fecha inicio *</label><input id="bl-from" type="date" value="${hoy}"/></div>
+        <div class="modal-field"><label>Fecha fin *</label><input id="bl-to" type="date" value="${hoy}"/></div>
+        <div class="modal-field full"><label>Motivo</label><input id="bl-reason" placeholder="Ej: Vacaciones agosto"/></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-accent" onclick="saveBloqueo()">Bloquear</button>
+      </div>
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+async function saveBloqueo(){
+  const from=document.getElementById('bl-from').value;
+  const to=document.getElementById('bl-to').value;
+  if(!from||!to){alert('Indica fecha inicio y fin');return;}
+  if(to<from){alert('La fecha fin debe ser igual o posterior al inicio');return;}
+  const reason=document.getElementById('bl-reason').value||'Cierre';
+  // Crear un bloqueo por cada día del rango
+  const rows=[];
+  let cur=new Date(from+'T00:00:00');
+  const end=new Date(to+'T23:59:59');
+  while(cur<=end){
+    const ds=cur.toISOString().slice(0,10);
+    rows.push({business_slug:BIZ_SLUG,client_name:'— BLOQUEADO —',service:reason,starts_at:ds+'T00:00:00.000Z',ends_at:ds+'T23:59:00.000Z',duration_minutes:1439,status:'blocked',notes:'bloqueo_manual'});
+    cur.setDate(cur.getDate()+1);
+  }
+  await _sb.from('appointments').insert(rows);
+  closeModal();loadAll();showToast(`${rows.length} día(s) bloqueado(s)`);
 }
 
 // ── LEADS ──────────────────────────────────────────────────────────────────
@@ -3357,20 +3415,15 @@ async function _buildEncBody(o={}){
         <div class="crm-form-group"><label class="crm-form-label">Forro traje</label><input class="crm-form-ctrl" id="tej-forro-traje" value="${esc(tej.forro_traje||'')}"/></div>
       </div>
       <div class="crm-form-row" style="margin-bottom:6px">
-        <div class="crm-form-group"><label class="crm-form-label">Bordado traje</label><input class="crm-form-ctrl" id="tej-bordado" value="${esc(tej.bordado||'')}"/></div>
         <div class="crm-form-group"><label class="crm-form-label">Tejido chaleco</label><input class="crm-form-ctrl" id="tej-chaleco" value="${esc(tej.tejido_chaleco||'')}"/></div>
-      </div>
-      <div class="crm-form-row" style="margin-bottom:6px">
         <div class="crm-form-group"><label class="crm-form-label">Forro chaleco</label><input class="crm-form-ctrl" id="tej-forro-chaleco" value="${esc(tej.forro_chaleco||'')}"/></div>
-        <div class="crm-form-group"><label class="crm-form-label">Tejido camisa</label><input class="crm-form-ctrl" id="tej-camisa" value="${esc(tej.tejido_camisa||'')}"/></div>
       </div>
       <div class="crm-form-row" style="margin-bottom:6px">
-        <div class="crm-form-group"><label class="crm-form-label">Bordado camisa</label><input class="crm-form-ctrl" id="tej-bordado-camisa" value="${esc(tej.bordado_camisa||'')}"/></div>
+        <div class="crm-form-group"><label class="crm-form-label">Tejido camisa</label><input class="crm-form-ctrl" id="tej-camisa" value="${esc(tej.tejido_camisa||'')}"/></div>
         <div class="crm-form-group"><label class="crm-form-label">Diseño</label><input class="crm-form-ctrl" id="tej-diseno" value="${esc(tej.diseno||'')}"/></div>
       </div>
       <div class="crm-form-row" style="margin-bottom:6px">
-        <div class="crm-form-group"><label class="crm-form-label">Frase personalizada</label><input class="crm-form-ctrl" id="tej-frase" value="${esc(tej.frase||'')}"/></div>
-        <div class="crm-form-group"><label class="crm-form-label">Iniciales</label><input class="crm-form-ctrl" id="tej-iniciales" value="${esc(tej.iniciales||'')}"/></div>
+        <div class="crm-form-group"><label class="crm-form-label">Altura de pecho (cm)</label><input type="number" class="crm-form-ctrl" id="tej-altura-pecho" value="${esc(tej.altura_pecho||'')}"/></div>
       </div>
     </div>
 
@@ -3475,7 +3528,7 @@ async function crmSaveEncargo(){
   Object.entries(evFields).forEach(([k,id])=>{const v=cv(id);if(v)evento[k]=v;});
   // Tejidos
   const tejidos={};
-  const tejFields={tejido_traje:'tej-traje',forro_traje:'tej-forro-traje',bordado:'tej-bordado',tejido_chaleco:'tej-chaleco',forro_chaleco:'tej-forro-chaleco',tejido_camisa:'tej-camisa',bordado_camisa:'tej-bordado-camisa',diseno:'tej-diseno',frase:'tej-frase',iniciales:'tej-iniciales'};
+  const tejFields={tejido_traje:'tej-traje',forro_traje:'tej-forro-traje',tejido_chaleco:'tej-chaleco',forro_chaleco:'tej-forro-chaleco',tejido_camisa:'tej-camisa',diseno:'tej-diseno',altura_pecho:'tej-altura-pecho'};
   Object.entries(tejFields).forEach(([k,id])=>{const v=cv(id);if(v)tejidos[k]=v;});
   // Pago
   const precio=parseFloat(cv('ef-price'))||null;
