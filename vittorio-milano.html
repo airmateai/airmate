@@ -1505,7 +1505,7 @@ section{position:relative;padding:120px 5vw;}
           <img id="bsd-spin-img" src="vittorio-assets/suit-spin-000.jpg" alt="Suit 360°"
             style="width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none;cursor:grab;">
           <!-- Option detail photo (shown on top when clicking options) -->
-          <img id="bsd-photo" alt="" style="opacity:0;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;transition:opacity .4s ease;">
+          <img id="bsd-photo" alt="" style="opacity:0;display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;transition:opacity .4s ease;">
           <!-- Spin hint -->
           <div id="bsd-spin-hint" style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.12em;white-space:nowrap;font-family:'Cinzel',serif;pointer-events:none;">⟵ drag to rotate ⟶</div>
         </div>
@@ -2639,10 +2639,10 @@ function bsdUpdate(){
     src=window.VM_SUIT_RENDERS[BSD.color+'-'+BSD.lapel]||window.VM_SUIT_RENDERS['charcoal-notch']||'';
   }
   if(src){
-    photoEl.style.animation='none';void photoEl.offsetWidth;photoEl.style.animation='';
-    photoEl.src=src;
-    photoEl.style.opacity='1';
+    photoEl.style.opacity='0';
+    photoEl.style.display='none';
     const ld=document.getElementById('bsd-loading');if(ld)ld.style.display='none';
+    if(window._bsdSpinShowDetail) window._bsdSpinShowDetail(false);
   }
   const cObj=BSD_COLORS.find(c=>c.key===BSD.color)||BSD_COLORS[0];
   const lObj=BSD_LAPELS.find(l=>l.key===BSD.lapel)||BSD_LAPELS[0];
@@ -2783,6 +2783,7 @@ function bsd3dOpen(src, label) {
   if(ld) ld.style.display = 'none';
   // Crossfade: fade out → swap src → fade in
   photoEl.style.opacity = '0';
+  photoEl.style.display = 'block';
   if (window._bsdSpinShowDetail) window._bsdSpinShowDetail(true);
   setTimeout(() => {
     photoEl.src = src;
