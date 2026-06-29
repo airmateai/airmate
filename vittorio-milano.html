@@ -1608,7 +1608,11 @@ section{position:relative;padding:120px 5vw;}
             <button class="bsd-lining-type" data-lining-type="half">Half Lining</button>
             <button class="bsd-lining-type" data-lining-type="unlined">Unlined</button>
           </div>
-          <div class="bsd-lining-row" id="bsd-lining-row"></div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
+            <button onclick="bsdLiningScroll(-1)" style="background:none;border:1px solid rgba(201,160,92,.3);color:#c4a05c;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">‹</button>
+            <div id="bsd-lining-row" style="display:flex;gap:8px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;flex:1"></div>
+            <button onclick="bsdLiningScroll(1)" style="background:none;border:1px solid rgba(201,160,92,.3);color:#c4a05c;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">›</button>
+          </div>
         </div>
 
         <div class="bsd-section">
@@ -2559,7 +2563,7 @@ function bsdRenderFabricRow(){
       <div class="bsd-fab-tex" style="background:${c.tex}"></div>
       <div class="bsd-fab-lbl">${c.name}</div>
     </div>`).join('');
-  document.querySelectorAll('[data-color]').forEach(el=>el.addEventListener('click',()=>{BSD.color=el.dataset.color;BSD.pattern=null;bsdRenderFabricRow();bsdRenderPatRow();bsdUpdate();}));
+  document.querySelectorAll('[data-color]').forEach(el=>el.addEventListener('click',()=>{BSD.color=el.dataset.color;BSD.pattern=null;_bsdDetailSrc='';bsdRenderFabricRow();bsdRenderPatRow();bsdUpdate();}));
 }
 function bsdRenderPatRow(){
   const p=window.VM_PATTERN_RENDERS||{};
@@ -2570,7 +2574,7 @@ function bsdRenderPatRow(){
       <div class="bsd-fab-lbl">${pat.name}</div>
     </div>`;
   }).join('');
-  document.querySelectorAll('[data-pat]').forEach(el=>el.addEventListener('click',()=>{BSD.pattern=el.dataset.pat;bsdRenderFabricRow();bsdRenderPatRow();bsdUpdate();}));
+  document.querySelectorAll('[data-pat]').forEach(el=>el.addEventListener('click',()=>{BSD.pattern=el.dataset.pat;_bsdDetailSrc='';bsdRenderFabricRow();bsdRenderPatRow();bsdUpdate();}));
 }
 function bsdRenderLapelRow(){
   const house = BSD_HOUSE === 'british' ? 'british' : 'naples';
@@ -2582,7 +2586,14 @@ function bsdRenderLapelRow(){
       <div class="bsd-lapel-sub">${l.sub}</div>
     </div>`;
   }).join('');
-  document.querySelectorAll('[data-lapel-bsd]').forEach(el=>el.addEventListener('click',()=>{BSD.lapel=el.dataset['lapelBsd'];bsdRenderLapelRow();bsdUpdate();}));
+  document.querySelectorAll('[data-lapel-bsd]').forEach(el=>el.addEventListener('click',()=>{
+    BSD.lapel=el.dataset['lapelBsd'];
+    bsdRenderLapelRow();
+    const house=BSD_HOUSE==='british'?'british':'naples';
+    const imgs=BSD_LAPEL_IMGS[BSD.lapel];
+    if(imgs) bsd3dOpen(imgs[house]||imgs.naples, BSD_LAPEL_LABELS[BSD.lapel]||BSD.lapel);
+    else bsdUpdate();
+  }));
 }
 function bsdRenderLiningRow(){
   const p=(window.VM_DESIGN_PHOTOS&&window.VM_DESIGN_PHOTOS.linings)||{};
@@ -2751,14 +2762,22 @@ document.querySelectorAll('.nav-links a').forEach(a=>a.addEventListener('click',
 
 // ══ 3D VIEW MODAL ══
 
+let _bsdDetailSrc = '';
 function bsd3dOpen(src, label) {
-  const ov = document.getElementById('bsd-3d-overlay');
-  document.getElementById('bsd-3d-img').src = src;
-  document.getElementById('bsd-3d-label').textContent = label;
-  ov.classList.add('open');
+  _bsdDetailSrc = src;
+  const photoEl = document.getElementById('bsd-photo');
+  const ld = document.getElementById('bsd-loading');
+  if(ld) ld.style.display = 'none';
+  photoEl.style.animation = 'none'; void photoEl.offsetWidth; photoEl.style.animation = '';
+  photoEl.src = src;
+  photoEl.style.opacity = '1';
+  photoEl.style.objectFit = 'contain';
+  // update label below preview
+  const specLead = document.getElementById('bsd-spec-color');
+  if(specLead) specLead.textContent = label;
 }
 function bsd3dClose() {
-  document.getElementById('bsd-3d-overlay').classList.remove('open');
+  // no-op — kept for compatibility
 }
 // overlay close on backdrop click — wired via onclick on the element itself
 
@@ -2799,6 +2818,12 @@ document.querySelectorAll('[data-lining-type]').forEach(b => b.addEventListener(
   const src = BSD_LINING_IMGS[BSD_LINING_TYPE];
   if(src) bsd3dOpen(src, BSD_LINING_TYPE_LABELS[BSD_LINING_TYPE] || b.textContent);
 }));
+
+// Lining colour carousel scroll
+function bsdLiningScroll(dir) {
+  const row = document.getElementById('bsd-lining-row');
+  if(row) row.scrollLeft += dir * 120;
+}
 
 // Trouser cut click → show 3D image
 const BSD_TROUSER_LABELS = {
