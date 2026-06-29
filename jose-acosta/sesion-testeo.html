@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sesión de Testeo · Jose Acosta</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f8fafc;--card:#fff;
+  --navy:#0a1628;--blue:#1565c0;--blue2:#1e88e5;
+  --green:#16a34a;--green-bg:#dcfce7;--green-text:#166534;
+  --orange:#ea580c;--orange-bg:#ffedd5;--orange-text:#9a3412;
+  --red:#dc2626;--red-bg:#fee2e2;--red-text:#991b1b;
+  --gold:#92400e;--gold-bg:#fef3c7;--gold-text:#92400e;
+  --purple:#7c3aed;--purple-bg:#f3e8ff;--purple-text:#6d28d9;
+  --border:#e2e8f0;--text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+  --shadow2:0 8px 24px rgba(0,0,0,.08);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,var(--navy) 0%,#0d2a5c 100%);padding:48px 0 0;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;right:-80px;top:-80px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(21,101,192,.25),transparent 70%)}
+.header::after{content:'';position:absolute;left:30%;bottom:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(0,188,212,.1),transparent 70%)}
+.header-inner{max-width:900px;margin:0 auto;padding:0 32px;position:relative;z-index:1}
+.header-tag{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.header-tag::before{content:'';width:20px;height:1px;background:rgba(255,255,255,.3)}
+.header-title{font-family:'Space Grotesk',sans-serif;font-size:38px;font-weight:800;color:#fff;line-height:1.1;margin-bottom:10px}
+.header-title span{color:#26c6da}
+.header-sub{font-size:14px;color:rgba(255,255,255,.45);margin-bottom:32px;line-height:1.6}
+.header-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:36px}
+.chip{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid}
+.chip-blue{background:rgba(21,101,192,.15);color:#64b5f6;border-color:rgba(21,101,192,.25)}
+.chip-green{background:rgba(22,163,74,.1);color:#4ade80;border-color:rgba(22,163,74,.2)}
+.chip-orange{background:rgba(234,88,12,.1);color:#fb923c;border-color:rgba(234,88,12,.2)}
+.header-steps-bar{background:rgba(255,255,255,.04);border-top:1px solid rgba(255,255,255,.07);display:flex;overflow-x:auto}
+.step-tab{flex:1;min-width:120px;padding:14px 16px;text-align:center;border-right:1px solid rgba(255,255,255,.06);cursor:default}
+.step-tab:last-child{border-right:none}
+.step-tab-num{font-size:10px;color:rgba(255,255,255,.3);font-weight:700;letter-spacing:.06em;margin-bottom:2px}
+.step-tab-label{font-size:11px;font-weight:600;color:rgba(255,255,255,.5)}
+.step-tab.done .step-tab-num{color:#4ade80}
+.step-tab.done .step-tab-label{color:rgba(255,255,255,.8)}
+.step-tab.active .step-tab-num{color:#26c6da}
+.step-tab.active .step-tab-label{color:#fff}
+.step-tab.pending .step-tab-label{color:rgba(255,255,255,.3)}
+
+/* CONTENT */
+.page{max-width:900px;margin:0 auto;padding:36px 32px 80px}
+
+/* SECTION */
+.section{margin-bottom:32px}
+.section-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.section-num{width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;font-family:'Space Grotesk',sans-serif}
+.section-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700}
+.section-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px}
+.b-ok{background:var(--green-bg);color:var(--green-text)}
+.b-pending{background:var(--orange-bg);color:var(--orange-text)}
+.b-blocker{background:var(--red-bg);color:var(--red-text)}
+.b-pay{background:var(--gold-bg);color:var(--gold-text)}
+.b-info{background:#dbeafe;color:#1e40af}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:12px}
+.card-body{padding:20px 24px}
+
+/* CHECKLIST */
+.checklist{display:flex;flex-direction:column;gap:0}
+.check-item{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
+.check-item:last-child{border-bottom:none}
+.check-ico{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.ico-ok{background:var(--green-bg)}
+.ico-ok svg{color:var(--green)}
+.ico-pending{background:var(--orange-bg)}
+.ico-pending svg{color:var(--orange)}
+.ico-blocker{background:var(--red-bg)}
+.ico-blocker svg{color:var(--red)}
+.ico-pay{background:var(--gold-bg)}
+.ico-pay svg{color:var(--gold)}
+.ico-info{background:#dbeafe}
+.ico-info svg{color:var(--blue)}
+.check-ico svg{width:14px;height:14px}
+.check-text{flex:1}
+.check-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
+.check-sub{font-size:12px;color:var(--text2);line-height:1.6}
+.check-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;margin-top:5px;display:inline-block}
+.tag-ok{background:var(--green-bg);color:var(--green-text)}
+.tag-pending{background:var(--orange-bg);color:var(--orange-text)}
+.tag-blocker{background:var(--red-bg);color:var(--red-text)}
+.tag-pay{background:var(--gold-bg);color:var(--gold-text)}
+.tag-info{background:#dbeafe;color:#1e40af}
+
+/* BLOCKER BANNER */
+.blocker-banner{background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1.5px solid #fed7aa;border-radius:16px;padding:24px 28px;margin-bottom:12px}
+.bb-title{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--orange);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.bb-sub{font-size:13px;color:#9a3412;line-height:1.7}
+
+.pay-banner{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #fde68a;border-radius:16px;padding:24px 28px;margin-bottom:12px}
+.pb-title{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.pb-items{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.pb-item{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #fde68a;border-radius:10px;padding:12px 16px}
+.pb-item-name{font-size:13px;font-weight:600;color:var(--text)}
+.pb-item-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.pb-item-price{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:800;color:var(--gold)}
+
+/* STEP CARDS */
+.step-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.step-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.sc-num{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.sc-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.sc-sub{font-size:12px;color:var(--text2);line-height:1.6}
+.sc-time{display:flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;color:var(--text3);font-weight:600}
+
+/* FLOW */
+.flow{display:flex;align-items:flex-start;gap:0;overflow-x:auto;padding:4px 0 8px;margin-bottom:0}
+.flow-step{display:flex;align-items:center;gap:0;flex-shrink:0}
+.flow-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;min-width:140px;text-align:center;box-shadow:var(--shadow)}
+.flow-box-icon{font-size:20px;margin-bottom:6px}
+.flow-box-title{font-size:12px;font-weight:700;color:var(--text)}
+.flow-box-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.flow-arrow{padding:0 8px;color:var(--text3);font-size:18px;flex-shrink:0}
+
+/* TOTAL BOX */
+.total-box{background:linear-gradient(135deg,var(--navy),#0d2a5c);border-radius:20px;padding:32px;color:#fff;text-align:center;position:relative;overflow:hidden}
+.total-box::before{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(0,188,212,.15),transparent 70%)}
+.total-label{font-size:11px;color:rgba(255,255,255,.4);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+.total-price{font-family:'Space Grotesk',sans-serif;font-size:52px;font-weight:900;color:#fff;line-height:1}
+.total-price span{color:#26c6da}
+.total-mes{font-size:16px;color:rgba(255,255,255,.5);margin-top:6px}
+.total-mes span{color:#4ade80;font-weight:700}
+.total-includes{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.ti{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 14px;font-size:11px;font-weight:600;color:rgba(255,255,255,.6)}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:28px 0}
+
+@media(max-width:640px){
+  .step-cards{grid-template-columns:1fr}
+  .header-title{font-size:28px}
+  .page{padding:24px 16px 60px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-tag">Airmate · Jose Acosta</div>
+    <div class="header-title">Sesión de testeo<br><span>& entrega del panel</span></div>
+    <div class="header-sub">Plan paso a paso para probar todo el sistema juntos antes de la entrega oficial. Duración estimada: 45–60 min.</div>
+    <div class="header-chips">
+      <div class="chip chip-green">✓ Panel 100% construido</div>
+      <div class="chip chip-green">✓ 820+ clientes importados</div>
+      <div class="chip chip-blue">→ Pendiente: 2 permisos API</div>
+      <div class="chip chip-orange">→ Pendiente: pago setup</div>
+    </div>
+  </div>
+  <div class="header-steps-bar">
+    <div class="step-tab done"><div class="step-tab-num">✓ HECHO</div><div class="step-tab-label">Construcción</div></div>
+    <div class="step-tab done"><div class="step-tab-num">✓ HECHO</div><div class="step-tab-label">Importar clientes</div></div>
+    <div class="step-tab active"><div class="step-tab-num">HOY</div><div class="step-tab-label">Testeo conjunto</div></div>
+    <div class="step-tab pending"><div class="step-tab-num">PENDIENTE</div><div class="step-tab-label">Permisos Holded</div></div>
+    <div class="step-tab pending"><div class="step-tab-num">PENDIENTE</div><div class="step-tab-label">Pago & entrega</div></div>
+    <div class="step-tab pending"><div class="step-tab-num">FINAL</div><div class="step-tab-label">Live 🚀</div></div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- BLOCKER: PERMISOS HOLDED -->
+  <div class="blocker-banner">
+    <div class="bb-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Acción necesaria antes de la sesión
+    </div>
+    <div class="bb-sub">
+      Para que el panel se conecte con Holded y pueda importar tus facturas y productos automáticamente, necesitas <strong>activar 2 permisos en tu cuenta Holded</strong>. Es un clic. Sin esto el sistema funciona pero sin los datos de Holded.
+      <br><br>
+      <strong>Cómo hacerlo:</strong> Holded → Configuración → API → Activar permisos: <strong>Invoicing</strong> + <strong>Products</strong>. Luego me mandas la API key actualizada.
+    </div>
+  </div>
+
+  <!-- PAGO PENDIENTE -->
+  <div class="pay-banner">
+    <div class="pb-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Pagos pendientes para activar todo
+    </div>
+    <div style="font-size:12px;color:#92400e;margin-bottom:4px">Una vez hecho el pago, activo los dos servicios en menos de 24h.</div>
+    <div class="pb-items">
+      <div class="pb-item">
+        <div>
+          <div class="pb-item-name">Setup del panel completo</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">CRM · Citas · Encargos · TPV · Inventario · Facturación</div>
+        </div>
+        <div class="pb-item-price">800€</div>
+      </div>
+      <div class="pb-item">
+        <div>
+          <div class="pb-item-name">Verifactu — Facturación legal</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">Necesario para emitir facturas oficiales desde el panel (obligatorio 2025)</div>
+        </div>
+        <div style="text-align:right">
+          <div class="pb-item-price" style="font-size:14px;color:var(--text3)">incluido</div>
+          <div style="font-size:10px;color:var(--text3)">en mantenimiento</div>
+        </div>
+      </div>
+      <div class="pb-item">
+        <div>
+          <div class="pb-item-name">EmailJS — Correos automáticos</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">Confirmaciones de cita, recordatorio 24h, encargos, facturas por email</div>
+        </div>
+        <div style="text-align:right">
+          <div class="pb-item-price" style="font-size:14px;color:var(--text3)">incluido</div>
+          <div style="font-size:10px;color:var(--text3)">en mantenimiento</div>
+        </div>
+      </div>
+      <div class="pb-item" style="background:linear-gradient(135deg,#fffbeb,#fef3c7)">
+        <div>
+          <div class="pb-item-name" style="color:var(--gold)">Mantenimiento mensual</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">Verifactu + EmailJS + soporte + actualizaciones</div>
+        </div>
+        <div class="pb-item-price">79€/mes</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- PASO A PASO SESION -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">1</div>
+      <div>
+        <div class="section-title">Probamos el acceso y los clientes</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">~5 min</div>
+      </div>
+      <span class="section-badge b-ok">Listo</span>
+    </div>
+    <div class="card">
+      <div class="card-body checklist">
+        <div class="check-item">
+          <div class="check-ico ico-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="check-text">
+            <div class="check-title">Login con tu email</div>
+            <div class="check-sub">Accedes con tu correo, sin contraseña que recordar. El sistema reconoce quién eres.</div>
+            <span class="check-tag tag-ok">✓ Funciona</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-ico ico-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="check-text">
+            <div class="check-title">820+ clientes importados de Holded</div>
+            <div class="check-sub">Todos tus clientes ya están dentro. Puedes buscar por nombre, teléfono o tipo de encargo.</div>
+            <span class="check-tag tag-ok">✓ Importados</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-ico ico-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="check-text">
+            <div class="check-title">Buscar un cliente tuyo real</div>
+            <div class="check-sub">Vamos a buscar un cliente que conozcas para que veas que los datos son correctos.</div>
+            <span class="check-tag tag-ok">✓ Listo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">2</div>
+      <div>
+        <div class="section-title">Probamos las citas</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">~10 min</div>
+      </div>
+      <span class="section-badge b-ok">Listo</span>
+    </div>
+    <div class="card">
+      <div class="card-body checklist">
+        <div class="check-item">
+          <div class="check-ico ico-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="check-text">
+            <div class="check-title">Crear una cita nueva</div>
+            <div class="check-sub">Asignamos un cliente, fecha, hora y tipo de servicio. Exactamente como lo haces hoy pero en el sistema.</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-ico ico-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="check-text">
+            <div class="check-title">Ver el calendario de citas</div>
+            <div class="check-sub">Vista semanal de todas las citas, con colores por tipo de servicio.</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-ico ico-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+          <div class="check-text">
+            <div class="check-title">Email automático de confirmación al cliente</div>
+            <div class="check-sub">Cuando creas la cita, el cliente recibe un email automático con todos los detalles. Y otro 24h antes recordándoselo.</div>
+            <span class="check-tag tag-pending">Requiere EmailJS activo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">3</div>
+      <div>
+        <div class="section-title">Probamos los encargos</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">~10 min</div>
+      </div>
+      <span class="section-badge b-ok">Listo</span>
+    </div>
+    <div class="card">
+      <div class="card-body checklist">
+        <div class="check-item">
+          <div class="check-ico ico-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="check-text">
+            <div class="check-title">Crear un encargo</div>
+            <div class="check-sub">Traje, chaqueta, pantalón — con medidas, tela, fecha de entrega y estado. Todo en el perfil del cliente.</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-ico ico-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="check-text">
+            <div class="check-title">Mover el estado del encargo</div>
+            <div class="check-sub">Pendiente → En proceso → Listo → Entregado. Con un clic. Sin papel, sin post-its.</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-ico ico-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="check-text">
+            <div class="check-title">Ver todos los encargos pendientes de entrega</div>
+            <div class="check-sub">Vista global de lo que está en taller ahora mismo, ordenado por fecha de entrega.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">4</div>
+      <div>
+        <div class="section-title">Probamos el TPV y cobros</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">~8 min</div>
+      </div>
+      <span class="section-badge b-ok">Listo</span>
+    </div>
+    <div class="card">
+      <div class="card-body checklist">
+        <div class="check-item">
+          <div class="check-ico ico-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="check-text">
+            <div class="check-title">Registrar un cobro</div>
+            <div class="check-sub">Efectivo, tarjeta o transferencia. El sistema guarda el historial de pagos de cada cliente.</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-ico ico-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div class="check-text">
+            <div class="check-title">Emitir factura oficial (Verifactu)</div>
+            <div class="check-sub">Con Verifactu activo, cada cobro genera una factura válida fiscalmente. La ley lo exige desde 2025.</div>
+            <span class="check-tag tag-pending">Requiere Verifactu activo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">5</div>
+      <div>
+        <div class="section-title">Probamos el inventario y stock</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">~5 min</div>
+      </div>
+      <span class="section-badge b-ok">Listo</span>
+    </div>
+    <div class="card">
+      <div class="card-body checklist">
+        <div class="check-item">
+          <div class="check-ico ico-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="check-text">
+            <div class="check-title">Ver catálogo de telas y productos</div>
+            <div class="check-sub">Con foto, precio, stock disponible. Puedes asignarlo directamente a un encargo.</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-ico ico-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>
+          <div class="check-text">
+            <div class="check-title">Sincronización con productos de Holded</div>
+            <div class="check-sub">Si activas el permiso Products en Holded, el catálogo se sincroniza automáticamente.</div>
+            <span class="check-tag tag-pending">Requiere permiso Holded Products</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">6</div>
+      <div>
+        <div class="section-title">Probamos los emails automáticos</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">~5 min — requiere EmailJS</div>
+      </div>
+      <span class="section-badge b-pending">Pendiente pago</span>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <!-- FLOW -->
+        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;font-weight:600">Así funciona el flujo de emails:</div>
+        <div class="flow">
+          <div class="flow-step">
+            <div class="flow-box">
+              <div class="flow-box-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+              <div class="flow-box-title">Creas la cita</div>
+              <div class="flow-box-sub">En el panel</div>
+            </div>
+            <div class="flow-arrow">→</div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-box">
+              <div class="flow-box-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+              <div class="flow-box-title">Email al cliente</div>
+              <div class="flow-box-sub">Confirmación inmediata</div>
+            </div>
+            <div class="flow-arrow">→</div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-box">
+              <div class="flow-box-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+              <div class="flow-box-title">Recordatorio 24h</div>
+              <div class="flow-box-sub">Automático</div>
+            </div>
+            <div class="flow-arrow">→</div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-box">
+              <div class="flow-box-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+              <div class="flow-box-title">Encargo listo</div>
+              <div class="flow-box-sub">Email notificación</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- RESUMEN PRECIO -->
+  <div class="total-box">
+    <div class="total-label">Inversión total para Jose Acosta</div>
+    <div class="total-price">800<span>€</span></div>
+    <div class="total-mes">+ <span>79€/mes</span> (Verifactu + EmailJS + soporte)</div>
+    <div class="total-includes">
+      <div class="ti">CRM completo</div>
+      <div class="ti">820+ clientes</div>
+      <div class="ti">Citas + recordatorios</div>
+      <div class="ti">Encargos + TPV</div>
+      <div class="ti">Inventario</div>
+      <div class="ti">Facturación legal</div>
+      <div class="ti">Emails automáticos</div>
+      <div class="ti">Sync Holded</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
