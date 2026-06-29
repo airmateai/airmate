@@ -1287,7 +1287,7 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
         <!-- FINANZAS -->
         <div id="pane-finanzas" class="tab-pane">
           <div class="page-hd page-hd-row">
-            <div><div class="page-title">Finanzas</div><div class="page-sub">Análisis financiero · datos de ejemplo</div></div>
+            <div><div class="page-title">Finanzas</div><div class="page-sub">Análisis financiero · Holded</div></div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <div id="fin-conn" style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:5px 10px;border-radius:20px;background:rgba(196,163,90,.12);color:#c4a35a;border:1px solid rgba(196,163,90,.3)"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:0"><circle cx="12" cy="12" r="8"/></svg> Holded</div>
               <select id="fin-mes" onchange="finanzasAnimar()" style="font-size:12px;padding:8px 12px;border:1px solid rgba(196,163,90,.3);border-radius:8px;background:#fff;color:#1a1410;font-weight:600;font-family:inherit">
@@ -1376,7 +1376,7 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
         <!-- VENTAS / TPV -->
         <div id="pane-ventas" class="tab-pane">
           <div class="page-hd page-hd-row">
-            <div><div class="page-title">Ventas / TPV</div><div class="page-sub">Caja del negocio · datos de ejemplo</div></div>
+            <div><div class="page-title">Ventas / TPV</div><div class="page-sub">Caja del negocio</div></div>
             <div style="display:flex;gap:8px;align-items:center">
               <button class="btn btn-ghost btn-sm" onclick="tpvVista('historial')" id="tpv-btn-hist"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M9 2h6a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v0a2 2 0 0 1 2-2z"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Historial</button>
               <button onclick="tpvVista('caja')" id="tpv-btn-caja" style="background:#0a0a0a;color:#c4a35a;border:1px solid rgba(196,163,90,.35);padding:7px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg> Nueva venta</button>
@@ -5532,8 +5532,33 @@ function _finGenDemo(){
 }
 
 async function _finLoadData(force){
-  if(!force && _finCache.ts && (Date.now()-_finCache.ts)<60000) return _finCache;
-  _finCache=_finGenDemo();
+  if(!force && _finCache.ts && (Date.now()-_finCache.ts)<120000) return _finCache;
+  try{
+    const now=Math.floor(Date.now()/1000);
+    const yearAgo=now-365*86400;
+    const [invoices, compras] = await Promise.all([
+      _sb.from('crm_invoices').select('*').eq('business_slug',BIZ_SLUG).eq('type','factura').order('issue_date',{ascending:false}).limit(300),
+      _sb.from('crm_invoices').select('*').eq('business_slug',BIZ_SLUG).eq('type','compra').order('issue_date',{ascending:false}).limit(300),
+    ]);
+    const facturas = invoices.data||[];
+    const gastos   = compras.data||[];
+    if(!facturas.length && !gastos.length){ _finCache=_finGenDemo(); return _finCache; }
+
+    const allPayments=[];
+    facturas.forEach(f=>{
+      const d=f.issue_date?new Date(f.issue_date).getTime()/1000:now;
+      allPayments.push({id:f.id,bankId:'1',contactName:f.client_name||'',amount:Number(f.total||0),desc:f.invoice_number||f.client_name||'Factura',date:d,documentType:'invoice',documentId:f.id,status:f.status});
+    });
+    gastos.forEach(g=>{
+      const d=g.issue_date?new Date(g.issue_date).getTime()/1000:now;
+      allPayments.push({id:g.id,bankId:'1',contactName:g.client_name||'',amount:-Number(g.total||0),desc:g.invoice_number||g.client_name||'Compra',date:d,documentType:'purchase',documentId:g.id});
+    });
+    allPayments.sort((a,b)=>b.date-a.date);
+    _finCache={treasury:[],expensesAcc:[],payments:allPayments,salesreceipt:[],creditnote:[],invoices:facturas,purchases:gastos,ts:Date.now(),_live:true};
+  }catch(e){
+    console.warn('Fin load failed',e);
+    _finCache=_finGenDemo();
+  }
   return _finCache;
 }
 
@@ -5549,12 +5574,19 @@ async function renderFinanzas(){
   const data = await _finLoadData();
 
   if(conn){
-    const liveOk = (data.treasury&&data.treasury.length)||(data.payments&&data.payments.length);
-    conn.textContent = 'Datos demo';
-    conn.style.opacity='1';
-    conn.style.background = 'rgba(196,163,90,.12)';
-    conn.style.color = '#c4a35a';
-    conn.style.borderColor = 'rgba(196,163,90,.3)';
+    if(data._live){
+      conn.textContent = '● Holded en vivo';
+      conn.style.opacity='1';
+      conn.style.background = 'rgba(22,163,74,.12)';
+      conn.style.color = '#16a34a';
+      conn.style.borderColor = 'rgba(22,163,74,.3)';
+    } else {
+      conn.textContent = 'Datos demo';
+      conn.style.opacity='1';
+      conn.style.background = 'rgba(196,163,90,.12)';
+      conn.style.color = '#c4a35a';
+      conn.style.borderColor = 'rgba(196,163,90,.3)';
+    }
   }
 
   _finRenderTreasury(data.treasury);
@@ -5573,7 +5605,7 @@ async function renderFinanzas(){
 function _finRenderTreasury(treasury){
   const box=document.getElementById('fin-treasury'); if(!box)return;
   if(!treasury||!treasury.length){
-    box.innerHTML='<div style="grid-column:1/-1;padding:18px;text-align:center;color:#8a7960;font-style:italic;font-family:\'Cormorant Garamond\',serif">Sin cuentas conectadas a Holded</div>';
+    box.innerHTML='<div style="grid-column:1/-1;padding:18px;text-align:center;color:#8a7960;font-style:italic;font-family:\'Cormorant Garamond\',serif">Conecta tu banco en Holded para ver saldos en tiempo real</div>';
     return;
   }
   const total=treasury.reduce((s,t)=>s+Number(t.balance||0),0);
