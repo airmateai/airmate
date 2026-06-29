@@ -2549,11 +2549,17 @@ const BSD={color:'charcoal',pattern:null,lapel:'notch',btn:'2',fit:'regular',tro
 let BSD_HOUSE='naples';
 let BSD_LINING_TYPE='full';
 const BSD_LAPEL_IMGS={
-  notch:{naples:'vittorio-assets/lapel-notch-naples.png',british:'vittorio-assets/lapel-notch-british.png'},
-  peak: {naples:'vittorio-assets/lapel-peak-naples.png', british:'vittorio-assets/lapel-peak-british.png'},
-  shawl:{naples:'vittorio-assets/lapel-shawl-naples.png',british:'vittorio-assets/lapel-shawl-british.png'},
+  notch:{naples:'vittorio-assets/suit-notch.jpg',british:'vittorio-assets/suit-notch.jpg'},
+  peak: {naples:'vittorio-assets/suit-peak.jpg', british:'vittorio-assets/suit-peak.jpg'},
+  shawl:{naples:'vittorio-assets/suit-shawl.jpg',british:'vittorio-assets/suit-shawl.jpg'},
 };
-const BSD_LINING_IMGS={full:'vittorio-assets/lining-full.png',half:'vittorio-assets/lining-half.png',unlined:'vittorio-assets/lining-unlined.png'};
+const BSD_LINING_IMGS={full:'vittorio-assets/suit-lining-full.jpg',half:'vittorio-assets/suit-lining-half.jpg',unlined:'vittorio-assets/suit-lining-unlined.jpg'};
+const BSD_PHOTO_IMGS={
+  btn:{'1':'vittorio-assets/suit-1btn.jpg','2':'vittorio-assets/suit-2btn.jpg','3':'vittorio-assets/suit-3btn.jpg'},
+  pocket:{jetted:'vittorio-assets/suit-pocket-jetted.jpg',flap:'vittorio-assets/suit-pocket-flap.jpg',patch:'vittorio-assets/suit-pocket-patch.jpg'},
+  house:{naples:'vittorio-assets/suit-neapolitan.jpg',british:'vittorio-assets/suit-british.jpg'},
+  trouser:{flat:'vittorio-assets/suit-trouser-classic.jpg',gorkha:'vittorio-assets/suit-trouser-gorkha.jpg',tuxedo:'vittorio-assets/suit-trouser-tuxedo.jpg'},
+};
 const BSD_LINING_TYPE_LABELS={full:'Full Lining — Inside Excellence',half:'Half Lining — Lightness & Elegance',unlined:'Unlined — The Essence of Lightness'};
 const BSD_LAPEL_LABELS={notch:'Notch Lapel',peak:'Peak Lapel',shawl:'Shawl Lapel'};
 
@@ -2791,7 +2797,7 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// House style → update shoulder row visibility + rerender lapel cards with correct illustrations
+// House style → update shoulder row visibility + rerender lapel cards + show photo
 document.querySelectorAll('[data-style]').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('[data-style]').forEach(x => x.classList.remove('active'));
   b.classList.add('active');
@@ -2799,6 +2805,26 @@ document.querySelectorAll('[data-style]').forEach(b => b.addEventListener('click
   const shoulderRow = document.getElementById('bsd-shoulder-row');
   if(shoulderRow) shoulderRow.style.display = BSD_HOUSE === 'naples' ? '' : 'none';
   bsdRenderLapelRow();
+  const src = BSD_PHOTO_IMGS.house[BSD_HOUSE];
+  if(src) bsd3dOpen(src, BSD_HOUSE === 'british' ? 'British House — Structured Classic' : 'Neapolitan House — Soft Drape');
+}));
+
+// Button click → show photo
+document.querySelectorAll('[data-btn]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-btn]').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  BSD.btn = b.dataset.btn;
+  const src = BSD_PHOTO_IMGS.btn[BSD.btn];
+  if(src) bsd3dOpen(src, BSD.btn + ' Button — ' + (BSD.btn==='1'?'Single Breasted Elegant':BSD.btn==='2'?'Classic Two Button':'Three Button Traditional'));
+}));
+
+// Pocket click → show photo
+document.querySelectorAll('[data-pocket]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-pocket]').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  BSD.pocket = b.dataset.pocket;
+  const src = BSD_PHOTO_IMGS.pocket[BSD.pocket];
+  if(src) bsd3dOpen(src, BSD.pocket.charAt(0).toUpperCase()+BSD.pocket.slice(1)+' Pocket');
 }));
 
 // Shoulder click → 3D view
@@ -2837,8 +2863,8 @@ document.querySelectorAll('[data-trousers-cut]').forEach(b => b.addEventListener
   document.querySelectorAll('[data-trousers-cut]').forEach(x => x.classList.remove('active'));
   b.classList.add('active');
   const key = b.dataset.trousersCut;
-  const imgs = window.VM_TROUSER_IMGS || {};
-  const src = imgs['trouser-' + key] || imgs['trouser-classic'] || '';
+  const troMapKey = key==='classic'?'flat':key==='gorkha'?'gorkha':key==='tuxedo'?'tuxedo':null;
+  const src = troMapKey ? BSD_PHOTO_IMGS.trouser[troMapKey] : (window.VM_TROUSER_IMGS||{})['trouser-'+key]||'';
   if(src) bsd3dOpen(src, BSD_TROUSER_LABELS[key] || key);
 }));
 </script>
