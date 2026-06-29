@@ -2778,24 +2778,29 @@ document.querySelectorAll('.nav-links a').forEach(a=>a.addEventListener('click',
 
 let _bsdDetailSrc = '';
 function bsd3dOpen(src, label) {
+  if(!src) return;
   _bsdDetailSrc = src;
   const photoEl = document.getElementById('bsd-photo');
-  const ld = document.getElementById('bsd-loading');
-  if(ld) ld.style.display = 'none';
-  // Crossfade: fade out → swap src → fade in
-  photoEl.style.opacity = '0';
+  const vid = document.getElementById('bsd-spin-video');
+  if(vid) { vid.style.opacity = '0.12'; vid.pause(); }
   photoEl.style.display = 'block';
-  if (window._bsdSpinShowDetail) window._bsdSpinShowDetail(true);
-  setTimeout(() => {
-    photoEl.src = src;
-    photoEl.onload = () => { photoEl.style.opacity = '1'; };
-    if (photoEl.complete) photoEl.style.opacity = '1';
-  }, 200);
+  photoEl.style.transition = 'opacity 0.35s';
+  photoEl.style.opacity = '0';
+  const tmp = new Image();
+  tmp.onload = () => {
+    photoEl.src = tmp.src;
+    requestAnimationFrame(() => { photoEl.style.opacity = '1'; });
+  };
+  tmp.src = src;
   const specLead = document.getElementById('bsd-spec-color');
-  if(specLead) specLead.textContent = label;
+  if(specLead && label) specLead.textContent = label;
 }
 function bsd3dClose() {
-  // no-op — kept for compatibility
+  const photoEl = document.getElementById('bsd-photo');
+  const vid = document.getElementById('bsd-spin-video');
+  photoEl.style.opacity = '0';
+  setTimeout(() => { photoEl.style.display = 'none'; }, 360);
+  if(vid) { vid.style.opacity = '1'; vid.play(); }
 }
 // overlay close on backdrop click — wired via onclick on the element itself
 
