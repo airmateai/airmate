@@ -1502,8 +1502,9 @@ section{position:relative;padding:120px 5vw;}
         <div class="bsd-left-eyebrow">Live Preview · 3D</div>
         <div class="bsd-preview-card" id="bsd-spin-card">
           <!-- 360 spin canvas -->
-          <img id="bsd-spin-img" src="vittorio-assets/suit-spin-000.jpg" alt="Suit 360°"
-            style="width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none;cursor:grab;">
+          <video id="bsd-spin-video" src="vittorio-assets/suit-spin.mp4"
+            muted playsinline preload="auto"
+            style="width:100%;height:100%;object-fit:contain;display:block;user-select:none;cursor:grab;"></video>
           <!-- Option detail photo (shown on top when clicking options) -->
           <img id="bsd-photo" alt="" style="opacity:0;display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;transition:opacity .4s ease;">
           <!-- Spin hint -->
@@ -2883,58 +2884,58 @@ document.querySelectorAll('[data-trousers-cut]').forEach(b => b.addEventListener
 <!-- ═══ PHOTO TILT 3D EFFECT ═══ -->
 <script>
 
-// ── 360° Spin viewer ──
+// ── 360° Video Spin viewer ──
 (function(){
-  const FRAMES = [
-    'vittorio-assets/suit-spin-000.jpg',
-    'vittorio-assets/suit-spin-045.jpg',
-    'vittorio-assets/suit-spin-090.jpg',
-    'vittorio-assets/suit-spin-135.jpg',
-    'vittorio-assets/suit-spin-180.jpg',
-    'vittorio-assets/suit-spin-225.jpg',
-    'vittorio-assets/suit-spin-270.jpg',
-    'vittorio-assets/suit-spin-315.jpg',
-  ];
-  const TOTAL = FRAMES.length;
+  const video   = document.getElementById('bsd-spin-video');
+  const card    = document.getElementById('bsd-spin-card');
+  const photoEl = document.getElementById('bsd-photo');
+  const hint    = document.getElementById('bsd-spin-hint');
+  if (!video || !card) return;
 
-  // Preload all frames
-  FRAMES.forEach(src => { const i = new Image(); i.src = src; });
-
-  const spinImg  = document.getElementById('bsd-spin-img');
-  const card     = document.getElementById('bsd-spin-card');
-  const photoEl  = document.getElementById('bsd-photo');
-  const hint     = document.getElementById('bsd-spin-hint');
-  if (!spinImg || !card) return;
-
-  let frame = 0;
   let dragging = false;
   let startX = 0;
-  let startFrame = 0;
-  const PX_PER_FRAME = 40; // pixels to drag per frame change
+  let startTime = 0;
+  let autoplay = true;
+  const DURATION = () => video.duration || 9;
+  const PX_PER_SEC = 180; // pixels to drag per second of video
 
-  function showFrame(f) {
-    frame = ((f % TOTAL) + TOTAL) % TOTAL;
-    spinImg.src = FRAMES[frame];
+  // Autoplay slow rotation when idle
+  function startAutoplay() {
+    autoplay = true;
+    video.playbackRate = 0.4;
+    video.play().catch(()=>{});
+  }
+  function stopAutoplay() {
+    autoplay = false;
+    video.pause();
   }
 
+  video.addEventListener('loadedmetadata', () => startAutoplay());
+  video.addEventListener('ended', () => { video.currentTime = 0; video.play(); });
+
   function onStart(x) {
-    // Only spin when no option photo is shown
     if (parseFloat(photoEl.style.opacity) > 0.5) return;
+    stopAutoplay();
     dragging = true;
     startX = x;
-    startFrame = frame;
+    startTime = video.currentTime;
     card.style.cursor = 'grabbing';
     if (hint) hint.style.opacity = '0';
   }
   function onMove(x) {
     if (!dragging) return;
     const delta = x - startX;
-    const frameDelta = Math.round(delta / PX_PER_FRAME);
-    showFrame(startFrame + frameDelta);
+    let t = startTime - (delta / PX_PER_SEC);
+    const dur = DURATION();
+    t = ((t % dur) + dur) % dur;
+    video.currentTime = t;
   }
   function onEnd() {
+    if (!dragging) return;
     dragging = false;
     card.style.cursor = 'grab';
+    // Resume autoplay after 1.5s idle
+    setTimeout(() => { if (!dragging) startAutoplay(); }, 1500);
   }
 
   // Mouse
@@ -2943,14 +2944,14 @@ document.querySelectorAll('[data-trousers-cut]').forEach(b => b.addEventListener
   window.addEventListener('mouseup', onEnd);
 
   // Touch
-  card.addEventListener('touchstart', e => onStart(e.touches[0].clientX), {passive:true});
+  card.addEventListener('touchstart', e => { e.preventDefault(); onStart(e.touches[0].clientX); }, {passive:false});
   window.addEventListener('touchmove', e => onMove(e.touches[0].clientX), {passive:true});
   window.addEventListener('touchend', onEnd);
 
-  // Expose: when option clicked, overlay the detail photo and hide spin briefly
   window._bsdSpinShowDetail = function(show) {
-    spinImg.style.opacity = show ? '0.15' : '1';
-    if (hint) hint.style.opacity = show ? '0' : '0.6';
+    video.style.opacity = show ? '0.15' : '1';
+    if (hint) hint.style.opacity = show ? '0' : '0';
+    if (!show) startAutoplay();
   };
 })();
 </script>
