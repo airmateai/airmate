@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cita previa · José Acosta</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --gold:#8B6914;--gold2:#a07820;--gold-lt:#f9f4ea;
+  --dark:#1a1a1a;--gray:#6b7280;--gray2:#9ca3af;
+  --border:#e5e7eb;--border2:#f3f4f6;
+  --white:#ffffff;--bg:#fafaf9;
+  --rad:10px;
+}
+body{font-family:'Inter',sans-serif;background:var(--white);color:var(--dark);font-size:14px;line-height:1.5;min-height:100vh;}
+
+/* ── HEADER ── */
+.header{text-align:center;padding:40px 24px 0;}
+.header-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--dark);letter-spacing:.04em;text-transform:uppercase;}
+.header-sub{font-size:14px;color:var(--gray);margin-top:8px;font-weight:300;}
+
+/* ── STEPS ── */
+.steps-bar{display:flex;justify-content:center;gap:0;margin:32px auto 0;max-width:520px;padding:0 24px;}
+.step-item{display:flex;flex-direction:column;align-items:center;flex:1;}
+.step-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--white);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--gray2);transition:all .25s;position:relative;z-index:1;}
+.step-dot.done{background:var(--gold);border-color:var(--gold);color:#fff;}
+.step-dot.active{background:var(--dark);border-color:var(--dark);color:#fff;}
+.step-line{height:2px;flex:1;background:var(--border);margin-top:14px;transition:background .25s;}
+.step-line.done{background:var(--gold);}
+.step-lbl{font-size:9.5px;font-weight:600;color:var(--gray2);text-transform:uppercase;letter-spacing:.08em;margin-top:6px;text-align:center;}
+.step-lbl.active{color:var(--dark);}
+.steps-bar-inner{display:flex;align-items:flex-start;width:100%;}
+
+/* ── WRAP ── */
+.wrap{max-width:800px;margin:0 auto;padding:24px 16px 48px;}
+
+/* ── CARD ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;}
+
+/* ── LAYOUT 3COL ── */
+.layout{display:grid;grid-template-columns:220px 1fr 220px;min-height:420px;}
+.layout-side{background:var(--bg);padding:28px 20px;border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;text-align:center;}
+.layout-side.right{border-right:none;border-left:1px solid var(--border);}
+.layout-center{padding:28px 28px;}
+.side-icon{width:56px;height:56px;border:2px solid var(--border);border-radius:12px;display:grid;place-items:center;margin-bottom:16px;}
+.side-icon svg{width:28px;height:28px;stroke:var(--dark);fill:none;stroke-width:1.5;}
+.side-title{font-size:13px;font-weight:600;color:var(--dark);margin-bottom:8px;}
+.side-desc{font-size:12px;color:var(--gray);line-height:1.5;}
+.side-wa{margin-top:auto;padding-top:24px;}
+.side-wa span{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gray2);margin-bottom:6px;}
+.side-wa a{font-size:12px;font-weight:600;color:var(--dark);text-decoration:underline;text-underline-offset:3px;}
+
+/* ── SECTION TITLE ── */
+.sec-title{font-size:15px;font-weight:600;color:var(--dark);margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+
+/* ── SERVICE CARDS ── */
+.service-list{display:flex;flex-direction:column;gap:10px;}
+.service-item{display:flex;align-items:center;gap:14px;padding:14px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;}
+.service-item:hover{border-color:var(--dark);}
+.service-item.selected{border-color:var(--dark);background:#f9f9f9;}
+.service-img{width:48px;height:48px;border-radius:6px;object-fit:cover;background:var(--border2);flex-shrink:0;display:grid;place-items:center;overflow:hidden;}
+.service-img svg{width:24px;height:24px;stroke:var(--gray);fill:none;stroke-width:1.5;}
+.service-info .sn{font-size:13px;font-weight:700;color:var(--dark);text-transform:uppercase;letter-spacing:.04em;}
+.service-info .sd{font-size:12px;color:var(--gray);margin-top:2px;}
+
+/* ── CALENDAR ── */
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.cal-month{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--dark);}
+.cal-year{font-size:16px;color:var(--gray);font-weight:400;}
+.cal-nav{display:flex;gap:8px;}
+.cal-btn{width:32px;height:32px;border:1.5px solid var(--border);border-radius:7px;background:var(--white);cursor:pointer;display:grid;place-items:center;color:var(--dark);font-size:16px;transition:all .14s;}
+.cal-btn:hover{border-color:var(--dark);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0;}
+.cal-day-hd{text-align:center;font-size:10.5px;font-weight:600;color:var(--gray2);text-transform:uppercase;padding:6px 0;}
+.cal-day{text-align:center;padding:6px 2px;cursor:pointer;border-radius:6px;position:relative;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;}
+.cal-day:hover:not(.empty):not(.past){background:var(--gold-lt);}
+.cal-day.selected{background:var(--dark);}
+.cal-day.selected .cal-num{color:#fff;}
+.cal-day.past .cal-num{color:var(--border);}
+.cal-day.empty{cursor:default;}
+.cal-num{font-size:14px;font-weight:500;color:var(--dark);}
+.cal-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;}
+.cal-dot{width:18px;height:4px;border-radius:2px;background:#22c55e;}
+.cal-dot.few{background:#f59e0b;}
+
+/* ── SLOTS ── */
+.slots-title{font-size:13px;font-weight:600;color:var(--dark);margin:20px 0 10px;}
+.slots-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.slot{padding:9px;border:1.5px solid var(--border);border-radius:7px;text-align:center;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--dark);transition:all .14s;}
+.slot:hover{border-color:var(--dark);}
+.slot.selected{background:var(--dark);color:#fff;border-color:var(--dark);}
+.slot.taken{background:var(--bg);color:var(--gray2);cursor:not-allowed;border-color:var(--border2);}
+
+/* ── FORM ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.form-group{margin-bottom:12px;}
+.form-label{display:block;font-size:10.5px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;}
+.form-input,.form-select,.form-textarea{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;color:var(--dark);background:var(--white);outline:none;transition:border .14s;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--dark);}
+.form-textarea{resize:vertical;}
+.form-hint{font-size:11px;color:var(--gray);margin-top:4px;}
+
+/* ── WEDDING SECTION ── */
+.wedding-banner{background:var(--gold-lt);border:1px solid #d4b483;border-radius:8px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.wedding-banner svg{width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:1.5;flex-shrink:0;}
+.wedding-banner span{font-size:12.5px;color:var(--gold);font-weight:600;}
+
+/* ── SUMMARY ── */
+.summary-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--dark);margin-bottom:16px;}
+.sum-service{font-size:12.5px;font-weight:700;color:var(--dark);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.sum-date{font-size:12px;color:var(--gold);font-weight:600;margin-bottom:16px;}
+.sum-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px;}
+.sum-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gray2);}
+.sum-value{font-size:12px;color:var(--dark);font-weight:500;text-align:right;}
+.sum-divider{height:1px;background:var(--border);margin:12px 0;}
+
+/* ── VERIFY ── */
+.verify-block{border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:14px;}
+.vb-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border2);}
+.vb-row:last-child{border-bottom:none;}
+.vb-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray2);}
+.vb-value{font-size:13px;color:var(--dark);font-weight:500;text-align:right;}
+
+/* ── CONFIRM ── */
+.confirm-box{text-align:center;padding:32px 24px;}
+.confirm-check{width:72px;height:72px;border-radius:50%;background:#dcfce7;display:grid;place-items:center;margin:0 auto 20px;}
+.confirm-check svg{width:36px;height:36px;stroke:#16a34a;fill:none;stroke-width:2.5;}
+.confirm-title{font-size:22px;font-weight:700;color:var(--dark);margin-bottom:6px;}
+.confirm-sub{font-size:13px;color:var(--gray);}
+.confirm-code{display:inline-block;background:var(--border2);padding:6px 16px;border-radius:6px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--dark);margin:16px 0;}
+.confirm-detail{background:var(--bg);border-radius:8px;padding:16px;margin:20px 0;text-align:left;}
+.confirm-service{font-size:15px;font-weight:700;color:var(--dark);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.confirm-date-str{font-size:14px;color:var(--gold);font-weight:600;}
+.confirm-actions{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+.conf-btn{padding:9px 18px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--dark);font-family:'Inter',sans-serif;transition:all .14s;display:flex;align-items:center;gap:6px;}
+.conf-btn:hover{border-color:var(--dark);}
+.conf-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;}
+
+/* ── NAVIGATION ── */
+.nav-bar{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:18px;border-top:1px solid var(--border);}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--gray);cursor:pointer;background:none;border:none;font-family:'Inter',sans-serif;transition:color .14s;}
+.nav-back:hover{color:var(--dark);}
+.nav-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;}
+.nav-next{padding:11px 28px;border-radius:8px;background:var(--dark);color:#fff;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:8px;transition:all .15s;}
+.nav-next:hover{background:#333;}
+.nav-next:disabled{background:var(--border);color:var(--gray2);cursor:not-allowed;}
+.nav-next svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.5;}
+
+/* ── ERROR ── */
+.err{color:#dc2626;font-size:12px;margin-top:6px;}
+
+/* ── LOADING ── */
+.loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;color:var(--gray);}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--dark);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(max-width:700px){
+  .layout{grid-template-columns:1fr;}
+  .layout-side{display:none;}
+  .layout-side.right{display:none;}
+  .form-row{grid-template-columns:1fr;}
+  .header-title{font-size:24px;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">Concierte una cita con nosotros</div>
+  <div class="header-sub">Estamos aquí para ayudarte a crear el traje perfecto.</div>
+</div>
+
+<!-- STEPS BAR -->
+<div class="steps-bar">
+  <div class="steps-bar-inner" id="steps-bar"></div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="layout">
+
+      <!-- LEFT SIDEBAR -->
+      <div class="layout-side" id="side-left">
+        <div class="side-icon" id="side-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <div class="side-title" id="side-title">Servicio</div>
+        <div class="side-desc" id="side-desc">Seleccione el servicio para el que desea concertar una cita.</div>
+        <div class="side-wa">
+          <span>Preguntas?</span>
+          <a href="https://wa.me/34600000000" target="_blank">WhatsApp me ahora</a>
+        </div>
+      </div>
+
+      <!-- CENTER -->
+      <div class="layout-center" id="center">
+        <div id="step-content"></div>
+      </div>
+
+      <!-- RIGHT SUMMARY -->
+      <div class="layout-side right" id="side-right">
+        <div class="summary-title">Resumen</div>
+        <div id="summary-body">
+          <div style="font-size:12px;color:var(--gray2);">Seleccione un servicio para comenzar.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──
+const SB = supabase.createClient(
+  'https://vjofxmfwdybktpwiuanc.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ2NTgzMjAsImV4cCI6MjA2MDIzNDMyMH0.O8WBkE7TwjquvGEzFJ49_6_dGR7UuFB6aVmHW1MgYqg'
+);
+emailjs.init('i4iBVVP-BkUOOwBE9');
+
+const SERVICES = [
+  {id:'novio', name:'Traje de novio a medida', desc:'Tu traje de novio a medida', wedding:true},
+  {id:'traje', name:'Traje a medida', desc:'Para una ocasión especial o para diario', wedding:false},
+  {id:'camisa', name:'Camisa a medida', desc:'Quiero hacer camisas a medida', wedding:false},
+  {id:'prueba', name:'Prueba de traje o camisa', desc:'Tu traje/camisa está listo para prueba', wedding:false},
+];
+
+const ALL_SLOTS = ['09:30','10:00','10:30','11:00','11:30','12:00','16:00','16:30','17:00','17:30','18:00','18:30'];
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAYS = ['L','M','M','J','V','S','D'];
+
+// ── STATE ──
+let state = {
+  step: 0,
+  service: null,
+  date: null,
+  slot: null,
+  wedding: {fecha:'',lugar:'',finca:'',invitados:'',notas:''},
+  contact: {nombre:'',apellido:'',telefono:'',email:''},
+  bookedSlots: [],
+  calYear: new Date().getFullYear(),
+  calMonth: new Date().getMonth(),
+  confirmCode: '',
+};
+
+// Steps definition
+function getSteps(){
+  const base = ['Servicio','Fecha y Hora','Su información','Verificar'];
+  if(state.service?.wedding) base.splice(2,0,'Boda');
+  return base;
+}
+
+// ── RENDER STEPS BAR ──
+function renderStepsBar(){
+  const steps = getSteps();
+  const bar = document.getElementById('steps-bar');
+  bar.innerHTML = '';
+  steps.forEach((s,i)=>{
+    if(i>0){
+      const line = document.createElement('div');
+      line.className = 'step-line'+(i<=state.step?' done':'');
+      line.style.cssText='flex:1;height:2px;margin-top:14px;';
+      bar.appendChild(line);
+    }
+    const item = document.createElement('div');
+    item.className = 'step-item';
+    item.style.cssText='display:flex;flex-direction:column;align-items:center;flex:0 0 auto;';
+    const dot = document.createElement('div');
+    dot.className = 'step-dot'+(i<state.step?' done':i===state.step?' active':'');
+    dot.textContent = i<state.step ? '✓' : String(i+1);
+    const lbl = document.createElement('div');
+    lbl.className = 'step-lbl'+(i===state.step?' active':'');
+    lbl.textContent = s;
+    item.appendChild(dot);
+    item.appendChild(lbl);
+    bar.appendChild(item);
+  });
+}
+
+// ── RENDER SIDEBAR ──
+function updateSidebar(){
+  const steps = getSteps();
+  const step = steps[state.step]||'';
+  const icons = {
+    'Servicio':'<svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
+    'Fecha y Hora':'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    'Boda':'<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+    'Su información':'<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    'Verificar':'<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>',
+  };
+  const descs = {
+    'Servicio':'Seleccione el servicio para el que desea concertar una cita.',
+    'Fecha y Hora':'Haga clic en una fecha para ver los horarios disponibles.',
+    'Boda':'Cuéntenos los detalles de su boda para prepararnos mejor.',
+    'Su información':'Facilítenos sus datos de contacto para confirmar la cita.',
+    'Verificar':'Compruebe los datos y confirme su reserva.',
+  };
+  document.getElementById('side-icon').innerHTML = icons[step]||icons['Servicio'];
+  document.getElementById('side-title').textContent = step;
+  document.getElementById('side-desc').textContent = descs[step]||'';
+}
+
+// ── RENDER SUMMARY ──
+function updateSummary(){
+  let html = '';
+  if(state.service){
+    html += `<div class="sum-service">${state.service.name}</div>`;
+  }
+  if(state.date && state.slot){
+    const d = new Date(state.date+'T12:00:00');
+    html += `<div class="sum-date">${d.getDate()} ${MONTHS[d.getMonth()]}, ${state.slot}</div>`;
+  }
+  if(state.service || state.date){
+    html += '<div class="sum-divider"></div>';
+    if(state.contact.nombre) html += `<div class="sum-row"><span class="sum-label">Cliente</span><span class="sum-value">${state.contact.nombre} ${state.contact.apellido}</span></div>`;
+    if(state.wedding.fecha && state.service?.wedding) html += `<div class="sum-row"><span class="sum-label">Fecha boda</span><span class="sum-value">${state.wedding.fecha}</span></div>`;
+    html += '<div class="sum-divider"></div>';
+    html += '<div class="sum-row"><span class="sum-label">Ubicación</span><span class="sum-value" style="font-size:11px;">S/C DE TENERIFE<br>Plaza de la Candelaria, 12</span></div>';
+  }
+  if(!html) html = '<div style="font-size:12px;color:var(--gray2);">Seleccione un servicio para comenzar.</div>';
+  document.getElementById('summary-body').innerHTML = html;
+}
+
+// ── STEP 0: SERVICIO ──
+function renderStep0(){
+  const html = `
+    <div class="sec-title">Servicio</div>
+    <div class="service-list">
+      ${SERVICES.map(s=>`
+        <div class="service-item${state.service?.id===s.id?' selected':''}" onclick="selectService('${s.id}')">
+          <div class="service-img">
+            <svg viewBox="0 0 24 24"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg>
+          </div>
+          <div class="service-info">
+            <div class="sn">${s.name}</div>
+            <div class="sd">${s.desc}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="nav-bar" style="border-top:none;margin-top:20px;">
+      <span></span>
+      <button class="nav-next" onclick="nextStep()" ${!state.service?'disabled':''}>
+        Siguiente <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  `;
+  document.getElementById('step-content').innerHTML = html;
+}
+
+function selectService(id){
+  state.service = SERVICES.find(s=>s.id===id);
+  renderStep0();
+  updateSummary();
+}
+
+// ── STEP 1: FECHA / HORA ──
+async function renderStep1(){
+  document.getElementById('step-content').innerHTML = '<div class="loading"><div class="spinner"></div> Cargando disponibilidad...</div>';
+
+  // Load booked slots for this month
+  const y = state.calYear, m = state.calMonth;
+  const from = `${y}-${String(m+1).padStart(2,'0')}-01`;
+  const to = `${y}-${String(m+1).padStart(2,'0')}-31`;
+  const {data} = await SB.from('appointments').select('fecha_cita,hora_cita').eq('business_slug','jose-acosta').eq('status','confirmed').gte('fecha_cita',from).lte('fecha_cita',to);
+  state.bookedSlots = data||[];
+
+  renderCalendar();
+}
+
+function renderCalendar(){
+  const y = state.calYear, m = state.calMonth;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const firstDay = new Date(y,m,1).getDay(); // 0=Sun
+  const adjustedFirst = (firstDay+6)%7; // Mon=0
+  const daysInMonth = new Date(y,m+1,0).getDate();
+
+  // Count bookings per day
+  const bookingsPerDay = {};
+  state.bookedSlots.forEach(b=>{
+    const d = parseInt(b.fecha_cita.split('-')[2]);
+    bookingsPerDay[d] = (bookingsPerDay[d]||0)+1;
+  });
+
+  let calRows = '';
+  let dayCount = 1;
+  let cells = '';
+  // Empty cells before first day
+  for(let i=0;i<adjustedFirst;i++) cells += '<div class="cal-day empty"></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const date = new Date(y,m,d);
+    const isPast = date < today;
+    const isSun = date.getDay()===0;
+    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isSelected = state.date===dateStr;
+    const booked = bookingsPerDay[d]||0;
+    const available = ALL_SLOTS.length - booked;
+    let dots = '';
+    if(!isPast && !isSun){
+      const dotCount = Math.min(available,4);
+      const color = available<=2 ? 'few' : '';
+      for(let i=0;i<dotCount;i++) dots += `<div class="cal-dot ${color}"></div>`;
+    }
+    cells += `<div class="cal-day${isPast||isSun?' past':''}${isSelected?' selected':''}" onclick="${isPast||isSun?'':'selectDate(\''+dateStr+'\')'}">
+      <span class="cal-num">${d}</span>
+      ${dots?`<div class="cal-dots">${dots}</div>`:''}
+    </div>`;
+  }
+
+  const slotsHtml = state.date ? renderSlots() : '';
+
+  document.getElementById('step-content').innerHTML = `
+    <div class="sec-title">Fecha y Hora</div>
+    <div class="cal-header">
+      <span><span class="cal-month">${MONTHS[m]}</span> <span class="cal-year">${y}</span></span>
+      <div class="cal-nav">
+        <button class="cal-btn" onclick="calNav(-1)">&#8592;</button>
+        <button class="cal-btn" onclick="calNav(1)">&#8594;</button>
+      </div>
+    </div>
+    <div class="cal-grid">
+      ${DAYS.map(d=>`<div class="cal-day-hd">${d}</div>`).join('')}
+      ${cells}
+    </div>
+    ${slotsHtml}
+    <div class="nav-bar">
+      <button class="nav-back" onclick="prevStep()"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Atrás</button>
+      <button class="nav-next" onclick="nextStep()" ${!state.date||!state.slot?'disabled':''}>
+        Siguiente <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  `;
+}
+
+function renderSlots(){
+  const takenSlots = state.bookedSlots.filter(b=>b.fecha_cita===state.date).map(b=>b.hora_cita);
+  return `
+    <div class="slots-title">Horarios disponibles</div>
+    <div class="slots-grid">
+      ${ALL_SLOTS.map(s=>{
+        const taken = takenSlots.includes(s);
+        return `<div class="slot${taken?' taken':state.slot===s?' selected':''}" onclick="${taken?'':'selectSlot(\''+s+'\')'}">${s}</div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function selectDate(dateStr){
+  state.date = dateStr;
+  state.slot = null;
+  renderCalendar();
+  updateSummary();
+}
+function selectSlot(s){
+  state.slot = s;
+  renderCalendar();
+  updateSummary();
+}
+function calNav(dir){
+  state.calMonth += dir;
+  if(state.calMonth<0){state.calMonth=11;state.calYear--;}
+  if(state.calMonth>11){state.calMonth=0;state.calYear++;}
+  renderStep1();
+}
+
+// ── STEP 2 (optional): BODA ──
+function renderStepWedding(){
+  document.getElementById('step-content').innerHTML = `
+    <div class="sec-title">Información de la boda</div>
+    <div class="wedding-banner">
+      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <span>Esta información nos ayuda a preparar su traje con tiempo suficiente antes del gran día.</span>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Fecha de la boda *</label>
+        <input type="date" class="form-input" id="w-fecha" value="${state.wedding.fecha}" onchange="state.wedding.fecha=this.value">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Número de invitados</label>
+        <input type="number" class="form-input" id="w-inv" placeholder="Ej. 150" value="${state.wedding.invitados}" onchange="state.wedding.invitados=this.value">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Lugar de la celebración *</label>
+      <input type="text" class="form-input" id="w-lugar" placeholder="Ciudad o municipio donde se celebra la boda" value="${state.wedding.lugar}" onchange="state.wedding.lugar=this.value">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre de la finca / venue (si lo sabe)</label>
+      <input type="text" class="form-input" id="w-finca" placeholder="Ej. Finca Los Almendros, Hotel Mencey..." value="${state.wedding.finca}" onchange="state.wedding.finca=this.value">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Estilo o colores que tienes en mente</label>
+      <textarea class="form-textarea" id="w-notas" rows="3" placeholder="Cuéntenos el estilo, colores de la boda, inspiración..."  onchange="state.wedding.notas=this.value">${state.wedding.notas}</textarea>
+      <div class="form-hint">Cuanta más información nos aporte, mejor podemos preparar su propuesta.</div>
+    </div>
+    <div id="wed-err" class="err"></div>
+    <div class="nav-bar">
+      <button class="nav-back" onclick="prevStep()"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Atrás</button>
+      <button class="nav-next" onclick="validateWedding()">
+        Siguiente <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  `;
+}
+
+function validateWedding(){
+  state.wedding.fecha = document.getElementById('w-fecha').value;
+  state.wedding.lugar = document.getElementById('w-lugar').value.trim();
+  state.wedding.finca = document.getElementById('w-finca').value.trim();
+  state.wedding.notas = document.getElementById('w-notas').value.trim();
+  state.wedding.invitados = document.getElementById('w-inv').value;
+  if(!state.wedding.fecha){document.getElementById('wed-err').textContent='La fecha de la boda es obligatoria.';return;}
+  if(!state.wedding.lugar){document.getElementById('wed-err').textContent='El lugar de la celebración es obligatorio.';return;}
+  nextStep();
+}
+
+// ── STEP: CONTACTO ──
+function renderStepContact(){
+  document.getElementById('step-content').innerHTML = `
+    <div class="sec-title">Su información</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input type="text" class="form-input" id="c-nombre" placeholder="Nombre" value="${state.contact.nombre}" onchange="state.contact.nombre=this.value">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Apellido *</label>
+        <input type="text" class="form-input" id="c-apellido" placeholder="Apellido" value="${state.contact.apellido}" onchange="state.contact.apellido=this.value">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Teléfono *</label>
+        <input type="tel" class="form-input" id="c-tel" placeholder="+34 600 000 000" value="${state.contact.telefono}" onchange="state.contact.telefono=this.value">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Correo electrónico *</label>
+        <input type="email" class="form-input" id="c-email" placeholder="correo@ejemplo.com" value="${state.contact.email}" onchange="state.contact.email=this.value">
+      </div>
+    </div>
+    <div id="cont-err" class="err"></div>
+    <div class="nav-bar">
+      <button class="nav-back" onclick="prevStep()"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Atrás</button>
+      <button class="nav-next" onclick="validateContact()">
+        Siguiente <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  `;
+}
+
+function validateContact(){
+  state.contact.nombre = document.getElementById('c-nombre').value.trim();
+  state.contact.apellido = document.getElementById('c-apellido').value.trim();
+  state.contact.telefono = document.getElementById('c-tel').value.trim();
+  state.contact.email = document.getElementById('c-email').value.trim();
+  const err = document.getElementById('cont-err');
+  if(!state.contact.nombre||!state.contact.apellido){err.textContent='Nombre y apellido son obligatorios.';return;}
+  if(!state.contact.telefono){err.textContent='El teléfono es obligatorio.';return;}
+  if(!state.contact.email||!state.contact.email.includes('@')){err.textContent='Introduce un email válido.';return;}
+  nextStep();
+}
+
+// ── STEP: VERIFICAR ──
+function renderStepVerify(){
+  const d = new Date(state.date+'T12:00:00');
+  const dateStr = `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}, ${state.slot}`;
+  let weddingRows = '';
+  if(state.service?.wedding && state.wedding.fecha){
+    const wd = new Date(state.wedding.fecha+'T12:00:00');
+    weddingRows = `
+      <div class="vb-row"><span class="vb-label">Fecha boda</span><span class="vb-value">${wd.getDate()} ${MONTHS[wd.getMonth()]} ${wd.getFullYear()}</span></div>
+      <div class="vb-row"><span class="vb-label">Lugar boda</span><span class="vb-value">${state.wedding.lugar}</span></div>
+      ${state.wedding.finca?`<div class="vb-row"><span class="vb-label">Venue</span><span class="vb-value">${state.wedding.finca}</span></div>`:''}
+      ${state.wedding.invitados?`<div class="vb-row"><span class="vb-label">Invitados</span><span class="vb-value">${state.wedding.invitados}</span></div>`:''}
+    `;
+  }
+  document.getElementById('step-content').innerHTML = `
+    <div class="sec-title">Verificar los datos de la reserva</div>
+    <div class="verify-block">
+      <div class="vb-row"><span class="vb-label">Servicio</span><span class="vb-value" style="font-weight:700;text-transform:uppercase;">${state.service.name}</span></div>
+      <div class="vb-row"><span class="vb-label">Fecha y hora</span><span class="vb-value">${dateStr}</span></div>
+      <div class="vb-row"><span class="vb-label">Ubicación</span><span class="vb-value" style="font-size:12px;">S/C de Tenerife<br>Plaza de la Candelaria, 12 · 38003</span></div>
+      ${weddingRows}
+    </div>
+    <div class="verify-block">
+      <div class="vb-row"><span class="vb-label">Cliente</span><span class="vb-value">${state.contact.nombre} ${state.contact.apellido}</span></div>
+      <div class="vb-row"><span class="vb-label">Teléfono</span><span class="vb-value">${state.contact.telefono}</span></div>
+      <div class="vb-row"><span class="vb-label">Email</span><span class="vb-value">${state.contact.email}</span></div>
+    </div>
+    <div id="verify-err" class="err"></div>
+    <div class="nav-bar">
+      <button class="nav-back" onclick="prevStep()"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Atrás</button>
+      <button class="nav-next" id="submit-btn" onclick="submitBooking()">
+        Confirmar reserva <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  `;
+}
+
+// ── SUBMIT ──
+async function submitBooking(){
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  const code = Math.random().toString(36).slice(2,8).toUpperCase();
+  state.confirmCode = code;
+
+  const row = {
+    business_slug: 'jose-acosta',
+    service_type: state.service.name,
+    fecha_cita: state.date,
+    hora_cita: state.slot,
+    nombre: state.contact.nombre,
+    apellido: state.contact.apellido,
+    telefono: state.contact.telefono,
+    email: state.contact.email,
+    status: 'confirmed',
+    confirm_code: code,
+    notas: state.service.wedding ? JSON.stringify(state.wedding) : '',
+  };
+
+  const {error} = await SB.from('appointments').insert(row);
+  if(error){
+    document.getElementById('verify-err').textContent = 'Error al guardar. Inténtalo de nuevo.';
+    btn.disabled=false;btn.textContent='Confirmar reserva';
+    return;
+  }
+
+  // Email
+  const d = new Date(state.date+'T12:00:00');
+  const dateStr = `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} a las ${state.slot}`;
+  try{
+    await emailjs.send('service_npmjvvf','template_qnip0mc',{
+      to_email: state.contact.email,
+      client_name: `${state.contact.nombre} ${state.contact.apellido}`,
+      service: state.service.name,
+      fecha: dateStr,
+      location: 'Plaza de la Candelaria, 12 · S/C de Tenerife',
+      confirm_code: code,
+      reply_to: state.contact.email,
+    });
+  }catch(e){console.warn('Email error',e);}
+
+  renderConfirmation();
+}
+
+// ── CONFIRMATION ──
+function renderConfirmation(){
+  const d = new Date(state.date+'T12:00:00');
+  const dateStr = `${d.getDate()} ${MONTHS[d.getMonth()]}, ${state.slot} - ${addMinutes(state.slot,45)}`;
+
+  // Hide summary & sidebar on confirmation
+  document.querySelector('.layout').style.gridTemplateColumns='1fr';
+  document.getElementById('side-left').style.display='none';
+  document.getElementById('side-right').style.display='none';
+
+  document.getElementById('step-content').innerHTML = `
+    <div class="confirm-box">
+      <div class="confirm-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="confirm-title">Cita confirmada</div>
+      <div class="confirm-sub">Le esperamos en nuestra tienda.</div>
+      <div class="confirm-code">ORDEN #${state.confirmCode}</div>
+      <div class="confirm-detail">
+        <div style="display:flex;gap:14px;align-items:flex-start;">
+          <div style="background:var(--dark);color:#fff;border-radius:6px;padding:6px 10px;text-align:center;min-width:48px;">
+            <div style="font-size:22px;font-weight:800;line-height:1;">${d.getDate()}</div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;opacity:.7;">${MONTHS[d.getMonth()].slice(0,3)}</div>
+          </div>
+          <div>
+            <div class="confirm-service">${state.service.name}</div>
+            <div class="confirm-date-str">${dateStr}</div>
+            <div style="font-size:12px;color:var(--gray);margin-top:6px;">Plaza de la Candelaria, 12 · S/C de Tenerife</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--gray);margin-top:4px;">Hemos enviado la confirmación a <strong>${state.contact.email}</strong></div>
+      <div class="confirm-actions">
+        <button class="conf-btn" onclick="addToCalendar()"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Agregar al calendario</button>
+        <button class="conf-btn" onclick="window.print()"><svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir</button>
+      </div>
+    </div>
+  `;
+
+  // Update steps bar to show all done
+  state.step = getSteps().length;
+  renderStepsBar();
+}
+
+function addMinutes(time, mins){
+  const [h,m] = time.split(':').map(Number);
+  const total = h*60+m+mins;
+  return `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
+}
+
+function addToCalendar(){
+  const d = new Date(state.date+'T'+state.slot+':00');
+  const end = new Date(d.getTime()+45*60000);
+  const fmt = dt => dt.toISOString().replace(/-|:|\.\d{3}/g,'');
+  const url = `https://calendar.google.com/calendar/r/eventedit?text=${encodeURIComponent('Cita José Acosta - '+state.service.name)}&dates=${fmt(d)}/${fmt(end)}&location=${encodeURIComponent('Plaza de la Candelaria, 12, Santa Cruz de Tenerife')}`;
+  window.open(url,'_blank');
+}
+
+// ── NAVIGATION ──
+function nextStep(){
+  state.step++;
+  render();
+}
+function prevStep(){
+  state.step--;
+  render();
+}
+
+function render(){
+  const steps = getSteps();
+  const stepName = steps[state.step];
+  renderStepsBar();
+  updateSidebar();
+  updateSummary();
+
+  if(stepName==='Servicio') renderStep0();
+  else if(stepName==='Fecha y Hora') renderStep1();
+  else if(stepName==='Boda') renderStepWedding();
+  else if(stepName==='Su información') renderStepContact();
+  else if(stepName==='Verificar') renderStepVerify();
+}
+
+// ── INIT ──
+render();
+</script>
+</body>
+</html>
