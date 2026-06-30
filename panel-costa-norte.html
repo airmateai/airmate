@@ -3455,7 +3455,7 @@ function newInvoiceModal(){
     ${fActions('Crear factura','saveNewInvoice()')}
   `);
 }
-function saveNewInvoice(){
+async function saveNewInvoice(){
   const base=+document.getElementById('niv-base').value;
   const vatPct=+document.getElementById('niv-vat').value;
   const vat=Math.round(base*vatPct/100);
@@ -4136,11 +4136,10 @@ document.addEventListener('mousemove', e => {
 });
 
 // Inicializar cuando se entra en la sección de clases
-const _origRenderClasses = renderClasses;
-renderClasses = function(){
-  _origRenderClasses();
-  renderGantt();
-};
+if(typeof renderClasses !== 'undefined'){
+  const _origRenderClasses = renderClasses;
+  renderClasses = function(){ _origRenderClasses(); try{renderGantt();}catch(e){} };
+}
 // También inicializar si ya está visible
 document.addEventListener('DOMContentLoaded', ()=>{ if(document.getElementById('gantt-wrap')) renderGantt(); });
 </script>
