@@ -8581,6 +8581,20 @@ async function punteoConfirmar(){
     } catch(e){ errors++; }
   }
 
+  // Actualizar crm_inventory en Supabase directamente
+  const {data: invItems} = await _sb.from('crm_inventory').select('id,name,stock,holded_id').eq('business_slug','jose-acosta');
+  for(const line of punteoLines){
+    if(!line.cantidad_real) continue;
+    const match = (invItems||[]).find(p=>
+      p.name?.toLowerCase()===line.nombre?.toLowerCase() ||
+      (line.referencia && p.sku===line.referencia)
+    );
+    if(match){
+      await _sb.from('crm_inventory').update({stock:(match.stock||0)+Number(line.cantidad_real)}).eq('id',match.id);
+      await _sb.from('crm_inventory_movements').insert({business_slug:'jose-acosta',inventory_id:match.id,tipo:'entrada',cantidad:Number(line.cantidad_real),motivo:`Albarán${_punteoNumAlbaran?' #'+_punteoNumAlbaran:''}${_punteoProveedor?' · '+_punteoProveedor:''}`});
+    }
+  }
+
   // Guardar recepción en Supabase
   await _sb.from('stock_recepciones').insert({
     business_slug: 'jose-acosta',
