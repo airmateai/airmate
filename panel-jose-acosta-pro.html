@@ -851,6 +851,10 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M5.34 18.66l-1.41 1.41M20 12h-2M6 12H4M19.07 19.07l-1.41-1.41M5.34 5.34L3.93 3.93M12 20v-2M12 6V4"/></svg>
             <span>Stock / Inventario</span>
           </button>
+          <button class="nav-item" id="nav-punteo" onclick="showTab('punteo',this)">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            <span>Recepción de Stock</span>
+          </button>
           <button class="nav-item" id="nav-crm-facturacion" onclick="showTab('crm-facturacion',this)">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             <span>Facturación</span>
@@ -1153,6 +1157,101 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
             <tbody id="crm-inventario-tbody"><tr><td colspan="9" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr></tbody>
             </table>
           </div></div>
+        </div>
+
+        <!-- RECEPCIÓN DE STOCK / PUNTEO -->
+        <div id="pane-punteo" class="tab-pane">
+          <div class="page-hd page-hd-row">
+            <div><div class="page-title">Recepción de Stock</div><div class="page-sub">Punteo de albaranes y actualización automática de inventario</div></div>
+            <button class="btn btn-accent" onclick="punteoNuevo()">+ Nueva recepción</button>
+          </div>
+
+          <!-- ESTADO: INICIO -->
+          <div id="punteo-inicio">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+              <!-- Subir albarán -->
+              <div class="card" style="padding:28px;text-align:center;cursor:pointer;border:2px dashed var(--border);transition:all .2s;" id="punteo-drop-zone" onclick="document.getElementById('punteo-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='#c4a35a'" ondragleave="this.style.borderColor=''" ondrop="punteoDrop(event)">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#c4a35a" stroke-width="1.5" style="margin-bottom:12px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <div style="font-size:14px;font-weight:600;color:var(--txt);margin-bottom:4px;">Foto del albarán</div>
+                <div style="font-size:12px;color:var(--txt3);">Arrastra o haz clic para subir.<br>La IA leerá los productos automáticamente.</div>
+                <input type="file" id="punteo-file-input" accept="image/*" style="display:none" onchange="punteoReadFile(this.files[0])">
+              </div>
+              <!-- O manual -->
+              <div class="card" style="padding:28px;text-align:center;cursor:pointer;transition:all .2s;" onclick="punteoManual()">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8a7960" stroke-width="1.5" style="margin-bottom:12px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <div style="font-size:14px;font-weight:600;color:var(--txt);margin-bottom:4px;">Entrada manual</div>
+                <div style="font-size:12px;color:var(--txt3);">Busca productos del catálogo<br>y añade las cantidades a mano.</div>
+              </div>
+            </div>
+
+            <!-- Recepciones anteriores -->
+            <div class="card">
+              <div style="padding:16px 20px;border-bottom:1px solid var(--border2);font-size:13px;font-weight:600;color:var(--txt);">Últimas recepciones</div>
+              <div id="punteo-historial-tbody" style="padding:0;">
+                <div style="text-align:center;padding:40px;color:var(--txt3);font-size:13px;">Cargando historial...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ESTADO: PROCESANDO FOTO -->
+          <div id="punteo-procesando" style="display:none;">
+            <div class="card" style="padding:40px;text-align:center;">
+              <div class="spinner" style="margin:0 auto 16px;width:32px;height:32px;border-width:3px;border-color:var(--border);border-top-color:#c4a35a;"></div>
+              <div style="font-size:14px;font-weight:600;color:var(--txt);margin-bottom:4px;">Leyendo el albarán...</div>
+              <div style="font-size:12px;color:var(--txt3);">La IA está extrayendo los productos y cantidades.</div>
+            </div>
+          </div>
+
+          <!-- ESTADO: PUNTEO ACTIVO -->
+          <div id="punteo-activo" style="display:none;">
+            <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start;">
+              <!-- Lista de punteo -->
+              <div>
+                <div class="card" style="margin-bottom:16px;">
+                  <div style="padding:14px 20px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:13px;font-weight:600;color:var(--txt);">Productos a puntear</span>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                      <span id="punteo-counter" style="font-size:12px;color:var(--txt3);"></span>
+                      <button class="btn btn-ghost" onclick="punteoAddLine()" style="font-size:11px;padding:5px 10px;">+ Línea</button>
+                    </div>
+                  </div>
+                  <div style="padding:0;" id="punteo-lines"></div>
+                </div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;">
+                  <button class="btn btn-ghost" onclick="punteoReset()">Cancelar</button>
+                  <button class="btn btn-accent" onclick="punteoConfirmar()" id="punteo-confirm-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg>
+                    Confirmar recepción
+                  </button>
+                </div>
+              </div>
+
+              <!-- Panel derecho: foto + resumen -->
+              <div style="display:flex;flex-direction:column;gap:14px;">
+                <div class="card" style="padding:16px;" id="punteo-foto-panel">
+                  <div style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Albarán</div>
+                  <img id="punteo-preview-img" src="" alt="Albarán" style="width:100%;border-radius:8px;object-fit:contain;max-height:320px;display:none;">
+                  <div id="punteo-no-foto" style="font-size:12px;color:var(--txt3);text-align:center;padding:20px 0;">Entrada manual — sin imagen</div>
+                </div>
+                <div class="card" style="padding:16px;" id="punteo-resumen-panel">
+                  <div style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;">Resumen</div>
+                  <div id="punteo-resumen-body" style="font-size:13px;color:var(--txt3);">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ESTADO: ÉXITO -->
+          <div id="punteo-exito" style="display:none;">
+            <div class="card" style="padding:48px;text-align:center;">
+              <div style="width:64px;height:64px;background:#dcfce7;border-radius:50%;display:grid;place-items:center;margin:0 auto 18px;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div style="font-size:18px;font-weight:700;color:var(--txt);margin-bottom:6px;">Stock actualizado</div>
+              <div style="font-size:13px;color:var(--txt3);margin-bottom:20px;" id="punteo-exito-msg"></div>
+              <button class="btn btn-accent" onclick="punteoReset()">Nueva recepción</button>
+            </div>
+          </div>
         </div>
 
         <!-- CRM: FACTURACIÓN -->
@@ -8211,6 +8310,319 @@ Estado: ${citasHoy} citas hoy · ${encActivos} encargos activos.`;
 
 // Sustituye la función iaSend si está cargado el agente con tools
 window._iaUseAgent=true;
+
+// ══════════════════════════════════════════
+// RECEPCIÓN DE STOCK / PUNTEO
+// ══════════════════════════════════════════
+const HOLDED_KEY = 'pat_6a4244076c77500e41039686_11a27d3f1775f1606499bcdf87ff9bcd68c662ae0264a0c8c9b585b33f5b13d0';
+const HOLDED_BASE = 'https://api.holded.com/api/invoicing/v1';
+const ANTHROPIC_PROXY = 'https://bot-airmate-1.vercel.app/api/chat';
+
+let punteoLines = []; // [{id, sku, nombre, cantidad_esperada, cantidad_real, checked, holded_product_id}]
+let punteoImageB64 = null;
+let punteoHistorial = [];
+
+// ── Cargar historial desde Supabase ──
+async function punteoLoadHistorial(){
+  const {data} = await _sb.from('stock_recepciones').select('*').eq('business_slug','jose-acosta').order('created_at',{ascending:false}).limit(10);
+  punteoHistorial = data||[];
+  renderPunteoHistorial();
+}
+
+function renderPunteoHistorial(){
+  const el = document.getElementById('punteo-historial-tbody');
+  if(!el) return;
+  if(!punteoHistorial.length){
+    el.innerHTML='<div style="text-align:center;padding:32px;color:var(--txt3);font-size:13px;">Sin recepciones registradas aún</div>';
+    return;
+  }
+  el.innerHTML = punteoHistorial.map(r=>{
+    const fecha = new Date(r.created_at).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+    const lineas = JSON.parse(r.lineas||'[]');
+    return `<div style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border2);">
+      <div style="width:36px;height:36px;background:var(--gold-lt,#f9f4ea);border-radius:8px;display:grid;place-items:center;flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c4a35a" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;color:var(--txt);">${r.proveedor||'Recepción sin proveedor'}</div>
+        <div style="font-size:11px;color:var(--txt3);">${fecha} · ${lineas.length} productos · ${lineas.reduce((a,l)=>a+(Number(l.cantidad_real)||0),0)} uds recibidas</div>
+      </div>
+      <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#dcfce7;color:#16a34a;">Completado</span>
+    </div>`;
+  }).join('');
+}
+
+function punteoNuevo(){
+  punteoLines = [];
+  punteoImageB64 = null;
+  document.getElementById('punteo-inicio').style.display='none';
+  document.getElementById('punteo-procesando').style.display='none';
+  document.getElementById('punteo-activo').style.display='none';
+  document.getElementById('punteo-exito').style.display='none';
+  document.getElementById('punteo-inicio').style.display='block';
+  document.getElementById('punteo-file-input').value='';
+}
+
+function punteoDrop(e){
+  e.preventDefault();
+  document.getElementById('punteo-drop-zone').style.borderColor='';
+  const f = e.dataTransfer.files[0];
+  if(f) punteoReadFile(f);
+}
+
+function punteoReadFile(file){
+  if(!file||!file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = async (e)=>{
+    punteoImageB64 = e.target.result; // data:image/...;base64,...
+    await punteoAnalizarImagen();
+  };
+  reader.readAsDataURL(file);
+}
+
+async function punteoAnalizarImagen(){
+  document.getElementById('punteo-inicio').style.display='none';
+  document.getElementById('punteo-procesando').style.display='block';
+
+  try{
+    // Llama a Claude via proxy con la imagen
+    const b64data = punteoImageB64.split(',')[1];
+    const mediaType = punteoImageB64.split(';')[0].split(':')[1];
+
+    const resp = await fetch(ANTHROPIC_PROXY,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-opus-4-8',
+        max_tokens:1500,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image',source:{type:'base64',media_type:mediaType,data:b64data}},
+            {type:'text',text:`Eres un asistente de gestión de stock para una sastrería. Analiza este albarán de entrega y extrae TODOS los productos con sus cantidades.
+Devuelve ÚNICAMENTE un JSON válido con este formato exacto (sin texto adicional):
+{
+  "proveedor": "nombre del proveedor si aparece o null",
+  "fecha_albaran": "fecha si aparece en formato YYYY-MM-DD o null",
+  "numero_albaran": "número si aparece o null",
+  "productos": [
+    {"nombre": "descripción del producto", "referencia": "ref/sku si aparece o null", "cantidad": número}
+  ]
+}
+Si no puedes leer el albarán claramente, devuelve {"error": "No se puede leer el documento"}.`}
+          ]
+        }]
+      })
+    });
+    const data = await resp.json();
+    const text = data.content?.[0]?.text||'';
+    let parsed;
+    try{ parsed = JSON.parse(text.replace(/```json|```/g,'').trim()); }
+    catch(e){ parsed = {error:'No se pudo procesar'}; }
+
+    if(parsed.error || !parsed.productos?.length){
+      // Fallback a manual con imagen
+      punteoLines = [];
+      punteoMostrarActivo(parsed.proveedor||'', parsed.fecha_albaran||'', parsed.numero_albaran||'');
+    } else {
+      punteoLines = parsed.productos.map((p,i)=>({
+        id: i,
+        nombre: p.nombre,
+        referencia: p.referencia||'',
+        cantidad_esperada: p.cantidad,
+        cantidad_real: p.cantidad,
+        checked: false,
+        holded_id: null,
+      }));
+      punteoMostrarActivo(parsed.proveedor||'', parsed.fecha_albaran||'', parsed.numero_albaran||'');
+    }
+  } catch(err){
+    console.error(err);
+    punteoLines = [];
+    punteoMostrarActivo('','','');
+  }
+}
+
+let _punteoProveedor='', _puntoFecha='', _punteoNumAlbaran='';
+
+function punteoMostrarActivo(proveedor, fecha, numAlbaran){
+  _punteoProveedor = proveedor;
+  _puntoFecha = fecha;
+  _punteoNumAlbaran = numAlbaran;
+  document.getElementById('punteo-procesando').style.display='none';
+  document.getElementById('punteo-inicio').style.display='none';
+  document.getElementById('punteo-activo').style.display='block';
+
+  // Foto preview
+  const img = document.getElementById('punteo-preview-img');
+  const noFoto = document.getElementById('punteo-no-foto');
+  if(punteoImageB64){
+    img.src = punteoImageB64;
+    img.style.display='block';
+    noFoto.style.display='none';
+  } else {
+    img.style.display='none';
+    noFoto.style.display='block';
+  }
+
+  renderPunteoLines();
+}
+
+function punteoManual(){
+  punteoImageB64 = null;
+  punteoLines = [];
+  punteoMostrarActivo('','','');
+}
+
+function renderPunteoLines(){
+  const cont = document.getElementById('punteo-lines');
+  if(!punteoLines.length){
+    cont.innerHTML=`<div style="padding:20px;text-align:center;color:var(--txt3);font-size:13px;">
+      Sin productos — <span style="color:#c4a35a;cursor:pointer;text-decoration:underline;" onclick="punteoAddLine()">añade una línea</span>
+    </div>`;
+  } else {
+    cont.innerHTML = punteoLines.map((l,i)=>`
+      <div style="display:grid;grid-template-columns:32px 1fr 110px 110px 40px;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);${l.checked?'background:#f0fdf4;':''}" id="punteo-line-${i}">
+        <div onclick="punteoToggle(${i})" style="width:24px;height:24px;border-radius:6px;border:2px solid ${l.checked?'#16a34a':'var(--border)'};background:${l.checked?'#16a34a':'transparent'};display:grid;place-items:center;cursor:pointer;flex-shrink:0;transition:all .15s;">
+          ${l.checked?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
+        </div>
+        <div>
+          <input style="width:100%;font-size:13px;font-weight:500;border:none;outline:none;background:transparent;color:var(--txt);" value="${escHtml(l.nombre)}" onchange="punteoLines[${i}].nombre=this.value;updatePunteoResumen();" placeholder="Nombre del producto">
+          <input style="width:100%;font-size:11px;border:none;outline:none;background:transparent;color:var(--txt3);margin-top:2px;" value="${escHtml(l.referencia||'')}" onchange="punteoLines[${i}].referencia=this.value;" placeholder="Referencia / SKU">
+        </div>
+        <div>
+          <div style="font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Esperado</div>
+          <input type="number" min="0" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:center;" value="${l.cantidad_esperada}" onchange="punteoLines[${i}].cantidad_esperada=Number(this.value);updatePunteoResumen();">
+        </div>
+        <div>
+          <div style="font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Recibido</div>
+          <input type="number" min="0" style="width:100%;padding:6px 8px;border:1.5px solid ${l.checked?'#16a34a':'var(--border)'};border-radius:6px;font-size:13px;font-weight:700;text-align:center;color:${l.checked?'#16a34a':'var(--txt)'};" value="${l.cantidad_real}" onchange="punteoLines[${i}].cantidad_real=Number(this.value);updatePunteoResumen();">
+        </div>
+        <div onclick="punteoRemoveLine(${i})" style="cursor:pointer;color:var(--txt3);display:grid;place-items:center;width:32px;height:32px;border-radius:6px;transition:all .15s;" onmouseover="this.style.background='#fee2e2';this.style.color='#dc2626'" onmouseout="this.style.background='';this.style.color=''">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
+    `).join('');
+  }
+  updatePunteoResumen();
+}
+
+function punteoToggle(i){
+  punteoLines[i].checked = !punteoLines[i].checked;
+  renderPunteoLines();
+}
+
+function punteoRemoveLine(i){
+  punteoLines.splice(i,1);
+  punteoLines.forEach((l,idx)=>l.id=idx);
+  renderPunteoLines();
+}
+
+function punteoAddLine(){
+  punteoLines.push({id:punteoLines.length, nombre:'', referencia:'', cantidad_esperada:1, cantidad_real:1, checked:false});
+  renderPunteoLines();
+  // Focus last input
+  setTimeout(()=>{
+    const inputs = document.querySelectorAll('#punteo-lines input[placeholder="Nombre del producto"]');
+    if(inputs.length) inputs[inputs.length-1].focus();
+  },50);
+}
+
+function updatePunteoResumen(){
+  const total = punteoLines.length;
+  const chequeados = punteoLines.filter(l=>l.checked).length;
+  const totalUds = punteoLines.reduce((a,l)=>a+(Number(l.cantidad_real)||0),0);
+  const totalEsp = punteoLines.reduce((a,l)=>a+(Number(l.cantidad_esperada)||0),0);
+  const diff = totalUds - totalEsp;
+  document.getElementById('punteo-counter').textContent = `${chequeados}/${total} verificados`;
+  document.getElementById('punteo-resumen-body').innerHTML = `
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border2);"><span style="font-size:12px;color:var(--txt3);">Productos</span><span style="font-size:12px;font-weight:700;">${total}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border2);"><span style="font-size:12px;color:var(--txt3);">Verificados</span><span style="font-size:12px;font-weight:700;color:#16a34a;">${chequeados}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border2);"><span style="font-size:12px;color:var(--txt3);">Uds esperadas</span><span style="font-size:12px;font-weight:700;">${totalEsp}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border2);"><span style="font-size:12px;color:var(--txt3);">Uds recibidas</span><span style="font-size:12px;font-weight:700;">${totalUds}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:12px;color:var(--txt3);">Diferencia</span><span style="font-size:12px;font-weight:700;color:${diff===0?'#16a34a':diff>0?'#2563eb':'#dc2626'}">${diff>0?'+':''}${diff} uds</span></div>
+    ${_punteoProveedor?`<div style="margin-top:10px;font-size:11px;color:var(--txt3);border-top:1px solid var(--border2);padding-top:10px;"><b>Proveedor:</b> ${_punteoProveedor}</div>`:''}
+    ${_punteoNumAlbaran?`<div style="font-size:11px;color:var(--txt3);"><b>Albarán:</b> ${_punteoNumAlbaran}</div>`:''}
+  `;
+}
+
+async function punteoConfirmar(){
+  if(!punteoLines.length){ toast('Añade al menos un producto'); return; }
+  const btn = document.getElementById('punteo-confirm-btn');
+  btn.disabled=true; btn.textContent='Actualizando stock...';
+
+  let updated=0, errors=0;
+
+  // Actualizar stock en Holded para cada línea
+  for(const line of punteoLines){
+    if(!line.nombre||!line.cantidad_real) continue;
+    try{
+      // Buscar producto en Holded por nombre/referencia
+      const searchResp = await fetch(`${HOLDED_BASE}/products?name=${encodeURIComponent(line.nombre)}`,{
+        headers:{'key':HOLDED_KEY,'Accept':'application/json'}
+      });
+      if(searchResp.ok){
+        const products = await searchResp.json();
+        const match = Array.isArray(products) ? products.find(p=>
+          p.name?.toLowerCase().includes(line.nombre.toLowerCase().slice(0,8)) ||
+          (line.referencia && p.sku===line.referencia)
+        ) : null;
+        if(match){
+          // Actualizar stock via Holded
+          const stockResp = await fetch(`${HOLDED_BASE}/products/${match.id}/stock`,{
+            method:'POST',
+            headers:{'key':HOLDED_KEY,'Content-Type':'application/json','Accept':'application/json'},
+            body: JSON.stringify({quantity: line.cantidad_real, type:'add'})
+          });
+          if(stockResp.ok) updated++;
+          else errors++;
+        }
+      }
+    } catch(e){ errors++; }
+  }
+
+  // Guardar recepción en Supabase
+  await _sb.from('stock_recepciones').insert({
+    business_slug: 'jose-acosta',
+    proveedor: _punteoProveedor||null,
+    fecha_albaran: _puntoFecha||null,
+    numero_albaran: _punteoNumAlbaran||null,
+    lineas: JSON.stringify(punteoLines),
+    tiene_imagen: !!punteoImageB64,
+    updated_en_holded: updated,
+  });
+
+  // Mostrar éxito
+  document.getElementById('punteo-activo').style.display='none';
+  document.getElementById('punteo-exito').style.display='block';
+  document.getElementById('punteo-exito-msg').textContent =
+    `${punteoLines.length} productos registrados · ${updated} actualizados en Holded${errors?' · '+errors+' sin coincidencia en catálogo':''}`;
+
+  punteoLoadHistorial();
+}
+
+function punteoReset(){
+  punteoLines=[];punteoImageB64=null;
+  _punteoProveedor='';_puntoFecha='';_punteoNumAlbaran='';
+  document.getElementById('punteo-inicio').style.display='block';
+  document.getElementById('punteo-procesando').style.display='none';
+  document.getElementById('punteo-activo').style.display='none';
+  document.getElementById('punteo-exito').style.display='none';
+}
+
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Cargar historial cuando se abre el pane
+const _origShowTab2 = window.showTab;
+window.showTab = function(id, btn){
+  _origShowTab2(id, btn);
+  if(id==='punteo') punteoLoadHistorial();
+};
+
+// Crear tabla en Supabase si no existe (silencioso)
+_sb.from('stock_recepciones').select('id').limit(1).then(({error})=>{
+  if(error) console.log('Tabla stock_recepciones pendiente de crear');
+});
 
 </script>
 </body>
