@@ -2634,19 +2634,12 @@ function bsdRenderLiningRow(){
 
 function bsdUpdate(){
   const photoEl=document.getElementById('bsd-photo');
-  // PRIMARY: if a pattern is selected, show the pattern render directly
-  let src='';
-  if(BSD.pattern && window.VM_PATTERN_RENDERS){
-    src=window.VM_PATTERN_RENDERS[BSD.pattern]||'';
-  } else if(window.VM_SUIT_RENDERS){
-    src=window.VM_SUIT_RENDERS[BSD.color+'-'+BSD.lapel]||window.VM_SUIT_RENDERS['charcoal-notch']||'';
-  }
-  if(src){
-    photoEl.style.opacity='0';
-    photoEl.style.display='none';
-    const ld=document.getElementById('bsd-loading');if(ld)ld.style.display='none';
-    if(window._bsdSpinShowDetail) window._bsdSpinShowDetail(false);
-  }
+  // Always close any detail photo and resume spin video
+  photoEl.style.opacity='0';
+  setTimeout(()=>{ photoEl.style.display='none'; },360);
+  const vid=document.getElementById('bsd-spin-video');
+  if(vid){ vid.style.opacity='1'; vid.play().catch(()=>{}); }
+  const ld=document.getElementById('bsd-loading');if(ld)ld.style.display='none';
   const cObj=BSD_COLORS.find(c=>c.key===BSD.color)||BSD_COLORS[0];
   const lObj=BSD_LAPELS.find(l=>l.key===BSD.lapel)||BSD_LAPELS[0];
   document.getElementById('bsd-spec-color').textContent=BSD.pattern?BSD_PATTERNS.find(p=>p.key===BSD.pattern).name:cObj.name;
@@ -2885,8 +2878,16 @@ document.querySelectorAll('[data-trousers-cut]').forEach(b => b.addEventListener
   b.classList.add('active');
   const key = b.dataset.trousersCut;
   const troMapKey = key==='classic'?'flat':key==='gorkha'?'gorkha':key==='tuxedo'?'tuxedo':null;
-  const src = troMapKey ? BSD_PHOTO_IMGS.trouser[troMapKey] : (window.VM_TROUSER_IMGS||{})['trouser-'+key]||'';
+  const src = troMapKey ? BSD_PHOTO_IMGS.trouser[troMapKey] : '';
   if(src) bsd3dOpen(src, BSD_TROUSER_LABELS[key] || key);
+  else bsdUpdate();
+}));
+
+// BSD tie pills → close detail photo, show spin video
+document.querySelectorAll('.bsd-pill-row [data-tie]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.bsd-pill-row [data-tie]').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  bsdUpdate();
 }));
 </script>
 
