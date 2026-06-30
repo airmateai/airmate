@@ -7775,11 +7775,11 @@ async function sincronizarContactosHolded(){
     }
 
     if(typeof crmRenderClientes==='function')crmRenderClientes(_crmClientes);
-    const msg=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Sincronización completa\n\n• Nuevos: ${nuevos}\n• Enriquecidos: ${actualizados}\n• Sin cambios: ${omitidos}`;
-    alert(msg);
+    showToast(`Holded sync: ${nuevos} nuevos · ${actualizados} enriquecidos · ${omitidos} sin cambios`);
     if(typeof soundSuccess==='function')soundSuccess();
   } catch(e){
-    alert(' Error: '+e.message+'\n\nVerifica que el proxy /api/holded está desplegado en Vercel.');
+    showToast('Error sync Holded: '+e.message);
+    console.error(e);
   } finally {
     if(btn){btn.disabled=false;btn.textContent='Importar Holded';}
   }
@@ -8677,53 +8677,6 @@ async function holdedSyncStock(){
 }
 
 // ── Sync contactos Holded → crm_clients ──
-async function sincronizarContactosHolded(){
-  const btn = document.getElementById('cli-btn-sync');
-  btn.disabled=true; btn.textContent='Importando...';
-  try{
-    const contacts = await holdedGet('contacts');
-    const list = Array.isArray(contacts) ? contacts : (contacts.data||[]);
-    if(!list.length){ showToast('Sin contactos en Holded'); return; }
-
-    let nuevos=0, actualizados=0;
-    for(const c of list){
-      const name = c.name||c.tradeName||'';
-      if(!name) continue;
-      const phone = c.mobile||c.phone||null;
-      const email = c.email||null;
-      const nif = c.code||c.vatnumber||null;
-      const address = c.address ? `${c.address}, ${c.city||''} ${c.postalCode||''}`.trim() : null;
-
-      const payload = {
-        business_slug: BIZ_SLUG,
-        name,
-        phone,
-        email,
-        nif,
-        address,
-        holded_id: c.id,
-        tipo: c.type==='supplier'?'proveedor':'particular',
-      };
-
-      const {data:existing} = await _sb.from('crm_clients').select('id').eq('business_slug',BIZ_SLUG).eq('holded_id',c.id).maybeSingle();
-      if(existing){
-        await _sb.from('crm_clients').update({phone,email,nif,address}).eq('id',existing.id);
-        actualizados++;
-      } else {
-        await _sb.from('crm_clients').insert(payload);
-        nuevos++;
-      }
-    }
-    showToast(`Contactos Holded: ${nuevos} nuevos · ${actualizados} actualizados`);
-    crmLoadClientes();
-  } catch(e){
-    showToast('Error importando contactos: '+e.message);
-    console.error(e);
-  } finally {
-    btn.disabled=false; btn.textContent='⟳ Importar Holded';
-    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Importar Holded';
-  }
-}
 
 </script>
 </body>
