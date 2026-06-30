@@ -2568,7 +2568,12 @@ const BSD_PHOTO_IMGS={
   btn:{'1':'vittorio-assets/suit-1btn.jpg','2':'vittorio-assets/suit-2btn.jpg','3':'vittorio-assets/suit-3btn.jpg','4':'vittorio-assets/suit-surgeons-cuff.jpg'},
   pocket:{jetted:'vittorio-assets/suit-pocket-jetted.jpg',flap:'vittorio-assets/suit-pocket-flap.jpg',patch:'vittorio-assets/suit-pocket-patch.jpg'},
   house:{naples:'vittorio-assets/suit-neapolitan.jpg',british:'vittorio-assets/suit-british.jpg'},
-  trouser:{flat:'vittorio-assets/suit-trouser-classic.jpg',gorkha:'vittorio-assets/suit-trouser-gorkha.jpg',tuxedo:'vittorio-assets/suit-trouser-tuxedo.jpg'},
+  trouser:{flat:'vittorio-assets/suit-trouser-classic.jpg',gorkha:'vittorio-assets/suit-trouser-gorkha.jpg',tuxedo:'vittorio-assets/suit-trouser-tuxedo.jpg','bottom-cuff':'vittorio-assets/suit-trouser-bottomcuff.jpg','side-adjusters':'vittorio-assets/suit-trouser-sideadjusters.jpg'},
+  color:{charcoal:'vittorio-assets/suit-charcoal.jpg',navy:'vittorio-assets/suit-navy.jpg','mid-grey':'vittorio-assets/suit-mid-grey.jpg',camel:'vittorio-assets/suit-camel.jpg',black:'vittorio-assets/suit-black.jpg',ivory:'vittorio-assets/suit-ivory.jpg','dk-brown':'vittorio-assets/suit-dk-brown.jpg',taupe:'vittorio-assets/suit-taupe.jpg'},
+  pattern:{'charcoal-stripe':'vittorio-assets/fabric-charcoal-stripe.jpg','navy-pinstripe':'vittorio-assets/fabric-navy-pinstripe.jpg','charcoal-herring':'vittorio-assets/fabric-charcoal-herring.jpg','navy-plaid':'vittorio-assets/fabric-navy-plaid.jpg','grey-windowpane':'vittorio-assets/fabric-grey-windowpane.jpg','brown-houndstooth':'vittorio-assets/fabric-brown-houndstooth.jpg','black-pinstripe':'vittorio-assets/fabric-black-pinstripe.jpg','taupe-herring':'vittorio-assets/fabric-taupe-herring.jpg'},
+  vent:{none:'vittorio-assets/suit-vent-double.jpg',single:'vittorio-assets/suit-vent-single.jpg',double:'vittorio-assets/suit-vent-double.jpg'},
+  sleeve:{'1':'vittorio-assets/suit-sleeve-1btn.jpg','2':'vittorio-assets/suit-sleeve-2btn.jpg','3':'vittorio-assets/suit-sleeve-3btn.jpg','4':'vittorio-assets/suit-surgeons-cuff.jpg'},
+  tie:{'seven-fold':'vittorio-assets/suit-tie-sevenfold.jpg',grenadine:'vittorio-assets/suit-tie-grenadine.jpg',bow:'vittorio-assets/suit-tie-bowtie.jpg'},
 };
 const BSD_LINING_TYPE_LABELS={full:'Full Lining — Inside Excellence',half:'Half Lining — Lightness & Elegance',unlined:'Unlined — The Essence of Lightness'};
 const BSD_LAPEL_LABELS={notch:'Notch Lapel',peak:'Peak Lapel',shawl:'Shawl Lapel'};
@@ -2597,7 +2602,12 @@ function bsdRenderFabricRow(){
       <div class="bsd-fab-tex" style="background:${c.tex}"></div>
       <div class="bsd-fab-lbl">${c.name}</div>
     </div>`).join('');
-  document.querySelectorAll('[data-color]').forEach(el=>el.addEventListener('click',()=>{BSD.color=el.dataset.color;BSD.pattern=null;_bsdDetailSrc='';bsdRenderFabricRow();bsdRenderPatRow();bsdApplyColorFilter();bsdUpdate();}));
+  document.querySelectorAll('[data-color]').forEach(el=>el.addEventListener('click',()=>{
+    BSD.color=el.dataset.color;BSD.pattern=null;_bsdDetailSrc='';bsdRenderFabricRow();bsdRenderPatRow();
+    const img=BSD_PHOTO_IMGS.color[BSD.color];
+    const cObj=BSD_COLORS.find(c=>c.key===BSD.color)||{name:BSD.color};
+    if(img) bsd3dOpen(img, cObj.name+' — Bespoke Suit'); else bsdUpdate();
+  }));
 }
 function bsdRenderPatRow(){
   const p=window.VM_PATTERN_RENDERS||{};
@@ -2608,7 +2618,12 @@ function bsdRenderPatRow(){
       <div class="bsd-fab-lbl">${pat.name}</div>
     </div>`;
   }).join('');
-  document.querySelectorAll('[data-pat]').forEach(el=>el.addEventListener('click',()=>{BSD.pattern=el.dataset.pat;BSD.color=el.dataset.pat.split('-')[0]||BSD.color;_bsdDetailSrc='';bsdRenderFabricRow();bsdRenderPatRow();bsdApplyColorFilter();bsdUpdate();}));
+  document.querySelectorAll('[data-pat]').forEach(el=>el.addEventListener('click',()=>{
+    BSD.pattern=el.dataset.pat;BSD.color=el.dataset.pat.split('-')[0]||BSD.color;_bsdDetailSrc='';bsdRenderFabricRow();bsdRenderPatRow();
+    const img=BSD_PHOTO_IMGS.pattern[BSD.pattern];
+    const pObj=BSD_PATTERNS.find(p=>p.key===BSD.pattern)||{name:BSD.pattern};
+    if(img) bsd3dOpen(img, pObj.name+' — Fabric Swatch'); else bsdUpdate();
+  }));
 }
 function bsdRenderLapelRow(){
   const house = BSD_HOUSE === 'british' ? 'british' : 'naples';
@@ -2693,8 +2708,9 @@ document.querySelectorAll('[data-trouser]').forEach(b=>b.addEventListener('click
 document.querySelectorAll('[data-sleeve]').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('[data-sleeve]').forEach(x=>x.classList.remove('active'));
   b.classList.add('active'); BSD.sleeve=b.dataset.sleeve;
-  const src=b.dataset.sleeve==='4'?BSD_PHOTO_IMGS.btn['4']:'';
-  if(src) bsd3dOpen(src, "Surgeon's Cuff — Working Buttonholes");
+  const src=BSD_PHOTO_IMGS.sleeve[BSD.sleeve];
+  const labels={'1':'1 Sleeve Button','2':'2 Sleeve Buttons','3':'3 Sleeve Buttons','4':"Surgeon's Cuff — Working Buttonholes"};
+  if(src) bsd3dOpen(src, labels[BSD.sleeve]||'Sleeve Buttons');
   else bsdUpdate();
 }));
 document.querySelectorAll('[data-pocket]').forEach(b=>b.addEventListener('click',()=>{
@@ -2704,7 +2720,12 @@ document.querySelectorAll('[data-pocket]').forEach(b=>b.addEventListener('click'
   if(src) bsd3dOpen(src, b.textContent.trim()+' Pocket');
   else bsdUpdate();
 }));
-document.querySelectorAll('[data-vent]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-vent]').forEach(x=>x.classList.remove('active'));b.classList.add('active');BSD.vent=b.dataset.vent;bsdUpdate();}));
+document.querySelectorAll('[data-vent]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('[data-vent]').forEach(x=>x.classList.remove('active'));b.classList.add('active');BSD.vent=b.dataset.vent;
+  const img=BSD_PHOTO_IMGS.vent[BSD.vent];
+  const label=BSD.vent==='single'?'Single Vent':BSD.vent==='double'?'Double Side Vents':'No Vent — Clean Back';
+  if(img) bsd3dOpen(img,label); else bsdUpdate();
+}));
 
 bsdRenderFabricRow();
 bsdRenderPatRow();
@@ -2901,17 +2922,19 @@ document.querySelectorAll('[data-trousers-cut]').forEach(b => b.addEventListener
   document.querySelectorAll('[data-trousers-cut]').forEach(x => x.classList.remove('active'));
   b.classList.add('active');
   const key = b.dataset.trousersCut;
-  const troMapKey = key==='classic'?'flat':key==='gorkha'?'gorkha':key==='tuxedo'?'tuxedo':key==='bottom-cuff'?'flat':key==='side-adjusters'?'gorkha':null;
-  const src = troMapKey ? BSD_PHOTO_IMGS.trouser[troMapKey] : '';
+  const src = BSD_PHOTO_IMGS.trouser[key] || (key==='classic'?BSD_PHOTO_IMGS.trouser.flat:key==='gorkha'?BSD_PHOTO_IMGS.trouser.gorkha:key==='tuxedo'?BSD_PHOTO_IMGS.trouser.tuxedo:'');
   if(src) bsd3dOpen(src, BSD_TROUSER_LABELS[key] || key);
   else bsdUpdate();
 }));
 
-// BSD tie pills → close detail photo, show spin video
+// BSD tie pills → show tie photo
 document.querySelectorAll('.bsd-pill-row [data-tie]').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('.bsd-pill-row [data-tie]').forEach(x => x.classList.remove('active'));
   b.classList.add('active');
-  bsdUpdate();
+  const key = b.dataset.tie;
+  const img = BSD_PHOTO_IMGS.tie[key];
+  const labels={'seven-fold':'7-Fold Silk Tie',grenadine:'Grenadine Tie',bow:'Bow Tie',none:'No Tie'};
+  if(img) bsd3dOpen(img, labels[key]||key); else bsdUpdate();
 }));
 </script>
 
