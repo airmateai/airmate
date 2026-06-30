@@ -8314,8 +8314,7 @@ window._iaUseAgent=true;
 // ══════════════════════════════════════════
 // RECEPCIÓN DE STOCK / PUNTEO
 // ══════════════════════════════════════════
-const HOLDED_KEY = 'pat_6a4244076c77500e41039686_11a27d3f1775f1606499bcdf87ff9bcd68c662ae0264a0c8c9b585b33f5b13d0';
-const HOLDED_BASE = 'https://api.holded.com/api/invoicing/v1';
+const HOLDED_PROXY = 'https://bot-airmate-1.vercel.app/api/holded';
 const ANTHROPIC_PROXY = 'https://bot-airmate-1.vercel.app/api/chat';
 
 let punteoLines = []; // [{id, sku, nombre, cantidad_esperada, cantidad_real, checked, holded_product_id}]
@@ -8555,8 +8554,10 @@ async function punteoConfirmar(){
     if(!line.nombre||!line.cantidad_real) continue;
     try{
       // Buscar producto en Holded por nombre/referencia
-      const searchResp = await fetch(`${HOLDED_BASE}/products?name=${encodeURIComponent(line.nombre)}`,{
-        headers:{'key':HOLDED_KEY,'Accept':'application/json'}
+      const searchResp = await fetch(HOLDED_PROXY,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({slug:'jose-acosta', action:'search_product', payload:{name:line.nombre, sku:line.referencia||null}})
       });
       if(searchResp.ok){
         const products = await searchResp.json();
@@ -8565,11 +8566,10 @@ async function punteoConfirmar(){
           (line.referencia && p.sku===line.referencia)
         ) : null;
         if(match){
-          // Actualizar stock via Holded
-          const stockResp = await fetch(`${HOLDED_BASE}/products/${match.id}/stock`,{
+          const stockResp = await fetch(HOLDED_PROXY,{
             method:'POST',
-            headers:{'key':HOLDED_KEY,'Content-Type':'application/json','Accept':'application/json'},
-            body: JSON.stringify({quantity: line.cantidad_real, type:'add'})
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({slug:'jose-acosta', action:'update_stock', payload:{product_id:match.id, quantity:line.cantidad_real}})
           });
           if(stockResp.ok) updated++;
           else errors++;
