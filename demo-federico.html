@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VILOR · Panel de Producción</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --navy:#0f1f3d;
+  --navy2:#1a3260;
+  --blue:#2563eb;
+  --blue-lt:#eff6ff;
+  --green:#16a34a;
+  --green-lt:#f0fdf4;
+  --amber:#d97706;
+  --amber-lt:#fffbeb;
+  --red:#dc2626;
+  --red-lt:#fef2f2;
+  --txt:#0f172a;
+  --txt2:#475569;
+  --txt3:#94a3b8;
+  --border:#e2e8f0;
+  --border2:#f1f5f9;
+  --bg:#f8fafc;
+  --white:#ffffff;
+  --rad:10px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;}
+
+/* SIDEBAR */
+.sidebar{
+  position:fixed;top:0;left:0;width:240px;height:100vh;
+  background:var(--navy);display:flex;flex-direction:column;z-index:100;
+}
+.sb-logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-logo-mark{display:flex;align-items:center;gap:10px;}
+.sb-logo-sq{width:32px;height:32px;background:var(--blue);border-radius:7px;display:grid;place-items:center;}
+.sb-logo-sq svg{width:16px;height:16px;color:#fff;}
+.sb-logo-name{font-size:15px;font-weight:700;color:#fff;letter-spacing:.02em;}
+.sb-logo-sub{font-size:10px;color:rgba(255,255,255,.4);margin-top:1px;letter-spacing:.06em;text-transform:uppercase;}
+.sb-nav{flex:1;padding:16px 10px;overflow-y:auto;}
+.sb-section{font-size:9px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:.14em;text-transform:uppercase;padding:12px 10px 6px;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;cursor:pointer;color:rgba(255,255,255,.6);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:1px;}
+.sb-item:hover{background:rgba(255,255,255,.06);color:#fff;}
+.sb-item.active{background:rgba(255,255,255,.1);color:#fff;}
+.sb-item svg{width:15px;height:15px;flex-shrink:0;}
+.sb-badge{margin-left:auto;background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;}
+.sb-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);}
+.sb-user{display:flex;align-items:center;gap:10px;}
+.sb-avatar{width:34px;height:34px;border-radius:50%;background:var(--blue);display:grid;place-items:center;font-weight:700;color:#fff;font-size:13px;flex-shrink:0;}
+.sb-user-name{font-size:13px;font-weight:600;color:#fff;}
+.sb-user-role{font-size:11px;color:rgba(255,255,255,.4);}
+
+/* MAIN */
+.main{margin-left:240px;min-height:100vh;}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.topbar-left{display:flex;align-items:center;gap:8px;}
+.breadcrumb{font-size:12px;color:var(--txt3);}
+.breadcrumb strong{color:var(--txt);font-weight:600;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.topbar-date{font-size:12px;color:var(--txt3);}
+.tb-btn{padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--txt2);font-family:'Inter',sans-serif;transition:all .15s;}
+.tb-btn:hover{border-color:var(--blue);color:var(--blue);}
+.tb-btn-primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+.tb-btn-primary:hover{background:#1d4ed8;border-color:#1d4ed8;color:#fff;}
+
+/* CONTENT */
+.content{padding:28px;}
+.page{display:none;}
+.page.active{display:block;}
+.page-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:16px;}
+.page-title{font-size:22px;font-weight:700;color:var(--txt);letter-spacing:-.02em;}
+.page-sub{font-size:13px;color:var(--txt3);margin-top:3px;}
+.page-actions{display:flex;gap:8px;flex-shrink:0;}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.kpi{background:var(--white);border:1px solid var(--border);border-radius:var(--rad);padding:20px;}
+.kpi-label{font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
+.kpi-value{font-size:28px;font-weight:700;color:var(--txt);line-height:1;letter-spacing:-.02em;}
+.kpi-delta{font-size:11px;font-weight:600;margin-top:6px;}
+.kpi-delta.up{color:var(--green);}
+.kpi-delta.down{color:var(--red);}
+.kpi-delta.neutral{color:var(--txt3);}
+
+/* CARDS */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--rad);margin-bottom:16px;}
+.card-hd{padding:16px 20px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:13px;font-weight:700;color:var(--txt);}
+.card-meta{font-size:11px;color:var(--txt3);font-weight:500;}
+.card-body{padding:20px;}
+
+/* TWO COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{padding:10px 16px;text-align:left;font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid var(--border);background:var(--bg);}
+tbody tr{border-bottom:1px solid var(--border2);transition:background .1s;cursor:pointer;}
+tbody tr:hover{background:var(--bg);}
+tbody tr:last-child{border-bottom:none;}
+tbody td{padding:12px 16px;font-size:13px;color:var(--txt);}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-blue{background:var(--blue-lt);color:var(--blue);}
+.badge-green{background:var(--green-lt);color:var(--green);}
+.badge-amber{background:var(--amber-lt);color:var(--amber);}
+.badge-red{background:var(--red-lt);color:var(--red);}
+.badge-gray{background:var(--border2);color:var(--txt3);}
+.badge-navy{background:rgba(15,31,61,.08);color:var(--navy);}
+
+/* PROGRESS BAR */
+.prog-wrap{display:flex;align-items:center;gap:10px;}
+.prog-bar{flex:1;height:6px;background:var(--border2);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:3px;transition:width .3s;}
+.prog-pct{font-size:11px;font-weight:700;color:var(--txt2);min-width:34px;text-align:right;}
+
+/* OBRA CARD */
+.obra-card{background:var(--white);border:1px solid var(--border);border-radius:var(--rad);padding:20px;cursor:pointer;transition:all .2s;}
+.obra-card:hover{border-color:var(--blue);box-shadow:0 4px 20px rgba(37,99,235,.08);}
+.obra-ref{font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;}
+.obra-name{font-size:15px;font-weight:700;color:var(--txt);margin-bottom:4px;}
+.obra-client{font-size:12px;color:var(--txt3);}
+.obra-divider{height:1px;background:var(--border2);margin:14px 0;}
+.obra-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.obra-meta-item label{font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:3px;}
+.obra-meta-item span{font-size:13px;font-weight:700;color:var(--txt);}
+
+/* PARTE DIARIO */
+.parte-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--border2);}
+.parte-row:last-child{border-bottom:none;}
+.parte-time{font-family:'DM Mono',monospace;font-size:12px;color:var(--txt3);min-width:52px;}
+.parte-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.parte-dot.ok{background:var(--green);}
+.parte-dot.warn{background:var(--amber);}
+.parte-dot.info{background:var(--blue);}
+.parte-info{flex:1;}
+.parte-title{font-size:13px;font-weight:600;color:var(--txt);}
+.parte-detail{font-size:11px;color:var(--txt3);margin-top:1px;}
+.parte-value{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--txt2);}
+
+/* WORKER CARD */
+.worker-card{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border2);}
+.worker-card:last-child{border-bottom:none;}
+.worker-avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0;}
+.worker-name{font-size:13px;font-weight:600;color:var(--txt);}
+.worker-role{font-size:11px;color:var(--txt3);}
+.worker-status{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.worker-dot{width:7px;height:7px;border-radius:50%;}
+.worker-dot.present{background:var(--green);}
+.worker-dot.absent{background:var(--txt3);}
+.worker-hours{font-size:12px;font-weight:600;color:var(--txt2);}
+
+/* CERT ROW */
+.cert-item{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border2);}
+.cert-item:last-child{border-bottom:none;}
+.cert-obra{font-size:13px;font-weight:600;color:var(--txt);}
+.cert-period{font-size:11px;color:var(--txt3);margin-top:2px;}
+.cert-amount{font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--txt);}
+.cert-pct{font-size:11px;color:var(--txt3);text-align:right;margin-top:2px;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,31,61,.4);z-index:300;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:14px;width:min(600px,92vw);max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.18);}
+.modal-hd{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-size:16px;font-weight:700;color:var(--txt);}
+.modal-close{width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:var(--white);cursor:pointer;display:grid;place-items:center;color:var(--txt3);font-size:16px;}
+.modal-body{padding:20px 24px 24px;}
+.form-group{margin-bottom:14px;}
+.form-label{display:block;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;}
+.form-input,.form-select,.form-textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--white);outline:none;transition:border .15s;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--blue);}
+.form-textarea{resize:vertical;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;padding-top:16px;border-top:1px solid var(--border);margin-top:4px;}
+
+/* ALERT */
+.alert{padding:12px 16px;border-radius:8px;font-size:12px;font-weight:500;margin-bottom:16px;}
+.alert-blue{background:var(--blue-lt);color:var(--blue);border:1px solid #bfdbfe;}
+.alert-amber{background:var(--amber-lt);color:var(--amber);border:1px solid #fde68a;}
+
+/* TIMELINE */
+.timeline{display:flex;flex-direction:column;gap:0;}
+.tl-item{display:flex;gap:14px;padding-bottom:20px;position:relative;}
+.tl-item:last-child{padding-bottom:0;}
+.tl-line{position:absolute;left:15px;top:30px;bottom:0;width:1px;background:var(--border);}
+.tl-item:last-child .tl-line{display:none;}
+.tl-dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;border:2px solid var(--border);}
+.tl-dot.done{background:var(--green-lt);border-color:var(--green);}
+.tl-dot.active{background:var(--blue-lt);border-color:var(--blue);}
+.tl-dot.pending{background:var(--white);border-color:var(--border);}
+.tl-content{flex:1;padding-top:4px;}
+.tl-title{font-size:13px;font-weight:600;color:var(--txt);}
+.tl-date{font-size:11px;color:var(--txt3);margin-top:2px;}
+
+/* STAT ROW */
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border2);}
+.stat-row:last-child{border-bottom:none;}
+.stat-label{font-size:13px;color:var(--txt2);}
+.stat-value{font-size:13px;font-weight:700;color:var(--txt);}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">
+      <div class="sb-logo-sq">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div>
+        <div class="sb-logo-name">VILOR</div>
+        <div class="sb-logo-sub">Panel de Producción</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="sb-section">General</div>
+    <div class="sb-item active" onclick="go('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      Dashboard
+    </div>
+
+    <div class="sb-section">Obras</div>
+    <div class="sb-item" onclick="go('obras')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+      Obras activas
+      <span class="sb-badge">4</span>
+    </div>
+    <div class="sb-item" onclick="go('produccion')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Partes diarios
+    </div>
+    <div class="sb-item" onclick="go('equipo')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Equipo
+    </div>
+
+    <div class="sb-section">Económico</div>
+    <div class="sb-item" onclick="go('certificaciones')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Certificaciones
+    </div>
+    <div class="sb-item" onclick="go('presupuesto')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      Presupuesto vs Real
+    </div>
+  </nav>
+
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar">FS</div>
+      <div>
+        <div class="sb-user-name">Federico Salinas</div>
+        <div class="sb-user-role">Jefe de Producción</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="breadcrumb" id="breadcrumb"><strong>Dashboard</strong></span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-date" id="top-date"></span>
+      <button class="tb-btn tb-btn-primary" onclick="openModal()">+ Nuevo parte</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-hd">
+        <div>
+          <div class="page-title">Resumen de producción</div>
+          <div class="page-sub">Semana 26 · 23–29 junio 2026</div>
+        </div>
+        <div class="page-actions">
+          <button class="tb-btn" onclick="go('obras')">Ver todas las obras</button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">Obras activas</div>
+          <div class="kpi-value">4</div>
+          <div class="kpi-delta neutral">2 civil · 1 inst. BT · 1 fibra</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Horas ejecutadas hoy</div>
+          <div class="kpi-value">68</div>
+          <div class="kpi-delta up">↑ +12% vs semana anterior</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Certificado este mes</div>
+          <div class="kpi-value">€142K</div>
+          <div class="kpi-delta up">↑ 94% del objetivo mensual</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Incidencias abiertas</div>
+          <div class="kpi-value">3</div>
+          <div class="kpi-delta down">↑ 1 nueva hoy · revisar</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+
+        <!-- Obras en curso -->
+        <div class="card">
+          <div class="card-hd">
+            <span class="card-title">Obras en curso</span>
+            <span class="card-meta">% ejecución</span>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <table>
+              <thead><tr><th>Obra</th><th>Avance</th><th>Estado</th></tr></thead>
+              <tbody>
+                <tr onclick="go('obras')">
+                  <td><div style="font-weight:600;">Nave industrial Sabadell</div><div style="font-size:11px;color:var(--txt3);">Civil · estructura metálica</div></td>
+                  <td>
+                    <div class="prog-wrap">
+                      <div class="prog-bar"><div class="prog-fill" style="width:78%;background:var(--green);"></div></div>
+                      <div class="prog-pct">78%</div>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-green">En plazo</span></td>
+                </tr>
+                <tr onclick="go('obras')">
+                  <td><div style="font-weight:600;">Urbanización L'Hospitalet</div><div style="font-size:11px;color:var(--txt3);">Civil · movimiento tierras</div></td>
+                  <td>
+                    <div class="prog-wrap">
+                      <div class="prog-bar"><div class="prog-fill" style="width:45%;background:var(--amber);"></div></div>
+                      <div class="prog-pct">45%</div>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-amber">Retrasada</span></td>
+                </tr>
+                <tr onclick="go('obras')">
+                  <td><div style="font-weight:600;">Inst. BT Complejo logístico</div><div style="font-size:11px;color:var(--txt3);">Instalaciones · baja tensión</div></td>
+                  <td>
+                    <div class="prog-wrap">
+                      <div class="prog-bar"><div class="prog-fill" style="width:62%;background:var(--blue);"></div></div>
+                      <div class="prog-pct">62%</div>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-blue">En ejecución</span></td>
+                </tr>
+                <tr onclick="go('obras')">
+                  <td><div style="font-weight:600;">Red fibra óptica Badalona</div><div style="font-size:11px;color:var(--txt3);">Comunicaciones · FTTH</div></td>
+                  <td>
+                    <div class="prog-wrap">
+                      <div class="prog-bar"><div class="prog-fill" style="width:91%;background:var(--green);"></div></div>
+                      <div class="prog-pct">91%</div>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-green">En plazo</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Actividad de hoy -->
+        <div class="card">
+          <div class="card-hd">
+            <span class="card-title">Actividad de hoy</span>
+            <span class="card-meta">Lunes 30 junio</span>
+          </div>
+          <div class="card-body" style="padding:16px 20px;">
+            <div class="parte-row">
+              <span class="parte-time">07:30</span>
+              <div class="parte-dot ok"></div>
+              <div class="parte-info">
+                <div class="parte-title">Inicio jornada · Nave Sabadell</div>
+                <div class="parte-detail">12 operarios. Condiciones OK.</div>
+              </div>
+              <span class="parte-value">12 op.</span>
+            </div>
+            <div class="parte-row">
+              <span class="parte-time">09:15</span>
+              <div class="parte-dot info"></div>
+              <div class="parte-info">
+                <div class="parte-title">Hormigonado losa planta 1</div>
+                <div class="parte-detail">Nave Sabadell · 42 m³</div>
+              </div>
+              <span class="parte-value">42 m³</span>
+            </div>
+            <div class="parte-row">
+              <span class="parte-time">11:00</span>
+              <div class="parte-dot warn"></div>
+              <div class="parte-info">
+                <div class="parte-title">Incidencia: rotura conducto agua</div>
+                <div class="parte-detail">Urbanización L'Hospitalet · en gestión</div>
+              </div>
+              <span class="parte-value" style="color:var(--amber);">Abierta</span>
+            </div>
+            <div class="parte-row">
+              <span class="parte-time">13:30</span>
+              <div class="parte-dot ok"></div>
+              <div class="parte-info">
+                <div class="parte-title">Certificación enviada a cliente</div>
+                <div class="parte-detail">Red fibra Badalona · Mayo 2026</div>
+              </div>
+              <span class="parte-value" style="color:var(--green);">€28.400</span>
+            </div>
+            <div class="parte-row">
+              <span class="parte-time">15:00</span>
+              <div class="parte-dot info"></div>
+              <div class="parte-info">
+                <div class="parte-title">Visita de obra · dirección facultativa</div>
+                <div class="parte-detail">Complejo logístico · acta firmada</div>
+              </div>
+              <span class="parte-value">OK</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Presencia equipo + Alertas -->
+      <div class="two-col">
+        <div class="card">
+          <div class="card-hd">
+            <span class="card-title">Equipo hoy</span>
+            <span class="card-meta">23 de 26 presentes</span>
+          </div>
+          <div class="card-body" style="padding:8px 20px;">
+            <div class="worker-card">
+              <div class="worker-avatar" style="background:#1d4ed8;">RG</div>
+              <div><div class="worker-name">Raúl García</div><div class="worker-role">Encargado · Nave Sabadell</div></div>
+              <div class="worker-status"><div class="worker-dot present"></div><span class="worker-hours">8h</span></div>
+            </div>
+            <div class="worker-card">
+              <div class="worker-avatar" style="background:#15803d;">ML</div>
+              <div><div class="worker-name">Mihai Lungu</div><div class="worker-role">Oficial 1ª · Ferralla</div></div>
+              <div class="worker-status"><div class="worker-dot present"></div><span class="worker-hours">8h</span></div>
+            </div>
+            <div class="worker-card">
+              <div class="worker-avatar" style="background:#b45309;">JP</div>
+              <div><div class="worker-name">José Pérez</div><div class="worker-role">Oficial electricista · BT</div></div>
+              <div class="worker-status"><div class="worker-dot present"></div><span class="worker-hours">8h</span></div>
+            </div>
+            <div class="worker-card">
+              <div class="worker-avatar" style="background:#6b7280;">AA</div>
+              <div><div class="worker-name">Ahmed Amrani</div><div class="worker-role">Peón especialista · civil</div></div>
+              <div class="worker-status"><div class="worker-dot absent"></div><span class="worker-hours" style="color:var(--txt3);">Baja</span></div>
+            </div>
+            <div class="worker-card">
+              <div class="worker-avatar" style="background:#7c3aed;">PD</div>
+              <div><div class="worker-name">Pavel Dinu</div><div class="worker-role">Oficial 1ª · encofrado</div></div>
+              <div class="worker-status"><div class="worker-dot present"></div><span class="worker-hours">8h</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-hd"><span class="card-title">Alertas pendientes</span><span class="badge badge-red">3</span></div>
+            <div class="card-body" style="padding:12px 20px;">
+              <div class="parte-row">
+                <div class="parte-dot warn"></div>
+                <div class="parte-info">
+                  <div class="parte-title">Retraso en urbanización</div>
+                  <div class="parte-detail">L'Hospitalet · 6 días de retraso acumulado</div>
+                </div>
+              </div>
+              <div class="parte-row">
+                <div class="parte-dot warn"></div>
+                <div class="parte-info">
+                  <div class="parte-title">Rotura conducto agua</div>
+                  <div class="parte-detail">Pendiente resolución con subcontrata</div>
+                </div>
+              </div>
+              <div class="parte-row">
+                <div class="parte-dot" style="background:var(--red);"></div>
+                <div class="parte-info">
+                  <div class="parte-title">Vence permiso corte vial</div>
+                  <div class="parte-detail">Red fibra Badalona · vence 3 julio</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-hd"><span class="card-title">Producción semanal</span><span class="card-meta">vs objetivo</span></div>
+            <div class="card-body" style="padding:16px 20px;">
+              <div class="stat-row"><span class="stat-label">Horas ejecutadas</span><span class="stat-value">312 h <span style="color:var(--green);font-size:11px;">↑ +8%</span></span></div>
+              <div class="stat-row"><span class="stat-label">Hormigón colocado</span><span class="stat-value">187 m³</span></div>
+              <div class="stat-row"><span class="stat-label">Ferralla montada</span><span class="stat-value">4.2 t</span></div>
+              <div class="stat-row"><span class="stat-label">Fibra tendida</span><span class="stat-value">1.840 m</span></div>
+              <div class="stat-row"><span class="stat-label">Rendimiento equipo</span><span class="stat-value" style="color:var(--green);">96%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ OBRAS ══ -->
+    <div id="page-obras" class="page">
+      <div class="page-hd">
+        <div>
+          <div class="page-title">Obras activas</div>
+          <div class="page-sub">4 obras en ejecución</div>
+        </div>
+        <div class="page-actions">
+          <button class="tb-btn tb-btn-primary">+ Nueva obra</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="obra-card">
+          <div class="obra-ref">OBR-2024-018</div>
+          <div class="obra-name">Nave industrial Sabadell</div>
+          <div class="obra-client">VILOR · Promotor: Distribuciones Marín S.L.</div>
+          <div class="obra-divider"></div>
+          <div class="obra-meta">
+            <div class="obra-meta-item"><label>Presupuesto</label><span>€840.000</span></div>
+            <div class="obra-meta-item"><label>Plazo</label><span>Jun → Oct 26</span></div>
+            <div class="obra-meta-item"><label>Avance</label><span style="color:var(--green);">78%</span></div>
+          </div>
+          <div style="margin-top:14px;">
+            <div class="prog-bar"><div class="prog-fill" style="width:78%;background:var(--green);height:8px;border-radius:4px;"></div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <span class="badge badge-green">En plazo</span>
+            <span class="badge badge-navy">Civil · estructura</span>
+            <span class="badge badge-gray">12 operarios</span>
+          </div>
+        </div>
+
+        <div class="obra-card">
+          <div class="obra-ref">OBR-2025-003</div>
+          <div class="obra-name">Urbanización L'Hospitalet Norte</div>
+          <div class="obra-client">VILOR · Promotor: Ayuntamiento L'Hospitalet</div>
+          <div class="obra-divider"></div>
+          <div class="obra-meta">
+            <div class="obra-meta-item"><label>Presupuesto</label><span>€1.240.000</span></div>
+            <div class="obra-meta-item"><label>Plazo</label><span>Feb → Sep 26</span></div>
+            <div class="obra-meta-item"><label>Avance</label><span style="color:var(--amber);">45%</span></div>
+          </div>
+          <div style="margin-top:14px;">
+            <div class="prog-bar"><div class="prog-fill" style="width:45%;background:var(--amber);height:8px;border-radius:4px;"></div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <span class="badge badge-amber">Retrasada 6d</span>
+            <span class="badge badge-navy">Civil · movim. tierras</span>
+            <span class="badge badge-gray">8 operarios</span>
+          </div>
+        </div>
+
+        <div class="obra-card">
+          <div class="obra-ref">OBR-2025-011</div>
+          <div class="obra-name">Instalaciones BT Complejo Logístico</div>
+          <div class="obra-client">VILOR · Promotor: Mercadona Infraestructuras</div>
+          <div class="obra-divider"></div>
+          <div class="obra-meta">
+            <div class="obra-meta-item"><label>Presupuesto</label><span>€380.000</span></div>
+            <div class="obra-meta-item"><label>Plazo</label><span>Abr → Ago 26</span></div>
+            <div class="obra-meta-item"><label>Avance</label><span style="color:var(--blue);">62%</span></div>
+          </div>
+          <div style="margin-top:14px;">
+            <div class="prog-bar"><div class="prog-fill" style="width:62%;background:var(--blue);height:8px;border-radius:4px;"></div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <span class="badge badge-blue">En ejecución</span>
+            <span class="badge badge-navy">Instalaciones · BT</span>
+            <span class="badge badge-gray">5 operarios</span>
+          </div>
+        </div>
+
+        <div class="obra-card">
+          <div class="obra-ref">OBR-2025-019</div>
+          <div class="obra-name">Red Fibra Óptica FTTH Badalona</div>
+          <div class="obra-client">VILOR · Cliente: Fiber Wireless España</div>
+          <div class="obra-divider"></div>
+          <div class="obra-meta">
+            <div class="obra-meta-item"><label>Presupuesto</label><span>€210.000</span></div>
+            <div class="obra-meta-item"><label>Plazo</label><span>Mar → Jul 26</span></div>
+            <div class="obra-meta-item"><label>Avance</label><span style="color:var(--green);">91%</span></div>
+          </div>
+          <div style="margin-top:14px;">
+            <div class="prog-bar"><div class="prog-fill" style="width:91%;background:var(--green);height:8px;border-radius:4px;"></div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <span class="badge badge-green">Finalizando</span>
+            <span class="badge badge-navy">Comunicaciones · FTTH</span>
+            <span class="badge badge-gray">4 operarios</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PRODUCCION ══ -->
+    <div id="page-produccion" class="page">
+      <div class="page-hd">
+        <div>
+          <div class="page-title">Partes diarios</div>
+          <div class="page-sub">Registro de producción y jornadas</div>
+        </div>
+        <div class="page-actions">
+          <button class="tb-btn tb-btn-primary" onclick="openModal()">+ Nuevo parte</button>
+        </div>
+      </div>
+
+      <div class="alert alert-blue">Tienes <strong>2 partes pendientes de firma</strong> por la dirección facultativa. Nave Sabadell · 27 jun y 28 jun.</div>
+
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Partes de la semana</span><span class="card-meta">23–29 junio 2026</span></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr><th>Fecha</th><th>Obra</th><th>Actividad realizada</th><th>Operarios</th><th>Horas</th><th>Unidades</th><th>Estado</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Lun 23</td><td>Nave Sabadell</td><td>Encofrado pilares P1 · A-C</td><td>12</td><td>96h</td><td>18 pilares</td><td><span class="badge badge-green">Firmado</span></td></tr>
+              <tr><td>Mar 24</td><td>Nave Sabadell</td><td>Hormigonado losa planta 1</td><td>12</td><td>96h</td><td>42 m³</td><td><span class="badge badge-amber">Pendiente firma</span></td></tr>
+              <tr><td>Mar 24</td><td>Urbanización L'H</td><td>Excavación z. norte + compactado</td><td>8</td><td>64h</td><td>380 m³</td><td><span class="badge badge-green">Firmado</span></td></tr>
+              <tr><td>Mié 25</td><td>Inst. BT Logístico</td><td>Canalización CT-01 a CT-05</td><td>5</td><td>40h</td><td>320 ml</td><td><span class="badge badge-green">Firmado</span></td></tr>
+              <tr><td>Jue 26</td><td>Nave Sabadell</td><td>Montaje estructura metálica c. 3</td><td>10</td><td>80h</td><td>8.4 t</td><td><span class="badge badge-amber">Pendiente firma</span></td></tr>
+              <tr><td>Jue 26</td><td>Fibra Badalona</td><td>Tendido cable drop + empalmes</td><td>4</td><td>32h</td><td>840 ml</td><td><span class="badge badge-green">Firmado</span></td></tr>
+              <tr><td>Vie 27</td><td>Urbanización L'H</td><td>Pavimentación aceras z. este</td><td>8</td><td>64h</td><td>420 m²</td><td><span class="badge badge-green">Firmado</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ EQUIPO ══ -->
+    <div id="page-equipo" class="page">
+      <div class="page-hd">
+        <div>
+          <div class="page-title">Equipo</div>
+          <div class="page-sub">26 trabajadores · 4 obras activas</div>
+        </div>
+        <div class="page-actions">
+          <button class="tb-btn">Exportar</button>
+          <button class="tb-btn tb-btn-primary">+ Incorporar</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Total equipo</div><div class="kpi-value">26</div><div class="kpi-delta neutral">propios + subcontrata</div></div>
+        <div class="kpi"><div class="kpi-label">Presentes hoy</div><div class="kpi-value">23</div><div class="kpi-delta up">88% de asistencia</div></div>
+        <div class="kpi"><div class="kpi-label">Horas semana</div><div class="kpi-value">312h</div><div class="kpi-delta up">↑ +8% vs anterior</div></div>
+        <div class="kpi"><div class="kpi-label">Horas extra</div><div class="kpi-value">18h</div><div class="kpi-delta neutral">Nave Sabadell</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Personal asignado</span><span class="card-meta">Semana 26</span></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Nombre</th><th>Categoría</th><th>Obra asignada</th><th>Horas sem.</th><th>H. extra</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Raúl García</strong></td><td>Encargado</td><td>Nave Sabadell</td><td>44h</td><td>4h</td><td><span class="badge badge-green">Activo</span></td></tr>
+              <tr><td><strong>Mihai Lungu</strong></td><td>Oficial 1ª ferralla</td><td>Nave Sabadell</td><td>40h</td><td>—</td><td><span class="badge badge-green">Activo</span></td></tr>
+              <tr><td><strong>Ionut Ciobanu</strong></td><td>Oficial 1ª ferralla</td><td>Nave Sabadell</td><td>40h</td><td>—</td><td><span class="badge badge-green">Activo</span></td></tr>
+              <tr><td><strong>Pavel Dinu</strong></td><td>Oficial 1ª encofrado</td><td>Nave Sabadell</td><td>42h</td><td>2h</td><td><span class="badge badge-green">Activo</span></td></tr>
+              <tr><td><strong>Carlos Muñoz</strong></td><td>Peón especialista</td><td>Nave Sabadell</td><td>40h</td><td>—</td><td><span class="badge badge-green">Activo</span></td></tr>
+              <tr><td><strong>Ahmed Amrani</strong></td><td>Peón especialista</td><td>Urbanización L'H</td><td>—</td><td>—</td><td><span class="badge badge-gray">Baja médica</span></td></tr>
+              <tr><td><strong>Luis Fernández</strong></td><td>Conductor maquinaria</td><td>Urbanización L'H</td><td>40h</td><td>—</td><td><span class="badge badge-green">Activo</span></td></tr>
+              <tr><td><strong>José Pérez</strong></td><td>Oficial electricista</td><td>Inst. BT Logístico</td><td>40h</td><td>—</td><td><span class="badge badge-green">Activo</span></td></tr>
+              <tr><td><strong>Marc Puig</strong></td><td>Oficial electricista</td><td>Inst. BT Logístico</td><td>40h</td><td>—</td><td><span class="badge badge-green">Activo</span></td></tr>
+              <tr><td><strong>Andrei Pop</strong></td><td>Técnico fibra óptica</td><td>Fibra Badalona</td><td>40h</td><td>—</td><td><span class="badge badge-green">Activo</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CERTIFICACIONES ══ -->
+    <div id="page-certificaciones" class="page">
+      <div class="page-hd">
+        <div>
+          <div class="page-title">Certificaciones</div>
+          <div class="page-sub">Control económico por obra</div>
+        </div>
+        <div class="page-actions">
+          <button class="tb-btn">Exportar Excel</button>
+          <button class="tb-btn tb-btn-primary">+ Nueva certificación</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Certificado total</div><div class="kpi-value">€612K</div><div class="kpi-delta neutral">de €2.67M presupuesto</div></div>
+        <div class="kpi"><div class="kpi-label">Pendiente cobro</div><div class="kpi-value">€87K</div><div class="kpi-delta down">3 facturas emitidas</div></div>
+        <div class="kpi"><div class="kpi-label">Este mes</div><div class="kpi-value">€142K</div><div class="kpi-delta up">↑ +18% vs mayo</div></div>
+        <div class="kpi"><div class="kpi-label">Desviación media</div><div class="kpi-value">–2.1%</div><div class="kpi-delta up">Bajo coste real</div></div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">Certificaciones emitidas</span><span class="card-meta">2026</span></div>
+          <div class="card-body" style="padding:8px 20px;">
+            <div class="cert-item">
+              <div><div class="cert-obra">Nave industrial Sabadell</div><div class="cert-period">Certificación 4 · Mayo 2026</div></div>
+              <div><div class="cert-amount">€68.400</div><div class="cert-pct">Cobrado ✓</div></div>
+            </div>
+            <div class="cert-item">
+              <div><div class="cert-obra">Urbanización L'Hospitalet</div><div class="cert-period">Certificación 2 · Mayo 2026</div></div>
+              <div><div class="cert-amount">€45.200</div><div class="cert-pct" style="color:var(--amber);">Pendiente cobro</div></div>
+            </div>
+            <div class="cert-item">
+              <div><div class="cert-obra">Red fibra óptica Badalona</div><div class="cert-period">Certificación 3 · Junio 2026</div></div>
+              <div><div class="cert-amount">€28.400</div><div class="cert-pct" style="color:var(--amber);">Pendiente cobro</div></div>
+            </div>
+            <div class="cert-item">
+              <div><div class="cert-obra">Inst. BT Complejo logístico</div><div class="cert-period">Certificación 2 · Junio 2026</div></div>
+              <div><div class="cert-amount">€31.800</div><div class="cert-pct" style="color:var(--amber);">Pendiente cobro</div></div>
+            </div>
+            <div class="cert-item">
+              <div><div class="cert-obra">Nave industrial Sabadell</div><div class="cert-period">Certificación 5 · Junio 2026</div></div>
+              <div><div class="cert-amount">€82.000</div><div class="cert-pct" style="color:var(--txt3);">En preparación</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-hd"><span class="card-title">Presupuesto vs. Real</span><span class="card-meta">por obra</span></div>
+          <div class="card-body" style="padding:16px 20px;">
+            <div style="margin-bottom:18px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:12px;font-weight:600;">Nave Sabadell</span><span style="font-size:12px;color:var(--green);font-weight:600;">–1.2% desviación</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div style="background:var(--bg);border-radius:7px;padding:10px;"><div style="font-size:10px;color:var(--txt3);font-weight:600;text-transform:uppercase;">Presupuesto</div><div style="font-size:16px;font-weight:700;">€840K</div></div>
+                <div style="background:var(--green-lt);border-radius:7px;padding:10px;"><div style="font-size:10px;color:var(--green);font-weight:600;text-transform:uppercase;">Coste real</div><div style="font-size:16px;font-weight:700;color:var(--green);">€389K</div></div>
+              </div>
+            </div>
+            <div style="margin-bottom:18px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:12px;font-weight:600;">Urbanización L'Hospitalet</span><span style="font-size:12px;color:var(--amber);font-weight:600;">+3.8% desviación</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div style="background:var(--bg);border-radius:7px;padding:10px;"><div style="font-size:10px;color:var(--txt3);font-weight:600;text-transform:uppercase;">Presupuesto</div><div style="font-size:16px;font-weight:700;">€1.240K</div></div>
+                <div style="background:var(--amber-lt);border-radius:7px;padding:10px;"><div style="font-size:10px;color:var(--amber);font-weight:600;text-transform:uppercase;">Coste real</div><div style="font-size:16px;font-weight:700;color:var(--amber);">€591K</div></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:12px;font-weight:600;">Fibra Badalona</span><span style="font-size:12px;color:var(--green);font-weight:600;">–4.1% desviación</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div style="background:var(--bg);border-radius:7px;padding:10px;"><div style="font-size:10px;color:var(--txt3);font-weight:600;text-transform:uppercase;">Presupuesto</div><div style="font-size:16px;font-weight:700;">€210K</div></div>
+                <div style="background:var(--green-lt);border-radius:7px;padding:10px;"><div style="font-size:10px;color:var(--green);font-weight:600;text-transform:uppercase;">Coste real</div><div style="font-size:16px;font-weight:700;color:var(--green);">€183K</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PRESUPUESTO ══ -->
+    <div id="page-presupuesto" class="page">
+      <div class="page-hd">
+        <div>
+          <div class="page-title">Presupuesto vs. Real</div>
+          <div class="page-sub">Seguimiento económico detallado</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Nave industrial Sabadell · OBR-2024-018</span><span class="badge badge-green">En plazo · –1.2% desviación</span></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Capítulo</th><th>Presupuesto</th><th>Certificado</th><th>Coste real</th><th>Desviación</th><th>% Ejec.</th></tr></thead>
+            <tbody>
+              <tr><td><strong>01 · Movimiento de tierras</strong></td><td>€42.000</td><td>€42.000</td><td>€40.800</td><td style="color:var(--green);">–€1.200</td><td><span class="badge badge-green">100%</span></td></tr>
+              <tr><td><strong>02 · Cimentaciones</strong></td><td>€98.000</td><td>€98.000</td><td>€99.400</td><td style="color:var(--amber);">+€1.400</td><td><span class="badge badge-green">100%</span></td></tr>
+              <tr><td><strong>03 · Estructura metálica</strong></td><td>€310.000</td><td>€248.000</td><td>€239.200</td><td style="color:var(--green);">–€8.800</td><td><span class="badge badge-blue">80%</span></td></tr>
+              <tr><td><strong>04 · Cubierta y cerramientos</strong></td><td>€180.000</td><td>€90.000</td><td>€92.100</td><td style="color:var(--amber);">+€2.100</td><td><span class="badge badge-blue">50%</span></td></tr>
+              <tr><td><strong>05 · Instalaciones</strong></td><td>€120.000</td><td>—</td><td>—</td><td>—</td><td><span class="badge badge-gray">0%</span></td></tr>
+              <tr><td><strong>06 · Acabados y urbanización</strong></td><td>€90.000</td><td>—</td><td>—</td><td>—</td><td><span class="badge badge-gray">0%</span></td></tr>
+              <tr style="background:var(--bg);"><td><strong>TOTAL</strong></td><td><strong>€840.000</strong></td><td><strong>€478.000</strong></td><td><strong>€471.500</strong></td><td style="color:var(--green);"><strong>–€6.500</strong></td><td><span class="badge badge-blue">57%</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- MODAL NUEVO PARTE -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-hd">
+      <span class="modal-title">Nuevo parte diario</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input type="date" class="form-input" id="p-fecha">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Obra</label>
+          <select class="form-select" id="p-obra">
+            <option>Nave industrial Sabadell</option>
+            <option>Urbanización L'Hospitalet</option>
+            <option>Inst. BT Complejo logístico</option>
+            <option>Red fibra óptica Badalona</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Actividad realizada</label>
+        <input type="text" class="form-input" id="p-actividad" placeholder="Ej. Hormigonado losa planta 1 · zona A-C">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nº operarios</label>
+          <input type="number" class="form-input" id="p-ops" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Horas totales</label>
+          <input type="number" class="form-input" id="p-horas" placeholder="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Unidades ejecutadas</label>
+          <input type="text" class="form-input" id="p-unidades" placeholder="Ej. 42 m³ · 320 ml · 8 pilares">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Condiciones meteorológicas</label>
+          <select class="form-select" id="p-met">
+            <option>Buenas</option>
+            <option>Aceptables</option>
+            <option>Adversas (no condicionan)</option>
+            <option>Adversas (paran trabajo)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Observaciones e incidencias</label>
+        <textarea class="form-textarea" id="p-notas" rows="3" placeholder="Incidencias, visitas de obra, instrucciones recibidas..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="tb-btn" onclick="closeModal()">Cancelar</button>
+        <button class="tb-btn tb-btn-primary" onclick="saveParte()">Guardar parte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// NAV
+const PAGES={
+  'dashboard':'Dashboard',
+  'obras':'Obras activas',
+  'produccion':'Partes diarios',
+  'equipo':'Equipo',
+  'certificaciones':'Certificaciones',
+  'presupuesto':'Presupuesto vs Real'
+};
+function go(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('page-'+page)?.classList.add('active');
+  document.querySelector(`.sb-item[onclick*="'${page}'"]`)?.classList.add('active');
+  document.getElementById('breadcrumb').innerHTML=`<strong>${PAGES[page]||page}</strong>`;
+}
+
+// DATE
+const d=new Date();
+document.getElementById('top-date').textContent=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+document.getElementById('p-fecha').value=d.toISOString().slice(0,10);
+
+// MODAL
+function openModal(){document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function saveParte(){
+  const obra=document.getElementById('p-obra').value;
+  const act=document.getElementById('p-actividad').value;
+  if(!act){alert('Escribe la actividad realizada');return;}
+  closeModal();
+  // feedback
+  const alert=document.createElement('div');
+  alert.style.cssText='position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:14px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 8px 30px rgba(0,0,0,.2);';
+  alert.textContent='✓ Parte guardado · '+obra;
+  document.body.appendChild(alert);
+  setTimeout(()=>alert.remove(),3000);
+}
+</script>
+</body>
+</html>
