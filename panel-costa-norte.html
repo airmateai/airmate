@@ -1129,35 +1129,8 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       <!-- ✦ AUTOMATIZACIONES activas -->
       <div class="card">
         <div class="card-hd"><div class="card-hd-title">⚡ Automatizaciones IA activas</div><span class="card-hd-meta">12 procesos sin tu intervención</span></div>
-        <div class="card-body" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
-          ${[
-            {i:'💬',n:'Respuesta WhatsApp',d:'Bot responde en &lt; 1 min · ES/EN',c:34,u:'consultas/día'},
-            {i:'📧',n:'Confirmaciones email',d:'Tras cada reserva apt/clase',c:42,u:'esta semana'},
-            {i:'⏰',n:'Recordatorios 24h antes',d:'WhatsApp a huéspedes y alumnos',c:38,u:'mensajes'},
-            {i:'🔑',n:'Instrucciones check-in',d:'Auto-envío 2h antes de llegada',c:8,u:'hoy'},
-            {i:'💰',n:'Pagos pendientes recordatorio',d:'Bot avisa cliente · gestor cobra',c:3,u:'recuperados'},
-            {i:'⭐',n:'Petición reseña post-estancia',d:'Email automático check-out +24h',c:7,u:'enviados'},
-            {i:'🎁',n:'Bono casi agotado · ofrece renovar',d:'Cliente con ≤2 sesiones recibe oferta',c:4,u:'detectados'},
-            {i:'📊',n:'Reporte semanal por email',d:'Lunes 09:00 al gerente',c:1,u:'/semana'},
-            {i:'🌊',n:'Cancela clases si mal tiempo',d:'Avisa alumnos y reagenda automáticamente',c:0,u:'esta semana'},
-            {i:'🔔',n:'Alerta stock bajo',d:'Email cuando llegues al mínimo',c:1,u:'producto'},
-            {i:'📷',n:'Repost Instagram fotos huéspedes',d:'Con tag · permiso previo automático',c:5,u:'esta semana'},
-            {i:'💌',n:'Newsletter mensual segmentada',d:'Por idioma + tipo cliente',c:142,u:'destinatarios'}
-          ].map(a=>`<div style="padding:11px 14px;background:var(--bg);border-radius:8px;display:flex;gap:10px;align-items:center;">
-            <div style="font-size:20px;width:38px;height:38px;display:grid;place-items:center;background:var(--surface);border-radius:8px;flex-shrink:0;">${a.i}</div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:12px;font-weight:700;color:var(--txt);">${a.n}</div>
-              <div style="font-size:10px;color:var(--txt3);">${a.d}</div>
-            </div>
-            <div style="text-align:right;flex-shrink:0;">
-              <div style="font-family:var(--display);font-size:14px;font-weight:700;color:var(--coral);line-height:1;">${a.c}</div>
-              <div style="font-size:9px;letter-spacing:.04em;color:var(--txt3);">${a.u}</div>
-            </div>
-          </div>`).join('')}
-        </div>
+        <div class="card-body" id="automations-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"></div>
       </div>
-
-    -->
     </div>
 
     <!-- ════════════ CLASES SURF ════════════ -->
@@ -1919,6 +1892,36 @@ async function renderDash(){
   if(classTbody) classTbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:24px;">Sin clases programadas hoy</td></tr>';
   const classCount = document.getElementById('classes-today-count');
   if(classCount) classCount.textContent='0 clases';
+
+  // Automatizaciones IA
+  const ag = document.getElementById('automations-grid');
+  if(ag){
+    const autos=[
+      {i:'💬',n:'Respuesta WhatsApp',d:'Bot responde en < 1 min · ES/EN',c:34,u:'consultas/día'},
+      {i:'📧',n:'Confirmaciones email',d:'Tras cada reserva de clase',c:42,u:'esta semana'},
+      {i:'⏰',n:'Recordatorios 24h antes',d:'WhatsApp a alumnos confirmados',c:38,u:'mensajes'},
+      {i:'🌊',n:'Cancela si mal tiempo',d:'Avisa alumnos y reagenda solo',c:0,u:'esta semana'},
+      {i:'💰',n:'Recordatorio pago pendiente',d:'Bot avisa · gestor cobra',c:3,u:'recuperados'},
+      {i:'⭐',n:'Petición reseña Google',d:'Email automático tras la clase',c:7,u:'enviados'},
+      {i:'🎁',n:'Bono casi agotado',d:'Cliente con ≤2 sesiones recibe oferta',c:4,u:'detectados'},
+      {i:'📊',n:'Reporte semanal',d:'Lunes 09:00 al director',c:1,u:'/semana'},
+      {i:'🔔',n:'Alerta material bajo',d:'Email cuando llegues al mínimo',c:1,u:'producto'},
+      {i:'📷',n:'Repost Instagram alumnos',d:'Con tag · permiso previo automático',c:5,u:'esta semana'},
+      {i:'💌',n:'Newsletter segmentada',d:'Por nivel + idioma del alumno',c:142,u:'destinatarios'},
+      {i:'📈',n:'Informe mensual',d:'Ocupación, ingresos y tendencias',c:1,u:'/mes'}
+    ];
+    ag.innerHTML=autos.map(a=>`<div style="padding:11px 14px;background:var(--bg);border-radius:8px;display:flex;gap:10px;align-items:center;">
+      <div style="font-size:20px;width:38px;height:38px;display:grid;place-items:center;background:var(--surface);border-radius:8px;flex-shrink:0;">${a.i}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:700;color:var(--txt);">${a.n}</div>
+        <div style="font-size:10px;color:var(--txt3);">${a.d}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-family:var(--display);font-size:14px;font-weight:700;color:var(--coral);line-height:1;">${a.c}</div>
+        <div style="font-size:9px;letter-spacing:.04em;color:var(--txt3);">${a.u}</div>
+      </div>
+    </div>`).join('');
+  }
 }
 
 function renderAgenda(){
