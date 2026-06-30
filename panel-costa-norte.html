@@ -54,7 +54,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
-body{font-family:var(--sans);background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+body{font-family:var(--sans);background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
 ::selection{background:var(--coral);color:#fff;}
 img{max-width:100%;display:block;}
 a{color:inherit;text-decoration:none;}
@@ -127,7 +127,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .theme-toggle:hover{background:rgba(255,255,255,.1);color:#fff;}
 
 /* MAIN */
-.main{position:relative;background:var(--bg);}
+.main{position:relative;background:var(--bg);overflow-x:auto;min-width:0;}
 .topbar{
   position:sticky;top:0;z-index:30;background:rgba(241,239,230,.95);backdrop-filter:blur(10px);
   padding:14px 24px;display:flex;align-items:center;justify-content:space-between;
@@ -570,6 +570,32 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 
 /* ═══ SCHEDULE GRID ═══ */
 .sched-grid{display:grid;grid-template-columns:80px repeat(7,1fr);gap:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+/* GANTT */
+.gantt-table{border-collapse:collapse;table-layout:fixed;width:max-content;}
+.gantt-label-col{width:160px;}
+.gantt-day-col{width:56px;}
+.gantt-head-row th{padding:8px 4px;font-size:10px;font-weight:700;letter-spacing:.06em;text-align:center;border-right:1px solid var(--border2);color:var(--txt3);background:var(--sand-lt);position:sticky;top:0;z-index:2;}
+.gantt-head-row th.g-today{background:rgba(255,94,58,.08);color:var(--coral);}
+.gantt-head-row th:first-child{text-align:left;padding-left:14px;background:var(--sand-lt);}
+.gantt-row{border-top:1px solid var(--border2);}
+.gantt-row:hover{background:rgba(10,37,64,.02);}
+.gantt-row-label{padding:12px 14px;font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;border-right:1px solid var(--border);background:var(--sand-lt);position:sticky;left:0;z-index:1;}
+.gantt-row-label small{display:block;font-size:10px;font-weight:400;color:var(--txt3);margin-top:2px;}
+.gantt-cell{border-right:1px solid var(--border2);position:relative;height:54px;cursor:pointer;padding:4px;overflow:hidden;}
+.gantt-cell:hover{background:rgba(93,189,211,.07);}
+.gantt-cell.g-today{background:rgba(255,94,58,.04);}
+.gantt-cell.g-weekend{background:rgba(10,37,64,.02);}
+.gantt-bar{width:100%;height:100%;border-radius:6px;display:flex;align-items:center;padding:0 7px;font-size:10px;font-weight:600;color:#fff;overflow:hidden;cursor:pointer;transition:filter .15s;line-height:1.3;box-sizing:border-box;}
+.gantt-bar:hover{filter:brightness(1.1);}
+.gantt-bar.paid{background:#2dba8a;}
+.gantt-bar.pending{background:#f59e0b;}
+.gantt-bar.cancelled{background:#ff5e3a;}
+.gantt-bar.private{background:#5dbdd3;}
+.gantt-bar.sup{background:#8b5cf6;}
+/* tooltip */
+.g-tooltip{position:fixed;background:var(--ocean);color:#fff;padding:10px 14px;border-radius:10px;font-size:12px;pointer-events:none;z-index:9999;max-width:220px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,.3);display:none;}
+.g-tooltip strong{display:block;font-size:13px;margin-bottom:4px;}
+.g-tooltip .g-tt-row{display:flex;justify-content:space-between;gap:16px;font-size:11px;opacity:.8;}
 .sched-h{padding:10px 6px;font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;text-align:center;background:var(--bg);border-bottom:1px solid var(--border2);border-right:1px solid var(--border2);}
 .sched-h.today{color:var(--coral);background:rgba(255,94,58,.08);}
 .sched-time{padding:8px 6px;font-size:10px;font-weight:700;color:var(--txt3);text-align:right;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);min-height:54px;}
@@ -869,6 +895,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 .mob-fab{display:none;}
 @media(min-width:901px){.mob-fab{display:none!important;}.bot-nav{display:none!important;}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
@@ -1201,10 +1228,10 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
         </div>
       </div>
       <div class="kpi-grid">
-        <div class="kpi"><div class="kpi-lbl">Clases esta semana</div><div class="kpi-val">38</div><div class="kpi-trend up">+6</div></div>
-        <div class="kpi"><div class="kpi-lbl">Alumnos esta semana</div><div class="kpi-val">142</div><div class="kpi-trend up">+18</div></div>
-        <div class="kpi"><div class="kpi-lbl">Ocupación clases</div><div class="kpi-val">86%</div><div class="kpi-trend up">+4 pts</div></div>
-        <div class="kpi"><div class="kpi-lbl">Bonos vendidos</div><div class="kpi-val">23</div><div class="kpi-trend up">€3,250</div></div>
+        <div class="kpi"><div class="kpi-lbl">Clases esta semana</div><div class="kpi-val">—</div></div>
+        <div class="kpi"><div class="kpi-lbl">Alumnos esta semana</div><div class="kpi-val">—</div></div>
+        <div class="kpi"><div class="kpi-lbl">Ocupación clases</div><div class="kpi-val">—</div></div>
+        <div class="kpi"><div class="kpi-lbl">Bonos vendidos</div><div class="kpi-val">—</div></div>
       </div>
 
       <!-- Surf conditions today -->
@@ -1222,9 +1249,28 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-hd"><div class="card-hd-title">Vista semanal</div><span class="card-hd-meta" id="week-range"></span></div>
-        <div class="card-body"><div class="sched-grid" id="sched-grid"></div></div>
+      <!-- GANTT MENSUAL -->
+      <div class="card" style="overflow:hidden;">
+        <div class="card-hd">
+          <div class="card-hd-title">Calendario mensual</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="btn btn-ghost" id="gantt-prev" onclick="ganttMove(-1)">‹</button>
+            <span id="gantt-month-label" style="font-weight:600;font-size:13px;min-width:120px;text-align:center;"></span>
+            <button class="btn btn-ghost" id="gantt-next" onclick="ganttMove(1)">›</button>
+            <button class="btn btn-ghost" onclick="ganttGoToday()">Hoy</button>
+          </div>
+        </div>
+        <!-- Leyenda -->
+        <div style="display:flex;gap:12px;padding:10px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><span style="width:12px;height:12px;border-radius:3px;background:#2dba8a;display:inline-block;"></span>Pagado</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><span style="width:12px;height:12px;border-radius:3px;background:#f59e0b;display:inline-block;"></span>Pendiente pago</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><span style="width:12px;height:12px;border-radius:3px;background:#ff5e3a;display:inline-block;"></span>Cancelado</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><span style="width:12px;height:12px;border-radius:3px;background:#5dbdd3;display:inline-block;"></span>Privada</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><span style="width:12px;height:12px;border-radius:3px;background:#8b5cf6;display:inline-block;"></span>SUP</div>
+        </div>
+        <div id="gantt-scroll" style="overflow-x:auto;width:100%;">
+          <div id="gantt-wrap"></div>
+        </div>
       </div>
 
       <!-- Today's classes attendance -->
@@ -1238,7 +1284,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
     <div id="page-students" class="page">
       <div class="page-hd">
         <div><h1>Alumnos &amp; <em>bonos</em></h1><div class="page-sub">Saldos · niveles · histórico</div></div>
-        <div class="page-hd-actions"><button class="btn btn-primary">+ Nuevo alumno</button></div>
+        <div class="page-hd-actions"><button class="btn btn-primary" onclick="newStudent()">+ Nuevo alumno</button></div>
       </div>
       <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Alumno</th><th>Nivel</th><th>Bono</th><th>Sesiones restantes</th><th>Próxima clase</th><th>Total gastado</th></tr></thead><tbody id="students-tbody"></tbody></table></div></div>
     </div>
@@ -1306,7 +1352,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
     <div id="page-instructors" class="page">
       <div class="page-hd">
         <div><h1>Nuestros <em>instructores</em></h1><div class="page-sub">5 monitores titulados</div></div>
-        <div class="page-hd-actions"><button class="btn btn-primary">+ Añadir instructor</button></div>
+        <div class="page-hd-actions"><button class="btn btn-primary" onclick="newInstructor()">+ Añadir instructor</button></div>
       </div>
       <div id="instructors-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
     </div>
@@ -1333,10 +1379,10 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 
       <!-- TPV mini KPIs -->
       <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px;">
-        <div class="kpi" style="padding:14px;"><div class="kpi-lbl">Ventas hoy</div><div class="kpi-val" style="font-size:22px;">€480</div></div>
-        <div class="kpi" style="padding:14px;"><div class="kpi-lbl">Tickets</div><div class="kpi-val" style="font-size:22px;">12</div></div>
-        <div class="kpi" style="padding:14px;"><div class="kpi-lbl">Ticket medio</div><div class="kpi-val" style="font-size:22px;">€40</div></div>
-        <div class="kpi" style="padding:14px;"><div class="kpi-lbl">Top producto</div><div class="kpi-val" style="font-size:14px;font-weight:600;">Crema EQ</div></div>
+        <div class="kpi" style="padding:14px;"><div class="kpi-lbl">Ventas hoy</div><div class="kpi-val" style="font-size:22px;">—</div></div>
+        <div class="kpi" style="padding:14px;"><div class="kpi-lbl">Tickets</div><div class="kpi-val" style="font-size:22px;">—</div></div>
+        <div class="kpi" style="padding:14px;"><div class="kpi-lbl">Ticket medio</div><div class="kpi-val" style="font-size:22px;">—</div></div>
+        <div class="kpi" style="padding:14px;"><div class="kpi-lbl">Top producto</div><div class="kpi-val" style="font-size:14px;font-weight:600;">—</div></div>
       </div>
 
       <div class="pos-wrap">
@@ -1428,7 +1474,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
     <div id="page-clients" class="page">
       <div class="page-hd">
         <div><h1>Clientes <em>unificados</em></h1><div class="page-sub">Alumnos · compradores · alquileres</div></div>
-        <div class="page-hd-actions"><button class="btn btn-primary">+ Nuevo cliente</button></div>
+        <div class="page-hd-actions"><button class="btn btn-primary" onclick="newClient()">+ Nuevo cliente</button></div>
       </div>
       <div class="tabs"><button class="tab active">Todos</button><button class="tab">Surf</button><button class="tab">Tienda</button><button class="tab">VIP</button><button class="tab">Newsletter</button></div>
       <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Cliente</th><th>Origen</th><th>Clases</th><th>Compras</th><th>LTV</th><th>Tags</th></tr></thead><tbody id="clients-tbody"></tbody></table></div></div>
@@ -1613,7 +1659,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
     <div id="page-team" class="page">
       <div class="page-hd">
         <div><h1>Nuestro <em>equipo</em></h1><div class="page-sub">Recepción · instructores · limpieza</div></div>
-        <div class="page-hd-actions"><button class="btn btn-primary">+ Invitar miembro</button></div>
+        <div class="page-hd-actions"><button class="btn btn-primary" onclick="newTeamMember()">+ Invitar miembro</button></div>
       </div>
       <div id="team-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
     </div>
@@ -1701,6 +1747,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 <div class="toast-host" id="toast-host"></div>
 
 <!-- ════════════ MODAL ════════════ -->
+<div class="g-tooltip" id="g-tooltip"></div>
 <div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
   <div class="modal-box">
     <div class="modal-hd"><div class="modal-hd-t" id="modal-t">Detalle</div><button class="modal-close" onclick="closeModal()">×</button></div>
@@ -1761,236 +1808,27 @@ const APTS=[];
 const APT_STATE_LBL={free:'Libre',occupied:'Ocupado',cleaning:'Limpieza',maint:'Manten.'};
 const RESERVATIONS=[];
 
-const CLASSES=[
-  {time:'09:00',type:'Grupal',instr:'David Sánchez',students:8,level:'Iniciación'},
-  {time:'10:30',type:'Privada',instr:'Lucas Ortega',students:1,level:'Intermedio'},
-  {time:'11:30',type:'Grupal',instr:'David Sánchez',students:6,level:'Avanzado'},
-  {time:'12:30',type:'SUP',instr:'María Quintana',students:4,level:'Iniciación'},
-  {time:'15:00',type:'Grupal',instr:'Lucas Ortega',students:9,level:'Iniciación'},
-  {time:'16:30',type:'Privada',instr:'David Sánchez',students:2,level:'Avanzado'},
-  {time:'17:30',type:'Grupal',instr:'María Quintana',students:7,level:'Intermedio'},
-];
+const CLASSES=[];
 
-const RENTALS=[
-  // Tarifas: Surfboard/Body 30€/día · Premium 40€/día · Wetsuit 18€/día · Surf+Wetsuit 40€/día · SUP 40€/día
-  {item:'Tabla surf (bodyboard)',client:'Marc Riba',out:'Hoy 09:30',ret:'Mañana 09:30',days:1,state:'Activo',total:30},
-  {item:'Neopreno · talla M',client:'Marc Riba',out:'Hoy 09:30',ret:'Mañana 09:30',days:1,state:'Activo',total:18},
-  {item:'Tabla surf premium + neopreno',client:'Helena Vidal',out:'Ayer 14:00',ret:'Mañana 14:00',days:2,state:'Activo',total:90},
-  {item:'Tabla surf + neopreno',client:'Familia Bauer',out:'Hoy 11:00',ret:'Sábado 11:00',days:5,state:'Activo',total:120},
-  {item:'Tabla surf + neopreno',client:'Familia Bauer',out:'Hoy 11:00',ret:'Sábado 11:00',days:5,state:'Activo',total:120},
-  {item:'Tabla surf premium',client:'Pierre Lacroix',out:'Hoy 08:00',ret:'Hoy 14:00',days:0.5,state:'Activo',total:20},
-  {item:'Paddle Surf',client:'Lola Mendoza',out:'Hoy 10:00',ret:'Hoy 18:00',days:0.5,state:'Activo',total:20},
-  {item:'Neopreno · talla L',client:'Tom Bauer',out:'Hoy 11:00',ret:'Sábado 11:00',days:5,state:'Activo',total:55},
-];
+const RENTALS=[];
 
-const PACKS=[
-  // CLASES GRUPALES — INICIACIÓN (precios reales web)
-  {name:'Iniciación · 1 día',type:'Clase',sess:1,price:35,sold:18,margin:'62%',state:'Activo'},
-  {name:'Iniciación · 2 días',type:'Clase',sess:2,price:70,sold:14,margin:'64%',state:'Activo'},
-  {name:'Iniciación · 5 días',type:'Semana',sess:5,price:140,sold:38,margin:'72%',state:'Top'},
-  {name:'Iniciación · 10 días',type:'Bono',sess:10,price:230,sold:22,margin:'73%',state:'Top'},
-  // CLASES GRUPALES — PERFECCIONAMIENTO (precios reales web)
-  {name:'Perfeccionamiento · 1 día',type:'Clase',sess:1,price:50,sold:10,margin:'65%',state:'Activo'},
-  {name:'Perfeccionamiento · 2 días',type:'Clase',sess:2,price:100,sold:8,margin:'67%',state:'Activo'},
-  {name:'Perfeccionamiento · 5 días',type:'Semana',sess:5,price:170,sold:20,margin:'70%',state:'Top'},
-  {name:'Perfeccionamiento · 7 días',type:'Semana',sess:7,price:270,sold:12,margin:'72%',state:'Top'},
-  // CLASES COMPETICIÓN (precios reales web)
-  {name:'Competición · 1 día',type:'Competición',sess:1,price:60,sold:6,margin:'68%',state:'Activo'},
-  {name:'Competición · 2 días',type:'Competición',sess:2,price:110,sold:4,margin:'70%',state:'Activo'},
-  {name:'Competición · 5 días',type:'Competición',sess:5,price:175,sold:8,margin:'72%',state:'Top'},
-  {name:'Competición · 10 días',type:'Competición',sess:10,price:225,sold:3,margin:'74%',state:'Activo'},
-  // SURF CAMP
-  {name:'Surf Camp San Vicente',type:'Camp',sess:5,price:395,sold:12,margin:'68%',state:'Top'},
-  {name:'Surf Camp Extreme',type:'Camp',sess:7,price:520,sold:8,margin:'70%',state:'Top'},
-  {name:'Surf Camp Rip Curl Edition',type:'Camp',sess:7,price:650,sold:4,margin:'72%',state:'Activo'},
-  {name:'Surf Camp Solo Chicas',type:'Camp',sess:5,price:420,sold:6,margin:'69%',state:'Activo'},
-  // SUP
-  {name:'SUP · 1 día',type:'SUP',sess:1,price:35,sold:22,margin:'70%',state:'Activo'},
-  {name:'SUP · 5 días',type:'SUP',sess:5,price:140,sold:10,margin:'72%',state:'Activo'},
-];
+const PACKS=[];
 
-const INSTRUCTORS=[
-  {name:'David Sánchez',role:'Director técnico',exp:'18 años',cert:'ISA · WSL',rating:5.0,classes:1240,img:'https://images.unsplash.com/photo-1539571696857-7c4e7e1f8d8b?w=400&q=85'},
-  {name:'Lucas Ortega',role:'Instructor senior',exp:'12 años',cert:'ISA L2',rating:4.9,classes:980,img:'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=400&q=85'},
-  {name:'María Quintana',role:'Instructora SUP',exp:'8 años',cert:'ISA SUP',rating:4.9,classes:720,img:'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=85'},
-  {name:'Iker Bárcena',role:'Instructor júnior',exp:'4 años',cert:'ISA L1',rating:4.7,classes:280,img:'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=85'},
-  {name:'Nora Fernández',role:'Instructora kids',exp:'6 años',cert:'ISA L1 · CCAA',rating:4.9,classes:540,img:'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=85'},
-];
+const INSTRUCTORS=[];
 
-const STUDENTS=[
-  {name:'Marc Riba',level:'Iniciación',pack:'Semana 5 días',left:3,next:'Mañana 10:30',spent:285},
-  {name:'Helena Vidal',level:'Intermedio',pack:'Bono 10x',left:6,next:'Vie 11:30',spent:480},
-  {name:'Pierre Lacroix',level:'Avanzado',pack:'Privada',left:0,next:'-',spent:165},
-  {name:'Familia Bauer',level:'Iniciación',pack:'Familia 4 pax',left:2,next:'Hoy 15:00',spent:480},
-  {name:'Lola Mendoza',level:'SUP',pack:'1 sesión',left:0,next:'-',spent:25},
-  {name:'Jaime Vega',level:'Avanzado',pack:'Bono 10x',left:8,next:'Sáb 12:30',spent:680},
-  {name:'Sofía Rivas',level:'Intermedio',pack:'Bono 5x',left:2,next:'Dom 10:30',spent:320},
-  {name:'Ainhoa Berasaluce',level:'Iniciación',pack:'Semana 5 días',left:5,next:'Lun 09:00',spent:175},
-  {name:'Tom Bauer',level:'Iniciación',pack:'Familia 4 pax',left:2,next:'Hoy 15:00',spent:120},
-  {name:'Carlos Ramírez',level:'Avanzado',pack:'Bono 10x',left:4,next:'Mié 11:30',spent:740},
-];
+const STUDENTS=[];
 
-const STOCK=[
-  // TABLAS
-  {name:'Tabla Soft 7\'2"',sku:'TB-S072',cat:'Tabla',stock:6,min:3,cost:120,price:225,img:'https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=400&q=85'},
-  {name:'Tabla Soft 8\'0"',sku:'TB-S080',cat:'Tabla',stock:4,min:3,cost:140,price:265,img:'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=400&q=85'},
-  {name:'Tabla Soft 9\'0"',sku:'TB-S090',cat:'Tabla',stock:3,min:2,cost:160,price:295,img:'https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=400&q=85'},
-  {name:'Tabla Rígida 6\'10" Channel Islands',sku:'TB-R610',cat:'Tabla',stock:2,min:3,cost:280,price:550,img:'https://images.unsplash.com/photo-1591025207163-942350e47db2?w=400&q=85'},
-  {name:'Tabla Rígida 7\'6" funboard',sku:'TB-R760',cat:'Tabla',stock:3,min:2,cost:320,price:620,img:'https://images.unsplash.com/photo-1591025207163-942350e47db2?w=400&q=85'},
-  {name:'Longboard 9\'2"',sku:'TB-L092',cat:'Tabla',stock:1,min:2,cost:380,price:720,img:'https://images.unsplash.com/photo-1504911890770-7fed5dad0b87?w=400&q=85'},
-  {name:'SUP Race 12\'6"',sku:'SUP-R126',cat:'Tabla',stock:2,min:2,cost:520,price:980,img:'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=400&q=85'},
-  {name:'SUP Cruise 10\'6"',sku:'SUP-C106',cat:'Tabla',stock:4,min:2,cost:380,price:720,img:'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=400&q=85'},
-  // NEOPRENOS Rip Curl
-  {name:'Neopreno Rip Curl Flashbomb 3/2 S',sku:'NP-32S',cat:'Neopreno',stock:6,min:3,cost:75,price:155,img:'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&q=85'},
-  {name:'Neopreno Rip Curl Flashbomb 3/2 M',sku:'NP-32M',cat:'Neopreno',stock:5,min:4,cost:75,price:155,img:'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&q=85'},
-  {name:'Neopreno Rip Curl Flashbomb 3/2 L',sku:'NP-32L',cat:'Neopreno',stock:6,min:3,cost:75,price:155,img:'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&q=85'},
-  {name:'Neopreno Rip Curl Flashbomb 4/3 S',sku:'NP-43S',cat:'Neopreno',stock:5,min:3,cost:90,price:185,img:'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&q=85'},
-  {name:'Neopreno Rip Curl Flashbomb 4/3 M',sku:'NP-43M',cat:'Neopreno',stock:8,min:4,cost:90,price:185,img:'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&q=85'},
-  {name:'Neopreno Rip Curl Flashbomb 4/3 L',sku:'NP-43L',cat:'Neopreno',stock:6,min:3,cost:90,price:185,img:'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&q=85'},
-  {name:'Neopreno Rip Curl Flashbomb 5/4 M',sku:'NP-54M',cat:'Neopreno',stock:4,min:2,cost:110,price:225,img:'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&q=85'},
-  {name:'Neopreno Rip Curl Flashbomb 5/4 L',sku:'NP-54L',cat:'Neopreno',stock:0,min:2,cost:110,price:225,img:'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&q=85'},
-  {name:'Capucha Rip Curl 3mm',sku:'NP-CAP',cat:'Neopreno',stock:8,min:3,cost:15,price:35,img:'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&q=85'},
-  {name:'Escarpines Rip Curl 3mm',sku:'NP-ESC',cat:'Calzado',stock:10,min:4,cost:18,price:45,img:'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&q=85'},
-  // ROPA Rip Curl
-  {name:'Camiseta Rip Curl Sun M',sku:'RC-CAM-M',cat:'Ropa',stock:8,min:3,cost:12,price:32,img:'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=85'},
-  {name:'Camiseta Rip Curl Sun L',sku:'RC-CAM-L',cat:'Ropa',stock:6,min:3,cost:12,price:32,img:'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=85'},
-  {name:'Sudadera Rip Curl Wetty',sku:'RC-SUD',cat:'Ropa',stock:12,min:4,cost:28,price:65,img:'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=85'},
-  {name:'Hoodie Rip Curl premium',sku:'RC-HOO',cat:'Ropa',stock:7,min:3,cost:32,price:75,img:'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=85'},
-  {name:'Boardshort Rip Curl S',sku:'RC-BSH-S',cat:'Ropa',stock:5,min:3,cost:22,price:55,img:'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=85'},
-  {name:'Boardshort Rip Curl M',sku:'RC-BSH-M',cat:'Ropa',stock:9,min:4,cost:22,price:55,img:'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=85'},
-  {name:'Boardshort Rip Curl L',sku:'RC-BSH-L',cat:'Ropa',stock:6,min:3,cost:22,price:55,img:'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=85'},
-  {name:'Bikini Rip Curl S',sku:'RC-BIK-S',cat:'Ropa',stock:5,min:2,cost:18,price:48,img:'https://images.unsplash.com/photo-1583846783214-7229a91b20ed?w=400&q=85'},
-  {name:'Bikini Rip Curl M',sku:'RC-BIK-M',cat:'Ropa',stock:7,min:3,cost:18,price:48,img:'https://images.unsplash.com/photo-1583846783214-7229a91b20ed?w=400&q=85'},
-  {name:'Bañador surf mujer Rip Curl',sku:'RC-BAN-F',cat:'Ropa',stock:6,min:3,cost:24,price:58,img:'https://images.unsplash.com/photo-1583846783214-7229a91b20ed?w=400&q=85'},
-  {name:'Licra UV mujer',sku:'RC-LIC-F',cat:'Ropa',stock:4,min:2,cost:18,price:42,img:'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=85'},
-  {name:'Licra UV hombre',sku:'RC-LIC-M',cat:'Ropa',stock:6,min:3,cost:18,price:42,img:'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=85'},
-  // CALZADO
-  {name:'Chanclas Rip Curl',sku:'RC-CHA',cat:'Calzado',stock:14,min:5,cost:8,price:22,img:'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=85'},
-  {name:'Sandalias surf Rip Curl',sku:'RC-SAN',cat:'Calzado',stock:8,min:3,cost:14,price:36,img:'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=85'},
-  // ACCESORIOS
-  {name:'Crema solar EQ SPF50',sku:'EQ-SPF',cat:'Acc',stock:24,min:10,cost:5,price:14,img:'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=85'},
-  {name:'Crema after sun',sku:'EQ-AFT',cat:'Acc',stock:12,min:5,cost:4,price:12,img:'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=85'},
-  {name:'Gorra Rip Curl Cap',sku:'RC-GOR',cat:'Acc',stock:18,min:8,cost:8,price:22,img:'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=400&q=85'},
-  {name:'Gafas sol surf Rip Curl',sku:'RC-GAF',cat:'Acc',stock:10,min:4,cost:18,price:45,img:'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=85'},
-  {name:'Mochila Rip Curl 30L',sku:'RC-MOC',cat:'Acc',stock:6,min:3,cost:28,price:65,img:'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=85'},
-  {name:'Bidón seco 20L',sku:'AC-BID',cat:'Acc',stock:10,min:4,cost:14,price:32,img:'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=85'},
-  {name:'Funda tabla 6\'10"',sku:'AC-FND-S',cat:'Acc',stock:6,min:2,cost:22,price:48,img:'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=400&q=85'},
-  {name:'Funda tabla 9\'0"',sku:'AC-FND-L',cat:'Acc',stock:3,min:2,cost:28,price:62,img:'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=400&q=85'},
-  // PARAFINAS / QUILLAS
-  {name:'Leash 6\' premium',sku:'AC-LSH-6',cat:'Wax',stock:11,min:5,cost:9,price:24,img:'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=400&q=85'},
-  {name:'Leash 8\' longboard',sku:'AC-LSH-8',cat:'Wax',stock:7,min:3,cost:11,price:28,img:'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=400&q=85'},
-  {name:'Parafina Sex Wax (caliente)',sku:'AC-WAX-W',cat:'Wax',stock:32,min:15,cost:1.2,price:3.5,img:'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=85'},
-  {name:'Parafina Sex Wax (frío)',sku:'AC-WAX-C',cat:'Wax',stock:18,min:10,cost:1.2,price:3.5,img:'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=85'},
-  {name:'Quillas FCS II Performer',sku:'AC-FCS-P',cat:'Wax',stock:8,min:3,cost:42,price:85,img:'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=400&q=85'},
-  {name:'Quillas FCS II Reactor',sku:'AC-FCS-R',cat:'Wax',stock:6,min:3,cost:38,price:78,img:'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=400&q=85'},
-];
+const STOCK=[];
 
-const CLIENTS=[
-  {name:'Marc Riba',src:'Surf',apto:'-',clas:3,buys:'€48',ltv:485,tags:['VIP','Surf']},
-  {name:'Helena Vidal',src:'Surf · bono 10x',apto:'-',clas:4,buys:'€55',ltv:520,tags:['Bono activo']},
-  {name:'Familia Bauer',src:'Camp surf',apto:'-',clas:4,buys:'€140',ltv:1295,tags:['VIP','Familia']},
-  {name:'Pierre Lacroix',src:'Surf · privada',apto:'-',clas:3,buys:'-',ltv:165,tags:['Francés']},
-  {name:'Lola Mendoza',src:'SUP · alquiler',apto:'-',clas:1,buys:'€25',ltv:50,tags:['Nuevo']},
-  {name:'Tom Bauer',src:'Camp · 4 pax',apto:'-',clas:5,buys:'€85',ltv:300,tags:['Familia']},
-  {name:'Jaime Vega',src:'Surf · bono 10x',apto:'-',clas:6,buys:'€220',ltv:920,tags:['VIP','Bono activo']},
-  {name:'Sofía Rivas',src:'Surf · bono 5x',apto:'-',clas:3,buys:'€42',ltv:412,tags:['Newsletter']},
-  {name:'Carlos Ramírez',src:'Surf · bono 10x',apto:'-',clas:6,buys:'€180',ltv:960,tags:['VIP']},
-  {name:'Ainhoa Berasaluce',src:'Semana surf',apto:'-',clas:0,buys:'€95',ltv:380,tags:['Newsletter']},
-  {name:'Yannick Möller',src:'Web directo',apto:'-',clas:0,buys:'€68',ltv:840,tags:['Alemán','VIP']},
-  {name:'Reem Al Mansoori',src:'Surf · privada',apto:'-',clas:2,buys:'-',ltv:220,tags:['Internacional']},
-];
+const CLIENTS=[];
 
-const INVOICES=[
-  {num:'FAC-2026-3142',client:'Familia Bauer',clientNif:'Sin NIF',clientEmail:'bauer@gmail.com',clientAddress:'Múnich, Alemania',concept:'Surf Camp Familia · 4 pax · 7 días',lines:[{desc:'Pack Familia 4 pax · 5 clases',qty:4,unitPrice:175,vatPct:21},{desc:'Alquiler material · 7 días',qty:7,unitPrice:30,vatPct:21}],date:'07/06/2026',issueDate:'07/06/2026',dueDate:'07/06/2026',vatPct:10,base:1815,vat:220,total:2035,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Directo',quarter:2},
-  {num:'FAC-2026-3141',client:'Marc Riba',clientNif:'47820913L',clientEmail:'marc.riba@outlook.es',clientAddress:'Barcelona',concept:'Semana surf · 5 sesiones grupo',lines:[{desc:'Pack Semana Surf · 5 clases grupo',qty:1,unitPrice:175,vatPct:21}],date:'06/06/2026',issueDate:'06/06/2026',dueDate:'06/06/2026',vatPct:21,base:145,vat:30,total:175,state:'Pagada',sc:'ok',payMethod:'Bizum',channel:'Escuela',quarter:2},
-  {num:'FAC-2026-3140',client:'Helena Vidal',clientNif:'52987634M',clientEmail:'helenav@gmail.com',clientAddress:'Santander',concept:'Bono 10 clases surf',lines:[{desc:'Bono 10 clases surf grupo',qty:1,unitPrice:250,vatPct:21}],date:'06/06/2026',issueDate:'06/06/2026',dueDate:'13/06/2026',vatPct:21,base:207,vat:43,total:250,state:'Pagada',sc:'ok',payMethod:'Transferencia',channel:'Escuela',quarter:2},
-  {num:'FAC-2026-3139',client:'Yannick Möller',clientNif:'Sin NIF',clientEmail:'y.moller@web.de',clientAddress:'Berlín, Alemania',concept:'Apto 19 · 5 noches',lines:[{desc:'Alojamiento Apto 19 · 5 noches',qty:5,unitPrice:138,vatPct:10}],date:'05/06/2026',issueDate:'05/06/2026',dueDate:'05/06/2026',vatPct:10,base:627,vat:63,total:690,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Booking',quarter:2},
-  {num:'FAC-2026-3138',client:'Jaime Vega',clientNif:'38741205K',clientEmail:'jaime.vega@live.es',clientAddress:'Oviedo',concept:'Tienda · Neopreno 4/3 Rip Curl + tabla longboard',lines:[{desc:'Neopreno Rip Curl 4/3 talla M',qty:1,unitPrice:280,vatPct:21},{desc:'Tabla longboard 9\'2"',qty:1,unitPrice:360,vatPct:21}],date:'05/06/2026',issueDate:'05/06/2026',dueDate:'05/06/2026',vatPct:21,base:529,vat:111,total:640,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Tienda',quarter:2},
-  {num:'FAC-2026-3137',client:'Reem Al Mansoori',clientNif:'Sin NIF',clientEmail:'reem.alm@gmail.com',clientAddress:'Abu Dabi, EAU',concept:'Apto 21 · 3 noches + 2 clases privadas',lines:[{desc:'Alojamiento Apto 21 · 3 noches',qty:3,unitPrice:158,vatPct:10},{desc:'Clases privadas surf · 2 sesiones',qty:2,unitPrice:55,vatPct:21}],date:'04/06/2026',issueDate:'04/06/2026',dueDate:'11/06/2026',vatPct:10,base:534,vat:65,total:599,state:'Enviada',sc:'info',payMethod:'Transferencia',channel:'Directo',quarter:2},
-  {num:'FAC-2026-3136',client:'Sofía Rivas',clientNif:'55312048J',clientEmail:'sofia.rivas@hotmail.com',clientAddress:'Madrid',concept:'Apto 12 · 4 noches',lines:[{desc:'Alojamiento Apto 12 · 4 noches',qty:4,unitPrice:128,vatPct:10}],date:'04/06/2026',issueDate:'04/06/2026',dueDate:'04/06/2026',vatPct:10,base:465,vat:47,total:512,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Airbnb',quarter:2},
-  {num:'FAC-2026-3135',client:'Pierre Lacroix',clientNif:'Sin NIF',clientEmail:'pierre.l@laposte.fr',clientAddress:'Lyon, Francia',concept:'3 clases privadas surf',lines:[{desc:'Clase privada surf · 1h',qty:3,unitPrice:55,vatPct:21}],date:'03/06/2026',issueDate:'03/06/2026',dueDate:'03/06/2026',vatPct:21,base:136,vat:29,total:165,state:'Pagada',sc:'ok',payMethod:'Efectivo',channel:'Escuela',quarter:2},
-  {num:'FAC-2026-3134',client:'Lola Mendoza',clientNif:'45620178R',clientEmail:'lola.mendoza@gmail.com',clientAddress:'Bilbao',concept:'Sesión SUP + alquiler tabla SUP 2h',lines:[{desc:'Sesión SUP grupo',qty:1,unitPrice:25,vatPct:21},{desc:'Alquiler tabla SUP · 2h',qty:2,unitPrice:12,vatPct:21}],date:'03/06/2026',issueDate:'03/06/2026',dueDate:'03/06/2026',vatPct:21,base:41,vat:9,total:50,state:'Pagada',sc:'ok',payMethod:'Efectivo',channel:'Escuela',quarter:2},
-  {num:'FAC-2026-3133',client:'Ainhoa Berasaluce',clientNif:'78341250A',clientEmail:'ainhoa.b@euskaltel.net',clientAddress:'Vitoria-Gasteiz',concept:'Apto 3 · 7 noches',lines:[{desc:'Alojamiento Apto 3 · 7 noches',qty:7,unitPrice:135,vatPct:10}],date:'02/06/2026',issueDate:'02/06/2026',dueDate:'09/06/2026',vatPct:10,base:859,vat:86,total:945,state:'Pendiente',sc:'warn',payMethod:'Transferencia',channel:'Directo',quarter:2},
-  {num:'FAC-2026-3132',client:'Carlos Ramírez',clientNif:'36741203V',clientEmail:'carlos.ramirez@gmail.com',clientAddress:'Valladolid',concept:'Bono 10 clases + tabla Rip Curl Fish',lines:[{desc:'Bono 10 clases surf grupo',qty:1,unitPrice:250,vatPct:21},{desc:'Tabla Rip Curl Fish 6\'2"',qty:1,unitPrice:420,vatPct:21}],date:'02/06/2026',issueDate:'02/06/2026',dueDate:'02/06/2026',vatPct:21,base:554,vat:116,total:670,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Tienda',quarter:2},
-  {num:'FAC-2026-3131',client:'Familie Jensen',clientNif:'Sin NIF',clientEmail:'jensen@gmail.dk',clientAddress:'Copenhague, Dinamarca',concept:'Pack Familia Surf + SUP · 4 pax · 5 días',lines:[{desc:'Alojamiento Apto 8 · 5 noches',qty:5,unitPrice:142,vatPct:10},{desc:'Pack Familia Surf · 4 pax · 3 días',qty:4,unitPrice:95,vatPct:21}],date:'01/06/2026',issueDate:'01/06/2026',dueDate:'01/06/2026',vatPct:10,base:959,vat:131,total:1090,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Airbnb',quarter:2},
-  {num:'FAC-2026-3130',client:'Roberto Pérez',clientNif:'28741203B',clientEmail:'roberto.perez@gmail.com',clientAddress:'Santander',concept:'Alquiler equipo · 3 días neopreno + tabla + leash',lines:[{desc:'Alquiler neopreno 3/2 · 3 días',qty:3,unitPrice:15,vatPct:21},{desc:'Alquiler tabla shortboard · 3 días',qty:3,unitPrice:20,vatPct:21}],date:'31/05/2026',issueDate:'31/05/2026',dueDate:'31/05/2026',vatPct:21,base:99,vat:21,total:120,state:'Pagada',sc:'ok',payMethod:'Efectivo',channel:'Escuela',quarter:2},
-  {num:'FAC-2026-3129',client:'Surf Academy SL',clientNif:'B-28741204',clientEmail:'admin@surfacademy.es',clientAddress:'Madrid',concept:'10 bonos grupo pack empresa · delegación Madrid',lines:[{desc:'Bono 10 clases grupo · pack empresa',qty:10,unitPrice:220,vatPct:21}],date:'30/05/2026',issueDate:'30/05/2026',dueDate:'13/06/2026',vatPct:21,base:1818,vat:382,total:2200,state:'Pendiente',sc:'warn',payMethod:'Transferencia',channel:'Escuela',quarter:2},
-  {num:'FAC-2026-3128',client:'Katrin Hoffmann',clientNif:'Sin NIF',clientEmail:'k.hoffmann@gmx.de',clientAddress:'Hamburgo, Alemania',concept:'Apto 22 · 10 noches temporada alta',lines:[{desc:'Alojamiento Apto 22 · 10 noches',qty:10,unitPrice:162,vatPct:10}],date:'29/05/2026',issueDate:'29/05/2026',dueDate:'29/05/2026',vatPct:10,base:1473,vat:147,total:1620,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Booking',quarter:2},
-  {num:'FAC-2026-3127',client:'Amaia Iriondo',clientNif:'16520047L',clientEmail:'amaia.iriondo@gmail.com',clientAddress:'Pamplona',concept:'Tienda · Traje seco + accesorios surf',lines:[{desc:'Traje seco Patagonia R3 talla S',qty:1,unitPrice:380,vatPct:21},{desc:'Leash 9\' + wax cold + gorro 3mm',qty:1,unitPrice:75,vatPct:21}],date:'28/05/2026',issueDate:'28/05/2026',dueDate:'28/05/2026',vatPct:21,base:376,vat:79,total:455,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Tienda',quarter:2},
-  {num:'FAC-2026-3126',client:'Iago Costa',clientNif:'33412087P',clientEmail:'iago.costa@correo.es',clientAddress:'A Coruña',concept:'Apto 6 · 4 noches + Semana surf',lines:[{desc:'Alojamiento Apto 6 · 4 noches',qty:4,unitPrice:120,vatPct:10},{desc:'Pack Semana Surf · 5 clases grupo',qty:1,unitPrice:175,vatPct:21}],date:'26/05/2026',issueDate:'26/05/2026',dueDate:'02/06/2026',vatPct:10,base:582,vat:79,total:661,state:'Vencida',sc:'coral',payMethod:'Transferencia',channel:'Directo',quarter:2},
-  {num:'FAC-2026-3125',client:'Costa Norte SL',clientNif:'B39762695',clientEmail:'roberto@costanorte.es',clientAddress:'San Vicente de la Barquera',concept:'RECTIFICATIVA FAC-2026-3120 · error IVA aplicado',lines:[{desc:'Rectificación tipo IVA alojamiento (21%→10%)',qty:1,unitPrice:-148,vatPct:10}],date:'20/05/2026',issueDate:'20/05/2026',dueDate:'20/05/2026',vatPct:10,base:-135,vat:-14,total:-149,state:'Rectificada',sc:'warn',payMethod:'Tarjeta',channel:'Directo',quarter:2},
-  {num:'FAC-2026-3118',client:'Martin O\'Brien',clientNif:'Sin NIF',clientEmail:'martin.obrien@gmail.ie',clientAddress:'Dublín, Irlanda',concept:'Surf Camp · 7 noches Apto 17 + 5 clases',lines:[{desc:'Alojamiento Apto 17 · 7 noches',qty:7,unitPrice:118,vatPct:10},{desc:'Pack Surf Camp · 5 clases grupo',qty:1,unitPrice:175,vatPct:21}],date:'12/05/2026',issueDate:'12/05/2026',dueDate:'12/05/2026',vatPct:10,base:976,vat:118,total:1094,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Airbnb',quarter:2},
-  {num:'FAC-2026-3110',client:'Lucía Fernández',clientNif:'71204538C',clientEmail:'lucia.fernandez@gmail.com',clientAddress:'Logroño',concept:'Apto 11 · 6 noches + alquiler material',lines:[{desc:'Alojamiento Apto 11 · 6 noches',qty:6,unitPrice:130,vatPct:10},{desc:'Alquiler material · 4 días',qty:4,unitPrice:35,vatPct:21}],date:'02/04/2026',issueDate:'02/04/2026',dueDate:'02/04/2026',vatPct:10,base:841,vat:99,total:940,state:'Pagada',sc:'ok',payMethod:'Tarjeta',channel:'Booking',quarter:1},
-];
+const INVOICES=[];
 
-const EXPENSES=[
-  {num:'GAS-2026-0215',date:'05/06/2026',vendor:'Marta Sevilla',concept:'Nómina junio · Responsable limpieza',category:'Personal',base:1450,vatPct:0,vat:0,total:1450,deductible:true,payMethod:'Transferencia',doc:'Recibo',state:'Registrado'},
-  {num:'GAS-2026-0214',date:'05/06/2026',vendor:'Iker Bárcena',concept:'Factura autónomo · Instructor surf junio',category:'Personal',base:1200,vatPct:21,vat:252,total:1452,deductible:true,payMethod:'Transferencia',doc:'Factura',state:'Registrado'},
-  {num:'GAS-2026-0213',date:'05/06/2026',vendor:'David Sánchez',concept:'Factura autónomo · Director técnico junio',category:'Personal',base:1800,vatPct:21,vat:378,total:2178,deductible:true,payMethod:'Transferencia',doc:'Factura',state:'Registrado'},
-  {num:'GAS-2026-0212',date:'04/06/2026',vendor:'Endesa',concept:'Electricidad · suministro junio complejo',category:'Suministros',base:820,vatPct:21,vat:172,total:992,deductible:true,payMethod:'Domiciliación',doc:'Factura',state:'Registrado'},
-  {num:'GAS-2026-0211',date:'04/06/2026',vendor:'Canal de Aguas de Cantabria',concept:'Agua · suministro junio escuela surf',category:'Suministros',base:310,vatPct:10,vat:31,total:341,deductible:true,payMethod:'Domiciliación',doc:'Factura',state:'Registrado'},
-  {num:'GAS-2026-0210',date:'03/06/2026',vendor:'Movistar Empresas',concept:'Fibra óptica + WiFi escuela surf junio',category:'Suministros',base:185,vatPct:21,vat:39,total:224,deductible:true,payMethod:'Domiciliación',doc:'Factura',state:'Registrado'},
-  {num:'GAS-2026-0209',date:'03/06/2026',vendor:'Proveedores de Limpieza SL',concept:'Productos limpieza profesional · stock junio',category:'Limpieza',base:380,vatPct:21,vat:80,total:460,deductible:true,payMethod:'Transferencia',doc:'Factura',state:'Registrado'},
-  {num:'GAS-2026-0208',date:'02/06/2026',vendor:'Airbnb Payments Europe',concept:'Comisión plataforma Airbnb · mayo 2026',category:'Software',base:1840,vatPct:0,vat:0,total:1840,deductible:true,payMethod:'Domiciliación',doc:'Recibo',state:'Registrado'},
-  {num:'GAS-2026-0207',date:'02/06/2026',vendor:'Booking.com BV',concept:'Comisión plataforma Booking · mayo 2026',category:'Software',base:1240,vatPct:0,vat:0,total:1240,deductible:true,payMethod:'Domiciliación',doc:'Recibo',state:'Registrado'},
-  {num:'GAS-2026-0206',date:'01/06/2026',vendor:'Meta Ads',concept:'Publicidad Facebook/Instagram · mayo',category:'Marketing',base:480,vatPct:21,vat:101,total:581,deductible:true,payMethod:'Tarjeta',doc:'Factura',state:'Registrado'},
-  {num:'GAS-2026-0205',date:'01/06/2026',vendor:'Google Ads',concept:'Campañas SEM Google · mayo',category:'Marketing',base:320,vatPct:21,vat:67,total:387,deductible:true,payMethod:'Tarjeta',doc:'Factura',state:'Registrado'},
-  {num:'GAS-2026-0204',date:'31/05/2026',vendor:'Zurich Seguros',concept:'Seguro responsabilidad civil actividades acuáticas',category:'Seguros',base:880,vatPct:0,vat:0,total:880,deductible:true,payMethod:'Domiciliación',doc:'Recibo',state:'Registrado'},
-  {num:'GAS-2026-0203',date:'30/05/2026',vendor:'Fontanería Cantabria SL',concept:'Reparación instalación agua caliente Apto 8',category:'Reparaciones',base:420,vatPct:21,vat:88,total:508,deductible:true,payMethod:'Transferencia',doc:'Factura',state:'Registrado'},
-  {num:'GAS-2026-0202',date:'28/05/2026',vendor:'Pinturas Norte SL',concept:'Pintura y rehabilitación Apto 4 + terraza',category:'Reparaciones',base:680,vatPct:21,vat:143,total:823,deductible:true,payMethod:'Transferencia',doc:'Factura',state:'Registrado'},
-  {num:'GAS-2026-0201',date:'26/05/2026',vendor:'Surf Supplies SL',concept:'Stock wax cold + leashes + grip tapes tienda',category:'Proveedores',base:560,vatPct:21,vat:118,total:678,deductible:true,payMethod:'Tarjeta',doc:'Factura',state:'Pendiente'},
-];
+const EXPENSES=[];
 
-const CONTABILIDAD={
-  year:2026,
-  months:[
-    {month:'Ene',ingresos:18400,gastos:12800,beneficio:5600,iva_rep:3444,iva_sop:1890,iva_liq:1554},
-    {month:'Feb',ingresos:14200,gastos:11400,beneficio:2800,iva_rep:2740,iva_sop:1620,iva_liq:1120},
-    {month:'Mar',ingresos:22800,gastos:13200,beneficio:9600,iva_rep:4274,iva_sop:2100,iva_liq:2174},
-    {month:'Abr',ingresos:31400,gastos:14800,beneficio:16600,iva_rep:5682,iva_sop:2320,iva_liq:3362},
-    {month:'May',ingresos:38200,gastos:15600,beneficio:22600,iva_rep:6840,iva_sop:2450,iva_liq:4390},
-    {month:'Jun',ingresos:42800,gastos:17200,beneficio:25600,iva_rep:7540,iva_sop:2640,iva_liq:4900},
-  ],
-  irpf_retencion:0.07,
-  regimen:'Estimación directa simplificada',
-  epigrafes:['685 - Hoteles y pensiones','671 - Restaurantes','659 - Comercio menor'],
-  cif:'B39762695'
-};
+const CONTABILIDAD={year:new Date().getFullYear(),months:[],irpf_retencion:0.07,regimen:'',epigrafes:[],cif:''};
 
-const THREADS=[
-  {name:'Daniel Pérez',phone:'+34 612 345 678',channel:'WhatsApp',when:'2m',state:'active',booked:true,prev:'Genial, reservo clases de iniciación del 12 al 14',tag:{cls:'ok',label:'Reservado'},msgs:[
-    {from:'client',text:'Hola buenas, quería información sobre clases de surf disponibles en julio',at:'10:42'},
-    {from:'bot',text:'¡Hola Daniel! 👋 Para julio tenemos varias opciones. ¿Cuántas personas y qué fechas exactas te interesan?',at:'10:42'},
-    {from:'client',text:'Somos 2 adultos y 1 niño, del 12 al 19 de julio',at:'10:43'},
-    {from:'bot',text:'Para 3 personas tengo estas opciones:\n\n🏄 Pack Iniciación 3 días · €105/pax\n🏄 Privada 3 pax · 1 clase · €50/pax\n🏄 Semana 5 días · €175/pax\n\nTodos incluyen tabla y neopreno. ¿Qué nivel tenéis?',at:'10:43'},
-    {from:'client',text:'El 7 me gusta. ¿Incluye algo de surf?',at:'10:44'},
-    {from:'bot',text:'¡Genial! Pack Iniciación 3 días para 3 personas:\n\n3 pax × €105 = **€315**\n\nIncluye tabla, neopreno y wetsuit. ¿Te paso el link de pago Stripe?',at:'10:44'},
-    {from:'client',text:'Genial, reservo clases de iniciación del 12 al 14',at:'10:45'}
-  ]},
-  {name:'Marie Dubois',phone:'+33 6 78 90 12 34',channel:'Web',when:'18m',state:'active',booked:false,prev:'Hi, do you offer surf classes for beginners?',tag:{cls:'info',label:'Consulta'},msgs:[
-    {from:'client',text:'Hi, do you offer surf classes for beginners?',at:'10:25'},
-    {from:'bot',text:'Hi! 🌊 Yes, we have beginner classes every day. Group (€35) or private (€75) lessons available. What dates are you in San Vicente?',at:'10:25'},
-    {from:'client',text:'July 8-15',at:'10:26'},
-    {from:'bot',text:'Great! For that week I recommend our "Surf Week · 5 days" pack for €175 — saves you €100 vs single classes. Includes board + wetsuit.',at:'10:26'},
-    {from:'client',text:'Do I need to book accommodation separately?',at:'10:27'},
-    {from:'bot',text:'You can book everything with us! We have 22 beachfront apartments. For July 8-15 we have 3 free apartments. Should I check options?',at:'10:27'}
-  ]},
-  {name:'Lukas Bauer',phone:'+49 152 1234 5678',channel:'Instagram',when:'1h',state:'closed',booked:true,prev:'Danke schön! Bis dann',tag:{cls:'ok',label:'Confirmado'},msgs:[
-    {from:'client',text:'Hallo, ich möchte das Surf Camp für August buchen',at:'09:18'},
-    {from:'bot',text:'¡Hola Lukas! 🏄 For August we have the Surf Camp · 7 nights for €520. Includes apartment + 5 classes + board rental. Which week?',at:'09:18'},
-    {from:'client',text:'15-22 August, 2 personas',at:'09:19'},
-    {from:'bot',text:'Perfect, that week is available. Total for 2 people = **€1,040**. I can hold the slot for 24h. Need your email to send confirmation?',at:'09:19'},
-    {from:'client',text:'lukas.bauer@email.com',at:'09:20'},
-    {from:'bot',text:'✓ Reservation confirmed! Email sent with details and payment link. Roberto will contact you personally 24h before arrival. Vielen Dank!',at:'09:20'},
-    {from:'client',text:'Danke schön! Bis dann',at:'09:21'}
-  ]},
-  {name:'Roberto Casas',phone:'+34 666 789 012',channel:'WhatsApp',when:'2h',state:'closed',booked:false,prev:'Ok, gracias',tag:{cls:'warn',label:'Sin cerrar'},msgs:[
-    {from:'client',text:'¿Hacéis SUP los martes?',at:'08:33'},
-    {from:'bot',text:'¡Sí! SUP los martes a las 12:30 con María. €25 por sesión, 1 hora. ¿Te apunto a algún día?',at:'08:33'},
-    {from:'client',text:'Ok, gracias',at:'08:35'},
-    {from:'bot',text:'Cuando quieras reservar pasa por aquí o llama al 942 71 25 04. ¡Buen día! 🌊',at:'08:35'}
-  ]}
-];
+const THREADS=[];
 
 const TEAM=[
   {name:'Iván Aja Ingelmo',role:'General Manager',email:'comunicacion@escueladesurfcostanorte.com',phone:'618 964 263',av:'IA',color:'var(--coral)'},
@@ -2008,25 +1846,25 @@ function initApp(){
   document.getElementById('dash-date').textContent=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   renderDash();
   renderAgenda();
-  renderClasses();
-  renderStudents();
-  renderPacks();
-  renderInstructors();
-  renderRental();
-  renderShop();
-  renderStock();
-  renderClients();
-  renderInvoices();
-  renderReports();
-  renderGastos();
-  renderInbox();renderLeads();
+  renderInbox();
+  renderLeads();
   renderTeam();
   renderSettings();
+  renderShop();
+  renderReports();
   fetchSurfConditions();
   setInterval(fetchSurfConditions, 30*60*1000);
+  loadAllData();
 }
 
 function fmt(n,c='€'){return c+Number(n||0).toLocaleString('es-ES',{maximumFractionDigits:2});}
+function fLbl(t){return `<label style="display:block;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;margin-top:12px;">${t}</label>`;}
+function fInp(id,val='',type='text',ph=''){return `<input id="${id}" type="${type}" value="${String(val).replace(/"/g,'&quot;')}" placeholder="${ph}" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;">`;}
+function fSel(id,val,opts){return `<select id="${id}" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;">${opts.map(o=>`<option value="${o}" ${o===String(val)?'selected':''}>${o}</option>`).join('')}</select>`;}
+function fTxt(id,val,rows='3',ph=''){return `<textarea id="${id}" rows="${rows}" placeholder="${ph}" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;resize:vertical;">${String(val).replace(/</g,'&lt;')}</textarea>`;}
+function fRow(...cols){return `<div style="display:grid;grid-template-columns:${cols.map(()=>'1fr').join(' ')};gap:12px;">${cols.join('')}</div>`;}
+function fActions(label,saveFn,delFn){return `<div style="display:flex;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">${delFn?`<button class="btn btn-ghost" style="color:var(--coral);" onclick="${delFn}">Eliminar</button>`:''}<div style="flex:1;"></div><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="${saveFn}">${label}</button></div>`;}
+
 function sparkline(values){
   const w=100,h=24,max=Math.max(...values),min=Math.min(...values),rng=(max-min)||1;
   const pts=values.map((v,i)=>{const x=(i/(values.length-1))*w;const y=h-((v-min)/rng)*(h-4)-2;return [x,y];});
@@ -2035,15 +1873,57 @@ function sparkline(values){
   return `<svg class="kpi-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d}"/><circle cx="${last[0]}" cy="${last[1]}" r="2"/></svg>`;
 }
 
+// ════════════ SUPABASE ════════════
+const SLUG='costa-norte';
+const SB=supabase.createClient(
+  'https://vjofxmfwdybktpwiuanc.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE'
+);
+
+async function sbLoad(table, setter, render, order='created_at'){
+  const {data,error}=await SB.from(table).select('*').eq('business_slug',SLUG).order(order,{ascending:false});
+  if(error){console.error(table,error);return;}
+  setter(data||[]);
+  render();
+}
+async function sbInsert(table,row){
+  const {data,error}=await SB.from(table).insert({...row,business_slug:SLUG}).select().single();
+  if(error){toast('⚠ Error al guardar: '+error.message);return null;}
+  return data;
+}
+async function sbUpdate(table,id,row){
+  const {error}=await SB.from(table).update(row).eq('id',id).eq('business_slug',SLUG);
+  if(error){toast('⚠ Error al actualizar: '+error.message);return false;}
+  return true;
+}
+async function sbDelete(table,id){
+  const {error}=await SB.from(table).delete().eq('id',id).eq('business_slug',SLUG);
+  if(error){toast('⚠ Error al eliminar: '+error.message);return false;}
+  return true;
+}
+
+// ════════════ LOAD ALL DATA ════════════
+async function loadAllData(){
+  await Promise.all([
+    sbLoad('cn_clases',   d=>CLASSES=d,    ()=>renderClasses(), 'hora'),
+    sbLoad('cn_alumnos',  d=>STUDENTS=d,   ()=>renderStudents(), 'nombre'),
+    sbLoad('cn_packs',    d=>PACKS=d,      ()=>renderPacks(), 'nombre'),
+    sbLoad('cn_instructores', d=>INSTRUCTORS=d, ()=>renderInstructors(), 'nombre'),
+    sbLoad('cn_alquileres', d=>RENTALS=d,  ()=>renderRental(), 'created_at'),
+    sbLoad('cn_stock',    d=>STOCK=d,      ()=>renderStock(), 'nombre'),
+    sbLoad('crm_clients', d=>CLIENTS=d,    ()=>renderClients(), 'name'),
+    sbLoad('crm_invoices',d=>INVOICES=d,   ()=>renderInvoices(), 'created_at'),
+    sbLoad('cn_gastos',   d=>EXPENSES=d,   ()=>renderGastos(), 'fecha'),
+  ]);
+}
+
 function renderDash(){
   // AI COACH · actionable suggestions
   const cl=document.getElementById('coach-list');
   if(cl){
     const suggestions=[
       {icon:'💰',cat:'Pricing',title:'Sube precio clases privadas fin de semana · +€10',body:'Demanda alta detectada · 6 peticiones web últimas 48h. Sube tarifa clases privadas sábado-domingo de €75 → €85.',cta:'Aplicar',gain:'+€80',color:'#22c55e'},
-      {icon:'📲',cat:'Rescate',title:'4 clientes dormidos · llevan +3 meses sin venir',body:'Marc Riba, Sofía Rivas, Carlos Ramírez, Helena Vidal · gastaron €1.840 en su última visita. Envío WhatsApp con código RECUPERA15.',cta:'Mandar a los 4',gain:'+€420 medio',color:'var(--coral)'},
       {icon:'🌊',cat:'Clases',title:'Domingo hay olas perfectas · añade clase 11:30',body:'Predicción 1.8m olas + viento offshore · alta demanda histórica. Tu calendario está vacío esa franja. Beneficio neto: €280.',cta:'Crear clase',gain:'+€280',color:'var(--aqua-dk)'},
-      {icon:'🎁',cat:'Upsell',title:'8 huéspedes apto sin clases · ofrecer pack',body:'Familia Bauer · Möller · Costa · Eriksson · Pereira · Pérez · Sancho · Jensen. Bot puede mandarles oferta "Pack 5 días €175" con clic.',cta:'Lanzar campaña',gain:'+€1.400 (40% conv)',color:'#a78bfa'},
       {icon:'📦',cat:'Stock',title:'Reordenar Neopreno 5/4 L · agotado hace 2 días',body:'2 alquileres rechazados esta semana por falta de stock. Coste oportunidad: €110. Tu proveedor habitual entrega en 48h.',cta:'Pedir 3 uds',gain:'+€55 margen',color:'var(--warn)'}
     ];
     cl.innerHTML=suggestions.map((s,i)=>`<div style="padding:14px 18px;border-bottom:1px solid var(--border2);display:grid;grid-template-columns:38px 1fr 110px auto;gap:14px;align-items:center;">
@@ -2063,17 +1943,14 @@ function renderDash(){
   }
 
   document.getElementById('dash-kpis').innerHTML=[
-    {l:'Ingresos hoy',v:'€2,840',t:'+€420 vs ayer',cls:'up',s:[3,5,4,6,5,8,7,9]},
-    {l:'Clases hoy',v:'7',t:'42 alumnos',cls:'up',s:[2,3,4,3,5,6,5,7]},
-    {l:'Ventas tienda',v:'€480',t:'+18%',cls:'up',s:[3,3,5,4,5,5,6,7]},
-    {l:'Alquileres activos',v:'8',t:'4 devoluciones hoy',cls:'',s:[2,3,3,4,4,5,5,6]},
-    {l:'Reservas IA · 24h',v:'8',t:'19% conv.',cls:'up',s:[1,2,3,2,3,4,3,5]},
-  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-trend ${k.cls}">${k.t}</div>${sparkline(k.s)}</div>`).join('');
+    {l:'Ingresos hoy',v:'—',t:'',cls:'',s:[]},
+    {l:'Clases hoy',v:'—',t:'',cls:'',s:[]},
+    {l:'Ventas tienda',v:'—',t:'',cls:'',s:[]},
+    {l:'Alquileres activos',v:'—',t:'',cls:'',s:[]},
+    {l:'Reservas IA · 24h',v:'—',t:'',cls:'',s:[]},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div></div>`).join('');
 
-  const wk=[1840,2120,1980,2640,2400,3120,2840];
-  const days=['L','M','X','J','V','S','D'];
-  const max=Math.max(...wk);
-  document.getElementById('dash-chart').innerHTML=`<div class="bar-chart">${wk.map((v,i)=>`<div class="bar" style="height:${(v/max)*100}%" title="${days[i]}: €${v}"><span class="bar-lbl">${days[i]}</span></div>`).join('')}</div>`;
+  document.getElementById('dash-chart').innerHTML=`<div class="bar-chart"></div>`;
 
   document.getElementById('classes-today-count').textContent=CLASSES.length+' clases';
   document.getElementById('dash-classes').innerHTML=CLASSES.slice(0,5).map(c=>`<tr>
@@ -2085,13 +1962,7 @@ function renderDash(){
     <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:10px;">Ver</button></td>
   </tr>`).join('');
 
-  document.getElementById('dash-activity').innerHTML=[
-    {when:'2 min',w:'IA confirmó reserva',m:'Daniel Pérez · Pack Iniciación 3 días · 3 pax'},
-    {when:'18 min',w:'Pago recibido',m:'FAC-2026-3142 · €1,675 · Familia Bauer'},
-    {when:'45 min',w:'Devolución material',m:'Marc Riba devolvió tabla 7\'2"'},
-    {when:'1h',w:'Nueva clase reservada',m:'Helena Vidal · Bono 10 · Mañana 11:30'},
-    {when:'2h',w:'Clase iniciación completada',m:'Grupo 8 pax · valoración enviada'}
-  ].map(a=>`<li style="padding:10px 0;border-bottom:1px solid var(--border2);"><div style="font-size:10px;letter-spacing:.12em;color:var(--coral);text-transform:uppercase;font-weight:700;margin-bottom:2px;">${a.when}</div><div style="font-size:13px;color:var(--txt);font-weight:600;">${a.w}</div><div style="font-size:11px;color:var(--txt3);">${a.m}</div></li>`).join('');
+  document.getElementById('dash-activity').innerHTML='';
 
   // Forecast 60-day bars (seasonal curve)
   const fc=document.getElementById('forecast-chart');
@@ -2124,27 +1995,11 @@ function renderDash(){
   }
 
   document.getElementById('dash-alerts').innerHTML=[
-    {p:'high',w:'Stock bajo · Neoprenos 5/4 L',m:'0 unidades · pedir urgente a proveedor'},
-    {p:'mid',w:'Stock bajo',m:'Neopreno 5/4 L · sin stock · reorden urgente'},
-    {p:'mid',w:'Pago pendiente',m:'FAC-2026-3133 · Ainhoa B. · €1,015 · 5 días'}
   ].map(a=>`<li style="padding:10px 0;border-bottom:1px solid var(--border2);"><div style="font-size:10px;letter-spacing:.12em;color:var(--warn);text-transform:uppercase;font-weight:700;margin-bottom:2px;">${a.p==='high'?'ALTA':'MEDIA'}</div><div style="font-size:13px;color:var(--txt);font-weight:600;">${a.w}</div><div style="font-size:11px;color:var(--txt3);">${a.m}</div></li>`).join('');
 }
 
 function renderAgenda(){
-  const events=[
-    {h:'09:00',t:'Clase grupal · Iniciación',c:'8 alumnos · David',s:'ok',d:'Surf'},
-    {h:'09:30',t:'Clase iniciación grupal',c:'David Sánchez · 8 alumnos',s:'ok',d:'Playa'},
-    {h:'10:00',t:'Clase privada 2 pax',c:'Lucas Ortega · Helena Vidal',s:'ok',d:'Playa'},
-    {h:'10:30',t:'Clase privada',c:'Pierre Lacroix · Lucas',s:'ok',d:'Surf'},
-    {h:'11:00',t:'Clase avanzada grupal',c:'David Sánchez · 6 alumnos',s:'ok',d:'Playa'},
-    {h:'11:30',t:'Clase grupal · Avanzado',c:'6 alumnos · David',s:'ok',d:'Surf'},
-    {h:'12:30',t:'SUP grupal',c:'4 alumnos · María',s:'ok',d:'SUP'},
-    {h:'14:00',t:'Mantenimiento Apto 8',c:'Técnico boiler',s:'warn',d:'Apto'},
-    {h:'15:00',t:'Clase grupal · Iniciación',c:'9 alumnos · Lucas',s:'ok',d:'Surf'},
-    {h:'16:30',t:'Clase privada',c:'Carlos Ramírez · David',s:'ok',d:'Surf'},
-    {h:'18:00',t:'Devolución tablas',c:'Marc Riba (2 ítems)',s:'ok',d:'Alquiler'},
-    {h:'19:00',t:'Cierre caja',c:'Resumen día',s:'ok',d:'Tienda'}
-  ];
+  const events=[];
   document.getElementById('agenda-tbody').innerHTML=events.map(e=>`<tr>
     <td><strong>${e.h}</strong></td>
     <td><span class="tag tag-${e.d==='Surf'?'info':e.d==='Apto'?'coral':e.d==='SUP'?'ocean':e.d==='Alquiler'?'warn':'ok'}">${e.d}</span></td>
@@ -2165,26 +2020,7 @@ function renderClasses(){
   for(let i=0;i<7;i++){html+=`<div class="sched-h ${i===dow?'today':''}">${days[i]}</div>`;}
   // sample classes per slot
   const grid={};
-  const sample=[
-    {d:0,h:'09:00',t:'Grupal · Iniciación',i:'David',n:8,m:10,c:'',cls:''},
-    {d:0,h:'10:30',t:'Privada',i:'Lucas',n:1,m:1,c:'',cls:'private'},
-    {d:0,h:'11:30',t:'Grupal · Avanzado',i:'David',n:6,m:8,c:'',cls:''},
-    {d:0,h:'12:30',t:'SUP',i:'María',n:4,m:6,c:'',cls:'sup'},
-    {d:0,h:'15:00',t:'Grupal · Iniciación',i:'Lucas',n:9,m:10,c:'',cls:''},
-    {d:0,h:'16:30',t:'Privada',i:'David',n:2,m:2,c:'',cls:'private'},
-    {d:1,h:'10:30',t:'Grupal · Intermedio',i:'David',n:7,m:10,c:'',cls:''},
-    {d:1,h:'11:30',t:'Grupal · Iniciación',i:'Lucas',n:10,m:10,c:'',cls:' full'},
-    {d:1,h:'14:00',t:'SUP',i:'María',n:3,m:6,c:'',cls:'sup'},
-    {d:2,h:'09:00',t:'Grupal · Iniciación',i:'David',n:7,m:10,c:'',cls:''},
-    {d:2,h:'15:00',t:'Privada',i:'Iker',n:1,m:2,c:'',cls:'private'},
-    {d:3,h:'10:30',t:'Grupal · Avanzado',i:'David',n:5,m:8,c:'',cls:''},
-    {d:3,h:'16:30',t:'Grupal · Iniciación',i:'Lucas',n:9,m:10,c:'',cls:''},
-    {d:4,h:'09:00',t:'Camp grupal',i:'David',n:8,m:10,c:'',cls:''},
-    {d:4,h:'11:30',t:'SUP race',i:'María',n:4,m:6,c:'',cls:'sup'},
-    {d:5,h:'10:30',t:'Grupal · Familia',i:'Nora',n:4,m:4,c:'',cls:' full'},
-    {d:5,h:'14:00',t:'Camp grupal',i:'Lucas',n:7,m:10,c:'',cls:''},
-    {d:6,h:'11:30',t:'Privada VIP',i:'David',n:2,m:2,c:'',cls:'private'},
-  ];
+  const sample=[];
   sample.forEach(s=>{grid[s.d+'-'+s.h]=s;});
   hours.forEach(h=>{
     html+=`<div class="sched-time">${h}</div>`;
@@ -2220,7 +2056,7 @@ function renderClasses(){
 function checkinClass(i){
   const c=CLASSES[i];
   if(!c.attended)c.attended=0;
-  const fakeStudents=['Marc Riba','Helena Vidal','Familia Bauer','Pierre Lacroix','Lola Mendoza','Jaime Vega','Sofía Rivas','Ainhoa B.','Tom Bauer'].slice(0,c.students);
+  const fakeStudents=[].slice(0,c.students);
   if(!c.checkedIn)c.checkedIn=new Array(c.students).fill(false);
   openModal('Check-in · '+c.time+' · '+c.type,`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding:12px;background:var(--bg);border-radius:8px;">
@@ -2375,7 +2211,7 @@ function editClass(d,h,t,instr,n,m){
 
     <div style="background:var(--bg);padding:14px;border-radius:10px;margin-top:14px;">
       <div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:10px;">Alumnos en la clase</div>
-      ${(['Marc Riba','Helena Vidal','Familia Bauer','+'+Math.max(0,n-3)+' más'].slice(0,Math.min(n,4))).map(name=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px;"><span>👤 ${name}</span><button onclick="toast('Quitado: ${name}')" style="background:none;border:none;color:var(--coral);cursor:pointer;font-size:14px;">×</button></div>`).join('')}
+      ${([]).map(name=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px;"><span>👤 ${name}</span><button onclick="toast('Quitado: ${name}')" style="background:none;border:none;color:var(--coral);cursor:pointer;font-size:14px;">×</button></div>`).join('')}
       <button class="btn btn-ghost" style="width:100%;margin-top:8px;font-size:11px;">+ Añadir alumno</button>
     </div>
 
@@ -2548,6 +2384,104 @@ const MATERIAL_CATALOG=[
     {n:'Bidón seco',p:4,s:10,sku:'AC-BID'},
   ]}
 ];
+function newStudent(){
+  openModal('+ Nuevo alumno',`
+    ${fLbl('Nombre completo')}${fInp('st-name','')}
+    ${fRow(fLbl('Nivel')+fSel('st-level','Iniciación',['Iniciación','Intermedio','Avanzado','SUP','Kids']), fLbl('Sesiones restantes')+fInp('st-left','0','number'))}
+    ${fLbl('Pack')}${fSel('st-pack','1 sesión suelta',PACKS.map(p=>p.name).concat(['1 sesión suelta']))}
+    ${fRow(fLbl('Próxima clase')+fInp('st-next','','text','Vie 11:30'), fLbl('Total gastado (€)')+fInp('st-spent','0','number'))}
+    ${fLbl('Notas del instructor')}${fTxt('st-notes','','2','')}
+    ${fActions('Guardar','saveNewStudent()')}
+  `);
+}
+async function saveNewStudent(){
+  const s={
+    nombre:document.getElementById('st-name').value.trim(),
+    nivel:document.getElementById('st-level').value,
+    pack:document.getElementById('st-pack').value,
+    sesiones_restantes:+document.getElementById('st-left').value,
+    proxima_clase:document.getElementById('st-next').value,
+    total_gastado:+document.getElementById('st-spent').value,
+    notas:document.getElementById('st-notes').value
+  };
+  if(!s.nombre){toast('⚠ Escribe el nombre');return;}
+  const row=await sbInsert('cn_alumnos',s);
+  if(row){STUDENTS.push(row);toast('✓ Alumno añadido');closeModal();renderStudents();}
+}
+
+function newInstructor(){
+  openModal('+ Nuevo instructor',`
+    ${fLbl('Nombre completo')}${fInp('ins-name','')}
+    ${fRow(fLbl('Rol')+fInp('ins-role','Instructor'), fLbl('Experiencia')+fInp('ins-exp','','text','8 años'))}
+    ${fRow(fLbl('Certificaciones')+fInp('ins-cert','','text','ISA L1'), fLbl('Valoración')+fInp('ins-rating','5.0','number'))}
+    ${fLbl('Email')}${fInp('ins-email','','email')}
+    ${fLbl('Teléfono')}${fInp('ins-phone','')}
+    ${fActions('Guardar','saveNewInstructor()')}
+  `);
+}
+async function saveNewInstructor(){
+  const ins={
+    nombre:document.getElementById('ins-name').value.trim(),
+    rol:document.getElementById('ins-role').value,
+    experiencia:document.getElementById('ins-exp').value,
+    certificaciones:document.getElementById('ins-cert').value,
+    valoracion:+document.getElementById('ins-rating').value,
+    email:document.getElementById('ins-email').value,
+    telefono:document.getElementById('ins-phone').value,
+    clases_impartidas:0
+  };
+  if(!ins.nombre){toast('⚠ Escribe el nombre');return;}
+  const row=await sbInsert('cn_instructores',ins);
+  if(row){INSTRUCTORS.push(row);toast('✓ Instructor añadido');closeModal();renderInstructors();}
+}
+
+function newPack(){
+  openModal('+ Nuevo pack / bono',`
+    ${fLbl('Nombre del pack')}${fInp('pk-name','')}
+    ${fRow(fLbl('Tipo')+fSel('pk-type','Clase',['Clase','Bono','Semana','Camp','SUP','Privada','Grupal']), fLbl('Sesiones incluidas')+fInp('pk-sess','1','number'))}
+    ${fRow(fLbl('Precio (€)')+fInp('pk-price','0','number'), fLbl('Estado')+fSel('pk-state','Activo',['Activo','Top','Nuevo','Pausado']))}
+    ${fLbl('Descripción')}${fTxt('pk-desc','','3','')}
+    ${fActions('Guardar','saveNewPack()')}
+  `);
+}
+async function saveNewPack(){
+  const p={
+    nombre:document.getElementById('pk-name').value.trim(),
+    tipo:document.getElementById('pk-type').value,
+    sesiones:+document.getElementById('pk-sess').value,
+    precio:+document.getElementById('pk-price').value,
+    vendidos:0,
+    estado:document.getElementById('pk-state').value,
+    descripcion:document.getElementById('pk-desc').value
+  };
+  if(!p.nombre){toast('⚠ Escribe el nombre');return;}
+  const row=await sbInsert('cn_packs',p);
+  if(row){PACKS.push(row);toast('✓ Pack añadido');closeModal();renderPacks();}
+}
+
+function newClient(){
+  openModal('+ Nuevo cliente',`
+    ${fLbl('Nombre completo')}${fInp('cli-name','')}
+    ${fRow(fLbl('Email')+fInp('cli-email','','email'), fLbl('Teléfono')+fInp('cli-phone',''))}
+    ${fRow(fLbl('Canal de origen')+fSel('cli-src','Web',['Web','Escuela','Tienda','Booking','Airbnb','Directo','Referido']), fLbl('LTV (€)')+fInp('cli-ltv','0','number'))}
+    ${fLbl('Etiquetas (separadas por coma)')}${fInp('cli-tags','')}
+    ${fActions('Guardar','saveNewClient()')}
+  `);
+}
+async function saveNewClient(){
+  const c={
+    name:document.getElementById('cli-name').value.trim(),
+    source:document.getElementById('cli-src').value,
+    email:document.getElementById('cli-email').value,
+    phone:document.getElementById('cli-phone').value,
+    ltv:+document.getElementById('cli-ltv').value,
+    tags:document.getElementById('cli-tags').value.split(',').map(t=>t.trim()).filter(Boolean)
+  };
+  if(!c.name){toast('⚠ Escribe el nombre');return;}
+  const row=await sbInsert('crm_clients',c);
+  if(row){CLIENTS.push(row);toast('✓ Cliente añadido');closeModal();renderClients();}
+}
+
 function newRental(){
   let html=`
     <div style="background:linear-gradient(135deg,#0a2540,#1a3a5c);color:#fff;padding:14px;border-radius:10px;margin-bottom:14px;">
@@ -3559,19 +3493,88 @@ function saveGasto(i){
 }
 function deleteGasto(i){if(confirm('¿Eliminar gasto?')){EXPENSES.splice(i,1);toast('Eliminado');closeModal();renderGastos();}}
 function newGastoModal(){
-  EXPENSES.unshift({vendor:'',concept:'',date:new Date().toLocaleDateString('es-ES'),category:'Suministros',base:0,vatPct:21,vat:0,total:0,payMethod:'Tarjeta',doc:'Factura',deductible:true,state:'Pendiente'});
-  editGasto(0);
+  openModal('+ Registrar gasto',`
+    ${fLbl('Proveedor')}${fInp('ng-vendor','')}
+    ${fLbl('Concepto')}${fInp('ng-concept','')}
+    ${fRow(fLbl('Categoría')+fSel('ng-cat','Suministros',['Personal','Suministros','Reparaciones','Marketing','Software','Limpieza','Seguros','Banco','Proveedores']), fLbl('Fecha')+fInp('ng-date',new Date().toISOString().slice(0,10),'date'))}
+    ${fRow(fLbl('Base (€)')+fInp('ng-base','0','number'), fLbl('IVA %')+fSel('ng-vat','21',['0','10','21']))}
+    ${fRow(fLbl('Forma de pago')+fSel('ng-pay','Tarjeta',['Tarjeta','Efectivo','Bizum','Transferencia','Domiciliación']), fLbl('Documento')+fSel('ng-doc','Factura',['Factura','Ticket','Recibo','Sin doc.']))}
+    ${fActions('Guardar gasto','saveNewGasto()')}
+  `);
+}
+async function saveNewGasto(){
+  const base=+document.getElementById('ng-base').value;
+  const vatPct=+document.getElementById('ng-vat').value;
+  const vat=Math.round(base*vatPct/100);
+  const g={
+    proveedor:document.getElementById('ng-vendor').value.trim(),
+    concepto:document.getElementById('ng-concept').value.trim(),
+    categoria:document.getElementById('ng-cat').value,
+    fecha:document.getElementById('ng-date').value,
+    base,vat_pct:vatPct,iva:vat,total:base+vat,
+    forma_pago:document.getElementById('ng-pay').value,
+    documento:document.getElementById('ng-doc').value,
+    deducible:true,estado:'Registrado'
+  };
+  if(!g.proveedor){toast('⚠ Escribe el proveedor');return;}
+  const row=await sbInsert('cn_gastos',g);
+  if(row){EXPENSES.unshift(row);toast('✓ Gasto registrado');closeModal();renderGastos();}
 }
 function exportGastosCSV(){toast('📊 CSV gastos descargado · compatible con gestor');}
 function exportFacturasCSV(){toast('📊 CSV facturas exportado · formato Hacienda AEAT');}
-function newInvoiceModal(){toast('📝 Módulo nueva factura · próximamente');}
+function newInvoiceModal(){
+  openModal('+ Nueva factura',`
+    ${fLbl('Cliente')}${fInp('niv-client','')}
+    ${fRow(fLbl('NIF/NIE (opcional)')+fInp('niv-nif',''), fLbl('Email cliente')+fInp('niv-email','','email'))}
+    ${fLbl('Concepto')}${fInp('niv-concept','')}
+    ${fRow(fLbl('Base imponible (€)')+fInp('niv-base','0','number'), fLbl('IVA %')+fSel('niv-vat','21',['0','10','21']))}
+    ${fRow(fLbl('Forma de pago')+fSel('niv-pay','Tarjeta',['Tarjeta','Efectivo','Bizum','Transferencia']), fLbl('Canal')+fSel('niv-ch','Escuela',['Escuela','Tienda','Directo','Airbnb','Booking']))}
+    ${fActions('Crear factura','saveNewInvoice()')}
+  `);
+}
+function saveNewInvoice(){
+  const base=+document.getElementById('niv-base').value;
+  const vatPct=+document.getElementById('niv-vat').value;
+  const vat=Math.round(base*vatPct/100);
+  const total=base+vat;
+  const num='FAC-'+new Date().getFullYear()+'-'+(INVOICES.length+1).toString().padStart(4,'0');
+  const inv={
+    num,
+    client:document.getElementById('niv-client').value.trim(),
+    clientNif:document.getElementById('niv-nif').value||'Sin NIF',
+    clientEmail:document.getElementById('niv-email').value,
+    clientAddress:'',
+    concept:document.getElementById('niv-concept').value,
+    lines:[{desc:document.getElementById('niv-concept').value,qty:1,unitPrice:base,vatPct}],
+    date:new Date().toLocaleDateString('es-ES'),
+    issueDate:new Date().toLocaleDateString('es-ES'),
+    dueDate:new Date().toLocaleDateString('es-ES'),
+    vatPct,base,vat,total,
+    state:'Enviada',sc:'info',
+    payMethod:document.getElementById('niv-pay').value,
+    channel:document.getElementById('niv-ch').value,
+    quarter:Math.ceil((new Date().getMonth()+1)/3)
+  };
+  if(!inv.client){toast('⚠ Escribe el cliente');return;}
+  const row=await sbInsert('crm_invoices',{
+    client_name:inv.client,
+    client_nif:inv.clientNif,
+    client_email:inv.clientEmail,
+    concept:inv.concept,
+    base:inv.base,
+    vat:inv.vat,
+    vat_pct:inv.vatPct,
+    total:inv.total,
+    state:inv.state,
+    pay_method:inv.payMethod,
+    channel:inv.channel,
+    invoice_date:new Date().toISOString().slice(0,10)
+  });
+  if(row){INVOICES.unshift({...inv,id:row.id});toast('✓ Factura creada');closeModal();renderInvoices();}
+}
 
 // ════════ LEADS DESDE LA WEB ════════
-const WEB_LEADS=[
-  {id:1,name:'Colegio Santa María',email:'jefatura@csmaria.es',phone:'+34 942 555 123',msg:'Hola, somos un colegio de Torrelavega. Tenemos 38 alumnos de 3º ESO y queremos hacer una jornada de surf en junio. ¿Nos podéis pasar presupuesto?',type:'colegio',pax:38,when:'12 min',source:'Web'},
-  {id:2,name:'Marie Dubois',email:'marie.dubois@gmail.com',phone:'+33 6 78 90 12 34',msg:'Bonjour! On vient 4 jours en juillet, je voudrais des cours pour 2 adultes + 1 ado et louer 3 planches.',type:'familia',pax:3,when:'48 min',source:'Web · FR'},
-  {id:3,name:'Lukas Müller',email:'lukas.m@kabel.de',phone:'+49 152 1234 5678',msg:'Hi, looking for surf camp 7 days for 2 people in August. Need accommodation + classes + board rental. Send me the best package.',type:'camp',pax:2,when:'2 h',source:'Web · EN'},
-];
+const WEB_LEADS=[];
 function renderLeads(){
   const cl=document.getElementById('leads-list');
   if(!cl)return;
@@ -3713,6 +3716,23 @@ function inboxSend(){
   inp.value='';
   openThread(CUR_THREAD);
   setTimeout(()=>{document.getElementById('inbox-msgs').scrollTop=99999;},50);
+}
+
+function newTeamMember(){
+  openModal('+ Nuevo miembro del equipo',`
+    ${fLbl('Nombre completo')}${fInp('tm-name','')}
+    ${fRow(fLbl('Rol')+fInp('tm-role',''), fLbl('Email')+fInp('tm-email','','email'))}
+    ${fLbl('Teléfono')}${fInp('tm-phone','')}
+    ${fActions('Añadir al equipo','saveNewTeamMember()')}
+  `);
+}
+function saveNewTeamMember(){
+  const name=document.getElementById('tm-name').value.trim();
+  if(!name){toast('⚠ Escribe el nombre');return;}
+  const av=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const colors=['var(--coral)','var(--aqua-dk)','var(--leaf)','var(--ocean-mid)','#a78bfa'];
+  TEAM.push({name,role:document.getElementById('tm-role').value,email:document.getElementById('tm-email').value,phone:document.getElementById('tm-phone').value,av,color:colors[TEAM.length%colors.length]});
+  toast('✓ Miembro añadido');closeModal();renderTeam();
 }
 
 function renderTeam(){
@@ -4088,6 +4108,118 @@ function updateWaLink(){
   const link=`https://wa.me/${SOL_CUR.client_phone.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(msg)}`;
   document.getElementById('sol-wa-btn').href=link;
 }
+</script>
+
+<!-- ══ GANTT MENSUAL ══ -->
+<script>
+const GANTT_ROWS = [
+  {id:'inic',  label:'Grupal · Iniciación',  sub:'Máx 10 alumnos'},
+  {id:'inter', label:'Grupal · Intermedio',  sub:'Máx 8 alumnos'},
+  {id:'avanz', label:'Grupal · Avanzado',    sub:'Máx 8 alumnos'},
+  {id:'fam',   label:'Grupal · Familia',     sub:'Máx 4 familias'},
+  {id:'priv',  label:'Clase Privada',         sub:'1-2 personas'},
+  {id:'sup',   label:'SUP / Paddle',          sub:'Máx 6 personas'},
+];
+
+// Datos de ejemplo — se sustituirán por Supabase
+const GANTT_DATA = [];
+
+let ganttYear = new Date().getFullYear();
+let ganttMonth = new Date().getMonth();
+
+function ganttMove(dir){
+  ganttMonth += dir;
+  if(ganttMonth > 11){ganttMonth=0; ganttYear++;}
+  if(ganttMonth < 0){ganttMonth=11; ganttYear--;}
+  renderGantt();
+}
+function ganttGoToday(){
+  ganttYear = new Date().getFullYear();
+  ganttMonth = new Date().getMonth();
+  renderGantt();
+}
+
+function renderGantt(){
+  const wrap = document.getElementById('gantt-wrap');
+  if(!wrap) return;
+
+  const today = new Date();
+  const daysInMonth = new Date(ganttYear, ganttMonth+1, 0).getDate();
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('gantt-month-label').textContent = monthNames[ganttMonth] + ' ' + ganttYear;
+
+  // Indexar datos por fila+día
+  const dataMap = {};
+  GANTT_DATA.forEach(b => {
+    const key = b.row + '-' + b.day;
+    if(!dataMap[key]) dataMap[key] = [];
+    dataMap[key].push(b);
+  });
+
+  let html = '<table class="gantt-table"><thead><tr class="gantt-head-row">';
+  html += '<th class="gantt-label-col">Tipo de clase</th>';
+  for(let d=1; d<=daysInMonth; d++){
+    const dt = new Date(ganttYear, ganttMonth, d);
+    const dow = dt.getDay();
+    const isToday = (today.getFullYear()===ganttYear && today.getMonth()===ganttMonth && today.getDate()===d);
+    const dayNames = ['D','L','M','X','J','V','S'];
+    html += `<th class="gantt-day-col${isToday?' g-today':''}${dow===0||dow===6?' g-weekend':''}">${d}<br><span style="font-size:9px;opacity:.6">${dayNames[dow]}</span></th>`;
+  }
+  html += '</tr></thead><tbody>';
+
+  GANTT_ROWS.forEach(row => {
+    html += `<tr class="gantt-row">`;
+    html += `<td class="gantt-row-label">${row.label}<small>${row.sub}</small></td>`;
+    for(let d=1; d<=daysInMonth; d++){
+      const dt = new Date(ganttYear, ganttMonth, d);
+      const dow = dt.getDay();
+      const isToday = (today.getFullYear()===ganttYear && today.getMonth()===ganttMonth && today.getDate()===d);
+      const isWknd = dow===0||dow===6;
+      const bookings = dataMap[row.id+'-'+d] || [];
+      let cellContent = '';
+      bookings.forEach(b => {
+        const tt = encodeURIComponent(JSON.stringify({name:b.name,hora:b.hora,instr:b.instr,importe:b.importe,status:b.status}));
+        cellContent += `<div class="gantt-bar ${b.status}" data-tt="${tt}" onmouseenter="showGTT(event,this)" onmouseleave="hideGTT()" title="${b.name}">${b.name}</div>`;
+      });
+      html += `<td class="gantt-cell${isToday?' g-today':''}${isWknd?' g-weekend':''}">${cellContent}</td>`;
+    }
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function showGTT(e, el){
+  const data = JSON.parse(decodeURIComponent(el.dataset.tt));
+  const tt = document.getElementById('g-tooltip');
+  const statusLabels = {paid:'✅ Pagado', pending:'⏳ Pendiente pago', cancelled:'❌ Cancelado', private:'🎯 Privada', sup:'🏄 SUP'};
+  tt.innerHTML = `<strong>${data.name}</strong>
+    <div class="g-tt-row"><span>🕐 Hora</span><span>${data.hora}</span></div>
+    <div class="g-tt-row"><span>👤 Instructor</span><span>${data.instr}</span></div>
+    <div class="g-tt-row"><span>💶 Importe</span><span>${data.importe}</span></div>
+    <div class="g-tt-row"><span>Estado</span><span>${statusLabels[data.status]||data.status}</span></div>`;
+  tt.style.display = 'block';
+  tt.style.left = (e.clientX + 14) + 'px';
+  tt.style.top  = (e.clientY - 10) + 'px';
+}
+function hideGTT(){ document.getElementById('g-tooltip').style.display='none'; }
+document.addEventListener('mousemove', e => {
+  const tt = document.getElementById('g-tooltip');
+  if(tt.style.display==='block'){
+    tt.style.left = (e.clientX+14)+'px';
+    tt.style.top  = (e.clientY-10)+'px';
+  }
+});
+
+// Inicializar cuando se entra en la sección de clases
+const _origRenderClasses = renderClasses;
+renderClasses = function(){
+  _origRenderClasses();
+  renderGantt();
+};
+// También inicializar si ya está visible
+document.addEventListener('DOMContentLoaded', ()=>{ if(document.getElementById('gantt-wrap')) renderGantt(); });
 </script>
 </body>
 </html>

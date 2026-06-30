@@ -184,6 +184,15 @@ Carpeta con plantillas y guías operativas:
 
 Coste real OpenAI: ~5–15€/mes por cliente. Margen mínimo setup: 300€.
 
+### Precio fijo panel CRM custom (DEFINITIVO)
+- **Setup:** 800€ (precio fijo, sin excepciones)
+- **Mantenimiento:** 99€/mes
+- Aplica a todos los paneles custom independientemente de la complejidad.
+
+### Precio fijo web (DEFINITIVO)
+- **Setup:** 250€
+- **Mantenimiento:** 50€/mes
+
 ---
 
 ## 7. FLUJO TÉCNICO — CÓMO FUNCIONA UN CLIENTE
