@@ -965,16 +965,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
         <div class="tb-title" id="tb-title">Dashboard</div>
       </div>
       <div class="tb-right">
-        <div class="tb-search" onclick="toast('Búsqueda · Cmd+K')">
-          <svg width="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          Buscar
-          <kbd>⌘K</kbd>
-        </div>
-        <div class="lang-pill">
-          <button class="active" onclick="setLang('es',this)">ES</button>
-          <button onclick="setLang('en',this)">EN</button>
-        </div>
-        <button class="tb-btn" onclick="toast('3 notificaciones')">🔔 3</button>
+        <button class="tb-btn" id="notif-btn" onclick="go('solicitudes',null);loadSolicitudes()" style="display:none;">🔔 <span id="notif-count">0</span></button>
         <button class="tb-btn" onclick="logout()">Salir</button>
       </div>
     </div>
@@ -983,7 +974,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
     <div id="page-dashboard" class="page active">
       <div class="page-hd">
         <div>
-          <h1>Hola <em>Roberto</em></h1>
+          <h1>Panel <em>Costa Norte</em></h1>
           <div class="page-sub" id="dash-date"></div>
         </div>
         <div class="page-hd-actions">
@@ -1080,52 +1071,6 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
         <div class="tbl-wrap"><table><thead><tr><th>Hora</th><th>Tipo</th><th>Instructor</th><th>Alumnos</th><th>Nivel</th><th></th></tr></thead><tbody id="dash-classes"></tbody></table></div>
       </div>
 
-      <!-- ✦ FORECAST · predicción próximos 60 días -->
-      <div class="card">
-        <div class="card-hd"><div class="card-hd-title">📈 Predicción IA · próximos 60 días</div><span class="card-hd-meta">basado en histórico + tendencia web</span></div>
-        <div class="card-body">
-          <div id="forecast-chart" style="height:140px;display:flex;align-items:flex-end;gap:3px;padding-bottom:24px;position:relative;"></div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border2);">
-            <div><div style="font-size:9px;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Julio · ocupación</div><div style="font-family:var(--display);font-size:24px;font-weight:700;color:var(--ocean);line-height:1;margin-top:4px;">94%</div><div style="font-size:10px;color:var(--leaf);font-weight:600;margin-top:2px;">↑ pico verano</div></div>
-            <div><div style="font-size:9px;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Ingresos previstos</div><div style="font-family:var(--display);font-size:24px;font-weight:700;color:var(--coral);line-height:1;margin-top:4px;">€42.800</div><div style="font-size:10px;color:var(--leaf);font-weight:600;margin-top:2px;">+22% YoY</div></div>
-            <div><div style="font-size:9px;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Días con olas top</div><div style="font-family:var(--display);font-size:24px;font-weight:700;color:var(--aqua-dk);line-height:1;margin-top:4px;">18</div><div style="font-size:10px;color:var(--txt3);font-weight:600;margin-top:2px;">julio-agosto</div></div>
-            <div><div style="font-size:9px;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Clases extras necesarias</div><div style="font-family:var(--display);font-size:24px;font-weight:700;color:var(--warn);line-height:1;margin-top:4px;">+8</div><div style="font-size:10px;color:var(--txt3);font-weight:600;margin-top:2px;">contratar instr.</div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ✦ COMPARATIVA · con vs sin IA -->
-      <div class="card">
-        <div class="card-hd"><div class="card-hd-title">⚖️ Con IA Airmate vs Sin IA</div><span class="card-hd-meta" style="color:var(--coral);">datos mes en curso</span></div>
-        <div class="card-body" style="padding:0;">
-          <div style="display:grid;grid-template-columns:1fr 1fr;">
-            <div style="padding:24px;border-right:1px solid var(--border2);background:rgba(255,94,58,.04);">
-              <div style="display:inline-flex;align-items:center;gap:6px;background:var(--coral);color:#fff;padding:4px 10px;border-radius:14px;font-size:10px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;">SIN IA</div>
-              <div style="margin-top:18px;">
-                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border2);"><span style="font-size:13px;color:var(--txt2);">Reservas perdidas (fuera de horario)</span><strong style="color:var(--coral);">12-18/mes</strong></div>
-                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border2);"><span style="font-size:13px;color:var(--txt2);">Tiempo en WhatsApp/email</span><strong style="color:var(--coral);">3-4h/día</strong></div>
-                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border2);"><span style="font-size:13px;color:var(--txt2);">Mensajes sin responder</span><strong style="color:var(--coral);">22%</strong></div>
-                <div style="display:flex;justify-content:space-between;padding:8px 0;"><span style="font-size:13px;color:var(--txt2);">Ingresos potenciales perdidos</span><strong style="color:var(--coral);">€2.800/mes</strong></div>
-              </div>
-            </div>
-            <div style="padding:24px;background:rgba(45,186,138,.04);">
-              <div style="display:inline-flex;align-items:center;gap:6px;background:var(--leaf);color:#fff;padding:4px 10px;border-radius:14px;font-size:10px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;">CON AIRMATE</div>
-              <div style="margin-top:18px;">
-                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border2);"><span style="font-size:13px;color:var(--txt2);">Reservas capturadas 24/7</span><strong style="color:var(--leaf);">+42/mes</strong></div>
-                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border2);"><span style="font-size:13px;color:var(--txt2);">Tiempo ahorrado</span><strong style="color:var(--leaf);">22h/semana</strong></div>
-                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border2);"><span style="font-size:13px;color:var(--txt2);">Respuesta media</span><strong style="color:var(--leaf);">42 segundos</strong></div>
-                <div style="display:flex;justify-content:space-between;padding:8px 0;"><span style="font-size:13px;color:var(--txt2);">Ingresos extra generados</span><strong style="color:var(--leaf);">+€3.420/mes</strong></div>
-              </div>
-            </div>
-          </div>
-          <div style="padding:16px 24px;background:linear-gradient(135deg,var(--ocean),var(--ocean-dk));color:#fff;text-align:center;">
-            <div style="font-family:var(--display);font-size:13px;color:rgba(245,237,214,.7);font-weight:600;">Diferencia mensual neta</div>
-            <div style="font-family:var(--display);font-size:36px;font-weight:700;color:var(--coral);line-height:1;margin-top:4px;">+€6.220</div>
-            <div style="font-size:11px;color:rgba(245,237,214,.6);margin-top:4px;font-style:italic;">+ 22 horas de tu tiempo recuperadas para vivir tu negocio</div>
-          </div>
-        </div>
-      </div>
-
       <!-- ✦ AUTOMATIZACIONES activas -->
       <div class="card">
         <div class="card-hd"><div class="card-hd-title">⚡ Automatizaciones IA activas</div><span class="card-hd-meta">12 procesos sin tu intervención</span></div>
@@ -1202,7 +1147,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       <div class="page-hd">
         <div><h1>Alumnos &amp; <em>bonos</em></h1><div class="page-sub">Saldos · niveles · histórico</div></div>
         <div class="page-hd-actions">
-          <input id="st-search" type="search" placeholder="Buscar alumno…" oninput="renderStudents()" style="padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;width:200px;font-family:var(--body);color:var(--txt);background:var(--surface);outline:none;">
+          <input id="st-search" type="search" placeholder="Buscar alumno…" oninput="renderStudents()" style="padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;width:200px;font-family:var(--sans,'Inter',sans-serif);color:var(--txt);background:var(--surface);outline:none;">
           <button class="btn btn-primary" onclick="newStudent()">+ Nuevo alumno</button>
         </div>
       </div>
@@ -1214,7 +1159,10 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 
     <!-- PAGINA SOLICITUDES (dentro del main) -->
     <div id="page-solicitudes" class="page">
-      <div style="max-width:1100px;margin:0 auto;padding:24px 20px 60px">
+      <div class="page-hd">
+        <div><h1>Solicitudes <em>web</em></h1><div class="page-sub">Reservas recibidas desde la web · gestión y seguimiento</div></div>
+      </div>
+      <div style="max-width:1100px;margin:0 auto;padding:0 20px 60px">
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
           <button class="sol-filter" onclick="solSetFilter(this,'pending')" style="padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #dde3ec;background:#fff;color:#4a5568;font-family:'Inter',sans-serif">Pendientes</button>
           <button class="sol-filter" onclick="solSetFilter(this,'contacted')" style="padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #dde3ec;background:#fff;color:#4a5568;font-family:'Inter',sans-serif">Contactados</button>
@@ -1295,7 +1243,7 @@ function go(p,el){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function toggleTheme(){const cur=document.documentElement.getAttribute('data-theme');document.documentElement.setAttribute('data-theme',cur==='dark'?'light':'dark');}
-function setLang(l,el){document.querySelectorAll('.lang-pill button').forEach(x=>x.classList.remove('active'));el.classList.add('active');toast(l==='es'?'Cambiado a Español':'Switched to English');}
+function setLang(l,el){}
 
 // ════════════ TOAST ════════════
 function toast(msg){
@@ -1307,19 +1255,7 @@ function toast(msg){
 // ════════════ MODAL ════════════
 function openModal(title,html){document.getElementById('modal-t').textContent=title;document.getElementById('modal-b').innerHTML=html;document.getElementById('modal').classList.add('open');}
 function closeModal(){document.getElementById('modal').classList.remove('open');}
-function quickAdd(){openModal('+ Nueva reserva',`
-  <div style="display:flex;flex-direction:column;gap:14px;">
-    <label style="display:flex;flex-direction:column;gap:6px;"><span style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Tipo</span><select style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);"><option>Clase de surf grupal</option><option>Clase de surf privada</option><option>Pack semana completa</option><option>Alquiler de material</option></select></label>
-    <label style="display:flex;flex-direction:column;gap:6px;"><span style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Cliente</span><input placeholder="Nombre completo" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);"></label>
-    <div class="two-col">
-      <label style="display:flex;flex-direction:column;gap:6px;"><span style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Entrada</span><input type="date" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);"></label>
-      <label style="display:flex;flex-direction:column;gap:6px;"><span style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Salida</span><input type="date" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);"></label>
-    </div>
-    <label style="display:flex;flex-direction:column;gap:6px;"><span style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Notas</span><textarea rows="2" placeholder="Detalles adicionales..." style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);resize:vertical;"></textarea></label>
-    <div style="background:rgba(255,94,58,.06);border:1px dashed var(--coral);padding:10px 14px;border-radius:8px;font-size:12px;color:var(--txt2);"><strong style="color:var(--coral);">✦ Sugerencia IA:</strong> Enviar email confirmación + WhatsApp con instrucciones de check-in 24h antes.</div>
-    <div style="display:flex;gap:8px;"><button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" style="flex:1" onclick="toast('✓ Reserva creada · email enviado');closeModal()">Confirmar</button></div>
-  </div>
-`);}
+function quickAdd(){go('solicitudes',null);loadSolicitudes();}
 
 // ════════════ DATA ════════════
 const APTS=[];
@@ -1362,16 +1298,9 @@ let CUR_THREAD=null;
 // ════════════ RENDER ════════════
 function initApp(){
   document.getElementById('dash-date').textContent=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  try{renderDash();}catch(e){}
-  try{renderAgenda();}catch(e){}
-  try{renderInbox();}catch(e){}
-  try{renderLeads();}catch(e){}
-  try{renderTeam();}catch(e){}
-  try{renderSettings();}catch(e){}
-  try{renderShop();}catch(e){}
-  try{renderReports();}catch(e){}
+  try{renderDash();}catch(e){console.error('renderDash',e);}
   try{fetchSurfConditions();setInterval(fetchSurfConditions,30*60*1000);}catch(e){}
-  try{loadAllData();}catch(e){}
+  try{loadAllData();}catch(e){console.error('loadAllData',e);}
 }
 
 function fmt(n,c='€'){return c+Number(n||0).toLocaleString('es-ES',{maximumFractionDigits:2});}
@@ -1396,6 +1325,7 @@ const SB=supabase.createClient(
   'https://vjofxmfwdybktpwiuanc.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE'
 );
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 async function sbLoad(table, setter, render, order='created_at'){
   const {data,error}=await SB.from(table).select('*').eq('business_slug',SLUG).order(order,{ascending:false});
@@ -1422,15 +1352,8 @@ async function sbDelete(table,id){
 // ════════════ LOAD ALL DATA ════════════
 async function loadAllData(){
   await Promise.all([
-    sbLoad('cn_clases',   d=>CLASSES=d,    ()=>renderClasses(), 'hora'),
-    sbLoad('cn_alumnos',  d=>STUDENTS=d,   ()=>renderStudents(), 'nombre'),
-    sbLoad('cn_packs',    d=>PACKS=d,      ()=>renderPacks(), 'nombre'),
-    sbLoad('cn_instructores', d=>INSTRUCTORS=d, ()=>renderInstructors(), 'nombre'),
-    sbLoad('cn_alquileres', d=>RENTALS=d,  ()=>renderRental(), 'created_at'),
-    sbLoad('cn_stock',    d=>STOCK=d,      ()=>renderStock(), 'nombre'),
-    sbLoad('crm_clients', d=>CLIENTS=d,    ()=>renderClients(), 'name'),
-    sbLoad('crm_invoices',d=>INVOICES=d,   ()=>renderInvoices(), 'created_at'),
-    sbLoad('cn_gastos',   d=>EXPENSES=d,   ()=>renderGastos(), 'fecha'),
+    sbLoad('cn_clases',  d=>CLASSES=d,  ()=>renderClasses(), 'hora'),
+    sbLoad('cn_alumnos', d=>STUDENTS=d, ()=>renderStudents(), 'nombre'),
   ]);
 }
 
@@ -1441,9 +1364,9 @@ async function renderDash(){
 
   try {
     const [allRes, pendingRes, thisWeekRes] = await Promise.all([
-      _sb.from('appointments').select('id,status,budget,date').eq('business_slug','costa-norte'),
-      _sb.from('appointments').select('id').eq('business_slug','costa-norte').eq('status','pending'),
-      _sb.from('appointments').select('id').eq('business_slug','costa-norte').gte('date', weekAgo)
+      SB.from('appointments').select('id,status,budget,date').eq('business_slug','costa-norte'),
+      SB.from('appointments').select('id').eq('business_slug','costa-norte').eq('status','pending'),
+      SB.from('appointments').select('id').eq('business_slug','costa-norte').gte('date', weekAgo)
     ]);
     const all = allRes.data || [];
     const pending = (pendingRes.data||[]).length;
@@ -1471,7 +1394,7 @@ async function renderDash(){
         pTbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:24px;">Sin solicitudes pendientes</td></tr>';
       } else {
         // Load full data for pending
-        const {data:rows} = await _sb.from('appointments').select('name,service,date,budget,status').eq('business_slug','costa-norte').eq('status','pending').order('created_at',{ascending:false}).limit(5);
+        const {data:rows} = await SB.from('appointments').select('name,service,date,budget,status').eq('business_slug','costa-norte').eq('status','pending').order('created_at',{ascending:false}).limit(5);
         pTbody.innerHTML=(rows||[]).map(r=>`<tr>
           <td>${esc(r.name||'—')}</td>
           <td>${esc(r.service||'—')}</td>
@@ -1543,10 +1466,13 @@ function renderClasses(){
   const dow=(today.getDay()+6)%7;
   let html='<div class="sched-h"></div>';
   for(let i=0;i<7;i++){html+=`<div class="sched-h ${i===dow?'today':''}">${days[i]}</div>`;}
-  // sample classes per slot
+  // build grid from real CLASSES data
   const grid={};
-  const sample=[];
-  sample.forEach(s=>{grid[s.d+'-'+s.h]=s;});
+  const todayName=days[(new Date().getDay()+6)%7];
+  CLASSES.forEach(c=>{
+    const d=days.indexOf((c.dia||'').toUpperCase().slice(0,3));
+    if(d>=0) grid[d+'-'+(c.hora||c.time||'')]=c;
+  });
   hours.forEach(h=>{
     html+=`<div class="sched-time">${h}</div>`;
     for(let d=0;d<7;d++){
@@ -1581,7 +1507,7 @@ function renderClasses(){
 function checkinClass(i){
   const c=CLASSES[i];
   if(!c.attended)c.attended=0;
-  const fakeStudents=[].slice(0,c.students);
+  const fakeStudents=STUDENTS.slice(0,c.students||c.max_alumnos||0);
   if(!c.checkedIn)c.checkedIn=new Array(c.students).fill(false);
   openModal('Check-in · '+c.time+' · '+c.type,`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding:12px;background:var(--bg);border-radius:8px;">
@@ -1720,7 +1646,7 @@ function sendQuoteEmail(){
     </div>
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button class="btn btn-ghost" style="flex:1" onclick="toast('✏️ Editado')">✏️ Editar</button>
-      <button class="btn btn-primary" style="flex:1" onclick="toast('✓ Enviado a '+'${email}');closeModal();">📨 Enviar ahora</button>
+      <button class="btn btn-primary" style="flex:1" onclick="navigator.clipboard.writeText(this.closest('.modal-body,div')?.querySelector('div')?.innerText||'').then(()=>{toast('✓ Copiado — pega en tu email o WhatsApp');closeModal();})">📋 Copiar mensaje</button>
     </div>
   `);
 }
@@ -1849,7 +1775,7 @@ function registrarClase(){
   const left=ST_CUR.sesiones_restantes??0;
   openModal('Registrar clase · '+ST_CUR.nombre,`
     ${fLbl('Tipo de clase')}${fSel('rc-tipo','Grupal Iniciación',['Grupal Iniciación','Grupal Intermedio','Grupal Avanzado','Clase Privada','SUP','Kids','Otro'])}
-    ${fRow(fLbl('Fecha')+`<input id="rc-fecha" type="date" value="${new Date().toISOString().slice(0,10)}" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--body);color:var(--txt);">`,
+    ${fRow(fLbl('Fecha')+`<input id="rc-fecha" type="date" value="${new Date().toISOString().slice(0,10)}" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--sans,'Inter',sans-serif);color:var(--txt);">`,
            fLbl('Instructor')+fInp('rc-instructor',''))}
     ${fLbl('Notas')}${fTxt('rc-notas','','2','Progresa bien en el pop-up...')}
     <div style="background:rgba(15,34,64,.06);border-radius:8px;padding:12px 14px;margin-top:12px;font-size:13px;">
@@ -3578,6 +3504,10 @@ function renderSolBadge(){
   const n=SOL_ALL.filter(r=>r.status==='pending').length;
   const b=document.getElementById('sol-badge');
   if(b){b.textContent=n;b.style.display=n>0?'':'none';}
+  const nb=document.getElementById('notif-btn');
+  const nc=document.getElementById('notif-count');
+  if(nb){nb.style.display=n>0?'':'none';}
+  if(nc) nc.textContent=n;
 }
 
 function renderSolicitudes(){
@@ -3736,7 +3666,7 @@ function solSetFilter(btn,f){
           <div id="st-d-left" style="font-family:var(--display);font-size:38px;font-weight:700;color:#0f2240;line-height:1;margin-top:4px;"></div>
           <div id="st-d-pack" style="font-size:12px;color:#64748b;margin-top:3px;"></div>
         </div>
-        <button onclick="registrarClase()" style="padding:12px 18px;background:#0f2240;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--body);">🏄 Registrar clase</button>
+        <button onclick="registrarClase()" style="padding:12px 18px;background:#0f2240;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans,'Inter',sans-serif);">🏄 Registrar clase</button>
       </div>
       <!-- datos -->
       <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Datos del alumno</div>
@@ -3746,8 +3676,8 @@ function solSetFilter(btn,f){
       <div id="st-d-history" style="display:flex;flex-direction:column;gap:6px;"></div>
       <!-- acciones -->
       <div style="margin-top:18px;display:flex;gap:8px;">
-        <button onclick="editStudentOverlay()" style="flex:1;padding:11px;background:#f1f5f9;color:#0f2240;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body);">Editar alumno</button>
-        <button onclick="deleteStudentOverlay()" style="padding:11px 16px;background:#fef2f2;color:#dc2626;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body);">Eliminar</button>
+        <button onclick="editStudentOverlay()" style="flex:1;padding:11px;background:#f1f5f9;color:#0f2240;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans,'Inter',sans-serif);">Editar alumno</button>
+        <button onclick="deleteStudentOverlay()" style="padding:11px 16px;background:#fef2f2;color:#dc2626;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans,'Inter',sans-serif);">Eliminar</button>
       </div>
     </div>
   </div>
