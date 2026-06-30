@@ -2647,7 +2647,12 @@ function bsdRenderLiningRow(){
       <div class="bsd-lining-lbl">${o.name}</div>
     </div>`;
   }).join('');
-  document.querySelectorAll('[data-lining]').forEach(el=>el.addEventListener('click',()=>{BSD.lining=el.dataset.lining;bsdRenderLiningRow();bsdUpdate();}));
+  document.querySelectorAll('[data-lining]').forEach(el=>el.addEventListener('click',()=>{
+    BSD.lining=el.dataset.lining;bsdRenderLiningRow();
+    const imgEl=el.querySelector('img');
+    if(imgEl&&imgEl.src) bsd3dOpen(imgEl.src, el.dataset.lining+' Lining — Bemberg Silk');
+    else bsdUpdate();
+  }));
 }
 
 function bsdUpdate(){
@@ -2896,7 +2901,7 @@ document.querySelectorAll('[data-trousers-cut]').forEach(b => b.addEventListener
   document.querySelectorAll('[data-trousers-cut]').forEach(x => x.classList.remove('active'));
   b.classList.add('active');
   const key = b.dataset.trousersCut;
-  const troMapKey = key==='classic'?'flat':key==='gorkha'?'gorkha':key==='tuxedo'?'tuxedo':null;
+  const troMapKey = key==='classic'?'flat':key==='gorkha'?'gorkha':key==='tuxedo'?'tuxedo':key==='bottom-cuff'?'flat':key==='side-adjusters'?'gorkha':null;
   const src = troMapKey ? BSD_PHOTO_IMGS.trouser[troMapKey] : '';
   if(src) bsd3dOpen(src, BSD_TROUSER_LABELS[key] || key);
   else bsdUpdate();
