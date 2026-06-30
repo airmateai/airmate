@@ -2490,9 +2490,9 @@ function renderLeads(){
         <div class="pipe-col-hd-label"><div class="pipe-col-dot" style="background:${stageDot[s]}"></div>${stageName[s]}</div>
         <span class="pipe-count-badge">${list.filter(l=>l.status===s).length}</span>
       </div>
-      <div class="pipe-body">
+      <div class="pipe-body" id="lead-col-${s}" ondragover="leadDragOver(event,'${s}')" ondragleave="leadDragLeave('${s}')" ondrop="leadDrop(event,'${s}')">
         ${list.filter(l=>l.status===s).map(l=>`
-          <div class="lead-card" onclick="openLeadModal('${l.id}')">
+          <div class="lead-card" draggable="true" ondragstart="leadDragStart(event,'${l.id}')" onclick="openLeadModal('${l.id}')">
             <div class="lead-card-name">${esc(l.name)}</div>
             <div class="lead-card-svc">${esc(l.interest||'—')}</div>
             ${l.phone?`<div style="font-size:12px;font-weight:600;color:#22c55e;margin-bottom:6px;">${esc(l.phone)}</div>`:''}
@@ -2506,6 +2506,22 @@ function renderLeads(){
           </div>`).join('')}
       </div>
     </div>`).join('')+'</div>';
+}
+
+let _leadDragId=null;
+function leadDragStart(e,id){_leadDragId=id;e.dataTransfer.effectAllowed='move';e.currentTarget.style.opacity='.4';}
+function leadDragOver(e,stage){e.preventDefault();document.getElementById('lead-col-'+stage).style.background='rgba(196,163,90,.08)';}
+function leadDragLeave(stage){document.getElementById('lead-col-'+stage).style.background='';}
+async function leadDrop(e,stage){
+  e.preventDefault();
+  document.getElementById('lead-col-'+stage).style.background='';
+  if(!_leadDragId) return;
+  const lead=allLeads.find(l=>l.id===_leadDragId);
+  if(!lead||lead.status===stage){_leadDragId=null;return;}
+  lead.status=stage;
+  renderLeads();
+  await _sb.from('leads').update({status:stage}).eq('id',_leadDragId);
+  _leadDragId=null;
 }
 
 async function leadToCRM(id){
