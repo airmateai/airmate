@@ -11,13 +11,48 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:#f0f4f8;color:#1
 .site-logo{font-size:20px;font-weight:800;letter-spacing:.02em}
 .site-logo span{color:#ff5e3a}
 .site-nav{display:flex;gap:24px;font-size:13px;opacity:.8}
-.hero{background:linear-gradient(135deg,#0a2540,#1d5a7d);color:#fff;padding:60px 32px;text-align:center}
-.hero h1{font-size:36px;font-weight:800;margin-bottom:12px}
-.hero p{font-size:16px;opacity:.8;max-width:500px;margin:0 auto}
-.section{max-width:900px;margin:40px auto;padding:0 24px}
-.section h2{font-size:22px;font-weight:700;color:#0a2540;margin-bottom:8px}
-.section p{font-size:14px;color:#64748b;margin-bottom:24px}
-.iframe-wrap{border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(10,37,64,.15)}
+.hero{background:linear-gradient(135deg,#0a2540,#1d5a7d);color:#fff;padding:80px 32px;text-align:center}
+.hero h1{font-size:40px;font-weight:800;margin-bottom:14px}
+.hero p{font-size:16px;opacity:.8;max-width:500px;margin:0 auto 32px}
+.btn-reservar{
+  display:inline-block;background:#ff5e3a;color:#fff;
+  padding:18px 48px;border-radius:50px;font-size:18px;font-weight:700;
+  border:none;cursor:pointer;box-shadow:0 8px 30px rgba(255,94,58,.4);
+  transition:transform .15s,box-shadow .15s;
+}
+.btn-reservar:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(255,94,58,.5);}
+
+/* POPUP */
+.popup-overlay{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(10,37,64,.7);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;
+}
+.popup-overlay.open{display:flex;}
+.popup-box{
+  background:#fff;border-radius:20px;overflow:hidden;
+  width:min(680px,95vw);max-height:92vh;
+  display:flex;flex-direction:column;
+  box-shadow:0 32px 80px rgba(10,37,64,.35);
+  animation:popIn .25s cubic-bezier(.2,.9,.3,1.1);
+}
+@keyframes popIn{from{transform:scale(.92) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.popup-head{
+  background:#0a2540;color:#fff;
+  padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.popup-head-title{font-size:15px;font-weight:700;}
+.popup-head-sub{font-size:11px;opacity:.6;margin-top:2px;}
+.popup-close{
+  width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);
+  border:none;cursor:pointer;color:#fff;font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+}
+.popup-close:hover{background:rgba(255,255,255,.25);}
+.popup-iframe-wrap{flex:1;overflow-y:auto;}
+.popup-iframe-wrap iframe{width:100%;display:block;border:none;min-height:600px;}
+
 .site-footer{background:#0a2540;color:rgba(255,255,255,.5);text-align:center;padding:24px;font-size:12px;margin-top:60px}
 </style>
 </head>
@@ -34,45 +69,62 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:#f0f4f8;color:#1
 </header>
 
 <div class="hero">
-  <h1>Reserva tu clase de surf</h1>
-  <p>Escuela de surf en San Vicente de la Barquera · Desde 2005</p>
+  <h1>Escuela de surf desde 2005</h1>
+  <p>San Vicente de la Barquera · Cantabria · Instructores ISA certificados</p>
+  <button class="btn-reservar" onclick="openPopup()">🏄 Reservar clase</button>
 </div>
 
-<div class="section">
-  <h2>Formulario de reserva</h2>
-  <p>Rellena el formulario y nuestro equipo te confirmará la plaza en menos de 24 horas.</p>
-  <div class="iframe-wrap">
-    <iframe
-      id="cn-iframe"
-      src="https://airmate.es/costa-norte-reservas.html"
-      width="100%"
-      height="900"
-      frameborder="0"
-      scrolling="yes"
-      style="border:none;display:block;min-height:900px;">
-    </iframe>
+<!-- POPUP -->
+<div class="popup-overlay" id="popup" onclick="closeOnOverlay(event)">
+  <div class="popup-box">
+    <div class="popup-head">
+      <div>
+        <div class="popup-head-title">Reserva tu clase · Costa Norte</div>
+        <div class="popup-head-sub">San Vicente de la Barquera · Cantabria</div>
+      </div>
+      <button class="popup-close" onclick="closePopup()">✕</button>
+    </div>
+    <div class="popup-iframe-wrap">
+      <iframe
+        id="cn-iframe"
+        src=""
+        width="100%"
+        height="700"
+        frameborder="0"
+        scrolling="yes"
+        style="border:none;display:block;">
+      </iframe>
+    </div>
   </div>
-  <script>
-    // Auto-resize iframe to content height
-    const iframe = document.getElementById('cn-iframe');
-    function resizeIframe() {
-      try {
-        const h = iframe.contentWindow.document.body.scrollHeight;
-        if(h > 100) iframe.style.height = (h + 40) + 'px';
-      } catch(e) {}
-    }
-    iframe.addEventListener('load', resizeIframe);
-    window.addEventListener('message', e => {
-      if(e.data?.type === 'resize' && e.data.height > 100) {
-        iframe.style.height = (e.data.height + 40) + 'px';
-      }
-    });
-  </script>
 </div>
 
 <footer class="site-footer">
   © 2026 Costa Norte Surf Center · San Vicente de la Barquera, Cantabria
 </footer>
+
+<script>
+function openPopup() {
+  const iframe = document.getElementById('cn-iframe');
+  if(!iframe.src || iframe.src === window.location.href) {
+    iframe.src = 'https://airmate.es/costa-norte-reservas.html';
+  }
+  document.getElementById('popup').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closePopup() {
+  document.getElementById('popup').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeOnOverlay(e) {
+  if(e.target === document.getElementById('popup')) closePopup();
+}
+window.addEventListener('message', e => {
+  if(e.data?.type === 'resize' && e.data.height > 100) {
+    document.getElementById('cn-iframe').style.height = (e.data.height + 20) + 'px';
+  }
+});
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closePopup(); });
+</script>
 
 </body>
 </html>
