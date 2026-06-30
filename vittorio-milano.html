@@ -2573,13 +2573,31 @@ const BSD_PHOTO_IMGS={
 const BSD_LINING_TYPE_LABELS={full:'Full Lining — Inside Excellence',half:'Half Lining — Lightness & Elegance',unlined:'Unlined — The Essence of Lightness'};
 const BSD_LAPEL_LABELS={notch:'Notch Lapel',peak:'Peak Lapel',shawl:'Shawl Lapel'};
 
+const BSD_COLOR_FILTERS={
+  'charcoal':  'none',
+  'navy':      'saturate(4) hue-rotate(210deg) brightness(0.55)',
+  'mid-grey':  'saturate(0.2) brightness(0.75)',
+  'camel':     'saturate(3) hue-rotate(30deg) brightness(1.25) sepia(0.3)',
+  'black':     'brightness(0.25) saturate(0)',
+  'ivory':     'brightness(1.6) saturate(0.15) sepia(0.2)',
+  'dk-brown':  'saturate(3) hue-rotate(20deg) brightness(0.45) sepia(0.5)',
+  'taupe':     'saturate(1.5) hue-rotate(25deg) brightness(0.9) sepia(0.3)',
+};
+function bsdApplyColorFilter(){
+  const f=BSD_COLOR_FILTERS[BSD.color]||'none';
+  const vid=document.getElementById('bsd-spin-video');
+  const photo=document.getElementById('bsd-photo');
+  if(vid) vid.style.filter=f;
+  if(photo) photo.style.filter=f;
+}
+
 function bsdRenderFabricRow(){
   document.getElementById('bsd-fab-row').innerHTML=BSD_COLORS.map(c=>`
     <div class="bsd-fab ${c.key===BSD.color&&!BSD.pattern?'active':''}" data-color="${c.key}" title="${c.name} · ${c.sub}">
       <div class="bsd-fab-tex" style="background:${c.tex}"></div>
       <div class="bsd-fab-lbl">${c.name}</div>
     </div>`).join('');
-  document.querySelectorAll('[data-color]').forEach(el=>el.addEventListener('click',()=>{BSD.color=el.dataset.color;BSD.pattern=null;_bsdDetailSrc='';bsdRenderFabricRow();bsdRenderPatRow();bsdUpdate();}));
+  document.querySelectorAll('[data-color]').forEach(el=>el.addEventListener('click',()=>{BSD.color=el.dataset.color;BSD.pattern=null;_bsdDetailSrc='';bsdRenderFabricRow();bsdRenderPatRow();bsdApplyColorFilter();bsdUpdate();}));
 }
 function bsdRenderPatRow(){
   const p=window.VM_PATTERN_RENDERS||{};
@@ -2590,7 +2608,7 @@ function bsdRenderPatRow(){
       <div class="bsd-fab-lbl">${pat.name}</div>
     </div>`;
   }).join('');
-  document.querySelectorAll('[data-pat]').forEach(el=>el.addEventListener('click',()=>{BSD.pattern=el.dataset.pat;_bsdDetailSrc='';bsdRenderFabricRow();bsdRenderPatRow();bsdUpdate();}));
+  document.querySelectorAll('[data-pat]').forEach(el=>el.addEventListener('click',()=>{BSD.pattern=el.dataset.pat;BSD.color=el.dataset.pat.split('-')[0]||BSD.color;_bsdDetailSrc='';bsdRenderFabricRow();bsdRenderPatRow();bsdApplyColorFilter();bsdUpdate();}));
 }
 function bsdRenderLapelRow(){
   const house = BSD_HOUSE === 'british' ? 'british' : 'naples';
@@ -2687,6 +2705,7 @@ bsdRenderFabricRow();
 bsdRenderPatRow();
 bsdRenderLapelRow();
 bsdRenderLiningRow();
+bsdApplyColorFilter();
 bsdUpdate();
 function bsdRefreshOnPhotosReady(){bsdRenderPatRow();bsdRenderLapelRow();bsdRenderLiningRow();bsdUpdate();}
 document.addEventListener('vm-photos-ready',bsdRefreshOnPhotosReady);
