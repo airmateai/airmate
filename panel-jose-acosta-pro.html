@@ -1149,7 +1149,10 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
         <div id="pane-crm-stock" class="tab-pane">
           <div class="page-hd page-hd-row">
             <div><div class="page-title">Stock / Inventario</div><div class="page-sub">Inventario de materiales</div></div>
-            <button class="btn btn-accent" onclick="crmOpenInventarioModal()">+ Añadir material</button>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-ghost" id="holded-sync-stock-btn" onclick="holdedSyncStock()">⟳ Sync Holded</button>
+              <button class="btn btn-accent" onclick="crmOpenInventarioModal()">+ Añadir material</button>
+            </div>
           </div>
           <div id="crm-stock-alert" class="alert alert-red" style="display:none"></div>
           <div class="card"><div class="table-wrap">
@@ -8620,6 +8623,107 @@ window.showTab = function(id, btn){
 _sb.from('stock_recepciones').select('id').limit(1).then(({error})=>{
   if(error) console.log('Tabla stock_recepciones pendiente de crear');
 });
+
+// ══════════════════════════════════════════
+// SYNC HOLDED → PANEL
+// ══════════════════════════════════════════
+
+async function holdedGet(endpoint, params=''){
+  const url = `${HOLDED_PROXY}?slug=jose-acosta&endpoint=${encodeURIComponent(endpoint)}${params?'&params='+encodeURIComponent(params):''}`;
+  const r = await fetch(url);
+  if(!r.ok) throw new Error(`Holded ${endpoint}: ${r.status}`);
+  return r.json();
+}
+
+// ── Sync productos Holded → crm_inventory ──
+async function holdedSyncStock(){
+  const btn = document.getElementById('holded-sync-stock-btn');
+  btn.disabled=true; btn.textContent='Sincronizando...';
+  try{
+    const products = await holdedGet('products');
+    if(!Array.isArray(products) || !products.length){ showToast('Sin productos en Holded'); return; }
+
+    let nuevos=0, actualizados=0;
+    for(const p of products){
+      const payload = {
+        business_slug: BIZ_SLUG,
+        name: p.name||'Sin nombre',
+        sku: p.sku||null,
+        category: p.kind||null,
+        stock: p.stock??0,
+        stock_min: p.minStock??0,
+        unit: p.unit||'ud',
+        purchase_price: p.price||0,
+        holded_id: p.id,
+      };
+      // Upsert por holded_id si existe, si no por nombre
+      const {data:existing} = await _sb.from('crm_inventory').select('id').eq('business_slug',BIZ_SLUG).eq('holded_id',p.id).maybeSingle();
+      if(existing){
+        await _sb.from('crm_inventory').update({stock:payload.stock, purchase_price:payload.purchase_price, stock_min:payload.stock_min}).eq('id',existing.id);
+        actualizados++;
+      } else {
+        await _sb.from('crm_inventory').insert(payload);
+        nuevos++;
+      }
+    }
+    showToast(`Holded sync: ${nuevos} nuevos · ${actualizados} actualizados`);
+    crmLoadInventario();
+  } catch(e){
+    showToast('Error sync Holded: '+e.message);
+    console.error(e);
+  } finally {
+    btn.disabled=false; btn.textContent='⟳ Sync Holded';
+  }
+}
+
+// ── Sync contactos Holded → crm_clients ──
+async function sincronizarContactosHolded(){
+  const btn = document.getElementById('cli-btn-sync');
+  btn.disabled=true; btn.textContent='Importando...';
+  try{
+    const contacts = await holdedGet('contacts');
+    const list = Array.isArray(contacts) ? contacts : (contacts.data||[]);
+    if(!list.length){ showToast('Sin contactos en Holded'); return; }
+
+    let nuevos=0, actualizados=0;
+    for(const c of list){
+      const name = c.name||c.tradeName||'';
+      if(!name) continue;
+      const phone = c.mobile||c.phone||null;
+      const email = c.email||null;
+      const nif = c.code||c.vatnumber||null;
+      const address = c.address ? `${c.address}, ${c.city||''} ${c.postalCode||''}`.trim() : null;
+
+      const payload = {
+        business_slug: BIZ_SLUG,
+        name,
+        phone,
+        email,
+        nif,
+        address,
+        holded_id: c.id,
+        tipo: c.type==='supplier'?'proveedor':'particular',
+      };
+
+      const {data:existing} = await _sb.from('crm_clients').select('id').eq('business_slug',BIZ_SLUG).eq('holded_id',c.id).maybeSingle();
+      if(existing){
+        await _sb.from('crm_clients').update({phone,email,nif,address}).eq('id',existing.id);
+        actualizados++;
+      } else {
+        await _sb.from('crm_clients').insert(payload);
+        nuevos++;
+      }
+    }
+    showToast(`Contactos Holded: ${nuevos} nuevos · ${actualizados} actualizados`);
+    crmLoadClientes();
+  } catch(e){
+    showToast('Error importando contactos: '+e.message);
+    console.error(e);
+  } finally {
+    btn.disabled=false; btn.textContent='⟳ Importar Holded';
+    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Importar Holded';
+  }
+}
 
 </script>
 </body>
