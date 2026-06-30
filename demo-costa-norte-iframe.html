@@ -43,14 +43,31 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:#f0f4f8;color:#1
   <p>Rellena el formulario y nuestro equipo te confirmará la plaza en menos de 24 horas.</p>
   <div class="iframe-wrap">
     <iframe
+      id="cn-iframe"
       src="https://airmate.es/costa-norte-reservas.html"
       width="100%"
-      height="850"
+      height="900"
       frameborder="0"
-      scrolling="no"
-      style="border:none;display:block;">
+      scrolling="yes"
+      style="border:none;display:block;min-height:900px;">
     </iframe>
   </div>
+  <script>
+    // Auto-resize iframe to content height
+    const iframe = document.getElementById('cn-iframe');
+    function resizeIframe() {
+      try {
+        const h = iframe.contentWindow.document.body.scrollHeight;
+        if(h > 100) iframe.style.height = (h + 40) + 'px';
+      } catch(e) {}
+    }
+    iframe.addEventListener('load', resizeIframe);
+    window.addEventListener('message', e => {
+      if(e.data?.type === 'resize' && e.data.height > 100) {
+        iframe.style.height = (e.data.height + 40) + 'px';
+      }
+    });
+  </script>
 </div>
 
 <footer class="site-footer">
