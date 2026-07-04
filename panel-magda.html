@@ -375,7 +375,9 @@ tr:hover td{background:var(--bg);}
       </div>
       <h2>Acceso al panel</h2>
       <div class="login-box-sub">Panel privado de Magda &mdash; anfitriona Superhost</div>
-      <button class="login-btn" onclick="doLogin()">Entrar al panel &rarr;</button>
+      <input id="lg-p" type="password" placeholder="Contraseña" style="width:100%;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;margin:12px 0;box-sizing:border-box;">
+      <div id="lg-err" style="display:none;color:#e05252;font-size:12px;margin-bottom:8px;"></div>
+      <button class="login-btn" id="lg-btn" onclick="doLogin()">Entrar al panel &rarr;</button>
     </div>
   </div>
 </div>
@@ -1412,11 +1414,44 @@ function toast(msg, type='success') {
 // =============================================
 // LOGIN
 // =============================================
-function doLogin() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  init();
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
+async function doLogin() {
+  const pass=document.getElementById('lg-p').value;
+  const btn=document.getElementById('lg-btn');
+  const errEl=document.getElementById('lg-err');
+  errEl.style.display='none';
+  if(!pass){errEl.textContent='Introduce la contraseña.';errEl.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Verificando…';
+  try{
+    const {data:cfg,error}=await _sb.from('bot_configs').select('slug,password_hash').eq('slug','magda-punta-hidalgo').single();
+    if(error||!cfg||!cfg.password_hash){errEl.textContent='No se pudo verificar el acceso. Contacta con Airmate.';errEl.style.display='block';return;}
+    const h=await sha256(pass);
+    if(h!==cfg.password_hash){errEl.textContent='Contraseña incorrecta.';errEl.style.display='block';return;}
+    localStorage.setItem('magda_session','1');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    init();
+  } finally {
+    btn.disabled=false;btn.textContent='Entrar al panel →';
+  }
+}
+function logout(){
+  localStorage.removeItem('magda_session');
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+(function(){
+  if(localStorage.getItem('magda_session')==='1'){
+    document.addEventListener('DOMContentLoaded',()=>{
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('app').style.display='block';
+      init();
+    });
+  }
+})();
 
 // =============================================
 // EMAILJS

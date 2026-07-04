@@ -23,8 +23,8 @@
   --sand:#f5edd6;
   --sand-lt:#fbf6e8;
   --cream:#ffffff;
-  --coral:#ff5e3a;
-  --coral-dk:#e0492a;
+  --coral:#1c5d82;
+  --coral-dk:#123f59;
   --aqua:#5dbdd3;
   --aqua-dk:#3a9bb5;
   --leaf:#2dba8a;
@@ -680,7 +680,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 .msg.client{align-self:flex-start;background:#fff;color:var(--txt);border-bottom-left-radius:4px;}
 .msg.bot,.msg.owner{align-self:flex-end;background:#d9fdd3;color:#0a2540;border-bottom-right-radius:4px;}
 .msg .at{font-size:9px;color:#7a8a9a;text-align:right;margin-top:3px;}
-.msg.bot .at::before{content:'🤖 ';color:var(--coral);}
+.msg.bot .at::before{content:' ';color:var(--coral);}
 .inbox-input{padding:14px;border-top:1px solid var(--border2);display:flex;gap:8px;}
 .inbox-input input{flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;color:var(--txt);}
 .inbox-input input:focus{outline:none;border-color:var(--coral);}
@@ -907,9 +907,10 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
     <div class="login-mark">CN</div>
     <div class="login-name">Costa <em>Norte</em></div>
     <div class="login-sub">Panel CRM · Surf Center</div>
-    <div class="login-row"><label>Usuario</label><input id="lg-u" value="admin" placeholder="admin"></div>
-    <div class="login-row"><label>Contraseña</label><input id="lg-p" type="password" value="surf2026" placeholder="••••••••"></div>
-    <button class="login-btn" onclick="doLogin()">Entrar al panel</button>
+    <div class="login-row"><label>Usuario</label><input id="lg-u" placeholder="admin"></div>
+    <div class="login-row"><label>Contraseña</label><input id="lg-p" type="password" placeholder="••••••••"></div>
+    <div id="lg-err" style="display:none;color:#e05252;font-size:12px;margin-top:6px;"></div>
+    <button class="login-btn" id="lg-btn" onclick="doLogin()">Entrar al panel</button>
     <div class="login-foot">San Vicente de la Barquera · Cantabria · 2025</div>
   </div>
 </div>
@@ -926,23 +927,22 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
     <nav class="sb-nav">
       <div class="sb-section">Operaciones</div>
       <button class="nav-item active" onclick="go('dashboard',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
-        Dashboard
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Dashboard
       </button>
 
       <div class="sb-section">Escuela de Surf</div>
       <button class="nav-item" id="nav-solicitudes" onclick="go('solicitudes',this);loadSolicitudes()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-        Solicitudes web
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Solicitudes web
         <span id="sol-badge" style="background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:auto;display:none">0</span>
       </button>
       <button class="nav-item" onclick="go('classes',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-        Horario clases
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>Horario clases
       </button>
       <button class="nav-item" onclick="go('students',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Alumnos
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Alumnos
+      </button>
+      <button class="nav-item" onclick="go('clientes',this);loadClientes()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Clientes
       </button>
     </nav>
     <div class="sb-foot">
@@ -965,7 +965,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
         <div class="tb-title" id="tb-title">Dashboard</div>
       </div>
       <div class="tb-right">
-        <button class="tb-btn" id="notif-btn" onclick="go('solicitudes',null);loadSolicitudes()" style="display:none;">🔔 <span id="notif-count">0</span></button>
+        <button class="tb-btn" id="notif-btn" onclick="go('solicitudes',null);loadSolicitudes()" style="display:none;"> <span id="notif-count">0</span></button>
         <button class="tb-btn" onclick="logout()">Salir</button>
       </div>
     </div>
@@ -1038,8 +1038,8 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 
       <div class="two-col">
         <div class="card">
-          <div class="card-hd"><div class="card-hd-title">Ingresos semana</div><span class="card-hd-meta">+18% vs anterior</span></div>
-          <div class="card-body"><div id="dash-chart"></div></div>
+          <div class="card-hd"><div class="card-hd-title">Solicitudes de esta semana</div></div>
+          <div class="card-body"><div id="dash-chart" style="text-align:center;padding:20px;color:var(--txt3);font-size:13px;">Ver el detalle en "Solicitudes web"</div></div>
         </div>
         <div class="card">
           <div class="card-hd"><div class="card-hd-title">Condiciones de surf · hoy</div><span class="card-hd-meta" id="sc-rating" style="font-size:16px;">—</span></div>
@@ -1100,7 +1100,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       <div class="card" style="background:linear-gradient(135deg,#1d5a7d,#3a8db5);color:#fff;border:none;">
         <div class="surf-cond-grid" style="padding:18px 22px;display:grid;grid-template-columns:1fr repeat(5,auto);gap:24px;align-items:center;">
           <div class="surf-cond-header">
-            <div style="font-family:var(--display);font-size:16px;font-weight:700;color:#fff;">🌊 Condiciones de hoy</div>
+            <div style="font-family:var(--display);font-size:16px;font-weight:700;color:#fff;">Condiciones de hoy</div>
             <div style="font-size:11px;color:rgba(245,237,214,.7);letter-spacing:.04em;margin-top:2px;">Playa de Oyambre · San Vicente de la Barquera</div>
           </div>
           <div style="text-align:center;"><div id="sc-wave" style="font-family:var(--display);font-size:24px;font-weight:700;color:#fff;">—</div><div style="font-size:9px;letter-spacing:.18em;color:rgba(245,237,214,.6);text-transform:uppercase;font-weight:700;margin-top:2px;">Olas</div></div>
@@ -1157,6 +1157,25 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       <div id="students-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;"></div>
     </div>
 
+    <!-- PAGINA CLIENTES -->
+    <div id="page-clientes" class="page">
+      <div class="page-hd">
+        <div><h1>Clientes</h1><div class="page-sub">Agregado de solicitudes recibidas · nombre, contacto y presupuesto</div></div>
+        <div class="page-hd-actions">
+          <input id="cli-search" type="search" placeholder="Buscar cliente…" oninput="renderClientes()" style="padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;width:220px;font-family:var(--sans,'Inter',sans-serif);color:var(--txt);background:var(--surface);outline:none;">
+        </div>
+      </div>
+      <div class="kpi-grid" id="cli-kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;"></div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Cliente</th><th>Teléfono</th><th>Email</th><th>Solicitudes</th><th>Presupuesto total</th><th>Última solicitud</th></tr></thead>
+            <tbody id="clientes-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- PAGINA SOLICITUDES (dentro del main) -->
     <div id="page-solicitudes" class="page">
       <div class="page-hd">
@@ -1184,20 +1203,16 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
   <!-- ════════════ BOTTOM NAV · MOBILE ════════════ -->
   <nav class="bot-nav" id="bot-nav">
     <button class="bot-nav-item active" id="bn-dashboard" onclick="go('dashboard',null);setBotNav('dashboard')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
-      Inicio
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Inicio
     </button>
     <button class="bot-nav-item" id="bn-solicitudes" onclick="go('solicitudes',null);loadSolicitudes();setBotNav('solicitudes')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      Solicitudes
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Solicitudes
     </button>
     <button class="bot-nav-item" id="bn-classes" onclick="go('classes',null);setBotNav('classes')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17s6-6 9-6 9 6 9 6"/><path d="M3 11s6-6 9-6 9 6 9 6"/></svg>
-      Clases
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17s6-6 9-6 9 6 9 6"/><path d="M3 11s6-6 9-6 9 6 9 6"/></svg>Clases
     </button>
     <button class="bot-nav-item" id="bn-students" onclick="go('students',null);setBotNav('students')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      Alumnos
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Alumnos
     </button>
   </nav>
 
@@ -1223,8 +1238,38 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 
 <script>
 // ════════════ LOGIN ════════════
-function doLogin(){document.getElementById('login').classList.add('hidden');initApp();}
-function logout(){document.getElementById('login').classList.remove('hidden');}
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function doLogin(){
+  const pass=document.getElementById('lg-p').value;
+  const btn=document.getElementById('lg-btn');
+  const errEl=document.getElementById('lg-err');
+  errEl.style.display='none';
+  if(!pass){errEl.textContent='Introduce la contraseña.';errEl.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Verificando…';
+  try{
+    const {data:cfg,error}=await SB.from('bot_configs').select('slug,password_hash').eq('slug','costa-norte').single();
+    if(error||!cfg||!cfg.password_hash){errEl.textContent='No se pudo verificar el acceso. Contacta con Airmate.';errEl.style.display='block';return;}
+    const h=await sha256(pass);
+    if(h!==cfg.password_hash){errEl.textContent='Contraseña incorrecta.';errEl.style.display='block';return;}
+    localStorage.setItem('cn_session','1');
+    document.getElementById('login').classList.add('hidden');
+    initApp();
+  } finally {
+    btn.disabled=false;btn.textContent='Entrar al panel';
+  }
+}
+function logout(){localStorage.removeItem('cn_session');document.getElementById('login').classList.remove('hidden');}
+(function(){
+  if(localStorage.getItem('cn_session')==='1'){
+    document.addEventListener('DOMContentLoaded',()=>{
+      document.getElementById('login').classList.add('hidden');
+      initApp();
+    });
+  }
+})();
 
 // ════════════ NAV ════════════
 function go(p,el){
@@ -1235,7 +1280,7 @@ function go(p,el){
     const links=document.querySelectorAll('.nav-item');
     const labels={dashboard:'Dashboard',agenda:'Agenda',apt:'Mapa',cal:'Calendario',res:'Reservas',clean:'Limpieza',maint:'Mantenimiento',classes:'Clases',students:'Alumnos',packs:'Packs',instructors:'Instructores',rental:'Alquileres',shop:'TPV',stock:'Stock',clients:'Clientes',invoices:'Facturas',reports:'Informes',inbox:'Bandeja IA',widget:'Widget',team:'Equipo',settings:'Ajustes'};
   }
-  const titles={dashboard:'Dashboard',solicitudes:'Solicitudes web',agenda:'Agenda del día',classes:'Horario de clases',students:'Alumnos',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',gastos:'Gastos deducibles',reports:'Gestor financiero',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes'};
+  const titles={dashboard:'Dashboard',solicitudes:'Solicitudes web',agenda:'Agenda del día',classes:'Horario de clases',students:'Alumnos',clientes:'Clientes',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',gastos:'Gastos deducibles',reports:'Gestor financiero',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes'};
   document.getElementById('tb-title').textContent=titles[p]||'';
   document.getElementById('sb').classList.remove('open');
   const ov=document.getElementById('mob-overlay');if(ov)ov.classList.remove('on');
@@ -1262,23 +1307,23 @@ const APTS=[];
 const APT_STATE_LBL={free:'Libre',occupied:'Ocupado',cleaning:'Limpieza',maint:'Manten.'};
 const RESERVATIONS=[];
 
-const CLASSES=[];
+let CLASSES=[];
 
-const RENTALS=[];
+let RENTALS=[];
 
-const PACKS=[];
+let PACKS=[];
 
-const INSTRUCTORS=[];
+let INSTRUCTORS=[];
 
-const STUDENTS=[];
+let STUDENTS=[];
 
-const STOCK=[];
+let STOCK=[];
 
 const CLIENTS=[];
 
 const INVOICES=[];
 
-const EXPENSES=[];
+let EXPENSES=[];
 
 const CONTABILIDAD={year:new Date().getFullYear(),months:[],irpf_retencion:0.07,regimen:'',epigrafes:[],cif:''};
 
@@ -1314,7 +1359,7 @@ function fActions(label,saveFn,delFn){return `<div style="display:flex;gap:8px;m
 function sparkline(values){
   const w=100,h=24,max=Math.max(...values),min=Math.min(...values),rng=(max-min)||1;
   const pts=values.map((v,i)=>{const x=(i/(values.length-1))*w;const y=h-((v-min)/rng)*(h-4)-2;return [x,y];});
-  const d='M '+pts.map(p=>p.join(',')).join(' L ');
+  const d='M '+pts.map(p=>p.join(',')).join('L ');
   const last=pts[pts.length-1];
   return `<svg class="kpi-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d}"/><circle cx="${last[0]}" cy="${last[1]}" r="2"/></svg>`;
 }
@@ -1326,6 +1371,7 @@ const SB=supabase.createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE'
 );
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const cv=id=>document.getElementById(id)?.value??'';
 
 async function sbLoad(table, setter, render, order='created_at'){
   const {data,error}=await SB.from(table).select('*').eq('business_slug',SLUG).order(order,{ascending:false});
@@ -1349,11 +1395,26 @@ async function sbDelete(table,id){
   return true;
 }
 
+// ════════════ MAPEO DB ↔ CAMPOS LOCALES ════════════
+function mapInstructor(row){return {...row,name:row.nombre,role:row.rol,exp:row.experiencia,cert:row.certificaciones,rating:row.valoracion,classes:row.clases_impartidas,phone:row.telefono};}
+function mapPack(row){return {...row,name:row.nombre,type:row.tipo,sess:row.sesiones,price:row.precio,sold:row.vendidos,state:row.estado,desc:row.descripcion};}
+function mapGasto(row){return {...row,vendor:row.proveedor,concept:row.concepto,category:row.categoria,date:row.fecha,vatPct:row.vat_pct,vat:row.iva,payMethod:row.forma_pago,doc:row.documento,deductible:row.deducible,state:row.estado};}
+function mapStock(row){return {...row,name:row.nombre,sku:row.sku,cat:row.categoria,stock:row.stock,min:row.stock_minimo,cost:row.precio_coste,price:row.precio_venta,img:row.imagen};}
+function mapClass(row){
+  const cls=row.tipo==='Privada'?'coral':row.tipo==='SUP'?'info':'ok';
+  return {...row,dia:row.dia_semana,time:row.hora,t:row.tipo,type:row.tipo,i:row.instructor,instr:row.instructor,n:row.alumnos,students:row.alumnos,m:row.max_alumnos,cls};
+}
+
 // ════════════ LOAD ALL DATA ════════════
 async function loadAllData(){
   await Promise.all([
-    sbLoad('cn_clases',  d=>CLASSES=d,  ()=>renderClasses(), 'hora'),
+    sbLoad('cn_clases',  d=>CLASSES=d.map(mapClass),  ()=>renderClasses(), 'hora'),
     sbLoad('cn_alumnos', d=>STUDENTS=d, ()=>renderStudents(), 'nombre'),
+    sbLoad('cn_instructores', d=>INSTRUCTORS=d.map(mapInstructor), ()=>renderInstructors()),
+    sbLoad('cn_packs', d=>PACKS=d.map(mapPack), ()=>renderPacks()),
+    sbLoad('cn_gastos', d=>EXPENSES=d.map(mapGasto), ()=>renderGastos(), 'fecha'),
+    sbLoad('cn_alquileres', d=>RENTALS=d.map(mapRental), ()=>renderRental()),
+    sbLoad('cn_stock', d=>STOCK=d.map(mapStock), ()=>renderStock()),
   ]);
 }
 
@@ -1364,15 +1425,19 @@ async function renderDash(){
 
   try {
     const [allRes, pendingRes, thisWeekRes] = await Promise.all([
-      SB.from('appointments').select('id,status,budget,date').eq('business_slug','costa-norte'),
+      SB.from('appointments').select('id,status,budget,starts_at,notes').eq('business_slug','costa-norte'),
       SB.from('appointments').select('id').eq('business_slug','costa-norte').eq('status','pending'),
-      SB.from('appointments').select('id').eq('business_slug','costa-norte').gte('date', weekAgo)
+      SB.from('appointments').select('id').eq('business_slug','costa-norte').gte('starts_at', weekAgo)
     ]);
     const all = allRes.data || [];
     const pending = (pendingRes.data||[]).length;
     const thisWeek = (thisWeekRes.data||[]).length;
     const confirmed = all.filter(a=>a.status==='confirmed').length;
-    const totalBudget = all.filter(a=>a.budget).reduce((s,a)=>s+(parseFloat(a.budget)||0),0);
+    const totalBudget = all.filter(a=>a.budget&&a.status!=='cancelled').reduce((s,a)=>s+(parseFloat(a.budget)||0),0);
+    const totalCobrado = all.filter(a=>{
+      if(!a.budget||a.status==='cancelled')return false;
+      try{return JSON.parse(a.notes||'{}').payment_status==='confirmed';}catch{return false;}
+    }).reduce((s,a)=>s+(parseFloat(a.budget)||0),0);
 
     // KPIs
     const kpiEl = document.getElementById('dash-kpis');
@@ -1381,7 +1446,8 @@ async function renderDash(){
       {l:'Pendientes',v:pending},
       {l:'Confirmadas',v:confirmed},
       {l:'Esta semana',v:thisWeek},
-      {l:'Presupuesto total',v:'€'+Math.round(totalBudget).toLocaleString('es-ES')},
+      {l:'Presupuesto solicitado',v:'€'+Math.round(totalBudget).toLocaleString('es-ES')},
+      {l:'Cobrado (verificado)',v:'€'+Math.round(totalCobrado).toLocaleString('es-ES')},
     ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div></div>`).join('');
 
     // Pending table
@@ -1394,11 +1460,11 @@ async function renderDash(){
         pTbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:24px;">Sin solicitudes pendientes</td></tr>';
       } else {
         // Load full data for pending
-        const {data:rows} = await SB.from('appointments').select('name,service,date,budget,status').eq('business_slug','costa-norte').eq('status','pending').order('created_at',{ascending:false}).limit(5);
+        const {data:rows} = await SB.from('appointments').select('client_name,service,starts_at,budget,status').eq('business_slug','costa-norte').eq('status','pending').order('created_at',{ascending:false}).limit(5);
         pTbody.innerHTML=(rows||[]).map(r=>`<tr>
-          <td>${esc(r.name||'—')}</td>
+          <td>${esc(r.client_name||'—')}</td>
           <td>${esc(r.service||'—')}</td>
-          <td>${r.date||'—'}</td>
+          <td>${r.starts_at?r.starts_at.slice(0,10):'—'}</td>
           <td>${r.budget?'€'+r.budget:'—'}</td>
           <td><span class="tag tag-warn">Pendiente</span></td>
         </tr>`).join('');
@@ -1419,18 +1485,18 @@ async function renderDash(){
   const ag = document.getElementById('automations-grid');
   if(ag){
     const autos=[
-      {i:'💬',n:'Respuesta WhatsApp',d:'Bot responde en < 1 min · ES/EN',c:34,u:'consultas/día'},
-      {i:'📧',n:'Confirmaciones email',d:'Tras cada reserva de clase',c:42,u:'esta semana'},
+      {i:'',n:'Respuesta WhatsApp',d:'Bot responde en < 1 min · ES/EN',c:34,u:'consultas/día'},
+      {i:'',n:'Confirmaciones email',d:'Tras cada reserva de clase',c:42,u:'esta semana'},
       {i:'⏰',n:'Recordatorios 24h antes',d:'WhatsApp a alumnos confirmados',c:38,u:'mensajes'},
-      {i:'🌊',n:'Cancela si mal tiempo',d:'Avisa alumnos y reagenda solo',c:0,u:'esta semana'},
-      {i:'💰',n:'Recordatorio pago pendiente',d:'Bot avisa · gestor cobra',c:3,u:'recuperados'},
-      {i:'⭐',n:'Petición reseña Google',d:'Email automático tras la clase',c:7,u:'enviados'},
-      {i:'🎁',n:'Bono casi agotado',d:'Cliente con ≤2 sesiones recibe oferta',c:4,u:'detectados'},
-      {i:'📊',n:'Reporte semanal',d:'Lunes 09:00 al director',c:1,u:'/semana'},
-      {i:'🔔',n:'Alerta material bajo',d:'Email cuando llegues al mínimo',c:1,u:'producto'},
-      {i:'📷',n:'Repost Instagram alumnos',d:'Con tag · permiso previo automático',c:5,u:'esta semana'},
-      {i:'💌',n:'Newsletter segmentada',d:'Por nivel + idioma del alumno',c:142,u:'destinatarios'},
-      {i:'📈',n:'Informe mensual',d:'Ocupación, ingresos y tendencias',c:1,u:'/mes'}
+      {i:'',n:'Cancela si mal tiempo',d:'Avisa alumnos y reagenda solo',c:0,u:'esta semana'},
+      {i:'',n:'Recordatorio pago pendiente',d:'Bot avisa · gestor cobra',c:3,u:'recuperados'},
+      {i:'★',n:'Petición reseña Google',d:'Email automático tras la clase',c:7,u:'enviados'},
+      {i:'',n:'Bono casi agotado',d:'Cliente con ≤2 sesiones recibe oferta',c:4,u:'detectados'},
+      {i:'',n:'Reporte semanal',d:'Lunes 09:00 al director',c:1,u:'/semana'},
+      {i:'',n:'Alerta material bajo',d:'Email cuando llegues al mínimo',c:1,u:'producto'},
+      {i:'',n:'Repost Instagram alumnos',d:'Con tag · permiso previo automático',c:5,u:'esta semana'},
+      {i:'',n:'Newsletter segmentada',d:'Por nivel + idioma del alumno',c:142,u:'destinatarios'},
+      {i:'',n:'Informe mensual',d:'Ocupación, ingresos y tendencias',c:1,u:'/mes'}
     ];
     ag.innerHTML=autos.map(a=>`<div style="padding:11px 14px;background:var(--bg);border-radius:8px;display:flex;gap:10px;align-items:center;">
       <div style="font-size:20px;width:38px;height:38px;display:grid;place-items:center;background:var(--surface);border-radius:8px;flex-shrink:0;">${a.i}</div>
@@ -1468,7 +1534,7 @@ function renderClasses(){
   for(let i=0;i<7;i++){html+=`<div class="sched-h ${i===dow?'today':''}">${days[i]}</div>`;}
   // build grid from real CLASSES data
   const grid={};
-  const todayName=days[(new Date().getDay()+6)%7];
+  const todayName=DAYS_ES[dow];
   CLASSES.forEach(c=>{
     const d=days.indexOf((c.dia||'').toUpperCase().slice(0,3));
     if(d>=0) grid[d+'-'+(c.hora||c.time||'')]=c;
@@ -1478,7 +1544,7 @@ function renderClasses(){
     for(let d=0;d<7;d++){
       const c=grid[d+'-'+h];
       if(c){
-        html+=`<div class="sched-cell"><div class="sched-class ${c.cls}" onclick="editClass(${d},'${h}','${c.t}','${c.i}',${c.n},${c.m})"><strong>${c.t.split('·')[0]}</strong>${c.i} · ${c.n}/${c.m}</div></div>`;
+        html+=`<div class="sched-cell"><div class="sched-class ${c.cls}" onclick="editClass('${c.id}',${d},'${h}','${esc(c.t)}','${esc(c.i)}',${c.n||0},${c.m||0})"><strong>${esc((c.t||'').split('·')[0])}</strong>${esc(c.i)} · ${c.n||0}/${c.m||0}</div></div>`;
       } else {
         html+=`<div class="sched-cell" onclick="newClass(${d},'${h}')" style="cursor:pointer;"></div>`;
       }
@@ -1489,19 +1555,23 @@ function renderClasses(){
   const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
   document.getElementById('week-range').textContent=monday.getDate()+' — '+sunday.getDate()+' '+sunday.toLocaleDateString('es-ES',{month:'long'});
 
-  // Today's classes table
+  // Today's classes table — solo las de hoy
+  const todayClasses=CLASSES.filter(c=>(c.dia||'').toLowerCase()===todayName.toLowerCase());
+  document.getElementById('classes-today-count')&&(document.getElementById('classes-today-count').textContent=todayClasses.length+' clases');
   const tb=document.getElementById('classes-today-tbody');
-  if(tb)tb.innerHTML=CLASSES.map((c,i)=>{
+  if(tb)tb.innerHTML=todayClasses.length?todayClasses.map((c)=>{
+    const i=CLASSES.indexOf(c);
     const attended=c.attended||0;
+    const students=c.students||0;
     return `<tr>
-      <td><strong>${c.time}</strong></td>
-      <td><span class="tag tag-${c.type==='Privada'?'coral':c.type==='SUP'?'info':'ok'}">${c.type}</span></td>
-      <td>${c.instr}</td>
-      <td>${c.students}</td>
-      <td><div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;"><div style="height:100%;background:${attended===c.students?'var(--leaf)':attended>0?'var(--warn)':'var(--coral)'};width:${(attended/c.students)*100}%"></div></div><strong style="font-size:11px;">${attended}/${c.students}</strong></div></td>
-      <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="checkinClass(${i})">📝 Check-in</button></td>
+      <td><strong>${esc(c.time)}</strong></td>
+      <td><span class="tag tag-${c.type==='Privada'?'coral':c.type==='SUP'?'info':'ok'}">${esc(c.type)}</span></td>
+      <td>${esc(c.instr)}</td>
+      <td>${students}</td>
+      <td><div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;"><div style="height:100%;background:${attended===students?'var(--leaf)':attended>0?'var(--warn)':'var(--coral)'};width:${students?(attended/students)*100:0}%"></div></div><strong style="font-size:11px;">${attended}/${students}</strong></div></td>
+      <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="checkinClass(${i})">Check-in</button></td>
     </tr>`;
-  }).join('');
+  }).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:24px;">Sin clases programadas hoy</td></tr>';
 }
 
 function checkinClass(i){
@@ -1527,7 +1597,7 @@ function checkinClass(i){
         </label>`).join('')}
     </div>
     <div style="display:flex;gap:6px;margin-top:14px;">
-      <button class="btn btn-ghost" style="flex:1" onclick="toast('📲 SMS enviado a ausentes')">📲 Recordar ausentes</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('SMS enviado a ausentes')">Recordar ausentes</button>
       <button class="btn btn-ghost" style="flex:1" onclick="markAll(${i})">✓ Marcar todos</button>
     </div>
     ${fActions('Cerrar check-in','closeCk('+i+')')}
@@ -1551,7 +1621,7 @@ function newClass(dow,hour){
 
     <!-- PRECIO ADAPTATIVO -->
     <div style="margin:14px 0;padding:14px;background:linear-gradient(135deg,rgba(255,94,58,.05),rgba(93,189,211,.05));border:1px solid var(--border);border-radius:10px;">
-      <div style="font-size:10px;letter-spacing:.22em;color:var(--coral);text-transform:uppercase;font-weight:700;margin-bottom:10px;">💶 Precio · adaptable a grupos</div>
+      <div style="font-size:10px;letter-spacing:.22em;color:var(--coral);text-transform:uppercase;font-weight:700;margin-bottom:10px;">Precio · adaptable a grupos</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">
         <button class="tab active" onclick="setPriceMode('std')" id="pm-std" type="button">Tarifa estándar</button>
         <button class="tab" onclick="setPriceMode('custom')" id="pm-custom" type="button">Precio personalizado</button>
@@ -1565,13 +1635,13 @@ function newClass(dow,hour){
         ${fLbl('Plantilla rápida')}
         <select id="cls-tmpl" onchange="applyPriceTemplate(this.value)" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;margin-bottom:10px;">
           <option value="">— Elegir plantilla —</option>
-          <option value="25:8">🎒 Colegio Cantabria · 25€/alumno · mín 8</option>
-          <option value="22:15">🎒 Colegio + 15 alumnos · 22€/alumno</option>
-          <option value="18:25">🎒 Colegio +25 alumnos · 18€/alumno (precio cerrado)</option>
-          <option value="30:6">👯 Grupo amigos · 30€/persona · mín 6</option>
-          <option value="45:10">💼 Despedida soltero / Empresa · 45€/persona</option>
-          <option value="120:4">👨‍👩‍👧 Familia 4 pax · 120€ pack cerrado</option>
-          <option value="80:1">⭐ Privada VIP · 80€/persona</option>
+          <option value="25:8">Colegio Cantabria · 25€/alumno · mín 8</option>
+          <option value="22:15">Colegio + 15 alumnos · 22€/alumno</option>
+          <option value="18:25">Colegio +25 alumnos · 18€/alumno (precio cerrado)</option>
+          <option value="30:6">Grupo amigos · 30€/persona · mín 6</option>
+          <option value="45:10">Despedida soltero / Empresa · 45€/persona</option>
+          <option value="120:4">‍‍ Familia 4 pax · 120€ pack cerrado</option>
+          <option value="80:1">★ Privada VIP · 80€/persona</option>
         </select>
         ${fRow(fLbl('Precio / persona (€)')+fInp('cls-pp','30','number'), fLbl('Personas')+fInp('cls-pax','10','number'))}
         ${fLbl('Cliente / Centro')}${fInp('cls-client','','text','CEIP San Vicente · IES La Granja · Empresa X')}
@@ -1581,14 +1651,13 @@ function newClass(dow,hour){
           <span style="font-size:10px;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;font-weight:700;">Total grupo</span>
           <strong style="font-family:var(--display);font-size:22px;color:var(--coral);" id="cls-total">€300</strong>
         </div>
-        <button class="btn btn-ghost" style="width:100%;margin-top:8px;" onclick="sendQuoteEmail()">
-          📧 Enviar presupuesto humanizado por email
+        <button class="btn btn-ghost" style="width:100%;margin-top:8px;" onclick="sendQuoteEmail()">Enviar presupuesto humanizado por email
         </button>
       </div>
     </div>
 
     ${fLbl('Notas internas')}${fTxt('cls-notes','','2','Material adicional, peticiones especiales...')}
-    <div style="background:rgba(45,186,138,.06);border:1px dashed var(--leaf);padding:10px 14px;border-radius:8px;margin-top:14px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--leaf);">Bot IA:</strong> Si pones precio adaptado, el email lleva tono cálido + condiciones de surf del día + foto playa + tu firma.</div>
+    <div style="background:rgba(45,186,138,.06);border:1px dashed var(--leaf);padding:10px 14px;border-radius:8px;margin-top:14px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--leaf);">Bot IA:</strong>Si pones precio adaptado, el email lleva tono cálido + condiciones de surf del día + foto playa + tu firma.</div>
     ${fActions('Crear clase','saveNewClass()')}
   `);
   setTimeout(()=>{
@@ -1633,11 +1702,7 @@ function sendQuoteEmail(){
       <p style="font-size:14px;line-height:1.6;margin-bottom:14px;">Gracias por confiar en nosotros para vuestra experiencia de surf en San Vicente de la Barquera. Aquí tenéis vuestro presupuesto adaptado:</p>
       <div style="background:#f9f5ec;padding:14px;border-left:3px solid #ff5e3a;margin:14px 0;">
         <div style="font-size:13px;line-height:1.7;">
-          <strong>${total}</strong> total para el grupo<br>
-          Material incluido: tabla soft + neopreno por persona<br>
-          Seguro de actividad incluido<br>
-          Monitor titulado ISA<br>
-          Fotos de la sesión por WhatsApp
+          <strong>${total}</strong> total para el grupo<br>Material incluido: tabla soft + neopreno por persona<br>Seguro de actividad incluido<br>Monitor titulado ISA<br>Fotos de la sesión por WhatsApp
         </div>
       </div>
       <p style="font-size:14px;line-height:1.6;margin-bottom:14px;">Por nuestra parte estamos deseando recibiros. La playa de Oyambre está espectacular en esta época y vamos a daros un día que recordaréis siempre.</p>
@@ -1646,32 +1711,44 @@ function sendQuoteEmail(){
     </div>
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button class="btn btn-ghost" style="flex:1" onclick="toast('✏️ Editado')">✏️ Editar</button>
-      <button class="btn btn-primary" style="flex:1" onclick="navigator.clipboard.writeText(this.closest('.modal-body,div')?.querySelector('div')?.innerText||'').then(()=>{toast('✓ Copiado — pega en tu email o WhatsApp');closeModal();})">📋 Copiar mensaje</button>
+      <button class="btn btn-primary" style="flex:1" onclick="navigator.clipboard.writeText(this.closest('.modal-body,div')?.querySelector('div')?.innerText||'').then(()=>{toast('✓ Copiado — pega en tu email o WhatsApp');closeModal();})">Copiar mensaje</button>
     </div>
   `);
 }
-function saveNewClass(){
-  toast('✓ Clase creada '+document.getElementById('cls-d').value+' '+document.getElementById('cls-h').value);
-  closeModal();
+async function saveNewClass(){
+  const dia=cv('cls-d'),hora=cv('cls-h'),tipo=cv('cls-t'),instructor=cv('cls-i');
+  const max_alumnos=+cv('cls-m')||10,duracion_min=+cv('cls-dur')||60;
+  if(!dia||!hora){toast('⚠ Falta día u hora');return;}
+  const row=await sbInsert('cn_clases',{dia_semana:dia,hora,tipo,instructor,alumnos:0,max_alumnos,duracion_min});
+  if(row){CLASSES.push(mapClass(row));toast('✓ Clase creada');closeModal();renderClasses();}
 }
-function editClass(d,h,t,instr,n,m){
+async function editClass(id,d,h,t,instr,n,m){
   openModal('Clase · '+(DAYS_ES[d]||'')+' '+h,`
     ${fRow(fLbl('Día')+fSel('ce-d',DAYS_ES[d],DAYS_ES), fLbl('Hora')+fInp('ce-h',h,'time'))}
     ${fRow(fLbl('Tipo')+fInp('ce-t',t), fLbl('Instructor')+fSel('ce-i',instr,INSTRUCTORS.map(x=>x.name.split(' ')[0])))}
     ${fRow(fLbl('Alumnos inscritos')+fInp('ce-n',n,'number'), fLbl('Plazas')+fInp('ce-m',m,'number'))}
 
-    <div style="background:var(--bg);padding:14px;border-radius:10px;margin-top:14px;">
-      <div style="font-size:10px;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;font-weight:700;margin-bottom:10px;">Alumnos en la clase</div>
-      ${([]).map(name=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px;"><span>👤 ${name}</span><button onclick="toast('Quitado: ${name}')" style="background:none;border:none;color:var(--coral);cursor:pointer;font-size:14px;">×</button></div>`).join('')}
-      <button class="btn btn-ghost" style="width:100%;margin-top:8px;font-size:11px;">+ Añadir alumno</button>
-    </div>
-
     <div style="display:flex;gap:6px;margin-top:14px;">
-      <button class="btn btn-ghost" style="flex:1" onclick="toast('📣 Notificación enviada a alumnos');">📣 Notificar</button>
-      <button class="btn btn-ghost" style="flex:1" onclick="toast('❌ Clase cancelada');closeModal();">Cancelar clase</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('Notificación enviada a alumnos');">Notificar</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="deleteClass('${id}')">Cancelar clase</button>
     </div>
-    ${fActions('Guardar','toast(\'✓ Clase guardada\');closeModal();')}
+    ${fActions('Guardar','saveEditClass(\''+id+'\')')}
   `);
+}
+async function saveEditClass(id){
+  const dia=cv('ce-d'),hora=cv('ce-h'),tipo=cv('ce-t'),instructor=cv('ce-i');
+  const alumnos=+cv('ce-n')||0,max_alumnos=+cv('ce-m')||0;
+  const ok=await sbUpdate('cn_clases',id,{dia_semana:dia,hora,tipo,instructor,alumnos,max_alumnos});
+  if(ok){
+    const idx=CLASSES.findIndex(c=>String(c.id)===String(id));
+    if(idx>=0)CLASSES[idx]=mapClass({...CLASSES[idx],dia_semana:dia,hora,tipo,instructor,alumnos,max_alumnos});
+    toast('✓ Clase guardada');closeModal();renderClasses();
+  }
+}
+async function deleteClass(id){
+  if(!confirm('¿Cancelar y eliminar esta clase del horario?'))return;
+  const ok=await sbDelete('cn_clases',id);
+  if(ok){CLASSES=CLASSES.filter(c=>String(c.id)!==String(id));toast('✕ Clase cancelada');closeModal();renderClasses();}
 }
 
 let ST_CUR=null;
@@ -1778,8 +1855,7 @@ function registrarClase(){
     ${fRow(fLbl('Fecha')+`<input id="rc-fecha" type="date" value="${new Date().toISOString().slice(0,10)}" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--sans,'Inter',sans-serif);color:var(--txt);">`,
            fLbl('Instructor')+fInp('rc-instructor',''))}
     ${fLbl('Notas')}${fTxt('rc-notas','','2','Progresa bien en el pop-up...')}
-    <div style="background:rgba(15,34,64,.06);border-radius:8px;padding:12px 14px;margin-top:12px;font-size:13px;">
-      Sesiones actuales: <strong>${left}</strong> → quedarán <strong style="color:${left>0?'var(--leaf)':'var(--coral)'};">${Math.max(0,left-1)}</strong>
+    <div style="background:rgba(15,34,64,.06);border-radius:8px;padding:12px 14px;margin-top:12px;font-size:13px;">Sesiones actuales: <strong>${left}</strong> → quedarán <strong style="color:${left>0?'var(--leaf)':'var(--coral)'};">${Math.max(0,left-1)}</strong>
       ${left===0?'<div style="color:var(--coral);margin-top:6px;font-size:12px;">⚠ El alumno no tiene sesiones disponibles. Se registrará igualmente.</div>':''}
     </div>
     ${fActions('Registrar clase','confirmarClase()')}
@@ -1874,7 +1950,7 @@ function renderPacks(){
     <td>${p.sess}</td>
     <td><strong style="color:var(--coral);font-family:var(--display);font-size:15px;">${fmt(p.price)}</strong></td>
     <td>${p.sold}</td>
-    <td><strong>${p.margin}</strong></td>
+    <td><strong>${p.margin||'—'}</strong></td>
     <td><span class="tag tag-${p.state==='Top'?'coral':p.state==='Nuevo'?'info':'ok'}">${p.state}</span></td>
   </tr>`).join('');
 }
@@ -1892,7 +1968,7 @@ function editPack(i){
     ${fActions('Guardar','savePack('+i+')','deletePack('+i+')')}
   `);
 }
-function savePack(i){
+async function savePack(i){
   const p=PACKS[i];
   p.name=document.getElementById('pk-name').value;
   p.type=document.getElementById('pk-type').value;
@@ -1900,9 +1976,10 @@ function savePack(i){
   p.price=+document.getElementById('pk-price').value;
   p.state=document.getElementById('pk-state').value;
   p.desc=document.getElementById('pk-desc').value;
+  await sbUpdate('cn_packs',p.id,{nombre:p.name,tipo:p.type,sesiones:p.sess,precio:p.price,estado:p.state,descripcion:p.desc});
   toast('✓ Pack guardado · sincronizado en web');closeModal();renderPacks();
 }
-function deletePack(i){if(confirm('¿Eliminar pack?')){PACKS.splice(i,1);toast('Pack eliminado');closeModal();renderPacks();}}
+async function deletePack(i){if(confirm('¿Eliminar pack?')){const p=PACKS[i];await sbDelete('cn_packs',p.id);PACKS.splice(i,1);toast('Pack eliminado');closeModal();renderPacks();}}
 
 function renderInstructors(){
   document.getElementById('instructors-grid').innerHTML=INSTRUCTORS.map((ins,i)=>`
@@ -1930,7 +2007,7 @@ function editInstructor(i){
     ${fActions('Guardar','saveInstructor('+i+')','deleteInstructor('+i+')')}
   `);
 }
-function saveInstructor(i){
+async function saveInstructor(i){
   const ins=INSTRUCTORS[i];
   ins.name=document.getElementById('in-name').value;
   ins.role=document.getElementById('in-role').value;
@@ -1940,9 +2017,10 @@ function saveInstructor(i){
   ins.classes=+document.getElementById('in-classes').value;
   ins.com=+document.getElementById('in-com').value;
   ins.avail=document.getElementById('in-avail').value;
+  await sbUpdate('cn_instructores',ins.id,{nombre:ins.name,rol:ins.role,experiencia:ins.exp,certificaciones:ins.cert,valoracion:ins.rating,clases_impartidas:ins.classes});
   toast('✓ Instructor guardado');closeModal();renderInstructors();
 }
-function deleteInstructor(i){if(confirm('¿Eliminar instructor?')){INSTRUCTORS.splice(i,1);toast('Eliminado');closeModal();renderInstructors();}}
+async function deleteInstructor(i){if(confirm('¿Eliminar instructor?')){const ins=INSTRUCTORS[i];await sbDelete('cn_instructores',ins.id);INSTRUCTORS.splice(i,1);toast('Eliminado');closeModal();renderInstructors();}}
 
 function renderRental(){
   document.getElementById('rental-tbody').innerHTML=RENTALS.map((r,i)=>`<tr onclick="editRental(${i})">
@@ -1962,9 +2040,9 @@ const MATERIAL_CATALOG=[
     {n:'Tabla Soft 7\'2" (Iniciación)',p:30,s:8,sku:'TB-S072'},
     {n:'Tabla Soft 8\'0" (Iniciación)',p:30,s:6,sku:'TB-S080'},
     {n:'Tabla Soft 9\'0" (Iniciación)',p:30,s:4,sku:'TB-S090'},
-    {n:'Tabla Rígida 6\'10" Premium',p:40,s:3,sku:'TB-R610'},
-    {n:'Tabla Rígida 7\'6" Premium',p:40,s:2,sku:'TB-R760'},
-    {n:'Longboard 9\'2" Premium',p:40,s:2,sku:'TB-L092'},
+    {n:'Tabla Rígida 6\'10"Premium',p:40,s:3,sku:'TB-R610'},
+    {n:'Tabla Rígida 7\'6"Premium',p:40,s:2,sku:'TB-R760'},
+    {n:'Longboard 9\'2"Premium',p:40,s:2,sku:'TB-L092'},
     {n:'SUP Race 12\'6"',p:40,s:3,sku:'SUP-R126'},
     {n:'SUP Cruise 10\'6"',p:40,s:5,sku:'SUP-C106'},
   ]},
@@ -2041,7 +2119,7 @@ async function saveNewInstructor(){
   };
   if(!ins.nombre){toast('⚠ Escribe el nombre');return;}
   const row=await sbInsert('cn_instructores',ins);
-  if(row){INSTRUCTORS.push(row);toast('✓ Instructor añadido');closeModal();renderInstructors();}
+  if(row){INSTRUCTORS.push(mapInstructor(row));toast('✓ Instructor añadido');closeModal();renderInstructors();}
 }
 
 function newPack(){
@@ -2065,7 +2143,7 @@ async function saveNewPack(){
   };
   if(!p.nombre){toast('⚠ Escribe el nombre');return;}
   const row=await sbInsert('cn_packs',p);
-  if(row){PACKS.push(row);toast('✓ Pack añadido');closeModal();renderPacks();}
+  if(row){PACKS.push(mapPack(row));toast('✓ Pack añadido');closeModal();renderPacks();}
 }
 
 function newClient(){
@@ -2094,7 +2172,7 @@ async function saveNewClient(){
 function newRental(){
   let html=`
     <div style="background:linear-gradient(135deg,#0a2540,#1a3a5c);color:#fff;padding:14px;border-radius:10px;margin-bottom:14px;">
-      <div style="font-family:var(--display);font-size:14px;font-weight:700;">🏄 Configura el alquiler personalizado</div>
+      <div style="font-family:var(--display);font-size:14px;font-weight:700;">Configura el alquiler personalizado</div>
       <div style="font-size:11px;color:rgba(245,237,214,.7);margin-top:2px;">Marca SOLO lo que necesita el cliente. Algunos solo quieren tabla porque ya tienen neopreno.</div>
     </div>
     ${fLbl('Cliente')}${fInp('rn-client','','text','Nombre del cliente')}
@@ -2130,7 +2208,7 @@ function newRental(){
       <div style="font-family:var(--display);font-size:32px;font-weight:700;color:#fff;" id="rn-total">€0</div>
     </div>
     ${fLbl('Notas')}${fTxt('rn-notes','','2','Cliente experimentado · trajo su propio leash · alergias...')}
-    <div style="background:rgba(45,186,138,.06);border:1px dashed var(--leaf);padding:10px 14px;border-radius:8px;margin-top:14px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--leaf);">Auto:</strong> El stock se descuenta al confirmar. Se devuelve cuando marques "devuelto". Si pasa la hora prevista, el bot avisa al cliente.</div>
+    <div style="background:rgba(45,186,138,.06);border:1px dashed var(--leaf);padding:10px 14px;border-radius:8px;margin-top:14px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--leaf);">Auto:</strong>El stock se descuenta al confirmar. Se devuelve cuando marques "devuelto". Si pasa la hora prevista, el bot avisa al cliente.</div>
     ${fActions('Crear alquiler','saveNewRental()')}
   `;
   openModal('+ Nuevo alquiler personalizado',html);
@@ -2152,14 +2230,20 @@ function updateRentalTotal(){
   document.getElementById('rn-total').textContent='€'+total.toLocaleString('es-ES');
   document.getElementById('rn-detail').textContent=items.length?items.length+' items · '+days+' día'+(days>1?'s':''):'Sin items seleccionados';
 }
-function saveNewRental(){
+function mapRental(row){return {...row,item:row.articulo,client:row.cliente,out:row.fecha_salida,ret:row.fecha_devolucion,days:row.dias,state:row.estado,total:row.total,notes:row.notas};}
+async function saveNewRental(){
   const client=document.getElementById('rn-client').value.trim();
   if(!client){toast('Pon el nombre del cliente');return;}
   const items=document.querySelectorAll('[id^="mat-"]:checked');
   if(!items.length){toast('Marca al menos un item');return;}
-  const total=document.getElementById('rn-total').textContent;
-  toast('✓ Alquiler creado · '+client+' · '+items.length+' items · '+total);
-  closeModal();renderRental();
+  const days=+document.getElementById('rn-days').value||1;
+  const out=document.getElementById('rn-out').value;
+  const back=document.getElementById('rn-back').value;
+  const notes=document.getElementById('rn-notes').value;
+  const itemNames=Array.from(items).map(c=>c.dataset.name).join(', ');
+  const total=+document.getElementById('rn-total').textContent.replace('€','').replace(/\./g,'').replace(',','.');
+  const row=await sbInsert('cn_alquileres',{articulo:itemNames,cliente:client,fecha_salida:out,fecha_devolucion:back,dias:days,estado:'Activo',total,notas:notes});
+  if(row){RENTALS.push(mapRental(row));toast('✓ Alquiler creado · '+client+' · '+items.length+' items · €'+total);closeModal();renderRental();}
 }
 
 function editRental(i){
@@ -2173,13 +2257,12 @@ function editRental(i){
     ${fLbl('Notas')}${fTxt('rn-notes',r.notes||'','2','Estado del material, daños observados...')}
     <div style="display:flex;gap:6px;margin-top:14px;">
       <button class="btn btn-ghost" style="flex:1" onclick="markReturned(${i})">✓ Marcar devuelto</button>
-      <button class="btn btn-ghost" style="flex:1" onclick="toast('Días extendidos +1')">+ Extender 1 día</button>
     </div>
     ${fActions('Guardar','saveRental('+i+')','deleteRental('+i+')')}
   `);
 }
-function markReturned(i){RENTALS[i].state='Devuelto';toast('✓ Devolución registrada');closeModal();renderRental();}
-function saveRental(i){
+async function markReturned(i){const r=RENTALS[i];r.state='Devuelto';await sbUpdate('cn_alquileres',r.id,{estado:'Devuelto'});toast('✓ Devolución registrada');closeModal();renderRental();}
+async function saveRental(i){
   const r=RENTALS[i];
   r.item=document.getElementById('rn-item').value;
   r.client=document.getElementById('rn-client').value;
@@ -2189,9 +2272,10 @@ function saveRental(i){
   r.total=+document.getElementById('rn-total').value;
   r.state=document.getElementById('rn-state').value;
   r.notes=document.getElementById('rn-notes').value;
+  await sbUpdate('cn_alquileres',r.id,{articulo:r.item,cliente:r.client,fecha_salida:r.out,fecha_devolucion:r.ret,dias:r.days,total:r.total,estado:r.state,notas:r.notes});
   toast('✓ Alquiler guardado');closeModal();renderRental();
 }
-function deleteRental(i){if(confirm('¿Eliminar?')){RENTALS.splice(i,1);toast('Eliminado');closeModal();renderRental();}}
+async function deleteRental(i){if(confirm('¿Eliminar?')){const r=RENTALS[i];await sbDelete('cn_alquileres',r.id);RENTALS.splice(i,1);toast('Eliminado');closeModal();renderRental();}}
 
 let POS_CART=[];
 function renderShop(){posFilter('');posDraw();}
@@ -2239,7 +2323,7 @@ function assignCustomer(){
   openModal('Asignar cliente al ticket',`
     <input placeholder="Buscar cliente..." oninput="filterCustList(this.value)" style="width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;margin-bottom:12px;">
     <div id="cust-list" style="max-height:400px;overflow-y:auto;">${list}</div>
-    <div style="margin-top:14px;padding:12px;background:rgba(255,94,58,.06);border:1px dashed var(--coral);border-radius:8px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--coral);">VIP:</strong> Si el cliente es VIP se aplica 10% descuento automático.</div>
+    <div style="margin-top:14px;padding:12px;background:rgba(255,94,58,.06);border:1px dashed var(--coral);border-radius:8px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--coral);">VIP:</strong>Si el cliente es VIP se aplica 10% descuento automático.</div>
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button class="btn btn-ghost" style="flex:1" onclick="setCustomer(-1)">Sin cliente</button>
       <button class="btn btn-primary" style="flex:1" onclick="closeModal()">+ Nuevo cliente</button>
@@ -2296,11 +2380,11 @@ function posPay(m){
         <div style="display:flex;justify-content:space-between;padding:8px 0 4px;margin-top:6px;border-top:1px solid #000;font-family:var(--display);font-size:18px;font-weight:700;"><span>TOTAL</span><span>${fmt(total)}</span></div>
       </div>
       <div style="text-align:center;margin-top:14px;font-size:10px;color:#666;letter-spacing:.18em;text-transform:uppercase;">Forma de pago: ${m}</div>
-      <div style="text-align:center;margin-top:14px;font-size:10px;color:#666;font-style:italic;">¡Gracias por tu compra! 🌊</div>
+      <div style="text-align:center;margin-top:14px;font-size:10px;color:#666;font-style:italic;">¡Gracias por tu compra! </div>
     </div>
     <div style="display:flex;gap:6px;">
-      <button class="btn btn-ghost" style="flex:1" onclick="toast('🖨 Imprimiendo...')">🖨 Imprimir</button>
-      <button class="btn btn-ghost" style="flex:1" onclick="toast('💬 WhatsApp enviado')">💬 WhatsApp</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('Imprimiendo...')">Imprimir</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('WhatsApp enviado')">WhatsApp</button>
       <button class="btn btn-ghost" style="flex:1" onclick="toast('✉ Email enviado')">✉ Email</button>
     </div>
     <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="closeModal()">Cerrar y nuevo ticket</button>
@@ -2334,8 +2418,8 @@ function dailyClose(){
       </div>
     </div>
     <div style="display:flex;gap:8px;">
-      <button class="btn btn-ghost" style="flex:1" onclick="toast('📄 Reporte descargado')">📄 PDF</button>
-      <button class="btn btn-primary" style="flex:1" onclick="toast('✓ Caja cerrada · día contabilizado');closeModal();">🔒 Cerrar caja</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('Reporte descargado')">PDF</button>
+      <button class="btn btn-primary" style="flex:1" onclick="toast('✓ Caja cerrada · día contabilizado');closeModal();">Cerrar caja</button>
     </div>
   `);
 }
@@ -2367,7 +2451,7 @@ function filterStock(){
   // Group by category
   const grouped={};
   filtered.forEach(s=>{(grouped[s.cat]=grouped[s.cat]||[]).push(s);});
-  const catLabel={Tabla:'🏄 Tablas',Neopreno:'🤿 Neoprenos',Ropa:'👕 Ropa Rip Curl',Calzado:'👟 Calzado',Acc:'🎒 Accesorios',Wax:'🪴 Parafinas / Quillas / Leashes'};
+  const catLabel={Tabla:'Tablas',Neopreno:'Neoprenos',Ropa:'Ropa Rip Curl',Calzado:'Calzado',Acc:'Accesorios',Wax:'Parafinas / Quillas / Leashes'};
   let html='';
   Object.keys(grouped).forEach(c=>{
     const items=grouped[c];
@@ -2380,7 +2464,7 @@ function filterStock(){
         <div class="card-hd-title">${catLabel[c]||c} <span style="color:var(--txt3);font-weight:400;font-size:12px;margin-left:8px;">${total} producto${total!==1?'s':''}</span></div>
         <div style="display:flex;align-items:center;gap:10px;">
           ${totalLow?`<span class="tag tag-warn">⚠ ${totalLow} bajo</span>`:''}
-          ${totalOut?`<span class="tag tag-coral">❌ ${totalOut} agotado</span>`:''}
+          ${totalOut?`<span class="tag tag-coral">✕ ${totalOut} agotado</span>`:''}
           <span style="color:var(--txt3);font-size:14px;">${collapsed?'▶':'▼'}</span>
         </div>
       </div>
@@ -2406,10 +2490,10 @@ function filterStock(){
   document.getElementById('stk-by-cat').innerHTML=html;
 }
 function bulkImport(){
-  openModal('📁 Importar productos desde CSV',`
+  openModal('Importar productos desde CSV',`
     <p style="font-size:13px;color:var(--txt2);margin-bottom:14px;">Sube un Excel/CSV con los campos: <code style="background:var(--bg);padding:2px 6px;border-radius:4px;">nombre, sku, categoría, stock, mínimo, coste, precio</code>. El sistema detecta duplicados por SKU y los actualiza en lugar de crear nuevos.</p>
     <div style="border:2px dashed var(--border);padding:32px;border-radius:10px;text-align:center;background:var(--bg);">
-      <div style="font-size:36px;margin-bottom:10px;">📥</div>
+      <div style="font-size:36px;margin-bottom:10px;"></div>
       <div style="font-size:13px;color:var(--txt2);margin-bottom:14px;">Arrastra tu CSV aquí o</div>
       <button class="btn btn-primary" onclick="toast('CSV procesado · 47 productos actualizados')">Seleccionar archivo</button>
     </div>
@@ -2417,7 +2501,7 @@ function bulkImport(){
       <strong>Formato esperado:</strong>
       <div style="font-family:monospace;background:#fff;padding:8px;margin-top:6px;border-radius:4px;font-size:11px;border:1px solid var(--border);">nombre,sku,cat,stock,min,cost,price<br>"Tabla Soft 7'2"",TB-S072,Tabla,6,3,120,225</div>
     </div>
-    <div style="background:rgba(45,186,138,.06);border:1px dashed var(--leaf);padding:10px 14px;border-radius:8px;margin-top:14px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--leaf);">Sincronización Factucont:</strong> Si conectas Factucont, los productos se sincronizan automáticamente cada noche.</div>
+    <div style="background:rgba(45,186,138,.06);border:1px dashed var(--leaf);padding:10px 14px;border-radius:8px;margin-top:14px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--leaf);">Sincronización Factucont:</strong>Si conectas Factucont, los productos se sincronizan automáticamente cada noche.</div>
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cancelar</button>
       <button class="btn btn-primary" style="flex:1" onclick="toast('Descargada plantilla');closeModal()">↓ Descargar plantilla</button>
@@ -2457,7 +2541,7 @@ function editStock(i){
   `);
 }
 function stkStep(i,d){const s=STOCK[i];s.stock=Math.max(0,s.stock+d);document.getElementById('sk-stock').value=s.stock;}
-function saveStock(i){
+async function saveStock(i){
   const s=STOCK[i];
   s.name=document.getElementById('sk-name').value;
   s.sku=document.getElementById('sk-sku').value;
@@ -2466,9 +2550,33 @@ function saveStock(i){
   s.min=+document.getElementById('sk-min').value;
   s.cost=+document.getElementById('sk-cost').value;
   s.price=+document.getElementById('sk-price').value;
+  await sbUpdate('cn_stock',s.id,{nombre:s.name,sku:s.sku,categoria:s.cat,stock:s.stock,stock_minimo:s.min,precio_coste:s.cost,precio_venta:s.price});
   toast('✓ Producto guardado');closeModal();renderStock();renderShop();
 }
-function deleteStock(i){if(confirm('¿Eliminar producto?')){STOCK.splice(i,1);toast('Eliminado');closeModal();renderStock();renderShop();}}
+async function deleteStock(i){if(confirm('¿Eliminar producto?')){const s=STOCK[i];await sbDelete('cn_stock',s.id);STOCK.splice(i,1);toast('Eliminado');closeModal();renderStock();renderShop();}}
+async function newStock(){
+  openModal('+ Nuevo producto',`
+    ${fLbl('Nombre')}${fInp('nsk-name','')}
+    ${fRow(fLbl('SKU')+fInp('nsk-sku',''), fLbl('Categoría')+fSel('nsk-cat','Tabla',['Tabla','Neopreno','Ropa','Calzado','Acc','Wax']))}
+    ${fRow(fLbl('Stock inicial')+fInp('nsk-stock','0','number'), fLbl('Mínimo')+fInp('nsk-min','1','number'))}
+    ${fRow(fLbl('Coste (€)')+fInp('nsk-cost','0','number'), fLbl('Precio venta (€)')+fInp('nsk-price','0','number'))}
+    ${fActions('Crear producto','saveNewStock()')}
+  `);
+}
+async function saveNewStock(){
+  const s={
+    nombre:document.getElementById('nsk-name').value.trim(),
+    sku:document.getElementById('nsk-sku').value,
+    categoria:document.getElementById('nsk-cat').value,
+    stock:+document.getElementById('nsk-stock').value,
+    stock_minimo:+document.getElementById('nsk-min').value,
+    precio_coste:+document.getElementById('nsk-cost').value,
+    precio_venta:+document.getElementById('nsk-price').value,
+  };
+  if(!s.nombre){toast('⚠ Escribe el nombre');return;}
+  const row=await sbInsert('cn_stock',s);
+  if(row){STOCK.push(mapStock(row));toast('✓ Producto añadido');closeModal();renderStock();renderShop();}
+}
 
 function renderClients(){
   document.getElementById('clients-tbody').innerHTML=CLIENTS.map((c,i)=>`<tr onclick="editClient(${i})">
@@ -2520,7 +2628,7 @@ function editClient(i){
     </div>
 
     <div style="display:flex;gap:6px;margin-top:14px;">
-      <button class="btn btn-ghost" style="flex:1" onclick="toast('💬 WhatsApp abierto');">💬 WhatsApp</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('WhatsApp abierto');">WhatsApp</button>
       <button class="btn btn-ghost" style="flex:1" onclick="toast('✉ Email enviado');">✉ Email</button>
       <button class="btn btn-ghost" style="flex:1" onclick="toast('+ Reserva creada');">+ Reservar</button>
     </div>
@@ -2574,7 +2682,7 @@ function filterInv(f,tabEl){
   ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val" style="font-size:20px;">${k.v}</div><div class="kpi-trend ${k.cls}">${k.t}</div></div>`).join('');
   if(INV_SEARCH)list=list.filter(i=>i.client.toLowerCase().includes(INV_SEARCH)||i.num.toLowerCase().includes(INV_SEARCH));
   const chColors={Airbnb:'#ff5a5f',Booking:'#003580',Directo:'var(--coral)',Escuela:'var(--aqua-dk)',Tienda:'var(--ocean-mid)'};
-  const payIcons={Tarjeta:'💳',Efectivo:'💵',Bizum:'📱',Transferencia:'🏦'};
+  const payIcons={Tarjeta:'',Efectivo:'',Bizum:'',Transferencia:''};
   document.getElementById('inv-tbody').innerHTML=list.map((inv)=>{
     const realI=INVOICES.indexOf(inv);
     return `<tr onclick="viewInvoice(${realI})" style="cursor:pointer;">
@@ -2632,9 +2740,9 @@ function viewInvoice(i){
     </div>
 
     <div style="display:flex;gap:6px;">
-      <button class="btn btn-ghost" style="flex:1" onclick="toast('💬 Factura enviada por WhatsApp')">💬 WhatsApp</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('Factura enviada por WhatsApp')">WhatsApp</button>
       <button class="btn btn-ghost" style="flex:1" onclick="toast('✉ Email enviado')">✉ Email</button>
-      <button class="btn btn-ghost" style="flex:1" onclick="toast('📄 PDF descargado')">📄 PDF</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('PDF descargado')">PDF</button>
     </div>
 
     <div style="display:flex;gap:8px;margin-top:14px;">
@@ -2681,10 +2789,10 @@ function rptTab(tab,tabEl){
 
   if(tab==='resumen'){
     const biz=[
-      {name:'🏄 Escuela Surf',pct:61,val:Math.round(totIng*0.61),col:'var(--ocean)'},
-      {name:'🏄 Escuela surf',pct:28,val:Math.round(totIng*0.28),col:'var(--aqua-dk)'},
-      {name:'🛒 Tienda',pct:7,val:Math.round(totIng*0.07),col:'var(--ocean-mid)'},
-      {name:'🏄 Alquiler material',pct:4,val:Math.round(totIng*0.04),col:'var(--leaf)'}
+      {name:'Escuela Surf',pct:61,val:Math.round(totIng*0.61),col:'var(--ocean)'},
+      {name:'Escuela surf',pct:28,val:Math.round(totIng*0.28),col:'var(--aqua-dk)'},
+      {name:'Tienda',pct:7,val:Math.round(totIng*0.07),col:'var(--ocean-mid)'},
+      {name:'Alquiler material',pct:4,val:Math.round(totIng*0.04),col:'var(--leaf)'}
     ];
     el.innerHTML=`
     <div class="two-col">
@@ -2747,10 +2855,10 @@ function rptTab(tab,tabEl){
     <div class="card" style="border-left:4px solid var(--coral);">
       <div class="card-hd">
         <div>
-          <div class="card-hd-title">🧾 Modelo 303 · Declaración IVA</div>
+          <div class="card-hd-title">Modelo 303 · Declaración IVA</div>
           <div style="font-size:10px;color:var(--txt3);margin-top:2px;">${q==='q1'?'1T 2026 · presentar antes del 20/04/2026':q==='month'?'Jun 2026':'2T 2026 · presentar antes del 20/07/2026'}</div>
         </div>
-        <button class="btn btn-primary" onclick="toast('📄 Modelo 303 generado · listo para gestor')">Generar Mod. 303</button>
+        <button class="btn btn-primary" onclick="toast('Modelo 303 generado · listo para gestor')">Generar Mod. 303</button>
       </div>
       <div class="card-body">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
@@ -2802,8 +2910,8 @@ function rptTab(tab,tabEl){
           </div>
         </div>
         <div style="margin-top:14px;background:rgba(245,158,11,.08);border:1px solid var(--warn);border-radius:10px;padding:14px 16px;font-size:12px;color:var(--txt2);">
-          ⚠️ <strong style="color:var(--warn);">Recuerda:</strong> El IVA del alojamiento turístico tributa al <strong>10%</strong> (art. 91 LIVA). Las comisiones de Airbnb/Booking son <strong>inversión del sujeto pasivo</strong> — no deducible directamente si son extranjeras sin establecimiento permanente.
-          <div style="margin-top:8px;"><button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;" onclick="toast('📋 Nota enviada al gestor')">📋 Enviar nota al gestor</button></div>
+          ⚠️ <strong style="color:var(--warn);">Recuerda:</strong>El IVA del alojamiento turístico tributa al <strong>10%</strong> (art. 91 LIVA). Las comisiones de Airbnb/Booking son <strong>inversión del sujeto pasivo</strong> — no deducible directamente si son extranjeras sin establecimiento permanente.
+          <div style="margin-top:8px;"><button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;" onclick="toast('Nota enviada al gestor')">Enviar nota al gestor</button></div>
         </div>
       </div>
     </div>
@@ -2833,10 +2941,10 @@ function rptTab(tab,tabEl){
     <div class="card" style="border-left:4px solid var(--ocean);">
       <div class="card-hd">
         <div>
-          <div class="card-hd-title">💼 Modelo 130 · Pago fraccionado IRPF</div>
+          <div class="card-hd-title">Modelo 130 · Pago fraccionado IRPF</div>
           <div style="font-size:10px;color:var(--txt3);margin-top:2px;">${q==='q1'?'1T · antes 20/04/2026':q==='month'?'Jun 2026':'2T · antes 20/07/2026'} · Estimación directa simplificada</div>
         </div>
-        <button class="btn btn-primary" onclick="toast('📄 Modelo 130 generado')">Generar Mod. 130</button>
+        <button class="btn btn-primary" onclick="toast('Modelo 130 generado')">Generar Mod. 130</button>
       </div>
       <div class="card-body">
         <div style="background:var(--bg);border-radius:12px;padding:20px;margin-bottom:18px;">
@@ -2866,18 +2974,16 @@ function rptTab(tab,tabEl){
           </div>
           <div style="padding:16px;background:var(--bg);border-radius:12px;">
             <div style="font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--txt3);font-weight:700;margin-bottom:10px;">Previsión anual IRPF</div>
-            <div style="font-size:12px;color:var(--txt2);line-height:1.6;">
-              Beneficio anual estimado: <strong>${fmt(Math.round(totBen/months.length*12))}</strong><br>
-              IRPF estimado anual: <strong style="color:var(--coral);">${fmt(Math.round(totBen/months.length*12*0.30))}</strong><br>
+            <div style="font-size:12px;color:var(--txt2);line-height:1.6;">Beneficio anual estimado: <strong>${fmt(Math.round(totBen/months.length*12))}</strong><br>IRPF estimado anual: <strong style="color:var(--coral);">${fmt(Math.round(totBen/months.length*12*0.30))}</strong><br>
               <span style="font-size:10px;color:var(--txt3);">tipo medio estimado 30%</span>
             </div>
           </div>
         </div>
         <div style="background:rgba(93,189,211,.08);border:1px solid var(--aqua);border-radius:10px;padding:14px 16px;font-size:12px;color:var(--txt2);">
-          💡 <strong style="color:var(--aqua-dk);">Tip del gestor:</strong> Con los beneficios actuales puede ser conveniente considerar <strong>constituir SL</strong> — tipo IS 25% vs IRPF progresivo que puede llegar al 45%. Consulta con tu asesor fiscal.
+           <strong style="color:var(--aqua-dk);">Tip del gestor:</strong>Con los beneficios actuales puede ser conveniente considerar <strong>constituir SL</strong> — tipo IS 25% vs IRPF progresivo que puede llegar al 45%. Consulta con tu asesor fiscal.
           <div style="margin-top:8px;display:flex;gap:8px;">
-            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;" onclick="toast('📋 Consulta enviada al asesor')">📋 Consultar asesor</button>
-            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;" onclick="toast('📊 Comparativa SL vs Autónomo generada')">📊 Comparar SL vs Autónomo</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;" onclick="toast('Consulta enviada al asesor')">Consultar asesor</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;" onclick="toast('Comparativa SL vs Autónomo generada')">Comparar SL vs Autónomo</button>
           </div>
         </div>
       </div>
@@ -2938,7 +3044,7 @@ function rptTab(tab,tabEl){
     <div class="card" style="border-left:4px solid var(--coral);">
       <div class="card-hd">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--ocean),var(--coral));display:grid;place-items:center;font-size:18px;">🤖</div>
+          <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--ocean),var(--coral));display:grid;place-items:center;font-size:18px;"></div>
           <div>
             <div class="card-hd-title">Gestor IA · Ana</div>
             <div style="font-size:10px;color:var(--leaf);font-weight:700;letter-spacing:.12em;">● EN LÍNEA · responde al instante</div>
@@ -2947,8 +3053,7 @@ function rptTab(tab,tabEl){
         <span class="card-hd-meta" style="color:var(--coral);">Asesora fiscal 24/7</span>
       </div>
       <div style="background:var(--bg);padding:18px;min-height:200px;display:flex;flex-direction:column;gap:12px;" id="gestor-msgs">
-        <div style="align-self:flex-start;max-width:80%;background:var(--surface);padding:12px 16px;border-radius:12px 12px 12px 3px;font-size:13px;color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.06);">
-          👋 Hola, soy <strong>Ana</strong>, tu gestora IA. Analizo tus cuentas en tiempo real y te aviso cuando hay que actuar. <br><br>
+        <div style="align-self:flex-start;max-width:80%;background:var(--surface);padding:12px 16px;border-radius:12px 12px 12px 3px;font-size:13px;color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.06);">Hola, soy <strong>Ana</strong>, tu gestora IA. Analizo tus cuentas en tiempo real y te aviso cuando hay que actuar. <br><br>
           <strong>Este trimestre (2T 2026):</strong><br>
           • IVA a liquidar el 20 jul: <strong style="color:var(--coral);">${fmt(Math.round(ivaLiq))}</strong><br>
           • Mod. 130 IRPF el 20 jul: <strong style="color:var(--coral);">${fmt(irpfAIngresar)}</strong><br>
@@ -2977,10 +3082,10 @@ function rptTab(tab,tabEl){
       <div class="card-hd"><div class="card-hd-title">⚠️ Alertas fiscales activas</div><span class="card-hd-meta" style="color:var(--warn);">3 pendientes</span></div>
       <div class="card-body" style="padding:0;">
         ${[
-          {icon:'🗓',title:'Mod. 303 IVA 2T 2026',desc:'Presentar antes del <strong>20 de julio 2026</strong>. A ingresar: '+fmt(Math.round(ivaLiq)),urgency:'warn',days:41},
-          {icon:'💼',title:'Mod. 130 IRPF 2T 2026',desc:'Pago fraccionado IRPF. A ingresar: '+fmt(irpfAIngresar)+'. Fecha límite <strong>20/07/2026</strong>',urgency:'warn',days:41},
-          {icon:'📋',title:'Factura vencida · '+(INVOICES.find(i=>i.state==='Vencida')||{num:'—'}).num,desc:'Cliente: <strong>'+(INVOICES.find(i=>i.state==='Vencida')||{client:'—'}).client+'</strong>. Importe: '+fmt((INVOICES.find(i=>i.state==='Vencida')||{total:0}).total)+'. Vencida hace 12 días.',urgency:'coral',days:-12},
-          {icon:'📊',title:'Cierre contable junio',desc:'Fin de mes: revisar gastos, conciliar TPV, cuadrar caja. <strong>Pendiente tu revisión.</strong>',urgency:'info',days:0},
+          {icon:'',title:'Mod. 303 IVA 2T 2026',desc:'Presentar antes del <strong>20 de julio 2026</strong>. A ingresar: '+fmt(Math.round(ivaLiq)),urgency:'warn',days:41},
+          {icon:'',title:'Mod. 130 IRPF 2T 2026',desc:'Pago fraccionado IRPF. A ingresar: '+fmt(irpfAIngresar)+'. Fecha límite <strong>20/07/2026</strong>',urgency:'warn',days:41},
+          {icon:'',title:'Factura vencida · '+(INVOICES.find(i=>i.state==='Vencida')||{num:'—'}).num,desc:'Cliente: <strong>'+(INVOICES.find(i=>i.state==='Vencida')||{client:'—'}).client+'</strong>. Importe: '+fmt((INVOICES.find(i=>i.state==='Vencida')||{total:0}).total)+'. Vencida hace 12 días.',urgency:'coral',days:-12},
+          {icon:'',title:'Cierre contable junio',desc:'Fin de mes: revisar gastos, conciliar TPV, cuadrar caja. <strong>Pendiente tu revisión.</strong>',urgency:'info',days:0},
         ].map(a=>`
           <div style="display:flex;gap:14px;padding:14px 18px;border-bottom:1px solid var(--border2);align-items:flex-start;">
             <div style="font-size:22px;flex-shrink:0;">${a.icon}</div>
@@ -3027,9 +3132,9 @@ function gestorResponse(q){
   if(q.includes('iva'))return`El IVA a liquidar para el <strong>2T 2026</strong> es de <strong style="color:var(--coral);">${fmt(Math.round(ivaLiq))}</strong>. IVA repercutido ${fmt(Math.round(sel.reduce((a,m)=>a+m.iva_rep,0)))} menos IVA soportado ${fmt(Math.round(sel.reduce((a,m)=>a+m.iva_sop,0)))}. Presenta el <strong>Modelo 303 antes del 20 de julio</strong>. ¿Quieres que genere el borrador?`;
   if(q.includes('130')||q.includes('irpf'))return`Pago fraccionado IRPF: 20% sobre rendimiento neto = <strong>${fmt(irpfP)}</strong>, menos retenciones soportadas ${fmt(irpfR)} = <strong style="color:var(--coral);">${fmt(Math.max(0,irpfP-irpfR))}</strong> a ingresar. Presenta el <strong>Modelo 130 antes del 20/07/2026</strong>.`;
   if(q.includes('gastos'))return`Tienes <strong>${EXPENSES.filter(g=>g.state==='Pendiente').length} gastos pendientes</strong> de registrar. Total deducible este periodo: <strong>${fmt(EXPENSES.filter(g=>g.deductible).reduce((a,g)=>a+g.total,0))}</strong>. Recuerda que las nóminas son deducibles al 100%, y el local al 100% si es uso exclusivo negocio.`;
-  if(q.includes('hacienda')||q.includes('pago')||q.includes('fecha'))return`Próximos vencimientos:<br>📅 <strong>20 Jul 2026</strong> → Mod. 303 IVA 2T: ${fmt(Math.round(ivaLiq))}<br>📅 <strong>20 Jul 2026</strong> → Mod. 130 IRPF 2T: ${fmt(Math.max(0,irpfP-irpfR))}<br>📅 <strong>30 Sep 2026</strong> → Mod. 303 IVA 3T<br>📅 <strong>20 Oct 2026</strong> → Mod. 130 IRPF 3T`;
+  if(q.includes('hacienda')||q.includes('pago')||q.includes('fecha'))return`Próximos vencimientos:<br> <strong>20 Jul 2026</strong> → Mod. 303 IVA 2T: ${fmt(Math.round(ivaLiq))}<br> <strong>20 Jul 2026</strong> → Mod. 130 IRPF 2T: ${fmt(Math.max(0,irpfP-irpfR))}<br> <strong>30 Sep 2026</strong> → Mod. 303 IVA 3T<br> <strong>20 Oct 2026</strong> → Mod. 130 IRPF 3T`;
   if(q.includes('rectificativa'))return`Tienes 1 factura marcada como <strong>Rectificada</strong> (${(INVOICES.find(i=>i.state==='Rectificada')||{num:'—'}).num}). Las facturas rectificativas deben emitirse en el mismo periodo para compensar el IVA en el 303. ¿Necesitas ayuda para generarla?`;
-  if(q.includes('extracto')||q.includes('resumen'))return`Generando extracto mensual...<br><br>📊 <strong>Junio 2026</strong><br>Ingresos: ${fmt(CONTABILIDAD.months[5].ingresos)}<br>Gastos: ${fmt(CONTABILIDAD.months[5].gastos)}<br>Beneficio: ${fmt(CONTABILIDAD.months[5].beneficio)}<br>IVA a liquidar: ${fmt(CONTABILIDAD.months[5].iva_liq)}<br><br><button class="btn btn-ghost" style="font-size:11px;padding:6px 10px;" onclick="toast('📄 Extracto enviado al gestor')">📄 Enviar al gestor</button>`;
+  if(q.includes('extracto')||q.includes('resumen'))return`Generando extracto mensual...<br><br> <strong>Junio 2026</strong><br>Ingresos: ${fmt(CONTABILIDAD.months[5].ingresos)}<br>Gastos: ${fmt(CONTABILIDAD.months[5].gastos)}<br>Beneficio: ${fmt(CONTABILIDAD.months[5].beneficio)}<br>IVA a liquidar: ${fmt(CONTABILIDAD.months[5].iva_liq)}<br><br><button class="btn btn-ghost" style="font-size:11px;padding:6px 10px;" onclick="toast('Extracto enviado al gestor')">Enviar al gestor</button>`;
   if(q.includes('margen'))return`Margen neto actual: <strong style="color:var(--leaf);">${Math.round(totBen/totIng*100)}%</strong> antes de impuestos. Después de IRPF estimado: ~${Math.round(totBen*0.80/totIng*100)}%. <br>Línea más rentable: <strong>Escuela de surf</strong> con margen bruto del 75%.`;
   return`Entendido. Estoy analizando tus datos del periodo seleccionado... Ingresos: <strong>${fmt(totIng)}</strong>, gastos: <strong>${fmt(sel.reduce((a,m)=>a+m.gastos,0))}</strong>, beneficio: <strong style="color:var(--leaf);">${fmt(totBen)}</strong>. ¿Quieres que profundice en algún aspecto concreto? Puedo revisar facturas, gastos deducibles, o preparar los modelos tributarios.`;
 }
@@ -3077,14 +3182,13 @@ function editGasto(i){
     ${fRow(fLbl('Fecha')+fInp('g-date',g.date), fLbl('Categoría')+fSel('g-cat',g.category,['Personal','Suministros','Reparaciones','Proveedores','Seguros','Marketing','Software','Limpieza','Banco']))}
     ${fRow(fLbl('Base imponible (€)')+fInp('g-base',g.base,'number'), fLbl('IVA %')+fSel('g-vat',String(g.vatPct),['0','4','10','21']))}
     ${fRow(fLbl('Forma de pago')+fSel('g-pay',g.payMethod||'Tarjeta',['Tarjeta','Efectivo','Transferencia','Domiciliación']), fLbl('Tipo documento')+fSel('g-doc',g.doc,['Factura','Ticket','Recibo','Contrato']))}
-    <label style="display:flex;align-items:center;gap:8px;padding:10px 0;font-size:12px;font-weight:600;cursor:pointer;"><input type="checkbox" id="g-ded" ${g.deductible?'checked':''} style="margin:0;"> Gasto 100% deducible</label>
-    <div style="background:rgba(93,189,211,.06);border:1px solid var(--aqua);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--txt2);margin-top:6px;">
-      💡 Son deducibles: personal, alquiler, suministros del negocio, reparaciones de inmuebles arrendados, seguros, publicidad, software profesional.
+    <label style="display:flex;align-items:center;gap:8px;padding:10px 0;font-size:12px;font-weight:600;cursor:pointer;"><input type="checkbox" id="g-ded" ${g.deductible?'checked':''} style="margin:0;">Gasto 100% deducible</label>
+    <div style="background:rgba(93,189,211,.06);border:1px solid var(--aqua);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--txt2);margin-top:6px;">Son deducibles: personal, alquiler, suministros del negocio, reparaciones de inmuebles arrendados, seguros, publicidad, software profesional.
     </div>
     ${fActions('Guardar','saveGasto('+i+')','deleteGasto('+i+')')}
   `);
 }
-function saveGasto(i){
+async function saveGasto(i){
   const g=EXPENSES[i];
   g.vendor=document.getElementById('g-vendor').value;
   g.concept=document.getElementById('g-concept').value;
@@ -3098,9 +3202,10 @@ function saveGasto(i){
   g.doc=document.getElementById('g-doc').value;
   g.deductible=document.getElementById('g-ded').checked;
   g.state='Registrado';
+  await sbUpdate('cn_gastos',g.id,{proveedor:g.vendor,concepto:g.concept,fecha:g.date,categoria:g.category,base:g.base,vat_pct:g.vatPct,iva:g.vat,total:g.total,forma_pago:g.payMethod,documento:g.doc,deducible:g.deductible,estado:g.state});
   toast('✓ Gasto guardado');closeModal();renderGastos();renderReports();
 }
-function deleteGasto(i){if(confirm('¿Eliminar gasto?')){EXPENSES.splice(i,1);toast('Eliminado');closeModal();renderGastos();}}
+async function deleteGasto(i){if(confirm('¿Eliminar gasto?')){const g=EXPENSES[i];await sbDelete('cn_gastos',g.id);EXPENSES.splice(i,1);toast('Eliminado');closeModal();renderGastos();}}
 function newGastoModal(){
   openModal('+ Registrar gasto',`
     ${fLbl('Proveedor')}${fInp('ng-vendor','')}
@@ -3127,10 +3232,10 @@ async function saveNewGasto(){
   };
   if(!g.proveedor){toast('⚠ Escribe el proveedor');return;}
   const row=await sbInsert('cn_gastos',g);
-  if(row){EXPENSES.unshift(row);toast('✓ Gasto registrado');closeModal();renderGastos();}
+  if(row){EXPENSES.unshift(mapGasto(row));toast('✓ Gasto registrado');closeModal();renderGastos();}
 }
-function exportGastosCSV(){toast('📊 CSV gastos descargado · compatible con gestor');}
-function exportFacturasCSV(){toast('📊 CSV facturas exportado · formato Hacienda AEAT');}
+function exportGastosCSV(){toast('CSV gastos descargado · compatible con gestor');}
+function exportFacturasCSV(){toast('CSV facturas exportado · formato Hacienda AEAT');}
 function newInvoiceModal(){
   openModal('+ Nueva factura',`
     ${fLbl('Cliente')}${fInp('niv-client','')}
@@ -3241,18 +3346,18 @@ function generateQuoteForLead(id){
       <div style="background:#f9f5ec;padding:14px;border-left:3px solid #ff5e3a;margin:14px 0;font-size:13px;line-height:1.7;">
         <strong>€${template.total.toLocaleString('es-ES')}</strong> · ${template.detail}<br>
         ${l.type==='colegio'?`<br><em>Incluye:</em> tabla soft + neopreno por alumno · monitor titulado ISA cada 8 alumnos · seguro de actividad · botiquín en playa · foto de grupo`:''}
-        ${l.type==='camp'?`<br><em>Incluye:</em> Apto Loft beachfront · desayuno opcional · 5 clases de 90 min · material toda la semana · WhatsApp directo conmigo`:''}
+        ${l.type==='camp'?`<br><em>Incluye:</em>Apto Loft beachfront · desayuno opcional · 5 clases de 90 min · material toda la semana · WhatsApp directo conmigo`:''}
         ${l.type==='familia'?`<br><em>Incluye:</em> clase 90 min privada familia · 3 tablas + 3 neoprenos × 4 días · foto sesión`:''}
       </div>
       <p style="font-size:14px;line-height:1.6;margin-bottom:12px;">Llevamos 20 años enseñando en San Vicente, somos escuela oficial Rip Curl y trabajamos con los mejores monitores titulados ISA de Cantabria. La playa de Oyambre está dentro del Parque Natural, es de las mejores de la costa norte para iniciarse.</p>
       <p style="font-size:14px;line-height:1.6;margin-bottom:12px;">${l.type==='colegio'?'Si os va bien, llamadme directamente al teléfono que pongo abajo y os cuento cualquier detalle (transporte, comida, hora exacta). Podemos adaptar todo a vuestro horario.':'Si te encaja podemos confirmar fechas hoy mismo. ¿Hablamos por WhatsApp?'}</p>
-      <p style="font-size:14px;line-height:1.6;margin-top:18px;">Un abrazo,<br><strong>Roberto Bárcena</strong><br><em style="color:#666;font-size:12px;">Director · Costa Norte Surf Center · San Vicente de la Barquera<br>📞 +34 618 964 263 · 📧 reservas@escueladesurfcostanorte.com</em></p>
+      <p style="font-size:14px;line-height:1.6;margin-top:18px;">Un abrazo,<br><strong>Roberto Bárcena</strong><br><em style="color:#666;font-size:12px;">Director · Costa Norte Surf Center · San Vicente de la Barquera<br> +34 618 964 263 ·  reservas@escueladesurfcostanorte.com</em></p>
     </div>
 
     <div style="display:flex;gap:6px;">
       <button class="btn btn-ghost" style="flex:1" onclick="toast('Editando presupuesto');closeModal()">✏️ Editar texto</button>
-      <button class="btn btn-ghost" style="flex:1" onclick="toast('💬 Enviado a WhatsApp')">💬 Por WhatsApp</button>
-      <button class="btn btn-primary" style="flex:1" onclick="toast('✓ Email enviado a '+'${l.email}');closeModal();WEB_LEADS.splice(WEB_LEADS.findIndex(x=>x.id===${l.id}),1);renderLeads();">📨 Enviar email</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="toast('Enviado a WhatsApp')">Por WhatsApp</button>
+      <button class="btn btn-primary" style="flex:1" onclick="toast('✓ Email enviado a '+'${l.email}');closeModal();WEB_LEADS.splice(WEB_LEADS.findIndex(x=>x.id===${l.id}),1);renderLeads();">Enviar email</button>
     </div>
   `);
 }
@@ -3370,7 +3475,7 @@ function editMember(i){
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
       ${['Escuela','Tienda','Facturas','Informes','Equipo','Ajustes'].map(p=>`<label style="display:inline-flex;align-items:center;gap:5px;padding:6px 11px;background:var(--bg);border-radius:18px;font-size:11px;cursor:pointer;font-weight:600;"><input type="checkbox" data-perm="${p}" ${(t.perms||[]).includes(p)?'checked':''} style="margin:0;">${p}</label>`).join('')}
     </div>
-    <div style="margin-top:14px;background:rgba(255,94,58,.06);border:1px dashed var(--coral);padding:10px 14px;border-radius:8px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--coral);">Acceso:</strong> Recibirá invitación por email para crear contraseña.</div>
+    <div style="margin-top:14px;background:rgba(255,94,58,.06);border:1px dashed var(--coral);padding:10px 14px;border-radius:8px;font-size:11px;color:var(--txt2);">✦ <strong style="color:var(--coral);">Acceso:</strong>Recibirá invitación por email para crear contraseña.</div>
     ${fActions('Guardar','saveMember('+i+')','deleteMember('+i+')')}
   `);
 }
@@ -3388,7 +3493,7 @@ function deleteMember(i){if(confirm('¿Eliminar miembro?')){TEAM.splice(i,1);toa
 function renderSettings(){
   document.getElementById('integrations-list').innerHTML=`
     <div style="padding:14px;background:rgba(45,186,138,.08);border:1px solid var(--leaf);border-radius:10px;display:flex;gap:12px;align-items:flex-start;">
-      <div style="font-size:22px;">🤖</div>
+      <div style="font-size:22px;"></div>
       <div style="flex:1;">
         <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px;">Widget IA · Tu agente 24/7</div>
         <div style="font-size:11px;color:var(--txt3);line-height:1.5;">El chatbot embebido en escueladesurfcostanorte.com responde peticiones de clases y packs en automático. Conectado al panel: lo que vende el bot aparece aquí.</div>
@@ -3399,8 +3504,7 @@ function renderSettings(){
         </div>
       </div>
     </div>
-    <div style="text-align:center;padding:20px 0;color:var(--txt3);font-size:12px;font-style:italic;">
-      Este panel funciona de forma autónoma. No requiere conexión con servicios externos.
+    <div style="text-align:center;padding:20px 0;color:var(--txt3);font-size:12px;font-style:italic;">Este panel funciona de forma autónoma. No requiere conexión con servicios externos.
     </div>`;
 }
 
@@ -3416,11 +3520,11 @@ function waveRating(h,p){
 }
 function skyLabel(code){
   if(code===0)return'☀️ Despejado';
-  if(code<=2) return'🌤 Poco nublado';
+  if(code<=2) return'Poco nublado';
   if(code<=3) return'⛅ Nublado';
-  if(code<=49)return'🌫 Niebla';
-  if(code<=69)return'🌧 Lluvia';
-  if(code<=79)return'🌨 Nieve';
+  if(code<=49)return'Niebla';
+  if(code<=69)return'Lluvia';
+  if(code<=79)return'Nieve';
   if(code<=99)return'⛈ Tormenta';
   return'—';
 }
@@ -3480,12 +3584,56 @@ function setBotNav(page){
 const SB_URL_SOL='https://vjofxmfwdybktpwiuanc.supabase.co';
 const SB_KEY_SOL='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
 const TARIFAS_SOL={
-  surf:{Iniciacion:{1:35,2:70,5:150,7:195,15:315,20:390},Avanzado:{1:50,2:100,5:175,7:280,15:390,20:500}},
+  surf:{Iniciacion:{1:35,2:65,3:85,4:113,5:140,6:163,7:185,8:200,9:215,10:230,11:242,12:254,13:266,14:278,15:290,16:308,17:326,18:344,19:362,20:380},Avanzado:{1:50,2:100,5:175,7:280,15:390,20:500}},
   particular:{'1p':{1:75,2:145},'2p':{1:60,2:115},'3p':{1:50,2:90}},
   sup:{flat:{1:35,5:140},olas:{1:40,5:150},race:{1:35,5:140}},
   surfskate:{1:20,4:75,8:135}
 };
 let SOL_ALL=[], SOL_FILTER='all', SOL_CUR=null;
+let CLIENTES_ALL=[];
+
+async function loadClientes(){
+  const tbody=document.getElementById('clientes-tbody');
+  if(tbody)tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:24px;">Cargando…</td></tr>';
+  try{
+    const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?business_slug=eq.costa-norte&select=client_name,client_phone,client_email,budget,status,starts_at,created_at&order=created_at.desc',
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+    const rows=await res.json();
+    const byKey={};
+    (Array.isArray(rows)?rows:[]).forEach(r=>{
+      const key=(r.client_phone||r.client_email||r.client_name||'').toLowerCase().trim();
+      if(!key)return;
+      if(!byKey[key])byKey[key]={name:r.client_name,phone:r.client_phone,email:r.client_email,count:0,total:0,last:r.created_at};
+      byKey[key].count++;
+      if(r.budget&&r.status!=='cancelled')byKey[key].total+=parseFloat(r.budget)||0;
+      if(new Date(r.created_at)>new Date(byKey[key].last))byKey[key].last=r.created_at;
+    });
+    CLIENTES_ALL=Object.values(byKey).sort((a,b)=>new Date(b.last)-new Date(a.last));
+  }catch(e){CLIENTES_ALL=[];}
+  renderClientes();
+}
+
+function renderClientes(){
+  const q=(document.getElementById('cli-search')?.value||'').toLowerCase();
+  const list=q?CLIENTES_ALL.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.phone||'').includes(q)||(c.email||'').toLowerCase().includes(q)):CLIENTES_ALL;
+  const kpiEl=document.getElementById('cli-kpis');
+  if(kpiEl)kpiEl.innerHTML=[
+    {l:'Clientes distintos',v:CLIENTES_ALL.length},
+    {l:'Solicitudes totales',v:CLIENTES_ALL.reduce((s,c)=>s+c.count,0)},
+    {l:'Presupuesto total',v:'€'+Math.round(CLIENTES_ALL.reduce((s,c)=>s+c.total,0)).toLocaleString('es-ES')},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div></div>`).join('');
+  const tbody=document.getElementById('clientes-tbody');
+  if(!tbody)return;
+  if(!list.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:24px;">Sin clientes todavía</td></tr>';return;}
+  tbody.innerHTML=list.map(c=>`<tr>
+    <td><strong>${esc(c.name)||'—'}</strong></td>
+    <td>${esc(c.phone)||'—'}</td>
+    <td>${esc(c.email)||'—'}</td>
+    <td>${c.count}</td>
+    <td>€${Math.round(c.total).toLocaleString('es-ES')}</td>
+    <td>${c.last?new Date(c.last).toLocaleDateString('es-ES'):'—'}</td>
+  </tr>`).join('');
+}
 
 async function loadSolicitudes(){
   const list=document.getElementById('sol-list');
@@ -3525,8 +3673,8 @@ function renderSolicitudes(){
     const presup=calcPresup(r.service,dias);
     const pago=notes.payment_status==='confirmed'?'<span style="background:#f0fdf4;color:#16a34a;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px">Verificado</span>':notes.receipt_url?'<span style="background:#fef9c3;color:#ca8a04;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px">Subido</span>':'<span style="background:#fef2f2;color:#dc2626;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px">Pendiente</span>';
     return `<div onclick="openSol('${r.id}')" style="padding:14px 20px;border-bottom:1px solid #eef1f6;cursor:pointer;transition:background .1s;display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 1fr;align-items:center;gap:8px" onmouseover="this.style.background='#fafbfd'" onmouseout="this.style.background=''">
-      <div><div style="font-weight:600;color:#0f1923">${r.client_name||'—'}</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">${r.client_phone||''} · DNI: ${notes.dni||'—'}</div></div>
-      <div style="font-size:13px;color:#4a5568">${r.service||'—'}<br><span style="font-size:11px;color:#94a3b8">${dias} dia${dias>1?'s':''}</span></div>
+      <div><div style="font-weight:600;color:#0f1923">${esc(r.client_name)||'—'}</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">${esc(r.client_phone)} · DNI: ${esc(notes.dni)||'—'}</div></div>
+      <div style="font-size:13px;color:#4a5568">${esc(r.service)||'—'}<br><span style="font-size:11px;color:#94a3b8">${dias} dia${dias>1?'s':''}</span></div>
       <div style="font-size:13px;color:#4a5568">${fecha}<br><span style="font-size:11px;color:#94a3b8">${hora} h</span></div>
       <div style="font-weight:700;color:#0f2240;font-size:15px">${presup>0?presup+'€':'—'}</div>
       <div>${pago}</div>
@@ -3581,14 +3729,14 @@ async function openSol(id){
     {l:'Email',v:r.client_email||'—'},
     {l:'DNI / NIE',v:notes.dni||'—'},
     ...(notes.notas_cliente?[{l:'Notas',v:notes.notas_cliente}]:[]),
-  ].map(x=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #eef1f6;font-size:13px"><span style="color:#4a5568">${x.l}</span><span style="font-weight:600;color:#0f1923;text-align:right;max-width:58%;word-break:break-all">${x.v}</span></div>`).join('');
+  ].map(x=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #eef1f6;font-size:13px"><span style="color:#4a5568">${esc(x.l)}</span><span style="font-weight:600;color:#0f1923;text-align:right;max-width:58%;word-break:break-all">${esc(x.v)}</span></div>`).join('');
 
   // Presupuesto calculado
   document.getElementById('sol-presup-amount').textContent=presup>0?presup+'€':'Consultar';
   document.getElementById('sol-presup-detail').textContent=`${r.service||''} · ${dias} dia${dias>1?'s':''} · tarifa oficial`;
 
   // Mensaje predeterminado
-  const msg=`Hola ${nombre}! 🏄‍♂️\n\nGracias por tu solicitud de reserva en Costa Norte Surf Center.\n\nHemos revisado tu peticion y tenemos disponibilidad para:\n📅 ${fecha}\n⏰ ${hora} h (2 horas de clase)\n🏄 ${r.service||''}\n\n💰 Presupuesto: ${presup>0?presup+'€':'te lo confirmamos en breve'}\n\nEl precio incluye material y seguro.\n\nConfirmanos si te viene bien y te asignamos el hueco. Si tienes alguna duda llámanos o escríbenos.\n\n¡Hasta pronto! 🌊\nEquipo Costa Norte`;
+  const msg=`Hola ${nombre}! ‍♂️\n\nGracias por tu solicitud de reserva en Costa Norte Surf Center.\n\nHemos revisado tu peticion y tenemos disponibilidad para:\n ${fecha}\n⏰ ${hora} h (2 horas de clase)\n ${r.service||''}\n\n Presupuesto: ${presup>0?presup+'€':'te lo confirmamos en breve'}\n\nEl precio incluye material y seguro.\n\nConfirmanos si te viene bien y te asignamos el hueco. Si tienes alguna duda llámanos o escríbenos.\n\n¡Hasta pronto! \nEquipo Costa Norte`;
   document.getElementById('sol-msg').value=msg;
 
   // Estado de pago
@@ -3613,11 +3761,12 @@ async function updatePayment(status){
   if(!SOL_CUR) return;
   const notes=solParseNotes(SOL_CUR.notes);
   notes.payment_status=status;
-  await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
+  const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
     method:'PATCH',
     headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
     body:JSON.stringify({notes:JSON.stringify(notes)})
   });
+  if(!res.ok){toast('⚠ Error al guardar — inténtalo de nuevo');return;}
   toast('Pago verificado');
   closeSolDetail();
   loadSolicitudes();
@@ -3627,11 +3776,12 @@ function closeSolDetail(){document.getElementById('sol-detail-overlay').style.di
 
 async function updateSolStatus(status){
   if(!SOL_CUR)return;
-  await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
+  const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
     method:'PATCH',
     headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
     body:JSON.stringify({status})
   });
+  if(!res.ok){toast('⚠ Error al guardar el estado — inténtalo de nuevo');return;}
   SOL_CUR.status=status;
   renderSolBadge(); renderSolicitudes();
   closeSolDetail();
@@ -3666,7 +3816,7 @@ function solSetFilter(btn,f){
           <div id="st-d-left" style="font-family:var(--display);font-size:38px;font-weight:700;color:#0f2240;line-height:1;margin-top:4px;"></div>
           <div id="st-d-pack" style="font-size:12px;color:#64748b;margin-top:3px;"></div>
         </div>
-        <button onclick="registrarClase()" style="padding:12px 18px;background:#0f2240;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans,'Inter',sans-serif);">🏄 Registrar clase</button>
+        <button onclick="registrarClase()" style="padding:12px 18px;background:#0f2240;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans,'Inter',sans-serif);">Registrar clase</button>
       </div>
       <!-- datos -->
       <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Datos del alumno</div>
@@ -3727,8 +3877,7 @@ function solSetFilter(btn,f){
         <a id="sol-pago-link" href="#" target="_blank" style="display:block;margin-bottom:10px">
           <img id="sol-pago-img" src="" style="width:100%;border-radius:8px;border:1px solid #bbf7d0;display:none;max-height:220px;object-fit:cover">
           <span id="sol-pago-txt" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#16a34a;text-decoration:none;background:#fff;border:1px solid #bbf7d0;border-radius:7px;padding:8px 14px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Ver / descargar justificante
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Ver / descargar justificante
           </span>
         </a>
         <button onclick="updatePayment('confirmed')" style="margin-top:10px;width:100%;padding:10px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Marcar pago como verificado</button>
@@ -3840,11 +3989,11 @@ function renderGantt(){
 function showGTT(e, el){
   const data = JSON.parse(decodeURIComponent(el.dataset.tt));
   const tt = document.getElementById('g-tooltip');
-  const statusLabels = {paid:'✅ Pagado', pending:'⏳ Pendiente pago', cancelled:'❌ Cancelado', private:'🎯 Privada', sup:'🏄 SUP'};
+  const statusLabels = {paid:'✓ Pagado', pending:'⏳ Pendiente pago', cancelled:'✕ Cancelado', private:'Privada', sup:'SUP'};
   tt.innerHTML = `<strong>${data.name}</strong>
-    <div class="g-tt-row"><span>🕐 Hora</span><span>${data.hora}</span></div>
-    <div class="g-tt-row"><span>👤 Instructor</span><span>${data.instr}</span></div>
-    <div class="g-tt-row"><span>💶 Importe</span><span>${data.importe}</span></div>
+    <div class="g-tt-row"><span>Hora</span><span>${data.hora}</span></div>
+    <div class="g-tt-row"><span>Instructor</span><span>${data.instr}</span></div>
+    <div class="g-tt-row"><span>Importe</span><span>${data.importe}</span></div>
     <div class="g-tt-row"><span>Estado</span><span>${statusLabels[data.status]||data.status}</span></div>`;
   tt.style.display = 'block';
   tt.style.left = (e.clientX + 14) + 'px';

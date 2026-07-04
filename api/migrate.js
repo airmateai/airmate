@@ -1,4 +1,4 @@
-const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDQ3NTk0NiwiZXhwIjoyMDkwMDUxOTQ2fQ.08g-CtdJ0BvgE3U4v9JppA_114EN24KBs7iBpUaw9cs';
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SB_URL = 'https://vjofxmfwdybktpwiuanc.supabase.co';
 
 async function sbFetch(path, opts = {}) {

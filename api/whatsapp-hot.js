@@ -7,10 +7,11 @@
  *   META_WA_TOKEN
  *   META_WA_PHONE_ID
  *   META_VERIFY_TOKEN
+ *   HOT_SUPABASE_SERVICE_ROLE_KEY  (service_role del proyecto mzcfjyrosamuogzskbrp — NUNCA hardcodear aquí)
  */
 
 const SB_URL  = 'https://mzcfjyrosamuogzskbrp.supabase.co';
-const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16Y2ZqeXJvc2FtdW9nenNrYnJwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTEzNzk0NCwiZXhwIjoyMDk0NzEzOTQ0fQ.5wAcx_bAVScBAafQnytTfy1OyiEZHA0PThC3NIVXoMw';
+const SB_KEY  = process.env.HOT_SUPABASE_SERVICE_ROLE_KEY;
 const SLUG    = 'house-of-tailors';
 const WA_NUM  = '+971 50 937 2696';
 
