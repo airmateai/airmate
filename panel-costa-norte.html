@@ -1071,6 +1071,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       <div class="page-hd">
         <div><h1>Horario de <em>clases</em></h1><div class="page-sub">Grupales · privadas · SUP</div></div>
         <div class="page-hd-actions">
+          <button class="btn btn-ghost" onclick="newCampamento()">+ Nuevo campamento</button>
           <button class="btn btn-primary" onclick="newClass(0,'10:00')">+ Nueva clase</button>
         </div>
       </div>
@@ -3834,6 +3835,63 @@ async function saveMonitorAsignado(){
 }
 
 const TIPOS_CLASE_MANUAL=['Iniciación','Perfeccionamiento','Avanzado','Clase Privada','SUP','Padel','Campamento'];
+
+let _campNinos=[''];
+function campRenderNinos(){
+  const wrap=document.getElementById('camp-ninos-wrap');
+  if(!wrap)return;
+  wrap.innerHTML=_campNinos.map((n,i)=>`
+    <div style="display:flex;gap:6px;margin-bottom:6px;">
+      <input value="${String(n).replace(/"/g,'&quot;')}" placeholder="Nombre del niño/a" oninput="_campNinos[${i}]=this.value" style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;">
+      ${_campNinos.length>1?`<button onclick="campQuitarNino(${i})" style="background:none;border:none;color:var(--coral-dk);cursor:pointer;font-size:16px;padding:0 6px;">×</button>`:''}
+    </div>`).join('');
+}
+function campAnadirNino(){_campNinos.push('');campRenderNinos();}
+function campQuitarNino(i){_campNinos.splice(i,1);campRenderNinos();}
+
+function newCampamento(){
+  _campNinos=[''];
+  const monitorChecks=INSTRUCTORS.map(x=>`<label style="display:flex;align-items:center;gap:6px;padding:5px 0;font-size:13px;cursor:pointer;"><input type="checkbox" class="camp-mon-chk" value="${x.name.replace(/"/g,'&quot;')}" style="width:15px;height:15px;">${esc(x.name)}</label>`).join('')||'<div style="font-size:12px;color:var(--txt3);">No hay monitores dados de alta — añádelos en Ajustes.</div>';
+  openModal('+ Nuevo campamento',`
+    ${fRow(fLbl('Nombre del campamento')+fInp('camp-nombre','Campamento de verano'), fLbl('Nº plazas / precio total (€)')+fInp('camp-importe','0','number'))}
+    ${fRow(fLbl('Fecha')+fInp('camp-fecha',new Date().toISOString().slice(0,10),'date'), fLbl('Hora inicio')+fInp('camp-hora','10:00','time'))}
+    ${fLbl('Niños apuntados')}
+    <div id="camp-ninos-wrap"></div>
+    <button class="btn btn-ghost" style="font-size:12px;margin-top:4px;" onclick="campAnadirNino()">+ Añadir niño/a</button>
+    ${fLbl('Monitores asignados')}
+    <div style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px 12px;">${monitorChecks}</div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:600;cursor:pointer;">
+      <input type="checkbox" id="camp-pagado" style="width:16px;height:16px;"> Marcar como pagado
+    </label>
+    ${fActions('Crear campamento','saveCampamento()')}
+  `);
+  campRenderNinos();
+}
+
+async function saveCampamento(){
+  const nombre=cv('camp-nombre').trim()||'Campamento';
+  const fecha=cv('camp-fecha'),hora=cv('camp-hora')||'10:00';
+  const importe=+cv('camp-importe')||0;
+  const pagado=document.getElementById('camp-pagado').checked;
+  const ninos=_campNinos.map(n=>n.trim()).filter(Boolean);
+  if(!ninos.length){toast('⚠ Añade al menos un niño/a');return;}
+  const monitores=Array.from(document.querySelectorAll('.camp-mon-chk:checked')).map(c=>c.value);
+  const startsAt=new Date(fecha+'T'+hora+':00');
+  const endsAt=new Date(startsAt.getTime()+2*60*60*1000);
+  const notes={source:'manual',dias_totales:1,ninos,instructor:monitores.join(', ')||null,payment_status:pagado?'confirmed':undefined};
+  try{
+    const res=await fetch(SB_URL_SOL+'/rest/v1/appointments',{
+      method:'POST',
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=representation'},
+      body:JSON.stringify({business_slug:'costa-norte',client_name:nombre+' — '+ninos.join(', '),service:'Campamento ('+ninos.length+' niños)',duration_minutes:120,starts_at:startsAt.toISOString(),ends_at:endsAt.toISOString(),status:'confirmed',budget:importe,notes:JSON.stringify(notes)})
+    });
+    if(!res.ok){toast('⚠ Error al crear el campamento');return;}
+    toast('✓ Campamento creado'+(pagado?' · marcado como pagado':''));
+    closeModal();
+    loadSolicitudes();
+    if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
+  }catch(e){console.error('saveCampamento',e);toast('⚠ Error al crear el campamento');}
+}
 function newManualReserva(){
   const monitorOpts=['— Sin asignar —',...INSTRUCTORS.map(x=>x.name)];
   openModal('+ Nueva reserva manual',`
@@ -4064,6 +4122,7 @@ function renderDayPanel(){
         </div>
         <div style="font-size:13px;font-weight:600;color:var(--ink);margin-top:4px;">${esc(r.client_name||'—')}</div>
         <div style="font-size:11px;color:var(--txt3);margin-top:2px;">${esc(rowLabel(row))} · ${esc(notesObj.instructor||'Sin monitor')}</div>
+        ${Array.isArray(notesObj.ninos)&&notesObj.ninos.length?`<div style="font-size:11px;color:var(--txt2);margin-top:4px;padding-top:4px;border-top:1px dashed var(--border);">Niños: ${notesObj.ninos.map(esc).join(', ')}</div>`:''}
         ${r.budget?`<div style="font-size:11px;color:var(--txt2);margin-top:2px;font-weight:600;">€${r.budget}</div>`:''}
       </div>`;
     }).join(''):'<div style="font-size:12px;color:var(--txt3);text-align:center;padding:20px 0;">Sin reservas este día</div>'}
