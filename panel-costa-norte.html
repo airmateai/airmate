@@ -1327,6 +1327,15 @@ function initApp(){
   try{renderDash();}catch(e){console.error('renderDash',e);}
   try{fetchSurfConditions();setInterval(fetchSurfConditions,30*60*1000);}catch(e){}
   try{loadAllData();}catch(e){console.error('loadAllData',e);}
+  setInterval(()=>{
+    const modalOpen=document.getElementById('modal')?.classList.contains('open');
+    if(modalOpen)return;
+    try{
+      sbLoad('cn_clases',  d=>CLASSES=d.map(mapClass),  ()=>renderClasses(), 'hora');
+      sbLoad('cn_alumnos', d=>STUDENTS=d, ()=>renderStudents(), 'nombre');
+      if(document.getElementById('page-clientes')?.classList.contains('active'))loadClientes();
+    }catch(e){console.error('auto-refresh',e);}
+  },30000);
 }
 
 function fmt(n,c='€'){return c+Number(n||0).toLocaleString('es-ES',{maximumFractionDigits:2});}
@@ -3731,6 +3740,27 @@ async function updatePayment(status){
 
 function closeSolDetail(){document.getElementById('sol-detail-overlay').style.display='none';}
 
+async function syncAlumnoFromSolicitud(r){
+  try{
+    const nombre=(r.client_name||'').trim();
+    if(!nombre)return;
+    const telefono=r.client_phone||null;
+    const email=r.client_email||null;
+    const s=(r.service||'').toLowerCase();
+    const nivel=s.includes('avanzado')?'Avanzado':s.includes('sup')?'SUP':s.includes('surfskate')?'Iniciación':'Iniciación';
+    const proxima=r.starts_at?new Date(r.starts_at).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'short'}):null;
+    const key=(telefono||nombre).toLowerCase().trim();
+    const existente=STUDENTS.find(a=>(a.telefono||a.nombre||'').toLowerCase().trim()===key);
+    if(existente){
+      await sbUpdate('cn_alumnos',existente.id,{proxima_clase:proxima,telefono:telefono||existente.telefono,email:email||existente.email});
+    }else{
+      const row=await sbInsert('cn_alumnos',{nombre,telefono,email,nivel,pack:null,sesiones_restantes:0,proxima_clase:proxima,total_gastado:r.budget||0,notas:'Alta automática desde solicitud web'});
+      if(row)STUDENTS.push(row);
+    }
+    await sbLoad('cn_alumnos', d=>STUDENTS=d, ()=>renderStudents(), 'nombre');
+  }catch(e){console.error('syncAlumnoFromSolicitud',e);}
+}
+
 async function updateSolStatus(status){
   if(!SOL_CUR)return;
   const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
@@ -3740,6 +3770,7 @@ async function updateSolStatus(status){
   });
   if(!res.ok){toast('⚠ Error al guardar el estado — inténtalo de nuevo');return;}
   SOL_CUR.status=status;
+  if(status==='confirmed')await syncAlumnoFromSolicitud(SOL_CUR);
   renderSolBadge(); renderSolicitudes();
   closeSolDetail();
 }
