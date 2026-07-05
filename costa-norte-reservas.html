@@ -347,9 +347,21 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
           <div class="field"><label>Telefono</label><input id="f-tel" type="tel" placeholder="+34 600 000 000" autocomplete="tel"></div>
         </div>
         <div class="field"><label>Correo electronico</label><input id="f-email" type="email" placeholder="correo@ejemplo.com" autocomplete="email"></div>
+        <div class="field-row">
+          <div class="field"><label>Edad</label><input id="f-edad" type="number" min="1" max="120" placeholder="30"></div>
+          <div class="field"><label>Idioma</label>
+            <select id="f-idioma">
+              <option value="Español">Español</option>
+              <option value="Inglés">Inglés</option>
+              <option value="Francés">Francés</option>
+              <option value="Alemán">Alemán</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+        </div>
         <div class="field">
           <label>Notas adicionales <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--txt3)">(opcional)</span></label>
-          <input id="f-notas" placeholder="Edad, menores, alergias, experiencia previa...">
+          <input id="f-notas" placeholder="Menores, alergias, experiencia previa...">
         </div>
       </div>
     </div>
@@ -720,6 +732,8 @@ async function enviar(){
   const tel=document.getElementById('f-tel').value.trim();
   const email=document.getElementById('f-email').value.trim();
   const notas=document.getElementById('f-notas').value.trim();
+  const edad=document.getElementById('f-edad').value.trim();
+  const idioma=document.getElementById('f-idioma').value;
   const tipoLabels={surf:'Surf',particular:'Clase particular',sup:'SUP',surfskate:'Surfskate'};
 
   const dias=getDiasRango();
@@ -794,7 +808,7 @@ async function enviar(){
       ends_at:endsAt.toISOString(),
       status:'pending',
       budget:idx===0?presupTotal:null,
-      notes:JSON.stringify({dni,source:'web-reservas',dias_totales:days,notas_cliente:notas||null})
+      notes:JSON.stringify({dni,source:'web-reservas',dias_totales:days,edad:edad||null,idioma,notas_cliente:notas||null})
     });
   });
 
