@@ -1325,16 +1325,32 @@ function initApp(){
   try{renderDash();}catch(e){console.error('renderDash',e);}
   try{fetchSurfConditions();setInterval(fetchSurfConditions,30*60*1000);}catch(e){}
   try{loadAllData();}catch(e){console.error('loadAllData',e);}
-  setInterval(()=>{
-    const modalOpen=document.getElementById('modal')?.classList.contains('open');
-    if(modalOpen)return;
-    try{
-      sbLoad('cn_clases',  d=>CLASSES=d.map(mapClass),  ()=>renderClasses(), 'hora');
-      sbLoad('cn_alumnos', d=>STUDENTS=d, ()=>renderStudents(), 'nombre');
-      if(document.getElementById('page-clientes')?.classList.contains('active'))loadClientes();
-      if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
-    }catch(e){console.error('auto-refresh',e);}
-  },30000);
+let _lastClasesJSON='',_lastAlumnosJSON='';
+async function sbLoadIfChanged(table,setter,render,lastRef,order='created_at'){
+  const {data,error}=await SB.from(table).select('*').eq('business_slug',SLUG).order(order,{ascending:false});
+  if(error)return;
+  const json=JSON.stringify(data||[]);
+  if(json===lastRef.val)return; // sin cambios reales — no repintar nada
+  lastRef.val=json;
+  setter(data||[]);
+  render();
+}
+const _clasesRef={val:''}, _alumnosRef={val:''};
+setInterval(()=>{
+  const modalOpen=document.getElementById('modal')?.classList.contains('open');
+  if(modalOpen)return;
+  const activePage=id=>document.getElementById(id)?.classList.contains('active');
+  try{
+    if(activePage('page-classes')){
+      sbLoadIfChanged('cn_clases', d=>CLASSES=d.map(mapClass), ()=>renderClasses(), _clasesRef, 'hora');
+      loadGanttMonth(true);
+    }
+    if(activePage('page-students')){
+      sbLoadIfChanged('cn_alumnos', d=>STUDENTS=d, ()=>renderStudents(), _alumnosRef, 'nombre');
+    }
+    if(activePage('page-clientes'))loadClientes(true);
+  }catch(e){console.error('auto-refresh',e);}
+},30000);
 }
 
 function fmt(n,c='€'){return c+Number(n||0).toLocaleString('es-ES',{maximumFractionDigits:2});}
@@ -3551,13 +3567,17 @@ const TARIFAS_SOL={
 let SOL_ALL=[], SOL_FILTER='all', SOL_CUR=null;
 let CLIENTES_ALL=[];
 
-async function loadClientes(){
+let _lastClientesJSON='';
+async function loadClientes(silent){
   const tbody=document.getElementById('clientes-tbody');
-  if(tbody)tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:24px;">Cargando…</td></tr>';
+  if(tbody&&!silent)tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:24px;">Cargando…</td></tr>';
   try{
     const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?business_slug=eq.costa-norte&select=client_name,client_phone,client_email,budget,status,starts_at,created_at&order=created_at.desc',
       {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
     const rows=await res.json();
+    const json=JSON.stringify(rows);
+    if(silent&&json===_lastClientesJSON)return; // sin cambios — no repintar
+    _lastClientesJSON=json;
     const byKey={};
     (Array.isArray(rows)?rows:[]).forEach(r=>{
       const key=(r.client_phone||r.client_email||r.client_name||'').toLowerCase().trim();
@@ -3568,7 +3588,7 @@ async function loadClientes(){
       if(new Date(r.created_at)>new Date(byKey[key].last))byKey[key].last=r.created_at;
     });
     CLIENTES_ALL=Object.values(byKey).sort((a,b)=>new Date(b.last)-new Date(a.last));
-  }catch(e){CLIENTES_ALL=[];}
+  }catch(e){if(!silent)CLIENTES_ALL=[];}
   renderClientes();
 }
 
@@ -3920,15 +3940,19 @@ function classifyServiceToRow(service){
   return 'inic';
 }
 
-async function loadGanttMonth(){
+let _lastGanttJSON='';
+async function loadGanttMonth(silent){
   const wrap=document.getElementById('gantt-wrap');
-  if(wrap)wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--txt3);">Cargando...</div>';
+  if(wrap&&!silent)wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--txt3);">Cargando...</div>';
   const first=new Date(ganttYear,ganttMonth,1);
   const last=new Date(ganttYear,ganttMonth+1,0,23,59,59);
   try{
     const res=await fetch(`${SB_URL_SOL}/rest/v1/appointments?business_slug=eq.costa-norte&starts_at=gte.${first.toISOString()}&starts_at=lte.${last.toISOString()}&select=id,client_name,service,starts_at,status,budget,notes`,
       {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
     const rows=await res.json();
+    const json=JSON.stringify(rows);
+    if(silent&&json===_lastGanttJSON)return; // sin cambios — no repintar
+    _lastGanttJSON=json;
     GANTT_RAW=Array.isArray(rows)?rows:[];
     GANTT_DATA=GANTT_RAW.map(r=>{
       const dt=new Date(r.starts_at);
