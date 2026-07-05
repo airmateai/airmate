@@ -581,11 +581,12 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 .gantt-row:hover{background:rgba(10,37,64,.02);}
 .gantt-row-label{padding:12px 14px;font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;border-right:1px solid var(--border);background:var(--sand-lt);position:sticky;left:0;z-index:1;}
 .gantt-row-label small{display:block;font-size:10px;font-weight:400;color:var(--txt3);margin-top:2px;}
-.gantt-cell{border-right:1px solid var(--border2);position:relative;height:54px;cursor:pointer;padding:4px;overflow:hidden;}
+.gantt-cell{border-right:1px solid var(--border2);position:relative;min-height:54px;cursor:pointer;padding:4px;overflow:visible;vertical-align:top;}
+.gantt-cell-inner{display:flex;flex-direction:column;gap:3px;}
 .gantt-cell:hover{background:rgba(93,189,211,.07);}
 .gantt-cell.g-today{background:rgba(255,94,58,.04);}
 .gantt-cell.g-weekend{background:rgba(10,37,64,.02);}
-.gantt-bar{width:100%;height:100%;border-radius:6px;display:flex;align-items:center;padding:0 7px;font-size:10px;font-weight:600;color:#fff;overflow:hidden;cursor:pointer;transition:filter .15s;line-height:1.3;box-sizing:border-box;}
+.gantt-bar{width:100%;height:22px;flex-shrink:0;border-radius:6px;display:flex;align-items:center;padding:0 7px;font-size:10px;font-weight:600;color:#fff;overflow:hidden;cursor:pointer;transition:filter .15s;line-height:1.3;box-sizing:border-box;white-space:nowrap;text-overflow:ellipsis;}
 .gantt-bar:hover{filter:brightness(1.1);}
 .gantt-bar.paid{background:#2dba8a;}
 .gantt-bar.pending{background:#f59e0b;}
@@ -4005,7 +4006,7 @@ function renderGantt(){
         const tt = encodeURIComponent(JSON.stringify({name:b.name,hora:b.hora,instr:b.instr,importe:b.importe,status:b.status}));
         cellContent += `<div class="gantt-bar ${b.status}" data-tt="${tt}" onmouseenter="showGTT(event,this)" onmouseleave="hideGTT()" onclick="ganttOpenBooking('${b.id}')" title="${esc(b.name)} · ${b.hora}">${esc(b.name)}</div>`;
       });
-      html += `<td class="gantt-cell${isToday?' g-today':''}${isWknd?' g-weekend':''}">${cellContent}</td>`;
+      html += `<td class="gantt-cell${isToday?' g-today':''}${isWknd?' g-weekend':''}"><div class="gantt-cell-inner">${cellContent}</div></td>`;
     }
     html += '</tr>';
   });
