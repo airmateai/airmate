@@ -3846,17 +3846,30 @@ async function saveMonitorAsignado(){
   if(!SOL_CUR)return;
   const sel=document.getElementById('sol-monitor-sel');
   const monitor=sel.value.startsWith('—')?null:sel.value;
-  const notes=solParseNotes(SOL_CUR.notes);
-  notes.instructor=monitor;
-  const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
-    method:'PATCH',
-    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
-    body:JSON.stringify({notes:JSON.stringify(notes)})
-  });
-  if(!res.ok){toast('⚠ Error al guardar el monitor');return;}
-  SOL_CUR.notes=JSON.stringify(notes);
-  toast('✓ Monitor asignado');
-  loadSolicitudes();
+  // El monitor se asigna a TODA la clase (mismo dia+hora+tipo), no solo a esta reserva —
+  // son grupos con un maximo de plazas, no reservas individuales sueltas.
+  const miRow=classifyServiceToRow(SOL_CUR.service);
+  const miHora=SOL_CUR.starts_at;
+  try{
+    const res=await fetch(`${SB_URL_SOL}/rest/v1/appointments?business_slug=eq.costa-norte&starts_at=eq.${encodeURIComponent(miHora)}&select=id,service,notes`,
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+    const mismos=(await res.json()).filter(r=>classifyServiceToRow(r.service)===miRow);
+    await Promise.all(mismos.map(r=>{
+      const notes=solParseNotes(r.notes);
+      notes.instructor=monitor;
+      return fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+r.id,{
+        method:'PATCH',
+        headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({notes:JSON.stringify(notes)})
+      });
+    }));
+    const notes=solParseNotes(SOL_CUR.notes);
+    notes.instructor=monitor;
+    SOL_CUR.notes=JSON.stringify(notes);
+    toast(`✓ Monitor asignado a la clase (${mismos.length||1} reserva${mismos.length!==1?'s':''})`);
+    loadSolicitudes();
+    if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
+  }catch(e){console.error('saveMonitorAsignado',e);toast('⚠ Error al guardar el monitor');}
 }
 
 const TIPOS_CLASE_MANUAL=['Iniciación','Perfeccionamiento','Avanzado','Clase Privada','SUP','Padel','Campamento'];
