@@ -4155,7 +4155,7 @@ function renderDayPanel(){
   for(let h=HOUR_START; h<=HOUR_END; h++){
     const hLabel=String(h).padStart(2,'0')+':00';
     const bookings=byHour[h]||[];
-    hoursHtml+=`<div style="display:flex;border-bottom:1px solid var(--border2);min-height:38px;">
+    hoursHtml+=`<div class="day-hour-row" style="display:flex;border-bottom:1px solid var(--border2);min-height:38px;" ondragover="event.preventDefault()" ondrop="dayPanelDropOnHour(event,${h})">
       <div style="width:48px;flex-shrink:0;font-size:11px;color:var(--txt3);font-weight:600;padding:6px 8px 6px 0;text-align:right;">${hLabel}</div>
       <div style="flex:1;display:flex;flex-direction:column;gap:4px;padding:4px 0;">
         ${bookings.map(r=>{
@@ -4164,7 +4164,7 @@ function renderDayPanel(){
           let notesObj={};try{notesObj=JSON.parse(r.notes||'{}');}catch{}
           const row=classifyServiceToRow(r.service);
           const pill=statusPill(r);
-          return `<div onclick="ganttOpenBooking('${r.id}')" style="background:#fff;border-left:3px solid ${pill.color};border-radius:6px;padding:6px 9px;cursor:pointer;box-shadow:0 1px 2px rgba(10,37,64,.06);">
+          return `<div draggable="true" ondragstart="ganttDragStart(event,'${r.id}')" onclick="ganttOpenBooking('${r.id}')" style="background:#fff;border-left:3px solid ${pill.color};border-radius:6px;padding:6px 9px;cursor:grab;box-shadow:0 1px 2px rgba(10,37,64,.06);">
             <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
               <strong style="font-size:12px;color:var(--ink);">${hora} · ${esc(r.client_name||'—')}</strong>
               <span style="font-size:9px;font-weight:700;padding:1px 7px;border-radius:20px;background:${pill.bg};color:${pill.color};white-space:nowrap;">${pill.label}</span>
@@ -4244,6 +4244,54 @@ function ganttOpenBooking(id){
   if(r){SOL_CUR=r;openSol(id);}
 }
 
+let _dragBookingId=null;
+function ganttDragStart(e,id){
+  _dragBookingId=id;
+  e.dataTransfer.effectAllowed='move';
+  e.stopPropagation();
+}
+async function _moveBooking(id,newStartsAt){
+  const r=GANTT_RAW.find(x=>String(x.id)===String(id));
+  if(!r)return;
+  const oldStart=new Date(r.starts_at), oldEnd=new Date(r.ends_at);
+  const durMs=oldEnd-oldStart;
+  const newEnd=new Date(newStartsAt.getTime()+durMs);
+  try{
+    const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+id,{
+      method:'PATCH',
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({starts_at:newStartsAt.toISOString(),ends_at:newEnd.toISOString()})
+    });
+    if(!res.ok){toast('⚠ Error al mover la reserva');return;}
+    toast('✓ Reserva movida');
+    await loadGanttMonth();
+    if(document.getElementById('sol-detail-overlay')?.style.display==='flex')closeSolDetail();
+    loadSolicitudes();
+  }catch(e){console.error('_moveBooking',e);toast('⚠ Error al mover la reserva');}
+}
+function dayPanelDropOnHour(e,hour){
+  e.preventDefault();
+  if(!_dragBookingId)return;
+  const r=GANTT_RAW.find(x=>String(x.id)===String(_dragBookingId));
+  _dragBookingId=null;
+  if(!r)return;
+  const old=new Date(r.starts_at);
+  if(old.getHours()===hour)return; // misma hora, no hace falta mover
+  const nuevo=new Date(old.getFullYear(),old.getMonth(),old.getDate(),hour,old.getMinutes(),0);
+  _moveBooking(r.id,nuevo);
+}
+function ganttDropOnDay(e,day){
+  e.preventDefault();
+  if(!_dragBookingId)return;
+  const r=GANTT_RAW.find(x=>String(x.id)===String(_dragBookingId));
+  _dragBookingId=null;
+  if(!r)return;
+  const old=new Date(r.starts_at);
+  if(old.getDate()===day)return; // mismo dia, no hace falta mover
+  const nuevo=new Date(ganttYear,ganttMonth,day,old.getHours(),old.getMinutes(),0);
+  _moveBooking(r.id,nuevo);
+}
+
 function renderGantt(){
   const wrap = document.getElementById('gantt-wrap');
   if(!wrap) return;
@@ -4285,9 +4333,9 @@ function renderGantt(){
       let cellContent = '';
       bookings.forEach(b => {
         const tt = encodeURIComponent(JSON.stringify({name:b.name,hora:b.hora,instr:b.instr,importe:b.importe,status:b.status}));
-        cellContent += `<div class="gantt-bar ${b.status}" data-tt="${tt}" onmouseenter="showGTT(event,this)" onmouseleave="hideGTT()" onclick="ganttOpenBooking('${b.id}')" title="${esc(b.name)} · ${b.hora}"><span class="gantt-bar-hora">${esc(b.hora)}</span>${esc(b.name)}</div>`;
+        cellContent += `<div class="gantt-bar ${b.status}" data-tt="${tt}" draggable="true" ondragstart="ganttDragStart(event,'${b.id}')" onmouseenter="showGTT(event,this)" onmouseleave="hideGTT()" onclick="ganttOpenBooking('${b.id}')" title="${esc(b.name)} · ${b.hora}"><span class="gantt-bar-hora">${esc(b.hora)}</span>${esc(b.name)}</div>`;
       });
-      html += `<td class="gantt-cell${isToday?' g-today':''}${isWknd?' g-weekend':''}"><div class="gantt-cell-inner">${cellContent}</div></td>`;
+      html += `<td class="gantt-cell${isToday?' g-today':''}${isWknd?' g-weekend':''}" ondragover="event.preventDefault()" ondrop="ganttDropOnDay(event,${d})"><div class="gantt-cell-inner">${cellContent}</div></td>`;
     }
     html += '</tr>';
   });
