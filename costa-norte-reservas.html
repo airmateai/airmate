@@ -276,21 +276,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
           </div>
         </div>
 
-        <div class="field" id="field-personas" style="display:none;">
+        <div class="field" id="field-personas">
           <label>Numero de personas</label>
-          <div class="nivel-row">
-            <div class="nivel-opt sel" id="np-1" onclick="selPersonas(1,this)">
-              <div class="nivel-name">1 persona</div>
-              <div class="nivel-desc">75&euro; / clase</div>
-            </div>
-            <div class="nivel-opt" id="np-2" onclick="selPersonas(2,this)">
-              <div class="nivel-name">2 personas</div>
-              <div class="nivel-desc">60&euro; / clase c/u</div>
-            </div>
-            <div class="nivel-opt" id="np-3" onclick="selPersonas(3,this)">
-              <div class="nivel-name">3 personas</div>
-              <div class="nivel-desc">50&euro; / clase c/u</div>
-            </div>
+          <div class="nivel-row" style="flex-wrap:wrap;">
+            <div class="nivel-opt sel np-btn" data-n="1" onclick="selPersonas(1,this)"><div class="nivel-name">1</div></div>
+            <div class="nivel-opt np-btn" data-n="2" onclick="selPersonas(2,this)"><div class="nivel-name">2</div></div>
+            <div class="nivel-opt np-btn" data-n="3" onclick="selPersonas(3,this)"><div class="nivel-name">3</div></div>
+            <div class="nivel-opt np-btn" data-n="4" onclick="selPersonas(4,this)"><div class="nivel-name">4</div></div>
+            <div class="nivel-opt np-btn" data-n="5" onclick="selPersonas(5,this)"><div class="nivel-name">5</div></div>
+            <div class="nivel-opt np-btn" data-n="6" onclick="selPersonas(6,this)"><div class="nivel-name">6</div></div>
           </div>
         </div>
 
@@ -578,7 +572,6 @@ function selTipo(t,el){
   document.querySelectorAll('.tipo-opt').forEach(x=>x.classList.remove('sel'));
   el.classList.add('sel');
   document.getElementById('field-nivel').style.display=(t==='sup'||t==='surfskate')?'none':'';
-  document.getElementById('field-personas').style.display=(t==='particular')?'':'none';
 }
 function selNivel(n,el){
   S.nivel=n;
@@ -703,7 +696,7 @@ function irPaso3(){
   document.getElementById('resumen-body').innerHTML=[
     {l:'Tipo de clase',v:tipoLabels[S.tipo]},
     {l:'Nivel',v:(S.tipo==='surf'||S.tipo==='particular')?S.nivel:'—'},
-    ...(S.tipo==='particular'?[{l:'Numero de personas',v:S.personas}]:[]),
+    {l:'Numero de personas',v:S.personas},
     {l:'Dias',v:days+' dia'+(days>1?'s':'')},
     {l:'Horarios',v:horariosResumen},
     {l:'Nombre completo',v:nombre+' '+apellidos},
@@ -765,20 +758,21 @@ async function enviar(){
     surfskate:{1:20,4:75,8:135}
   };
   const closestTierPre=(tiers,n)=>tiers.reduce((a,b)=>Math.abs(b-n)<Math.abs(a-n)?b:a);
+  const personasSel=Math.min(Math.max(S.personas||1,1),6);
   let presupTotal=0;
   if(S.tipo==='surf'){
     const nv=S.nivel==='Avanzado'?'Avanzado':'Iniciacion';
     const t=TARIFAS_PRE.surf[nv];const k=closestTierPre(Object.keys(t).map(Number),days);
-    presupTotal=t[k];
+    presupTotal=t[k]*personasSel;
   }else if(S.tipo==='particular'){
-    const personas=Math.min(Math.max(S.personas||1,1),3);
-    const t=TARIFAS_PRE.particular[personas];
+    const tierPersonas=Math.min(personasSel,3);
+    const t=TARIFAS_PRE.particular[tierPersonas];
     const k=closestTierPre(Object.keys(t).map(Number),days);
-    presupTotal=t[k]*personas;
+    presupTotal=t[k]*personasSel;
   }else if(S.tipo==='sup'){
-    const k=closestTierPre([1,5],days);presupTotal=TARIFAS_PRE.sup[k];
+    const k=closestTierPre([1,5],days);presupTotal=TARIFAS_PRE.sup[k]*personasSel;
   }else if(S.tipo==='surfskate'){
-    const k=closestTierPre([1,4,8],days);presupTotal=TARIFAS_PRE.surfskate[k];
+    const k=closestTierPre([1,4,8],days);presupTotal=TARIFAS_PRE.surfskate[k]*personasSel;
   }
 
   // Una appointment por cada dia con su propio horario
@@ -792,7 +786,7 @@ async function enviar(){
       client_name:nombre+(apellidos?' '+apellidos:''),
       client_phone:tel,
       client_email:email,
-      service:tipoLabels[S.tipo]+(S.nivel&&(S.tipo==='surf'||S.tipo==='particular')?' - '+S.nivel:'')+(S.tipo==='particular'?' ('+S.personas+' persona'+(S.personas>1?'s':'')+')':''),
+      service:tipoLabels[S.tipo]+(S.nivel&&(S.tipo==='surf'||S.tipo==='particular')?' - '+S.nivel:'')+' ('+S.personas+' persona'+(S.personas>1?'s':'')+')',
       duration_minutes:120,
       starts_at:startsAt.toISOString(),
       ends_at:endsAt.toISOString(),

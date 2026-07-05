@@ -3640,15 +3640,16 @@ function calcPresup(service,dias){
   let closest=dias;
   const tiers=[1,2,5,7,15,20];
   let best=tiers.reduce((a,b)=>Math.abs(b-dias)<Math.abs(a-dias)?b:a);
-  if(s.includes('surf - ')||s.includes('surf\n')) return (TARIFAS_SOL.surf[nivel]||TARIFAS_SOL.surf.Iniciacion)[best]||0;
+  const mPersonas=s.match(/\((\d)\s*persona/);
+  const personasReal=mPersonas?Math.min(Math.max(+mPersonas[1],1),6):1;
+  if(s.includes('surf - ')||s.includes('surf\n')) return ((TARIFAS_SOL.surf[nivel]||TARIFAS_SOL.surf.Iniciacion)[best]||0)*personasReal;
   if(s.includes('particular')){
-    const m=s.match(/\((\d)\s*persona/);
-    const personas=m?Math.min(Math.max(+m[1],1),3):1;
-    const precioPersona=(TARIFAS_SOL.particular[personas+'p']||TARIFAS_SOL.particular['1p']||{})[Math.min(dias,2)]||0;
-    return precioPersona*personas;
+    const tierPersonas=Math.min(personasReal,3);
+    const precioPersona=(TARIFAS_SOL.particular[tierPersonas+'p']||TARIFAS_SOL.particular['1p']||{})[Math.min(dias,2)]||0;
+    return precioPersona*personasReal;
   }
-  if(s.includes('sup')) return (TARIFAS_SOL.sup.flat||{})[dias<=1?1:5]||0;
-  if(s.includes('surfskate')){const t=TARIFAS_SOL.surfskate;const k=Object.keys(t).map(Number).reduce((a,b)=>Math.abs(b-dias)<Math.abs(a-dias)?b:a);return t[k]||0;}
+  if(s.includes('sup')) return ((TARIFAS_SOL.sup.flat||{})[dias<=1?1:5]||0)*personasReal;
+  if(s.includes('surfskate')){const t=TARIFAS_SOL.surfskate;const k=Object.keys(t).map(Number).reduce((a,b)=>Math.abs(b-dias)<Math.abs(a-dias)?b:a);return (t[k]||0)*personasReal;}
   return 0;
 }
 
