@@ -594,6 +594,8 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 .gantt-bar.cancelled{background:#ff5e3a;}
 .gantt-bar.private{background:#5dbdd3;}
 .gantt-bar.sup{background:#8b5cf6;}
+.gantt-bar.padel{background:#0e9488;}
+.gantt-bar.camp{background:#c9942c;}
 /* tooltip */
 .g-tooltip{position:fixed;background:var(--ocean);color:#fff;padding:10px 14px;border-radius:10px;font-size:12px;pointer-events:none;z-index:9999;max-width:220px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,.3);display:none;}
 .g-tooltip strong{display:block;font-size:13px;margin-bottom:4px;}
@@ -946,6 +948,9 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       <button class="nav-item" onclick="go('clientes',this);loadClientes()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Clientes
       </button>
+      <button class="nav-item" onclick="go('ajustes',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Ajustes
+      </button>
     </nav>
     <div class="sb-foot">
       <div class="sb-user">
@@ -1109,9 +1114,14 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
           <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><span style="width:12px;height:12px;border-radius:3px;background:#ff5e3a;display:inline-block;"></span>Cancelado</div>
           <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><span style="width:12px;height:12px;border-radius:3px;background:#5dbdd3;display:inline-block;"></span>Privada</div>
           <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><span style="width:12px;height:12px;border-radius:3px;background:#8b5cf6;display:inline-block;"></span>SUP</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><span style="width:12px;height:12px;border-radius:3px;background:#0e9488;display:inline-block;"></span>Padel</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><span style="width:12px;height:12px;border-radius:3px;background:#c9942c;display:inline-block;"></span>Campamento</div>
         </div>
-        <div id="gantt-scroll" style="overflow-x:auto;width:100%;">
-          <div id="gantt-wrap"></div>
+        <div style="display:flex;align-items:stretch;">
+          <div id="gantt-scroll" style="overflow-x:auto;flex:1;min-width:0;">
+            <div id="gantt-wrap"></div>
+          </div>
+          <div id="gantt-day-panel" style="width:260px;flex-shrink:0;border-left:1px solid var(--border);padding:16px;background:var(--sand-lt);"></div>
         </div>
       </div>
 
@@ -1156,10 +1166,24 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       </div>
     </div>
 
+    <!-- PAGINA AJUSTES -->
+    <div id="page-ajustes" class="page">
+      <div class="page-hd">
+        <div><h1>Ajustes</h1><div class="page-sub">Monitores del equipo</div></div>
+        <div class="page-hd-actions">
+          <button class="btn btn-primary" onclick="newInstructor()">+ Nuevo monitor</button>
+        </div>
+      </div>
+      <div id="instructors-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
+    </div>
+
     <!-- PAGINA SOLICITUDES (dentro del main) -->
     <div id="page-solicitudes" class="page">
       <div class="page-hd">
         <div><h1>Solicitudes <em>web</em></h1><div class="page-sub">Reservas recibidas desde la web · gestión y seguimiento</div></div>
+        <div class="page-hd-actions">
+          <button class="btn btn-primary" onclick="newManualReserva()">+ Nueva reserva manual</button>
+        </div>
       </div>
       <div style="max-width:1100px;margin:0 auto;padding:0 20px 60px">
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
@@ -1260,7 +1284,7 @@ function go(p,el){
     const links=document.querySelectorAll('.nav-item');
     const labels={dashboard:'Dashboard',agenda:'Agenda',apt:'Mapa',cal:'Calendario',res:'Reservas',clean:'Limpieza',maint:'Mantenimiento',classes:'Clases',students:'Alumnos',packs:'Packs',instructors:'Instructores',rental:'Alquileres',shop:'TPV',stock:'Stock',clients:'Clientes',invoices:'Facturas',reports:'Informes',inbox:'Bandeja IA',widget:'Widget',team:'Equipo',settings:'Ajustes'};
   }
-  const titles={dashboard:'Dashboard',solicitudes:'Solicitudes web',agenda:'Agenda del día',classes:'Horario de clases',students:'Alumnos',clientes:'Clientes',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',gastos:'Gastos deducibles',reports:'Gestor financiero',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes'};
+  const titles={dashboard:'Dashboard',solicitudes:'Solicitudes web',agenda:'Agenda del día',classes:'Horario de clases',students:'Alumnos',clientes:'Clientes',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',gastos:'Gastos deducibles',reports:'Gestor financiero',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes',ajustes:'Ajustes'};
   document.getElementById('tb-title').textContent=titles[p]||'';
   document.getElementById('sb').classList.remove('open');
   const ov=document.getElementById('mob-overlay');if(ov)ov.classList.remove('on');
@@ -3717,6 +3741,17 @@ async function openSol(id){
     ...(notes.notas_cliente?[{l:'Notas',v:notes.notas_cliente}]:[]),
   ].map(x=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #eef1f6;font-size:13px"><span style="color:#4a5568">${esc(x.l)}</span><span style="font-weight:600;color:#0f1923;text-align:right;max-width:58%;word-break:break-all">${esc(x.v)}</span></div>`).join('');
 
+  const monitorOpts=['— Sin asignar —',...INSTRUCTORS.map(x=>x.name)];
+  const monitorActual=notes.instructor||monitorOpts[0];
+  document.getElementById('sol-detail-rows').innerHTML += `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;font-size:13px;gap:10px;">
+      <span style="color:#4a5568;flex-shrink:0;">Monitor asignado</span>
+      <div style="display:flex;gap:6px;">
+        <select id="sol-monitor-sel" style="padding:6px 8px;border:1px solid #dde3ec;border-radius:6px;font-size:12px;">${monitorOpts.map(m=>`<option value="${esc(m)}" ${m===monitorActual?'selected':''}>${esc(m)}</option>`).join('')}</select>
+        <button onclick="saveMonitorAsignado()" style="padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;border:none;background:#0f2240;color:#fff;cursor:pointer;">Guardar</button>
+      </div>
+    </div>`;
+
   // Presupuesto calculado
   document.getElementById('sol-presup-amount').textContent=presup>0?presup+'€':'Consultar';
   document.getElementById('sol-presup-detail').textContent=`${r.service||''} · ${dias} dia${dias>1?'s':''} · tarifa oficial`;
@@ -3779,6 +3814,66 @@ async function syncAlumnoFromSolicitud(r){
     }
     await sbLoad('cn_alumnos', d=>STUDENTS=d, ()=>renderStudents(), 'nombre');
   }catch(e){console.error('syncAlumnoFromSolicitud',e);}
+}
+
+async function saveMonitorAsignado(){
+  if(!SOL_CUR)return;
+  const sel=document.getElementById('sol-monitor-sel');
+  const monitor=sel.value.startsWith('—')?null:sel.value;
+  const notes=solParseNotes(SOL_CUR.notes);
+  notes.instructor=monitor;
+  const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
+    method:'PATCH',
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({notes:JSON.stringify(notes)})
+  });
+  if(!res.ok){toast('⚠ Error al guardar el monitor');return;}
+  SOL_CUR.notes=JSON.stringify(notes);
+  toast('✓ Monitor asignado');
+  loadSolicitudes();
+}
+
+const TIPOS_CLASE_MANUAL=['Iniciación','Perfeccionamiento','Avanzado','Clase Privada','SUP','Padel','Campamento'];
+function newManualReserva(){
+  const monitorOpts=['— Sin asignar —',...INSTRUCTORS.map(x=>x.name)];
+  openModal('+ Nueva reserva manual',`
+    ${fRow(fLbl('Cliente')+fInp('mr-nombre',''), fLbl('Teléfono')+fInp('mr-tel',''))}
+    ${fRow(fLbl('Email')+fInp('mr-email','','email'), fLbl('Tipo de clase')+fSel('mr-tipo','Iniciación',TIPOS_CLASE_MANUAL))}
+    ${fRow(fLbl('Monitor')+fSel('mr-monitor',monitorOpts[0],monitorOpts), fLbl('Nº personas')+fInp('mr-personas','1','number'))}
+    ${fRow(fLbl('Fecha')+fInp('mr-fecha',new Date().toISOString().slice(0,10),'date'), fLbl('Hora')+fInp('mr-hora','10:00','time'))}
+    ${fLbl('Importe (€)')+fInp('mr-importe','0','number')}
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:600;cursor:pointer;">
+      <input type="checkbox" id="mr-pagado" style="width:16px;height:16px;"> Marcar como pagado (cobrado en persona / TPV)
+    </label>
+    ${fActions('Crear reserva','saveManualReserva()')}
+  `);
+}
+async function saveManualReserva(){
+  const nombre=cv('mr-nombre').trim();
+  if(!nombre){toast('⚠ Falta el nombre del cliente');return;}
+  const tel=cv('mr-tel'),email=cv('mr-email'),tipo=cv('mr-tipo'),monitor=cv('mr-monitor');
+  const personas=+cv('mr-personas')||1,fecha=cv('mr-fecha'),hora=cv('mr-hora')||'10:00';
+  const importe=+cv('mr-importe')||0;
+  const pagado=document.getElementById('mr-pagado').checked;
+  const startsAt=new Date(fecha+'T'+hora+':00');
+  const endsAt=new Date(startsAt.getTime()+2*60*60*1000);
+  const serviceLabel=(tipo==='Clase Privada'?'Clase particular':'Surf - '+tipo)+' ('+personas+' persona'+(personas>1?'s':'')+')';
+  const notes={source:'manual',dias_totales:1,instructor:(monitor&&!monitor.startsWith('—'))?monitor:null,payment_status:pagado?'confirmed':undefined};
+  try{
+    const res=await fetch(SB_URL_SOL+'/rest/v1/appointments',{
+      method:'POST',
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=representation'},
+      body:JSON.stringify({business_slug:'costa-norte',client_name:nombre,client_phone:tel||null,client_email:email||null,service:serviceLabel,duration_minutes:120,starts_at:startsAt.toISOString(),ends_at:endsAt.toISOString(),status:'confirmed',budget:importe,notes:JSON.stringify(notes)})
+    });
+    if(!res.ok){toast('⚠ Error al crear la reserva');return;}
+    const rows=await res.json();
+    const row=Array.isArray(rows)?rows[0]:rows;
+    await syncAlumnoFromSolicitud(row);
+    toast('✓ Reserva creada'+(pagado?' · marcada como pagada':''));
+    closeModal();
+    loadSolicitudes();
+    if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
+  }catch(e){console.error('saveManualReserva',e);toast('⚠ Error al crear la reserva');}
 }
 
 async function updateSolStatus(status){
@@ -3917,12 +4012,13 @@ function updateWaLink(){
 <!-- ══ GANTT MENSUAL ══ -->
 <script>
 const GANTT_ROWS = [
-  {id:'inic',  label:'Grupal · Iniciación',  sub:'Máx 10 alumnos'},
-  {id:'inter', label:'Grupal · Intermedio',  sub:'Máx 8 alumnos'},
-  {id:'avanz', label:'Grupal · Avanzado',    sub:'Máx 8 alumnos'},
-  {id:'fam',   label:'Grupal · Familia',     sub:'Máx 4 familias'},
-  {id:'priv',  label:'Clase Privada',         sub:'1-2 personas'},
-  {id:'sup',   label:'SUP / Paddle',          sub:'Máx 6 personas'},
+  {id:'inic',   label:'Iniciación',        sub:'Grupal'},
+  {id:'perfec', label:'Perfeccionamiento', sub:'Grupal'},
+  {id:'avanz',  label:'Avanzado',          sub:'Grupal'},
+  {id:'priv',   label:'Clase Privada',     sub:'1-3 personas'},
+  {id:'sup',    label:'SUP',               sub:'Stand Up Paddle'},
+  {id:'padel',  label:'Padel',             sub:''},
+  {id:'camp',   label:'Campamento',        sub:'Grupo'},
 ];
 
 let GANTT_DATA = [];
@@ -3930,14 +4026,59 @@ let GANTT_RAW = [];
 
 let ganttYear = new Date().getFullYear();
 let ganttMonth = new Date().getMonth();
+let ganttSelectedDay = new Date().getDate();
+
+function ganttSelectDay(d){
+  ganttSelectedDay = d;
+  renderGantt();
+}
+
+function renderDayPanel(){
+  const panel=document.getElementById('gantt-day-panel');
+  if(!panel)return;
+  const dt=new Date(ganttYear,ganttMonth,ganttSelectedDay);
+  const dayLabel=dt.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+  const items=GANTT_RAW.filter(r=>new Date(r.starts_at).getDate()===ganttSelectedDay)
+    .slice().sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at));
+  const rowLabel=id=>(GANTT_ROWS.find(r=>r.id===id)||{}).label||id;
+  const statusPill=(r)=>{
+    let notesObj={};try{notesObj=JSON.parse(r.notes||'{}');}catch{}
+    if(r.status==='cancelled')return {bg:'#fef2f2',color:'#dc2626',label:'Cancelado'};
+    if(notesObj.payment_status==='confirmed')return {bg:'#f0fdf4',color:'#16a34a',label:'Pagado'};
+    return {bg:'#fef9c3',color:'#ca8a04',label:'Pendiente'};
+  };
+  panel.innerHTML=`
+    <div style="font-family:var(--display);font-weight:700;font-size:14px;color:var(--ink);text-transform:capitalize;margin-bottom:2px;">${esc(dayLabel)}</div>
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">${items.length} reserva${items.length!==1?'s':''}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto;">
+    ${items.length?items.map(r=>{
+      const dtr=new Date(r.starts_at);
+      const hora=dtr.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false});
+      let notesObj={};try{notesObj=JSON.parse(r.notes||'{}');}catch{}
+      const row=classifyServiceToRow(r.service);
+      const pill=statusPill(r);
+      return `<div onclick="ganttOpenBooking('${r.id}')" style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+          <strong style="font-size:13px;color:var(--ink);">${hora}</strong>
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${pill.bg};color:${pill.color};">${pill.label}</span>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:var(--ink);margin-top:4px;">${esc(r.client_name||'—')}</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:2px;">${esc(rowLabel(row))} · ${esc(notesObj.instructor||'Sin monitor')}</div>
+        ${r.budget?`<div style="font-size:11px;color:var(--txt2);margin-top:2px;font-weight:600;">€${r.budget}</div>`:''}
+      </div>`;
+    }).join(''):'<div style="font-size:12px;color:var(--txt3);text-align:center;padding:20px 0;">Sin reservas este día</div>'}
+    </div>
+  `;
+}
 
 function classifyServiceToRow(service){
   const s=(service||'').toLowerCase();
   if(s.includes('particular'))return 'priv';
+  if(s.includes('padel')||s.includes('pádel'))return 'padel';
   if(s.includes('sup'))return 'sup';
+  if(s.includes('campamento')||s.includes('camp')||s.includes('xpert'))return 'camp';
   if(s.includes('avanzado'))return 'avanz';
-  if(s.includes('familia'))return 'fam';
-  if(s.includes('intermedio'))return 'inter';
+  if(s.includes('perfeccionamiento')||s.includes('intermedio'))return 'perfec';
   return 'inic';
 }
 
@@ -3959,15 +4100,17 @@ async function loadGanttMonth(silent){
       const dt=new Date(r.starts_at);
       const row=classifyServiceToRow(r.service);
       let statusCls='pending';
+      let notesObj={};
+      try{notesObj=JSON.parse(r.notes||'{}');}catch{}
       if(r.status==='cancelled')statusCls='cancelled';
       else{
-        let pago='';
-        try{pago=JSON.parse(r.notes||'{}').payment_status;}catch{}
-        statusCls=pago==='confirmed'?'paid':'pending';
+        statusCls=notesObj.payment_status==='confirmed'?'paid':'pending';
       }
       if(row==='priv')statusCls='private';
       if(row==='sup')statusCls='sup';
-      return {id:r.id,row,day:dt.getDate(),name:r.client_name||'—',hora:dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false}),instr:'',importe:r.budget||0,status:statusCls};
+      if(row==='padel')statusCls='padel';
+      if(row==='camp')statusCls='camp';
+      return {id:r.id,row,day:dt.getDate(),name:r.client_name||'—',hora:dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false}),instr:notesObj.instructor||'Sin asignar',importe:r.budget||0,status:statusCls};
     }).sort((a,b)=>a.hora.localeCompare(b.hora));
   }catch(e){console.error('loadGanttMonth',e);GANTT_DATA=[];}
   renderGantt();
@@ -4013,7 +4156,8 @@ function renderGantt(){
     const dow = dt.getDay();
     const isToday = (today.getFullYear()===ganttYear && today.getMonth()===ganttMonth && today.getDate()===d);
     const dayNames = ['D','L','M','X','J','V','S'];
-    html += `<th class="gantt-day-col${isToday?' g-today':''}${dow===0||dow===6?' g-weekend':''}">${d}<br><span style="font-size:9px;opacity:.6">${dayNames[dow]}</span></th>`;
+    const isSel = d===ganttSelectedDay;
+    html += `<th class="gantt-day-col${isToday?' g-today':''}${dow===0||dow===6?' g-weekend':''}" style="cursor:pointer;${isSel?'background:var(--ocean);color:#fff;':''}" onclick="ganttSelectDay(${d})">${d}<br><span style="font-size:9px;opacity:.6">${dayNames[dow]}</span></th>`;
   }
   html += '</tr></thead><tbody>';
 
@@ -4038,12 +4182,14 @@ function renderGantt(){
 
   html += '</tbody></table>';
   wrap.innerHTML = html;
+  if(ganttSelectedDay>daysInMonth)ganttSelectedDay=daysInMonth;
+  renderDayPanel();
 }
 
 function showGTT(e, el){
   const data = JSON.parse(decodeURIComponent(el.dataset.tt));
   const tt = document.getElementById('g-tooltip');
-  const statusLabels = {paid:'✓ Pagado', pending:'⏳ Pendiente pago', cancelled:'✕ Cancelado', private:'Privada', sup:'SUP'};
+  const statusLabels = {paid:'✓ Pagado', pending:'⏳ Pendiente pago', cancelled:'✕ Cancelado', private:'Privada', sup:'SUP', padel:'Padel', camp:'Campamento'};
   tt.innerHTML = `<strong>${data.name}</strong>
     <div class="g-tt-row"><span>Hora</span><span>${data.hora}</span></div>
     <div class="g-tt-row"><span>Instructor</span><span>${data.instr}</span></div>
