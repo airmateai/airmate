@@ -935,7 +935,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Solicitudes web
         <span id="sol-badge" style="background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:auto;display:none">0</span>
       </button>
-      <button class="nav-item" onclick="go('classes',this)">
+      <button class="nav-item" onclick="go('classes',this);loadGanttMonth()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>Horario clases
       </button>
       <button class="nav-item" onclick="go('students',this)">
@@ -1064,9 +1064,6 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       <div class="page-hd">
         <div><h1>Horario de <em>clases</em></h1><div class="page-sub">Grupales · privadas · SUP</div></div>
         <div class="page-hd-actions">
-          <button class="btn btn-ghost">‹ Semana</button>
-          <button class="btn btn-ghost">Hoy</button>
-          <button class="btn btn-ghost">Semana ›</button>
           <button class="btn btn-primary" onclick="newClass(0,'10:00')">+ Nueva clase</button>
         </div>
       </div>
@@ -1189,7 +1186,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
     <button class="bot-nav-item" id="bn-solicitudes" onclick="go('solicitudes',null);loadSolicitudes();setBotNav('solicitudes')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Solicitudes
     </button>
-    <button class="bot-nav-item" id="bn-classes" onclick="go('classes',null);setBotNav('classes')">
+    <button class="bot-nav-item" id="bn-classes" onclick="go('classes',null);setBotNav('classes');loadGanttMonth()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17s6-6 9-6 9 6 9 6"/><path d="M3 11s6-6 9-6 9 6 9 6"/></svg>Clases
     </button>
     <button class="bot-nav-item" id="bn-students" onclick="go('students',null);setBotNav('students')">
@@ -1334,6 +1331,7 @@ function initApp(){
       sbLoad('cn_clases',  d=>CLASSES=d.map(mapClass),  ()=>renderClasses(), 'hora');
       sbLoad('cn_alumnos', d=>STUDENTS=d, ()=>renderStudents(), 'nombre');
       if(document.getElementById('page-clientes')?.classList.contains('active'))loadClientes();
+      if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
     }catch(e){console.error('auto-refresh',e);}
   },30000);
 }
@@ -3905,22 +3903,64 @@ const GANTT_ROWS = [
   {id:'sup',   label:'SUP / Paddle',          sub:'Máx 6 personas'},
 ];
 
-// Datos de ejemplo — se sustituirán por Supabase
-const GANTT_DATA = [];
+let GANTT_DATA = [];
+let GANTT_RAW = [];
 
 let ganttYear = new Date().getFullYear();
 let ganttMonth = new Date().getMonth();
+
+function classifyServiceToRow(service){
+  const s=(service||'').toLowerCase();
+  if(s.includes('particular'))return 'priv';
+  if(s.includes('sup'))return 'sup';
+  if(s.includes('avanzado'))return 'avanz';
+  if(s.includes('familia'))return 'fam';
+  if(s.includes('intermedio'))return 'inter';
+  return 'inic';
+}
+
+async function loadGanttMonth(){
+  const wrap=document.getElementById('gantt-wrap');
+  if(wrap)wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--txt3);">Cargando...</div>';
+  const first=new Date(ganttYear,ganttMonth,1);
+  const last=new Date(ganttYear,ganttMonth+1,0,23,59,59);
+  try{
+    const res=await fetch(`${SB_URL_SOL}/rest/v1/appointments?business_slug=eq.costa-norte&starts_at=gte.${first.toISOString()}&starts_at=lte.${last.toISOString()}&select=id,client_name,service,starts_at,status,budget,notes`,
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+    const rows=await res.json();
+    GANTT_RAW=Array.isArray(rows)?rows:[];
+    GANTT_DATA=GANTT_RAW.map(r=>{
+      const dt=new Date(r.starts_at);
+      const row=classifyServiceToRow(r.service);
+      let statusCls='pending';
+      if(r.status==='cancelled')statusCls='cancelled';
+      else{
+        let pago='';
+        try{pago=JSON.parse(r.notes||'{}').payment_status;}catch{}
+        statusCls=pago==='confirmed'?'paid':'pending';
+      }
+      if(row==='priv')statusCls='private';
+      if(row==='sup')statusCls='sup';
+      return {id:r.id,row,day:dt.getDate(),name:r.client_name||'—',hora:dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false}),instr:'',importe:r.budget||0,status:statusCls};
+    });
+  }catch(e){console.error('loadGanttMonth',e);GANTT_DATA=[];}
+  renderGantt();
+}
 
 function ganttMove(dir){
   ganttMonth += dir;
   if(ganttMonth > 11){ganttMonth=0; ganttYear++;}
   if(ganttMonth < 0){ganttMonth=11; ganttYear--;}
-  renderGantt();
+  loadGanttMonth();
 }
 function ganttGoToday(){
   ganttYear = new Date().getFullYear();
   ganttMonth = new Date().getMonth();
-  renderGantt();
+  loadGanttMonth();
+}
+function ganttOpenBooking(id){
+  const r=GANTT_RAW.find(x=>String(x.id)===String(id));
+  if(r){SOL_CUR=r;openSol(id);}
 }
 
 function renderGantt(){
@@ -3963,7 +4003,7 @@ function renderGantt(){
       let cellContent = '';
       bookings.forEach(b => {
         const tt = encodeURIComponent(JSON.stringify({name:b.name,hora:b.hora,instr:b.instr,importe:b.importe,status:b.status}));
-        cellContent += `<div class="gantt-bar ${b.status}" data-tt="${tt}" onmouseenter="showGTT(event,this)" onmouseleave="hideGTT()" title="${b.name}">${b.name}</div>`;
+        cellContent += `<div class="gantt-bar ${b.status}" data-tt="${tt}" onmouseenter="showGTT(event,this)" onmouseleave="hideGTT()" onclick="ganttOpenBooking('${b.id}')" title="${esc(b.name)} · ${b.hora}">${esc(b.name)}</div>`;
       });
       html += `<td class="gantt-cell${isToday?' g-today':''}${isWknd?' g-weekend':''}">${cellContent}</td>`;
     }
