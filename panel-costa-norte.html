@@ -1525,11 +1525,36 @@ async function renderDash(){
     if(kpiEl) kpiEl.innerHTML='<div class="kpi"><div class="kpi-lbl">Error cargando datos</div><div class="kpi-val">—</div></div>';
   }
 
-  // Classes today — empty until we have class schedule DB
+  // Clases de hoy — reservas reales del día
   const classTbody = document.getElementById('dash-classes');
-  if(classTbody) classTbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:24px;">Sin clases programadas hoy</td></tr>';
   const classCount = document.getElementById('classes-today-count');
-  if(classCount) classCount.textContent='0 clases';
+  try {
+    const tomorrow = new Date(Date.now()+86400000).toISOString().slice(0,10);
+    const {data:todayRows} = await SB.from('appointments').select('client_name,service,starts_at,status,notes')
+      .eq('business_slug','costa-norte').gte('starts_at', today).lt('starts_at', tomorrow)
+      .neq('status','cancelled').order('starts_at',{ascending:true});
+    const rows = todayRows || [];
+    if(classCount) classCount.textContent = rows.length+' clases';
+    if(classTbody){
+      classTbody.innerHTML = rows.length ? rows.map(r=>{
+        const hora = new Date(r.starts_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false});
+        const row = classifyServiceToRow(r.service);
+        const tipo = (GANTT_ROWS.find(x=>x.id===row)||{}).label || r.service || '—';
+        let notesObj={};try{notesObj=JSON.parse(r.notes||'{}');}catch{}
+        const estado = r.status==='pending'?'<span class="tag tag-warn">Pendiente</span>':'<span class="tag tag-ok">Confirmada</span>';
+        return `<tr>
+          <td><strong>${hora}</strong></td>
+          <td>${esc(tipo)}</td>
+          <td>${esc(notesObj.nivel||'—')}</td>
+          <td>${esc(r.client_name||'—')}</td>
+          <td>${estado}</td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:24px;">Sin clases programadas hoy</td></tr>';
+    }
+  } catch(e){
+    if(classTbody) classTbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:24px;">Sin clases programadas hoy</td></tr>';
+    if(classCount) classCount.textContent='0 clases';
+  }
 }
 
 function renderAgenda(){
@@ -2002,19 +2027,19 @@ async function savePack(i){
 async function deletePack(i){if(confirm('¿Eliminar pack?')){const p=PACKS[i];await sbDelete('cn_packs',p.id);PACKS.splice(i,1);toast('Pack eliminado');closeModal();renderPacks();}}
 
 function renderInstructors(){
-  document.getElementById('instructors-grid').innerHTML=INSTRUCTORS.map((ins,i)=>`
-    <div onclick="editInstructor(${i})" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;cursor:pointer;transition:all .2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 36px rgba(0,0,0,.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-      <div style="aspect-ratio:1/1;background:url('${ins.img}') center/cover;background-color:var(--sand);"></div>
-      <div style="padding:14px;">
-        <div style="font-family:var(--display);font-size:16px;font-weight:600;color:var(--txt);">${ins.name}</div>
-        <div style="font-size:10px;letter-spacing:.2em;color:var(--coral);text-transform:uppercase;font-weight:700;margin:3px 0 8px;">${ins.role}</div>
+  document.getElementById('instructors-grid').innerHTML=INSTRUCTORS.map((ins,i)=>{
+    const exp = ins.exp&&ins.exp!=='null' ? `<span><strong style="color:var(--txt);">${esc(ins.exp)}</strong> exp.</span>` : '<span></span>';
+    const cert = ins.cert&&ins.cert!=='null' ? `<div style="font-size:10px;letter-spacing:.1em;color:var(--txt3);text-transform:uppercase;font-weight:600;margin-top:4px;">${esc(ins.cert)}</div>` : '';
+    return `
+    <div onclick="editInstructor(${i})" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;cursor:pointer;transition:all .2s;padding:14px;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 36px rgba(0,0,0,.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div style="font-family:var(--display);font-size:16px;font-weight:600;color:var(--txt);">${esc(ins.name)}</div>
+        <div style="font-size:10px;letter-spacing:.2em;color:var(--coral);text-transform:uppercase;font-weight:700;margin:3px 0 8px;">${esc(ins.role||'Monitor')}</div>
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);padding:8px 0;border-top:1px solid var(--border2);">
-          <span><strong style="color:var(--txt);">${ins.exp}</strong> exp.</span>
-          <span><strong style="color:var(--txt);">${ins.rating}</strong>★ · ${ins.classes} clases</span>
+          ${exp}
+          <span><strong style="color:var(--txt);">${ins.rating||5}</strong>★ · ${ins.classes||0} clases</span>
         </div>
-        <div style="font-size:10px;letter-spacing:.1em;color:var(--txt3);text-transform:uppercase;font-weight:600;margin-top:4px;">${ins.cert}</div>
-      </div>
-    </div>`).join('');
+        ${cert}
+      </div>`;}).join('');
 }
 function editInstructor(i){
   const ins=INSTRUCTORS[i];
@@ -4352,7 +4377,7 @@ function renderGantt(){
       bookings.forEach(b => {
         const tt = encodeURIComponent(JSON.stringify({name:b.name,hora:b.hora,instr:b.instr,importe:b.importe,pago:b.pago,tipo:(GANTT_ROWS.find(r=>r.id===b.row)||{}).label||b.row}));
         const grupo=ganttGrupoLetra(d,slotIdx,b.row);
-        cellContent += `<div class="gantt-bar" style="background:${TYPE_COLORS[b.row]}" data-tt="${tt}" draggable="true" ondragstart="ganttDragStart(event,'${b.id}')" onmouseenter="showGTT(event,this)" onmouseleave="hideGTT()" onclick="ganttOpenBooking('${b.id}')" title="${esc(b.name)} · ${b.hora} · Grupo ${grupo}">
+        cellContent += `<div class="gantt-bar" style="background:${TYPE_COLORS[b.row]}" data-tt="${tt}" draggable="true" ondragstart="ganttDragStart(event,'${b.id}')" onmouseenter="showGTT(event,this)" onmouseleave="hideGTT()" onclick="ganttOpenBooking('${b.id}')">
           <span class="gantt-bar-badge">${paymentBadgeSVG(b.pago)}</span>
           <span class="gantt-bar-hora">${esc(b.hora)} · Grupo ${grupo}</span>${esc(b.name)}
         </div>`;
