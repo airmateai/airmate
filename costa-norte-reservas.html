@@ -276,6 +276,24 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
           </div>
         </div>
 
+        <div class="field" id="field-personas" style="display:none;">
+          <label>Numero de personas</label>
+          <div class="nivel-row">
+            <div class="nivel-opt sel" id="np-1" onclick="selPersonas(1,this)">
+              <div class="nivel-name">1 persona</div>
+              <div class="nivel-desc">75&euro; / clase</div>
+            </div>
+            <div class="nivel-opt" id="np-2" onclick="selPersonas(2,this)">
+              <div class="nivel-name">2 personas</div>
+              <div class="nivel-desc">60&euro; / clase c/u</div>
+            </div>
+            <div class="nivel-opt" id="np-3" onclick="selPersonas(3,this)">
+              <div class="nivel-name">3 personas</div>
+              <div class="nivel-desc">50&euro; / clase c/u</div>
+            </div>
+          </div>
+        </div>
+
         <div class="field">
           <label>Selecciona tus fechas</label>
           <div class="cal-wrap">
@@ -463,7 +481,7 @@ const FRANJAS=[
 ];
 
 // franjasPorDia: { 'YYYY-MM-DD': {id, hora} }
-let S={tipo:'surf',nivel:'Iniciacion',rangeStart:null,rangeEnd:null,franjasPorDia:{},ocupacionPorDia:{}};
+let S={tipo:'surf',nivel:'Iniciacion',personas:1,rangeStart:null,rangeEnd:null,franjasPorDia:{},ocupacionPorDia:{}};
 let calYear, calMonth;
 
 // ── INIT (al final del script) ──
@@ -560,10 +578,16 @@ function selTipo(t,el){
   document.querySelectorAll('.tipo-opt').forEach(x=>x.classList.remove('sel'));
   el.classList.add('sel');
   document.getElementById('field-nivel').style.display=(t==='sup'||t==='surfskate')?'none':'';
+  document.getElementById('field-personas').style.display=(t==='particular')?'':'none';
 }
 function selNivel(n,el){
   S.nivel=n;
-  document.querySelectorAll('.nivel-opt').forEach(x=>x.classList.remove('sel'));
+  document.querySelectorAll('#field-nivel .nivel-opt').forEach(x=>x.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function selPersonas(n,el){
+  S.personas=n;
+  document.querySelectorAll('#field-personas .nivel-opt').forEach(x=>x.classList.remove('sel'));
   el.classList.add('sel');
 }
 
@@ -679,6 +703,7 @@ function irPaso3(){
   document.getElementById('resumen-body').innerHTML=[
     {l:'Tipo de clase',v:tipoLabels[S.tipo]},
     {l:'Nivel',v:(S.tipo==='surf'||S.tipo==='particular')?S.nivel:'—'},
+    ...(S.tipo==='particular'?[{l:'Numero de personas',v:S.personas}]:[]),
     {l:'Dias',v:days+' dia'+(days>1?'s':'')},
     {l:'Horarios',v:horariosResumen},
     {l:'Nombre completo',v:nombre+' '+apellidos},
@@ -735,7 +760,7 @@ async function enviar(){
   // Calcular presupuesto total (se guarda solo en la primera fila para no duplicar en el sumatorio del dashboard)
   const TARIFAS_PRE={
     surf:{Iniciacion:{1:35,2:65,3:85,4:113,5:140,6:163,7:185,8:200,9:215,10:230,11:242,12:254,13:266,14:278,15:290,16:308,17:326,18:344,19:362,20:380},Avanzado:{1:50,2:100,5:175,7:280,15:390,20:500}},
-    particular:{1:75,2:145},
+    particular:{1:{1:75,2:145},2:{1:60,2:115},3:{1:50,2:90}},
     sup:{1:35,5:140},
     surfskate:{1:20,4:75,8:135}
   };
@@ -746,7 +771,10 @@ async function enviar(){
     const t=TARIFAS_PRE.surf[nv];const k=closestTierPre(Object.keys(t).map(Number),days);
     presupTotal=t[k];
   }else if(S.tipo==='particular'){
-    const k=closestTierPre([1,2],days);presupTotal=TARIFAS_PRE.particular[k]*days;
+    const personas=Math.min(Math.max(S.personas||1,1),3);
+    const t=TARIFAS_PRE.particular[personas];
+    const k=closestTierPre(Object.keys(t).map(Number),days);
+    presupTotal=t[k]*personas;
   }else if(S.tipo==='sup'){
     const k=closestTierPre([1,5],days);presupTotal=TARIFAS_PRE.sup[k];
   }else if(S.tipo==='surfskate'){
@@ -764,7 +792,7 @@ async function enviar(){
       client_name:nombre+(apellidos?' '+apellidos:''),
       client_phone:tel,
       client_email:email,
-      service:tipoLabels[S.tipo]+(S.nivel&&(S.tipo==='surf'||S.tipo==='particular')?' - '+S.nivel:''),
+      service:tipoLabels[S.tipo]+(S.nivel&&(S.tipo==='surf'||S.tipo==='particular')?' - '+S.nivel:'')+(S.tipo==='particular'?' ('+S.personas+' persona'+(S.personas>1?'s':'')+')':''),
       duration_minutes:120,
       starts_at:startsAt.toISOString(),
       ends_at:endsAt.toISOString(),
