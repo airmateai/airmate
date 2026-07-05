@@ -77,12 +77,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   box-shadow:0 32px 80px rgba(0,0,0,.45);
 }
 .login-mark{
-  width:64px;height:64px;border-radius:50%;
-  background:#fff;display:grid;place-items:center;margin:0 auto 18px;
+  width:110px;height:110px;border-radius:0;
+  background:transparent;display:grid;place-items:center;margin:0 auto 18px;
   font-family:var(--display);font-weight:700;color:var(--sand);font-size:18px;letter-spacing:.04em;
-  box-shadow:0 2px 8px rgba(10,37,64,.15);overflow:hidden;
 }
-.login-mark img{width:100%;height:100%;object-fit:contain;padding:4px;box-sizing:border-box;}
+.login-mark img{width:100%;height:100%;object-fit:contain;}
 .login-name{font-family:var(--display);font-size:28px;font-weight:600;color:var(--ocean);text-align:center;line-height:1.05;}
 .login-name em{font-style:italic;color:var(--coral);font-family:var(--serif);font-weight:500;}
 .login-sub{text-align:center;font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--ocean-mid);font-weight:600;margin-top:6px;margin-bottom:30px;}
@@ -104,8 +103,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   display:flex;flex-direction:column;overflow:hidden;
 }
 .sb-brand{padding:22px 24px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.08);}
-.sb-logo{width:38px;height:38px;border-radius:50%;background:#fff;color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:13px;overflow:hidden;flex-shrink:0;}
-.sb-logo img{width:100%;height:100%;object-fit:contain;padding:2px;box-sizing:border-box;}
+.sb-logo{width:64px;height:64px;border-radius:0;background:transparent;color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:13px;overflow:visible;flex-shrink:0;}
+.sb-logo img{width:100%;height:100%;object-fit:contain;filter:brightness(0) invert(1);}
 .sb-name{font-family:var(--display);font-size:16px;font-weight:600;color:#fff;letter-spacing:-.01em;line-height:1.1;}
 .sb-name span{display:block;font-family:var(--sans);font-size:9px;font-weight:600;color:rgba(245,237,214,.55);letter-spacing:.18em;text-transform:uppercase;margin-top:2px;}
 .sb-nav{flex:1;overflow-y:auto;padding:12px 12px 80px;}
@@ -1173,12 +1172,26 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
     <!-- PAGINA AJUSTES -->
     <div id="page-ajustes" class="page">
       <div class="page-hd">
-        <div><h1>Ajustes</h1><div class="page-sub">Monitores del equipo</div></div>
-        <div class="page-hd-actions">
-          <button class="btn btn-primary" onclick="newInstructor()">+ Nuevo monitor</button>
-        </div>
+        <div><h1>Ajustes <em>del panel</em></h1><div class="page-sub">Configuración general de Costa Norte</div></div>
       </div>
-      <div id="instructors-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
+      <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0;">
+        <button class="aj-tab active" id="aj-tab-monitores" onclick="ajustesTab('monitores')" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:var(--ink);border-bottom:2px solid var(--coral);cursor:pointer;">Monitores</button>
+        <button class="aj-tab" id="aj-tab-general" onclick="ajustesTab('general')" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;">General</button>
+      </div>
+
+      <div id="aj-sec-monitores" class="aj-section">
+        <div class="page-hd" style="padding:0 0 16px;">
+          <div><h2 style="font-family:var(--display);font-size:18px;font-weight:700;">Monitores del equipo</h2></div>
+          <div class="page-hd-actions">
+            <button class="btn btn-primary" onclick="newInstructor()">+ Nuevo monitor</button>
+          </div>
+        </div>
+        <div id="instructors-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
+      </div>
+
+      <div id="aj-sec-general" class="aj-section" style="display:none;">
+        <div style="font-size:13px;color:var(--txt3);padding:20px 0;">Próximamente: datos del negocio, horarios de apertura, precios y otras opciones generales.</div>
+      </div>
     </div>
 
     <!-- PAGINA SOLICITUDES (dentro del main) -->
@@ -2098,6 +2111,15 @@ async function saveNewStudent(){
   let row=await sbInsert('cn_alumnos',{...s,historial:'[]'});
   if(!row) row=await sbInsert('cn_alumnos',s);
   if(row){STUDENTS.push(row);toast('✓ Alumno añadido');closeModal();renderStudents();}
+}
+
+function ajustesTab(tab){
+  document.querySelectorAll('.aj-tab').forEach(b=>{b.classList.remove('active');b.style.color='var(--txt3)';b.style.borderBottomColor='transparent';});
+  document.querySelectorAll('.aj-section').forEach(s=>s.style.display='none');
+  const btn=document.getElementById('aj-tab-'+tab);
+  if(btn){btn.classList.add('active');btn.style.color='var(--ink)';btn.style.borderBottomColor='var(--coral)';}
+  const sec=document.getElementById('aj-sec-'+tab);
+  if(sec)sec.style.display='';
 }
 
 function newInstructor(){
@@ -4108,28 +4130,43 @@ function renderDayPanel(){
     if(notesObj.payment_status==='confirmed')return {bg:'#f0fdf4',color:'#16a34a',label:'Pagado'};
     return {bg:'#fef9c3',color:'#ca8a04',label:'Pendiente'};
   };
+  // Horario tipo agenda: horas fijas a la izquierda, reservas encajadas en su hora
+  const HOUR_START=8, HOUR_END=21;
+  const byHour={};
+  items.forEach(r=>{
+    const h=new Date(r.starts_at).getHours();
+    if(!byHour[h])byHour[h]=[];
+    byHour[h].push(r);
+  });
+  let hoursHtml='';
+  for(let h=HOUR_START; h<=HOUR_END; h++){
+    const hLabel=String(h).padStart(2,'0')+':00';
+    const bookings=byHour[h]||[];
+    hoursHtml+=`<div style="display:flex;border-bottom:1px solid var(--border2);min-height:38px;">
+      <div style="width:48px;flex-shrink:0;font-size:11px;color:var(--txt3);font-weight:600;padding:6px 8px 6px 0;text-align:right;">${hLabel}</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px;padding:4px 0;">
+        ${bookings.map(r=>{
+          const dtr=new Date(r.starts_at);
+          const hora=dtr.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false});
+          let notesObj={};try{notesObj=JSON.parse(r.notes||'{}');}catch{}
+          const row=classifyServiceToRow(r.service);
+          const pill=statusPill(r);
+          return `<div onclick="ganttOpenBooking('${r.id}')" style="background:#fff;border-left:3px solid ${pill.color};border-radius:6px;padding:6px 9px;cursor:pointer;box-shadow:0 1px 2px rgba(10,37,64,.06);">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+              <strong style="font-size:12px;color:var(--ink);">${hora} · ${esc(r.client_name||'—')}</strong>
+              <span style="font-size:9px;font-weight:700;padding:1px 7px;border-radius:20px;background:${pill.bg};color:${pill.color};white-space:nowrap;">${pill.label}</span>
+            </div>
+            <div style="font-size:10.5px;color:var(--txt3);margin-top:2px;">${esc(rowLabel(row))} · ${esc(notesObj.instructor||'Sin monitor')}</div>
+            ${Array.isArray(notesObj.ninos)&&notesObj.ninos.length?`<div style="font-size:10.5px;color:var(--txt2);margin-top:2px;">Niños: ${notesObj.ninos.map(esc).join(', ')}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
   panel.innerHTML=`
     <div style="font-family:var(--display);font-weight:700;font-size:14px;color:var(--ink);text-transform:capitalize;margin-bottom:2px;">${esc(dayLabel)}</div>
     <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">${items.length} reserva${items.length!==1?'s':''}</div>
-    <div style="display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto;">
-    ${items.length?items.map(r=>{
-      const dtr=new Date(r.starts_at);
-      const hora=dtr.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false});
-      let notesObj={};try{notesObj=JSON.parse(r.notes||'{}');}catch{}
-      const row=classifyServiceToRow(r.service);
-      const pill=statusPill(r);
-      return `<div onclick="ganttOpenBooking('${r.id}')" style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;">
-          <strong style="font-size:13px;color:var(--ink);">${hora}</strong>
-          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${pill.bg};color:${pill.color};">${pill.label}</span>
-        </div>
-        <div style="font-size:13px;font-weight:600;color:var(--ink);margin-top:4px;">${esc(r.client_name||'—')}</div>
-        <div style="font-size:11px;color:var(--txt3);margin-top:2px;">${esc(rowLabel(row))} · ${esc(notesObj.instructor||'Sin monitor')}</div>
-        ${Array.isArray(notesObj.ninos)&&notesObj.ninos.length?`<div style="font-size:11px;color:var(--txt2);margin-top:4px;padding-top:4px;border-top:1px dashed var(--border);">Niños: ${notesObj.ninos.map(esc).join(', ')}</div>`:''}
-        ${r.budget?`<div style="font-size:11px;color:var(--txt2);margin-top:2px;font-weight:600;">€${r.budget}</div>`:''}
-      </div>`;
-    }).join(''):'<div style="font-size:12px;color:var(--txt3);text-align:center;padding:20px 0;">Sin reservas este día</div>'}
-    </div>
+    <div style="max-height:560px;overflow-y:auto;border:1px solid var(--border2);border-radius:8px;">${hoursHtml}</div>
   `;
 }
 
