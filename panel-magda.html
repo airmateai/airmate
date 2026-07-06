@@ -1394,6 +1394,9 @@ function diffDays(a,b) {
   const d1 = new Date(a), d2 = new Date(b);
   return Math.round((d2-d1)/(1000*60*60*24));
 }
+function localYMD(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 function monthName(m) {
   return ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][m];
 }
@@ -1812,7 +1815,7 @@ function renderCalendario() {
     const s = new Date(b.starts_at);
     const e = new Date(b.ends_at);
     for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)){
-      const k=d.toISOString().slice(0,10);
+      const k=localYMD(d);
       dayMap[k]={status:'bloqueado',name:parseNotes(b.notes||'').notas||'Bloqueado',id:b.id,type:'block'};
     }
   });
@@ -1821,7 +1824,7 @@ function renderCalendario() {
     const s = new Date(r.starts_at);
     const e = new Date(r.ends_at);
     for(let d=new Date(s);d<e;d.setDate(d.getDate()+1)){
-      const k=d.toISOString().slice(0,10);
+      const k=localYMD(d);
       // Don't overwrite confirmed with other
       if(!dayMap[k]||dayMap[k].status==='bloqueado'&&r.status!=='cancelada') {
         if(r.status!=='cancelada'||!dayMap[k]) {
@@ -1840,7 +1843,7 @@ function renderCalendario() {
 
   for(let d=1;d<=lastDay.getDate();d++) {
     const date = new Date(calYear,calMonth,d);
-    const k = date.toISOString().slice(0,10);
+    const k = localYMD(date);
     const info = dayMap[k];
     const isToday = date.getTime()===today.getTime();
     const cls = info?info.status:'libre';
