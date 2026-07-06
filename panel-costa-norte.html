@@ -4111,6 +4111,7 @@ function addIntegranteAGrupo(){
     monitor:notes.instructor
   });
 }
+const RATIO_MAX_GRUPO=7;
 async function saveManualReserva(){
   const nombre=cv('mr-nombre').trim();
   if(!nombre){toast('⚠ Falta el nombre del cliente');return;}
@@ -4121,6 +4122,13 @@ async function saveManualReserva(){
   const pagado=document.getElementById('mr-pagado').checked;
   const startsAt=new Date(fecha+'T'+hora+':00');
   const endsAt=new Date(startsAt.getTime()+2*60*60*1000);
+  const miRowChk=classifyServiceToRow(tipo==='Clase Privada'?'Clase particular':tipo);
+  const yaEnGrupo=GANTT_RAW.filter(r=>r.status!=='cancelled' && new Date(r.starts_at).getTime()===startsAt.getTime() && classifyServiceToRow(r.service)===miRowChk)
+    .reduce((sum,r)=>{let n={};try{n=JSON.parse(r.notes||'{}');}catch{}return sum+_bookingHeadcount(r,n);},0);
+  if(yaEnGrupo+personas>RATIO_MAX_GRUPO){
+    toast(`⚠ Ya has superado el ratio (${yaEnGrupo}+${personas} > ${RATIO_MAX_GRUPO} por grupo). Abre otro grupo con otro monitor.`,'error');
+    return;
+  }
   const serviceLabel=(tipo==='Clase Privada'?'Clase particular':'Surf - '+tipo)+' ('+personas+' persona'+(personas>1?'s':'')+')';
   const notes={source:'manual',dias_totales:1,instructor:(monitor&&!monitor.startsWith('—'))?monitor:null,edad:edad||null,idioma:idioma||null,payment_status:pagado?'confirmed':undefined};
   try{
@@ -4523,7 +4531,7 @@ function renderClassesKPIs(){
     let notesObj={};try{notesObj=JSON.parse(r.notes||'{}');}catch{}
     alumnos+=_bookingHeadcount(r,notesObj);
   });
-  const CAPACIDAD_MAX=6;
+  const CAPACIDAD_MAX=7;
   const ocupacion=activas.length?Math.min(100,Math.round(alumnos/(activas.length*CAPACIDAD_MAX)*100)):0;
   const vals=grid.querySelectorAll('.kpi-val');
   if(vals[0])vals[0].textContent=activas.length;
