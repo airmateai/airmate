@@ -1806,18 +1806,18 @@ function renderCalendario() {
   // Build day map from reservations
   const dayMap = {}; // 'YYYY-MM-DD' -> {status, name, id, ...}
 
-  // Include blocks from leads
-  const blocks = allLeads.filter(l=>l.status==='bloqueado');
+  // Bloqueos guardados como reservas (client_name === 'BLOQUEADO')
+  const blocks = allReservas.filter(r=>r.client_name==='BLOQUEADO');
   blocks.forEach(b=>{
-    const s = new Date(b.starts_at||b.created_at);
-    const e = new Date(b.ends_at||b.created_at);
+    const s = new Date(b.starts_at);
+    const e = new Date(b.ends_at);
     for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)){
       const k=d.toISOString().slice(0,10);
-      dayMap[k]={status:'bloqueado',name:parseNotes(b.message||'').notas||b.message||'Bloqueado',id:b.id,type:'lead'};
+      dayMap[k]={status:'bloqueado',name:parseNotes(b.notes||'').notas||'Bloqueado',id:b.id,type:'block'};
     }
   });
 
-  allReservas.forEach(r=>{
+  allReservas.filter(r=>r.client_name!=='BLOQUEADO').forEach(r=>{
     const s = new Date(r.starts_at);
     const e = new Date(r.ends_at);
     for(let d=new Date(s);d<e;d.setDate(d.getDate()+1)){
@@ -1894,14 +1894,16 @@ function showCalPopover(e, dateKey, id, type) {
     e.currentTarget.style.position='relative';
     e.currentTarget.appendChild(pop);
     setTimeout(()=>document.addEventListener('click',()=>document.querySelectorAll('.popover').forEach(p=>p.remove()),{once:true}),10);
-  } else if(type==='lead') {
-    info = allLeads.find(l=>l.id==id);
+  } else if(type==='block') {
+    info = allReservas.find(r=>r.id==id);
     if(!info) return;
+    const p = parseNotes(info.notes||'');
     const pop = document.createElement('div');
     pop.className = 'popover';
     pop.innerHTML = `
-      <div class="popover-name">🔒 ${esc(info.name||'Bloqueado')}</div>
-      <div class="popover-row">Motivo: ${esc(info.message||'—')}</div>
+      <div class="popover-name">🔒 Bloqueado</div>
+      <div class="popover-row">📅 ${fmtDate(info.starts_at)} → ${fmtDate(info.ends_at)}</div>
+      <div class="popover-row">Motivo: ${esc(p.notas||'—')}</div>
       <div style="margin-top:8px;">
         <button class="btn btn-danger btn-sm" onclick="deleteBloqueo('${id}');document.querySelectorAll('.popover').forEach(p=>p.remove())">Desbloquear</button>
       </div>
@@ -1914,10 +1916,10 @@ function showCalPopover(e, dateKey, id, type) {
 
 async function deleteBloqueo(id) {
   if(!confirm('¿Eliminar este bloqueo?')) return;
-  const {error} = await _sb.from('leads').delete().eq('id',id);
+  const {error} = await _sb.from('appointments').delete().eq('id',id);
   if(error){toast('Error al eliminar','error');return;}
   toast('Bloqueo eliminado');
-  await loadLeads();
+  await loadReservas();
   renderCalendario();
   renderKanban();
 }
@@ -2180,21 +2182,21 @@ async function saveBloqueo() {
   if(diffDays(inicio,fin)<0){toast('La fecha fin debe ser posterior al inicio','error');return;}
 
   const payload = {
-    name: '[BLOQUEO]',
-    phone: '',
-    email: '',
-    message: motivo,
-    status: 'bloqueado',
     business_slug: SLUG,
+    client_name: 'BLOQUEADO',
+    service: 'Estancia bungalow',
+    duration_minutes: 0,
     starts_at: inicio,
-    ends_at: fin
+    ends_at: fin,
+    status: 'confirmada',
+    notes: `importe:0|personas:0|canal:bloqueado|notas:${motivo}`
   };
 
-  const {error} = await _sb.from('leads').insert(payload);
+  const {error} = await _sb.from('appointments').insert(payload);
   if(error){toast('Error al bloquear: '+error.message,'error');return;}
   toast('Fechas bloqueadas');
   closeModal('modal-bloqueo');
-  await loadLeads();
+  await loadReservas();
   renderCalendario();
 }
 
