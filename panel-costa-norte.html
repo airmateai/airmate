@@ -3978,10 +3978,11 @@ async function syncAlumnoFromSolicitud(r){
 
 function monitoresOcupadosEnFranja(startsAt,endsAt,miRow,miHora){
   const s=new Date(startsAt).getTime(), e=new Date(endsAt).getTime();
+  const miHoraMs=miHora?new Date(miHora).getTime():null;
   const ocupados=new Set();
   GANTT_RAW.forEach(r=>{
     if(r.status==='cancelled')return;
-    if(r.starts_at===miHora && classifyServiceToRow(r.service)===miRow)return; // mismo grupo, no cuenta como ocupado
+    if(miHoraMs!=null && new Date(r.starts_at).getTime()===miHoraMs && classifyServiceToRow(r.service)===miRow)return; // mismo grupo, no cuenta como ocupado
     const rs=new Date(r.starts_at).getTime(), re=new Date(r.ends_at).getTime();
     if(s<re && e>rs){
       let n={};try{n=JSON.parse(r.notes||'{}');}catch{}
@@ -4089,9 +4090,9 @@ function newManualReserva(prefill){
   openModal(lock?'+ Añadir integrante al grupo':'+ Nueva clase',`
     ${lock?`<div style="background:#eef2ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#4338ca;font-weight:600;margin-bottom:4px;">Se añadirá a la clase de ${tipoDef} del ${fechaDef} a las ${horaDef}</div>`:''}
     ${fRow(fLbl('Cliente')+fInp('mr-nombre',''), fLbl('Teléfono')+fInp('mr-tel',''))}
-    ${fRow(fLbl('Email')+fInp('mr-email','','email'), fLbl('Tipo de clase')+(lock?`<input type="hidden" id="mr-tipo" value="${esc(tipoDef)}">`+fInp('mr-tipo-ro',tipoDef).replace('id="mr-tipo-ro"','disabled'):fSel('mr-tipo',tipoDef,TIPOS_CLASE_MANUAL)))}
+    ${fRow(fLbl('Email')+fInp('mr-email','','email'), fLbl('Tipo de clase')+(lock?`<input type="hidden" id="mr-tipo" value="${esc(tipoDef)}">`+fInp('mr-tipo-ro',tipoDef).replace('id="mr-tipo-ro"','disabled'):fSel('mr-tipo',tipoDef,TIPOS_CLASE_MANUAL).replace('<select','<select onchange="mrRefreshMonitorOpts()"')))}
     ${fRow(fLbl('Monitor')+fSel('mr-monitor',monitorDef,monitorOpts), fLbl('Nº personas')+fInp('mr-personas','1','number'))}
-    ${fRow(fLbl('Fecha')+(lock?`<input type="hidden" id="mr-fecha" value="${fechaDef}">`+fInp('mr-fecha-ro',fechaDef,'date').replace('id="mr-fecha-ro"','disabled'):fInp('mr-fecha',fechaDef,'date')), fLbl('Hora')+(lock?`<input type="hidden" id="mr-hora" value="${horaDef}">`+fInp('mr-hora-ro',horaDef).replace('id="mr-hora-ro"','disabled'):fSel('mr-hora',horaDef,TIME_SLOTS.map(s=>String(s.s).padStart(2,'0')+':00'))))}
+    ${fRow(fLbl('Fecha')+(lock?`<input type="hidden" id="mr-fecha" value="${fechaDef}">`+fInp('mr-fecha-ro',fechaDef,'date').replace('id="mr-fecha-ro"','disabled'):fInp('mr-fecha',fechaDef,'date').replace('<input','<input onchange="mrRefreshMonitorOpts()"')), fLbl('Hora')+(lock?`<input type="hidden" id="mr-hora" value="${horaDef}">`+fInp('mr-hora-ro',horaDef).replace('id="mr-hora-ro"','disabled'):fSel('mr-hora',horaDef,TIME_SLOTS.map(s=>String(s.s).padStart(2,'0')+':00')).replace('<select','<select onchange="mrRefreshMonitorOpts()"')))}
     ${fRow(fLbl('Edad')+fInp('mr-edad','','number','30'), fLbl('Idioma')+fSel('mr-idioma','Español',['Español','Inglés','Francés','Alemán','Otro']))}
     ${fLbl('Importe (€)')+fInp('mr-importe','0','number')}
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:600;cursor:pointer;">
@@ -4099,6 +4100,24 @@ function newManualReserva(prefill){
     </label>
     ${fActions(lock?'Añadir al grupo':'Crear reserva','saveManualReserva()')}
   `);
+  mrRefreshMonitorOpts();
+}
+function mrRefreshMonitorOpts(){
+  const sel=document.getElementById('mr-monitor');
+  if(!sel)return;
+  const fecha=cv('mr-fecha'),hora=cv('mr-hora');
+  if(!fecha||!hora)return;
+  const startsAt=new Date(fecha+'T'+hora+':00');
+  const endsAt=new Date(startsAt.getTime()+2*60*60*1000);
+  const tipo=cv('mr-tipo');
+  const miRow=tipo?classifyServiceToRow(tipo==='Clase Privada'?'Clase particular':tipo):null;
+  const ocupados=monitoresOcupadosEnFranja(startsAt,endsAt,miRow,startsAt.toISOString());
+  const actual=sel.value;
+  Array.from(sel.options).forEach(opt=>{
+    const ocupado=ocupados.has(opt.value)&&opt.value!==actual;
+    opt.disabled=ocupado;
+    opt.text=opt.value+(ocupado?' (ocupado a esta hora)':'');
+  });
 }
 function addIntegranteAGrupo(){
   if(!SOL_CUR)return;
@@ -4465,10 +4484,31 @@ function renderDayPanel(){
       </div>
     </div>`;
   });
+  // Monitores del día — cuántas clases lleva cada uno hoy
+  const clasesPorMonitor={};
+  items.forEach(r=>{
+    if(r.status==='cancelled')return;
+    let n={};try{n=JSON.parse(r.notes||'{}');}catch{}
+    (n.instructor||'').split(',').map(x=>x.trim()).filter(Boolean).forEach(mon=>{
+      clasesPorMonitor[mon]=(clasesPorMonitor[mon]||0)+1;
+    });
+  });
+  const monitoresHtml=INSTRUCTORS.map(ins=>{
+    const n=clasesPorMonitor[ins.name]||0;
+    const sobrecargado=n>=4;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:11.5px;">
+      <span style="color:var(--txt2);">${esc(ins.name)}</span>
+      <span style="font-weight:700;padding:2px 8px;border-radius:10px;background:${n===0?'#e5f6ec':sobrecargado?'#fef2f2':'#eef2ff'};color:${n===0?'#16a34a':sobrecargado?'#dc2626':'#4338ca'};">${n} clase${n!==1?'s':''}</span>
+    </div>`;
+  }).join('');
   panel.innerHTML=`
     <div style="font-family:var(--display);font-weight:700;font-size:14px;color:var(--ink);text-transform:capitalize;margin-bottom:2px;">${esc(dayLabel)}</div>
     <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">${items.length} reserva${items.length!==1?'s':''}</div>
-    <div style="max-height:560px;overflow-y:auto;border:1px solid var(--border2);border-radius:8px;">${slotsHtml}</div>
+    <div style="max-height:340px;overflow-y:auto;border:1px solid var(--border2);border-radius:8px;">${slotsHtml}</div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border2);">
+      <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Monitores hoy</div>
+      ${monitoresHtml||'<div style="font-size:11.5px;color:var(--txt3);">Sin monitores</div>'}
+    </div>
   `;
 }
 
