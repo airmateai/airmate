@@ -584,6 +584,12 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 .gantt-row-label{padding:12px 14px;font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;border-right:1px solid var(--border);background:var(--sand-lt);position:sticky;left:0;z-index:1;}
 .gantt-row-label small{display:block;font-size:10px;font-weight:400;color:var(--txt3);margin-top:2px;}
 .gantt-cell{border-right:1px solid var(--border2);position:relative;min-height:54px;cursor:pointer;padding:4px;overflow:visible;vertical-align:top;}
+.gantt-cell.cell-selected{background:rgba(29,111,184,.16)!important;box-shadow:inset 0 0 0 2px var(--ocean);}
+.ctx-menu{position:fixed;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.2);z-index:500;min-width:220px;padding:6px;font-size:13px;}
+.ctx-menu button{display:block;width:100%;text-align:left;padding:9px 12px;border:none;background:none;border-radius:6px;cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;color:var(--ink);}
+.ctx-menu button:hover{background:var(--sand);}
+.ctx-menu .ctx-sep{height:1px;background:var(--border2);margin:4px 0;}
+.ctx-menu .ctx-hd{padding:6px 12px 4px;font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;}
 .gantt-cell-inner{display:flex;flex-direction:column;gap:3px;}
 .gantt-cell:hover{background:rgba(93,189,211,.07);}
 .gantt-cell.g-today{background:rgba(255,94,58,.04);}
@@ -4109,6 +4115,19 @@ async function updateSolStatus(status){
   closeSolDetail();
 }
 
+async function deleteSolPermanente(){
+  if(!SOL_CUR)return;
+  if(!confirm('¿Eliminar esta reserva del planning para siempre? Esta acción no se puede deshacer.'))return;
+  const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
+    method:'DELETE',
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}
+  });
+  if(!res.ok){toast('⚠ Error al eliminar');return;}
+  toast('✓ Reserva eliminada');
+  closeSolDetail();
+  renderSolicitudes();
+  if(document.getElementById('gantt-wrap'))await loadGanttMonth();
+}
 function solParseNotes(n){try{return JSON.parse(n)||{};}catch{return{};}}
 
 function solSetFilter(btn,f){
@@ -4214,6 +4233,7 @@ function solSetFilter(btn,f){
         <button onclick="updateSolStatus('confirmed')" style="padding:12px;background:#0f2240;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Marcar como confirmada</button>
         <button onclick="updateSolStatus('contacted')" style="padding:12px;background:#eff6ff;color:#1d6fb8;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Marcar como contactado</button>
         <button onclick="updateSolStatus('cancelled')" style="padding:12px;background:#fef2f2;color:#dc2626;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Cancelar solicitud</button>
+        <button onclick="deleteSolPermanente()" style="padding:12px;background:#fff;color:#dc2626;border:1.5px solid #dc2626;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">🗑 Eliminar definitivamente</button>
       </div>
     </div>
   </div>
@@ -4250,6 +4270,73 @@ function bloqueoFor(day,slotIdx){
 function bloqueoBadge(b){
   const labels={bloqueado:'🔒 Bloqueado',idioma:'🌐 '+(b.valor||''),edad:'🧒 ≤'+(b.valor||'')};
   return labels[b.restriccion]||b.restriccion;
+}
+
+// ═══════════ SELECCIÓN MÚLTIPLE DE FRANJAS + MENÚ CONTEXTUAL ═══════════
+let _cellSel = new Set();
+function ganttCellClick(e,day,slotIdx){
+  if(e.target.closest('.gantt-bar'))return; // clic en una reserva, no en la celda vacía
+  const key=day+'-'+slotIdx;
+  if(e.ctrlKey||e.metaKey||e.shiftKey||_cellSel.size>0){
+    if(_cellSel.has(key))_cellSel.delete(key); else _cellSel.add(key);
+    renderGantt();
+  }
+}
+function ganttCellContext(e,day,slotIdx){
+  e.preventDefault();
+  closeCtxMenu();
+  const key=day+'-'+slotIdx;
+  let cells;
+  if(_cellSel.size>0 && _cellSel.has(key)){
+    cells=[..._cellSel];
+  } else if(_cellSel.size>0){
+    cells=[..._cellSel];
+  } else {
+    cells=[key];
+  }
+  const n=cells.length;
+  const menu=document.createElement('div');
+  menu.className='ctx-menu';
+  menu.id='gantt-ctx-menu';
+  menu.style.left=e.clientX+'px';
+  menu.style.top=e.clientY+'px';
+  menu.innerHTML=`
+    <div class="ctx-hd">${n>1?n+' franjas seleccionadas':slotLabel(slotIdx)}</div>
+    <button onclick="ctxAplicarBloqueo('bloqueado')">🔒 Bloquear ${n>1?'selección':'esta franja'}</button>
+    <button onclick="ctxAplicarBloqueo('idioma')">🌐 Restringir por idioma</button>
+    <button onclick="ctxAplicarBloqueo('edad')">🧒 Restringir por edad</button>
+    <div class="ctx-sep"></div>
+    ${_cellSel.size>0?`<button onclick="_cellSel.clear();renderGantt();closeCtxMenu();">✕ Cancelar selección (${_cellSel.size})</button>`:`<button onclick="_cellSel.add('${key}');renderGantt();closeCtxMenu();">☑ Añadir a selección múltiple</button>`}
+  `;
+  document.body.appendChild(menu);
+  window._ctxCells=cells;
+  setTimeout(()=>document.addEventListener('click',closeCtxMenu,{once:true}),10);
+  return false;
+}
+function closeCtxMenu(){document.getElementById('gantt-ctx-menu')?.remove();}
+async function ctxAplicarBloqueo(restriccion){
+  const cells=window._ctxCells||[];
+  closeCtxMenu();
+  if(!cells.length)return;
+  let valor=null;
+  if(restriccion==='idioma'){valor=prompt('¿Solo qué idioma puede reservar esta franja? (ej. Inglés)');if(!valor)return;}
+  else if(restriccion==='edad'){valor=prompt('Edad máxima permitida en esta franja (ej. 12)');if(!valor)return;}
+  const rows=cells.map(k=>{
+    const [day,slotIdx]=k.split('-').map(Number);
+    const fecha=`${ganttYear}-${String(ganttMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    return {business_slug:'costa-norte',fecha,hora:TIME_SLOTS[slotIdx].s,restriccion,valor};
+  });
+  try{
+    const res=await fetch(`${SB_URL_SOL}/rest/v1/cn_bloqueos_horario`,{
+      method:'POST',
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify(rows)
+    });
+    if(!res.ok){toast('⚠ Error al bloquear');return;}
+    toast('✓ '+rows.length+' franja(s) actualizadas');
+  }catch(e){toast('⚠ Error al bloquear');return;}
+  _cellSel.clear();
+  await loadGanttMonth();
 }
 function slotIndexForHour(h){
   let idx=TIME_SLOTS.findIndex(sl=>sl.s===h);
@@ -4561,7 +4648,9 @@ function renderGantt(){
           <span class="gantt-bar-hora">${esc(b.hora)} · Grupo ${grupo}${b.numNinos!=null?' · '+b.numNinos+' niños':''}</span>${esc(b.name)}
         </div>`;
       });
-      html += `<td class="gantt-cell${isToday?' g-today':''}${isWknd?' g-weekend':''}" ondragover="event.preventDefault()" ondrop="ganttDropOnDay(event,${d},${slotIdx})"><div class="gantt-cell-inner">${cellContent}</div></td>`;
+      const cellKey=d+'-'+slotIdx;
+      const isSelCell=_cellSel.has(cellKey);
+      html += `<td class="gantt-cell${isToday?' g-today':''}${isWknd?' g-weekend':''}${isSelCell?' cell-selected':''}" data-cellkey="${cellKey}" ondragover="event.preventDefault()" ondrop="ganttDropOnDay(event,${d},${slotIdx})" onclick="ganttCellClick(event,${d},${slotIdx})" oncontextmenu="return ganttCellContext(event,${d},${slotIdx})"><div class="gantt-cell-inner">${cellContent}</div></td>`;
     }
     html += '</tr>';
   });
