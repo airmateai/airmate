@@ -3896,13 +3896,18 @@ async function openSol(id){
     ...(notes.notas_cliente?[{l:'Notas',v:notes.notas_cliente}]:[]),
   ].map(x=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #eef1f6;font-size:13px"><span style="color:#4a5568">${esc(x.l)}</span><span style="font-weight:600;color:#0f1923;text-align:right;max-width:58%;word-break:break-all">${esc(x.v)}</span></div>`).join('');
 
+  const monitorActual=notes.instructor||'— Sin asignar —';
+  const miRowSel=classifyServiceToRow(r.service);
+  const ocupados=monitoresOcupadosEnFranja(r.starts_at,r.ends_at,miRowSel,r.starts_at);
   const monitorOpts=['— Sin asignar —',...INSTRUCTORS.map(x=>x.name)];
-  const monitorActual=notes.instructor||monitorOpts[0];
   document.getElementById('sol-detail-rows').innerHTML += `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;font-size:13px;gap:10px;">
       <span style="color:#4a5568;flex-shrink:0;">Monitor asignado</span>
       <div style="display:flex;gap:6px;">
-        <select id="sol-monitor-sel" style="padding:6px 8px;border:1px solid #dde3ec;border-radius:6px;font-size:12px;">${monitorOpts.map(m=>`<option value="${esc(m)}" ${m===monitorActual?'selected':''}>${esc(m)}</option>`).join('')}</select>
+        <select id="sol-monitor-sel" style="padding:6px 8px;border:1px solid #dde3ec;border-radius:6px;font-size:12px;">${monitorOpts.map(m=>{
+          const ocupado=ocupados.has(m)&&m!==monitorActual;
+          return `<option value="${esc(m)}" ${m===monitorActual?'selected':''} ${ocupado?'disabled':''}>${esc(m)}${ocupado?' (ocupado a esta hora)':''}</option>`;
+        }).join('')}</select>
         <button onclick="saveMonitorAsignado()" style="padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;border:none;background:#0f2240;color:#fff;cursor:pointer;">Guardar</button>
       </div>
     </div>`;
@@ -3971,6 +3976,20 @@ async function syncAlumnoFromSolicitud(r){
   }catch(e){console.error('syncAlumnoFromSolicitud',e);}
 }
 
+function monitoresOcupadosEnFranja(startsAt,endsAt,miRow,miHora){
+  const s=new Date(startsAt).getTime(), e=new Date(endsAt).getTime();
+  const ocupados=new Set();
+  GANTT_RAW.forEach(r=>{
+    if(r.status==='cancelled')return;
+    if(r.starts_at===miHora && classifyServiceToRow(r.service)===miRow)return; // mismo grupo, no cuenta como ocupado
+    const rs=new Date(r.starts_at).getTime(), re=new Date(r.ends_at).getTime();
+    if(s<re && e>rs){
+      let n={};try{n=JSON.parse(r.notes||'{}');}catch{}
+      if(n.instructor)ocupados.add(n.instructor);
+    }
+  });
+  return ocupados;
+}
 async function saveMonitorAsignado(){
   if(!SOL_CUR)return;
   const sel=document.getElementById('sol-monitor-sel');
