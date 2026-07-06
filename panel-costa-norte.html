@@ -4078,25 +4078,26 @@ async function saveCampamento(){
     if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
   }catch(e){console.error('saveCampamento',e);toast('⚠ Error al crear el campamento');}
 }
-function newManualReserva(grupoFijo){
+function newManualReserva(prefill){
   const monitorOpts=['— Sin asignar —',...INSTRUCTORS.map(x=>x.name)];
-  const fijo=!!grupoFijo;
-  const fechaDef=fijo?grupoFijo.fecha:new Date().toISOString().slice(0,10);
-  const horaDef=fijo?grupoFijo.hora:'09:00';
-  const tipoDef=fijo?grupoFijo.tipo:'Iniciación';
-  const monitorDef=fijo&&grupoFijo.monitor?grupoFijo.monitor:monitorOpts[0];
-  openModal(fijo?'+ Añadir integrante al grupo':'+ Nueva reserva manual',`
-    ${fijo?`<div style="background:#eef2ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#4338ca;font-weight:600;margin-bottom:4px;">Se añadirá a la clase de ${tipoDef} del ${fechaDef} a las ${horaDef}</div>`:''}
+  const p=prefill||{};
+  const lock=!!p.lock;
+  const fechaDef=p.fecha||new Date().toISOString().slice(0,10);
+  const horaDef=p.hora||'09:00';
+  const tipoDef=p.tipo||'Iniciación';
+  const monitorDef=p.monitor||monitorOpts[0];
+  openModal(lock?'+ Añadir integrante al grupo':'+ Nueva clase',`
+    ${lock?`<div style="background:#eef2ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#4338ca;font-weight:600;margin-bottom:4px;">Se añadirá a la clase de ${tipoDef} del ${fechaDef} a las ${horaDef}</div>`:''}
     ${fRow(fLbl('Cliente')+fInp('mr-nombre',''), fLbl('Teléfono')+fInp('mr-tel',''))}
-    ${fRow(fLbl('Email')+fInp('mr-email','','email'), fLbl('Tipo de clase')+(fijo?`<input type="hidden" id="mr-tipo" value="${esc(tipoDef)}">`+fInp('mr-tipo-ro',tipoDef).replace('id="mr-tipo-ro"','disabled'):fSel('mr-tipo','Iniciación',TIPOS_CLASE_MANUAL)))}
+    ${fRow(fLbl('Email')+fInp('mr-email','','email'), fLbl('Tipo de clase')+(lock?`<input type="hidden" id="mr-tipo" value="${esc(tipoDef)}">`+fInp('mr-tipo-ro',tipoDef).replace('id="mr-tipo-ro"','disabled'):fSel('mr-tipo',tipoDef,TIPOS_CLASE_MANUAL)))}
     ${fRow(fLbl('Monitor')+fSel('mr-monitor',monitorDef,monitorOpts), fLbl('Nº personas')+fInp('mr-personas','1','number'))}
-    ${fRow(fLbl('Fecha')+(fijo?`<input type="hidden" id="mr-fecha" value="${fechaDef}">`+fInp('mr-fecha-ro',fechaDef,'date').replace('id="mr-fecha-ro"','disabled'):fInp('mr-fecha',fechaDef,'date')), fLbl('Hora')+(fijo?`<input type="hidden" id="mr-hora" value="${horaDef}">`+fInp('mr-hora-ro',horaDef).replace('id="mr-hora-ro"','disabled'):fSel('mr-hora','09:00',TIME_SLOTS.map(s=>String(s.s).padStart(2,'0')+':00'))))}
+    ${fRow(fLbl('Fecha')+(lock?`<input type="hidden" id="mr-fecha" value="${fechaDef}">`+fInp('mr-fecha-ro',fechaDef,'date').replace('id="mr-fecha-ro"','disabled'):fInp('mr-fecha',fechaDef,'date')), fLbl('Hora')+(lock?`<input type="hidden" id="mr-hora" value="${horaDef}">`+fInp('mr-hora-ro',horaDef).replace('id="mr-hora-ro"','disabled'):fSel('mr-hora',horaDef,TIME_SLOTS.map(s=>String(s.s).padStart(2,'0')+':00'))))}
     ${fRow(fLbl('Edad')+fInp('mr-edad','','number','30'), fLbl('Idioma')+fSel('mr-idioma','Español',['Español','Inglés','Francés','Alemán','Otro']))}
     ${fLbl('Importe (€)')+fInp('mr-importe','0','number')}
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:600;cursor:pointer;">
       <input type="checkbox" id="mr-pagado" style="width:16px;height:16px;"> Marcar como pagado (cobrado en persona / TPV)
     </label>
-    ${fActions(fijo?'Añadir al grupo':'Crear reserva','saveManualReserva()')}
+    ${fActions(lock?'Añadir al grupo':'Crear reserva','saveManualReserva()')}
   `);
 }
 function addIntegranteAGrupo(){
@@ -4108,7 +4109,8 @@ function addIntegranteAGrupo(){
     fecha:dt.toISOString().slice(0,10),
     hora:String(dt.getHours()).padStart(2,'0')+':00',
     tipo,
-    monitor:notes.instructor
+    monitor:notes.instructor,
+    lock:true
   });
 }
 const RATIO_MAX_GRUPO=7;
@@ -4328,7 +4330,13 @@ function ganttCellClick(e,day,slotIdx){
   if(e.ctrlKey||e.metaKey||e.shiftKey||_cellSel.size>0){
     if(_cellSel.has(key))_cellSel.delete(key); else _cellSel.add(key);
     renderGantt();
+    return;
   }
+  // Clic simple en celda vacía → abrir directamente Nueva clase con esa fecha/hora
+  if(bloqueoFor(day,slotIdx))return; // franja bloqueada, no abrir formulario
+  const fecha=`${ganttYear}-${String(ganttMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  const hora=String(TIME_SLOTS[slotIdx].s).padStart(2,'0')+':00';
+  newManualReserva({fecha,hora});
 }
 function ganttCellContext(e,day,slotIdx){
   e.preventDefault();
