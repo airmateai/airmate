@@ -1071,11 +1071,11 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
           <button class="btn btn-primary" onclick="newClass(0,'10:00')">+ Nueva clase</button>
         </div>
       </div>
-      <div class="kpi-grid">
+      <div class="kpi-grid" id="classes-kpi-grid">
         <div class="kpi"><div class="kpi-lbl">Clases esta semana</div><div class="kpi-val">—</div></div>
         <div class="kpi"><div class="kpi-lbl">Alumnos esta semana</div><div class="kpi-val">—</div></div>
         <div class="kpi"><div class="kpi-lbl">Ocupación clases</div><div class="kpi-val">—</div></div>
-        <div class="kpi"><div class="kpi-lbl">Bonos vendidos</div><div class="kpi-val">—</div></div>
+        <div class="kpi"><div class="kpi-lbl">Pendientes esta semana</div><div class="kpi-val">—</div></div>
       </div>
 
       <!-- Surf conditions today -->
@@ -1179,6 +1179,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       </div>
       <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0;">
         <button class="aj-tab active" id="aj-tab-monitores" onclick="ajustesTab('monitores')" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:var(--ink);border-bottom:2px solid var(--coral);cursor:pointer;">Monitores</button>
+        <button class="aj-tab" id="aj-tab-horarios" onclick="ajustesTab('horarios')" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;">Horarios</button>
         <button class="aj-tab" id="aj-tab-general" onclick="ajustesTab('general')" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;">General</button>
       </div>
 
@@ -1190,6 +1191,26 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
           </div>
         </div>
         <div id="instructors-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
+      </div>
+
+      <div id="aj-sec-horarios" class="aj-section" style="display:none;">
+        <div class="page-hd" style="padding:0 0 16px;">
+          <div><h2 style="font-family:var(--display);font-size:18px;font-weight:700;">Bloqueos y restricciones de horario</h2><div class="page-sub">Bloquea una franja para que no se pueda reservar, o restríngela por idioma/edad para agrupar mejor las clases.</div></div>
+        </div>
+        <div class="card" style="padding:18px;margin-bottom:18px;">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:end;">
+            <div><label style="display:block;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Fecha</label><input type="date" id="blq-fecha" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;"></div>
+            <div><label style="display:block;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Franja</label><select id="blq-hora" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;"></select></div>
+            <div><label style="display:block;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Restricción</label><select id="blq-restriccion" onchange="blqToggleValor()" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;">
+                <option value="bloqueado">Bloquear por completo</option>
+                <option value="idioma">Solo un idioma</option>
+                <option value="edad">Solo hasta cierta edad</option>
+              </select></div>
+            <div id="blq-valor-wrap" style="display:none;"><label id="blq-valor-lbl" style="display:block;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Valor</label><input id="blq-valor" placeholder="" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;"></div>
+            <div><button class="btn btn-primary" onclick="addBloqueoHorario()" style="width:100%;">+ Añadir</button></div>
+          </div>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Franja</th><th>Restricción</th><th></th></tr></thead><tbody id="bloqueos-horario-tbody"></tbody></table></div>
       </div>
 
       <div id="aj-sec-general" class="aj-section" style="display:none;">
@@ -2148,6 +2169,78 @@ function ajustesTab(tab){
   if(btn){btn.classList.add('active');btn.style.color='var(--ink)';btn.style.borderBottomColor='var(--coral)';}
   const sec=document.getElementById('aj-sec-'+tab);
   if(sec)sec.style.display='';
+  if(tab==='horarios')initBloqueosHorarioUI();
+}
+
+// ═══════════ BLOQUEOS / RESTRICCIONES DE HORARIO ═══════════
+let BLOQUEOS_HORARIO=[];
+function initBloqueosHorarioUI(){
+  const sel=document.getElementById('blq-hora');
+  if(sel && !sel.dataset.filled){
+    sel.innerHTML=TIME_SLOTS.map((s,i)=>`<option value="${s.s}">${slotLabel(i)}</option>`).join('');
+    sel.dataset.filled='1';
+  }
+  const fecha=document.getElementById('blq-fecha');
+  if(fecha && !fecha.value)fecha.value=new Date().toISOString().slice(0,10);
+  loadBloqueosHorario();
+}
+function blqToggleValor(){
+  const r=document.getElementById('blq-restriccion').value;
+  const wrap=document.getElementById('blq-valor-wrap');
+  const lbl=document.getElementById('blq-valor-lbl');
+  const inp=document.getElementById('blq-valor');
+  if(r==='bloqueado'){wrap.style.display='none';return;}
+  wrap.style.display='';
+  if(r==='idioma'){lbl.textContent='Idioma';inp.placeholder='Inglés';}
+  else{lbl.textContent='Edad máxima';inp.placeholder='12';}
+}
+async function loadBloqueosHorario(){
+  try{
+    const res=await fetch(`${SB_URL_SOL}/rest/v1/cn_bloqueos_horario?business_slug=eq.costa-norte&order=fecha.asc,hora.asc`,
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+    BLOQUEOS_HORARIO=res.ok?await res.json():[];
+  }catch(e){BLOQUEOS_HORARIO=[];}
+  renderBloqueosHorarioTbody();
+}
+function renderBloqueosHorarioTbody(){
+  const tb=document.getElementById('bloqueos-horario-tbody');
+  if(!tb)return;
+  const labels={bloqueado:'🔒 Bloqueado',idioma:'🌐 Solo idioma',edad:'🧒 Solo hasta edad'};
+  tb.innerHTML=BLOQUEOS_HORARIO.length?BLOQUEOS_HORARIO.map(b=>`<tr>
+    <td>${b.fecha}</td>
+    <td>${String(b.hora).padStart(2,'0')}:00–${String((b.hora+2)%24).padStart(2,'0')}:00</td>
+    <td>${labels[b.restriccion]||b.restriccion}${b.valor?': '+esc(b.valor):''}</td>
+    <td><button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="deleteBloqueoHorario('${b.id}')">Quitar</button></td>
+  </tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--txt3);padding:20px;">Sin bloqueos activos</td></tr>';
+}
+async function addBloqueoHorario(){
+  const fecha=document.getElementById('blq-fecha').value;
+  const hora=+document.getElementById('blq-hora').value;
+  const restriccion=document.getElementById('blq-restriccion').value;
+  const valor=document.getElementById('blq-valor').value.trim();
+  if(!fecha){toast('Selecciona una fecha','error');return;}
+  if(restriccion!=='bloqueado' && !valor){toast('Indica el valor de la restricción','error');return;}
+  try{
+    const res=await fetch(`${SB_URL_SOL}/rest/v1/cn_bloqueos_horario`,{
+      method:'POST',
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({business_slug:'costa-norte',fecha,hora,restriccion,valor:restriccion==='bloqueado'?null:valor})
+    });
+    if(!res.ok){toast('⚠ Error al guardar el bloqueo');return;}
+    toast('✓ Bloqueo guardado');
+    document.getElementById('blq-valor').value='';
+    await loadBloqueosHorario();
+  }catch(e){toast('⚠ Error al guardar el bloqueo');}
+}
+async function deleteBloqueoHorario(id){
+  if(!confirm('¿Quitar este bloqueo?'))return;
+  await fetch(`${SB_URL_SOL}/rest/v1/cn_bloqueos_horario?id=eq.${id}`,{
+    method:'DELETE',
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}
+  });
+  toast('Bloqueo eliminado');
+  if(document.getElementById('bloqueos-horario-tbody'))await loadBloqueosHorario();
+  if(document.getElementById('gantt-wrap'))await loadGanttMonth();
 }
 
 function newInstructor(){
@@ -4147,9 +4240,20 @@ const GANTT_ROWS = [
   {id:'camp',   label:'Campamento',        sub:'Grupo'},
 ];
 const TYPE_COLORS = {inic:'#5dbdd3',perfec:'#3a9bb5',avanz:'#0a2540',priv:'#8b5cf6',sup:'#2dba8a',padel:'#0e9488',camp:'#c9942c'};
-const TIME_SLOTS = [{s:9,e:11},{s:11,e:13},{s:13,e:15},{s:15,e:17},{s:17,e:19},{s:19,e:21}];
+const TIME_SLOTS = [{s:9,e:11},{s:10,e:12},{s:11,e:13},{s:12,e:14},{s:13,e:15},{s:14,e:16},{s:15,e:17},{s:16,e:18},{s:17,e:19},{s:18,e:20}];
+let BLOQUEOS_HORARIO_MES=[];
+function bloqueoFor(day,slotIdx){
+  const fecha=`${ganttYear}-${String(ganttMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  const hora=TIME_SLOTS[slotIdx].s;
+  return BLOQUEOS_HORARIO_MES.find(b=>b.fecha===fecha&&b.hora===hora)||null;
+}
+function bloqueoBadge(b){
+  const labels={bloqueado:'🔒 Bloqueado',idioma:'🌐 '+(b.valor||''),edad:'🧒 ≤'+(b.valor||'')};
+  return labels[b.restriccion]||b.restriccion;
+}
 function slotIndexForHour(h){
-  let idx=TIME_SLOTS.findIndex(sl=>h>=sl.s&&h<sl.e);
+  let idx=TIME_SLOTS.findIndex(sl=>sl.s===h);
+  if(idx<0)idx=TIME_SLOTS.findIndex(sl=>h>=sl.s&&h<sl.e);
   if(idx<0)idx=h<TIME_SLOTS[0].s?0:TIME_SLOTS.length-1;
   return idx;
 }
@@ -4196,9 +4300,11 @@ function renderDayPanel(){
   let slotsHtml='';
   TIME_SLOTS.forEach((sl,slotIdx)=>{
     const bookings=bySlot[slotIdx]||[];
+    const bloqueo=bloqueoFor(ganttSelectedDay,slotIdx);
     slotsHtml+=`<div class="day-hour-row" style="display:flex;border-bottom:1px solid var(--border2);min-height:44px;" ondragover="event.preventDefault()" ondrop="dayPanelDropOnHour(event,${slotIdx})">
       <div style="width:66px;flex-shrink:0;font-size:10.5px;color:var(--txt3);font-weight:600;padding:8px 8px 6px 0;text-align:right;line-height:1.3;">${slotLabel(slotIdx)}</div>
       <div style="flex:1;display:flex;flex-direction:column;gap:4px;padding:4px 0;">
+        ${bloqueo&&!bookings.length?`<div style="background:repeating-linear-gradient(45deg,#9ca3af,#9ca3af 6px,#c1c7d0 6px,#c1c7d0 12px);color:#fff;font-size:10.5px;font-weight:700;border-radius:6px;padding:6px 9px;cursor:pointer;" onclick="deleteBloqueoHorario('${bloqueo.id}')">${esc(bloqueoBadge(bloqueo))} · clic para quitar</div>`:''}
         ${bookings.map(r=>{
           const dtr=new Date(r.starts_at);
           const hora=dtr.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false});
@@ -4241,6 +4347,12 @@ async function loadGanttMonth(silent){
   const first=new Date(ganttYear,ganttMonth,1);
   const last=new Date(ganttYear,ganttMonth+1,0,23,59,59);
   try{
+    const fMin=first.toISOString().slice(0,10), fMax=last.toISOString().slice(0,10);
+    const bres=await fetch(`${SB_URL_SOL}/rest/v1/cn_bloqueos_horario?business_slug=eq.costa-norte&fecha=gte.${fMin}&fecha=lte.${fMax}`,
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+    BLOQUEOS_HORARIO_MES=bres.ok?await bres.json():[];
+  }catch(e){BLOQUEOS_HORARIO_MES=[];}
+  try{
     const res=await fetch(`${SB_URL_SOL}/rest/v1/appointments?business_slug=eq.costa-norte&starts_at=gte.${first.toISOString()}&starts_at=lte.${last.toISOString()}&select=id,client_name,service,starts_at,ends_at,status,budget,notes`,
       {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
     const rows=await res.json();
@@ -4256,12 +4368,75 @@ async function loadGanttMonth(silent){
       let pago='pending';
       if(r.status==='cancelled')pago='cancelled';
       else pago=notesObj.payment_status==='confirmed'?'paid':'pending';
-      return {id:r.id,row,slot:slotIndexForHour(dt.getHours()),day:dt.getDate(),name:r.client_name||'—',hora:dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false}),instr:notesObj.instructor||'Sin asignar',importe:r.budget||0,pago};
+      const numNinos=Array.isArray(notesObj.ninos)?notesObj.ninos.length:null;
+      return {id:r.id,row,slot:slotIndexForHour(dt.getHours()),day:dt.getDate(),name:r.client_name||'—',hora:dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false}),instr:notesObj.instructor||'Sin asignar',importe:r.budget||0,pago,numNinos};
     }).sort((a,b)=>a.hora.localeCompare(b.hora));
   }catch(e){console.error('loadGanttMonth',e);GANTT_DATA=[];}
   renderGantt();
+  renderClassesKPIs();
+  renderClassesCheckin();
 }
 
+function _bookingHeadcount(r,notesObj){
+  if(Array.isArray(notesObj.ninos)&&notesObj.ninos.length)return notesObj.ninos.length;
+  const m=(r.client_name||'').match(/\+(\d+)/);
+  return m?1+parseInt(m[1],10):1;
+}
+function renderClassesKPIs(){
+  const grid=document.getElementById('classes-kpi-grid');
+  if(!grid)return;
+  const now=new Date();
+  const startWeek=new Date(now); startWeek.setDate(now.getDate()-((now.getDay()+6)%7)); startWeek.setHours(0,0,0,0);
+  const endWeek=new Date(startWeek); endWeek.setDate(startWeek.getDate()+7);
+  const inWeek=GANTT_RAW.filter(r=>{const d=new Date(r.starts_at);return d>=startWeek&&d<endWeek;});
+  const activas=inWeek.filter(r=>r.status!=='cancelled');
+  const pendientes=inWeek.filter(r=>r.status==='pending'||r.status==='pendiente');
+  let alumnos=0;
+  activas.forEach(r=>{
+    let notesObj={};try{notesObj=JSON.parse(r.notes||'{}');}catch{}
+    alumnos+=_bookingHeadcount(r,notesObj);
+  });
+  const CAPACIDAD_MAX=6;
+  const ocupacion=activas.length?Math.min(100,Math.round(alumnos/(activas.length*CAPACIDAD_MAX)*100)):0;
+  const vals=grid.querySelectorAll('.kpi-val');
+  if(vals[0])vals[0].textContent=activas.length;
+  if(vals[1])vals[1].textContent=alumnos;
+  if(vals[2])vals[2].textContent=ocupacion+'%';
+  if(vals[3])vals[3].textContent=pendientes.length;
+}
+function renderClassesCheckin(){
+  const tbody=document.getElementById('classes-today-tbody');
+  const meta=document.querySelector('#page-classes .card-hd-meta');
+  if(!tbody)return;
+  const now=new Date();
+  const today=GANTT_RAW.filter(r=>{
+    const d=new Date(r.starts_at);
+    return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate()&&r.status!=='cancelled';
+  }).sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at));
+  if(meta)meta.textContent=today.length+' clases';
+  if(!today.length){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:24px;">Sin clases hoy</td></tr>';
+    return;
+  }
+  tbody.innerHTML=today.map(r=>{
+    let notesObj={};try{notesObj=JSON.parse(r.notes||'{}');}catch{}
+    const row=classifyServiceToRow(r.service);
+    const tipo=(GANTT_ROWS.find(x=>x.id===row)||{}).label||r.service||'—';
+    const hora=new Date(r.starts_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false});
+    const start=new Date(r.starts_at), end=new Date(r.ends_at);
+    const enCurso = now>=start && now<end;
+    const estado = enCurso ? '<span class="tag" style="background:#dbeafe;color:#1d4ed8;">● En curso</span>' : (now>=end ? '<span class="tag tag-ok">Finalizada</span>' : '<span class="tag" style="background:var(--sand);color:var(--txt2);">Próxima</span>');
+    const inscritos=_bookingHeadcount(r,notesObj);
+    return `<tr>
+      <td><strong>${esc(hora)}</strong></td>
+      <td>${esc(tipo)}</td>
+      <td>${esc(notesObj.instructor||'Sin asignar')}</td>
+      <td>${inscritos}</td>
+      <td>${estado}</td>
+      <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="ganttOpenBooking('${r.id}')">Ver</button></td>
+    </tr>`;
+  }).join('');
+}
 function ganttMove(dir){
   ganttMonth += dir;
   if(ganttMonth > 11){ganttMonth=0; ganttYear++;}
@@ -4374,12 +4549,16 @@ function renderGantt(){
       const isWknd = dow===0||dow===6;
       const bookings = dataMap[slotIdx+'-'+d] || [];
       let cellContent = '';
+      const bloqueo = bloqueoFor(d,slotIdx);
+      if(bloqueo && !bookings.length){
+        cellContent += `<div class="gantt-bar" style="background:repeating-linear-gradient(45deg,#9ca3af,#9ca3af 6px,#c1c7d0 6px,#c1c7d0 12px);color:#fff;font-size:9px;font-weight:700;justify-content:center;align-items:center;display:flex;cursor:pointer;" title="${esc(bloqueoBadge(bloqueo))} · clic para quitar" onclick="deleteBloqueoHorario('${bloqueo.id}')">${esc(bloqueoBadge(bloqueo))}</div>`;
+      }
       bookings.forEach(b => {
         const tt = encodeURIComponent(JSON.stringify({name:b.name,hora:b.hora,instr:b.instr,importe:b.importe,pago:b.pago,tipo:(GANTT_ROWS.find(r=>r.id===b.row)||{}).label||b.row}));
         const grupo=ganttGrupoLetra(d,slotIdx,b.row);
         cellContent += `<div class="gantt-bar" style="background:${TYPE_COLORS[b.row]}" data-tt="${tt}" draggable="true" ondragstart="ganttDragStart(event,'${b.id}')" onmouseenter="showGTT(event,this)" onmouseleave="hideGTT()" onclick="ganttOpenBooking('${b.id}')">
           <span class="gantt-bar-badge">${paymentBadgeSVG(b.pago)}</span>
-          <span class="gantt-bar-hora">${esc(b.hora)} · Grupo ${grupo}</span>${esc(b.name)}
+          <span class="gantt-bar-hora">${esc(b.hora)} · Grupo ${grupo}${b.numNinos!=null?' · '+b.numNinos+' niños':''}</span>${esc(b.name)}
         </div>`;
       });
       html += `<td class="gantt-cell${isToday?' g-today':''}${isWknd?' g-weekend':''}" ondragover="event.preventDefault()" ondrop="ganttDropOnDay(event,${d},${slotIdx})"><div class="gantt-cell-inner">${cellContent}</div></td>`;

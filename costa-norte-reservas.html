@@ -290,6 +290,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
           </div>
         </div>
 
+        <div class="field-row">
+          <div class="field"><label>Edad</label><input id="f-edad" type="number" min="1" max="120" placeholder="30" oninput="renderFranjasPorDias()"></div>
+          <div class="field"><label>Idioma</label>
+            <select id="f-idioma" onchange="renderFranjasPorDias()">
+              <option value="Español">Español</option>
+              <option value="Inglés">Inglés</option>
+              <option value="Francés">Francés</option>
+              <option value="Alemán">Alemán</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+        </div>
+
         <div class="field">
           <label>Selecciona tus fechas</label>
           <div class="cal-wrap">
@@ -347,18 +360,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
           <div class="field"><label>Telefono</label><input id="f-tel" type="tel" placeholder="+34 600 000 000" autocomplete="tel"></div>
         </div>
         <div class="field"><label>Correo electronico</label><input id="f-email" type="email" placeholder="correo@ejemplo.com" autocomplete="email"></div>
-        <div class="field-row">
-          <div class="field"><label>Edad</label><input id="f-edad" type="number" min="1" max="120" placeholder="30"></div>
-          <div class="field"><label>Idioma</label>
-            <select id="f-idioma">
-              <option value="Español">Español</option>
-              <option value="Inglés">Inglés</option>
-              <option value="Francés">Francés</option>
-              <option value="Alemán">Alemán</option>
-              <option value="Otro">Otro</option>
-            </select>
-          </div>
-        </div>
         <div class="field">
           <label>Notas adicionales <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--txt3)">(opcional)</span></label>
           <input id="f-notas" placeholder="Menores, alergias, experiencia previa...">
@@ -481,15 +482,20 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const SLUG='costa-norte';
 const AFORO_MAX=10;
 const FRANJAS=[
-  {id:'f1',hora:'09:00',label:'Manana'},
-  {id:'f2',hora:'11:00',label:'Manana'},
-  {id:'f3',hora:'13:00',label:'Mediodia'},
-  {id:'f4',hora:'16:00',label:'Tarde'},
-  {id:'f5',hora:'18:00',label:'Tarde'},
+  {id:'f1',hora:'09:00',fin:'11:00'},
+  {id:'f2',hora:'10:00',fin:'12:00'},
+  {id:'f3',hora:'11:00',fin:'13:00'},
+  {id:'f4',hora:'12:00',fin:'14:00'},
+  {id:'f5',hora:'13:00',fin:'15:00'},
+  {id:'f6',hora:'14:00',fin:'16:00'},
+  {id:'f7',hora:'15:00',fin:'17:00'},
+  {id:'f8',hora:'16:00',fin:'18:00'},
+  {id:'f9',hora:'17:00',fin:'19:00'},
+  {id:'f10',hora:'18:00',fin:'20:00'},
 ];
 
 // franjasPorDia: { 'YYYY-MM-DD': {id, hora} }
-let S={tipo:'surf',nivel:'Iniciacion',personas:1,rangeStart:null,rangeEnd:null,franjasPorDia:{},ocupacionPorDia:{}};
+let S={tipo:'surf',nivel:'Iniciacion',personas:1,rangeStart:null,rangeEnd:null,franjasPorDia:{},ocupacionPorDia:{},bloqueosPorDia:{}};
 let calYear, calMonth;
 
 // ── INIT (al final del script) ──
@@ -632,6 +638,19 @@ async function cargarAforoPorDias(){
     });
     S.ocupacionPorDia=oc;
   }catch(e){S.ocupacionPorDia={}}
+  try{
+    const res2=await fetch(
+      `${SB_URL}/rest/v1/cn_bloqueos_horario?business_slug=eq.${SLUG}&fecha=gte.${fechaMin}&fecha=lte.${fechaMax}&select=fecha,hora,restriccion,valor`,
+      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}
+    );
+    const brows=res2.ok?await res2.json():[];
+    const bl={};
+    brows.forEach(b=>{
+      if(!bl[b.fecha])bl[b.fecha]={};
+      bl[b.fecha][String(b.hora).padStart(2,'0')+':00']={restriccion:b.restriccion,valor:b.valor};
+    });
+    S.bloqueosPorDia=bl;
+  }catch(e){S.bloqueosPorDia={}}
   document.getElementById('franja-loading').classList.add('hidden');
   renderFranjasPorDias();
 }
@@ -642,20 +661,30 @@ const MESES_ES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov
 function renderFranjasPorDias(){
   const dias=getDiasRango();
   const container=document.getElementById('franjas-por-dia');
+  const edad=parseInt(document.getElementById('f-edad')?.value||'',10);
+  const idioma=document.getElementById('f-idioma')?.value||'';
   container.innerHTML=dias.map(ymd=>{
     const d=fromYMD(ymd);
     const label=DIAS_ES[d.getDay()]+' '+d.getDate()+' '+MESES_ES[d.getMonth()];
     const ocDia=S.ocupacionPorDia[ymd]||{};
+    const blDia=S.bloqueosPorDia[ymd]||{};
     const selFranjaId=S.franjasPorDia[ymd]?.id||null;
     const franjas=FRANJAS.map(f=>{
       const ocup=ocDia[f.hora]||0;
-      const llena=ocup>=AFORO_MAX;
+      const restr=blDia[f.hora];
+      let llena=ocup>=AFORO_MAX;
+      let tag=llena?'LLENO':'';
+      if(restr){
+        if(restr.restriccion==='bloqueado'){ llena=true; tag='NO DISPONIBLE'; }
+        else if(restr.restriccion==='idioma' && idioma && restr.valor && idioma.toLowerCase()!==restr.valor.toLowerCase()){ llena=true; tag='Solo '+restr.valor; }
+        else if(restr.restriccion==='edad' && !isNaN(edad) && restr.valor && edad>parseInt(restr.valor,10)){ llena=true; tag='Solo hasta '+restr.valor+' años'; }
+      }
       const dotCount=Math.min(AFORO_MAX,10);
       const dots=Array.from({length:dotCount},(_,i)=>`<div class="af-dot ${i<ocup?(llena?'llena':'ocup'):''}"></div>`).join('');
       return `<div class="franja-opt${llena?' llena':''}${selFranjaId===f.id?' sel':''}" onclick="${llena?'':'selFranjaParaDia(\''+ymd+'\',\''+f.id+'\',\''+f.hora+'\',this)'}">
-        ${llena?'<div class="franja-tag">LLENO</div>':''}
+        ${tag?`<div class="franja-tag">${tag}</div>`:''}
         <div class="franja-hora">${f.hora}</div>
-        <div class="franja-label">${f.label}</div>
+        <div class="franja-label">${f.hora}–${f.fin}</div>
         <div class="franja-aforo">${dots}</div>
       </div>`;
     }).join('');
