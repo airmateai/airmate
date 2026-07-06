@@ -4085,6 +4085,7 @@ function newManualReserva(){
     ${fRow(fLbl('Email')+fInp('mr-email','','email'), fLbl('Tipo de clase')+fSel('mr-tipo','Iniciación',TIPOS_CLASE_MANUAL))}
     ${fRow(fLbl('Monitor')+fSel('mr-monitor',monitorOpts[0],monitorOpts), fLbl('Nº personas')+fInp('mr-personas','1','number'))}
     ${fRow(fLbl('Fecha')+fInp('mr-fecha',new Date().toISOString().slice(0,10),'date'), fLbl('Hora')+fSel('mr-hora','09:00',TIME_SLOTS.map(s=>String(s.s).padStart(2,'0')+':00')))}
+    ${fRow(fLbl('Edad')+fInp('mr-edad','','number','30'), fLbl('Idioma')+fSel('mr-idioma','Español',['Español','Inglés','Francés','Alemán','Otro']))}
     ${fLbl('Importe (€)')+fInp('mr-importe','0','number')}
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:600;cursor:pointer;">
       <input type="checkbox" id="mr-pagado" style="width:16px;height:16px;"> Marcar como pagado (cobrado en persona / TPV)
@@ -4098,11 +4099,12 @@ async function saveManualReserva(){
   const tel=cv('mr-tel'),email=cv('mr-email'),tipo=cv('mr-tipo'),monitor=cv('mr-monitor');
   const personas=+cv('mr-personas')||1,fecha=cv('mr-fecha'),hora=cv('mr-hora')||'09:00';
   const importe=+cv('mr-importe')||0;
+  const edad=cv('mr-edad'),idioma=cv('mr-idioma');
   const pagado=document.getElementById('mr-pagado').checked;
   const startsAt=new Date(fecha+'T'+hora+':00');
   const endsAt=new Date(startsAt.getTime()+2*60*60*1000);
   const serviceLabel=(tipo==='Clase Privada'?'Clase particular':'Surf - '+tipo)+' ('+personas+' persona'+(personas>1?'s':'')+')';
-  const notes={source:'manual',dias_totales:1,instructor:(monitor&&!monitor.startsWith('—'))?monitor:null,payment_status:pagado?'confirmed':undefined};
+  const notes={source:'manual',dias_totales:1,instructor:(monitor&&!monitor.startsWith('—'))?monitor:null,edad:edad||null,idioma:idioma||null,payment_status:pagado?'confirmed':undefined};
   try{
     const res=await fetch(SB_URL_SOL+'/rest/v1/appointments',{
       method:'POST',
