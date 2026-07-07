@@ -3900,20 +3900,41 @@ async function openSol(id){
   const miRowSel=classifyServiceToRow(r.service);
   const ocupados=monitoresOcupadosEnFranja(r.starts_at,r.ends_at,miRowSel,r.starts_at);
   const dispDiaSel=monitoresDisponiblesDia(new Date(r.starts_at).toISOString().slice(0,10));
-  const monitorOpts=['— Sin asignar —',...INSTRUCTORS.map(x=>x.name)];
-  document.getElementById('sol-detail-rows').innerHTML += `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;font-size:13px;gap:10px;">
-      <span style="color:#4a5568;flex-shrink:0;">Monitor asignado</span>
-      <div style="display:flex;gap:6px;">
-        <select id="sol-monitor-sel" style="padding:6px 8px;border:1px solid #dde3ec;border-radius:6px;font-size:12px;">${monitorOpts.map(m=>{
-          if(m.startsWith('—'))return `<option value="${esc(m)}" ${m===monitorActual?'selected':''}>${esc(m)}</option>`;
-          const noTrabajaHoy=dispDiaSel&&!dispDiaSel.has(m);
-          const ocupado=(ocupados.has(m)||noTrabajaHoy)&&m!==monitorActual;
-          return `<option value="${esc(m)}" ${m===monitorActual?'selected':''} ${ocupado?'disabled':''}>${esc(m)}${noTrabajaHoy?' (no trabaja hoy)':ocupado?' (ocupado a esta hora)':''}</option>`;
-        }).join('')}</select>
-        <button onclick="saveMonitorAsignado()" style="padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;border:none;background:#0f2240;color:#fff;cursor:pointer;">Guardar</button>
-      </div>
-    </div>`;
+  const esCampamento=miRowSel==='camp';
+  if(esCampamento){
+    const actuales=(notes.instructor||'').split(',').map(x=>x.trim()).filter(Boolean);
+    document.getElementById('sol-detail-rows').innerHTML += `
+      <div style="padding:9px 0;font-size:13px;">
+        <div style="color:#4a5568;margin-bottom:6px;">Monitores asignados (grupo grande — puedes marcar varios)</div>
+        <div id="sol-monitor-multi" style="display:flex;flex-direction:column;gap:5px;max-height:160px;overflow-y:auto;border:1px solid #eef1f6;border-radius:8px;padding:8px;">
+          ${INSTRUCTORS.map(ins=>{
+            const noTrabajaHoy=dispDiaSel&&!dispDiaSel.has(ins.name);
+            const ocupado=ocupados.has(ins.name)&&!actuales.includes(ins.name);
+            const deshabilitado=noTrabajaHoy||ocupado;
+            return `<label style="display:flex;align-items:center;gap:7px;font-size:12.5px;${deshabilitado?'opacity:.45;':''}cursor:pointer;">
+              <input type="checkbox" value="${esc(ins.name)}" ${actuales.includes(ins.name)?'checked':''} ${deshabilitado?'disabled':''} style="width:14px;height:14px;">
+              ${esc(ins.name)}${noTrabajaHoy?' (no trabaja hoy)':ocupado?' (ocupado)':''}
+            </label>`;
+          }).join('')}
+        </div>
+        <button onclick="saveMonitorAsignado()" style="margin-top:8px;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;border:none;background:#0f2240;color:#fff;cursor:pointer;">Guardar monitores</button>
+      </div>`;
+  } else {
+    const monitorOpts=['— Sin asignar —',...INSTRUCTORS.map(x=>x.name)];
+    document.getElementById('sol-detail-rows').innerHTML += `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;font-size:13px;gap:10px;">
+        <span style="color:#4a5568;flex-shrink:0;">Monitor asignado</span>
+        <div style="display:flex;gap:6px;">
+          <select id="sol-monitor-sel" style="padding:6px 8px;border:1px solid #dde3ec;border-radius:6px;font-size:12px;">${monitorOpts.map(m=>{
+            if(m.startsWith('—'))return `<option value="${esc(m)}" ${m===monitorActual?'selected':''}>${esc(m)}</option>`;
+            const noTrabajaHoy=dispDiaSel&&!dispDiaSel.has(m);
+            const ocupado=(ocupados.has(m)||noTrabajaHoy)&&m!==monitorActual;
+            return `<option value="${esc(m)}" ${m===monitorActual?'selected':''} ${ocupado?'disabled':''}>${esc(m)}${noTrabajaHoy?' (no trabaja hoy)':ocupado?' (ocupado a esta hora)':''}</option>`;
+          }).join('')}</select>
+          <button onclick="saveMonitorAsignado()" style="padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;border:none;background:#0f2240;color:#fff;cursor:pointer;">Guardar</button>
+        </div>
+      </div>`;
+  }
 
   // Presupuesto calculado
   document.getElementById('sol-presup-amount').textContent=presup>0?presup+'€':'Consultar';
@@ -3996,8 +4017,15 @@ function monitoresOcupadosEnFranja(startsAt,endsAt,miRow,miHora){
 }
 async function saveMonitorAsignado(){
   if(!SOL_CUR)return;
-  const sel=document.getElementById('sol-monitor-sel');
-  const monitor=sel.value.startsWith('—')?null:sel.value;
+  const multiWrap=document.getElementById('sol-monitor-multi');
+  let monitor;
+  if(multiWrap){
+    const marcados=Array.from(multiWrap.querySelectorAll('input:checked')).map(x=>x.value);
+    monitor=marcados.length?marcados.join(', '):null;
+  } else {
+    const sel=document.getElementById('sol-monitor-sel');
+    monitor=sel.value.startsWith('—')?null:sel.value;
+  }
   // El monitor se asigna a TODA la clase (mismo dia+hora+tipo), no solo a esta reserva —
   // son grupos con un maximo de plazas, no reservas individuales sueltas.
   const miRow=classifyServiceToRow(SOL_CUR.service);
@@ -4343,7 +4371,20 @@ function monitoresDisponiblesDia(fecha){
   return rows.length?new Set(rows.map(d=>d.monitor)):null; // null = sin configurar ese dia (no filtra)
 }
 async function toggleDisponibilidadMonitor(fecha,monitor,marcar){
-  if(marcar){
+  const yaConfigurado=monitoresDisponiblesDia(fecha)!==null;
+  if(!yaConfigurado && !marcar){
+    // Primer cambio del dia: aun no hay filas (todos "disponibles" por defecto).
+    // Hay que materializar esa lista completa (menos el que se acaba de desmarcar)
+    // para que desmarcar tenga efecto real.
+    const rows=INSTRUCTORS.filter(ins=>ins.name!==monitor).map(ins=>({business_slug:'costa-norte',fecha,monitor:ins.name}));
+    if(rows.length){
+      await fetch(`${SB_URL_SOL}/rest/v1/cn_disponibilidad_dia`,{
+        method:'POST',
+        headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
+        body:JSON.stringify(rows)
+      });
+    }
+  } else if(marcar){
     await fetch(`${SB_URL_SOL}/rest/v1/cn_disponibilidad_dia`,{
       method:'POST',
       headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
@@ -4364,9 +4405,12 @@ async function toggleDisponibilidadMonitor(fecha,monitor,marcar){
   renderDayPanel();
 }
 function bloqueoFor(day,slotIdx){
+  return bloqueosFor(day,slotIdx)[0]||null;
+}
+function bloqueosFor(day,slotIdx){
   const fecha=`${ganttYear}-${String(ganttMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
   const hora=TIME_SLOTS[slotIdx].s;
-  return BLOQUEOS_HORARIO_MES.find(b=>b.fecha===fecha&&b.hora===hora)||null;
+  return BLOQUEOS_HORARIO_MES.filter(b=>b.fecha===fecha&&b.hora===hora);
 }
 function bloqueoBadge(b){
   const labels={bloqueado:'🔒 Bloqueado',idioma:'🌐 '+(b.valor||''),edad:'🧒 ≤'+(b.valor||'')};
@@ -4494,11 +4538,11 @@ function renderDayPanel(){
   let slotsHtml='';
   TIME_SLOTS.forEach((sl,slotIdx)=>{
     const bookings=bySlot[slotIdx]||[];
-    const bloqueo=bloqueoFor(ganttSelectedDay,slotIdx);
+    const bloqueosSlot=bloqueosFor(ganttSelectedDay,slotIdx);
     slotsHtml+=`<div class="day-hour-row" style="display:flex;border-bottom:1px solid var(--border2);min-height:44px;" ondragover="event.preventDefault()" ondrop="dayPanelDropOnHour(event,${slotIdx})">
       <div style="width:66px;flex-shrink:0;font-size:10.5px;color:var(--txt3);font-weight:600;padding:8px 8px 6px 0;text-align:right;line-height:1.3;">${slotLabel(slotIdx)}</div>
       <div style="flex:1;display:flex;flex-direction:column;gap:4px;padding:4px 0;">
-        ${bloqueo?`<div style="background:repeating-linear-gradient(45deg,#9ca3af,#9ca3af 6px,#c1c7d0 6px,#c1c7d0 12px);color:#fff;font-size:10.5px;font-weight:700;border-radius:6px;padding:6px 9px;cursor:pointer;" onclick="deleteBloqueoHorario('${bloqueo.id}')">${esc(bloqueoBadge(bloqueo))} · clic para quitar${bookings.length?' (hay reservas ya en esta franja)':''}</div>`:''}
+        ${bloqueosSlot.map(bl=>`<div style="background:repeating-linear-gradient(45deg,#9ca3af,#9ca3af 6px,#c1c7d0 6px,#c1c7d0 12px);color:#fff;font-size:10.5px;font-weight:700;border-radius:6px;padding:6px 9px;cursor:pointer;" onclick="deleteBloqueoHorario('${bl.id}')">${esc(bloqueoBadge(bl))} · clic para quitar${bookings.length?' (hay reservas ya en esta franja)':''}</div>`).join('')}
         ${bookings.map(r=>{
           const dtr=new Date(r.starts_at);
           const hora=dtr.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false});
@@ -4742,6 +4786,8 @@ function ganttGrupoLetra(day,slot,row){
 function renderGantt(){
   const wrap = document.getElementById('gantt-wrap');
   if(!wrap) return;
+  const scrollBox = document.getElementById('gantt-scroll');
+  const scrollLeftPrev = scrollBox?scrollBox.scrollLeft:0;
 
   const today = new Date();
   const daysInMonth = new Date(ganttYear, ganttMonth+1, 0).getDate();
@@ -4778,10 +4824,12 @@ function renderGantt(){
       const isWknd = dow===0||dow===6;
       const bookings = dataMap[slotIdx+'-'+d] || [];
       let cellContent = '';
-      const bloqueo = bloqueoFor(d,slotIdx);
-      if(bloqueo){
-        const alto=bookings.length?'18px':'100%';
-        cellContent += `<div style="background:repeating-linear-gradient(45deg,#9ca3af,#9ca3af 6px,#c1c7d0 6px,#c1c7d0 12px);color:#fff;font-size:9px;font-weight:700;justify-content:center;align-items:center;display:flex;cursor:pointer;border-radius:4px;height:${alto};margin-bottom:2px;" title="${esc(bloqueoBadge(bloqueo))} · clic para quitar" onclick="event.stopPropagation();deleteBloqueoHorario('${bloqueo.id}')">${esc(bloqueoBadge(bloqueo))}</div>`;
+      const bloqueosCelda = bloqueosFor(d,slotIdx);
+      if(bloqueosCelda.length){
+        const alto=bookings.length?'18px':(Math.floor(100/bloqueosCelda.length)+'%');
+        bloqueosCelda.forEach(bl=>{
+          cellContent += `<div style="background:repeating-linear-gradient(45deg,#9ca3af,#9ca3af 6px,#c1c7d0 6px,#c1c7d0 12px);color:#fff;font-size:9px;font-weight:700;justify-content:center;align-items:center;display:flex;cursor:pointer;border-radius:4px;height:${alto};margin-bottom:2px;" title="${esc(bloqueoBadge(bl))} · clic para quitar" onclick="event.stopPropagation();deleteBloqueoHorario('${bl.id}')">${esc(bloqueoBadge(bl))}</div>`;
+        });
       }
       bookings.forEach(b => {
         const tt = encodeURIComponent(JSON.stringify({name:b.name,hora:b.hora,instr:b.instr,importe:b.importe,pago:b.pago,tipo:(GANTT_ROWS.find(r=>r.id===b.row)||{}).label||b.row}));
@@ -4800,6 +4848,7 @@ function renderGantt(){
 
   html += '</tbody></table>';
   wrap.innerHTML = html;
+  if(scrollBox)scrollBox.scrollLeft=scrollLeftPrev;
   if(ganttSelectedDay>daysInMonth)ganttSelectedDay=daysInMonth;
   renderDayPanel();
 }
