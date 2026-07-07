@@ -853,7 +853,7 @@ async function enviar(){
         }).reduce((s,r)=>s+headcountDe(r.service,r.notes),0);
         const cumple=!g.restriccion||
           (g.restriccion==='idioma' && (!idioma||!g.valor||idioma.toLowerCase()===g.valor.toLowerCase())) ||
-          (g.restriccion==='edad' && (!edad||!g.valor||parseInt(edad,10)<=parseInt(g.valor,10)));
+          (g.restriccion==='edad' && !!edad && (!g.valor||parseInt(edad,10)<=parseInt(g.valor,10)));
         if(cumple && ocGrupo+S.personas<=AFORO_MAX){ grupoElegido=g.letra; break; }
       }
       if(!grupoElegido){
@@ -868,10 +868,17 @@ async function enviar(){
         let letra='A';
         for(let i=0;i<26;i++){const l=String.fromCharCode(65+i);if(!letrasUsadas.includes(l)){letra=l;break;}}
         grupoElegido=letra;
+        // Restriccion automatica del grupo nuevo segun quien lo abre: si es un nino (<14 años)
+        // el grupo queda marcado para menores, para que solo entren otros ninos y los adultos
+        // generen su propio grupo aparte; si reserva en un idioma distinto del español, el
+        // grupo queda marcado con ese idioma para que el equipo asigne un monitor que lo hable.
+        let restriccionAuto=null, valorAuto=null;
+        if(edad && parseInt(edad,10)<14){ restriccionAuto='edad'; valorAuto='13'; }
+        else if(idioma && idioma!=='Español'){ restriccionAuto='idioma'; valorAuto=idioma; }
         await fetch(`${SB_URL}/rest/v1/cn_grupos_horario`,{
           method:'POST',
           headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
-          body:JSON.stringify({business_slug:SLUG,fecha:ymd,hora:horaNum,tipo:miRow,letra})
+          body:JSON.stringify({business_slug:SLUG,fecha:ymd,hora:horaNum,tipo:miRow,letra,restriccion:restriccionAuto,valor:valorAuto})
         });
       }
       grupoPorDia[ymd]=grupoElegido;
