@@ -1133,7 +1133,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
           <div id="gantt-scroll" style="overflow-x:auto;flex:1;min-width:0;">
             <div id="gantt-wrap"></div>
           </div>
-          <div id="gantt-day-panel" style="width:260px;flex-shrink:0;border-left:1px solid var(--border);padding:16px;background:var(--sand-lt);max-height:640px;overflow-y:auto;"></div>
+          <div id="gantt-day-panel" style="width:260px;flex-shrink:0;border-left:1px solid var(--border);padding:16px;background:var(--sand-lt);height:640px;overflow-y:auto;box-sizing:border-box;"></div>
         </div>
       </div>
 
@@ -1204,16 +1204,11 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
           <div><h2 style="font-family:var(--display);font-size:18px;font-weight:700;">Bloqueos y restricciones de horario</h2><div class="page-sub">Bloquea una franja para que no se pueda reservar, o restríngela por idioma/edad para agrupar mejor las clases.</div></div>
         </div>
         <div class="card" style="padding:18px;margin-bottom:18px;">
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:end;">
+          <div style="font-size:12px;color:var(--txt3);margin-bottom:12px;">Esto bloquea la franja entera (nadie puede reservar esa hora). Para restringir por idioma o edad, hazlo al grupo concreto desde "+ Nueva clase" o al abrirse automáticamente al reservar.</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:end;">
             <div><label style="display:block;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Fecha</label><input type="date" id="blq-fecha" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;"></div>
             <div><label style="display:block;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Franja</label><select id="blq-hora" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;"></select></div>
-            <div><label style="display:block;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Restricción</label><select id="blq-restriccion" onchange="blqToggleValor()" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;">
-                <option value="bloqueado">Bloquear por completo</option>
-                <option value="idioma">Solo un idioma</option>
-                <option value="edad">Solo hasta cierta edad</option>
-              </select></div>
-            <div id="blq-valor-wrap" style="display:none;"><label id="blq-valor-lbl" style="display:block;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Valor</label><input id="blq-valor" placeholder="" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;"></div>
-            <div><button class="btn btn-primary" onclick="addBloqueoHorario()" style="width:100%;">+ Añadir</button></div>
+            <div><button class="btn btn-primary" onclick="addBloqueoHorario()" style="width:100%;">🔒 Bloquear franja completa</button></div>
           </div>
         </div>
         <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Franja</th><th>Restricción</th><th></th></tr></thead><tbody id="bloqueos-horario-tbody"></tbody></table></div>
@@ -2190,16 +2185,6 @@ function initBloqueosHorarioUI(){
   if(fecha && !fecha.value)fecha.value=new Date().toISOString().slice(0,10);
   loadBloqueosHorario();
 }
-function blqToggleValor(){
-  const r=document.getElementById('blq-restriccion').value;
-  const wrap=document.getElementById('blq-valor-wrap');
-  const lbl=document.getElementById('blq-valor-lbl');
-  const inp=document.getElementById('blq-valor');
-  if(r==='bloqueado'){wrap.style.display='none';return;}
-  wrap.style.display='';
-  if(r==='idioma'){lbl.textContent='Idioma';inp.placeholder='Inglés';}
-  else{lbl.textContent='Edad máxima';inp.placeholder='12';}
-}
 async function loadBloqueosHorario(){
   try{
     const res=await fetch(`${SB_URL_SOL}/rest/v1/cn_bloqueos_horario?business_slug=eq.costa-norte&order=fecha.asc,hora.asc`,
@@ -2222,19 +2207,15 @@ function renderBloqueosHorarioTbody(){
 async function addBloqueoHorario(){
   const fecha=document.getElementById('blq-fecha').value;
   const hora=+document.getElementById('blq-hora').value;
-  const restriccion=document.getElementById('blq-restriccion').value;
-  const valor=document.getElementById('blq-valor').value.trim();
   if(!fecha){toast('Selecciona una fecha','error');return;}
-  if(restriccion!=='bloqueado' && !valor){toast('Indica el valor de la restricción','error');return;}
   try{
     const res=await fetch(`${SB_URL_SOL}/rest/v1/cn_bloqueos_horario`,{
       method:'POST',
       headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({business_slug:'costa-norte',fecha,hora,restriccion,valor:restriccion==='bloqueado'?null:valor})
+      body:JSON.stringify({business_slug:'costa-norte',fecha,hora,restriccion:'bloqueado',valor:null})
     });
     if(!res.ok){toast('⚠ Error al guardar el bloqueo');return;}
-    toast('✓ Bloqueo guardado');
-    document.getElementById('blq-valor').value='';
+    toast('✓ Franja bloqueada');
     await loadBloqueosHorario();
   }catch(e){toast('⚠ Error al guardar el bloqueo');}
 }
@@ -4439,11 +4420,13 @@ function gruposDeFranja(fecha,hora,tipo){
   return GRUPOS_HORARIO_MES.filter(g=>g.fecha===fecha&&g.hora===hora&&g.tipo===tipo);
 }
 async function crearGrupoHorario(fecha,hora,tipo,letra,restriccion,valor){
-  await fetch(`${SB_URL_SOL}/rest/v1/cn_grupos_horario`,{
+  const r=await fetch(`${SB_URL_SOL}/rest/v1/cn_grupos_horario`,{
     method:'POST',
     headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
     body:JSON.stringify({business_slug:'costa-norte',fecha,hora,tipo,letra,restriccion:restriccion||null,valor:valor||null})
   });
+  if(!r.ok)toast('⚠ Error al crear el grupo (revisa permisos de la tabla cn_grupos_horario)','error');
+  return r.ok;
 }
 function siguienteLetraGrupo(fecha,hora,tipo){
   const existentes=gruposDeFranja(fecha,hora,tipo).map(g=>g.letra);
@@ -4462,23 +4445,26 @@ async function toggleDisponibilidadMonitor(fecha,monitor,marcar){
     // para que desmarcar tenga efecto real.
     const rows=INSTRUCTORS.filter(ins=>ins.name!==monitor).map(ins=>({business_slug:'costa-norte',fecha,monitor:ins.name}));
     if(rows.length){
-      await fetch(`${SB_URL_SOL}/rest/v1/cn_disponibilidad_dia`,{
+      const r=await fetch(`${SB_URL_SOL}/rest/v1/cn_disponibilidad_dia`,{
         method:'POST',
         headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
         body:JSON.stringify(rows)
       });
+      if(!r.ok){toast('⚠ Error al guardar disponibilidad (revisa permisos de la tabla)','error');return;}
     }
   } else if(marcar){
-    await fetch(`${SB_URL_SOL}/rest/v1/cn_disponibilidad_dia`,{
+    const r=await fetch(`${SB_URL_SOL}/rest/v1/cn_disponibilidad_dia`,{
       method:'POST',
       headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
       body:JSON.stringify({business_slug:'costa-norte',fecha,monitor})
     });
+    if(!r.ok){toast('⚠ Error al guardar disponibilidad (revisa permisos de la tabla)','error');return;}
   } else {
-    await fetch(`${SB_URL_SOL}/rest/v1/cn_disponibilidad_dia?business_slug=eq.costa-norte&fecha=eq.${fecha}&monitor=eq.${encodeURIComponent(monitor)}`,{
+    const r=await fetch(`${SB_URL_SOL}/rest/v1/cn_disponibilidad_dia?business_slug=eq.costa-norte&fecha=eq.${fecha}&monitor=eq.${encodeURIComponent(monitor)}`,{
       method:'DELETE',
       headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}
     });
+    if(!r.ok){toast('⚠ Error al guardar disponibilidad (revisa permisos de la tabla)','error');return;}
   }
   try{
     const res=await fetch(`${SB_URL_SOL}/rest/v1/cn_disponibilidad_dia?business_slug=eq.costa-norte&fecha=eq.${fecha}`,
@@ -4537,9 +4523,7 @@ function ganttCellContext(e,day,slotIdx){
   menu.style.top=e.clientY+'px';
   menu.innerHTML=`
     <div class="ctx-hd">${n>1?n+' franjas seleccionadas':slotLabel(slotIdx)}</div>
-    <button onclick="ctxAplicarBloqueo('bloqueado')">🔒 Bloquear ${n>1?'selección':'esta franja'}</button>
-    <button onclick="ctxAplicarBloqueo('idioma')">🌐 Restringir por idioma</button>
-    <button onclick="ctxAplicarBloqueo('edad')">🧒 Restringir por edad</button>
+    <button onclick="ctxAplicarBloqueo('bloqueado')">🔒 Bloquear ${n>1?'selección':'esta franja'} (franja entera)</button>
     <div class="ctx-sep"></div>
     ${_cellSel.size>0?`<button onclick="_cellSel.clear();renderGantt();closeCtxMenu();">✕ Cancelar selección (${_cellSel.size})</button>`:`<button onclick="_cellSel.add('${key}');renderGantt();closeCtxMenu();">☑ Añadir a selección múltiple</button>`}
   `;
