@@ -4059,7 +4059,8 @@ function newCampamento(){
   const monitorChecks=INSTRUCTORS.map(x=>`<label style="display:flex;align-items:center;gap:6px;padding:5px 0;font-size:13px;cursor:pointer;"><input type="checkbox" class="camp-mon-chk" value="${x.name.replace(/"/g,'&quot;')}" style="width:15px;height:15px;">${esc(x.name)}</label>`).join('')||'<div style="font-size:12px;color:var(--txt3);">No hay monitores dados de alta — añádelos en Ajustes.</div>';
   openModal('+ Nuevo campamento',`
     ${fRow(fLbl('Nombre del campamento')+fInp('camp-nombre','Campamento de verano'), fLbl('Nº plazas / precio total (€)')+fInp('camp-importe','0','number'))}
-    ${fRow(fLbl('Fecha')+fInp('camp-fecha',new Date().toISOString().slice(0,10),'date'), fLbl('Hora inicio')+fSel('camp-hora','09:00',['09:00','11:00','13:00','15:00','17:00','19:00']))}
+    ${fRow(fLbl('Fecha')+fInp('camp-fecha',new Date().toISOString().slice(0,10),'date').replace('<input','<input onchange="campRefreshGrupoOpts()"'), fLbl('Hora inicio')+fSel('camp-hora','09:00',TIME_SLOTS.map(s=>String(s.s).padStart(2,'0')+':00')).replace('<select','<select onchange="campRefreshGrupoOpts()"'))}
+    <div style="margin-top:4px;">${fLbl('Grupo')}<select id="camp-grupo" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;"></select></div>
     ${fLbl('Niños apuntados')}
     <div id="camp-ninos-wrap"></div>
     <button class="btn btn-ghost" style="font-size:12px;margin-top:4px;" onclick="campAnadirNino()">+ Añadir niño/a</button>
@@ -4071,6 +4072,25 @@ function newCampamento(){
     ${fActions('Crear campamento','saveCampamento()')}
   `);
   campRenderNinos();
+  campRefreshGrupoOpts();
+}
+function campRefreshGrupoOpts(){
+  const sel=document.getElementById('camp-grupo');
+  if(!sel)return;
+  const fecha=cv('camp-fecha'),hora=cv('camp-hora');
+  if(!fecha||!hora)return;
+  const horaNum=parseInt(hora,10);
+  const grupos=gruposDeFranja(fecha,horaNum,'camp');
+  const ocupPorGrupo={};
+  GANTT_DATA.forEach(b=>{
+    if(b.row==='camp'&&b.grupo){
+      const dNino=new Date(fecha+'T'+hora+':00');
+      if(b.day===dNino.getDate())ocupPorGrupo[b.grupo]=(ocupPorGrupo[b.grupo]||0)+(b.numNinos||b.personas||1);
+    }
+  });
+  const opts=grupos.map(g=>`<option value="${g.letra}">Grupo ${g.letra} (${ocupPorGrupo[g.letra]||0} niños ya apuntados)</option>`);
+  opts.push(`<option value="__nuevo__" selected>+ Nuevo grupo (${siguienteLetraGrupo(fecha,horaNum,'camp')})</option>`);
+  sel.innerHTML=opts.join('');
 }
 
 async function saveCampamento(){
@@ -4083,7 +4103,18 @@ async function saveCampamento(){
   const monitores=Array.from(document.querySelectorAll('.camp-mon-chk:checked')).map(c=>c.value);
   const startsAt=new Date(fecha+'T'+hora+':00');
   const endsAt=new Date(startsAt.getTime()+2*60*60*1000);
-  const notes={source:'manual',dias_totales:1,ninos,instructor:monitores.join(', ')||null,payment_status:pagado?'confirmed':undefined};
+  const grupoSel=document.getElementById('camp-grupo');
+  let grupoLetra='A';
+  if(grupoSel){
+    if(grupoSel.value==='__nuevo__'){
+      grupoLetra=siguienteLetraGrupo(fecha,+hora.split(':')[0],'camp');
+      const ok=await crearGrupoHorario(fecha,+hora.split(':')[0],'camp',grupoLetra,null,null);
+      if(!ok)return;
+    } else {
+      grupoLetra=grupoSel.value;
+    }
+  }
+  const notes={source:'manual',dias_totales:1,ninos,instructor:monitores.join(', ')||null,grupo:grupoLetra,payment_status:pagado?'confirmed':undefined};
   try{
     const res=await fetch(SB_URL_SOL+'/rest/v1/appointments',{
       method:'POST',
