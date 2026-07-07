@@ -623,18 +623,22 @@ async function cargarAforoPorDias(){
   const fechaMin=dias[0], fechaMax=dias[dias.length-1];
   try{
     const res=await fetch(
-      `${SB_URL}/rest/v1/appointments?business_slug=eq.${SLUG}&starts_at=gte.${fechaMin}T00:00:00&starts_at=lte.${fechaMax}T23:59:59&status=neq.cancelled&select=starts_at`,
+      `${SB_URL}/rest/v1/appointments?business_slug=eq.${SLUG}&starts_at=gte.${fechaMin}T00:00:00&starts_at=lte.${fechaMax}T23:59:59&status=neq.cancelled&select=starts_at,service,notes`,
       {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}
     );
     const rows=await res.json();
-    // Agrupar ocupación por fecha+hora
+    // Agrupar ocupación por fecha+hora — contando personas reales, no filas
     const oc={};
     rows.forEach(r=>{
       const dt=new Date(r.starts_at);
       const ymd=toYMD(dt);
       const h=dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Madrid'});
       if(!oc[ymd]) oc[ymd]={};
-      oc[ymd][h]=(oc[ymd][h]||0)+1;
+      let n=1;
+      const m=(r.service||'').match(/\((\d+)\s*persona/);
+      if(m) n=parseInt(m[1],10);
+      else{ try{const no=JSON.parse(r.notes||'{}'); if(Array.isArray(no.ninos)&&no.ninos.length)n=no.ninos.length;}catch{} }
+      oc[ymd][h]=(oc[ymd][h]||0)+n;
     });
     S.ocupacionPorDia=oc;
   }catch(e){S.ocupacionPorDia={}}
@@ -653,6 +657,16 @@ async function cargarAforoPorDias(){
     });
     S.bloqueosPorDia=bl;
   }catch(e){S.bloqueosPorDia={}}
+  try{
+    const res3=await fetch(
+      `${SB_URL}/rest/v1/cn_disponibilidad_dia?business_slug=eq.${SLUG}&fecha=gte.${fechaMin}&fecha=lte.${fechaMax}&select=fecha,monitor`,
+      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}
+    );
+    const drows=res3.ok?await res3.json():[];
+    const dp={};
+    drows.forEach(d=>{ if(!dp[d.fecha])dp[d.fecha]=new Set(); dp[d.fecha].add(d.monitor); });
+    S.dispPorDia=dp;
+  }catch(e){S.dispPorDia={}}
   document.getElementById('franja-loading').classList.add('hidden');
   renderFranjasPorDias();
 }
@@ -670,11 +684,15 @@ function renderFranjasPorDias(){
     const label=DIAS_ES[d.getDay()]+' '+d.getDate()+' '+MESES_ES[d.getMonth()];
     const ocDia=S.ocupacionPorDia[ymd]||{};
     const blDia=S.bloqueosPorDia[ymd]||{};
+    const dispDia=(S.dispPorDia||{})[ymd];
+    const maxGruposDia=dispDia?dispDia.size:4; // sin roster configurado, asumimos hasta 4 grupos posibles
     const selFranjaId=S.franjasPorDia[ymd]?.id||null;
     const franjas=FRANJAS.map(f=>{
       const ocup=ocDia[f.hora]||0;
       const reglas=blDia[f.hora]||[];
-      let llena=ocup>=AFORO_MAX;
+      // El aforo real es por grupo (7 personas), no por franja — con varios grupos posibles
+      // en la misma hora, el limite combinado escala con los monitores disponibles ese dia.
+      let llena=ocup>=AFORO_MAX*Math.max(maxGruposDia,1);
       let tag=llena?'LLENO':'';
       if(reglas.some(rr=>rr.restriccion==='bloqueado')){
         llena=true; tag='NO DISPONIBLE';
@@ -781,31 +799,84 @@ async function enviar(){
   const days=dias.length;
 
   // Re-comprobar aforo con datos frescos justo antes de insertar (evita sobreventa por
-  // reservas hechas en paralelo mientras esta pestaña estaba abierta)
+  // reservas hechas en paralelo mientras esta pestaña estaba abierta), y asignar el GRUPO
+  // (A, B, C...) correspondiente a cada dia segun idioma/edad y aforo real por grupo.
+  const grupoPorDia={};
   try{
     const fechaMin=dias[0], fechaMax=dias[dias.length-1];
     const resAforo=await fetch(
-      `${SB_URL}/rest/v1/appointments?business_slug=eq.${SLUG}&starts_at=gte.${fechaMin}T00:00:00&starts_at=lte.${fechaMax}T23:59:59&status=neq.cancelled&select=starts_at`,
+      `${SB_URL}/rest/v1/appointments?business_slug=eq.${SLUG}&starts_at=gte.${fechaMin}T00:00:00&starts_at=lte.${fechaMax}T23:59:59&status=neq.cancelled&select=starts_at,service,notes`,
       {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}
     );
     const rowsAforo=await resAforo.json();
-    const ocFresca={};
-    (Array.isArray(rowsAforo)?rowsAforo:[]).forEach(r=>{
-      const dt=new Date(r.starts_at);
-      const ymd=toYMD(dt);
-      const h=dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Madrid'});
-      ocFresca[ymd+'|'+h]=(ocFresca[ymd+'|'+h]||0)+1;
-    });
+    const resGrupos=await fetch(
+      `${SB_URL}/rest/v1/cn_grupos_horario?business_slug=eq.${SLUG}&fecha=gte.${fechaMin}&fecha=lte.${fechaMax}`,
+      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}
+    );
+    const gruposRows=resGrupos.ok?await resGrupos.json():[];
+    const resDisp=await fetch(
+      `${SB_URL}/rest/v1/cn_disponibilidad_dia?business_slug=eq.${SLUG}&fecha=gte.${fechaMin}&fecha=lte.${fechaMax}`,
+      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}
+    );
+    const dispRows=resDisp.ok?await resDisp.json():[];
+
+    const miRowDe=(s)=>{
+      s=(s||'').toLowerCase();
+      if(s.includes('particular'))return 'priv';
+      if(s.includes('sup'))return 'sup';
+      if(s.includes('avanzado'))return 'avanz';
+      return 'inic';
+    };
+    const headcountDe=(service,notes)=>{
+      const m=(service||'').match(/\((\d+)\s*persona/);
+      if(m)return parseInt(m[1],10);
+      try{const n=JSON.parse(notes||'{}');if(Array.isArray(n.ninos)&&n.ninos.length)return n.ninos.length;}catch{}
+      return 1;
+    };
+
     for(const ymd of dias){
       const hora=S.franjasPorDia[ymd]?.hora||'09:00';
-      const ocupados=ocFresca[ymd+'|'+hora]||0;
-      if(ocupados>=AFORO_MAX){
-        btn.disabled=false; btn.textContent='Enviar solicitud de reserva';
-        alert('Lo sentimos, la franja de '+ymd+' a las '+hora+' se acaba de llenar. Elige otro horario.');
-        return;
+      const horaNum=parseInt(hora,10);
+      const miRow=miRowDe(tipoLabels[S.tipo]+(S.nivel?' - '+S.nivel:''));
+      // Grupos existentes de esa franja+tipo, con su ocupacion real
+      const gruposSlot=gruposRows.filter(g=>g.fecha===ymd&&g.hora===horaNum&&g.tipo===miRow);
+      const dispDia=dispRows.filter(d=>d.fecha===ymd);
+      const dispSet=dispDia.length?new Set(dispDia.map(d=>d.monitor)):null;
+      let grupoElegido=null;
+      for(const g of gruposSlot){
+        const ocGrupo=rowsAforo.filter(r=>{
+          if(toYMD(new Date(r.starts_at))!==ymd)return false;
+          if(new Date(r.starts_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Madrid'})!==hora)return false;
+          if(miRowDe(r.service)!==miRow)return false;
+          let n={};try{n=JSON.parse(r.notes||'{}');}catch{}
+          return (n.grupo||'A')===g.letra;
+        }).reduce((s,r)=>s+headcountDe(r.service,r.notes),0);
+        const cumple=!g.restriccion||
+          (g.restriccion==='idioma' && (!idioma||!g.valor||idioma.toLowerCase()===g.valor.toLowerCase())) ||
+          (g.restriccion==='edad' && (!edad||!g.valor||parseInt(edad,10)<=parseInt(g.valor,10)));
+        if(cumple && ocGrupo+S.personas<=AFORO_MAX){ grupoElegido=g.letra; break; }
       }
+      if(!grupoElegido){
+        const letrasUsadas=gruposSlot.map(g=>g.letra);
+        // Si ya hay grupos sin capacidad y no cabemos en ninguno, abrir uno nuevo si el
+        // roster de monitores del dia lo permite (si no esta configurado, no limitamos)
+        if(dispSet && letrasUsadas.length>=dispSet.size){
+          btn.disabled=false; btn.textContent='Enviar solicitud de reserva';
+          alert('Lo sentimos, la franja de '+ymd+' a las '+hora+' ya no tiene grupos disponibles con monitor libre. Elige otro horario.');
+          return;
+        }
+        let letra='A';
+        for(let i=0;i<26;i++){const l=String.fromCharCode(65+i);if(!letrasUsadas.includes(l)){letra=l;break;}}
+        grupoElegido=letra;
+        await fetch(`${SB_URL}/rest/v1/cn_grupos_horario`,{
+          method:'POST',
+          headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
+          body:JSON.stringify({business_slug:SLUG,fecha:ymd,hora:horaNum,tipo:miRow,letra})
+        });
+      }
+      grupoPorDia[ymd]=grupoElegido;
     }
-  }catch(e){/* si falla la comprobación, seguimos — mejor no bloquear la reserva por un fallo de red */}
+  }catch(e){/* si falla la comprobación, seguimos sin bloquear — mejor mostrarlo como pendiente que perder la solicitud */}
 
   // Calcular presupuesto total (se guarda solo en la primera fila para no duplicar en el sumatorio del dashboard)
   const TARIFAS_PRE={
@@ -849,7 +920,7 @@ async function enviar(){
       ends_at:endsAt.toISOString(),
       status:'pending',
       budget:idx===0?presupTotal:null,
-      notes:JSON.stringify({dni,source:'web-reservas',dias_totales:days,edad:edad||null,idioma,notas_cliente:notas||null})
+      notes:JSON.stringify({dni,source:'web-reservas',dias_totales:days,edad:edad||null,idioma,grupo:grupoPorDia[ymd]||'A',notas_cliente:notas||null})
     });
   });
 

@@ -4026,14 +4026,20 @@ async function saveMonitorAsignado(){
     const sel=document.getElementById('sol-monitor-sel');
     monitor=sel.value.startsWith('—')?null:sel.value;
   }
-  // El monitor se asigna a TODA la clase (mismo dia+hora+tipo), no solo a esta reserva —
-  // son grupos con un maximo de plazas, no reservas individuales sueltas.
+  // El monitor se asigna solo al MISMO GRUPO (mismo dia+hora+tipo+letra de grupo),
+  // no a toda la franja — puede haber varios grupos (A, B...) en la misma hora y tipo.
   const miRow=classifyServiceToRow(SOL_CUR.service);
   const miHora=SOL_CUR.starts_at;
+  const miNotes=solParseNotes(SOL_CUR.notes);
+  const miGrupo=miNotes.grupo||'A';
   try{
-    const res=await fetch(`${SB_URL_SOL}/rest/v1/appointments?business_slug=eq.costa-norte&starts_at=eq.${encodeURIComponent(miHora)}&select=id,service,notes`,
+    const res=await fetch(`${SB_URL_SOL}/rest/v1/appointments?business_slug=eq.costa-norte&starts_at=eq.${encodeURIComponent(miHora)}&select=id,service,notes,status`,
       {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
-    const mismos=(await res.json()).filter(r=>classifyServiceToRow(r.service)===miRow);
+    const mismos=(await res.json()).filter(r=>{
+      if(classifyServiceToRow(r.service)!==miRow||r.status==='cancelled')return false;
+      const n=solParseNotes(r.notes);
+      return (n.grupo||'A')===miGrupo;
+    });
     await Promise.all(mismos.map(r=>{
       const notes=solParseNotes(r.notes);
       notes.instructor=monitor;
@@ -4123,7 +4129,9 @@ function newManualReserva(prefill){
     ${fRow(fLbl('Cliente')+fInp('mr-nombre',''), fLbl('Teléfono')+fInp('mr-tel',''))}
     ${fRow(fLbl('Email')+fInp('mr-email','','email'), fLbl('Tipo de clase')+(lock?`<input type="hidden" id="mr-tipo" value="${esc(tipoDef)}">`+fInp('mr-tipo-ro',tipoDef).replace('id="mr-tipo-ro"','disabled'):fSel('mr-tipo',tipoDef,TIPOS_CLASE_MANUAL).replace('<select','<select onchange="mrRefreshMonitorOpts()"')))}
     ${fRow(fLbl('Monitor')+fSel('mr-monitor',monitorDef,monitorOpts), fLbl('Nº personas')+fInp('mr-personas','1','number'))}
-    ${fRow(fLbl('Fecha')+(lock?`<input type="hidden" id="mr-fecha" value="${fechaDef}">`+fInp('mr-fecha-ro',fechaDef,'date').replace('id="mr-fecha-ro"','disabled'):fInp('mr-fecha',fechaDef,'date').replace('<input','<input onchange="mrRefreshMonitorOpts()"')), fLbl('Hora')+(lock?`<input type="hidden" id="mr-hora" value="${horaDef}">`+fInp('mr-hora-ro',horaDef).replace('id="mr-hora-ro"','disabled'):fSel('mr-hora',horaDef,TIME_SLOTS.map(s=>String(s.s).padStart(2,'0')+':00')).replace('<select','<select onchange="mrRefreshMonitorOpts()"')))}
+    ${fRow(fLbl('Fecha')+(lock?`<input type="hidden" id="mr-fecha" value="${fechaDef}">`+fInp('mr-fecha-ro',fechaDef,'date').replace('id="mr-fecha-ro"','disabled'):fInp('mr-fecha',fechaDef,'date').replace('<input','<input onchange="mrRefreshMonitorOpts();mrRefreshGrupoOpts();"')), fLbl('Hora')+(lock?`<input type="hidden" id="mr-hora" value="${horaDef}">`+fInp('mr-hora-ro',horaDef).replace('id="mr-hora-ro"','disabled'):fSel('mr-hora',horaDef,TIME_SLOTS.map(s=>String(s.s).padStart(2,'0')+':00')).replace('<select','<select onchange="mrRefreshMonitorOpts();mrRefreshGrupoOpts();"')))}
+    ${lock?`<input type="hidden" id="mr-grupo" value="${esc(p.grupo||'A')}">`:`<div style="margin-top:4px;">${fLbl('Grupo')}<select id="mr-grupo" onchange="mrGrupoChanged()" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;"></select></div>
+    <div id="mr-grupo-nuevo-restr" style="display:none;margin-top:8px;">${fRow(fLbl('Restringir grupo nuevo a idioma')+fSel('mr-grupo-idioma','—',['—','Español','Inglés','Francés','Alemán']), fLbl('o edad máxima')+fInp('mr-grupo-edad','','number','12'))}</div>`}
     ${fRow(fLbl('Edad')+fInp('mr-edad','','number','30'), fLbl('Idioma')+fSel('mr-idioma','Español',['Español','Inglés','Francés','Alemán','Otro']))}
     ${fLbl('Importe (€)')+fInp('mr-importe','0','number')}
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:600;cursor:pointer;">
@@ -4132,6 +4140,39 @@ function newManualReserva(prefill){
     ${fActions(lock?'Añadir al grupo':'Crear reserva','saveManualReserva()')}
   `);
   mrRefreshMonitorOpts();
+  if(!lock)mrRefreshGrupoOpts();
+}
+function mrGrupoChanged(){
+  const sel=document.getElementById('mr-grupo');
+  const wrap=document.getElementById('mr-grupo-nuevo-restr');
+  if(!sel||!wrap)return;
+  wrap.style.display=sel.value==='__nuevo__'?'':'none';
+}
+function mrRefreshGrupoOpts(){
+  const sel=document.getElementById('mr-grupo');
+  if(!sel)return;
+  const fecha=cv('mr-fecha'),hora=cv('mr-hora'),tipo=cv('mr-tipo');
+  if(!fecha||!hora||!tipo)return;
+  const miRow=classifyServiceToRow(tipo==='Clase Privada'?'Clase particular':tipo);
+  const horaNum=parseInt(hora,10);
+  const grupos=gruposDeFranja(fecha,horaNum,miRow);
+  const ocupPorGrupo={};
+  GANTT_DATA.forEach(b=>{
+    const d=new Date(fecha+'T'+hora+':00');
+    if(b.day===d.getDate()&&b.row===miRow&&b.grupo&&new Date(fecha+'T'+hora+':00').getMonth()===ganttMonth){
+      ocupPorGrupo[b.grupo]=(ocupPorGrupo[b.grupo]||0)+(b.personas||1);
+    }
+  });
+  const opts=grupos.map(g=>{
+    const oc=ocupPorGrupo[g.letra]||0;
+    const restr=g.restriccion?(g.restriccion==='idioma'?' · solo '+g.valor:' · solo ≤'+g.valor+' años'):'';
+    return `<option value="${g.letra}">Grupo ${g.letra} (${oc}/${RATIO_MAX_GRUPO})${restr}</option>`;
+  });
+  opts.push(`<option value="__nuevo__">+ Nuevo grupo (${siguienteLetraGrupo(fecha,horaNum,miRow)})</option>`);
+  const prevVal=sel.value;
+  sel.innerHTML=opts.join('');
+  if(prevVal && Array.from(sel.options).some(o=>o.value===prevVal))sel.value=prevVal;
+  mrGrupoChanged();
 }
 function mrRefreshMonitorOpts(){
   const sel=document.getElementById('mr-monitor');
@@ -4163,6 +4204,7 @@ function addIntegranteAGrupo(){
     hora:String(dt.getHours()).padStart(2,'0')+':00',
     tipo,
     monitor:notes.instructor,
+    grupo:notes.grupo||'A',
     lock:true
   });
 }
@@ -4178,14 +4220,40 @@ async function saveManualReserva(){
   const startsAt=new Date(fecha+'T'+hora+':00');
   const endsAt=new Date(startsAt.getTime()+2*60*60*1000);
   const miRowChk=classifyServiceToRow(tipo==='Clase Privada'?'Clase particular':tipo);
-  const yaEnGrupo=GANTT_RAW.filter(r=>r.status!=='cancelled' && new Date(r.starts_at).getTime()===startsAt.getTime() && classifyServiceToRow(r.service)===miRowChk)
-    .reduce((sum,r)=>{let n={};try{n=JSON.parse(r.notes||'{}');}catch{}return sum+_bookingHeadcount(r,n);},0);
+
+  // Determinar el grupo: uno existente elegido, o crear uno nuevo (con restriccion opcional)
+  const grupoSelEl=document.getElementById('mr-grupo');
+  let grupoLetra='A';
+  if(grupoSelEl){
+    if(grupoSelEl.value==='__nuevo__'){
+      const dispDiaChk=monitoresDisponiblesDia(fecha);
+      const gruposYaAbiertos=gruposDeFranja(fecha,+hora.split(':')[0],miRowChk).length;
+      if(dispDiaChk && gruposYaAbiertos>=dispDiaChk.size){
+        toast(`⚠ Ya hay ${gruposYaAbiertos} grupos abiertos a esta hora y solo tienes ${dispDiaChk.size} monitor(es) disponible(s) hoy. Marca más monitores como disponibles o usa un grupo existente.`,'error');
+        return;
+      }
+      grupoLetra=siguienteLetraGrupo(fecha,+hora.split(':')[0],miRowChk);
+      const gIdioma=cv('mr-grupo-idioma'),gEdad=cv('mr-grupo-edad');
+      if(gIdioma&&gIdioma!=='—')await crearGrupoHorario(fecha,+hora.split(':')[0],miRowChk,grupoLetra,'idioma',gIdioma);
+      else if(gEdad)await crearGrupoHorario(fecha,+hora.split(':')[0],miRowChk,grupoLetra,'edad',gEdad);
+      else await crearGrupoHorario(fecha,+hora.split(':')[0],miRowChk,grupoLetra,null,null);
+    } else {
+      grupoLetra=grupoSelEl.value;
+    }
+  }
+
+  // Ratio maximo POR GRUPO (no por franja entera) — varios grupos pueden compartir la misma hora
+  const yaEnGrupo=GANTT_RAW.filter(r=>{
+    if(r.status==='cancelled'||new Date(r.starts_at).getTime()!==startsAt.getTime()||classifyServiceToRow(r.service)!==miRowChk)return false;
+    let n={};try{n=JSON.parse(r.notes||'{}');}catch{}
+    return (n.grupo||'A')===grupoLetra;
+  }).reduce((sum,r)=>{let n={};try{n=JSON.parse(r.notes||'{}');}catch{}return sum+_bookingHeadcount(r,n);},0);
   if(yaEnGrupo+personas>RATIO_MAX_GRUPO){
-    toast(`⚠ Ya has superado el ratio (${yaEnGrupo}+${personas} > ${RATIO_MAX_GRUPO} por grupo). Abre otro grupo con otro monitor.`,'error');
+    toast(`⚠ El grupo ${grupoLetra} ya está al ratio máximo (${yaEnGrupo}+${personas} > ${RATIO_MAX_GRUPO}). Abre otro grupo.`,'error');
     return;
   }
   const serviceLabel=(tipo==='Clase Privada'?'Clase particular':'Surf - '+tipo)+' ('+personas+' persona'+(personas>1?'s':'')+')';
-  const notes={source:'manual',dias_totales:1,instructor:(monitor&&!monitor.startsWith('—'))?monitor:null,edad:edad||null,idioma:idioma||null,payment_status:pagado?'confirmed':undefined};
+  const notes={source:'manual',dias_totales:1,instructor:(monitor&&!monitor.startsWith('—'))?monitor:null,edad:edad||null,idioma:idioma||null,grupo:grupoLetra,payment_status:pagado?'confirmed':undefined};
   try{
     const res=await fetch(SB_URL_SOL+'/rest/v1/appointments',{
       method:'POST',
@@ -4366,6 +4434,22 @@ const TYPE_COLORS = {inic:'#5dbdd3',perfec:'#3a9bb5',avanz:'#0a2540',priv:'#8b5c
 const TIME_SLOTS = [{s:9,e:11},{s:10,e:12},{s:11,e:13},{s:12,e:14},{s:13,e:15},{s:14,e:16},{s:15,e:17},{s:16,e:18},{s:17,e:19},{s:18,e:20}];
 let BLOQUEOS_HORARIO_MES=[];
 let DISP_DIA_MES=[];
+let GRUPOS_HORARIO_MES=[];
+function gruposDeFranja(fecha,hora,tipo){
+  return GRUPOS_HORARIO_MES.filter(g=>g.fecha===fecha&&g.hora===hora&&g.tipo===tipo);
+}
+async function crearGrupoHorario(fecha,hora,tipo,letra,restriccion,valor){
+  await fetch(`${SB_URL_SOL}/rest/v1/cn_grupos_horario`,{
+    method:'POST',
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
+    body:JSON.stringify({business_slug:'costa-norte',fecha,hora,tipo,letra,restriccion:restriccion||null,valor:valor||null})
+  });
+}
+function siguienteLetraGrupo(fecha,hora,tipo){
+  const existentes=gruposDeFranja(fecha,hora,tipo).map(g=>g.letra);
+  for(let i=0;i<26;i++){const l=String.fromCharCode(65+i);if(!existentes.includes(l))return l;}
+  return 'Z';
+}
 function monitoresDisponiblesDia(fecha){
   const rows=DISP_DIA_MES.filter(d=>d.fecha===fecha);
   return rows.length?new Set(rows.map(d=>d.monitor)):null; // null = sin configurar ese dia (no filtra)
@@ -4549,7 +4633,7 @@ function renderDayPanel(){
           let notesObj={};try{notesObj=JSON.parse(r.notes||'{}');}catch{}
           const row=classifyServiceToRow(r.service);
           const pago=pagoDe(r);
-          const grupo=ganttGrupoLetra(ganttSelectedDay,slotIdx,row);
+          const grupo=ganttGrupoLetra(ganttSelectedDay,slotIdx,row,r.id);
           return `<div draggable="true" ondragstart="ganttDragStart(event,'${r.id}')" onclick="ganttOpenBooking('${r.id}')" style="position:relative;background:${TYPE_COLORS[row]};color:#fff;border-radius:6px;padding:6px 24px 6px 9px;cursor:grab;box-shadow:0 1px 2px rgba(10,37,64,.15);">
             <span style="position:absolute;top:6px;right:6px;line-height:0;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35));">${paymentBadgeSVG(pago)}</span>
             <div style="font-size:12px;font-weight:700;">${hora} · Grupo ${grupo} · ${esc(r.client_name||'—')}</div>
@@ -4626,6 +4710,12 @@ async function loadGanttMonth(silent){
     DISP_DIA_MES=dres.ok?await dres.json():[];
   }catch(e){DISP_DIA_MES=[];}
   try{
+    const fMin=first.toISOString().slice(0,10), fMax=last.toISOString().slice(0,10);
+    const gres=await fetch(`${SB_URL_SOL}/rest/v1/cn_grupos_horario?business_slug=eq.costa-norte&fecha=gte.${fMin}&fecha=lte.${fMax}`,
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+    GRUPOS_HORARIO_MES=gres.ok?await gres.json():[];
+  }catch(e){GRUPOS_HORARIO_MES=[];}
+  try{
     const res=await fetch(`${SB_URL_SOL}/rest/v1/appointments?business_slug=eq.costa-norte&starts_at=gte.${first.toISOString()}&starts_at=lte.${last.toISOString()}&select=id,client_name,service,starts_at,ends_at,status,budget,notes`,
       {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
     const rows=await res.json();
@@ -4642,7 +4732,8 @@ async function loadGanttMonth(silent){
       if(r.status==='cancelled')pago='cancelled';
       else pago=notesObj.payment_status==='confirmed'?'paid':'pending';
       const numNinos=Array.isArray(notesObj.ninos)?notesObj.ninos.length:null;
-      return {id:r.id,row,slot:slotIndexForHour(dt.getHours()),day:dt.getDate(),name:r.client_name||'—',hora:dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false}),instr:notesObj.instructor||'Sin asignar',importe:r.budget||0,pago,numNinos};
+      const personas=_bookingHeadcount(r,notesObj);
+      return {id:r.id,row,slot:slotIndexForHour(dt.getHours()),day:dt.getDate(),name:r.client_name||'—',hora:dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false}),instr:notesObj.instructor||'Sin asignar',importe:r.budget||0,pago,numNinos,personas,startsAt:r.starts_at,grupo:notesObj.grupo||null};
     }).sort((a,b)=>a.hora.localeCompare(b.hora));
   }catch(e){console.error('loadGanttMonth',e);GANTT_DATA=[];}
   renderGantt();
@@ -4652,8 +4743,11 @@ async function loadGanttMonth(silent){
 
 function _bookingHeadcount(r,notesObj){
   if(Array.isArray(notesObj.ninos)&&notesObj.ninos.length)return notesObj.ninos.length;
-  const m=(r.client_name||'').match(/\+(\d+)/);
-  return m?1+parseInt(m[1],10):1;
+  const mNombre=(r.client_name||'').match(/\+(\d+)/);
+  if(mNombre)return 1+parseInt(mNombre[1],10);
+  const mServicio=(r.service||'').match(/\((\d+)\s*persona/);
+  if(mServicio)return parseInt(mServicio[1],10);
+  return 1;
 }
 function renderClassesKPIs(){
   const grid=document.getElementById('classes-kpi-grid');
@@ -4776,11 +4870,13 @@ function ganttDropOnDay(e,day,slotIdx){
   _moveBooking(r.id,nuevo);
 }
 
-function ganttGrupoLetra(day,slot,row){
-  // Letra de grupo calculada: orden de aparicion de los tipos distintos en esa franja+dia
-  const tiposEnFranja=[...new Set(GANTT_DATA.filter(b=>b.day===day&&b.slot===slot).map(b=>b.row))];
-  const idx=tiposEnFranja.indexOf(row);
-  return idx>=0?String.fromCharCode(65+idx):'A';
+function ganttGrupoLetra(day,slot,row,id){
+  // El grupo (A, B, C...) es un dato explicito guardado en la reserva (notes.grupo),
+  // elegido al crearla — no se calcula por aforo. Para reservas antiguas sin ese dato,
+  // caemos de vuelta a "A" como grupo unico de ese dia+franja+tipo.
+  const b=GANTT_DATA.find(x=>String(x.id)===String(id));
+  if(b&&b.grupo)return b.grupo;
+  return 'A';
 }
 
 function renderGantt(){
@@ -4833,7 +4929,7 @@ function renderGantt(){
       }
       bookings.forEach(b => {
         const tt = encodeURIComponent(JSON.stringify({name:b.name,hora:b.hora,instr:b.instr,importe:b.importe,pago:b.pago,tipo:(GANTT_ROWS.find(r=>r.id===b.row)||{}).label||b.row}));
-        const grupo=ganttGrupoLetra(d,slotIdx,b.row);
+        const grupo=ganttGrupoLetra(d,slotIdx,b.row,b.id);
         cellContent += `<div class="gantt-bar" style="background:${TYPE_COLORS[b.row]}" data-tt="${tt}" draggable="true" ondragstart="ganttDragStart(event,'${b.id}')" onmouseenter="showGTT(event,this)" onmouseleave="hideGTT()" onclick="ganttOpenBooking('${b.id}')">
           <span class="gantt-bar-badge">${paymentBadgeSVG(b.pago)}</span>
           <span class="gantt-bar-hora">${esc(b.hora)} · Grupo ${grupo}${b.numNinos!=null?' · '+b.numNinos+' niños':''}</span>${esc(b.name)}
