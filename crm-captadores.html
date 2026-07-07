@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airmate · Panel de Captación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --navy:#081b3a; --navy2:#0d2a5c; --blue:#1a56db; --blue-light:#eaf1fd;
+  --white:#ffffff; --bg:#f5f8fd; --ink:#0a1730; --txt2:#4b5b76; --txt3:#8a97af;
+  --border:#e1e8f5; --border2:#eef2fa;
+  --uae-red:#c8102e; --uae-green:#00732f; --uae-black:#0a0a0a;
+  --gold:#c4a35a;
+  --radius:14px; --radius-sm:9px;
+  --shadow-sm:0 1px 3px rgba(8,27,58,.06),0 1px 2px rgba(8,27,58,.04);
+  --shadow-md:0 8px 28px rgba(8,27,58,.10);
+  --shadow-lg:0 24px 64px rgba(8,27,58,.16);
+  --display:'Bricolage Grotesque',sans-serif; --body:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:#c7d4ea;border-radius:8px;}
+.hidden{display:none!important;}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;}
+
+/* ═══ LOGIN ═══ */
+#login{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 55%,#123a7a 100%);display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:999;}
+#login::before{content:'';position:absolute;inset:0;background:
+  radial-gradient(circle at 15% 20%,rgba(255,255,255,.06),transparent 40%),
+  radial-gradient(circle at 85% 80%,rgba(196,163,90,.10),transparent 45%);}
+#login::after{content:'';position:absolute;left:0;right:0;bottom:0;height:6px;
+  background:linear-gradient(90deg,var(--uae-black) 0%,var(--uae-black) 25%,var(--uae-green) 25%,var(--uae-green) 50%,var(--white) 50%,var(--white) 75%,var(--uae-red) 75%);}
+.login-card{position:relative;z-index:2;width:100%;max-width:400px;background:var(--white);border-radius:20px;padding:44px 40px 36px;box-shadow:var(--shadow-lg);}
+.login-brand{text-align:center;margin-bottom:8px;}
+.login-brand .mark{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--navy));display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 8px 20px rgba(26,86,219,.35);}
+.login-brand .mark svg{width:26px;height:26px;}
+.login-brand h1{font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:-.01em;color:var(--ink);}
+.login-brand p{font-size:12.5px;color:var(--txt3);letter-spacing:.06em;text-transform:uppercase;font-weight:600;margin-top:3px;}
+.login-form{margin-top:30px;display:flex;flex-direction:column;gap:14px;}
+.lf-field label{display:block;font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+.lf-field input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14.5px;background:var(--bg);color:var(--ink);transition:border-color .15s;}
+.lf-field input:focus{outline:none;border-color:var(--blue);background:var(--white);}
+#login-btn{margin-top:6px;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-size:14.5px;font-weight:700;letter-spacing:.02em;transition:background .15s;}
+#login-btn:hover{background:var(--blue);}
+#login-err{background:#fef2f2;color:var(--uae-red);border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:12.5px;font-weight:600;display:none;}
+
+/* ═══ APP SHELL ═══ */
+#app{display:none;min-height:100vh;}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:230px;background:var(--navy);color:#fff;display:flex;flex-direction:column;padding:24px 16px;z-index:50;}
+.sb-brand{display:flex;align-items:center;gap:10px;padding:0 8px 22px;border-bottom:1px solid rgba(255,255,255,.09);margin-bottom:18px;}
+.sb-brand .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--blue),#3b7bf0);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sb-brand .mark svg{width:18px;height:18px;}
+.sb-brand-txt{font-family:var(--display);font-size:15.5px;font-weight:800;line-height:1.1;}
+.sb-brand-txt span{display:block;font-size:9.5px;font-weight:600;color:#8fa8dd;text-transform:uppercase;letter-spacing:.1em;margin-top:2px;}
+.sb-nav{display:flex;flex-direction:column;gap:3px;flex:1;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:9px;color:#b7c6e8;font-size:13.5px;font-weight:600;background:none;border:none;text-align:left;width:100%;transition:.15s;}
+.sb-item svg{width:17px;height:17px;flex-shrink:0;opacity:.85;}
+.sb-item:hover{background:rgba(255,255,255,.06);color:#fff;}
+.sb-item.active{background:var(--blue);color:#fff;box-shadow:0 4px 14px rgba(26,86,219,.4);}
+.sb-user{border-top:1px solid rgba(255,255,255,.09);padding-top:14px;margin-top:10px;}
+.sb-user-row{display:flex;align-items:center;gap:10px;padding:6px 8px;}
+.sb-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;}
+.sb-user-name{font-size:13px;font-weight:700;color:#fff;}
+.sb-user-role{font-size:10.5px;color:#8fa8dd;text-transform:uppercase;letter-spacing:.06em;}
+.sb-logout{margin-top:8px;width:100%;padding:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#dbe4f7;font-size:12.5px;font-weight:600;}
+.sb-logout:hover{background:rgba(255,255,255,.12);}
+
+.main{margin-left:230px;padding:32px 40px 60px;max-width:1400px;}
+.page-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:26px;gap:16px;flex-wrap:wrap;}
+.page-hd h1{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:-.01em;}
+.page-hd h1 em{font-style:normal;color:var(--blue);}
+.page-sub{font-size:13.5px;color:var(--txt3);margin-top:4px;}
+.page{display:none;}
+.page.active{display:block;}
+
+.btn{padding:10px 18px;border-radius:9px;font-size:13.5px;font-weight:700;border:none;transition:.15s;display:inline-flex;align-items:center;gap:7px;}
+.btn-primary{background:var(--navy);color:#fff;}
+.btn-primary:hover{background:var(--blue);}
+.btn-ghost{background:var(--white);color:var(--ink);border:1.5px solid var(--border);}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);}
+
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:24px;}
+.kpi{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden;}
+.kpi-lbl{font-size:10.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;}
+.kpi-val{font-family:var(--display);font-size:30px;font-weight:800;margin-top:6px;color:var(--ink);}
+.kpi-sub{font-size:11.5px;color:var(--txt3);margin-top:3px;}
+.kpi.accent-blue::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--blue);}
+.kpi.accent-green::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--uae-green);}
+.kpi.accent-red::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--uae-red);}
+.kpi.accent-gold::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--gold);}
+
+/* progreso diario */
+.goal-card{background:linear-gradient(120deg,var(--navy),var(--navy2) 70%);border-radius:var(--radius);padding:26px 28px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden;}
+.goal-card::after{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(196,163,90,.18),transparent 70%);}
+.goal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;position:relative;z-index:1;}
+.goal-title{font-family:var(--display);font-size:17px;font-weight:700;}
+.goal-title span{display:block;font-size:11.5px;font-weight:500;color:#a9bce6;margin-top:3px;}
+.goal-num{font-family:var(--display);font-size:38px;font-weight:800;}
+.goal-num small{font-size:17px;font-weight:600;color:#a9bce6;}
+.goal-bar-wrap{margin-top:16px;height:10px;background:rgba(255,255,255,.14);border-radius:6px;overflow:hidden;position:relative;z-index:1;}
+.goal-bar{height:100%;background:linear-gradient(90deg,var(--gold),#e8c97a);border-radius:6px;transition:width .4s;}
+.goal-note{font-size:12px;color:#a9bce6;margin-top:10px;position:relative;z-index:1;}
+
+/* tabs */
+.tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:0;}
+.tab-btn{padding:10px 16px;border:none;background:none;font-size:13px;font-weight:700;color:var(--txt3);border-bottom:2.5px solid transparent;}
+.tab-btn.active{color:var(--ink);border-bottom-color:var(--blue);}
+
+/* tabla contactos */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;padding:11px 14px;font-size:10.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:12px 14px;border-bottom:1px solid var(--border2);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--blue-light);}
+.empresa-cell strong{display:block;font-size:13.5px;}
+.empresa-cell small{color:var(--txt3);font-size:11.5px;}
+
+.tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;}
+.tag-frio{background:#eef4ff;color:#3358b5;}
+.tag-templado{background:#fff6e5;color:#a3690b;}
+.tag-caliente{background:#fdeceb;color:var(--uae-red);}
+.tag-nuevo{background:#eef2f8;color:#48506b;}
+.tag-contactado{background:#eaf1fd;color:var(--blue);}
+.tag-interesado{background:#e8f6ee;color:var(--uae-green);}
+.tag-reunion{background:#fff3d6;color:#93650a;}
+.tag-cerrado{background:#0a1730;color:#fff;}
+.tag-descartado{background:#fbeaea;color:var(--uae-red);}
+
+.select-etapa,.select-temp{border:1.5px solid var(--border);border-radius:7px;padding:5px 8px;font-size:11.5px;font-weight:700;background:var(--white);color:var(--ink);}
+
+/* modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(8,20,45,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px);}
+.modal-backdrop.open{display:flex;}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--border);}
+.modal-hd h3{font-family:var(--display);font-size:17px;font-weight:800;}
+.modal-close{background:none;border:none;font-size:20px;color:var(--txt3);line-height:1;padding:4px;}
+.modal-body{padding:22px 24px;}
+.modal-ft{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.f-group label{display:block;font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.f-group input,.f-group select,.f-group textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13.5px;background:var(--bg);color:var(--ink);}
+.f-group input:focus,.f-group select:focus,.f-group textarea:focus{outline:none;border-color:var(--blue);background:#fff;}
+.f-group{margin-bottom:14px;}
+
+.empty-state{text-align:center;padding:50px 20px;color:var(--txt3);}
+.empty-state svg{width:44px;height:44px;opacity:.35;margin-bottom:12px;}
+.empty-state p{font-size:13.5px;}
+
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--navy);color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:var(--shadow-md);animation:toastIn .25s;}
+.toast.err{background:var(--uae-red);}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.rank-row{display:flex;align-items:center;gap:14px;padding:12px 6px;border-bottom:1px solid var(--border2);}
+.rank-row:last-child{border-bottom:none;}
+.rank-num{width:26px;height:26px;border-radius:50%;background:var(--blue-light);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;}
+.rank-num.gold{background:var(--gold);color:#fff;}
+.rank-name{flex:1;font-size:13.5px;font-weight:700;}
+.rank-bar-wrap{width:140px;height:7px;background:var(--border2);border-radius:5px;overflow:hidden;}
+.rank-bar{height:100%;background:var(--blue);border-radius:5px;}
+.rank-count{font-family:var(--display);font-weight:800;font-size:14px;width:50px;text-align:right;}
+
+@media(max-width:880px){
+  .sidebar{width:72px;padding:20px 10px;}
+  .sb-brand-txt,.sb-item span,.sb-user-name,.sb-user-role,.sb-logout span{display:none;}
+  .sb-item{justify-content:center;}
+  .sb-user-row{justify-content:center;}
+  .main{margin-left:72px;padding:24px 16px 50px;}
+  .f-row{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<div id="login">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1"/></svg></div>
+      <h1>Airmate</h1>
+      <p>Panel de Captación</p>
+    </div>
+    <div class="login-form">
+      <div class="lf-field">
+        <label>Usuario</label>
+        <input id="lg-user" placeholder="tu.usuario" autocomplete="username">
+      </div>
+      <div class="lf-field">
+        <label>Contraseña</label>
+        <input id="lg-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div id="login-err"></div>
+      <button id="login-btn" onclick="doLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ APP ═══════════ -->
+<div id="app">
+  <div class="sidebar">
+    <div class="sb-brand">
+      <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1"/></svg></div>
+      <div class="sb-brand-txt">Airmate<span>Captación</span></div>
+    </div>
+    <div class="sb-nav" id="sb-nav"></div>
+    <div class="sb-user">
+      <div class="sb-user-row">
+        <div class="sb-avatar" id="sb-avatar">–</div>
+        <div>
+          <div class="sb-user-name" id="sb-uname">–</div>
+          <div class="sb-user-role" id="sb-urole">–</div>
+        </div>
+      </div>
+      <button class="sb-logout" onclick="doLogout()">↩ <span>Cerrar sesión</span></button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- ═══ PÁGINA CAPTADOR: MI DÍA ═══ -->
+    <div class="page" id="page-mio">
+      <div class="page-hd">
+        <div><h1>Mi <em>día</em></h1><div class="page-sub">Registra tus contactos de hoy y haz seguimiento de los de ayer</div></div>
+        <button class="btn btn-primary" onclick="openContactoModal()">+ Nuevo contacto</button>
+      </div>
+
+      <div class="goal-card">
+        <div class="goal-top">
+          <div class="goal-title">Objetivo diario<span>Contactos nuevos añadidos hoy</span></div>
+          <div class="goal-num" id="goal-num">0<small>/50</small></div>
+        </div>
+        <div class="goal-bar-wrap"><div class="goal-bar" id="goal-bar" style="width:0%"></div></div>
+        <div class="goal-note" id="goal-note">¡Vamos, todavía te quedan contactos por meter hoy!</div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi accent-red"><div class="kpi-lbl">Follow-ups pendientes</div><div class="kpi-val" id="mio-kpi-followup">0</div><div class="kpi-sub">De ayer, sin segundo contacto aún</div></div>
+        <div class="kpi accent-green"><div class="kpi-lbl">Interesados (total)</div><div class="kpi-val" id="mio-kpi-interesados">0</div><div class="kpi-sub">De todo tu histórico</div></div>
+        <div class="kpi accent-gold"><div class="kpi-lbl">Reuniones agendadas</div><div class="kpi-val" id="mio-kpi-reuniones">0</div><div class="kpi-sub">Gestionadas por secretaría</div></div>
+        <div class="kpi accent-blue"><div class="kpi-lbl">Total histórico</div><div class="kpi-val" id="mio-kpi-total">0</div><div class="kpi-sub">Contactos metidos en total</div></div>
+      </div>
+
+      <div class="card" style="padding:6px 20px 20px;">
+        <div class="tabs" id="mio-tabs">
+          <button class="tab-btn active" data-tab="hoy" onclick="mioSetTab('hoy')">Hoy</button>
+          <button class="tab-btn" data-tab="followup" onclick="mioSetTab('followup')">Follow-up pendiente</button>
+          <button class="tab-btn" data-tab="todos" onclick="mioSetTab('todos')">Todo mi historial</button>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Empresa</th><th>Teléfono</th><th>Sector</th><th>Temperatura</th><th>Etapa</th><th>Alta</th><th></th></tr></thead>
+          <tbody id="mio-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ═══ PÁGINA RESUMEN EQUIPO (secretaria/jefe) ═══ -->
+    <div class="page" id="page-resumen">
+      <div class="page-hd">
+        <div><h1>Resumen del <em>equipo</em></h1><div class="page-sub">Vista general de todos los captadores</div></div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi accent-blue"><div class="kpi-lbl">Contactos hoy (equipo)</div><div class="kpi-val" id="res-kpi-hoy">0</div><div class="kpi-sub" id="res-kpi-hoy-sub">Objetivo: 0</div></div>
+        <div class="kpi accent-gold"><div class="kpi-lbl">Interesados</div><div class="kpi-val" id="res-kpi-interesados">0</div><div class="kpi-sub">Etapa "Interesado" o superior</div></div>
+        <div class="kpi accent-green"><div class="kpi-lbl">Reuniones agendadas</div><div class="kpi-val" id="res-kpi-reuniones">0</div><div class="kpi-sub">Pendientes de realizar</div></div>
+        <div class="kpi accent-red"><div class="kpi-lbl">Follow-ups sin hacer</div><div class="kpi-val" id="res-kpi-followup">0</div><div class="kpi-sub">De ayer o antes</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:20px;align-items:start;">
+        <div class="card" style="padding:22px 24px;">
+          <div style="font-family:var(--display);font-weight:800;font-size:15.5px;margin-bottom:16px;">Embudo de etapas</div>
+          <div id="res-funnel"></div>
+        </div>
+        <div class="card" style="padding:22px 24px;">
+          <div style="font-family:var(--display);font-weight:800;font-size:15.5px;margin-bottom:14px;">Ranking de hoy</div>
+          <div id="res-ranking"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PÁGINA TODOS LOS CONTACTOS (secretaria/jefe) ═══ -->
+    <div class="page" id="page-contactos">
+      <div class="page-hd">
+        <div><h1>Todos los <em>contactos</em></h1><div class="page-sub">Filtra, actualiza etapas y agenda reuniones</div></div>
+      </div>
+      <div class="card" style="padding:16px 20px;margin-bottom:18px;">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+          <div class="f-group" style="margin-bottom:0;"><label>Captador</label><select id="f-captador" onchange="renderContactos()"><option value="">Todos</option></select></div>
+          <div class="f-group" style="margin-bottom:0;"><label>Etapa</label><select id="f-etapa" onchange="renderContactos()">
+            <option value="">Todas</option>
+            <option value="nuevo">Nuevo</option><option value="contactado">Contactado</option><option value="interesado">Interesado</option>
+            <option value="reunion">Reunión agendada</option><option value="cerrado">Cerrado</option><option value="descartado">Descartado</option>
+          </select></div>
+          <div class="f-group" style="margin-bottom:0;"><label>Fecha alta</label><input type="date" id="f-fecha" onchange="renderContactos()"></div>
+          <div class="f-group" style="margin-bottom:0;"><label>Buscar empresa</label><input id="f-busqueda" placeholder="Nombre de empresa..." oninput="renderContactos()"></div>
+        </div>
+      </div>
+      <div class="card" style="padding:6px 20px 20px;">
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Empresa</th><th>Captador</th><th>Teléfono</th><th>Sector</th><th>Temp.</th><th>Etapa</th><th>Alta</th><th>Notas secretaría</th><th></th></tr></thead>
+          <tbody id="contactos-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ═══ PÁGINA REUNIONES (secretaria/jefe) ═══ -->
+    <div class="page" id="page-reuniones">
+      <div class="page-hd">
+        <div><h1>Reuniones y <em>llamadas</em></h1><div class="page-sub">Todo lo agendado para el jefe</div></div>
+      </div>
+      <div class="card" style="padding:6px 20px 20px;">
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Empresa</th><th>Captador</th><th>Teléfono</th><th>Fecha</th><th>Hora</th><th>Notas</th><th></th></tr></thead>
+          <tbody id="reuniones-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL NUEVO CONTACTO -->
+<div class="modal-backdrop" id="modal-contacto">
+  <div class="modal">
+    <div class="modal-hd"><h3>+ Nuevo contacto</h3><button class="modal-close" onclick="closeModal('modal-contacto')">✕</button></div>
+    <div class="modal-body">
+      <div class="f-group"><label>Nombre de la empresa *</label><input id="c-empresa" placeholder="Ej. Restaurante El Puerto"></div>
+      <div class="f-row">
+        <div class="f-group"><label>Teléfono</label><input id="c-telefono" placeholder="+34 600 000 000"></div>
+        <div class="f-group"><label>Sector / a qué se dedica</label><input id="c-sector" placeholder="Ej. Hostelería"></div>
+      </div>
+      <div class="f-group"><label>Nivel del lead</label>
+        <select id="c-temperatura"><option value="frio">Frío</option><option value="templado" selected>Templado</option><option value="caliente">Caliente</option></select>
+      </div>
+      <div class="f-group"><label>Notas</label><textarea id="c-notas" rows="3" placeholder="Info de la empresa, con quién hablaste, qué dijo..."></textarea></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeModal('modal-contacto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarContacto()">Guardar contacto</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE / GESTIÓN (secretaria y jefe) -->
+<div class="modal-backdrop" id="modal-gestion">
+  <div class="modal">
+    <div class="modal-hd"><h3 id="mg-titulo">Contacto</h3><button class="modal-close" onclick="closeModal('modal-gestion')">✕</button></div>
+    <div class="modal-body">
+      <div id="mg-info" style="font-size:13px;color:var(--txt2);margin-bottom:16px;line-height:1.7;"></div>
+      <div class="f-row">
+        <div class="f-group"><label>Etapa</label><select id="mg-etapa">
+          <option value="nuevo">Nuevo</option><option value="contactado">Contactado</option><option value="interesado">Interesado</option>
+          <option value="reunion">Reunión agendada</option><option value="cerrado">Cerrado</option><option value="descartado">Descartado</option>
+        </select></div>
+        <div class="f-group"><label>Temperatura</label><select id="mg-temp">
+          <option value="frio">Frío</option><option value="templado">Templado</option><option value="caliente">Caliente</option>
+        </select></div>
+      </div>
+      <div class="f-row">
+        <div class="f-group"><label>Fecha reunión/llamada</label><input type="date" id="mg-fecha"></div>
+        <div class="f-group"><label>Hora</label><input type="time" id="mg-hora"></div>
+      </div>
+      <div class="f-group"><label>Notas de secretaría</label><textarea id="mg-notas" rows="3" placeholder="Resumen de la llamada, qué acordasteis..."></textarea></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeModal('modal-gestion')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarGestion()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+const SB=supabase.createClient(SB_URL,SB_KEY);
+
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function toast(msg,type){
+  const el=document.createElement('div');
+  el.className='toast'+(type==='error'?' err':'');
+  el.textContent=msg;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(()=>el.remove(),3200);
+}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function fmtFecha(d){if(!d)return'—';const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('es-ES',{day:'2-digit',month:'short'});}
+
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ═══════════ SESIÓN ═══════════
+let SESSION=null;
+function loadSession(){
+  try{SESSION=JSON.parse(localStorage.getItem('am_crm_session')||'null');}catch{SESSION=null;}
+}
+function saveSession(){localStorage.setItem('am_crm_session',JSON.stringify(SESSION));}
+function doLogout(){localStorage.removeItem('am_crm_session');location.reload();}
+
+async function doLogin(){
+  const usuario=document.getElementById('lg-user').value.trim().toLowerCase();
+  const pass=document.getElementById('lg-pass').value;
+  const errEl=document.getElementById('login-err');
+  errEl.style.display='none';
+  if(!usuario||!pass){errEl.textContent='Rellena usuario y contraseña.';errEl.style.display='block';return;}
+  const btn=document.getElementById('login-btn');
+  btn.disabled=true;btn.textContent='Entrando...';
+  try{
+    const {data,error}=await SB.from('am_crm_usuarios').select('nombre,usuario,password_hash,rol').eq('usuario',usuario).single();
+    if(error||!data){errEl.textContent='Usuario no encontrado.';errEl.style.display='block';btn.disabled=false;btn.textContent='Entrar';return;}
+    const h=await sha256(pass);
+    if(h!==data.password_hash){errEl.textContent='Contraseña incorrecta.';errEl.style.display='block';btn.disabled=false;btn.textContent='Entrar';return;}
+    SESSION={nombre:data.nombre,usuario:data.usuario,rol:data.rol};
+    saveSession();
+    initApp();
+  }catch(e){errEl.textContent='Error de conexión. Inténtalo de nuevo.';errEl.style.display='block';}
+  btn.disabled=false;btn.textContent='Entrar';
+}
+
+// ═══════════ NAV POR ROL ═══════════
+const NAV_ICONS={
+  mio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>',
+  resumen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-2.8-2.8L7 14"/></svg>',
+  contactos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  reuniones:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
+};
+const NAV_BY_ROLE={
+  captador:[{id:'mio',label:'Mi día'}],
+  secretaria:[{id:'resumen',label:'Resumen'},{id:'contactos',label:'Contactos'},{id:'reuniones',label:'Reuniones'}],
+  jefe:[{id:'resumen',label:'Resumen'},{id:'contactos',label:'Contactos'},{id:'reuniones',label:'Reuniones'}]
+};
+
+let ALL_CONTACTOS=[];
+let CAPTADORES_LIST=[];
+
+async function initApp(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('sb-avatar').textContent=SESSION.nombre.charAt(0).toUpperCase();
+  document.getElementById('sb-uname').textContent=SESSION.nombre;
+  document.getElementById('sb-urole').textContent=SESSION.rol==='jefe'?'Jefe · Airmate':SESSION.rol==='secretaria'?'Secretaría':'Captador';
+
+  const nav=NAV_BY_ROLE[SESSION.rol]||[];
+  document.getElementById('sb-nav').innerHTML=nav.map((n,i)=>
+    `<button class="sb-item${i===0?' active':''}" data-page="${n.id}" onclick="goPage('${n.id}',this)">${NAV_ICONS[n.id]}<span>${n.label}</span></button>`
+  ).join('');
+  if(nav.length)goPage(nav[0].id,null);
+
+  await cargarUsuarios();
+  await cargarContactos();
+}
+function goPage(id,btn){
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active'); else {const b=document.querySelector(`.sb-item[data-page="${id}"]`);if(b)b.classList.add('active');}
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(id==='mio')renderMio();
+  if(id==='resumen')renderResumen();
+  if(id==='contactos')renderContactos();
+  if(id==='reuniones')renderReuniones();
+}
+
+async function cargarUsuarios(){
+  try{
+    const {data}=await SB.from('am_crm_usuarios').select('nombre,rol').eq('rol','captador').order('nombre');
+    CAPTADORES_LIST=data||[];
+    const sel=document.getElementById('f-captador');
+    if(sel)sel.innerHTML='<option value="">Todos</option>'+CAPTADORES_LIST.map(c=>`<option value="${esc(c.nombre)}">${esc(c.nombre)}</option>`).join('');
+  }catch(e){CAPTADORES_LIST=[];}
+}
+
+async function cargarContactos(){
+  try{
+    let q=SB.from('am_crm_contactos').select('*').order('created_at',{ascending:false});
+    if(SESSION.rol==='captador')q=q.eq('captador',SESSION.nombre);
+    const {data,error}=await q;
+    if(error)throw error;
+    ALL_CONTACTOS=data||[];
+  }catch(e){ALL_CONTACTOS=[];toast('Error cargando contactos','error');}
+  if(document.getElementById('page-mio').classList.contains('active'))renderMio();
+  if(document.getElementById('page-resumen').classList.contains('active'))renderResumen();
+  if(document.getElementById('page-contactos').classList.contains('active'))renderContactos();
+  if(document.getElementById('page-reuniones').classList.contains('active'))renderReuniones();
+}
+
+// ═══════════ NUEVO CONTACTO ═══════════
+function openContactoModal(){
+  document.getElementById('c-empresa').value='';
+  document.getElementById('c-telefono').value='';
+  document.getElementById('c-sector').value='';
+  document.getElementById('c-temperatura').value='templado';
+  document.getElementById('c-notas').value='';
+  openModal('modal-contacto');
+}
+async function guardarContacto(){
+  const empresa=document.getElementById('c-empresa').value.trim();
+  if(!empresa){toast('Falta el nombre de la empresa','error');return;}
+  const payload={
+    captador:SESSION.nombre,
+    empresa,
+    telefono:document.getElementById('c-telefono').value.trim()||null,
+    sector:document.getElementById('c-sector').value.trim()||null,
+    temperatura:document.getElementById('c-temperatura').value,
+    notas:document.getElementById('c-notas').value.trim()||null,
+    etapa:'nuevo',
+    fecha_alta:todayStr()
+  };
+  try{
+    const {error}=await SB.from('am_crm_contactos').insert(payload);
+    if(error)throw error;
+    toast('✓ Contacto guardado');
+    closeModal('modal-contacto');
+    await cargarContactos();
+  }catch(e){toast('Error al guardar','error');}
+}
+
+// ═══════════ MI DÍA (captador) ═══════════
+let MIO_TAB='hoy';
+function mioSetTab(t){
+  MIO_TAB=t;
+  document.querySelectorAll('#mio-tabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  renderMio();
+}
+function renderMio(){
+  const hoy=todayStr();
+  const misContactos=ALL_CONTACTOS.filter(c=>c.captador===SESSION.nombre);
+  const hoyContactos=misContactos.filter(c=>c.fecha_alta===hoy);
+  const pct=Math.min(100,Math.round(hoyContactos.length/50*100));
+  document.getElementById('goal-num').innerHTML=hoyContactos.length+'<small>/50</small>';
+  document.getElementById('goal-bar').style.width=pct+'%';
+  document.getElementById('goal-note').textContent = hoyContactos.length>=50 ? '¡Objetivo del día completado! Gran trabajo.' : `Te quedan ${50-hoyContactos.length} contactos para llegar a tu objetivo de hoy.`;
+
+  const followup=misContactos.filter(c=>!c.seguimiento_hecho && c.fecha_alta<hoy);
+  document.getElementById('mio-kpi-followup').textContent=followup.length;
+  document.getElementById('mio-kpi-interesados').textContent=misContactos.filter(c=>['interesado','reunion','cerrado'].includes(c.etapa)).length;
+  document.getElementById('mio-kpi-reuniones').textContent=misContactos.filter(c=>c.etapa==='reunion').length;
+  document.getElementById('mio-kpi-total').textContent=misContactos.length;
+
+  let lista;
+  if(MIO_TAB==='hoy')lista=hoyContactos;
+  else if(MIO_TAB==='followup')lista=followup;
+  else lista=misContactos;
+  lista=lista.slice().sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+
+  const tbody=document.getElementById('mio-tbody');
+  if(!lista.length){
+    tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>${MIO_TAB==='hoy'?'Aún no has añadido contactos hoy':MIO_TAB==='followup'?'No tienes follow-ups pendientes':'Sin contactos'}</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML=lista.map(c=>`
+    <tr>
+      <td class="empresa-cell"><strong>${esc(c.empresa)}</strong>${c.notas?`<small>${esc(c.notas).slice(0,60)}${c.notas.length>60?'…':''}</small>`:''}</td>
+      <td>${esc(c.telefono||'—')}</td>
+      <td>${esc(c.sector||'—')}</td>
+      <td><span class="tag tag-${c.temperatura}">${labelTemp(c.temperatura)}</span></td>
+      <td><span class="tag tag-${c.etapa}">${labelEtapa(c.etapa)}</span></td>
+      <td>${fmtFecha(c.fecha_alta)}</td>
+      <td>${(!c.seguimiento_hecho && c.fecha_alta<hoy)?`<button class="btn btn-ghost btn-sm" onclick="marcarSeguimiento('${c.id}')">✓ Seguimiento hecho</button>`:''}</td>
+    </tr>
+  `).join('');
+}
+async function marcarSeguimiento(id){
+  try{
+    const {error}=await SB.from('am_crm_contactos').update({seguimiento_hecho:true,etapa:'contactado',updated_at:new Date().toISOString()}).eq('id',id);
+    if(error)throw error;
+    toast('✓ Seguimiento marcado');
+    await cargarContactos();
+  }catch(e){toast('Error al actualizar','error');}
+}
+function labelTemp(t){return {frio:'Frío',templado:'Templado',caliente:'Caliente'}[t]||t;}
+function labelEtapa(e){return {nuevo:'Nuevo',contactado:'Contactado',interesado:'Interesado',reunion:'Reunión',cerrado:'Cerrado',descartado:'Descartado'}[e]||e;}
+
+// ═══════════ RESUMEN EQUIPO (secretaria/jefe) ═══════════
+function renderResumen(){
+  const hoy=todayStr();
+  const hoyContactos=ALL_CONTACTOS.filter(c=>c.fecha_alta===hoy);
+  const numCaptadores=CAPTADORES_LIST.length||1;
+  document.getElementById('res-kpi-hoy').textContent=hoyContactos.length;
+  document.getElementById('res-kpi-hoy-sub').textContent=`Objetivo: ${numCaptadores*50}`;
+  document.getElementById('res-kpi-interesados').textContent=ALL_CONTACTOS.filter(c=>['interesado','reunion','cerrado'].includes(c.etapa)).length;
+  document.getElementById('res-kpi-reuniones').textContent=ALL_CONTACTOS.filter(c=>c.etapa==='reunion').length;
+  document.getElementById('res-kpi-followup').textContent=ALL_CONTACTOS.filter(c=>!c.seguimiento_hecho && c.fecha_alta<hoy).length;
+
+  const etapas=['nuevo','contactado','interesado','reunion','cerrado','descartado'];
+  const max=Math.max(1,...etapas.map(e=>ALL_CONTACTOS.filter(c=>c.etapa===e).length));
+  document.getElementById('res-funnel').innerHTML=etapas.map(e=>{
+    const n=ALL_CONTACTOS.filter(c=>c.etapa===e).length;
+    const w=Math.round(n/max*100);
+    return `<div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:5px;"><span>${labelEtapa(e)}</span><span>${n}</span></div>
+      <div style="height:9px;background:var(--border2);border-radius:5px;overflow:hidden;"><div style="height:100%;width:${w}%;background:var(--blue);border-radius:5px;"></div></div>
+    </div>`;
+  }).join('');
+
+  const porCaptador=CAPTADORES_LIST.map(cap=>({nombre:cap.nombre,n:hoyContactos.filter(c=>c.captador===cap.nombre).length}))
+    .sort((a,b)=>b.n-a.n);
+  const maxR=Math.max(1,...porCaptador.map(p=>p.n));
+  document.getElementById('res-ranking').innerHTML=porCaptador.length?porCaptador.map((p,i)=>`
+    <div class="rank-row">
+      <div class="rank-num${i===0&&p.n>0?' gold':''}">${i+1}</div>
+      <div class="rank-name">${esc(p.nombre)}</div>
+      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(p.n/maxR*100)}%"></div></div>
+      <div class="rank-count">${p.n}/50</div>
+    </div>`).join(''):'<div class="empty-state"><p>Sin captadores dados de alta</p></div>';
+}
+
+// ═══════════ TODOS LOS CONTACTOS (secretaria/jefe) ═══════════
+function renderContactos(){
+  const fc=document.getElementById('f-captador').value;
+  const fe=document.getElementById('f-etapa').value;
+  const ff=document.getElementById('f-fecha').value;
+  const fb=(document.getElementById('f-busqueda').value||'').toLowerCase();
+  let lista=ALL_CONTACTOS.filter(c=>
+    (!fc||c.captador===fc) && (!fe||c.etapa===fe) && (!ff||c.fecha_alta===ff) &&
+    (!fb||c.empresa.toLowerCase().includes(fb))
+  );
+  const tbody=document.getElementById('contactos-tbody');
+  if(!lista.length){
+    tbody.innerHTML=`<tr><td colspan="9"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>Sin contactos con estos filtros</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML=lista.map(c=>`
+    <tr>
+      <td class="empresa-cell"><strong>${esc(c.empresa)}</strong></td>
+      <td>${esc(c.captador)}</td>
+      <td>${esc(c.telefono||'—')}</td>
+      <td>${esc(c.sector||'—')}</td>
+      <td><span class="tag tag-${c.temperatura}">${labelTemp(c.temperatura)}</span></td>
+      <td><span class="tag tag-${c.etapa}">${labelEtapa(c.etapa)}</span></td>
+      <td>${fmtFecha(c.fecha_alta)}</td>
+      <td style="max-width:180px;font-size:12px;color:var(--txt2);">${esc(c.notas_secretaria||'—')}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="abrirGestion('${c.id}')">Gestionar</button></td>
+    </tr>
+  `).join('');
+}
+let GESTION_ID=null;
+function abrirGestion(id){
+  const c=ALL_CONTACTOS.find(x=>x.id===id);
+  if(!c)return;
+  GESTION_ID=id;
+  document.getElementById('mg-titulo').textContent=c.empresa;
+  document.getElementById('mg-info').innerHTML=`
+    <strong>Captador:</strong> ${esc(c.captador)}<br>
+    <strong>Teléfono:</strong> ${esc(c.telefono||'—')}<br>
+    <strong>Sector:</strong> ${esc(c.sector||'—')}<br>
+    <strong>Notas del captador:</strong> ${esc(c.notas||'—')}`;
+  document.getElementById('mg-etapa').value=c.etapa;
+  document.getElementById('mg-temp').value=c.temperatura;
+  document.getElementById('mg-fecha').value=c.fecha_reunion||'';
+  document.getElementById('mg-hora').value=c.hora_reunion||'';
+  document.getElementById('mg-notas').value=c.notas_secretaria||'';
+  openModal('modal-gestion');
+}
+async function guardarGestion(){
+  if(!GESTION_ID)return;
+  const payload={
+    etapa:document.getElementById('mg-etapa').value,
+    temperatura:document.getElementById('mg-temp').value,
+    fecha_reunion:document.getElementById('mg-fecha').value||null,
+    hora_reunion:document.getElementById('mg-hora').value||null,
+    notas_secretaria:document.getElementById('mg-notas').value.trim()||null,
+    updated_at:new Date().toISOString()
+  };
+  try{
+    const {error}=await SB.from('am_crm_contactos').update(payload).eq('id',GESTION_ID);
+    if(error)throw error;
+    toast('✓ Cambios guardados');
+    closeModal('modal-gestion');
+    await cargarContactos();
+  }catch(e){toast('Error al guardar','error');}
+}
+
+// ═══════════ REUNIONES (secretaria/jefe) ═══════════
+function renderReuniones(){
+  const lista=ALL_CONTACTOS.filter(c=>c.fecha_reunion).sort((a,b)=>(a.fecha_reunion+  (a.hora_reunion||'')).localeCompare(b.fecha_reunion+(b.hora_reunion||'')));
+  const tbody=document.getElementById('reuniones-tbody');
+  if(!lista.length){
+    tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><p>Aún no hay reuniones agendadas</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML=lista.map(c=>`
+    <tr>
+      <td class="empresa-cell"><strong>${esc(c.empresa)}</strong></td>
+      <td>${esc(c.captador)}</td>
+      <td>${esc(c.telefono||'—')}</td>
+      <td>${fmtFecha(c.fecha_reunion)}</td>
+      <td>${esc(c.hora_reunion||'—')}</td>
+      <td style="max-width:220px;font-size:12px;color:var(--txt2);">${esc(c.notas_secretaria||'—')}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="abrirGestion('${c.id}')">Ver</button></td>
+    </tr>
+  `).join('');
+}
+
+// ═══════════ INIT ═══════════
+loadSession();
+if(SESSION){initApp();}else{document.getElementById('login').style.display='flex';}
+document.getElementById('lg-pass')?.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+</script>
+</body>
+</html>
