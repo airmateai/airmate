@@ -3960,6 +3960,58 @@ async function updatePayment(status){
 
 function closeSolDetail(){document.getElementById('sol-detail-overlay').style.display='none';}
 
+function editSolicitud(){
+  if(!SOL_CUR)return;
+  const r=SOL_CUR;
+  const notes=solParseNotes(r.notes);
+  const personasActuales=_bookingHeadcount(r,notes);
+  openModal('✎ Editar reserva',`
+    ${fLbl('Nombre del cliente')}${fInp('edit-sol-nombre',r.client_name||'')}
+    ${fRow(fLbl('Teléfono')+fInp('edit-sol-tel',r.client_phone||''),fLbl('Email')+fInp('edit-sol-email',r.client_email||'','email'))}
+    ${fLbl('Clase / servicio')}${fInp('edit-sol-servicio',r.service||'')}
+    ${fLbl('Número de personas')}${fInp('edit-sol-personas',personasActuales,'number')}
+    <button onclick="saveEditSolicitud()" style="margin-top:16px;width:100%;padding:11px;border-radius:8px;font-size:13px;font-weight:700;border:none;background:#0f2240;color:#fff;cursor:pointer;">Guardar cambios</button>
+  `);
+}
+
+async function saveEditSolicitud(){
+  if(!SOL_CUR)return;
+  const id=SOL_CUR.id;
+  const nombre=document.getElementById('edit-sol-nombre').value.trim();
+  const tel=document.getElementById('edit-sol-tel').value.trim();
+  const email=document.getElementById('edit-sol-email').value.trim();
+  let servicio=document.getElementById('edit-sol-servicio').value.trim();
+  const personas=Math.max(1,parseInt(document.getElementById('edit-sol-personas').value,10)||1);
+  // Actualiza el sufijo "(N persona/s)" del servicio si existe, o lo añade al final
+  if(/\(\d+\s*personas?\)/i.test(servicio)){
+    servicio=servicio.replace(/\(\d+\s*personas?\)/i,`(${personas} persona${personas>1?'s':''})`);
+  }else{
+    servicio=`${servicio} (${personas} persona${personas>1?'s':''})`;
+  }
+  const notes=solParseNotes(SOL_CUR.notes);
+  // Si ya habia un listado de ninos (campamentos), lo ajustamos al nuevo numero
+  // manteniendo los nombres que ya hubiera escritos.
+  if(Array.isArray(notes.ninos)){
+    const actuales=notes.ninos.slice();
+    while(actuales.length<personas) actuales.push('');
+    actuales.length=personas;
+    notes.ninos=actuales;
+  }
+  try{
+    const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+id,{
+      method:'PATCH',
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({client_name:nombre||null,client_phone:tel||null,client_email:email||null,service:servicio,notes:JSON.stringify(notes)})
+    });
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    toast('✓ Reserva actualizada');
+    closeModal();
+    await openSol(id);
+    loadSolicitudes();
+    if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth(true);
+  }catch(e){console.error('saveEditSolicitud',e);toast('⚠ Error al guardar los cambios');}
+}
+
 async function syncAlumnoFromSolicitud(r){
   try{
     const nombre=(r.client_name||'').trim();
@@ -4363,6 +4415,7 @@ function solSetFilter(btn,f){
     <!-- header -->
     <div style="background:#0f2240;padding:20px 24px;flex-shrink:0">
       <button onclick="closeSolDetail()" style="float:right;background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:16px;display:grid;place-items:center">✕</button>
+      <button onclick="editSolicitud()" style="float:right;margin-right:8px;background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:13px;display:grid;place-items:center" title="Editar reserva">✎</button>
       <div id="sol-detail-name" style="font-size:17px;font-weight:700;color:#fff;margin-bottom:3px"></div>
       <div id="sol-detail-sub" style="font-size:12px;color:rgba(255,255,255,.5)"></div>
     </div>
@@ -4709,7 +4762,13 @@ function classifyServiceToRow(service){
 let _lastGanttJSON='';
 async function loadGanttMonth(silent){
   const wrap=document.getElementById('gantt-wrap');
-  if(wrap&&!silent)wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--txt3);">Cargando...</div>';
+  const scrollBox=document.getElementById('gantt-scroll');
+  const scrollLeftPrev=scrollBox?scrollBox.scrollLeft:0;
+  // Solo mostramos "Cargando..." en la primera carga (tabla vacia) — si ya hay una tabla
+  // pintada, sustituirla por el placeholder encoge el contenido y el navegador resetea el
+  // scroll horizontal a 0 antes de que podamos restaurarlo (por eso "la barra" volvia al
+  // principio cada vez que se guardaba algo).
+  if(wrap&&!silent&&!wrap.querySelector('table'))wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--txt3);">Cargando...</div>';
   const first=new Date(ganttYear,ganttMonth,1);
   const last=new Date(ganttYear,ganttMonth+1,0,23,59,59);
   try{
@@ -4752,6 +4811,7 @@ async function loadGanttMonth(silent){
     }).sort((a,b)=>a.hora.localeCompare(b.hora));
   }catch(e){console.error('loadGanttMonth',e);GANTT_DATA=[];}
   renderGantt();
+  if(scrollBox)scrollBox.scrollLeft=scrollLeftPrev;
   renderClassesKPIs();
   renderClassesCheckin();
 }
