@@ -280,7 +280,7 @@ tr:hover td{background:var(--blue-light);}
 
       <div class="two-col-grid" style="display:grid;grid-template-columns:1fr 1.3fr;gap:20px;align-items:start;margin-bottom:24px;">
         <div class="card earn-card">
-          <div class="earn-hd">💰 Mis ganancias<span>10% de comisión por cliente cerrado</span></div>
+          <div class="earn-hd">💰 Mis ganancias<span>10% de comisión por cliente cerrado (hasta 15% en casos especiales)</span></div>
           <div class="earn-grid">
             <div class="earn-item"><div class="earn-num" id="mio-earn-cerrados">0</div><div class="earn-lbl">Clientes cerrados</div></div>
             <div class="earn-item"><div class="earn-num" id="mio-earn-total">0€</div><div class="earn-lbl">Comisión generada</div></div>
@@ -301,7 +301,7 @@ tr:hover td{background:var(--blue-light);}
           <button class="tab-btn" data-tab="todos" onclick="mioSetTab('todos')">Todo mi historial</button>
         </div>
         <div class="tbl-wrap"><table>
-          <thead><tr><th>Empresa</th><th>Teléfono</th><th>Sector</th><th>Temperatura</th><th>Etapa</th><th>Alta</th><th></th></tr></thead>
+          <thead><tr><th>Empresa</th><th>Teléfono</th><th>Sector</th><th>Canal</th><th>Temperatura</th><th>Etapa</th><th>Alta</th><th></th></tr></thead>
           <tbody id="mio-tbody"></tbody>
         </table></div>
       </div>
@@ -336,12 +336,15 @@ tr:hover td{background:var(--blue-light);}
         <div><h1>Todos los <em>contactos</em></h1><div class="page-sub">Filtra, actualiza etapas y agenda reuniones</div></div>
       </div>
       <div class="card" style="padding:16px 20px;margin-bottom:18px;">
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
           <div class="f-group" style="margin-bottom:0;"><label>Captador</label><select id="f-captador" onchange="renderContactos()"><option value="">Todos</option></select></div>
           <div class="f-group" style="margin-bottom:0;"><label>Etapa</label><select id="f-etapa" onchange="renderContactos()">
             <option value="">Todas</option>
             <option value="nuevo">Nuevo</option><option value="contactado">Contactado</option><option value="interesado">Interesado</option>
             <option value="reunion">Reunión agendada</option><option value="cerrado">Cerrado</option><option value="descartado">Descartado</option>
+          </select></div>
+          <div class="f-group" style="margin-bottom:0;"><label>Canal</label><select id="f-canal" onchange="renderContactos()">
+            <option value="">Todos</option><option value="llamada">Llamada fría</option><option value="email">Email</option>
           </select></div>
           <div class="f-group" style="margin-bottom:0;"><label>Fecha alta</label><input type="date" id="f-fecha" onchange="renderContactos()"></div>
           <div class="f-group" style="margin-bottom:0;"><label>Buscar empresa</label><input id="f-busqueda" placeholder="Nombre de empresa..." oninput="renderContactos()"></div>
@@ -349,7 +352,7 @@ tr:hover td{background:var(--blue-light);}
       </div>
       <div class="card" style="padding:6px 20px 20px;">
         <div class="tbl-wrap"><table>
-          <thead><tr><th>Empresa</th><th>Captador</th><th>Teléfono</th><th>Sector</th><th>Temp.</th><th>Etapa</th><th>Alta</th><th>Notas secretaría</th><th></th></tr></thead>
+          <thead><tr><th>Empresa</th><th>Captador</th><th>Teléfono</th><th>Sector</th><th>Canal</th><th>Temp.</th><th>Etapa</th><th>Alta</th><th>Notas secretaría</th><th></th></tr></thead>
           <tbody id="contactos-tbody"></tbody>
         </table></div>
       </div>
@@ -358,7 +361,21 @@ tr:hover td{background:var(--blue-light);}
     <!-- ═══ PÁGINA REUNIONES (secretaria/jefe) ═══ -->
     <div class="page" id="page-reuniones">
       <div class="page-hd">
-        <div><h1>Reuniones y <em>llamadas</em></h1><div class="page-sub">Todo lo agendado para el jefe</div></div>
+        <div><h1>Reuniones y <em>llamadas</em></h1><div class="page-sub">Agenda de reuniones, demos y llamadas para el jefe</div></div>
+      </div>
+      <div class="card" style="padding:18px 20px;margin-bottom:18px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="btn btn-ghost btn-sm" onclick="reCalNav(-1)">←</button>
+            <div style="font-family:var(--display);font-weight:800;font-size:14.5px;min-width:150px;text-align:center;" id="re-cal-label"></div>
+            <button class="btn btn-ghost btn-sm" onclick="reCalNav(1)">→</button>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="re-cal-clear" style="display:none;" onclick="reCalFiltrar(null)">Ver todas · quitar filtro</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;text-align:center;">
+          <div>Lu</div><div>Ma</div><div>Mi</div><div>Ju</div><div>Vi</div><div>Sa</div><div>Do</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;" id="re-cal-grid"></div>
       </div>
       <div class="card" style="padding:6px 20px 20px;">
         <div class="tbl-wrap"><table>
@@ -371,11 +388,11 @@ tr:hover td{background:var(--blue-light);}
     <!-- ═══ PÁGINA COMISIONES (secretaria/jefe) ═══ -->
     <div class="page" id="page-comisiones">
       <div class="page-hd">
-        <div><h1>Comisiones de <em>captadores</em></h1><div class="page-sub">10% por cada cliente cerrado — control de pagos</div></div>
+        <div><h1>Comisiones de <em>captadores</em></h1><div class="page-sub">10%-15% por cada cliente cerrado — control de pagos</div></div>
       </div>
       <div class="kpi-grid">
         <div class="kpi accent-blue"><div class="kpi-lbl">Clientes cerrados (total)</div><div class="kpi-val" id="com-kpi-cerrados">0</div><div class="kpi-sub">De todo el equipo</div></div>
-        <div class="kpi accent-gold"><div class="kpi-lbl">Comisión total generada</div><div class="kpi-val" id="com-kpi-total">0€</div><div class="kpi-sub">10% del valor cerrado</div></div>
+        <div class="kpi accent-gold"><div class="kpi-lbl">Comisión total generada</div><div class="kpi-val" id="com-kpi-total">0€</div><div class="kpi-sub">10%-15% del valor cerrado</div></div>
         <div class="kpi accent-green"><div class="kpi-lbl">Ya pagada</div><div class="kpi-val" id="com-kpi-pagada">0€</div></div>
         <div class="kpi accent-red"><div class="kpi-lbl">Pendiente de pagar</div><div class="kpi-val" id="com-kpi-pendiente">0€</div></div>
       </div>
@@ -386,7 +403,7 @@ tr:hover td{background:var(--blue-light);}
       <div class="card" style="padding:6px 20px 20px;">
         <div style="font-family:var(--display);font-weight:800;font-size:15.5px;margin:16px 0 6px;">Detalle de clientes cerrados</div>
         <div class="tbl-wrap"><table>
-          <thead><tr><th>Empresa</th><th>Captador</th><th>Valor cierre</th><th>Comisión (10%)</th><th>Estado</th><th></th></tr></thead>
+          <thead><tr><th>Empresa</th><th>Captador</th><th>Valor cierre</th><th>%</th><th>Comisión</th><th>Estado</th><th></th></tr></thead>
           <tbody id="comisiones-tbody"></tbody>
         </table></div>
       </div>
@@ -405,8 +422,13 @@ tr:hover td{background:var(--blue-light);}
         <div class="f-group"><label>Teléfono</label><input id="c-telefono" placeholder="+34 600 000 000"></div>
         <div class="f-group"><label>Sector / a qué se dedica</label><input id="c-sector" placeholder="Ej. Hostelería"></div>
       </div>
-      <div class="f-group"><label>Nivel del lead</label>
-        <select id="c-temperatura"><option value="frio">Frío</option><option value="templado" selected>Templado</option><option value="caliente">Caliente</option></select>
+      <div class="f-row">
+        <div class="f-group"><label>Nivel del lead</label>
+          <select id="c-temperatura"><option value="frio">Frío</option><option value="templado" selected>Templado</option><option value="caliente">Caliente</option></select>
+        </div>
+        <div class="f-group"><label>Canal de contacto</label>
+          <select id="c-canal"><option value="llamada">Llamada fría</option><option value="email">Email</option></select>
+        </div>
       </div>
       <div class="f-group"><label>Notas</label><textarea id="c-notas" rows="3" placeholder="Info de la empresa, con quién hablaste, qué dijo..."></textarea></div>
     </div>
@@ -436,7 +458,10 @@ tr:hover td{background:var(--blue-light);}
         <div class="f-group"><label>Fecha reunión/llamada</label><input type="date" id="mg-fecha"></div>
         <div class="f-group"><label>Hora</label><input type="time" id="mg-hora"></div>
       </div>
-      <div class="f-group" id="mg-valor-wrap" style="display:none;"><label>Valor del cierre (€) · comisión 10% para el captador</label><input type="number" id="mg-valor" placeholder="Ej. 800 (setup) o 99 (mensual)"></div>
+      <div class="f-row" id="mg-valor-wrap" style="display:none;">
+        <div class="f-group"><label>Valor del cierre (€)</label><input type="number" id="mg-valor" placeholder="Ej. 800 (setup) o 99 (mensual)"></div>
+        <div class="f-group" id="mg-comision-wrap"><label>% comisión captador</label><input type="number" id="mg-comision" min="10" max="15" step="0.5" placeholder="10"></div>
+      </div>
       <div class="f-group"><label>Notas de secretaría</label><textarea id="mg-notas" rows="3" placeholder="Resumen de la llamada, qué acordasteis..."></textarea></div>
     </div>
     <div class="modal-ft">
@@ -574,6 +599,7 @@ function openContactoModal(){
   document.getElementById('c-telefono').value='';
   document.getElementById('c-sector').value='';
   document.getElementById('c-temperatura').value='templado';
+  document.getElementById('c-canal').value='llamada';
   document.getElementById('c-notas').value='';
   openModal('modal-contacto');
 }
@@ -586,6 +612,7 @@ async function guardarContacto(){
     telefono:document.getElementById('c-telefono').value.trim()||null,
     sector:document.getElementById('c-sector').value.trim()||null,
     temperatura:document.getElementById('c-temperatura').value,
+    canal:document.getElementById('c-canal').value,
     notas:document.getElementById('c-notas').value.trim()||null,
     etapa:'nuevo',
     fecha_alta:todayStr()
@@ -623,7 +650,7 @@ function renderMio(){
 
   // Ganancias / comisiones (10% de cada cliente cerrado)
   const cerrados=misContactos.filter(c=>c.etapa==='cerrado');
-  const comisionDe=c=>(parseFloat(c.valor_cierre)||0)*0.10;
+  const comisionDe=c=>(parseFloat(c.valor_cierre)||0)*((c.comision_pct||10)/100);
   const totalComision=cerrados.reduce((s,c)=>s+comisionDe(c),0);
   const pagado=cerrados.filter(c=>c.comision_pagada).reduce((s,c)=>s+comisionDe(c),0);
   document.getElementById('mio-earn-cerrados').textContent=cerrados.length;
@@ -655,7 +682,7 @@ function renderMio(){
 
   const tbody=document.getElementById('mio-tbody');
   if(!lista.length){
-    tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>${MIO_TAB==='hoy'?'Aún no has añadido contactos hoy':MIO_TAB==='followup'?'No tienes follow-ups pendientes':'Sin contactos'}</p></div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="8"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>${MIO_TAB==='hoy'?'Aún no has añadido contactos hoy':MIO_TAB==='followup'?'No tienes follow-ups pendientes':'Sin contactos'}</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML=lista.map(c=>`
@@ -663,6 +690,7 @@ function renderMio(){
       <td class="empresa-cell"><strong>${esc(c.empresa)}</strong>${c.notas?`<small>${esc(c.notas).slice(0,60)}${c.notas.length>60?'…':''}</small>`:''}</td>
       <td>${esc(c.telefono||'—')}</td>
       <td>${esc(c.sector||'—')}</td>
+      <td>${labelCanal(c.canal)}</td>
       <td><span class="tag tag-${c.temperatura}">${labelTemp(c.temperatura)}</span></td>
       <td><span class="tag tag-${c.etapa}">${labelEtapa(c.etapa)}</span></td>
       <td>${fmtFecha(c.fecha_alta)}</td>
@@ -680,6 +708,7 @@ async function marcarSeguimiento(id){
 }
 function labelTemp(t){return {frio:'Frío',templado:'Templado',caliente:'Caliente'}[t]||t;}
 function labelEtapa(e){return {nuevo:'Nuevo',contactado:'Contactado',interesado:'Interesado',reunion:'Reunión',cerrado:'Cerrado',descartado:'Descartado'}[e]||e;}
+function labelCanal(c){return {llamada:'☎ Llamada fría',email:'✉ Email'}[c]||'—';}
 
 // ═══════════ RESUMEN EQUIPO (secretaria/jefe) ═══════════
 function renderResumen(){
@@ -719,15 +748,16 @@ function renderResumen(){
 function renderContactos(){
   const fc=document.getElementById('f-captador').value;
   const fe=document.getElementById('f-etapa').value;
+  const fcan=document.getElementById('f-canal').value;
   const ff=document.getElementById('f-fecha').value;
   const fb=(document.getElementById('f-busqueda').value||'').toLowerCase();
   let lista=ALL_CONTACTOS.filter(c=>
-    (!fc||c.captador===fc) && (!fe||c.etapa===fe) && (!ff||c.fecha_alta===ff) &&
+    (!fc||c.captador===fc) && (!fe||c.etapa===fe) && (!fcan||c.canal===fcan) && (!ff||c.fecha_alta===ff) &&
     (!fb||c.empresa.toLowerCase().includes(fb))
   );
   const tbody=document.getElementById('contactos-tbody');
   if(!lista.length){
-    tbody.innerHTML=`<tr><td colspan="9"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>Sin contactos con estos filtros</p></div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="10"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>Sin contactos con estos filtros</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML=lista.map(c=>`
@@ -736,6 +766,7 @@ function renderContactos(){
       <td>${esc(c.captador)}</td>
       <td>${esc(c.telefono||'—')}</td>
       <td>${esc(c.sector||'—')}</td>
+      <td>${labelCanal(c.canal)}</td>
       <td><span class="tag tag-${c.temperatura}">${labelTemp(c.temperatura)}</span></td>
       <td><span class="tag tag-${c.etapa}">${labelEtapa(c.etapa)}</span></td>
       <td>${fmtFecha(c.fecha_alta)}</td>
@@ -760,7 +791,11 @@ function abrirGestion(id){
   document.getElementById('mg-fecha').value=c.fecha_reunion||'';
   document.getElementById('mg-hora').value=c.hora_reunion||'';
   document.getElementById('mg-valor').value=c.valor_cierre||'';
+  document.getElementById('mg-comision').value=c.comision_pct||10;
   document.getElementById('mg-notas').value=c.notas_secretaria||'';
+  // Solo el jefe puede cambiar el % de comisión (10% estándar, hasta 15% en casos excepcionales)
+  const comisionWrap=document.getElementById('mg-comision-wrap');
+  comisionWrap.style.display=SESSION.rol==='jefe'?'':'none';
   mgEtapaChanged();
   openModal('modal-gestion');
 }
@@ -779,6 +814,10 @@ async function guardarGestion(){
     notas_secretaria:document.getElementById('mg-notas').value.trim()||null,
     updated_at:new Date().toISOString()
   };
+  if(SESSION.rol==='jefe'){
+    const pct=+document.getElementById('mg-comision').value||10;
+    payload.comision_pct=Math.min(15,Math.max(10,pct));
+  }
   try{
     const {error}=await SB.from('am_crm_contactos').update(payload).eq('id',GESTION_ID);
     if(error)throw error;
@@ -789,8 +828,57 @@ async function guardarGestion(){
 }
 
 // ═══════════ REUNIONES (secretaria/jefe) ═══════════
+let RE_CAL_YEAR=new Date().getFullYear(), RE_CAL_MONTH=new Date().getMonth();
+let RE_CAL_FILTRO=null; // 'YYYY-MM-DD' o null (todas)
+
+function reCalNav(dir){
+  RE_CAL_MONTH+=dir;
+  if(RE_CAL_MONTH>11){RE_CAL_MONTH=0;RE_CAL_YEAR++;}
+  if(RE_CAL_MONTH<0){RE_CAL_MONTH=11;RE_CAL_YEAR--;}
+  renderReCalendario();
+}
+function reCalFiltrar(ymd){
+  RE_CAL_FILTRO=ymd;
+  renderReuniones();
+}
+function renderReCalendario(){
+  const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('re-cal-label').textContent=MESES[RE_CAL_MONTH]+' '+RE_CAL_YEAR;
+  document.getElementById('re-cal-clear').style.display=RE_CAL_FILTRO?'':'none';
+
+  const todasReuniones=ALL_CONTACTOS.filter(c=>c.fecha_reunion);
+  const porDia={};
+  todasReuniones.forEach(c=>{(porDia[c.fecha_reunion]=porDia[c.fecha_reunion]||[]).push(c);});
+
+  const first=new Date(RE_CAL_YEAR,RE_CAL_MONTH,1);
+  let startDow=first.getDay()-1; if(startDow<0)startDow=6;
+  const daysInMonth=new Date(RE_CAL_YEAR,RE_CAL_MONTH+1,0).getDate();
+  const hoy=todayStr();
+
+  let html='';
+  for(let i=0;i<startDow;i++) html+='<div></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const ymd=`${RE_CAL_YEAR}-${String(RE_CAL_MONTH+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const reus=porDia[ymd]||[];
+    const esHoy=ymd===hoy;
+    const esFiltro=ymd===RE_CAL_FILTRO;
+    html+=`<div onclick="${reus.length?`reCalFiltrar('${ymd}')`:''}" style="min-height:56px;border-radius:8px;padding:6px 6px;font-size:12px;
+      background:${esFiltro?'var(--blue)':reus.length?'var(--blue-light)':'var(--bg)'};
+      color:${esFiltro?'#fff':'var(--ink)'};
+      border:1.5px solid ${esHoy?'var(--gold)':'transparent'};
+      cursor:${reus.length?'pointer':'default'};">
+      <div style="font-weight:700;">${d}</div>
+      ${reus.length?`<div style="font-size:10px;font-weight:700;margin-top:3px;">${reus.length} cita${reus.length>1?'s':''}</div>`:''}
+    </div>`;
+  }
+  document.getElementById('re-cal-grid').innerHTML=html;
+}
+
 function renderReuniones(){
-  const lista=ALL_CONTACTOS.filter(c=>c.fecha_reunion).sort((a,b)=>(a.fecha_reunion+  (a.hora_reunion||'')).localeCompare(b.fecha_reunion+(b.hora_reunion||'')));
+  renderReCalendario();
+  let lista=ALL_CONTACTOS.filter(c=>c.fecha_reunion);
+  if(RE_CAL_FILTRO) lista=lista.filter(c=>c.fecha_reunion===RE_CAL_FILTRO);
+  lista=lista.sort((a,b)=>(a.fecha_reunion+  (a.hora_reunion||'')).localeCompare(b.fecha_reunion+(b.hora_reunion||'')));
   const tbody=document.getElementById('reuniones-tbody');
   if(!lista.length){
     tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><p>Aún no hay reuniones agendadas</p></div></td></tr>`;
@@ -812,7 +900,7 @@ function renderReuniones(){
 // ═══════════ COMISIONES (secretaria/jefe) ═══════════
 function renderComisiones(){
   const cerrados=ALL_CONTACTOS.filter(c=>c.etapa==='cerrado');
-  const comisionDe=c=>(parseFloat(c.valor_cierre)||0)*0.10;
+  const comisionDe=c=>(parseFloat(c.valor_cierre)||0)*((c.comision_pct||10)/100);
   const totalComision=cerrados.reduce((s,c)=>s+comisionDe(c),0);
   const pagado=cerrados.filter(c=>c.comision_pagada).reduce((s,c)=>s+comisionDe(c),0);
   document.getElementById('com-kpi-cerrados').textContent=cerrados.length;
@@ -836,7 +924,7 @@ function renderComisiones(){
 
   const tbody=document.getElementById('comisiones-tbody');
   if(!cerrados.length){
-    tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><p>Aún no hay clientes cerrados</p></div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><p>Aún no hay clientes cerrados</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML=cerrados.slice().sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at)).map(c=>`
@@ -844,6 +932,7 @@ function renderComisiones(){
       <td class="empresa-cell"><strong>${esc(c.empresa)}</strong></td>
       <td>${esc(c.captador)}</td>
       <td>${c.valor_cierre?Math.round(c.valor_cierre)+'€':'—'}</td>
+      <td>${c.comision_pct||10}%</td>
       <td><strong>${Math.round(comisionDe(c))}€</strong></td>
       <td>${c.comision_pagada?'<span class="pay-tag">✓ Pagada</span>':'<span class="tag tag-descartado" style="background:#fff3d6;color:#93650a;">Pendiente</span>'}</td>
       <td>${c.comision_pagada?'':`<button class="pay-btn" onclick="marcarComisionPagada('${c.id}')">Marcar pagada</button>`}</td>
