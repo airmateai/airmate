@@ -2048,6 +2048,19 @@ async function savePack(i){
 }
 async function deletePack(i){if(confirm('¿Eliminar pack?')){const p=PACKS[i];await sbDelete('cn_packs',p.id);PACKS.splice(i,1);toast('Pack eliminado');closeModal();renderPacks();}}
 
+// Cuenta las clases reales de un monitor a partir de las reservas (no del numero
+// manual guardado en su ficha), separando por coma los grupos con varios monitores —
+// asi da igual si el monitor se asigno al crear el grupo o despues desde la solicitud.
+function clasesRealesDe(nombre){
+  let n=0;
+  GANTT_RAW.forEach(r=>{
+    if(r.status==='cancelled')return;
+    let notes={};try{notes=JSON.parse(r.notes||'{}');}catch{}
+    const nombres=(notes.instructor||'').split(',').map(x=>x.trim()).filter(Boolean);
+    if(nombres.includes(nombre))n++;
+  });
+  return n;
+}
 function renderInstructors(){
   document.getElementById('instructors-grid').innerHTML=INSTRUCTORS.map((ins,i)=>{
     const exp = ins.exp&&ins.exp!=='null' ? `<span><strong style="color:var(--txt);">${esc(ins.exp)}</strong> exp.</span>` : '<span></span>';
@@ -2058,7 +2071,7 @@ function renderInstructors(){
         <div style="font-size:10px;letter-spacing:.2em;color:var(--coral);text-transform:uppercase;font-weight:700;margin:3px 0 8px;">${esc(ins.role||'Monitor')}</div>
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);padding:8px 0;border-top:1px solid var(--border2);">
           ${exp}
-          <span><strong style="color:var(--txt);">${ins.rating||5}</strong>★ · ${ins.classes||0} clases</span>
+          <span><strong style="color:var(--txt);">${ins.rating||5}</strong>★ · ${clasesRealesDe(ins.name)} clases</span>
         </div>
         ${cert}
       </div>`;}).join('');
@@ -4043,7 +4056,10 @@ function monitoresOcupadosEnFranja(startsAt,endsAt,miRow,miHora){
     const rs=new Date(r.starts_at).getTime(), re=new Date(r.ends_at).getTime();
     if(s<re && e>rs){
       let n={};try{n=JSON.parse(r.notes||'{}');}catch{}
-      if(n.instructor)ocupados.add(n.instructor);
+      // instructor puede ser un solo nombre o varios separados por coma (campamentos con
+      // varios monitores) — hay que marcar cada uno como ocupado por separado, si no
+      // "David" y "Adri" nunca aparecen ocupados cuando están dentro de un grupo.
+      if(n.instructor)n.instructor.split(',').map(x=>x.trim()).filter(Boolean).forEach(m=>ocupados.add(m));
     }
   });
   return ocupados;
