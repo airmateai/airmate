@@ -819,6 +819,11 @@ async function enviar(){
   // reservas hechas en paralelo mientras esta pestaña estaba abierta), y asignar el GRUPO
   // (A, B, C...) correspondiente a cada dia segun idioma/edad y aforo real por grupo.
   const grupoPorDia={};
+  // Aplanar a lista de slots (dia+hora) — declarado fuera del try para que siga
+  // disponible mas abajo, al construir los inserts (si no, "slots" queda fuera de
+  // alcance y la reserva falla siempre con ReferenceError al enviar).
+  const slots=[];
+  dias.forEach(ymd=>(S.franjasPorDia[ymd]||[]).forEach(f=>slots.push({ymd,hora:f.hora})));
   try{
     const fechaMin=dias[0], fechaMax=dias[dias.length-1];
     const resAforo=await fetch(
@@ -850,10 +855,6 @@ async function enviar(){
       try{const n=JSON.parse(notes||'{}');if(Array.isArray(n.ninos)&&n.ninos.length)return n.ninos.length;}catch{}
       return 1;
     };
-
-    // Aplanar a lista de slots (dia+hora) — un dia puede tener varias clases
-    const slots=[];
-    dias.forEach(ymd=>(S.franjasPorDia[ymd]||[]).forEach(f=>slots.push({ymd,hora:f.hora})));
 
     for(const {ymd,hora} of slots){
       const horaNum=parseInt(hora,10);
