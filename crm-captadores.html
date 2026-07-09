@@ -444,7 +444,16 @@ tr:hover td{background:var(--blue-light);}
   <div class="modal">
     <div class="modal-hd"><h3 id="mg-titulo">Contacto</h3><button class="modal-close" onclick="closeModal('modal-gestion')">✕</button></div>
     <div class="modal-body">
-      <div id="mg-info" style="font-size:13px;color:var(--txt2);margin-bottom:16px;line-height:1.7;"></div>
+      <div id="mg-info" style="font-size:12px;color:var(--txt3);margin-bottom:10px;"></div>
+      <div class="f-group"><label>Nombre de la empresa</label><input id="mg-empresa" placeholder="Ej. Restaurante El Puerto"></div>
+      <div class="f-row">
+        <div class="f-group"><label>Teléfono</label><input id="mg-telefono" placeholder="+34 600 000 000"></div>
+        <div class="f-group"><label>Sector</label><input id="mg-sector" placeholder="Ej. Hostelería"></div>
+      </div>
+      <div class="f-group"><label>Canal de contacto</label>
+        <select id="mg-canal"><option value="llamada">Llamada fría</option><option value="email">Email</option></select>
+      </div>
+      <div class="f-group"><label>Notas del captador</label><textarea id="mg-notascap" rows="2" placeholder="Info de la empresa, con quién hablaste, qué dijo..."></textarea></div>
       <div class="f-row">
         <div class="f-group"><label>Etapa</label><select id="mg-etapa" onchange="mgEtapaChanged()">
           <option value="nuevo">Nuevo</option><option value="contactado">Contactado</option><option value="interesado">Interesado</option>
@@ -800,11 +809,12 @@ function abrirGestion(id){
   if(!c)return;
   GESTION_ID=id;
   document.getElementById('mg-titulo').textContent=c.empresa;
-  document.getElementById('mg-info').innerHTML=`
-    <strong>Captador:</strong> ${esc(c.captador)}<br>
-    <strong>Teléfono:</strong> ${esc(c.telefono||'—')}<br>
-    <strong>Sector:</strong> ${esc(c.sector||'—')}<br>
-    <strong>Notas del captador:</strong> ${esc(c.notas||'—')}`;
+  document.getElementById('mg-info').innerHTML=`Captador: <strong>${esc(c.captador)}</strong> · Alta: ${fmtFecha(c.fecha_alta)}`;
+  document.getElementById('mg-empresa').value=c.empresa||'';
+  document.getElementById('mg-telefono').value=c.telefono||'';
+  document.getElementById('mg-sector').value=c.sector||'';
+  document.getElementById('mg-canal').value=c.canal||'llamada';
+  document.getElementById('mg-notascap').value=c.notas||'';
   document.getElementById('mg-etapa').value=c.etapa;
   document.getElementById('mg-temp').value=c.temperatura;
   document.getElementById('mg-fecha').value=c.fecha_reunion||'';
@@ -824,7 +834,14 @@ function mgEtapaChanged(){
 }
 async function guardarGestion(){
   if(!GESTION_ID)return;
+  const empresa=document.getElementById('mg-empresa').value.trim();
+  if(!empresa){toast('Falta el nombre de la empresa','error');return;}
   const payload={
+    empresa,
+    telefono:document.getElementById('mg-telefono').value.trim()||null,
+    sector:document.getElementById('mg-sector').value.trim()||null,
+    canal:document.getElementById('mg-canal').value,
+    notas:document.getElementById('mg-notascap').value.trim()||null,
     etapa:document.getElementById('mg-etapa').value,
     temperatura:document.getElementById('mg-temp').value,
     fecha_reunion:document.getElementById('mg-fecha').value||null,
