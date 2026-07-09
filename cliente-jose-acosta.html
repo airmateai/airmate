@@ -53,7 +53,14 @@ function fmt(n){return new Intl.NumberFormat('es-ES',{style:'currency',currency:
 function fmtDate(s){return s?new Date(s).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'}):'—';}
 function fmtDateTime(s){return s?new Date(s).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—';}
 
-const STATUS_LABEL={presupuesto:'Presupuesto',produccion:'En producción',taller:'En el taller',listo_prueba:'Listo para prueba',prueba:'En prueba',ajustes:'En ajustes',listo:'Listo para entrega',entregado:'Entregado',cancelado:'Cancelado'};
+const STATUS_LABEL={presupuesto:'Presupuesto',produccion:'En producción',taller:'En el taller',listo_prueba:'Listo para prueba',ajustes:'En ajustes',listo:'Listo para entrega',entregado:'Entregado',cancelado:'Cancelado'};
+const STATUS_STEPS=['presupuesto','produccion','listo_prueba','ajustes','listo','entregado'];
+function seguimientoBar(status){
+  const idx=STATUS_STEPS.indexOf(status);
+  if(idx<0)return'';
+  const pct=Math.round((idx/(STATUS_STEPS.length-1))*100);
+  return `<div style="margin-top:10px"><div style="height:6px;background:rgba(196,163,90,.15);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#9a7f45,#c4a35a);border-radius:3px"></div></div></div>`;
+}
 
 async function init(){
   const params=new URLSearchParams(location.search);
@@ -102,6 +109,7 @@ async function init(){
           <div class="card-title">${esc(o.title)}</div>
           <div class="card-sub">${o.fecha_entrega?'Entrega prevista: '+fmtDate(o.fecha_entrega):'Encargo activo'}</div>
           <div class="card-meta">${esc(STATUS_LABEL[o.status]||o.status||'')}${o.price?' · '+fmt(o.price):''}</div>
+          ${seguimientoBar(o.status)}
         </div>`).join(''):'<div class="empty">Aún no tienes encargos registrados</div>'}
     </div>
 
