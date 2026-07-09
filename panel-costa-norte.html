@@ -4137,7 +4137,7 @@ function newCampamento(){
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:600;cursor:pointer;">
       <input type="checkbox" id="camp-pagado" style="width:16px;height:16px;"> Marcar como pagado
     </label>
-    ${fActions('Crear campamento','saveCampamento()')}
+    ${fActions('Crear campamento','saveCampamento(this)')}
   `);
   campRenderNinos();
   campRefreshGrupoOpts();
@@ -4161,13 +4161,15 @@ function campRefreshGrupoOpts(){
   sel.innerHTML=opts.join('');
 }
 
-async function saveCampamento(){
+async function saveCampamento(btn){
+  if(btn){ if(btn.dataset.busy)return; btn.dataset.busy='1'; btn.disabled=true; btn.dataset.origText=btn.textContent; btn.textContent='Guardando...'; }
+  const liberar=()=>{ if(btn){ btn.disabled=false; btn.textContent=btn.dataset.origText||'Crear campamento'; delete btn.dataset.busy; } };
   const nombre=cv('camp-nombre').trim()||'Campamento';
   const fecha=cv('camp-fecha'),hora=cv('camp-hora')||'09:00';
   const importe=+cv('camp-importe')||0;
   const pagado=document.getElementById('camp-pagado').checked;
   const ninos=_campNinos.map(n=>n.trim()).filter(Boolean);
-  if(!ninos.length){toast('⚠ Añade al menos un niño/a');return;}
+  if(!ninos.length){toast('⚠ Añade al menos un niño/a');liberar();return;}
   const monitores=Array.from(document.querySelectorAll('.camp-mon-chk:checked')).map(c=>c.value);
   const startsAt=new Date(fecha+'T'+hora+':00');
   const endsAt=new Date(startsAt.getTime()+2*60*60*1000);
@@ -4177,7 +4179,7 @@ async function saveCampamento(){
     if(grupoSel.value==='__nuevo__'){
       grupoLetra=siguienteLetraGrupo(fecha,+hora.split(':')[0],'camp');
       const ok=await crearGrupoHorario(fecha,+hora.split(':')[0],'camp',grupoLetra,null,null);
-      if(!ok)return;
+      if(!ok){liberar();return;}
     } else {
       grupoLetra=grupoSel.value;
     }
@@ -4189,12 +4191,12 @@ async function saveCampamento(){
       headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=representation'},
       body:JSON.stringify({business_slug:'costa-norte',client_name:nombre+' — '+ninos.join(', '),service:'Campamento ('+ninos.length+' niños)',duration_minutes:120,starts_at:startsAt.toISOString(),ends_at:endsAt.toISOString(),status:'confirmed',budget:importe,notes:JSON.stringify(notes)})
     });
-    if(!res.ok){toast('⚠ Error al crear el campamento');return;}
+    if(!res.ok){toast('⚠ Error al crear el campamento');liberar();return;}
     toast('✓ Campamento creado'+(pagado?' · marcado como pagado':''));
     closeModal();
     loadSolicitudes();
     if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
-  }catch(e){console.error('saveCampamento',e);toast('⚠ Error al crear el campamento');}
+  }catch(e){console.error('saveCampamento',e);toast('⚠ Error al crear el campamento');liberar();}
 }
 function newManualReserva(prefill){
   const monitorOpts=['— Sin asignar —',...INSTRUCTORS.map(x=>x.name)];
@@ -4217,7 +4219,7 @@ function newManualReserva(prefill){
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:600;cursor:pointer;">
       <input type="checkbox" id="mr-pagado" style="width:16px;height:16px;"> Marcar como pagado (cobrado en persona / TPV)
     </label>
-    ${fActions(lock?'Añadir al grupo':'Crear reserva','saveManualReserva()')}
+    ${fActions(lock?'Añadir al grupo':'Crear reserva','saveManualReserva(this)')}
   `);
   mrRefreshMonitorOpts();
   if(!lock)mrRefreshGrupoOpts();
@@ -4289,9 +4291,13 @@ function addIntegranteAGrupo(){
   });
 }
 const RATIO_MAX_GRUPO=7;
-async function saveManualReserva(){
+async function saveManualReserva(btn){
+  // Sin esto, un clic doble (o el usuario pensando que se ha quedado colgado el boton
+  // y volviendo a pulsar) crea la reserva duplicada por partida doble.
+  if(btn){ if(btn.dataset.busy)return; btn.dataset.busy='1'; btn.disabled=true; btn.dataset.origText=btn.textContent; btn.textContent='Guardando...'; }
+  const liberar=()=>{ if(btn){ btn.disabled=false; btn.textContent=btn.dataset.origText||'Crear reserva'; delete btn.dataset.busy; } };
   const nombre=cv('mr-nombre').trim();
-  if(!nombre){toast('⚠ Falta el nombre del cliente');return;}
+  if(!nombre){toast('⚠ Falta el nombre del cliente');liberar();return;}
   const tel=cv('mr-tel'),email=cv('mr-email'),tipo=cv('mr-tipo'),monitor=cv('mr-monitor');
   const personas=+cv('mr-personas')||1,fecha=cv('mr-fecha'),hora=cv('mr-hora')||'09:00';
   const importe=+cv('mr-importe')||0;
@@ -4310,7 +4316,7 @@ async function saveManualReserva(){
       const gruposYaAbiertos=gruposDeFranja(fecha,+hora.split(':')[0],miRowChk).length;
       if(dispDiaChk && gruposYaAbiertos>=dispDiaChk.size){
         toast(`⚠ Ya hay ${gruposYaAbiertos} grupos abiertos a esta hora y solo tienes ${dispDiaChk.size} monitor(es) disponible(s) hoy. Marca más monitores como disponibles o usa un grupo existente.`,'error');
-        return;
+        liberar();return;
       }
       grupoLetra=siguienteLetraGrupo(fecha,+hora.split(':')[0],miRowChk);
       const gIdioma=cv('mr-grupo-idioma'),gEdad=cv('mr-grupo-edad');
@@ -4330,7 +4336,7 @@ async function saveManualReserva(){
   }).reduce((sum,r)=>{let n={};try{n=JSON.parse(r.notes||'{}');}catch{}return sum+_bookingHeadcount(r,n);},0);
   if(yaEnGrupo+personas>RATIO_MAX_GRUPO){
     toast(`⚠ El grupo ${grupoLetra} ya está al ratio máximo (${yaEnGrupo}+${personas} > ${RATIO_MAX_GRUPO}). Abre otro grupo.`,'error');
-    return;
+    liberar();return;
   }
   const serviceLabel=(tipo==='Clase Privada'?'Clase particular':'Surf - '+tipo)+' ('+personas+' persona'+(personas>1?'s':'')+')';
   const notes={source:'manual',dias_totales:1,instructor:(monitor&&!monitor.startsWith('—'))?monitor:null,edad:edad||null,idioma:idioma||null,grupo:grupoLetra,payment_status:pagado?'confirmed':undefined};
@@ -4340,7 +4346,7 @@ async function saveManualReserva(){
       headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=representation'},
       body:JSON.stringify({business_slug:'costa-norte',client_name:nombre,client_phone:tel||null,client_email:email||null,service:serviceLabel,duration_minutes:120,starts_at:startsAt.toISOString(),ends_at:endsAt.toISOString(),status:'confirmed',budget:importe,notes:JSON.stringify(notes)})
     });
-    if(!res.ok){toast('⚠ Error al crear la reserva');return;}
+    if(!res.ok){toast('⚠ Error al crear la reserva');liberar();return;}
     const rows=await res.json();
     const row=Array.isArray(rows)?rows[0]:rows;
     await syncAlumnoFromSolicitud(row);
@@ -4348,7 +4354,7 @@ async function saveManualReserva(){
     closeModal();
     loadSolicitudes();
     if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
-  }catch(e){console.error('saveManualReserva',e);toast('⚠ Error al crear la reserva');}
+  }catch(e){console.error('saveManualReserva',e);toast('⚠ Error al crear la reserva');liberar();}
 }
 
 async function updateSolStatus(status){
