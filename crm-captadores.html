@@ -491,6 +491,25 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 function todayStr(){return new Date().toISOString().slice(0,10);}
 function fmtFecha(d){if(!d)return'—';const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('es-ES',{day:'2-digit',month:'short'});}
 
+// Si Supabase aun no tiene una columna nueva (ej. canal, comision_pct — falta correr
+// crm-captadores-setup.sql), no queremos que se rompa el guardado: reintentamos sin
+// ese campo y avisamos una vez, en vez de fallar todo el insert/update.
+async function sbWriteResiliente(fn,payload){
+  let p={...payload};
+  for(let i=0;i<5;i++){
+    const res=await fn(p);
+    if(!res.error)return res;
+    const m=/Could not find the '([^']+)' column/.exec(res.error.message||'');
+    if(m&&m[1] in p){
+      delete p[m[1]];
+      toast('⚠ Falta actualizar la base de datos (columna "'+m[1]+'") — pide a Fabio que ejecute crm-captadores-setup.sql','error');
+      continue;
+    }
+    return res;
+  }
+  return {error:{message:'No se pudo guardar tras varios intentos'}};
+}
+
 async function sha256(str){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -618,7 +637,7 @@ async function guardarContacto(){
     fecha_alta:todayStr()
   };
   try{
-    const {error}=await SB.from('am_crm_contactos').insert(payload);
+    const {error}=await sbWriteResiliente(p=>SB.from('am_crm_contactos').insert(p),payload);
     if(error)throw error;
     toast('✓ Contacto guardado');
     closeModal('modal-contacto');
@@ -819,7 +838,7 @@ async function guardarGestion(){
     payload.comision_pct=Math.min(15,Math.max(10,pct));
   }
   try{
-    const {error}=await SB.from('am_crm_contactos').update(payload).eq('id',GESTION_ID);
+    const {error}=await sbWriteResiliente(p=>SB.from('am_crm_contactos').update(p).eq('id',GESTION_ID),payload);
     if(error)throw error;
     toast('✓ Cambios guardados');
     closeModal('modal-gestion');
