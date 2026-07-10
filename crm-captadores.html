@@ -389,6 +389,11 @@ tr:hover td{background:var(--blue-light);}
     <div class="page" id="page-comisiones">
       <div class="page-hd">
         <div><h1>Comisiones de <em>captadores</em></h1><div class="page-sub">10%-15% por cada cliente cerrado — control de pagos</div></div>
+        <select class="ctrl-select" id="com-periodo" onchange="renderComisiones()" style="padding:9px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:#fff;">
+          <option value="mes">Este mes</option>
+          <option value="anio">Este año</option>
+          <option value="todo" selected>Todo</option>
+        </select>
       </div>
       <div class="kpi-grid">
         <div class="kpi accent-blue"><div class="kpi-lbl">Clientes cerrados (total)</div><div class="kpi-val" id="com-kpi-cerrados">0</div><div class="kpi-sub">De todo el equipo</div></div>
@@ -943,7 +948,17 @@ function renderReuniones(){
 
 // ═══════════ COMISIONES (secretaria/jefe) ═══════════
 function renderComisiones(){
-  const cerrados=ALL_CONTACTOS.filter(c=>c.etapa==='cerrado');
+  const periodo=document.getElementById('com-periodo')?.value||'todo';
+  const hoy=new Date();
+  const enPeriodo=c=>{
+    if(periodo==='todo')return true;
+    if(!c.updated_at)return false;
+    const d=new Date(c.updated_at);
+    if(periodo==='mes')return d.getFullYear()===hoy.getFullYear()&&d.getMonth()===hoy.getMonth();
+    if(periodo==='anio')return d.getFullYear()===hoy.getFullYear();
+    return true;
+  };
+  const cerrados=ALL_CONTACTOS.filter(c=>c.etapa==='cerrado'&&enPeriodo(c));
   const comisionDe=c=>(parseFloat(c.valor_cierre)||0)*((c.comision_pct||10)/100);
   const totalComision=cerrados.reduce((s,c)=>s+comisionDe(c),0);
   const pagado=cerrados.filter(c=>c.comision_pagada).reduce((s,c)=>s+comisionDe(c),0);
