@@ -1762,10 +1762,10 @@ function sendQuoteEmail(){
   openModal('Presupuesto generado · '+client,`
     <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:24px;font-family:Georgia,serif;color:#1d1418;">
       <div style="border-bottom:1px solid #ddd;padding-bottom:14px;margin-bottom:14px;">
-        <div style="font-size:13px;color:#666;">Para: <strong>${email}</strong></div>
-        <div style="font-size:13px;color:#666;margin-top:4px;">Asunto: <strong>Tu presupuesto para Costa Norte · ${client}</strong></div>
+        <div style="font-size:13px;color:#666;">Para: <strong>${esc(email)}</strong></div>
+        <div style="font-size:13px;color:#666;margin-top:4px;">Asunto: <strong>Tu presupuesto para Costa Norte · ${esc(client)}</strong></div>
       </div>
-      <p style="font-size:14px;line-height:1.6;margin-bottom:14px;">Hola ${client.split(' ')[0]||''},</p>
+      <p style="font-size:14px;line-height:1.6;margin-bottom:14px;">Hola ${esc(client.split(' ')[0]||'')},</p>
       <p style="font-size:14px;line-height:1.6;margin-bottom:14px;">Gracias por confiar en nosotros para vuestra experiencia de surf en San Vicente de la Barquera. Aquí tenéis vuestro presupuesto adaptado:</p>
       <div style="background:#f9f5ec;padding:14px;border-left:3px solid #ff5e3a;margin:14px 0;">
         <div style="font-size:13px;line-height:1.7;">
@@ -1900,12 +1900,12 @@ function openStDetail(id){
   hEl.innerHTML=hist.length?hist.slice().reverse().map(h=>`
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">
       <div>
-        <div style="font-size:13px;font-weight:600;color:#0f1923;">${h.tipo||'Clase'}</div>
-        <div style="font-size:11px;color:#64748b;margin-top:2px;">${h.instructor?'Instructor: '+h.instructor:''}</div>
+        <div style="font-size:13px;font-weight:600;color:#0f1923;">${esc(h.tipo||'Clase')}</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">${h.instructor?'Instructor: '+esc(h.instructor):''}</div>
       </div>
       <div style="text-align:right;">
-        <div style="font-size:12px;font-weight:700;color:#0f2240;">${h.fecha||''}</div>
-        ${h.notas?`<div style="font-size:10px;color:#94a3b8;margin-top:2px;">${h.notas}</div>`:''}
+        <div style="font-size:12px;font-weight:700;color:#0f2240;">${esc(h.fecha||'')}</div>
+        ${h.notas?`<div style="font-size:10px;color:#94a3b8;margin-top:2px;">${esc(h.notas)}</div>`:''}
       </div>
     </div>`).join(''):'<div style="text-align:center;padding:20px;color:#94a3b8;font-style:italic;font-size:13px;">Sin clases registradas aún</div>';
 
@@ -2472,7 +2472,7 @@ function posDraw(){
     const dv=document.getElementById('pos-disc-v');if(dv)dv.textContent='-'+fmt(discAmt);}
 }
 function assignCustomer(){
-  const list=CLIENTS.map((c,i)=>`<div style="padding:11px 14px;background:var(--bg);border-radius:8px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="setCustomer(${i})"><div><strong style="font-size:13px;">${c.name}</strong><div style="font-size:11px;color:var(--txt3);">${c.src}</div></div><div style="font-family:var(--display);font-size:14px;font-weight:700;color:var(--coral);">${fmt(c.ltv)}</div></div>`).join('');
+  const list=CLIENTS.map((c,i)=>`<div style="padding:11px 14px;background:var(--bg);border-radius:8px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="setCustomer(${i})"><div><strong style="font-size:13px;">${esc(c.name)}</strong><div style="font-size:11px;color:var(--txt3);">${esc(c.src)}</div></div><div style="font-family:var(--display);font-size:14px;font-weight:700;color:var(--coral);">${fmt(c.ltv)}</div></div>`).join('');
   openModal('Asignar cliente al ticket',`
     <input placeholder="Buscar cliente..." oninput="filterCustList(this.value)" style="width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:13px;margin-bottom:12px;">
     <div id="cust-list" style="max-height:400px;overflow-y:auto;">${list}</div>
@@ -2493,7 +2493,7 @@ function setCustomer(i){
   closeModal();
 }
 function filterCustList(q){
-  const list=CLIENTS.filter(c=>!q||c.name.toLowerCase().includes(q.toLowerCase())).map((c,i)=>`<div style="padding:11px 14px;background:var(--bg);border-radius:8px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="setCustomer(${CLIENTS.indexOf(c)})"><div><strong style="font-size:13px;">${c.name}</strong><div style="font-size:11px;color:var(--txt3);">${c.src}</div></div><div style="font-family:var(--display);font-size:14px;font-weight:700;color:var(--coral);">${fmt(c.ltv)}</div></div>`).join('');
+  const list=CLIENTS.filter(c=>!q||c.name.toLowerCase().includes(q.toLowerCase())).map((c,i)=>`<div style="padding:11px 14px;background:var(--bg);border-radius:8px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="setCustomer(${CLIENTS.indexOf(c)})"><div><strong style="font-size:13px;">${esc(c.name)}</strong><div style="font-size:11px;color:var(--txt3);">${esc(c.src)}</div></div><div style="font-family:var(--display);font-size:14px;font-weight:700;color:var(--coral);">${fmt(c.ltv)}</div></div>`).join('');
   document.getElementById('cust-list').innerHTML=list||'<div style="text-align:center;padding:24px;color:var(--txt3);font-style:italic;">Sin resultados</div>';
 }
 
@@ -2522,9 +2522,9 @@ function posPay(m){
         <span>${new Date().toLocaleString('es-ES')}</span>
         <span><strong>${num}</strong></span>
       </div>
-      ${customer?`<div style="font-size:11px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px dotted #ccc;">Cliente: <strong>${customer.name}</strong></div>`:''}
+      ${customer?`<div style="font-size:11px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px dotted #ccc;">Cliente: <strong>${esc(customer.name)}</strong></div>`:''}
       <div style="font-size:11px;">
-        ${items.map(it=>`<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>${it.qty} × ${it.name}</span><strong>${fmt(it.price*it.qty)}</strong></div>`).join('')}
+        ${items.map(it=>`<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>${it.qty} × ${esc(it.name)}</span><strong>${fmt(it.price*it.qty)}</strong></div>`).join('')}
       </div>
       <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #ccc;font-size:11px;">
         <div style="display:flex;justify-content:space-between;padding:2px 0;"><span>Subtotal</span><span>${fmt(sub)}</span></div>
@@ -2733,25 +2733,25 @@ async function saveNewStock(){
 
 function renderClients(){
   document.getElementById('clients-tbody').innerHTML=CLIENTS.map((c,i)=>`<tr onclick="editClient(${i})">
-    <td><strong>${c.name}</strong></td>
-    <td>${c.src}</td>
-    <td>${c.clas}</td>
+    <td><strong>${esc(c.name)}</strong></td>
+    <td>${esc(c.src)}</td>
+    <td>${esc(c.clas)}</td>
     <td>${c.buys}</td>
     <td><strong>${fmt(c.ltv)}</strong></td>
-    <td>${c.tags.map(t=>`<span class="tag tag-${t==='VIP'?'coral':t==='Nuevo'?'info':'ok'}">${t}</span>`).join(' ')}</td>
+    <td>${c.tags.map(t=>`<span class="tag tag-${t==='VIP'?'coral':t==='Nuevo'?'info':'ok'}">${esc(t)}</span>`).join(' ')}</td>
   </tr>`).join('');
 }
 function editClient(i){
   const c=CLIENTS[i];
   if(!c.phone)c.phone='+34 6';
   if(!c.email)c.email='';
-  openModal('Cliente · '+c.name,`
+  openModal('Cliente · '+esc(c.name),`
     <!-- 360° view -->
     <div style="display:flex;gap:14px;align-items:center;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--border);">
-      <div style="width:54px;height:54px;border-radius:50%;background:var(--coral);color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:20px;">${c.name.split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
+      <div style="width:54px;height:54px;border-radius:50%;background:var(--coral);color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:20px;">${esc(c.name).split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
       <div style="flex:1;">
-        <div style="font-family:var(--display);font-size:20px;font-weight:600;">${c.name}</div>
-        <div style="font-size:11px;color:var(--txt3);">${c.src}</div>
+        <div style="font-family:var(--display);font-size:20px;font-weight:600;">${esc(c.name)}</div>
+        <div style="font-size:11px;color:var(--txt3);">${esc(c.src)}</div>
       </div>
       <div style="text-align:right;">
         <div style="font-size:9px;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase;font-weight:700;">LTV</div>
@@ -3447,16 +3447,16 @@ function renderLeads(){
   if(!cl)return;
   cl.innerHTML=WEB_LEADS.map(l=>`
     <div style="padding:14px 18px;border-bottom:1px solid var(--border2);display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;">
-      <div style="width:44px;height:44px;border-radius:50%;background:var(--coral);color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:14px;">${l.name.split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--coral);color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:14px;">${esc(l.name).split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
       <div style="min-width:0;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
-          <strong style="font-size:13px;color:var(--txt);">${l.name}</strong>
-          <span style="font-size:9px;letter-spacing:.18em;color:var(--coral);text-transform:uppercase;font-weight:700;">${l.source}</span>
+          <strong style="font-size:13px;color:var(--txt);">${esc(l.name)}</strong>
+          <span style="font-size:9px;letter-spacing:.18em;color:var(--coral);text-transform:uppercase;font-weight:700;">${esc(l.source)}</span>
           <span style="color:var(--txt3);font-size:10px;">·</span>
-          <span style="font-size:10px;color:var(--txt3);">${l.when}</span>
+          <span style="font-size:10px;color:var(--txt3);">${esc(l.when)}</span>
         </div>
-        <div style="font-size:11px;color:var(--txt3);margin-bottom:4px;">${l.email} · ${l.phone}</div>
-        <div style="font-size:12px;color:var(--txt2);line-height:1.45;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${l.msg}</div>
+        <div style="font-size:11px;color:var(--txt3);margin-bottom:4px;">${esc(l.email)} · ${esc(l.phone)}</div>
+        <div style="font-size:12px;color:var(--txt2);line-height:1.45;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${esc(l.msg)}</div>
       </div>
       <button class="btn btn-primary" style="padding:9px 14px;font-size:11px;" onclick="generateQuoteForLead(${l.id})">
         ✦ Generar presupuesto IA
@@ -3471,30 +3471,30 @@ function generateQuoteForLead(id){
   let template={};
   if(l.type==='colegio'){
     const pp=l.pax>=25?18:l.pax>=15?22:25;
-    template={subject:`Tu jornada de surf en Costa Norte · ${l.name}`,
+    template={subject:`Tu jornada de surf en Costa Norte · ${esc(l.name)}`,
       total:pp*l.pax,pp,detail:`Pack escolar: clase de 2h + material + monitor titulado + seguro + foto grupo`};
   } else if(l.type==='camp'){
     template={subject:`Surf Camp 7 días · ${l.pax} pax`,total:520*l.pax,pp:520,
       detail:`Pack Premium: 5 clases surf + alquiler de material + un día SUP regalo`};
   } else if(l.type==='familia'){
-    template={subject:`Tu plan surf en familia · ${l.name}`,total:120*Math.ceil(l.pax/2)+10*4*3,
+    template={subject:`Tu plan surf en familia · ${esc(l.name)}`,total:120*Math.ceil(l.pax/2)+10*4*3,
       pp:120,detail:`Clase familiar 90 min + alquiler 4 días (3 tablas + neoprenos)`};
   }
-  openModal('✦ Presupuesto generado por IA · '+l.name,`
+  openModal('✦ Presupuesto generado por IA · '+esc(l.name),`
     <div style="background:linear-gradient(135deg,rgba(45,186,138,.08),rgba(93,189,211,.08));padding:12px 14px;border-radius:8px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--leaf);">
       <div>
         <div style="font-size:10px;letter-spacing:.22em;color:var(--leaf);text-transform:uppercase;font-weight:700;">Detectado por IA</div>
-        <div style="font-size:13px;color:var(--txt);font-weight:600;margin-top:2px;">Tipo: ${l.type.toUpperCase()} · ${l.pax} personas · idioma ${l.source.split('·')[1]||'ES'}</div>
+        <div style="font-size:13px;color:var(--txt);font-weight:600;margin-top:2px;">Tipo: ${esc(l.type.toUpperCase())} · ${l.pax} personas · idioma ${esc(l.source.split('·')[1]||'ES')}</div>
       </div>
       <div style="font-family:var(--display);font-size:28px;font-weight:700;color:var(--coral);">€${template.total.toLocaleString('es-ES')}</div>
     </div>
 
     <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:24px;font-family:Georgia,serif;color:#1d1418;margin-bottom:14px;">
       <div style="border-bottom:1px solid #ddd;padding-bottom:14px;margin-bottom:14px;">
-        <div style="font-size:13px;color:#666;">Para: <strong>${l.email}</strong></div>
-        <div style="font-size:13px;color:#666;margin-top:4px;">Asunto: <strong>${template.subject}</strong></div>
+        <div style="font-size:13px;color:#666;">Para: <strong>${esc(l.email)}</strong></div>
+        <div style="font-size:13px;color:#666;margin-top:4px;">Asunto: <strong>${esc(template.subject)}</strong></div>
       </div>
-      <p style="font-size:14px;line-height:1.6;margin-bottom:12px;">Hola ${l.name.split(' ')[0]},</p>
+      <p style="font-size:14px;line-height:1.6;margin-bottom:12px;">Hola ${esc(l.name.split(' ')[0])},</p>
       <p style="font-size:14px;line-height:1.6;margin-bottom:12px;">Muchas gracias por escribirnos. Soy Roberto, director de Costa Norte. He visto tu mensaje y aquí va una propuesta hecha a vuestra medida:</p>
       <div style="background:#f9f5ec;padding:14px;border-left:3px solid #ff5e3a;margin:14px 0;font-size:13px;line-height:1.7;">
         <strong>€${template.total.toLocaleString('es-ES')}</strong> · ${template.detail}<br>
@@ -3510,7 +3510,7 @@ function generateQuoteForLead(id){
     <div style="display:flex;gap:6px;">
       <button class="btn btn-ghost" style="flex:1" onclick="toast('Editando presupuesto');closeModal()">✏️ Editar texto</button>
       <button class="btn btn-ghost" style="flex:1" onclick="toast('Enviado a WhatsApp')">Por WhatsApp</button>
-      <button class="btn btn-primary" style="flex:1" onclick="toast('✓ Email enviado a '+'${l.email}');closeModal();WEB_LEADS.splice(WEB_LEADS.findIndex(x=>x.id===${l.id}),1);renderLeads();">Enviar email</button>
+      <button class="btn btn-primary" style="flex:1" onclick="toast('✓ Email enviado a '+'${esc(l.email)}');closeModal();WEB_LEADS.splice(WEB_LEADS.findIndex(x=>x.id===${l.id}),1);renderLeads();">Enviar email</button>
     </div>
   `);
 }
@@ -3556,13 +3556,13 @@ function renderInbox(){
   document.getElementById('inbox-threads').innerHTML=THREADS.map((t,i)=>`
     <div class="inbox-thread ${i===0?'active':''}" id="thread-${i}" onclick="openThread(${i})">
       <div class="it-row">
-        <div class="it-name">${t.name}</div>
-        <div class="it-when">${t.when}</div>
+        <div class="it-name">${esc(t.name)}</div>
+        <div class="it-when">${esc(t.when)}</div>
       </div>
-      <div class="it-prev">${t.prev}</div>
+      <div class="it-prev">${esc(t.prev)}</div>
       <div class="it-row" style="margin-top:6px;">
-        <span style="font-size:9px;letter-spacing:.16em;color:var(--txt3);text-transform:uppercase;font-weight:600;">${t.channel}</span>
-        <span class="tag tag-${t.tag.cls}" style="font-size:9px;">${t.tag.label}</span>
+        <span style="font-size:9px;letter-spacing:.16em;color:var(--txt3);text-transform:uppercase;font-weight:600;">${esc(t.channel)}</span>
+        <span class="tag tag-${t.tag.cls}" style="font-size:9px;">${esc(t.tag.label)}</span>
       </div>
     </div>`).join('');
   openThread(0);
@@ -3572,8 +3572,8 @@ function openThread(i){
   document.querySelectorAll('.inbox-thread').forEach(x=>x.classList.remove('active'));
   document.getElementById('thread-'+i).classList.add('active');
   const t=THREADS[i];
-  document.getElementById('chat-hd').innerHTML=`<strong>${t.name}</strong><em>${t.phone} · ${t.channel}</em>`;
-  document.getElementById('inbox-msgs').innerHTML=t.msgs.map(m=>`<div class="msg ${m.from}">${m.text.replace(/\n/g,'<br>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}<div class="at">${m.at}</div></div>`).join('');
+  document.getElementById('chat-hd').innerHTML=`<strong>${esc(t.name)}</strong><em>${esc(t.phone)} · ${esc(t.channel)}</em>`;
+  document.getElementById('inbox-msgs').innerHTML=t.msgs.map(m=>`<div class="msg ${m.from}">${esc(m.text).replace(/\n/g,'<br>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}<div class="at">${esc(m.at)}</div></div>`).join('');
 }
 function inboxSend(){
   const inp=document.getElementById('inbox-in');
@@ -3606,15 +3606,15 @@ function renderTeam(){
   document.getElementById('team-grid').innerHTML=TEAM.map((t,i)=>`
     <div onclick="editMember(${i})" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);padding:18px;cursor:pointer;transition:all .15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='var(--coral)'" onmouseout="this.style.transform='';this.style.borderColor='var(--border)'">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-        <div style="width:44px;height:44px;border-radius:50%;background:${t.color};color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:14px;">${t.av}</div>
+        <div style="width:44px;height:44px;border-radius:50%;background:${t.color};color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:14px;">${esc(t.av)}</div>
         <div>
-          <div style="font-family:var(--display);font-size:14px;font-weight:600;color:var(--txt);">${t.name}</div>
-          <div style="font-size:10px;letter-spacing:.18em;color:var(--coral);text-transform:uppercase;font-weight:700;margin-top:2px;">${t.role}</div>
+          <div style="font-family:var(--display);font-size:14px;font-weight:600;color:var(--txt);">${esc(t.name)}</div>
+          <div style="font-size:10px;letter-spacing:.18em;color:var(--coral);text-transform:uppercase;font-weight:700;margin-top:2px;">${esc(t.role)}</div>
         </div>
       </div>
       <div style="font-size:11px;color:var(--txt3);padding-top:10px;border-top:1px solid var(--border2);">
-        <div>${t.email}</div>
-        <div style="margin-top:2px;">${t.phone}</div>
+        <div>${esc(t.email)}</div>
+        <div style="margin-top:2px;">${esc(t.phone)}</div>
       </div>
     </div>`).join('');
 }
@@ -5090,12 +5090,12 @@ function showGTT(e, el){
   const data = JSON.parse(decodeURIComponent(el.dataset.tt));
   const tt = document.getElementById('g-tooltip');
   const pagoLabels = {paid:'Pagado', pending:'Pendiente de pago', cancelled:'Cancelado'};
-  tt.innerHTML = `<strong>${data.name}</strong>
-    <div class="g-tt-row"><span>Tipo</span><span>${data.tipo}</span></div>
-    <div class="g-tt-row"><span>Hora</span><span>${data.hora}</span></div>
-    <div class="g-tt-row"><span>Instructor</span><span>${data.instr}</span></div>
-    <div class="g-tt-row"><span>Importe</span><span>${data.importe}</span></div>
-    <div class="g-tt-row"><span>Estado</span><span>${pagoLabels[data.pago]||data.pago}</span></div>`;
+  tt.innerHTML = `<strong>${esc(data.name)}</strong>
+    <div class="g-tt-row"><span>Tipo</span><span>${esc(data.tipo)}</span></div>
+    <div class="g-tt-row"><span>Hora</span><span>${esc(data.hora)}</span></div>
+    <div class="g-tt-row"><span>Instructor</span><span>${esc(data.instr)}</span></div>
+    <div class="g-tt-row"><span>Importe</span><span>${esc(data.importe)}</span></div>
+    <div class="g-tt-row"><span>Estado</span><span>${esc(pagoLabels[data.pago]||data.pago)}</span></div>`;
   tt.style.display = 'block';
   tt.style.left = (e.clientX + 14) + 'px';
   tt.style.top  = (e.clientY - 10) + 'px';
