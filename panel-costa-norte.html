@@ -2062,6 +2062,12 @@ function clasesRealesDe(nombre){
   return n;
 }
 function renderInstructors(){
+  // El recuento de clases usa GANTT_RAW, que solo se carga al visitar "Clases". Si se
+  // entra directo a Instructores sin haber pasado por ahi, GANTT_RAW esta vacio y todos
+  // salen a 0 clases — lo cargamos aqui tambien para que el recuento sea siempre correcto.
+  if(!GANTT_RAW || !GANTT_RAW.length){
+    loadGanttMonth(true).then(()=>renderInstructors());
+  }
   document.getElementById('instructors-grid').innerHTML=INSTRUCTORS.map((ins,i)=>{
     const exp = ins.exp&&ins.exp!=='null' ? `<span><strong style="color:var(--txt);">${esc(ins.exp)}</strong> exp.</span>` : '<span></span>';
     const cert = ins.cert&&ins.cert!=='null' ? `<div style="font-size:10px;letter-spacing:.1em;color:var(--txt3);text-transform:uppercase;font-weight:600;margin-top:4px;">${esc(ins.cert)}</div>` : '';
@@ -3890,13 +3896,34 @@ async function openSol(id){
     ...(notes.notas_cliente?[{l:'Notas',v:notes.notas_cliente}]:[]),
   ].map(x=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #eef1f6;font-size:13px"><span style="color:#4a5568">${esc(x.l)}</span><span style="font-weight:600;color:#0f1923;text-align:right;max-width:58%;word-break:break-all">${esc(x.v)}</span></div>`).join('');
 
-  const monitorActual=notes.instructor||'— Sin asignar —';
   const miRowSel=classifyServiceToRow(r.service);
   const ocupados=monitoresOcupadosEnFranja(r.starts_at,r.ends_at,miRowSel,r.starts_at);
   const dispDiaSel=monitoresDisponiblesDia(new Date(r.starts_at).toISOString().slice(0,10));
   const esCampamento=miRowSel==='camp';
+  // El monitor puede haberse asignado desde OTRA reserva del mismo grupo (misma hora+tipo+
+  // letra) en un momento distinto, dejando esta fila con un valor de instructor desincronizado
+  // ("solo me marca uno ocupado, los demas no"). Para que el desplegable/checkboxes siempre
+  // reflejen el estado real del grupo (y no solo el de esta fila), miramos tambien las demas
+  // reservas del grupo antes de pintar.
+  let instructorGrupo=notes.instructor||'';
+  try{
+    const miGrupoSel=notes.grupo||'A';
+    const resG=await fetch(`${SB_URL_SOL}/rest/v1/appointments?business_slug=eq.costa-norte&starts_at=eq.${encodeURIComponent(r.starts_at)}&status=neq.cancelled&select=notes,service`,
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+    if(resG.ok){
+      const filas=await resG.json();
+      const delGrupo=filas.filter(f=>{
+        if(classifyServiceToRow(f.service)!==miRowSel)return false;
+        const n=solParseNotes(f.notes);
+        return (n.grupo||'A')===miGrupoSel;
+      });
+      const conInstructor=delGrupo.map(f=>solParseNotes(f.notes).instructor).filter(Boolean);
+      if(conInstructor.length)instructorGrupo=conInstructor.sort((a,b)=>b.length-a.length)[0];
+    }
+  }catch(e){/* si falla, seguimos con el valor de esta fila */}
+  const monitorActual=instructorGrupo||'— Sin asignar —';
   if(esCampamento){
-    const actuales=(notes.instructor||'').split(',').map(x=>x.trim()).filter(Boolean);
+    const actuales=(instructorGrupo||'').split(',').map(x=>x.trim()).filter(Boolean);
     document.getElementById('sol-detail-rows').innerHTML += `
       <div style="padding:9px 0;font-size:13px;">
         <div style="color:#4a5568;margin-bottom:6px;">Monitores asignados (grupo grande — puedes marcar varios)</div>
@@ -4968,6 +4995,17 @@ function ganttDropOnDay(e,day,slotIdx){
   _moveBooking(r.id,nuevo);
 }
 
+// Distintivo corto para grupos con restriccion (solo idioma o edad maxima), para verlo
+// directamente en el planning sin tener que abrir cada reserva.
+function grupoRestriccionBadge(day,slotIdx,row,letra){
+  const fecha=`${ganttYear}-${String(ganttMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  const hora=TIME_SLOTS[slotIdx].s;
+  const g=gruposDeFranja(fecha,hora,row).find(x=>x.letra===letra);
+  if(!g||!g.restriccion)return'';
+  if(g.restriccion==='idioma')return ` · 🌐${esc(g.valor||'')}`;
+  if(g.restriccion==='edad')return ` · ≤${esc(g.valor||'')}a`;
+  return'';
+}
 function ganttGrupoLetra(day,slot,row,id){
   // El grupo (A, B, C...) es un dato explicito guardado en la reserva (notes.grupo),
   // elegido al crearla — no se calcula por aforo. Para reservas antiguas sin ese dato,
@@ -5028,9 +5066,10 @@ function renderGantt(){
       bookings.forEach(b => {
         const tt = encodeURIComponent(JSON.stringify({name:b.name,hora:b.hora,instr:b.instr,importe:b.importe,pago:b.pago,tipo:(GANTT_ROWS.find(r=>r.id===b.row)||{}).label||b.row}));
         const grupo=ganttGrupoLetra(d,slotIdx,b.row,b.id);
+        const restrBadge=grupoRestriccionBadge(d,slotIdx,b.row,grupo);
         cellContent += `<div class="gantt-bar" style="background:${TYPE_COLORS[b.row]}" data-tt="${tt}" draggable="true" ondragstart="ganttDragStart(event,'${b.id}')" onmouseenter="showGTT(event,this)" onmouseleave="hideGTT()" onclick="ganttOpenBooking('${b.id}')">
           <span class="gantt-bar-badge">${paymentBadgeSVG(b.pago)}</span>
-          <span class="gantt-bar-hora">${esc(b.hora)} · Grupo ${grupo}${b.numNinos!=null?' · '+b.numNinos+' niños':''}</span>${esc(b.name)}
+          <span class="gantt-bar-hora">${esc(b.hora)} · Grupo ${grupo}${restrBadge}${b.numNinos!=null?' · '+b.numNinos+' niños':''}</span>${esc(b.name)}
         </div>`;
       });
       const cellKey=d+'-'+slotIdx;
