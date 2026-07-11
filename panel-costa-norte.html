@@ -1283,6 +1283,14 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 </div>
 
 <script>
+// ════════════ SUPABASE ════════════
+const SLUG='costa-norte';
+const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+let SB=supabase.createClient(SB_URL,SB_ANON);
+function setAuthToken(token){
+  SB=supabase.createClient(SB_URL,SB_ANON,{global:{headers:{Authorization:'Bearer '+token}}});
+}
 // ════════════ LOGIN ════════════
 async function sha256(str){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
@@ -1296,20 +1304,22 @@ async function doLogin(){
   if(!pass){errEl.textContent='Introduce la contraseña.';errEl.style.display='block';return;}
   btn.disabled=true;btn.textContent='Verificando…';
   try{
-    const {data:cfg,error}=await SB.from('bot_configs').select('slug,password_hash').eq('slug','costa-norte').single();
-    if(error||!cfg||!cfg.password_hash){errEl.textContent='No se pudo verificar el acceso. Contacta con Airmate.';errEl.style.display='block';return;}
-    const h=await sha256(pass);
-    if(h!==cfg.password_hash){errEl.textContent='Contraseña incorrecta.';errEl.style.display='block';return;}
+    const resp=await fetch('https://airmate.es/api/panel-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:'costa-norte',password:pass})});
+    const body=await resp.json();
+    if(!resp.ok||!body.token){errEl.textContent=body.error||'Contraseña incorrecta.';errEl.style.display='block';return;}
     localStorage.setItem('cn_session','1');
+    localStorage.setItem('cn_token',body.token);
+    setAuthToken(body.token);
     document.getElementById('login').classList.add('hidden');
     initApp();
   } finally {
     btn.disabled=false;btn.textContent='Entrar al panel';
   }
 }
-function logout(){localStorage.removeItem('cn_session');document.getElementById('login').classList.remove('hidden');}
+function logout(){localStorage.removeItem('cn_session');localStorage.removeItem('cn_token');document.getElementById('login').classList.remove('hidden');}
 (function(){
-  if(localStorage.getItem('cn_session')==='1'){
+  if(localStorage.getItem('cn_session')==='1'&&localStorage.getItem('cn_token')){
+    setAuthToken(localStorage.getItem('cn_token'));
     document.addEventListener('DOMContentLoaded',()=>{
       document.getElementById('login').classList.add('hidden');
       initApp();
@@ -1436,12 +1446,6 @@ function sparkline(values){
   return `<svg class="kpi-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d}"/><circle cx="${last[0]}" cy="${last[1]}" r="2"/></svg>`;
 }
 
-// ════════════ SUPABASE ════════════
-const SLUG='costa-norte';
-const SB=supabase.createClient(
-  'https://vjofxmfwdybktpwiuanc.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE'
-);
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const cv=id=>document.getElementById(id)?.value??'';
 

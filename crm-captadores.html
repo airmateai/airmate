@@ -597,7 +597,15 @@ tr:hover td{background:var(--blue-light);}
 <script>
 const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
-const SB=supabase.createClient(SB_URL,SB_KEY);
+let SB=supabase.createClient(SB_URL,SB_KEY);
+function setAuthToken(token){
+  SB=supabase.createClient(SB_URL,SB_KEY,{global:{headers:{Authorization:'Bearer '+token}}});
+}
+async function fetchInternalToken(){
+  const resp=await fetch('https://airmate.es/api/panel-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:'airmate-interno'})});
+  const body=await resp.json();
+  return body.token||null;
+}
 
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 function cv(id){return (document.getElementById(id)||{}).value||'';}
@@ -658,7 +666,10 @@ async function doLogin(){
     if(error||!data){errEl.textContent='Usuario no encontrado.';errEl.style.display='block';btn.disabled=false;btn.textContent='Entrar';return;}
     const h=await sha256(pass);
     if(h!==data.password_hash){errEl.textContent='Contraseña incorrecta.';errEl.style.display='block';btn.disabled=false;btn.textContent='Entrar';return;}
-    SESSION={nombre:data.nombre,usuario:data.usuario,rol:data.rol};
+    const token=await fetchInternalToken();
+    if(!token){errEl.textContent='No se pudo verificar el acceso. Contacta con Airmate.';errEl.style.display='block';btn.disabled=false;btn.textContent='Entrar';return;}
+    setAuthToken(token);
+    SESSION={nombre:data.nombre,usuario:data.usuario,rol:data.rol,token};
     saveSession();
     initApp();
   }catch(e){errEl.textContent='Error de conexión. Inténtalo de nuevo.';errEl.style.display='block';}
@@ -1330,7 +1341,7 @@ function crmFmt(n){return (+(n||0)).toLocaleString('es-ES',{style:'currency',cur
 
 // ═══════════ INIT ═══════════
 loadSession();
-if(SESSION){initApp();}else{document.getElementById('login').style.display='flex';}
+if(SESSION&&SESSION.token){setAuthToken(SESSION.token);initApp();}else{SESSION=null;document.getElementById('login').style.display='flex';}
 document.getElementById('lg-pass')?.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 </script>
 </body>
