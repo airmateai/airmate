@@ -604,7 +604,19 @@ function setAuthToken(token){
 async function fetchInternalToken(){
   const resp=await fetch('https://airmate-phi.vercel.app/api/panel-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:'airmate-interno'})});
   const body=await resp.json();
-  return body.token||null;
+  return body.token?body:null;
+}
+let _authClient=null;
+async function startAuthSession(access_token,refresh_token){
+  _authClient=supabase.createClient(SB_URL,SB_KEY);
+  await _authClient.auth.setSession({access_token,refresh_token});
+  _authClient.auth.onAuthStateChange((event,session)=>{
+    if(session){
+      SESSION.token=session.access_token;SESSION.refresh=session.refresh_token;
+      saveSession();
+      setAuthToken(session.access_token);
+    }
+  });
 }
 
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -666,11 +678,12 @@ async function doLogin(){
     if(error||!data){errEl.textContent='Usuario no encontrado.';errEl.style.display='block';btn.disabled=false;btn.textContent='Entrar';return;}
     const h=await sha256(pass);
     if(h!==data.password_hash){errEl.textContent='Contraseña incorrecta.';errEl.style.display='block';btn.disabled=false;btn.textContent='Entrar';return;}
-    const token=await fetchInternalToken();
-    if(!token){errEl.textContent='No se pudo verificar el acceso. Contacta con Airmate.';errEl.style.display='block';btn.disabled=false;btn.textContent='Entrar';return;}
-    setAuthToken(token);
-    SESSION={nombre:data.nombre,usuario:data.usuario,rol:data.rol,token};
+    const auth=await fetchInternalToken();
+    if(!auth){errEl.textContent='No se pudo verificar el acceso. Contacta con Airmate.';errEl.style.display='block';btn.disabled=false;btn.textContent='Entrar';return;}
+    setAuthToken(auth.token);
+    SESSION={nombre:data.nombre,usuario:data.usuario,rol:data.rol,token:auth.token,refresh:auth.refresh_token};
     saveSession();
+    await startAuthSession(auth.token,auth.refresh_token);
     initApp();
   }catch(e){errEl.textContent='Error de conexión. Inténtalo de nuevo.';errEl.style.display='block';}
   btn.disabled=false;btn.textContent='Entrar';
@@ -1341,7 +1354,7 @@ function crmFmt(n){return (+(n||0)).toLocaleString('es-ES',{style:'currency',cur
 
 // ═══════════ INIT ═══════════
 loadSession();
-if(SESSION&&SESSION.token){setAuthToken(SESSION.token);initApp();}else{SESSION=null;document.getElementById('login').style.display='flex';}
+if(SESSION&&SESSION.token&&SESSION.refresh){setAuthToken(SESSION.token);startAuthSession(SESSION.token,SESSION.refresh);initApp();}else{SESSION=null;document.getElementById('login').style.display='flex';}
 document.getElementById('lg-pass')?.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 </script>
 </body>

@@ -70,6 +70,7 @@ export default async function handler(req, res) {
     }
     return res.status(200).json({
       token: session.session.access_token,
+      refresh_token: session.session.refresh_token,
       business_slug: cfg.slug,
       bot_name: cfg.bot_name,
     });
