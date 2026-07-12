@@ -1288,8 +1288,10 @@ const SLUG='costa-norte';
 const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
 const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
 let SB=supabase.createClient(SB_URL,SB_ANON);
+let AUTH_BEARER=SB_ANON;
 function setAuthToken(token){
   SB=supabase.createClient(SB_URL,SB_ANON,{global:{headers:{Authorization:'Bearer '+token}}});
+  AUTH_BEARER=token;
 }
 // ════════════ LOGIN ════════════
 async function sha256(str){
@@ -2211,7 +2213,7 @@ function initBloqueosHorarioUI(){
 async function loadBloqueosHorario(){
   try{
     const res=await fetch(`${SB_URL_SOL}/rest/v1/cn_bloqueos_horario?business_slug=eq.costa-norte&order=fecha.asc,hora.asc`,
-      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}});
     BLOQUEOS_HORARIO=res.ok?await res.json():[];
   }catch(e){BLOQUEOS_HORARIO=[];}
   renderBloqueosHorarioTbody();
@@ -2234,7 +2236,7 @@ async function addBloqueoHorario(){
   try{
     const res=await fetch(`${SB_URL_SOL}/rest/v1/cn_bloqueos_horario`,{
       method:'POST',
-      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({business_slug:'costa-norte',fecha,hora,restriccion:'bloqueado',valor:null})
     });
     if(!res.ok){toast('⚠ Error al guardar el bloqueo');return;}
@@ -2246,7 +2248,7 @@ async function deleteBloqueoHorario(id){
   if(!confirm('¿Quitar este bloqueo?'))return;
   await fetch(`${SB_URL_SOL}/rest/v1/cn_bloqueos_horario?id=eq.${id}`,{
     method:'DELETE',
-    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}
   });
   toast('Bloqueo eliminado');
   if(document.getElementById('bloqueos-horario-tbody'))await loadBloqueosHorario();
@@ -3755,7 +3757,7 @@ async function loadClientes(silent){
   if(tbody&&!silent)tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:24px;">Cargando…</td></tr>';
   try{
     const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?business_slug=eq.costa-norte&select=client_name,client_phone,client_email,budget,status,starts_at,created_at&order=created_at.desc',
-      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}});
     const rows=await res.json();
     const json=JSON.stringify(rows);
     if(silent&&json===_lastClientesJSON)return; // sin cambios — no repintar
@@ -3801,7 +3803,7 @@ async function loadSolicitudes(){
   if(list) list.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-style:italic">Cargando...</div>';
   try{
     const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?business_slug=eq.costa-norte&order=starts_at.desc&limit=200',
-      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}});
     SOL_ALL=await res.json();
     if(!Array.isArray(SOL_ALL)){if(list)list.innerHTML='<div style="padding:40px;text-align:center;color:#ef4444">Error: '+JSON.stringify(SOL_ALL)+'</div>';return;}
     renderSolBadge();
@@ -3868,7 +3870,7 @@ async function openSol(id){
   // Recargar datos frescos de Supabase
   try{
     const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+id,
-      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}});
     const arr=await res.json();
     if(arr&&arr[0]){
       SOL_CUR=arr[0];
@@ -3913,7 +3915,7 @@ async function openSol(id){
   try{
     const miGrupoSel=notes.grupo||'A';
     const resG=await fetch(`${SB_URL_SOL}/rest/v1/appointments?business_slug=eq.costa-norte&starts_at=eq.${encodeURIComponent(r.starts_at)}&status=neq.cancelled&select=notes,service`,
-      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}});
     if(resG.ok){
       const filas=await resG.json();
       const delGrupo=filas.filter(f=>{
@@ -3993,7 +3995,7 @@ async function updatePayment(status){
   notes.payment_status=status;
   const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
     method:'PATCH',
-    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal'},
     body:JSON.stringify({notes:JSON.stringify(notes)})
   });
   if(!res.ok){toast('⚠ Error al guardar — inténtalo de nuevo');return;}
@@ -4044,7 +4046,7 @@ async function saveEditSolicitud(){
   try{
     const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+id,{
       method:'PATCH',
-      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({client_name:nombre||null,client_phone:tel||null,client_email:email||null,service:servicio,notes:JSON.stringify(notes)})
     });
     if(!res.ok)throw new Error('HTTP '+res.status);
@@ -4114,7 +4116,7 @@ async function saveMonitorAsignado(){
   const miGrupo=miNotes.grupo||'A';
   try{
     const res=await fetch(`${SB_URL_SOL}/rest/v1/appointments?business_slug=eq.costa-norte&starts_at=eq.${encodeURIComponent(miHora)}&select=id,service,notes,status`,
-      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}});
     const mismos=(await res.json()).filter(r=>{
       if(classifyServiceToRow(r.service)!==miRow||r.status==='cancelled')return false;
       const n=solParseNotes(r.notes);
@@ -4125,7 +4127,7 @@ async function saveMonitorAsignado(){
       notes.instructor=monitor;
       return fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+r.id,{
         method:'PATCH',
-        headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+        headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal'},
         body:JSON.stringify({notes:JSON.stringify(notes)})
       });
     }));
@@ -4219,7 +4221,7 @@ async function saveCampamento(btn){
   try{
     const res=await fetch(SB_URL_SOL+'/rest/v1/appointments',{
       method:'POST',
-      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=representation'},
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=representation'},
       body:JSON.stringify({business_slug:'costa-norte',client_name:nombre+' — '+ninos.join(', '),service:'Campamento ('+ninos.length+' niños)',duration_minutes:120,starts_at:startsAt.toISOString(),ends_at:endsAt.toISOString(),status:'confirmed',budget:importe,notes:JSON.stringify(notes)})
     });
     if(!res.ok){toast('⚠ Error al crear el campamento');liberar();return;}
@@ -4374,7 +4376,7 @@ async function saveManualReserva(btn){
   try{
     const res=await fetch(SB_URL_SOL+'/rest/v1/appointments',{
       method:'POST',
-      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=representation'},
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=representation'},
       body:JSON.stringify({business_slug:'costa-norte',client_name:nombre,client_phone:tel||null,client_email:email||null,service:serviceLabel,duration_minutes:120,starts_at:startsAt.toISOString(),ends_at:endsAt.toISOString(),status:'confirmed',budget:importe,notes:JSON.stringify(notes)})
     });
     if(!res.ok){toast('⚠ Error al crear la reserva');liberar();return;}
@@ -4392,7 +4394,7 @@ async function updateSolStatus(status){
   if(!SOL_CUR)return;
   const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
     method:'PATCH',
-    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal'},
     body:JSON.stringify({status})
   });
   if(!res.ok){toast('⚠ Error al guardar el estado — inténtalo de nuevo');return;}
@@ -4407,7 +4409,7 @@ async function deleteSolPermanente(){
   if(!confirm('¿Eliminar esta reserva del planning para siempre? Esta acción no se puede deshacer.'))return;
   const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
     method:'DELETE',
-    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}
   });
   if(!res.ok){toast('⚠ Error al eliminar');return;}
   toast('✓ Reserva eliminada');
@@ -4560,7 +4562,7 @@ function gruposDeFranja(fecha,hora,tipo){
 async function crearGrupoHorario(fecha,hora,tipo,letra,restriccion,valor){
   const r=await fetch(`${SB_URL_SOL}/rest/v1/cn_grupos_horario`,{
     method:'POST',
-    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
     body:JSON.stringify({business_slug:'costa-norte',fecha,hora,tipo,letra,restriccion:restriccion||null,valor:valor||null})
   });
   if(!r.ok)toast('⚠ Error al crear el grupo (revisa permisos de la tabla cn_grupos_horario)','error');
@@ -4585,7 +4587,7 @@ async function toggleDisponibilidadMonitor(fecha,monitor,marcar){
     if(rows.length){
       const r=await fetch(`${SB_URL_SOL}/rest/v1/cn_disponibilidad_dia`,{
         method:'POST',
-        headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
+        headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
         body:JSON.stringify(rows)
       });
       if(!r.ok){toast('⚠ Error al guardar disponibilidad (revisa permisos de la tabla)','error');return;}
@@ -4593,20 +4595,20 @@ async function toggleDisponibilidadMonitor(fecha,monitor,marcar){
   } else if(marcar){
     const r=await fetch(`${SB_URL_SOL}/rest/v1/cn_disponibilidad_dia`,{
       method:'POST',
-      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
       body:JSON.stringify({business_slug:'costa-norte',fecha,monitor})
     });
     if(!r.ok){toast('⚠ Error al guardar disponibilidad (revisa permisos de la tabla)','error');return;}
   } else {
     const r=await fetch(`${SB_URL_SOL}/rest/v1/cn_disponibilidad_dia?business_slug=eq.costa-norte&fecha=eq.${fecha}&monitor=eq.${encodeURIComponent(monitor)}`,{
       method:'DELETE',
-      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}
     });
     if(!r.ok){toast('⚠ Error al guardar disponibilidad (revisa permisos de la tabla)','error');return;}
   }
   try{
     const res=await fetch(`${SB_URL_SOL}/rest/v1/cn_disponibilidad_dia?business_slug=eq.costa-norte&fecha=eq.${fecha}`,
-      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}});
     const rows=res.ok?await res.json():[];
     DISP_DIA_MES=DISP_DIA_MES.filter(d=>d.fecha!==fecha).concat(rows);
   }catch(e){}
@@ -4686,7 +4688,7 @@ async function ctxAplicarBloqueo(restriccion){
   try{
     const res=await fetch(`${SB_URL_SOL}/rest/v1/cn_bloqueos_horario`,{
       method:'POST',
-      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify(rows)
     });
     if(!res.ok){toast('⚠ Error al bloquear');return;}
@@ -4828,24 +4830,24 @@ async function loadGanttMonth(silent){
   try{
     const fMin=first.toISOString().slice(0,10), fMax=last.toISOString().slice(0,10);
     const bres=await fetch(`${SB_URL_SOL}/rest/v1/cn_bloqueos_horario?business_slug=eq.costa-norte&fecha=gte.${fMin}&fecha=lte.${fMax}`,
-      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}});
     BLOQUEOS_HORARIO_MES=bres.ok?await bres.json():[];
   }catch(e){BLOQUEOS_HORARIO_MES=[];}
   try{
     const fMin=first.toISOString().slice(0,10), fMax=last.toISOString().slice(0,10);
     const dres=await fetch(`${SB_URL_SOL}/rest/v1/cn_disponibilidad_dia?business_slug=eq.costa-norte&fecha=gte.${fMin}&fecha=lte.${fMax}`,
-      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}});
     DISP_DIA_MES=dres.ok?await dres.json():[];
   }catch(e){DISP_DIA_MES=[];}
   try{
     const fMin=first.toISOString().slice(0,10), fMax=last.toISOString().slice(0,10);
     const gres=await fetch(`${SB_URL_SOL}/rest/v1/cn_grupos_horario?business_slug=eq.costa-norte&fecha=gte.${fMin}&fecha=lte.${fMax}`,
-      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}});
     GRUPOS_HORARIO_MES=gres.ok?await gres.json():[];
   }catch(e){GRUPOS_HORARIO_MES=[];}
   try{
     const res=await fetch(`${SB_URL_SOL}/rest/v1/appointments?business_slug=eq.costa-norte&starts_at=gte.${first.toISOString()}&starts_at=lte.${last.toISOString()}&select=id,client_name,service,starts_at,ends_at,status,budget,notes`,
-      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL}});
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}});
     const rows=await res.json();
     const json=JSON.stringify(rows);
     if(silent&&json===_lastGanttJSON)return; // sin cambios — no repintar
@@ -4964,7 +4966,7 @@ async function _moveBooking(id,newStartsAt){
   try{
     const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+id,{
       method:'PATCH',
-      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+SB_KEY_SOL,'Content-Type':'application/json','Prefer':'return=minimal'},
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({starts_at:newStartsAt.toISOString(),ends_at:newEnd.toISOString()})
     });
     if(!res.ok){toast('⚠ Error al mover la reserva');return;}
