@@ -935,11 +935,19 @@ async function enviar(){
   }
 
   // Una appointment por cada clase (dia+hora) — un mismo dia puede generar varias filas
+  // El id se genera aqui mismo (en vez de pedirselo a Supabase con return=representation)
+  // porque los visitantes anonimos ya no pueden leer datos personales de vuelta — por
+  // privacidad, tras el arreglo de seguridad de julio 2026.
   const inserts=[];
+  let firstId=null, firstNotesObj=null;
   slots.forEach(({ymd,hora},idx)=>{
     const startsAt=new Date(ymd+'T'+hora+':00');
     const endsAt=new Date(startsAt.getTime()+2*60*60*1000);
+    const rowId=crypto.randomUUID();
+    const notesObj={dni,source:'web-reservas',dias_totales:days,clases_totales:totalClases,edad:edad||null,idioma,grupo:grupoPorDia[ymd+'|'+hora]||'A',notas_cliente:notas||null};
+    if(idx===0){firstId=rowId;firstNotesObj=notesObj;}
     inserts.push({
+      id:rowId,
       business_slug:SLUG,
       client_name:nombre+(apellidos?' '+apellidos:''),
       client_phone:tel,
@@ -950,21 +958,19 @@ async function enviar(){
       ends_at:endsAt.toISOString(),
       status:'pending',
       budget:idx===0?presupTotal:null,
-      notes:JSON.stringify({dni,source:'web-reservas',dias_totales:days,clases_totales:totalClases,edad:edad||null,idioma,grupo:grupoPorDia[ymd+'|'+hora]||'A',notas_cliente:notas||null})
+      notes:JSON.stringify(notesObj)
     });
   });
 
   try{
     const res=await fetch(SB_URL+'/rest/v1/appointments',{
       method:'POST',
-      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify(inserts.length===1?inserts[0]:inserts)
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
-    const inserted=await res.json();
-    const apt=Array.isArray(inserted)?inserted[0]:inserted;
-    window._aptId=apt.id;
-    window._aptNotes=JSON.parse(apt.notes||'{}');
+    window._aptId=firstId;
+    window._aptNotes=firstNotesObj;
 
     // Presupuesto ya calculado antes del insert (presupTotal)
     let presup=presupTotal, presupDet='';

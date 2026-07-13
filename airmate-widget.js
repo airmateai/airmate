@@ -577,19 +577,23 @@
   }
 
   async function sbInsertReturn(table, body) {
+    // El id se genera aqui (no se pide de vuelta con return=representation) porque
+    // los visitantes anonimos ya no pueden leer datos personales tras el arreglo de
+    // seguridad de julio 2026 — pedir la fila de vuelta daba 401 permission denied.
+    const id = (body && body.id) || (crypto.randomUUID ? crypto.randomUUID() : null);
+    const bodyWithId = id ? { ...body, id } : body;
     try {
       const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
         method: 'POST',
-        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-        body: JSON.stringify(body)
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(bodyWithId)
       });
       if (!r.ok) {
         const txt = await r.text();
         console.error('[Airmate] sbInsert error', r.status, txt);
         return { ok: false, id: null };
       }
-      const data = await r.json();
-      return { ok: true, id: data[0]?.id || null };
+      return { ok: true, id };
     } catch(e) { console.error('[Airmate] sbInsert exception', e); return { ok: false, id: null }; }
   }
 
