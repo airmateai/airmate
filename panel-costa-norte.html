@@ -4150,7 +4150,12 @@ async function saveMonitorAsignado(){
     SOL_CUR.notes=JSON.stringify(notes);
     toast(`✓ Monitor asignado a la clase (${mismos.length||1} reserva${mismos.length!==1?'s':''})`);
     loadSolicitudes();
-    if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
+    // Refrescar SIEMPRE (no solo si estás en "Clases") para que el recuento de clases
+    // por monitor ("Monitores hoy" y Ajustes → Instructores) no se quede desactualizado
+    // cuando asignas el monitor desde Solicitudes web.
+    await loadGanttMonth();
+    if(document.getElementById('page-classes')?.classList.contains('active'))renderDayPanel();
+    renderInstructors();
   }catch(e){console.error('saveMonitorAsignado',e);toast('⚠ Error al guardar el monitor');}
 }
 
