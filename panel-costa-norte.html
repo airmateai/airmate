@@ -1282,25 +1282,22 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
 const SLUG='costa-norte';
 const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
 const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
-let SB=supabase.createClient(SB_URL,SB_ANON);
+// Un único cliente de Supabase para todo (antes había dos en paralelo, cada uno
+// con sus propios temporizadores de renovación de sesión en segundo plano, y se
+// creaba un cliente nuevo cada vez que el token se renovaba sin cerrar el
+// anterior — con el tiempo eso iba acumulando recursos y ralentizando el
+// navegador. Ahora SB.auth gestiona la sesión (refresh automático) y SB.from()
+// usa el token vigente solo, sin recrear nada.
+const SB=supabase.createClient(SB_URL,SB_ANON);
 let AUTH_BEARER=SB_ANON;
-function setAuthToken(token){
-  SB=supabase.createClient(SB_URL,SB_ANON,{global:{headers:{Authorization:'Bearer '+token}}});
-  AUTH_BEARER=token;
-}
-// Mantiene la sesión viva de verdad: usa el cliente de auth de Supabase (con
-// refresh_token) para que renueve el token solo antes de que caduque, y cada
-// vez que lo renueva actualizamos AUTH_BEARER/SB para que el resto del panel
-// (que llama a fetch() a mano) también use el token fresco.
-let _authClient=null;
 async function startAuthSession(access_token,refresh_token){
-  _authClient=supabase.createClient(SB_URL,SB_ANON);
-  await _authClient.auth.setSession({access_token,refresh_token});
-  _authClient.auth.onAuthStateChange((event,session)=>{
+  await SB.auth.setSession({access_token,refresh_token});
+  AUTH_BEARER=access_token;
+  SB.auth.onAuthStateChange((event,session)=>{
     if(session){
       localStorage.setItem('cn_token',session.access_token);
       localStorage.setItem('cn_refresh',session.refresh_token);
-      setAuthToken(session.access_token);
+      AUTH_BEARER=session.access_token;
     }
   });
 }
@@ -1323,7 +1320,6 @@ async function doLogin(){
     localStorage.setItem('cn_session','1');
     localStorage.setItem('cn_token',body.token);
     localStorage.setItem('cn_refresh',body.refresh_token);
-    setAuthToken(body.token);
     await startAuthSession(body.token,body.refresh_token);
     document.getElementById('login').classList.add('hidden');
     initApp();
@@ -1334,7 +1330,7 @@ async function doLogin(){
 function logout(){localStorage.removeItem('cn_session');localStorage.removeItem('cn_token');localStorage.removeItem('cn_refresh');document.getElementById('login').classList.remove('hidden');}
 (function(){
   if(localStorage.getItem('cn_session')==='1'&&localStorage.getItem('cn_token')&&localStorage.getItem('cn_refresh')){
-    setAuthToken(localStorage.getItem('cn_token'));
+    AUTH_BEARER=localStorage.getItem('cn_token');
     startAuthSession(localStorage.getItem('cn_token'),localStorage.getItem('cn_refresh'));
     document.addEventListener('DOMContentLoaded',()=>{
       document.getElementById('login').classList.add('hidden');

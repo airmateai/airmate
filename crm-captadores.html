@@ -597,24 +597,21 @@ tr:hover td{background:var(--blue-light);}
 <script>
 const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
-let SB=supabase.createClient(SB_URL,SB_KEY);
-function setAuthToken(token){
-  SB=supabase.createClient(SB_URL,SB_KEY,{global:{headers:{Authorization:'Bearer '+token}}});
-}
+// Un único cliente para todo (antes se creaba uno nuevo en cada renovación de
+// token, sin cerrar el anterior — con el tiempo acumula recursos en segundo
+// plano). SB.auth gestiona la sesión y SB.from() usa el token vigente solo.
+const SB=supabase.createClient(SB_URL,SB_KEY);
 async function fetchInternalToken(){
   const resp=await fetch('https://airmate-phi.vercel.app/api/panel-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:'airmate-interno'})});
   const body=await resp.json();
   return body.token?body:null;
 }
-let _authClient=null;
 async function startAuthSession(access_token,refresh_token){
-  _authClient=supabase.createClient(SB_URL,SB_KEY);
-  await _authClient.auth.setSession({access_token,refresh_token});
-  _authClient.auth.onAuthStateChange((event,session)=>{
+  await SB.auth.setSession({access_token,refresh_token});
+  SB.auth.onAuthStateChange((event,session)=>{
     if(session){
       SESSION.token=session.access_token;SESSION.refresh=session.refresh_token;
       saveSession();
-      setAuthToken(session.access_token);
     }
   });
 }
@@ -680,7 +677,6 @@ async function doLogin(){
     if(h!==data.password_hash){errEl.textContent='Contraseña incorrecta.';errEl.style.display='block';btn.disabled=false;btn.textContent='Entrar';return;}
     const auth=await fetchInternalToken();
     if(!auth){errEl.textContent='No se pudo verificar el acceso. Contacta con Airmate.';errEl.style.display='block';btn.disabled=false;btn.textContent='Entrar';return;}
-    setAuthToken(auth.token);
     SESSION={nombre:data.nombre,usuario:data.usuario,rol:data.rol,token:auth.token,refresh:auth.refresh_token};
     saveSession();
     await startAuthSession(auth.token,auth.refresh_token);
@@ -1354,7 +1350,7 @@ function crmFmt(n){return (+(n||0)).toLocaleString('es-ES',{style:'currency',cur
 
 // ═══════════ INIT ═══════════
 loadSession();
-if(SESSION&&SESSION.token&&SESSION.refresh){setAuthToken(SESSION.token);startAuthSession(SESSION.token,SESSION.refresh);initApp();}else{SESSION=null;document.getElementById('login').style.display='flex';}
+if(SESSION&&SESSION.token&&SESSION.refresh){startAuthSession(SESSION.token,SESSION.refresh);initApp();}else{SESSION=null;document.getElementById('login').style.display='flex';}
 document.getElementById('lg-pass')?.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 </script>
 </body>
