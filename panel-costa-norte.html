@@ -1484,7 +1484,10 @@ async function sbDelete(table,id){
 }
 
 // ════════════ MAPEO DB ↔ CAMPOS LOCALES ════════════
-function mapInstructor(row){return {...row,name:row.nombre,role:row.rol,exp:row.experiencia,cert:row.certificaciones,rating:row.valoracion,classes:row.clases_impartidas,phone:row.telefono};}
+// (row.nombre||'').trim() — algunos monitores tienen espacios de más al final
+// guardados en la ficha, y eso hacia que nunca coincidiera con el nombre ya
+// limpio guardado en las reservas ("no detecta al monitor aunque este puesto").
+function mapInstructor(row){return {...row,name:(row.nombre||'').trim(),role:row.rol,exp:row.experiencia,cert:row.certificaciones,rating:row.valoracion,classes:row.clases_impartidas,phone:row.telefono};}
 function mapPack(row){return {...row,name:row.nombre,type:row.tipo,sess:row.sesiones,price:row.precio,sold:row.vendidos,state:row.estado,desc:row.descripcion};}
 function mapGasto(row){return {...row,vendor:row.proveedor,concept:row.concepto,category:row.categoria,date:row.fecha,vatPct:row.vat_pct,vat:row.iva,payMethod:row.forma_pago,doc:row.documento,deductible:row.deducible,state:row.estado};}
 function mapStock(row){return {...row,name:row.nombre,sku:row.sku,cat:row.categoria,stock:row.stock,min:row.stock_minimo,cost:row.precio_coste,price:row.precio_venta,img:row.imagen};}
