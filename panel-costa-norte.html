@@ -2071,14 +2071,19 @@ async function deletePack(i){if(confirm('¿Eliminar pack?')){const p=PACKS[i];aw
 // manual guardado en su ficha), separando por coma los grupos con varios monitores —
 // asi da igual si el monitor se asigno al crear el grupo o despues desde la solicitud.
 function clasesRealesDe(nombre){
-  let n=0;
+  // Un grupo (mismo dia+hora+tipo+letra) puede tener varios alumnos = varias filas
+  // de "appointments", pero es UNA sola clase para el monitor — hay que contar
+  // sesiones distintas, no filas, o si no un grupo de 5 alumnos cuenta como 5 clases.
+  const sesiones=new Set();
   GANTT_RAW.forEach(r=>{
     if(r.status==='cancelled')return;
     let notes={};try{notes=JSON.parse(r.notes||'{}');}catch{}
     const nombres=(notes.instructor||'').split(',').map(x=>x.trim()).filter(Boolean);
-    if(nombres.includes(nombre))n++;
+    if(!nombres.includes(nombre))return;
+    const grupo=notes.grupo||'A';
+    sesiones.add(r.starts_at+'|'+classifyServiceToRow(r.service)+'|'+grupo);
   });
-  return n;
+  return sesiones.size;
 }
 function renderInstructors(){
   // El recuento de clases usa GANTT_RAW, que solo se carga al visitar "Clases". Si se
@@ -4786,12 +4791,19 @@ function renderDayPanel(){
       </div>
     </div>`;
   });
-  // Monitores del día — cuántas clases lleva cada uno hoy
+  // Monitores del día — cuántas clases lleva cada uno hoy (un grupo con varios
+  // alumnos = varias filas de reserva, pero es UNA sola clase por monitor)
   const clasesPorMonitor={};
+  const sesionesVistasPorMonitor={};
   items.forEach(r=>{
     if(r.status==='cancelled')return;
     let n={};try{n=JSON.parse(r.notes||'{}');}catch{}
+    const grupo=n.grupo||'A';
+    const sesionKey=r.starts_at+'|'+classifyServiceToRow(r.service)+'|'+grupo;
     (n.instructor||'').split(',').map(x=>x.trim()).filter(Boolean).forEach(mon=>{
+      if(!sesionesVistasPorMonitor[mon])sesionesVistasPorMonitor[mon]=new Set();
+      if(sesionesVistasPorMonitor[mon].has(sesionKey))return;
+      sesionesVistasPorMonitor[mon].add(sesionKey);
       clasesPorMonitor[mon]=(clasesPorMonitor[mon]||0)+1;
     });
   });
