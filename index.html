@@ -8635,7 +8635,8 @@ const _SB = supabase.createClient(
 
 /* ══ CAMBIA ESTO CON TUS DATOS ══ */
 const OWNER_EMAIL = 'owner@airmate.io'; /* Tu email de acceso */
-const OWNER_PASS = 'airmate2024owner'; /* Tu contraseña */
+/* La contraseña de owner ya NO está aquí — vive solo como hash en Vercel
+   (OWNER_PASSWORD_HASH) y se verifica en /api/owner-login. */
 /* TOKEN SECRETO — ponlo también en la "Success URL" de Stripe:
  https://tudominio.github.io/airmate.html?paid=ESTE_TOKEN
  Solo quien pague de verdad recibirá esta URL de Stripe. */
@@ -8711,8 +8712,17 @@ async function attemptLogin() {
 
  let user = null;
  try {
- /* Comprobar Owner */
- if (username.toLowerCase() === 'owner' && pass === OWNER_PASS) {
+ /* Comprobar Owner — el login pasa por un endpoint que verifica un hash
+    server-side (nunca hay una contraseña visible en este código) y
+    devuelve una sesión real, para poder leer web_requests con permiso. */
+ if (username.toLowerCase() === 'owner') {
+ const resp = await fetch('https://airmate-phi.vercel.app/api/owner-login', {
+   method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:pass})
+ });
+ const body = await resp.json();
+ if (!resp.ok || !body.token) { showAuthError('Usuario o contraseña incorrectos'); return; }
+ await _SB.auth.setSession({access_token:body.token, refresh_token:body.refresh_token});
+ localStorage.setItem('airmate_owner_session', JSON.stringify({token:body.token, refresh:body.refresh_token}));
  user = { id:'owner', email:OWNER_EMAIL, role:'owner', name:'Owner' };
  } else {
  /* Buscar en Supabase por nombre de usuario */
@@ -8994,6 +9004,7 @@ async function verifyPaymentNow() {
 /* ── Logout ── */
 function logout() {
  localStorage.removeItem(SESSION_KEY);
+ localStorage.removeItem('airmate_owner_session');
  authState.currentUser = null;
  authState.isOwner = false;
  enterPublicMode();
@@ -10396,6 +10407,16 @@ function renderUsersPanel() {
  /* ── Verificar sesión guardada y enrutar ── */
  const savedUser = validateSession();
  if (savedUser) {
+ /* Owner: restaurar la sesión real de Supabase (para poder seguir leyendo
+    web_requests) a partir del token guardado */
+ if (savedUser.role === 'owner') {
+ try {
+ const ownerSess = JSON.parse(localStorage.getItem('airmate_owner_session') || 'null');
+ if (ownerSess && ownerSess.token) {
+ _SB.auth.setSession({ access_token: ownerSess.token, refresh_token: ownerSess.refresh });
+ }
+ } catch(e) {}
+ }
  /* Si es cliente, refrescar paid/active desde Supabase antes de entrar */
  if (savedUser.role !== 'owner' && savedUser.id) {
  _SB.from('clients').select('active,name,plan').eq('id', savedUser.id).single().then(({ data }) => {

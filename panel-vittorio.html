@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vittorio Milano · Fitting Requests</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -171,32 +172,73 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 <script>
 const SB_URL = 'https://vjofxmfwdybktpwiuanc.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
-const ACCESS = 'vittorio2026';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+// El login ya no compara una contraseña visible en el código — pasa por un
+// endpoint que verifica un hash server-side y devuelve una sesión real.
+// AUTH_BEARER es el token de sesión (cambia); SB_ANON es la clave pública fija
+// (va siempre en la cabecera "apikey", nunca en "Authorization").
+let AUTH_BEARER = SB_ANON;
 let ALL_DATA = [];
 let CUR_FILTER = 'all';
 
-function doLogin(){
+async function startAuthSession(access_token,refresh_token){
+  const c=supabase.createClient(SB_URL,SB_ANON);
+  await c.auth.setSession({access_token,refresh_token});
+  AUTH_BEARER=access_token;
+  c.auth.onAuthStateChange((event,session)=>{
+    if(session){
+      AUTH_BEARER=session.access_token;
+      localStorage.setItem('vm_session',JSON.stringify({token:session.access_token,refresh:session.refresh_token}));
+    }
+  });
+}
+
+async function doLogin(){
   const v = document.getElementById('login-pass').value;
-  if(v === ACCESS){
+  const btn=document.querySelector('.login-btn');
+  if(btn)btn.disabled=true;
+  try{
+    const resp=await fetch('https://airmate-phi.vercel.app/api/panel-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:'Vittorio Milano',password:v})});
+    const body=await resp.json();
+    if(!resp.ok||!body.token){
+      document.getElementById('login-err').style.display='block';
+      return;
+    }
+    await startAuthSession(body.token,body.refresh_token);
+    localStorage.setItem('vm_session',JSON.stringify({token:body.token,refresh:body.refresh_token}));
     document.getElementById('login-screen').style.display='none';
     document.getElementById('panel').style.display='block';
     loadRequests();
-  } else {
+  }catch(e){
     document.getElementById('login-err').style.display='block';
+  }finally{
+    if(btn)btn.disabled=false;
   }
 }
 function doLogout(){
+  localStorage.removeItem('vm_session');
   document.getElementById('panel').style.display='none';
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('login-pass').value='';
 }
+(function(){
+  try{
+    const s=JSON.parse(localStorage.getItem('vm_session')||'null');
+    if(s&&s.token&&s.refresh){
+      startAuthSession(s.token,s.refresh).then(()=>{
+        document.getElementById('login-screen').style.display='none';
+        document.getElementById('panel').style.display='block';
+        loadRequests();
+      });
+    }
+  }catch(e){}
+})();
 
 async function loadRequests(){
   document.getElementById('requests-list').innerHTML='<div class="loading">Loading…</div>';
   try{
     const res = await fetch(SB_URL+'/rest/v1/web_requests?business_name=eq.Vittorio Milano&order=created_at.desc', {
-      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+      headers:{'apikey':SB_ANON,'Authorization':'Bearer '+AUTH_BEARER}
     });
     ALL_DATA = await res.json();
     renderStats();
@@ -274,7 +316,7 @@ async function updateStatus(id, status){
   try{
     await fetch(SB_URL+'/rest/v1/web_requests?id=eq.'+id, {
       method:'PATCH',
-      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      headers:{'apikey':SB_ANON,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal'},
       body: JSON.stringify({status})
     });
     const r = ALL_DATA.find(x=>x.id===id);
