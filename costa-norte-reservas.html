@@ -321,7 +321,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
               <span style="color:var(--txt3)">Haz clic en un dia para seleccionar, arrastra para varios dias</span>
             </div>
           </div>
-          <div class="field-hint" style="margin-top:6px">Minimo 24h de antelacion · Puedes seleccionar un dia o un rango de dias consecutivos</div>
+          <div class="field-hint" style="margin-top:6px">Puedes seleccionar un dia o un rango de dias consecutivos, incluido hoy mismo</div>
         </div>
 
         <div class="field" id="field-franjas" style="display:none">
@@ -515,7 +515,10 @@ function renderCal(){
   document.getElementById('cal-month-label').textContent=MONTHS[calMonth]+' '+calYear;
 
   const today=new Date(); today.setHours(0,0,0,0);
-  const minDate=new Date(); minDate.setDate(minDate.getDate()+1); minDate.setHours(0,0,0,0);
+  // Se permite reservar desde hoy mismo (antes exigia 24h de antelacion, pero
+  // por error de comparacion de fechas tambien bloqueaba el dia siguiente —
+  // y Costa Norte necesita poder apuntar a clientes presenciales el mismo dia).
+  const minDate=today;
   // first day of month (Mon=0)
   const first=new Date(calYear,calMonth,1);
   let startDow=first.getDay()-1; if(startDow<0)startDow=6;
@@ -532,7 +535,7 @@ function renderCal(){
     const dow=date.getDay(); // 0=sun
     const isWeekend=dow===0||dow===6;
     const isToday=date.toDateString()===today.toDateString();
-    const disabled=date<=minDate;
+    const disabled=date<minDate;
     let cls='cal-day';
     if(disabled) cls+=' disabled';
     if(isWeekend) cls+=' weekend';
