@@ -4993,11 +4993,20 @@ async function _moveBooking(id,newStartsAt){
   const oldStart=new Date(r.starts_at), oldEnd=new Date(r.ends_at);
   const durMs=oldEnd-oldStart;
   const newEnd=new Date(newStartsAt.getTime()+durMs);
+  // El grupo (A, B, C...) es especifico de cada dia+hora+tipo — si se arrastra la
+  // reserva a otra franja sin reasignar grupo, puede coincidir por casualidad con
+  // la letra de un grupo YA restringido ahi (ej. "solo menores de 14") y heredar
+  // esa restriccion sin tener nada que ver. Le asignamos un grupo nuevo, libre de
+  // restriccion, en el destino.
+  let notes={};try{notes=JSON.parse(r.notes||'{}');}catch{}
+  const tipoDestino=classifyServiceToRow(r.service);
+  const fechaDestino=`${newStartsAt.getFullYear()}-${String(newStartsAt.getMonth()+1).padStart(2,'0')}-${String(newStartsAt.getDate()).padStart(2,'0')}`;
+  notes.grupo=siguienteLetraGrupo(fechaDestino,newStartsAt.getHours(),tipoDestino);
   try{
     const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+id,{
       method:'PATCH',
       headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({starts_at:newStartsAt.toISOString(),ends_at:newEnd.toISOString()})
+      body:JSON.stringify({starts_at:newStartsAt.toISOString(),ends_at:newEnd.toISOString(),notes:JSON.stringify(notes)})
     });
     if(!res.ok){toast('⚠ Error al mover la reserva');return;}
     toast('✓ Reserva movida');
