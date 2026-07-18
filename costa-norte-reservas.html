@@ -1158,11 +1158,14 @@ async function subirJustificante(input){
 
     // Actualizar appointment con URL y payment_status
     if(window._aptId){
-      await fetch(SB_URL+'/rest/v1/appointments?id=eq.'+window._aptId,{
+      const patchRes=await fetch(SB_URL+'/rest/v1/appointments?id=eq.'+window._aptId,{
         method:'PATCH',
         headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
         body:JSON.stringify({notes:JSON.stringify(Object.assign(window._aptNotes||{},{payment_status:'uploaded',receipt_url:publicUrl}))})
       });
+      // Si esto falla, el archivo SÍ se ha subido pero la reserva no se marca
+      // como "justificante subido" — mejor avisar que fallar en silencio.
+      if(!patchRes.ok) throw new Error('No se pudo vincular el justificante a tu reserva (' + patchRes.status + ')');
     }
 
     area.style.borderColor='#16a34a';
