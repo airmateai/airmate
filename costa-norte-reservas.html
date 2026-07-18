@@ -366,6 +366,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
         </div>
       </div>
     </div>
+
+    <!-- Se rellena dinamicamente si hay mas de 1 persona: nombre+DNI de cada asistente -->
+    <div id="field-asistentes"></div>
+
+    <!-- Se rellena dinamicamente si la edad indicada es menor de 18 -->
+    <div id="field-autorizacion-menor"></div>
+
     <div id="err2" class="aviso aviso-err hidden">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <span id="err2-txt"></span>
@@ -755,8 +762,54 @@ function irPaso2(){
     showErr1('Selecciona al menos un horario para cada día. Falta: '+DIAS_ES[d.getDay()]+' '+d.getDate()+' '+MESES_ES[d.getMonth()]+'.');
     return;
   }
-  hideErr1(); setPaso(2); // paso2 = datos personales
+  hideErr1();
+  renderAsistentesExtra();
+  renderAutorizacionMenor();
+  setPaso(2); // paso2 = datos personales
 }
+
+// Si hay mas de 1 persona, pide nombre + DNI de cada asistente extra (la
+// reserva queda a nombre del contacto principal, ej. "Andrea +5", pero cada
+// asistente queda identificado y acepta las condiciones desde el principio.
+function renderAsistentesExtra(){
+  const cont=document.getElementById('field-asistentes');
+  const n=S.personas||1;
+  if(n<=1){cont.innerHTML='';return;}
+  let html='<div class="section"><div class="section-head"><div><div class="section-title">Resto de asistentes</div><div class="section-sub">Nombre y DNI de cada persona del grupo (sois '+n+')</div></div></div><div class="section-body">';
+  for(let i=2;i<=n;i++){
+    html+=`<div class="field-row">
+      <div class="field"><label>Asistente ${i} — Nombre</label><input id="f-asist-nombre-${i}" placeholder="Nombre y apellidos"></div>
+      <div class="field"><label>Asistente ${i} — DNI/NIE</label><input id="f-asist-dni-${i}" placeholder="12345678A"></div>
+    </div>`;
+  }
+  html+=`<label style="display:flex;align-items:flex-start;gap:8px;font-size:.82rem;line-height:1.5;margin-top:6px;">
+    <input type="checkbox" id="f-asist-acepta" style="margin-top:3px;">
+    <span>Confirmo que todos los asistentes del grupo (o sus tutores legales, si son menores) aceptan las condiciones del servicio indicadas al principio.</span>
+  </label>`;
+  html+='</div></div>';
+  cont.innerHTML=html;
+}
+
+// Si la edad indicada es menor de 18, pide autorizacion del padre/madre/tutor
+function renderAutorizacionMenor(){
+  const cont=document.getElementById('field-autorizacion-menor');
+  const edad=+cv2('f-edad');
+  if(!edad||edad>=18){cont.innerHTML='';return;}
+  cont.innerHTML=`<div class="section">
+    <div class="section-head"><div><div class="section-title">Autorización de menor de edad</div><div class="section-sub">La edad indicada es menor de 18 años — necesitamos la autorización de un padre, madre o tutor legal</div></div></div>
+    <div class="section-body">
+      <div class="field-row">
+        <div class="field"><label>Nombre del padre/madre/tutor</label><input id="f-tutor-nombre" placeholder="Nombre y apellidos"></div>
+        <div class="field"><label>DNI/NIE del padre/madre/tutor</label><input id="f-tutor-dni" placeholder="12345678A"></div>
+      </div>
+      <label style="display:flex;align-items:flex-start;gap:8px;font-size:.82rem;line-height:1.5;margin-top:6px;">
+        <input type="checkbox" id="f-tutor-acepta" style="margin-top:3px;">
+        <span>Soy el padre, madre o tutor legal del/de la menor, y autorizo su participación en la actividad, aceptando las condiciones del servicio indicadas al principio.</span>
+      </label>
+    </div>
+  </div>`;
+}
+function cv2(id){const el=document.getElementById(id);return el?el.value.trim():'';}
 
 function irPaso3(){
   const nombre=document.getElementById('f-nombre').value.trim();
@@ -767,7 +820,30 @@ function irPaso3(){
   if(!dni){showErr2('El DNI / NIE es obligatorio.');return;}
   if(!tel){showErr2('El telefono es obligatorio.');return;}
   if(!email||!email.includes('@')){showErr2('Introduce un correo electronico valido.');return;}
+
+  // Validar autorizacion de menor si aplica
+  const edadChk=+cv2('f-edad');
+  let tutorNombre='',tutorDni='';
+  if(edadChk&&edadChk<18){
+    tutorNombre=cv2('f-tutor-nombre');tutorDni=cv2('f-tutor-dni');
+    const tutorAcepta=document.getElementById('f-tutor-acepta')?.checked;
+    if(!tutorNombre||!tutorDni){showErr2('Falta el nombre o DNI del padre/madre/tutor para autorizar al menor.');return;}
+    if(!tutorAcepta){showErr2('El padre/madre/tutor debe marcar la casilla de autorización del menor.');return;}
+  }
+
+  // Validar datos de asistentes extra si hay mas de 1 persona
+  const asistentes=[];
+  if((S.personas||1)>1){
+    for(let i=2;i<=S.personas;i++){
+      const an=cv2('f-asist-nombre-'+i),ad=cv2('f-asist-dni-'+i);
+      if(!an||!ad){showErr2('Faltan datos del asistente '+i+' (nombre y DNI).');return;}
+      asistentes.push({nombre:an,dni:ad});
+    }
+    if(!document.getElementById('f-asist-acepta')?.checked){showErr2('Falta marcar que todos los asistentes aceptan las condiciones.');return;}
+  }
   hideErr2();
+  // Guardamos en S para que enviar() los incluya en la reserva
+  S.tutorNombre=tutorNombre||null;S.tutorDni=tutorDni||null;S.asistentes=asistentes;
 
   const apellidos=document.getElementById('f-apellidos').value.trim();
   const tipoLabels={surf:'Surf',particular:'Clase particular',sup:'SUP / Stand Up Paddle',surfskate:'Surfskate'};
@@ -947,7 +1023,7 @@ async function enviar(){
     const startsAt=new Date(ymd+'T'+hora+':00');
     const endsAt=new Date(startsAt.getTime()+2*60*60*1000);
     const rowId=crypto.randomUUID();
-    const notesObj={dni,source:'web-reservas',dias_totales:days,clases_totales:totalClases,edad:edad||null,idioma,grupo:grupoPorDia[ymd+'|'+hora]||'A',notas_cliente:notas||null};
+    const notesObj={dni,source:'web-reservas',dias_totales:days,clases_totales:totalClases,edad:edad||null,idioma,grupo:grupoPorDia[ymd+'|'+hora]||'A',notas_cliente:notas||null,tutor_nombre:S.tutorNombre||null,tutor_dni:S.tutorDni||null,asistentes:S.asistentes&&S.asistentes.length?S.asistentes:null};
     if(idx===0){firstId=rowId;firstNotesObj=notesObj;}
     inserts.push({
       id:rowId,
