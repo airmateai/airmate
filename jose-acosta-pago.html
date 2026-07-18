@@ -39,7 +39,7 @@ async function init(){
   if(!token){root.innerHTML='<div class="error">Enlace no válido. Pide a Jose Acosta que te lo reenvíe.</div>';return;}
   let data;
   try{
-    const r=await fetch('https://airmate-phi.vercel.app/api/pago-info?token='+encodeURIComponent(token));
+    const r=await fetch('https://airmate-phi.vercel.app/api/jose-acosta?action=pago-info&token='+encodeURIComponent(token));
     if(!r.ok)throw new Error();
     data=await r.json();
   }catch(e){root.innerHTML='<div class="error">No se pudo cargar la factura. Inténtalo de nuevo o contacta con Jose.</div>';return;}
@@ -87,7 +87,7 @@ async function subirComprobante(input){
   try{
     const base64=await fileToBase64(file);
     const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
-    const r=await fetch('https://airmate-phi.vercel.app/api/pago-comprobante',{
+    const r=await fetch('https://airmate-phi.vercel.app/api/jose-acosta?action=pago-comprobante',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({token,fileBase64:base64,fileType:file.type,fileExt:ext})
     });
