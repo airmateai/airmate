@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Pago · Jose Acosta Style</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#0a0806;color:#fafaf7;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.card{max-width:440px;width:100%;background:#161318;border:1px solid rgba(196,163,90,.2);border-radius:14px;padding:32px 28px;}
+.logo{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;letter-spacing:.06em;text-align:center;margin-bottom:4px;}
+.tagline{font-size:9px;letter-spacing:.28em;color:#c4a35a;text-transform:uppercase;text-align:center;margin-bottom:26px;}
+.amount{text-align:center;margin-bottom:24px;}
+.amount-lbl{font-size:10px;letter-spacing:.22em;color:#8a7960;text-transform:uppercase;margin-bottom:6px;}
+.amount-val{font-family:'Cormorant Garamond',serif;font-size:38px;color:#fff;}
+.row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:13px;}
+.row span:first-child{color:#8a7960;}
+.iban{font-family:'Cormorant Garamond',serif;font-size:20px;letter-spacing:.04em;color:#c4a35a;text-align:center;margin:20px 0;padding:14px;border:1px dashed rgba(196,163,90,.4);border-radius:8px;cursor:pointer;}
+.upload-area{border:2px dashed rgba(196,163,90,.3);border-radius:10px;padding:26px;text-align:center;margin-top:22px;cursor:pointer;transition:border-color .2s;}
+.upload-area:hover{border-color:#c4a35a;}
+.btn{display:block;width:100%;background:linear-gradient(135deg,#c4a35a,#9a7f45);color:#0a0806;border:none;padding:13px;border-radius:30px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;margin-top:16px;}
+.status{text-align:center;font-size:12px;margin-top:14px;min-height:16px;}
+.error,.empty{text-align:center;padding:40px 20px;color:rgba(255,255,255,.5);font-size:13px;}
+</style>
+</head>
+<body>
+<div id="root" class="card"><div class="empty">Cargando…</div></div>
+
+<script>
+const params=new URLSearchParams(location.search);
+const token=params.get('token');
+const root=document.getElementById('root');
+function esc(s){return (s||'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function fmt(n){return new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}).format(Number(n||0));}
+const TIPO_LABEL={senal_70:'Señal (70%)',resto_30:'Resto (30%)'};
+
+async function init(){
+  if(!token){root.innerHTML='<div class="error">Enlace no válido. Pide a Jose Acosta que te lo reenvíe.</div>';return;}
+  let data;
+  try{
+    const r=await fetch('https://airmate-phi.vercel.app/api/pago-info?token='+encodeURIComponent(token));
+    if(!r.ok)throw new Error();
+    data=await r.json();
+  }catch(e){root.innerHTML='<div class="error">No se pudo cargar la factura. Inténtalo de nuevo o contacta con Jose.</div>';return;}
+
+  if(data.payment_status==='uploaded'||data.status==='pagado'){
+    root.innerHTML=`<div class="logo">JOSE ACOSTA</div><div class="tagline">Sastrería · Alta Confección</div>
+    <div class="empty" style="padding-top:20px">✔ ${data.status==='pagado'?'Este pago ya está confirmado. ¡Gracias!':'Ya hemos recibido tu comprobante, lo estamos revisando.'}</div>`;
+    return;
+  }
+
+  root.innerHTML=`
+    <div class="logo">JOSE ACOSTA</div>
+    <div class="tagline">Sastrería · Alta Confección</div>
+    <div class="amount">
+      <div class="amount-lbl">${TIPO_LABEL[data.tipo_pago]||'Importe a pagar'}</div>
+      <div class="amount-val">${fmt(data.total)}</div>
+    </div>
+    <div class="row"><span>Cliente</span><span>${esc(data.client_name)}</span></div>
+    <div class="row"><span>Documento</span><span>${esc(data.invoice_number||'—')}</span></div>
+    ${data.iban?`<div class="iban" onclick="navigator.clipboard.writeText('${esc(data.iban)}');this.nextElementSibling.textContent='IBAN copiado ✓'">${esc(data.iban)}</div><div style="text-align:center;font-size:10px;color:#8a7960;margin-top:-14px;margin-bottom:14px">Toca para copiar</div>`:''}
+    <div style="font-size:12px;color:rgba(255,255,255,.5);text-align:center;margin-bottom:6px">Realiza la transferencia y sube aquí el comprobante:</div>
+    <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+      <div style="font-size:13px;font-weight:600">📎 Subir comprobante</div>
+      <div style="font-size:11px;color:#8a7960;margin-top:4px">Foto o PDF de la transferencia</div>
+    </div>
+    <input type="file" id="file-input" accept="image/*,application/pdf" style="display:none" onchange="subirComprobante(this)">
+    <div class="status" id="status"></div>
+  `;
+}
+
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result.split(',')[1]);
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function subirComprobante(input){
+  const file=input.files[0];if(!file)return;
+  const status=document.getElementById('status');
+  const area=document.getElementById('upload-area');
+  status.innerHTML='<span style="color:#3b82f6">Subiendo comprobante…</span>';
+  try{
+    const base64=await fileToBase64(file);
+    const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+    const r=await fetch('https://airmate-phi.vercel.app/api/pago-comprobante',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({token,fileBase64:base64,fileType:file.type,fileExt:ext})
+    });
+    if(!r.ok)throw new Error();
+    area.style.borderColor='#16a34a';
+    area.innerHTML='<div style="font-size:13px;font-weight:600;color:#16a34a">✔ Comprobante enviado</div>';
+    status.innerHTML='<span style="color:#16a34a;font-weight:600">Recibido. Jose lo revisará y confirmará el pago.</span>';
+  }catch(e){
+    status.innerHTML='<span style="color:#ef4444">Error al subir. Envíalo por WhatsApp.</span>';
+  }
+}
+
+init();
+</script>
+</body>
+</html>

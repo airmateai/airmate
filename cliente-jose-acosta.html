@@ -71,18 +71,18 @@ async function init(){
     return;
   }
 
-  // Cargar datos del cliente
-  const [{data:c},{data:ords},{data:facts},{data:apts}]=await Promise.all([
-    sb.from('crm_clients').select('*').eq('id',id).eq('business_slug','jose-acosta').maybeSingle(),
-    sb.from('crm_orders').select('*').eq('business_slug','jose-acosta').eq('client_id',id).order('created_at',{ascending:false}),
-    sb.from('crm_invoices').select('*').eq('business_slug','jose-acosta').eq('client_id',id).order('issue_date',{ascending:false}),
-    sb.from('appointments').select('*').eq('business_slug','jose-acosta').eq('client_id',id).order('starts_at',{ascending:false}).limit(20)
-  ]);
-
-  if(!c){
+  // Cargar datos del cliente vía función serverless (las tablas del CRM son
+  // multi-cliente y no tienen acceso anónimo directo, por seguridad).
+  let payload;
+  try{
+    const r=await fetch('https://airmate-phi.vercel.app/api/cliente-portal?id='+encodeURIComponent(id)+'&slug=jose-acosta');
+    if(!r.ok)throw new Error();
+    payload=await r.json();
+  }catch(e){
     root.innerHTML=`<div class="error"><div class="error-title">Cliente no encontrado</div><p style="color:rgba(255,255,255,.5);font-size:13px">Verifica el enlace o contacta con Jose Acosta.</p></div>`;
     return;
   }
+  const c=payload.client,ords=payload.orders,facts=payload.invoices,apts=payload.appointments;
 
   const totalFact=(facts||[]).filter(f=>f.type==='factura').reduce((s,f)=>s+Number(f.total||0),0);
   const totalPag=(facts||[]).filter(f=>f.type==='factura'&&f.status==='pagado').reduce((s,f)=>s+Number(f.total||0),0);
@@ -126,19 +126,22 @@ async function init(){
 
     <div class="section">
       <div class="section-title">🧾 Tus documentos</div>
-      ${(facts||[]).length?(facts).slice(0,10).map(f=>`
+      ${(facts||[]).length?(facts).slice(0,10).map(f=>{
+        const tipoLbl={senal_70:'Señal · 70%',resto_30:'Resto · 30%'}[f.tipo_pago]||'';
+        return `
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
             <div>
-              <div class="card-title">${esc(f.invoice_number||'—')}</div>
+              <div class="card-title">${esc(f.invoice_number||'—')}${tipoLbl?` <span style="font-size:11px;color:#c4a35a">· ${tipoLbl}</span>`:''}</div>
               <div class="card-sub">${fmtDate(f.issue_date)} · ${esc(f.type==='factura'?'Factura':'Presupuesto')}</div>
             </div>
             <div style="text-align:right">
               <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#c4a35a">${fmt(f.total||0)}</div>
-              ${f.status?`<span class="tag" style="margin-top:4px">${esc(f.status)}</span>`:''}
+              ${f.status?`<span class="tag" style="margin-top:4px">${f.status==='pagado'?'✔ Pagado':esc(f.status)}</span>`:''}
             </div>
           </div>
-        </div>`).join(''):'<div class="empty">Sin documentos emitidos</div>'}
+          ${f.type==='factura'&&f.status!=='pagado'&&f.payment_token?`<a href="jose-acosta-pago.html?token=${f.payment_token}" style="display:inline-block;margin-top:10px;font-size:11px;color:#c4a35a;text-decoration:underline">→ Pagar por transferencia y subir comprobante</a>`:''}
+        </div>`;}).join(''):'<div class="empty">Sin documentos emitidos</div>'}
     </div>
 
     <div class="footer">
