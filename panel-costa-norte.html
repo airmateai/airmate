@@ -4271,7 +4271,9 @@ function newManualReserva(prefill){
     ${lock?`<input type="hidden" id="mr-grupo" value="${esc(p.grupo||'A')}">`:`<div style="margin-top:4px;">${fLbl('Grupo')}<select id="mr-grupo" onchange="mrGrupoChanged()" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;"></select></div>
     <div id="mr-grupo-nuevo-restr" style="display:none;margin-top:8px;">${fRow(fLbl('Restringir grupo nuevo a idioma')+fSel('mr-grupo-idioma','—',['—','Español','Inglés','Francés','Alemán']), fLbl('o edad máxima')+fInp('mr-grupo-edad','','number','12'))}</div>`}
     ${fRow(fLbl('Edad')+fInp('mr-edad','','number','30'), fLbl('Idioma')+fSel('mr-idioma','Español',['Español','Inglés','Francés','Alemán','Otro']))}
+    ${lock?'':fRow(fLbl('Días consecutivos')+fInp('mr-dias','1','number').replace('<input','<input min="1" onchange="mrCalcularBono()"'), `<div style="display:flex;align-items:flex-end;"><button type="button" class="btn btn-ghost" style="width:100%" onclick="mrCalcularBono()">Calcular precio del bono</button></div>`)}
     ${fLbl('Importe (€)')+fInp('mr-importe','0','number')}
+    <div id="mr-bono-info" style="font-size:11px;color:var(--txt3);margin-top:2px;"></div>
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:600;cursor:pointer;">
       <input type="checkbox" id="mr-pagado" style="width:16px;height:16px;"> Marcar como pagado (cobrado en persona / TPV)
     </label>
@@ -4279,6 +4281,41 @@ function newManualReserva(prefill){
   `);
   mrRefreshMonitorOpts();
   if(!lock)mrRefreshGrupoOpts();
+}
+// Misma tabla de tarifas/bonos que usa el formulario público de reservas
+// (costa-norte-reservas.html), para que el precio salga igual sea cual sea
+// el sitio desde el que se cree la reserva.
+const MR_TARIFAS_PRE={
+  surf:{Iniciacion:{1:35,2:65,3:85,4:113,5:140,6:163,7:185,8:200,9:215,10:230,11:242,12:254,13:266,14:278,15:290,16:308,17:326,18:344,19:362,20:380},Avanzado:{1:50,2:100,5:175,7:280,15:390,20:500}},
+  particular:{1:{1:75,2:145},2:{1:60,2:115},3:{1:50,2:90}},
+  sup:{1:35,5:140}
+};
+function mrClosestTier(tiers,n){return tiers.reduce((a,b)=>Math.abs(b-n)<Math.abs(a-n)?b:a);}
+function mrCalcularBono(){
+  const tipo=cv('mr-tipo');
+  const dias=Math.max(+cv('mr-dias')||1,1);
+  const personas=Math.min(Math.max(+cv('mr-personas')||1,1),6);
+  const info=document.getElementById('mr-bono-info');
+  let total=0,ok=true;
+  if(tipo==='Iniciación'||tipo==='Perfeccionamiento'||tipo==='Avanzado'){
+    const nv=tipo==='Avanzado'?'Avanzado':'Iniciacion';
+    const t=MR_TARIFAS_PRE.surf[nv];const k=mrClosestTier(Object.keys(t).map(Number),dias);
+    total=t[k]*personas;
+  }else if(tipo==='Clase Privada'){
+    const tierPersonas=Math.min(personas,3);
+    const t=MR_TARIFAS_PRE.particular[tierPersonas];const k=mrClosestTier(Object.keys(t).map(Number),dias);
+    total=t[k]*personas;
+  }else if(tipo==='SUP'){
+    const k=mrClosestTier([1,5],dias);total=MR_TARIFAS_PRE.sup[k]*personas;
+  }else{
+    ok=false;
+  }
+  if(ok){
+    document.getElementById('mr-importe').value=total;
+    if(info)info.textContent=`Bono calculado: ${dias} día${dias>1?'s':''} · ${personas} persona${personas>1?'s':''} = ${total}€ (se puede editar a mano)`;
+  }else if(info){
+    info.textContent='No hay tabla de bono para este tipo de clase — introduce el importe a mano.';
+  }
 }
 function mrGrupoChanged(){
   const sel=document.getElementById('mr-grupo');
@@ -4395,18 +4432,28 @@ async function saveManualReserva(btn){
     liberar();return;
   }
   const serviceLabel=(tipo==='Clase Privada'?'Clase particular':'Surf - '+tipo)+' ('+personas+' persona'+(personas>1?'s':'')+')';
-  const notes={source:'manual',dias_totales:1,instructor:(monitor&&!monitor.startsWith('—'))?monitor:null,edad:edad||null,idioma:idioma||null,grupo:grupoLetra,payment_status:pagado?'confirmed':undefined};
+  // Días consecutivos: crea una reserva por día (todas con el mismo grupo/monitor),
+  // igual que el bono de la web pública — el importe total se guarda solo en la
+  // primera para no duplicarlo en las sumas del dashboard.
+  const dias=lock?1:Math.max(+cv('mr-dias')||1,1);
+  const inserts=[];
+  for(let i=0;i<dias;i++){
+    const sAt=new Date(startsAt.getTime()+i*24*60*60*1000);
+    const eAt=new Date(sAt.getTime()+2*60*60*1000);
+    const notes={source:'manual',dias_totales:dias,instructor:(monitor&&!monitor.startsWith('—'))?monitor:null,edad:edad||null,idioma:idioma||null,grupo:grupoLetra,payment_status:pagado?'confirmed':undefined};
+    inserts.push({business_slug:'costa-norte',client_name:nombre,client_phone:tel||null,client_email:email||null,service:serviceLabel,duration_minutes:120,starts_at:sAt.toISOString(),ends_at:eAt.toISOString(),status:'confirmed',budget:i===0?importe:null,notes:JSON.stringify(notes)});
+  }
   try{
     const res=await fetch(SB_URL_SOL+'/rest/v1/appointments',{
       method:'POST',
       headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=representation'},
-      body:JSON.stringify({business_slug:'costa-norte',client_name:nombre,client_phone:tel||null,client_email:email||null,service:serviceLabel,duration_minutes:120,starts_at:startsAt.toISOString(),ends_at:endsAt.toISOString(),status:'confirmed',budget:importe,notes:JSON.stringify(notes)})
+      body:JSON.stringify(inserts.length===1?inserts[0]:inserts)
     });
     if(!res.ok){toast('⚠ Error al crear la reserva');liberar();return;}
     const rows=await res.json();
     const row=Array.isArray(rows)?rows[0]:rows;
     await syncAlumnoFromSolicitud(row);
-    toast('✓ Reserva creada'+(pagado?' · marcada como pagada':''));
+    toast(`✓ Reserva creada${dias>1?' ('+dias+' días)':''}`+(pagado?' · marcada como pagada':''));
     closeModal();
     loadSolicitudes();
     if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
