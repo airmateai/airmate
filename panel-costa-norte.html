@@ -1942,7 +1942,8 @@ function registrarClase(){
   openModal('Registrar clase · '+ST_CUR.nombre,`
     ${fLbl('Tipo de clase')}${fSel('rc-tipo','Grupal Iniciación',['Grupal Iniciación','Grupal Intermedio','Grupal Avanzado','Clase Privada','SUP','Kids','Otro'])}
     ${fRow(fLbl('Fecha')+`<input id="rc-fecha" type="date" value="${new Date().toISOString().slice(0,10)}" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--sans,'Inter',sans-serif);color:var(--txt);">`,
-           fLbl('Instructor')+fInp('rc-instructor',''))}
+           fLbl('Hora')+fSel('rc-hora','09:00',TIME_SLOTS.map(s=>String(s.s).padStart(2,'0')+':00')))}
+    ${fLbl('Instructor')}${fInp('rc-instructor','')}
     ${fLbl('Notas')}${fTxt('rc-notas','','2','Progresa bien en el pop-up...')}
     <div style="background:rgba(15,34,64,.06);border-radius:8px;padding:12px 14px;margin-top:12px;font-size:13px;">Sesiones actuales: <strong>${left}</strong> → quedarán <strong style="color:${left>0?'var(--leaf)':'var(--coral)'};">${Math.max(0,left-1)}</strong>
       ${left===0?'<div style="color:var(--coral);margin-top:6px;font-size:12px;">⚠ El alumno no tiene sesiones disponibles. Se registrará igualmente.</div>':''}
@@ -1955,12 +1956,13 @@ async function confirmarClase(){
   if(!ST_CUR) return;
   const tipo=document.getElementById('rc-tipo').value;
   const fecha=document.getElementById('rc-fecha').value;
+  const hora=document.getElementById('rc-hora')?.value||'09:00';
   const instructor=document.getElementById('rc-instructor').value;
   const notas=document.getElementById('rc-notas').value;
 
   let hist=[];
   try{hist=JSON.parse(ST_CUR.historial||'[]');}catch{}
-  hist.push({tipo,fecha,instructor,notas,ts:Date.now()});
+  hist.push({tipo,fecha,hora,instructor,notas,ts:Date.now()});
 
   const newLeft=Math.max(0,(ST_CUR.sesiones_restantes??0)-1);
   // historial column may not exist yet — save gracefully
@@ -1974,6 +1976,20 @@ async function confirmarClase(){
   ST_CUR={...ST_CUR,...updates};
   const idx=STUDENTS.findIndex(s=>String(s.id)===String(ST_CUR.id));
   if(idx>=0) STUDENTS[idx]={...STUDENTS[idx],...updates};
+
+  // Vuelca también la clase al calendario (appointments) — antes solo se descontaba
+  // el bono en cn_alumnos y no aparecía en el horario de clases.
+  const startsAt=new Date(fecha+'T'+hora+':00');
+  const endsAt=new Date(startsAt.getTime()+2*60*60*1000);
+  const insert={business_slug:'costa-norte',client_name:ST_CUR.nombre,client_phone:ST_CUR.telefono||null,client_email:ST_CUR.email||null,service:'Surf - '+tipo.replace('Grupal ','')+' (1 persona)',duration_minutes:120,starts_at:startsAt.toISOString(),ends_at:endsAt.toISOString(),status:'confirmed',budget:null,notes:JSON.stringify({source:'manual',dias_totales:1,instructor:instructor||null,grupo:'A',payment_status:'confirmed'})};
+  try{
+    const res=await fetch(SB_URL_SOL+'/rest/v1/appointments',{
+      method:'POST',
+      headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify(insert)
+    });
+    if(!res.ok)toast('⚠ Sesión descontada pero no se pudo añadir al calendario');
+  }catch(e){console.error('confirmarClase appointment',e);toast('⚠ Sesión descontada pero no se pudo añadir al calendario');}
 
   closeModal();
   toast('✓ Clase registrada · '+newLeft+' sesiones restantes');
