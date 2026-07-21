@@ -1103,6 +1103,9 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
             <span id="gantt-month-label" style="font-weight:600;font-size:13px;min-width:120px;text-align:center;"></span>
             <button class="btn btn-ghost" id="gantt-next" onclick="ganttMove(1)">›</button>
             <button class="btn btn-ghost" onclick="ganttGoToday()">Hoy</button>
+            <span style="width:1px;height:20px;background:var(--border);margin:0 4px;"></span>
+            <button class="btn btn-ghost" title="Desplazar un día a la izquierda" onclick="ganttScrollDay(-1)">◄ Día</button>
+            <button class="btn btn-ghost" title="Desplazar un día a la derecha" onclick="ganttScrollDay(1)">Día ►</button>
           </div>
         </div>
         <!-- Leyenda -->
@@ -4462,6 +4465,52 @@ async function saveManualReserva(btn){
   }catch(e){console.error('saveManualReserva',e);toast('⚠ Error al crear la reserva');liberar();}
 }
 
+function togglePresupEdit(){
+  if(!SOL_CUR)return;
+  const row=document.getElementById('sol-presup-edit-row');
+  const abrir=row.style.display==='none'||!row.style.display;
+  row.style.display=abrir?'flex':'none';
+  if(abrir)document.getElementById('sol-presup-input').value=SOL_CUR.budget||'';
+}
+async function savePresupCorregido(){
+  if(!SOL_CUR)return;
+  const val=+document.getElementById('sol-presup-input').value;
+  if(!val||val<0){toast('⚠ Importe no válido');return;}
+  const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
+    method:'PATCH',
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify({budget:val})
+  });
+  if(!res.ok){toast('⚠ Error al guardar el importe');return;}
+  const rows=await res.json();
+  SOL_CUR.budget=val;
+  document.getElementById('sol-presup-amount').textContent=val+'€';
+  document.getElementById('sol-presup-edit-row').style.display='none';
+  toast('✓ Importe corregido');
+  loadSolicitudes();
+}
+async function duplicarClase(){
+  if(!SOL_CUR)return;
+  const r=SOL_CUR;
+  const fechaDef=new Date(new Date(r.starts_at).getTime()+24*60*60*1000).toISOString().slice(0,10);
+  const fecha=prompt('Duplicar esta clase para el cliente '+(r.client_name||'')+'.\nFecha (AAAA-MM-DD):',fechaDef);
+  if(!fecha)return;
+  const horaOriginal=new Date(r.starts_at);
+  const startsAt=new Date(fecha+'T'+String(horaOriginal.getHours()).padStart(2,'0')+':'+String(horaOriginal.getMinutes()).padStart(2,'0')+':00');
+  const durMs=new Date(r.ends_at).getTime()-new Date(r.starts_at).getTime();
+  const endsAt=new Date(startsAt.getTime()+durMs);
+  const insert={business_slug:'costa-norte',client_name:r.client_name,client_phone:r.client_phone||null,client_email:r.client_email||null,service:r.service,duration_minutes:r.duration_minutes||120,starts_at:startsAt.toISOString(),ends_at:endsAt.toISOString(),status:'confirmed',budget:r.budget||null,notes:r.notes};
+  const res=await fetch(SB_URL_SOL+'/rest/v1/appointments',{
+    method:'POST',
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify(insert)
+  });
+  if(!res.ok){toast('⚠ Error al duplicar la clase');return;}
+  toast('✓ Clase duplicada para '+fecha);
+  closeSolDetail();
+  loadSolicitudes();
+  if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
+}
 async function updateSolStatus(status){
   if(!SOL_CUR)return;
   const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
@@ -4556,7 +4605,14 @@ function solSetFilter(btn,f){
       <!-- presupuesto -->
       <div style="background:#0f2240;border-radius:12px;padding:18px 20px;margin-top:18px">
         <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Presupuesto calculado</div>
-        <div id="sol-presup-amount" style="font-size:36px;font-weight:800;color:#fff;line-height:1"></div>
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <div id="sol-presup-amount" style="font-size:36px;font-weight:800;color:#fff;line-height:1"></div>
+          <button onclick="togglePresupEdit()" id="sol-presup-edit-btn" style="background:rgba(255,255,255,.12);border:none;color:rgba(255,255,255,.7);font-size:11px;font-weight:600;padding:4px 9px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif">✎ Corregir</button>
+        </div>
+        <div id="sol-presup-edit-row" style="display:none;margin-top:8px;gap:6px;align-items:center">
+          <input id="sol-presup-input" type="number" step="0.01" style="width:110px;padding:7px 9px;border-radius:6px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font-size:14px">
+          <button onclick="savePresupCorregido()" style="padding:7px 12px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Guardar</button>
+        </div>
         <div id="sol-presup-detail" style="font-size:12px;color:rgba(255,255,255,.4);margin-top:5px"></div>
         <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
           <span style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);font-size:11px;padding:3px 9px;border-radius:6px">✓ Material incluido</span>
@@ -4594,6 +4650,7 @@ function solSetFilter(btn,f){
       <!-- acciones -->
       <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
         <button onclick="addIntegranteAGrupo()" style="padding:12px;background:#eef2ff;color:#4338ca;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">➕ Añadir integrante a este grupo</button>
+        <button onclick="duplicarClase()" style="padding:12px;background:#eef2ff;color:#4338ca;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">📋 Duplicar clase a otro día</button>
         <button onclick="updateSolStatus('confirmed')" style="padding:12px;background:#0f2240;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Marcar como confirmada</button>
         <button onclick="updateSolStatus('contacted')" style="padding:12px;background:#eff6ff;color:#1d6fb8;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Marcar como contactado</button>
         <button onclick="updateSolStatus('cancelled')" style="padding:12px;background:#fef2f2;color:#dc2626;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Cancelar solicitud</button>
@@ -5024,6 +5081,12 @@ function ganttGoToday(){
   ganttYear = new Date().getFullYear();
   ganttMonth = new Date().getMonth();
   loadGanttMonth();
+}
+function ganttScrollDay(dir){
+  const box=document.getElementById('gantt-scroll');
+  const dayCol=box?.querySelector('.gantt-day-col');
+  const colWidth=dayCol?dayCol.getBoundingClientRect().width:56;
+  if(box)box.scrollBy({left:dir*colWidth,behavior:'smooth'});
 }
 function ganttOpenBooking(id){
   const r=GANTT_RAW.find(x=>String(x.id)===String(id));
