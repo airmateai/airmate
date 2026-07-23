@@ -318,10 +318,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
             </div>
             <div class="cal-grid" id="cal-grid"></div>
             <div class="cal-selection-info" id="cal-info">
-              <span style="color:var(--txt3)">Haz clic en un dia para seleccionar, arrastra para varios dias</span>
+              <span style="color:var(--txt3)">Haz clic en los dias que quieras reservar</span>
             </div>
           </div>
-          <div class="field-hint" style="margin-top:6px">Puedes seleccionar un dia o un rango de dias consecutivos, incluido hoy mismo</div>
+          <div class="field-hint" style="margin-top:6px">Puedes elegir varios dias sueltos, no hace falta que sean seguidos — se aplica el mismo bono</div>
         </div>
 
         <div class="field" id="field-franjas" style="display:none">
@@ -502,7 +502,7 @@ const FRANJAS=[
 ];
 
 // franjasPorDia: { 'YYYY-MM-DD': [{id, hora}, ...] } — un dia puede tener varias clases (varias franjas)
-let S={tipo:'surf',nivel:'Iniciacion',personas:1,rangeStart:null,rangeEnd:null,franjasPorDia:{},ocupacionPorDia:{},bloqueosPorDia:{}};
+let S={tipo:'surf',nivel:'Iniciacion',personas:1,selectedDays:[],franjasPorDia:{},ocupacionPorDia:{},bloqueosPorDia:{}};
 let calYear, calMonth;
 
 // ── INIT (al final del script) ──
@@ -531,9 +531,6 @@ function renderCal(){
   let startDow=first.getDay()-1; if(startDow<0)startDow=6;
   const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
 
-  const rs=S.rangeStart?fromYMD(S.rangeStart):null;
-  const re=S.rangeEnd?fromYMD(S.rangeEnd):null;
-
   let html='';
   for(let i=0;i<startDow;i++) html+='<div class="cal-day empty"></div>';
   for(let d=1;d<=daysInMonth;d++){
@@ -547,15 +544,7 @@ function renderCal(){
     if(disabled) cls+=' disabled';
     if(isWeekend) cls+=' weekend';
     if(isToday) cls+=' today';
-    if(!disabled){
-      const d0=new Date(calYear,calMonth,d); d0.setHours(12,0,0,0);
-      const r0=rs?new Date(rs):null; const r1=re?new Date(re):r0;
-      if(r0&&r1){
-        if(d0>=r0&&d0<=r1) cls+=' in-range';
-        if(r0&&d0.toDateString()===r0.toDateString()) cls+=' range-start';
-        if(r1&&d0.toDateString()===r1.toDateString()) cls+=' range-end';
-      }
-    }
+    if(!disabled&&S.selectedDays.includes(ymd)) cls+=' in-range';
     html+=`<div class="${cls}" data-ymd="${ymd}" onclick="calClick('${ymd}',${disabled})">${d}</div>`;
   }
   document.getElementById('cal-grid').innerHTML=html;
@@ -564,35 +553,33 @@ function renderCal(){
 
 function calClick(ymd,disabled){
   if(disabled) return;
-  if(!S.rangeStart||S.rangeEnd){
-    S.rangeStart=ymd; S.rangeEnd=null;
-  } else {
-    const s=fromYMD(S.rangeStart), e=fromYMD(ymd);
-    if(e<s){S.rangeStart=ymd;S.rangeEnd=null;}
-    else{S.rangeEnd=ymd;}
-  }
+  // Clic para añadir/quitar un día suelto — no hace falta que sean consecutivos
+  // ("el cliente quiere reservar 5 clases pero en días sueltos, no un rango seguido").
+  const idx=S.selectedDays.indexOf(ymd);
+  if(idx>=0) S.selectedDays.splice(idx,1);
+  else S.selectedDays.push(ymd);
+  S.selectedDays.sort();
   S.franjasPorDia={};
   renderCal();
-  if(S.rangeStart) cargarAforoPorDias();
+  if(S.selectedDays.length) cargarAforoPorDias();
+  else document.getElementById('field-franjas').style.display='none';
 }
 
 function clearRange(){
-  S.rangeStart=null;S.rangeEnd=null;S.franjasPorDia={};S.ocupacionPorDia={};
+  S.selectedDays=[];S.franjasPorDia={};S.ocupacionPorDia={};
   document.getElementById('field-franjas').style.display='none';
   renderCal();
 }
 
 function renderCalInfo(){
   const el=document.getElementById('cal-info');
-  if(!S.rangeStart){
-    el.innerHTML='<span style="color:var(--txt3)">Haz clic en un dia para seleccionar. Clic en otro para un rango.</span>';
+  if(!S.selectedDays.length){
+    el.innerHTML='<span style="color:var(--txt3)">Haz clic en los dias que quieras reservar — no hace falta que sean seguidos.</span>';
     return;
   }
-  const s=fromYMD(S.rangeStart);
-  const e=S.rangeEnd?fromYMD(S.rangeEnd):s;
-  const days=Math.round((e-s)/(1000*60*60*24))+1;
-  const fmt=d=>d.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
-  const txt=days===1?fmt(s):`${fmt(s)} — ${fmt(e)}`;
+  const fmt=ymd=>fromYMD(ymd).toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+  const txt=S.selectedDays.map(fmt).join(', ');
+  const days=S.selectedDays.length;
   el.innerHTML=`<span>${txt}</span><div style="display:flex;align-items:center;gap:10px"><span class="cal-sel-badge">${days} dia${days>1?'s':''}</span><span class="cal-sel-clear" onclick="clearRange()">Limpiar</span></div>`;
 }
 
@@ -616,12 +603,10 @@ function selPersonas(n,el){
 
 // ── AFORO POR DÍAS ──
 function getDiasRango(){
-  const dias=[];
-  const s=fromYMD(S.rangeStart);
-  const e=S.rangeEnd?fromYMD(S.rangeEnd):s;
-  const n=Math.round((e-s)/(1000*60*60*24))+1;
-  for(let i=0;i<n;i++){const d=new Date(s);d.setDate(s.getDate()+i);dias.push(toYMD(d));}
-  return dias;
+  // Devuelve los dias sueltos elegidos por el cliente (ya no un rango consecutivo
+  // obligatorio) — el resto del codigo (aforo, franjas, calculo de bono) sigue
+  // funcionando igual porque solo consume este array.
+  return S.selectedDays.slice();
 }
 
 async function cargarAforoPorDias(){
@@ -754,7 +739,7 @@ function selFranjaParaDia(ymd,id,hora,el){
 
 // ── NAVEGACION ──
 function irPaso2(){
-  if(!S.rangeStart){showErr1('Selecciona al menos un dia en el calendario.');return;}
+  if(!S.selectedDays.length){showErr1('Selecciona al menos un dia en el calendario.');return;}
   const dias=getDiasRango();
   const sinHorario=dias.filter(d=>!S.franjasPorDia[d]||S.franjasPorDia[d].length===0);
   if(sinHorario.length>0){
