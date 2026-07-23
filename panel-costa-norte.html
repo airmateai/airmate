@@ -1121,10 +1121,12 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
             <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><span style="width:12px;height:12px;border-radius:3px;background:#c9942c;display:inline-block;"></span>Campamento</div>
           </div>
           <div style="display:flex;gap:14px;flex-wrap:wrap;">
-            <span style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;align-self:center;">Pago:</span>
-            <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#16a34a"/><path d="M7 12.5l3 3 7-7" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Pagado</div>
-            <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#d97706"/><path d="M12 7v5l3.2 2" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Pendiente</div>
-            <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#dc2626"/><path d="M8 8l8 8M16 8l-8 8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>Cancelado</div>
+            <span style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;align-self:center;">Pago ($):</span>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#16a34a"/><text x="12" y="16.5" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="Arial,sans-serif">$</text></svg>Pagado</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#dc2626"/><text x="12" y="16.5" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="Arial,sans-serif">$</text></svg>No pagado</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#64748b"/><path d="M8 8l8 8M16 8l-8 8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>Cancelado</div>
+            <span style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;align-self:center;margin-left:10px;">Confirmado (✓):</span>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt2)"><svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#0f2240"/><path d="M7 12.5l3 3 7-7" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Hora hablada con el cliente</div>
           </div>
         </div>
         <div style="display:flex;align-items:flex-start;">
@@ -3967,11 +3969,13 @@ async function openSol(id){
     }
   }catch(e){/* si falla, seguimos con el valor de esta fila */}
   const monitorActual=instructorGrupo||'— Sin asignar —';
-  if(esCampamento){
+  {
+    // Checkboxes multi-monitor para cualquier tipo de grupo (antes solo en campamentos) —
+    // un grupo normal también puede necesitar 2 monitores (ej. grupo de niños pequeños).
     const actuales=(instructorGrupo||'').split(',').map(x=>x.trim()).filter(Boolean);
     document.getElementById('sol-detail-rows').innerHTML += `
       <div style="padding:9px 0;font-size:13px;">
-        <div style="color:#4a5568;margin-bottom:6px;">Monitores asignados (grupo grande — puedes marcar varios)</div>
+        <div style="color:#4a5568;margin-bottom:6px;">Monitores asignados (puedes marcar varios)</div>
         <div id="sol-monitor-multi" style="display:flex;flex-direction:column;gap:5px;max-height:160px;overflow-y:auto;border:1px solid #eef1f6;border-radius:8px;padding:8px;">
           ${INSTRUCTORS.map(ins=>{
             const noTrabajaHoy=dispDiaSel&&!dispDiaSel.has(ins.name);
@@ -3985,22 +3989,27 @@ async function openSol(id){
         </div>
         <button onclick="saveMonitorAsignado()" style="margin-top:8px;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;border:none;background:#0f2240;color:#fff;cursor:pointer;">Guardar monitores</button>
       </div>`;
-  } else {
-    const monitorOpts=['— Sin asignar —',...INSTRUCTORS.map(x=>x.name)];
-    document.getElementById('sol-detail-rows').innerHTML += `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;font-size:13px;gap:10px;">
-        <span style="color:#4a5568;flex-shrink:0;">Monitor asignado</span>
-        <div style="display:flex;gap:6px;">
-          <select id="sol-monitor-sel" style="padding:6px 8px;border:1px solid #dde3ec;border-radius:6px;font-size:12px;">${monitorOpts.map(m=>{
-            if(m.startsWith('—'))return `<option value="${esc(m)}" ${m===monitorActual?'selected':''}>${esc(m)}</option>`;
-            const noTrabajaHoy=dispDiaSel&&!dispDiaSel.has(m);
-            const ocupado=(ocupados.has(m)||noTrabajaHoy)&&m!==monitorActual;
-            return `<option value="${esc(m)}" ${m===monitorActual?'selected':''} ${ocupado?'disabled':''}>${esc(m)}${noTrabajaHoy?' (no trabaja hoy)':ocupado?' (ocupado a esta hora)':''}</option>`;
-          }).join('')}</select>
-          <button onclick="saveMonitorAsignado()" style="padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;border:none;background:#0f2240;color:#fff;cursor:pointer;">Guardar</button>
-        </div>
-      </div>`;
   }
+
+  // Editar grupo y edad de esta clase ya creada (ej. mover del grupo C al B porque
+  // en realidad es el mismo monitor/nivel y no hacía falta abrir otro grupo).
+  document.getElementById('sol-detail-rows').innerHTML += `
+    <div style="padding:9px 0;font-size:13px;">
+      <div style="color:#4a5568;margin-bottom:6px;">Editar grupo / edad de esta clase</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="sol-grupo-input" value="${esc(notes.grupo||'A')}" maxlength="1" style="width:48px;text-align:center;padding:7px;border:1px solid #dde3ec;border-radius:6px;font-size:13px;text-transform:uppercase;" placeholder="Grupo">
+        <input id="sol-edad-input" type="number" value="${esc(notes.edad||'')}" style="width:70px;padding:7px;border:1px solid #dde3ec;border-radius:6px;font-size:13px;" placeholder="Edad">
+        <button onclick="saveGrupoEdad()" style="padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;border:none;background:#0f2240;color:#fff;cursor:pointer;">Guardar</button>
+      </div>
+    </div>`;
+
+  // Confirmado con el cliente (independiente del pago) — el tick indica que ya se ha
+  // hablado la hora exacta con el cliente (puede diferir de la hora del hueco original).
+  document.getElementById('sol-detail-rows').innerHTML += `
+    <label style="display:flex;align-items:center;gap:8px;padding:9px 0;font-size:13px;cursor:pointer;">
+      <input type="checkbox" id="sol-confirmado-chk" ${notes.confirmado_cliente?'checked':''} onchange="saveConfirmadoCliente(this.checked)" style="width:16px;height:16px;">
+      ✓ Horario ya hablado / confirmado con el cliente
+    </label>`;
 
   // Presupuesto calculado
   document.getElementById('sol-presup-amount').textContent=presup>0?presup+'€':'Consultar';
@@ -4028,6 +4037,40 @@ async function openSol(id){
   document.getElementById('sol-detail-overlay').style.display='flex';
 }
 
+async function saveGrupoEdad(){
+  if(!SOL_CUR)return;
+  const grupo=(document.getElementById('sol-grupo-input').value||'A').trim().toUpperCase().slice(0,1);
+  const edad=document.getElementById('sol-edad-input').value.trim();
+  const notes=solParseNotes(SOL_CUR.notes);
+  notes.grupo=grupo;
+  notes.edad=edad||null;
+  const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
+    method:'PATCH',
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({notes:JSON.stringify(notes)})
+  });
+  if(!res.ok){toast('⚠ Error al guardar');return;}
+  SOL_CUR.notes=JSON.stringify(notes);
+  toast('✓ Grupo/edad actualizados');
+  loadSolicitudes();
+  if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
+  openSol(SOL_CUR.id);
+}
+async function saveConfirmadoCliente(checked){
+  if(!SOL_CUR)return;
+  const notes=solParseNotes(SOL_CUR.notes);
+  notes.confirmado_cliente=checked;
+  const res=await fetch(SB_URL_SOL+'/rest/v1/appointments?id=eq.'+SOL_CUR.id,{
+    method:'PATCH',
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({notes:JSON.stringify(notes)})
+  });
+  if(!res.ok){toast('⚠ Error al guardar');document.getElementById('sol-confirmado-chk').checked=!checked;return;}
+  SOL_CUR.notes=JSON.stringify(notes);
+  toast(checked?'✓ Marcado como confirmado con el cliente':'Desmarcado');
+  loadSolicitudes();
+  if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
+}
 async function updatePayment(status){
   if(!SOL_CUR) return;
   const notes=solParseNotes(SOL_CUR.notes);
@@ -4442,15 +4485,18 @@ async function saveManualReserva(btn){
     }
   }
 
-  // Ratio maximo POR GRUPO (no por franja entera) — varios grupos pueden compartir la misma hora
-  const yaEnGrupo=GANTT_RAW.filter(r=>{
-    if(r.status==='cancelled'||new Date(r.starts_at).getTime()!==startsAt.getTime()||classifyServiceToRow(r.service)!==miRowChk)return false;
-    let n={};try{n=JSON.parse(r.notes||'{}');}catch{}
-    return (n.grupo||'A')===grupoLetra;
-  }).reduce((sum,r)=>{let n={};try{n=JSON.parse(r.notes||'{}');}catch{}return sum+_bookingHeadcount(r,n);},0);
-  if(yaEnGrupo+personas>RATIO_MAX_GRUPO){
-    toast(`⚠ El grupo ${grupoLetra} ya está al ratio máximo (${yaEnGrupo}+${personas} > ${RATIO_MAX_GRUPO}). Abre otro grupo.`,'error');
-    liberar();return;
+  // Ratio maximo POR GRUPO (no por franja entera) — varios grupos pueden compartir la misma hora.
+  // Los campamentos no tienen ratio fijo (grupos grandes con varios monitores repartiendo el ratio real).
+  if(miRowChk!=='camp'){
+    const yaEnGrupo=GANTT_RAW.filter(r=>{
+      if(r.status==='cancelled'||new Date(r.starts_at).getTime()!==startsAt.getTime()||classifyServiceToRow(r.service)!==miRowChk)return false;
+      let n={};try{n=JSON.parse(r.notes||'{}');}catch{}
+      return (n.grupo||'A')===grupoLetra;
+    }).reduce((sum,r)=>{let n={};try{n=JSON.parse(r.notes||'{}');}catch{}return sum+_bookingHeadcount(r,n);},0);
+    if(yaEnGrupo+personas>RATIO_MAX_GRUPO){
+      toast(`⚠ El grupo ${grupoLetra} ya está al ratio máximo (${yaEnGrupo}+${personas} > ${RATIO_MAX_GRUPO}). Abre otro grupo.`,'error');
+      liberar();return;
+    }
   }
   const serviceLabel=(tipo==='Clase Privada'?'Clase particular':'Surf - '+tipo)+' ('+personas+' persona'+(personas>1?'s':'')+')';
   // Días consecutivos: crea una reserva por día (todas con el mismo grupo/monitor),
@@ -4850,9 +4896,15 @@ function slotIndexForHour(h){
 }
 function slotLabel(idx){const sl=TIME_SLOTS[idx];return String(sl.s).padStart(2,'0')+':00–'+String(sl.e).padStart(2,'0')+':00';}
 function paymentBadgeSVG(status){
-  if(status==='cancelled')return `<svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#dc2626"/><path d="M8 8l8 8M16 8l-8 8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>`;
-  if(status==='paid')return `<svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#16a34a"/><path d="M7 12.5l3 3 7-7" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  return `<svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#d97706"/><path d="M12 7v5l3.2 2" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  // $ verde = pagado · $ rojo = no pagado · X gris = cancelado
+  if(status==='cancelled')return `<svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#64748b"/><path d="M8 8l8 8M16 8l-8 8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+  const fill=status==='paid'?'#16a34a':'#dc2626';
+  return `<svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="${fill}"/><text x="12" y="16.5" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="Arial,sans-serif">$</text></svg>`;
+}
+function confirmBadgeSVG(confirmado){
+  // Tick = horario ya hablado/confirmado con el cliente (independiente del pago)
+  const fill=confirmado?'#0f2240':'#94a3b8';
+  return `<svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="${fill}"/><path d="M7 12.5l3 3 7-7" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 
 let GANTT_DATA = [];
@@ -5015,7 +5067,7 @@ async function loadGanttMonth(silent){
       else pago=notesObj.payment_status==='confirmed'?'paid':'pending';
       const numNinos=Array.isArray(notesObj.ninos)?notesObj.ninos.length:null;
       const personas=_bookingHeadcount(r,notesObj);
-      return {id:r.id,row,slot:slotIndexForHour(dt.getHours()),day:dt.getDate(),name:r.client_name||'—',hora:dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false}),instr:notesObj.instructor||'Sin asignar',importe:r.budget||0,pago,numNinos,personas,startsAt:r.starts_at,grupo:notesObj.grupo||null};
+      return {id:r.id,row,slot:slotIndexForHour(dt.getHours()),day:dt.getDate(),name:r.client_name||'—',hora:dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false}),instr:notesObj.instructor||'Sin asignar',importe:r.budget||0,pago,confirmado:!!notesObj.confirmado_cliente,numNinos,personas,startsAt:r.starts_at,grupo:notesObj.grupo||null};
     }).sort((a,b)=>a.hora.localeCompare(b.hora));
   }catch(e){console.error('loadGanttMonth',e);GANTT_DATA=[];}
   renderGantt();
@@ -5206,6 +5258,8 @@ function renderGantt(){
     if(!dataMap[key]) dataMap[key] = [];
     dataMap[key].push(b);
   });
+  // Agrupar visualmente por letra de grupo (A, B, C...) en vez de mezclados
+  Object.values(dataMap).forEach(arr=>arr.sort((a,b)=>(a.grupo||'A').localeCompare(b.grupo||'A')));
 
   let html = '<table class="gantt-table"><thead><tr class="gantt-head-row">';
   html += '<th class="gantt-label-col">Franja horaria</th>';
@@ -5241,7 +5295,8 @@ function renderGantt(){
         const grupo=ganttGrupoLetra(d,slotIdx,b.row,b.id);
         const restrBadge=grupoRestriccionBadge(d,slotIdx,b.row,grupo);
         cellContent += `<div class="gantt-bar" style="background:${TYPE_COLORS[b.row]}" data-tt="${tt}" draggable="true" ondragstart="ganttDragStart(event,'${b.id}')" onmouseenter="showGTT(event,this)" onmouseleave="hideGTT()" onclick="ganttOpenBooking('${b.id}')">
-          <span class="gantt-bar-badge">${paymentBadgeSVG(b.pago)}</span>
+          <span class="gantt-bar-badge" style="right:2px;">${paymentBadgeSVG(b.pago)}</span>
+          <span class="gantt-bar-badge" style="right:18px;" title="${b.confirmado?'Horario confirmado con el cliente':'Sin confirmar con el cliente'}">${confirmBadgeSVG(b.confirmado)}</span>
           <span class="gantt-bar-hora">${esc(b.hora)} · Grupo ${grupo}${restrBadge}${b.numNinos!=null?' · '+b.numNinos+' niños':''}</span>${esc(b.name)}
         </div>`;
       });
