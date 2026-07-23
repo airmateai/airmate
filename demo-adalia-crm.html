@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Adalia OS — CRM Clínica Dental Adalia</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+/* Paleta EXACTA sacada de adaliadental.com: teal #00A3AD, azul #2EA3F2, gris #313131 */
+:root{
+  --teal:#00A3AD; --teal2:#00838c; --teal-dim:rgba(0,163,173,.10);
+  --blue:#2EA3F2; --blue-dim:rgba(46,163,242,.10);
+  --bg:#f4f8f8; --bg2:#ffffff; --panel:#ffffff; --panel2:#f6f9f9;
+  --border:rgba(20,40,40,.10); --border2:rgba(0,163,173,.38);
+  --ink:#1b2726; --txt:#1b2726; --txt2:#5b6c6b; --txt3:#8a9c9b;
+  --red:#d43c40; --amber:#c17f0e; --green:#1f9d5c; --violet:#7566e0;
+}
+html,body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;overflow-x:hidden;}
+img{max-width:100%;display:block;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:rgba(0,199,211,.25);border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(1100px 550px at 14% -8%, rgba(0,163,173,.07), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(46,163,242,.06), transparent 55%);
+}
+.app{position:relative;z-index:1;display:flex;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:240px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);box-shadow:2px 0 16px rgba(20,40,40,.03);display:flex;flex-direction:column;padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.brand{padding:8px 6px 18px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+.brand img{width:150px;}
+.brand small{display:block;font-size:9.5px;font-weight:600;color:var(--txt3);letter-spacing:.16em;text-transform:uppercase;margin-top:8px;}
+.nav-group{margin-bottom:16px;}
+.nav-label{font-size:9.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--txt3);padding:0 12px;margin-bottom:8px;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:9px;font-size:12.5px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;margin-bottom:2px;position:relative;}
+.nav-item svg{flex-shrink:0;opacity:.75;}
+.nav-item:hover{background:rgba(0,163,173,.06);color:var(--ink);}
+.nav-item.active{background:var(--teal-dim);color:var(--teal2);}
+.nav-item.active svg{opacity:1;stroke:var(--teal2);}
+.nav-item.active::before{content:'';position:absolute;left:-14px;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--teal2);}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;}
+.sidebar-foot{margin-top:auto;padding:12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sidebar-foot .av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#1a6fbf);display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.sidebar-foot .who{font-size:12.5px;font-weight:600;color:var(--ink);}
+.sidebar-foot .role{font-size:10.5px;color:var(--txt3);}
+
+/* ── MAIN ── */
+.main{flex:1;min-width:0;padding:26px 32px 60px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:14px;}
+.topbar h1{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;color:var(--ink);}
+.topbar p{font-size:12.5px;color:var(--txt3);margin-top:3px;}
+.topbar-actions{display:flex;gap:10px;align-items:center;}
+.pill{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border);padding:8px 13px;border-radius:9px;font-size:12px;color:var(--txt2);}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);}
+.btn{padding:9px 16px;border-radius:9px;font-size:12.5px;font-weight:600;border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#04211e;}
+.btn-primary:hover{filter:brightness(1.1);}
+.btn-ghost{background:var(--panel);color:var(--txt2);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--ink);border-color:var(--border2);}
+
+.page{display:none;animation:fade .25s ease;}
+.page.active{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:0 1px 3px rgba(20,40,40,.04);}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.card-title{font-size:13.5px;font-weight:700;color:var(--ink);}
+.card-sub{font-size:11px;color:var(--txt3);margin-top:2px;}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px;}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(20,40,40,.04);}
+.kpi::after{content:'';position:absolute;right:-30px;top:-30px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,var(--teal-dim),transparent 70%);}
+.kpi-label{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);margin-bottom:10px;}
+.kpi-val{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:var(--ink);line-height:1;}
+.kpi-delta{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;margin-top:9px;}
+.kpi-delta.up{color:var(--green);}
+.kpi-delta.down{color:var(--red);}
+
+.grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;}
+@media(max-width:1100px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+.pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;overflow-x:auto;}
+.pcol{background:var(--panel2);border:1px solid var(--border);border-radius:12px;min-width:198px;display:flex;flex-direction:column;max-height:520px;}
+.pcol-hd{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.pcol-hd span.n{font-size:12px;font-weight:700;color:var(--ink);}
+.pcol-hd span.c{font-size:10.5px;background:rgba(20,40,40,.06);color:var(--txt2);padding:2px 7px;border-radius:20px;font-weight:700;}
+.pcol-body{padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;}
+.lead-card{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--teal2);border-radius:9px;padding:10px 12px;cursor:pointer;transition:transform .12s;}
+.lead-card:hover{transform:translateY(-1px);border-color:var(--border2);}
+.lead-card.hot{border-left-color:var(--red);}
+.lead-card.warm{border-left-color:var(--amber);}
+.lead-card.cold{border-left-color:var(--blue);}
+.lead-name{font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.lead-meta{font-size:10.5px;color:var(--txt3);display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.lead-tag{font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(20,40,40,.05);color:var(--txt2);}
+.lead-tag.src-google{color:var(--blue);}
+.lead-tag.src-meta{color:#a78bfa;}
+.lead-tag.src-web{color:var(--teal2);}
+
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.tbl th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt3);padding:9px 12px;border-bottom:1px solid var(--border);}
+.tbl td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--txt2);}
+.tbl tr:hover td{background:rgba(20,40,40,.02);}
+.tbl td.strong{color:var(--ink);font-weight:600;}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.tag.ok{background:rgba(47,191,113,.12);color:var(--green);}
+.tag.warn{background:rgba(224,167,46,.12);color:var(--amber);}
+.tag.bad{background:rgba(229,72,77,.12);color:var(--red);}
+.tag.info{background:var(--blue-dim);color:var(--blue);}
+
+/* ── PLANO ARQUITECTÓNICO REAL ── */
+.floor-wrap{display:grid;grid-template-columns:1.7fr 1fr;gap:16px;align-items:start;}
+.floorplan-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:0 1px 3px rgba(20,40,40,.04);}
+.floorplan-svg{width:100%;height:auto;display:block;}
+.fp-wall{fill:none;stroke:#2b3d3c;stroke-width:3;}
+.fp-floor{fill:#eef4f3;}
+.fp-corridor{fill:#e4edec;}
+.fp-room{cursor:pointer;transition:filter .15s;}
+.fp-room:hover{filter:brightness(1.35);}
+.fp-room-fill.occupied{fill:rgba(212,60,64,.10);}
+.fp-room-fill.free{fill:rgba(31,157,92,.09);}
+.fp-room-fill.cleaning{fill:rgba(193,127,14,.10);}
+.fp-room-fill.support{fill:rgba(0,163,173,.07);}
+.fp-room-border{fill:none;stroke-width:2;}
+.fp-room-border.occupied{stroke:#d43c40;}
+.fp-room-border.free{stroke:#1f9d5c;}
+.fp-room-border.cleaning{stroke:#c17f0e;}
+.fp-room-border.support{stroke:var(--teal);}
+.fp-label{font-family:'Space Grotesk',sans-serif;font-size:12.5px;font-weight:700;fill:var(--ink);}
+.fp-sub{font-family:'Inter',sans-serif;font-size:8.5px;fill:#6b7d7c;}
+.fp-dot{font-size:9px;}
+.fp-icon{opacity:.85;}
+.legend-row{display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;}
+.legend-i{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);}
+.legend-i .d{width:9px;height:9px;border-radius:3px;}
+.room-detail-item{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px;gap:10px;}
+.room-detail-item span:first-child{color:var(--txt3);flex-shrink:0;}
+.room-detail-item span:last-child{color:var(--ink);font-weight:600;text-align:right;}
+
+.chan-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.chan-icon{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;font-size:14px;font-weight:800;}
+.chan-google{background:var(--blue-dim);color:var(--blue);}
+.chan-meta{background:rgba(167,139,250,.14);color:#a78bfa;}
+.chan-web{background:var(--teal-dim);color:var(--teal2);}
+.chan-info{flex:1;min-width:0;}
+.chan-name{font-size:12.5px;font-weight:700;color:var(--ink);}
+.chan-sub{font-size:10.5px;color:var(--txt3);margin-top:1px;}
+.chan-val{text-align:right;}
+.chan-val b{display:block;font-size:14px;color:var(--ink);font-family:'Space Grotesk',sans-serif;}
+.chan-val small{font-size:10px;color:var(--txt3);}
+.bar-track{height:6px;background:rgba(20,40,40,.07);border-radius:6px;margin-top:8px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--teal),var(--teal2));}
+
+.section-note{display:flex;gap:10px;align-items:flex-start;background:var(--teal-dim);border:1px solid var(--border2);border-radius:12px;padding:14px 16px;font-size:12px;color:var(--txt2);line-height:1.55;margin-bottom:18px;}
+.section-note b{color:var(--ink);}
+
+/* Odontograma */
+.odonto-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;max-width:560px;margin:0 auto 8px;}
+.tooth{aspect-ratio:1;border-radius:8px;border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--txt2);cursor:pointer;transition:all .15s;background:var(--panel2);}
+.tooth:hover{border-color:var(--border2);}
+.tooth.healthy{border-color:rgba(47,191,113,.35);}
+.tooth.treated{background:var(--teal-dim);border-color:var(--teal);color:var(--teal2);}
+.tooth.pending{background:rgba(193,127,14,.12);border-color:var(--amber);color:var(--amber);}
+.tooth.extracted{background:rgba(229,72,77,.1);border-color:var(--red);color:var(--red);text-decoration:line-through;}
+.odonto-legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:10px;}
+
+/* Stock */
+.stock-bar{height:8px;border-radius:6px;background:rgba(20,40,40,.07);overflow:hidden;}
+.stock-fill{height:100%;border-radius:6px;}
+
+/* Aseguradoras */
+.ins-badge{display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border-radius:10px;background:var(--panel2);border:1px solid var(--border);font-size:12px;font-weight:700;color:var(--ink);}
+.ins-badge .d{width:8px;height:8px;border-radius:50%;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAV8AAABaCAYAAAAfD1WGAAABbWlDQ1BpY2MAAHjaldC9a1MBGMXh56aWFk2pYAaHDhepTq2kLZS6CLZIFYKUWKGJLsltPoR8cW+KFFfBtaAguvg16F+gq+AsCIoiiJvgrOii5TqkkCJ08Ew/zuG8vBwy662onRzK0+704+LqcrhRKodjX42aMC5roRIlvXNrawUH6tcHAbybbUXtxP/pyGYtiQjGcTbqxX2CCyjc6Pf6BHeRi5qVTYLnmIk3SmWC98hVB/wNucaA/yAXrxdXyBxF2NjH1X0cNeM2mTym262taO+fANla58plnMCURNGqZaGLzluxaM4ZixbNmnfaHAf085hySVco0tWzLXZdQ1PfjNCWRE2oLlZT07K9USqH/+6a1BfmB9ezy4x+SdMfJxm7w+5Omv5+nKa7Txj5zKvOsN99xNJPRnaG3vRDJm/x4vXQq97j5W2Of+pV4goYQaZe5/szJkoce8vhq4PN9nJPP7J+k8Ib7j/gVJ3Ja38BOSJn0dlKSeEAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB+UFDgwYM5az2PkAABz1SURBVHja7Z13vBXF9cC/PDGKFcEuKETFEitWIjaiCBYso1gHESkBS0yi0fjTGGs09kTFiGAZrGEEjCiIBVERJdgLRkVEIypYgooN5ffH2Qf33bezd/fe3bv3vTffz+d+xJ3d2XPmzZ49c87sTCuywtiNgD8DvYEPgHvQ6vLM7pclxq4CnAAMAzZPcOVPwALgw6LfXGAyWs3NW7WawNhhwPFAJ+Ax4E9o9VbeYsWQuy0wEBgCzAFuAMah1ZK8RatyO/QETga2A0YC/0Crj/IWq0xdTgeOAdYFHgHORqsPsrhVq4wUWBmYBmxTVPJ7tLoqk3tmibGXA6dnUPMLwDhgPFq9lLeauWDsIOCmoqNvArui1Rd5i1dC9hGI8S2kN1pNzFu0KrbBNkBx352IVr3zFq0MXf4AXFZ09AWgO1otSvt2dRmpcSqNDS/ApRi7Tkb3zAZjV0S83izYHjgfeBFj38XYc4MXV8vA2FWBsJfxZsAf8xavhOyrIx5SMcPyFq3KDA051gtjN85bsEQYuy5wUUjJ9og9S530ja+xrYBBjtLlgQFZKJIhvwDaV+E+nYALgHcwdijGts5b8SpwLLCKo+wEjP1Z3gJGsCOwUsjxvfIWrMrs6Ti+R96CJWQAYp/CGBTYtVTJwvPtCXSOKM9EkQyptqzrILHD1zBW5a18xgyJKFsLODRvASNolfC4p1Yxtg63wwjwc2DftG+bhfEdUqK8M2KgPdF0AcZg7IRgiNu8MHZnJEETRam+5PGkQU9k5BlF6n0x3aGtsesBB8U4czAwKW1lcuBM4Mfg30sK/lv/71aIB7d+wa8TkCSuuz/wDMb2Qau381Y4ReJ05r0wdtMmMfPB05QZHOOcPhi7bpqzONKOKw6IWWcfjF0PrealfP9qcyVa/ZjoColj7g0cAvRBDHIptgCexdi+aPVo3kpXjLGrAUfGOLMV8mCckbfInmZKfIexNWLfLknr1umFHUrHTcIUaXlo9T1aTUKroUAHoBswIcaV7YCJGDs0xrm1znHE9/77Y+wKeQvsabacSHwndFBg51IhzZjvfsBGCc5PVZEmiVZL0Go6Wh2IZMmfK3FFa+B6jD0ib9ErJEn8bE3gsLwF9jRDkjmMICHD1PJVaRq/pAHpjRCD7QHQ6gm02gU4GlgYcWYr4FaM3T5vkcvC2F0JnwMehU+8ebKgF7BhwmtS64vpGF9jNwAOdJRGxUT9Q1WMVncDuwJRybWVgPFN7oMVIepv7uore2Jsks+6PZ44lNMXD8TYOHmakqTl+Z4ILOcouxb4OEKRDVKSofmg1RvALkBUcq0jMLZJxUNlLQRXou1L4C8RV8fJSHs88TC2A3CAo/RjxG6F0RqxdxVTufE1djkaf99ezxLgeuAWR/lyaSnS7NDqM2RYZCPO6oZ8ntxU0EAbR9kdwN+BHxzlxwefens8aRDlMN6C2C3XAkkD08hXpeH59ka8sDAmo9VsYEQJRVyN0LLRajHQD1ncw8VvMLZjzBrzJmqY9w+0+gQY6yhvBxyetwKeZkBph3FEYLcmO87ZELF7FZGG8Y1+oIASinRMQ5Fmi6ymdDDu0M2KyJoQtY2xuyHrZITxHFq9GPz7HxG1+ByBJw32R6Z5hlHvMELGfbEy4ysel8twzgPuL/h//1CVi1bvI+scuIbk/TB2q7zFLEHpl7TwOOD6oq07xm6ZtyKeJk/cvng/YsfC2D+IG5dNpZ5vVNxkVDBsjqNI70oVafZo9QzuF1gdcGneIjoxth3gmpv8P+DuAj2X0Hh930J84s1TPuIw9nKUNnQYxX6Ncpxbcb6qfOMbHTf5CYnzLqO0Iq66PMu4AJkVEMYBGLtt3gI66IeER8IYHbJQ9a3Ad866fOLNUz4Die8wAtyM2LPwuirIV1Xi+R4AuKaJTUKr90KOj8hKkRaBVvOBKyLOqNUlGKO81cbevFYLgPsc568B9M1bIU8TROyLy1tt7DACaDUHeNhxTQckflwWlRjfqLhJ+LBRDLJLkQ1wz7vzLONK4BNH2SF5C9cIY3dHFgYKYzpaveIoiwo9+ByBpxwOJLnDCBnlq8ozvrI5pitu8iHwQMTVPvFWCVp9DfzTUbotxnbKW8Qi4iY3ivWcguzlFsYvm0CC0VN7lNcXxZ596CjrjbFJP1EGyvd8B0ZcOzIkbhJXkV6BYfdEMz6i7OC8hVuKse1xz839ArinRA3e+/Wkg9gV11oy0Q6j2LORjtI6ysxXJTe+srdYVNzk5sjrM1KkhTEFmSUQRu0YX9kO3vX5s0Grb0pcfxvuxJvG2JXweOIxiGiHsdS63FGJtxPL2XOxHM/3IGA9R9lDaDU3Rh2pK9Ki0OoH4EFHadIVw7IkWaKtsZ6fAmMcpasTb0F2T0tH7Ilr/fDSDiMQ2LWHHKXr415YzEk5xrfcuElcReKuLN/SedJxvH1N7Ppr7F7IFvBhPI1Wr8WsyecIPJXSh8odRki5LyYzvpLMcS0m/AFubyxzRVogH0aUrRe7luyo/CUNoNWTwOuO0l1qeG6zp3ZIpy+KffvAUdYzabI7qec7CPfW2Dcn3M8sSpF9azBrX2tEGd9U1hstG2PXwr37xGe4Z2u48F+8ecrD2M64t31P5jCKfUstXxXf+Bq7PO64yY/EiZs0VsR1TdLtPVoitWt8oT/gCn3cjlbfJqzvdsB1zXEYm2Q3aE/LIk2HUa5xL7Q+IEm+Konn2wdY11E2Aa3+W0bDlFJk+TLqbCl8hDtpmV/Ywdj6HYddJBnmCVp9DtzrKF0NOCo3fT21S9oOI4BWUd7yeoidjEUS45tW3KRQkf/i3rl33SSKtEBa4/77/ZCkopTpAWziKJuKVrPKrNfnCDxJORhwbbVVrsMIKfXFeMbX2I2BfRylc4GJFTSQn0hfHlGhhQ9j15I+yT87j4NW04BXHaU7NdkNRT1Zkr7DKDyE2L0w9sXYn8epJK7nWypu8lPMepIqsk9g+D2NqT3ja+zauNeXiJqzGxf/ovbEQ+zGrxyl71GJwyj2zhWyaEXMfFVp4ytxkxMcpVFfq1VVkRZI7Rlf6SeuOP1taPVdkspCMIDrq7hjMHaVnPT21B6Dyc5hBLF7rmUUToiTr4rj+R4KrO0oewCt0njQK1akBeLat+1H3KueZYck2qJelOWHHOrR6gvc60GsChxTdb09tYd8ZJSdwwgEds+1HsQ6xFhhMI7xzSpuEleRtanddWrzxPWxyydlTJ9Jg30AV4hoClq9maSyCHzizVOKQ4G1HGX/Qqt5SSqLoKK+GG18jd0U2NtROgf32rxVV6RFYexquP8u03KSKvuXNIBW04GXHaVdMXbHnPT31A7V6Yti/+Y4ynpg7CZRF5fyfKMSbSNSiJvEVWTvUoq0MHrj/ohhfJKKUsHYdXGvpjYf964U5RL1APkv3loy4jDu5Sh9lzQdxgrzVW7jK3GT/o7SqP3YKlFkhKO01MT9lobL0C0meiH7rBiAzDsO41a0+j7l+40GvnaUHY2xq+bQBp7aoFSibUnK9xtFdL7KuchVlOd7GO64yXi0+ihlJUop0r8mVuvKG2M3wB3MfzL4Gqya8kR9Cl5qJ+Ly0GohhTseN2QV4NiqtoGnNjB2BarpMAJB/Ph+R+laROSrooxvteImhYp8hHvYHLVYS0viAqCNo2xcDvL0BDo5yh5Dq7czuq/PEXiKOQxY01GWlcMIZfbFcONr7Ga44ybvAI9kpETZirQIjP0FsjtEGIuBsTlIVf2XNIBWM4AXHKXbYezOObSFJ1/y6YswGZjtKNsbY7uEFbg836j46ogM4iaFPIIY+DD2Cl4MLZVLgeUcZTeh1ftVlcbYqBX8PyZ7T9y/qD2CsZsDezpKs3UYxR6OiDgj1J42Nr4SN3F5Vz8At2SmxDJFolYbapmJN2MH4DZ0XwHn5yDViUQn2rJe4OfOQPcwjsLY1XNoE08+5OkwgthFV3/vH9jVBoR5vocD7R2VjEOranw9FaXI8WGKNGuM3Q0YHnHGFVX6uxTKFLV4dClPIB20+hK4y1G6EnBcVdvEkw/GrkieDiOAVlEjvfaAKj4YZnzzipskUeTw+JU1cYzdEJkn65rp8TFwZQ6S9QI2dJQ9glbvJKmsAnzowXM40M5RNraKjkmivtjQ+Bq7BbC74+K3gceqpERiRZol8vHCv3CvrQFwDlp9FbPGNMn/JQ2g1UxgpqN0a4ztVs1G8eRCbfRFsY+u2T17BHHppRR7vlFxk5uqEDeJq8juwYui+WJsV2AG0VvBj0Kr5KvxVy5bB+AAR2nUdMGs8F+8tVSM3RLo7ih9C3i8arIkTLwtM77RcZPvgVurpsQyRVrmxonG9kW2hu8QcdbTwNCcJDwR96yLUWi1OEllKXAX8KWj7EiMbVtleTzVo5YcRpD4suuLzuMDOws09HyPANZwXHQfWs2vshIgBj+WIs0CY9tj7N+QZRNXijhzLnBYBp/txpFxOdyJtqhPxLNDwi53OErbALrqMnmyR57/fo7S76i2wwgEdtI1374dBfmqQuNbK3GTYkVci7Ksgbwwmj7GtsHYs5H5iKeUOPtroE/VZzcsY3/cHvnDaDUnJ7l8jqDl0Zdoh3FBTnLF6otifOXLqd0cJ7+JVlNyUiK2Ik0SYztj7O+Q2NTFQKl5qR8B+6LVSzlKXXsvaQCtXgSec5T+Ipiu52le1GpffBz4j6O0exCnXur5ZrPpYTqKTAFcC3HvFrw4mgbGroaxO2LsBRj7EvJJ4pXABjGufh7YCa2eyVH+DZHlLMOIWhC/WjTfF7WnIcZuBfzSUToLrZ7IWcKS+w22xtiomNh3wG05K1GviGsu6xDg1JzkGoOxS5CPCgj+W/jvVsg0sfWB9YCVy7zPP4H+aLUoJz3rGYj7k/SROSTairkbuIrwEcQRGHsaWn2WsQwrYmw1Z3t8CUxF2j+PHUzyonYdRuFWZDQb9kFYP4w9qzVwJNDWUcEYtPo0by2QF8AlDkU0xp6JVt8krDMNDsm4/u+AC4FLcsjaNsTY1sgshzCiFpWuHlotwtjRwEkhpfXJmWsylqI10KfKmh8LHBT8mj/GrkStO4xafYqxlvB9BdsCfeuI3h+tFt4gBC8A6yhtC/TIW8SUWYIsGL4ZWl2cu+EVdsa9Y/JEtJqbt4ABUX22OS9JeiDG9qy8mibB3rjzI2OqMLqJS2RfrMO9C+4baDU1b+kLiIrndYxdS3KqPZ1rMtAVrTRavVfle0cR1cb5JTeK0eplYLqjdMMkVZWg+tP8SrNN5VUk5oeEx9OgqfTFJ4BZLh3qcGeIb8hb9iJFpgKvOEqfS1JVQl7B/aVdWnyBrNC1L1r1DDL3tcZMJLxQzHvAhLyFK+J6x/FnU7zHM8jsk1oirR2ikxA2FfRb4MEM7+l63l9BqydzaIMoXHb02TrgPBpvXDkNuDFvqUP4NVCcdLoGrZ7P7I4y5P97BjW/D1wH7AusjVbHolWWi9RX2g5vI7toFPI9MKQGEz13ABOLjs0DzkyxPX4geqW5avMU+bwERyDGtpDRmQ795Xm/tujoIsQ+1BrDabyj+BzgPNloTjYcPBHoAryEfCKa9Vqs5SG7GPcDVgMmodVDVbpvV+Rz3iRT235Edu/9sOg3F61mJaindjC2B7Kuw3fAHWj1Wt4iOeRcDuknOyG71o7MxCAYuyvy0HeptKoyWYjMdrgKrb6ttLIy22BN4ASgKzAS2T4qzZ3NXfftDewXtMHtGW5ZVamcyyObzG6LzP8dGSyH6vF4PB6Px+PxeDwej8fj8Xg8Ho/H4/F4PB6Px+PxeDwej8fj8Xg8Ho/H4/F4PB6Px+PxeDwej8fj8Xg8Ho/H4/F4PBXQqup3lOUr7wAuRKsZeTeAx+Px5EHrqt7N2BWR7cVXIZ9V9z0ej6cmqKu8ikT8HFgM7IdWC/NW3uPxePKicdjB2FbAmsBCtPou8mpjWyXeWdd1jbF1wJLI+tzXih5xZJEt0NsDnySS3di6ilfnN/ZnNBxtfBNbBtkuOxytFoWcX157yg4QK0RI8mNkv4jbTuX0nSyRPtSm4MhitKrFTTILZa4DVnSU/tRoZwtj26DVN3mLXbHO5T6Hxq4MLKqo3xm7AtI3Kt46a5nna+z6GHsd8BnwCbAQY2dg7HFLjVtjpmLsngkEPxIY4yi9CLjbeS9jFTDOce0wSu2nZWwPjH0E+AbZ+HA+xo7H2M1iyN0KeAFjjyq7pY1dA9nu5OuC3+cYOwlje5W4dmDRdQ1/xvYLueoywES0p+tvMTbyXnK/jo46jw7aKTqXYOzawLzgRVgrDC3S81uMnYuxf8PYNHc9TpPbif47dV56prFdgA/yFrgijD0EeD1wEMrhYeCgCqUYDvy2SK62wZZGiagLLt4O2Z22G3AKsDmwB/BPZPfNu4N9iIpZG/Ei49Ie8arDaAf0BX7nKF8TWCuizFUvGHs68AgwG2n8jZH9vRYixuK4EnL3QLblPi1pAxewCuJRdgO2Duo7EtnTaSzGXh1htNZE9una2vG7y9GexyJ/zyTtOaCo7k8Qw1T//1vgfohPC/TqUaItVgXWodo5h2jWBB4t0HMn4I/AdsCLGLt33gI6ZL6S8D6xBQ03xl0l+DVlTgM2AxIbuhTbIKyO3YBrSzodRbTG2NURb+dBYGjRUOtZjL0XOAsxHFlvqvk8cDHGPotWT6VSo7H7A38BDkKrwt1dZwMPYux9SCw6ipOAvwH9MXYHtJpZgUSvF8S7XwEmYeztwCRkG/ZrHNctRKtXE95rJvBXjJ2BVs/EukKrBcCCgvb7AZhT8t7G7ghsGch/EmLImhr/K9JzJsbeiezafB/Gbo9Wc/IWsoh5ZfSLpoexWwG7AFcg/euBvEVailYTMPbBpOGM1sjOq4uBk0NjXNLZqrUl89PIUPjeoKN/XFFt8ia6DLiiyPAW6je2RB0dgAOR3WnrkD/8gFS11moGxv4aGImxae5sOhUYj7RnV7San6rcDRkGjAauAt7G2I5o9X6G96sOWi3B2D8BOwLnIrt8C8Zug+yeexUwGOknE9DqhoJzWgMnB2XrAM8iL/J2QGe0uiVvFTF2c+DMQMcFwEPA1Y12MDd2AOJNzwPOR0YFbwLXoNWjjrq7AaciO/e+jfTH24Eb0GpQAimHAvcAlwNzMXYT527Fxq4D/B/wS2Rb+ymIHXDpvzpwNrAnkgd7GrgUOAKYgVbPlWi/TRC78NuQsh2C49sHbfcAcBNwcx0y1L+xhgLxlyEe8J0VxHbq2RzYCrc3GYfByBb1c4AbgaMxNkmoJS5jgE+RhzRNLgZeA0an0J7hGNsOOBoYHhjch4AhmdwrD8SjuRz52xe2YSdAAQY4A3gDWDbCkATrI0go7TGkH7YBpgOXIMYrXyTf8DywUiDfBGAQ8EQwNbSQ7RAj+BTwMTKiXICM3nqG1D0YeAIJ7/0VeCH470NA/PyJfBvQDzHYnyAj9aGOc7dCRpRbAaOQ0Gkv4DnCwmySv3gZ2Bu4E3kx7BC0yanAJjEk7AIcFlL3scA04HvEY58OnIeMcvu3BjYNblQbaPVTkEB6Hvgz4m2Uy6bAh2V70PLwDAZOCGR7DWOfA/ojsba09Z6BvDDC2AtjXyk6Ng+ZtrekRL3HBe15DuKxpE1/YCZavRz8/3Dgdoy9oOZnDMRnBmI4O9IwlroT8B2wDVp9VXTNGUAHYFu0+jw4NhJjT0G83zQ+MjoDY/sXHfsXWp1d8krx+EYB56LVlQXHb0AM7DnBr5DDgSPQqj5ZewvG/g9JmD9cUMfGiDE/Aq3GFxwfCbyYUEeNeNj17TUcGIex5zaY6SMj3ZGIdz146XNh7PXAfYQn224I5FFotTg4fzhwG1AqFxTVthsEcg5AqzsKjo9AXkLUISGH5cupPzO0+gz5I58exGzLRXRLGAgv4FBgEfKmqudGYGgwzSdtVgFcIYfZSGcu/F0XK84kcdy+wB9DPZRKkHYYhnTieiYHeqgM2qj+vu0x9jWMnR3xm5nijIr6JEvx30f0b2x4AY4Bzi8wvPVcD7ybklxTadwvxsa8dk8k9Hh1g6Ni0M4P5C/mhQLDW88IYMdgGlY9hwDPNjC8UvfcRveLQp5dmc20rK8/iTgexd5zZ2Bn4MwGz4UY1T+E1L06MtI8fanhlfN/Ql6clXAAkky/s0j/jwhCIK2BWUis5+GElWeLVv/G2N8hw+Xty6xlFjLU6AjMLeP6k5A401oYW3/saWTWxn7I8CkdxEjsiAzLwpiLViPLrl+r6Rh7BhLOKbc9w9gXybo/FcTa6rk3aL+7yqq1NJ8jQ7g2kecUPlSVsTPwHlp9WnR8AfB6o7PlpdQFGQI3REYjaSXJnq2gX2yGxJ4/Lujf9SwHrIqxPysavbwcUs8cJFa6PsteKpuF6i64joexB2JUHyvqX/cAJ2HsLQWGtguSgPwspJ7/IM5YIZsio5bGsWOtPsLYBZSP6B/uHL0KYnxHA3/C2OEhb+i8uRHojsRtRie+WqvZGPsM8CdgYKJrjd0a2D34nRVyxkmkaXwlKP8tEpvKiuuQ9rw3+KXBMGB1ZKZGY4zdFq1eSl0T8U7GVFxPHGSa5YWADSldGPqAiYF9F3nAXyyqr1VwPC3vt1xmI/HYHYCwDxcWhYSNwj6wqf/goK6o7j0c9900gYzDkHj0bEf5Lkgstf6e62LsqiFJ6040ntr4LjKLqwPQMDlsbFuipq+WZjbywg5jk/rGGoV8dGCCGzbE2B0xdhzGVn+OoHTqIciQ76wya/k90A9jhzYKPxhbh7EnY+wFIdcNQ4ZvnUJ+3YBeDSaxV4LEZM9H4lRfZ9yeA4E1qHxYBcZuhAyvujvaaUzQjk0XY1dDkjArIy/xJIwDzglJXB2JO7ZfTaYiHuuv0OqDpT/x5js6PMi4TAB+hbHdGxyV5OxpsWowdj0kkdWD8P41mob9621kFHJeUT2tkJdnQ2QU8yRwQUho8s8Vtu1EYCeM3a9IllUJnr3WaPVt8OXIA8hk8pHAvxFvpjuS+bwOiX2G0b3oA4x6L+BttKo8kafVV8HXbeUlJ7R6BmOPR14yB2Ps/cgQpAsylWRLJJNa2ECrIUH+A9EqzKN7D2MnI1Pwzkwo0aEYuwh58XUB9kLekKegVZQnvT7GHuEoezyI68Zpjy8x9nDS8bCHBPd+OrTU2GuRTPiZaPVFyBlHYGyhZ7UspqfVvBTkS0qHgjZeGegKHIwYowPKeDGeD+wPPIexVyNOzj5Iv2k81DV2H6BtSEw1im0d/eJ7ZNqbO+yi1XyMPQkYFUybm4h8OHUaYpS7lt2SWr2CsRcCkzH2MmQWSGfEifocWC1GLYOQsMrjoaXGXgNMw9jfo9X8YLQxEHg0+CrxbiSfNQB5zsPm5w8OZFsLY29DvPijkHj4p5SLVu9g7FnAeIy9CnnRdUBiz99AvRuu1RyM3RV5mI5DDMrHSFZuP7Sa4rjFi0hSJSyxMgU4vujYW7hnVryGdJgwRd4I5hju5bh2Fsse3LDr78LYFxAv+HRkvmX9tKC+IfNf10OmBj0R0byXIdOr4vIF8lau97KXIC+B6cBAtIoagr6JDIGucJT/hsafXr+KK3mn1asYeyIyD7IU03DHy1fHHaMGiY9PQmKBXxQc/zzQ/SLHdecBtyZo2zSYhczhrW/jRUj/vxS4udGcV2EOhVPLitHqa4zdBfmbn4nkH6Yh/bgbwUNYQDckVhjX+L7EMkNRzPfIs1Y/nP4IaGzEtLoTY99H2rw/MB+ZHhc20nyF8LUkfkD+1p8V1X0Rxr6BhNR+i/Tja5ER5XUx9GsbtL+rfWcGH0l1DOSuz21sj0yDuwH5Oz4R6HY0xV9najUrePFchiQClyDPflfk5flOSJsXH5uL/F2L5bsGY99CDO5JyAt3FNK37/h/+QnYk29a+6sAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjEtMDUtMTRUMTI6MjQ6NTErMDA6MDA06kAaAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIxLTA1LTE0VDEyOjI0OjUxKzAwOjAwRbf4pgAAACZ0RVh0aWNjOmNvcHlyaWdodABObyBjb3B5cmlnaHQsIHVzZSBmcmVlbHmnmvCCAAAAIXRFWHRpY2M6ZGVzY3JpcHRpb24Ac1JHQiBJRUM2MTk2Ni0yLjFXrdpHAAAAInRFWHRpY2M6bWFudWZhY3R1cmVyAHNSR0IgSUVDNjE5NjYtMi4xa5wU+QAAABt0RVh0aWNjOm1vZGVsAHNSR0IgSUVDNjE5NjYtMi4xhWT+PAAAAABJRU5ErkJggg==" alt="Clínica Dental Adalia"/>
+      <small>Adalia OS · CRM Clínico</small>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">General</div>
+      <div class="nav-item active" onclick="go('dash',event)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Panel de control</div>
+      <div class="nav-item" onclick="go('pipeline',event)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg>Pipeline de leads<span class="nav-badge">14</span></div>
+      <div class="nav-item" onclick="go('pacientes',event)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20c1.6-4 4.3-6 7.5-6s5.9 2 7.5 6"/></svg>Pacientes</div>
+      <div class="nav-item" onclick="go('odontograma',event)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-4.35-9.3-9C1 8 3 4 7 4c2 0 3.5 1.2 5 3 1.5-1.8 3-3 5-3 4 0 6 4 4.3 8-2.3 4.65-9.3 9-9.3 9z"/></svg>Odontograma</div>
+      <div class="nav-item" onclick="go('agenda',event)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v4M16 3v4"/></svg>Agenda</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Clínica</div>
+      <div class="nav-item" onclick="go('plano',event)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6M15 15h6M15 3v9"/></svg>Plano de la clínica</div>
+      <div class="nav-item" onclick="go('stock',event)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8L12 3 3 8v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Stock &amp; Inventario</div>
+      <div class="nav-item" onclick="go('personal',event)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="3.2"/><path d="M2.5 20c1.4-3.6 3.7-5.4 6.5-5.4s5.1 1.8 6.5 5.4"/><circle cx="18" cy="8" r="2.4"/><path d="M15.8 14.3c1.9.3 3.4 1.7 4.4 4.3"/></svg>Personal &amp; Turnos</div>
+      <div class="nav-item" onclick="go('aseguradoras',event)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v6c0 4.5-3 7.7-7 9-4-1.3-7-4.5-7-9V6z"/></svg>Aseguradoras</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Negocio</div>
+      <div class="nav-item" onclick="go('marketing',event)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>Marketing &amp; Métricas</div>
+      <div class="nav-item" onclick="go('facturacion',event)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Facturación</div>
+      <div class="nav-item" onclick="go('comunicaciones',event)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-4-1L3 20l1.1-4.2A8.5 8.5 0 1 1 21 11.5z"/></svg>Comunicaciones</div>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="av">EA</div>
+      <div><div class="who">Dra. Elena Adalia</div><div class="role">Administración</div></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ═══════════ DASHBOARD ═══════════ -->
+    <section id="page-dash" class="page active">
+      <div class="topbar">
+        <div><h1>Panel de control</h1><p>Vista general de la clínica en tiempo real · hoy, 23 de julio</p></div>
+        <div class="topbar-actions">
+          <div class="pill"><span class="dot"></span>6 gabinetes activos ahora</div>
+          <button class="btn btn-primary">+ Nuevo lead</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Leads esta semana</div><div class="kpi-val">103</div><div class="kpi-delta up">▲ 12% vs semana anterior</div></div>
+        <div class="kpi"><div class="kpi-label">Tasa de conversión</div><div class="kpi-val">31%</div><div class="kpi-delta up">▲ 4 pts</div></div>
+        <div class="kpi"><div class="kpi-label">Coste por lead</div><div class="kpi-val">8,40€</div><div class="kpi-delta down">▼ 1,10€</div></div>
+        <div class="kpi"><div class="kpi-label">Ocupación gabinetes hoy</div><div class="kpi-val">83%</div><div class="kpi-delta up">▲ 5 pts</div></div>
+        <div class="kpi"><div class="kpi-label">Facturación mes</div><div class="kpi-val">61.240€</div><div class="kpi-delta up">▲ 9%</div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">Leads por canal — últimos 7 días</div><div class="card-sub">Google Ads · Meta Ads · Web orgánica</div></div></div>
+          <svg viewBox="0 0 560 200" style="width:100%;height:200px">
+            <polyline points="0,150 80,130 160,140 240,95 320,110 400,60 480,75 560,40" fill="none" stroke="#00c7d3" stroke-width="2.6"/>
+            <polyline points="0,175 80,168 160,172 240,150 320,158 400,130 480,140 560,118" fill="none" stroke="#a78bfa" stroke-width="2.2" stroke-dasharray="4 4"/>
+            <polyline points="0,190 80,186 160,188 240,178 320,182 400,170 480,175 560,165" fill="none" stroke="#2EA3F2" stroke-width="2.2" stroke-dasharray="4 4"/>
+          </svg>
+          <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap">
+            <span class="legend-i"><span class="d" style="background:#00c7d3"></span>Total leads</span>
+            <span class="legend-i"><span class="d" style="background:#a78bfa"></span>Meta Ads</span>
+            <span class="legend-i"><span class="d" style="background:#2EA3F2"></span>Google Ads</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">Estado de los gabinetes ahora</div><div class="card-sub">6 gabinetes clínicos</div></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="chan-row" style="border:none;padding:6px 0"><div class="chan-icon" style="background:rgba(229,72,77,.14);color:#e5484d">1</div><div class="chan-info"><div class="chan-name">Gab. 1 · Implantes</div><div class="chan-sub">Dra. Adalia · paciente hasta 12:40</div></div><span class="tag bad">Ocupada</span></div>
+            <div class="chan-row" style="border:none;padding:6px 0"><div class="chan-icon" style="background:rgba(229,72,77,.14);color:#e5484d">2</div><div class="chan-info"><div class="chan-name">Gab. 2 · Ortodoncia</div><div class="chan-sub">Dr. Marrero · hasta 13:10</div></div><span class="tag bad">Ocupada</span></div>
+            <div class="chan-row" style="border:none;padding:6px 0"><div class="chan-icon" style="background:rgba(224,167,46,.14);color:#e0a72e">3</div><div class="chan-info"><div class="chan-name">Gab. 3 · Higiene</div><div class="chan-sub">Limpieza en curso</div></div><span class="tag warn">Limpieza</span></div>
+            <div class="chan-row" style="border:none;padding:6px 0"><div class="chan-icon" style="background:rgba(47,191,113,.14);color:#2fbf71">4</div><div class="chan-info"><div class="chan-name">Gab. 4 · Cirugía</div><div class="chan-sub">Scanner 3D + escáner intraoral</div></div><span class="tag ok">Libre</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Leads calientes hoy</div></div>
+          <div class="lead-card hot" style="margin-bottom:8px"><div class="lead-name">Marta S. — Implantes All-on-4</div><div class="lead-meta"><span class="lead-tag src-google">Google Ads</span>Pide presupuesto urgente</div></div>
+          <div class="lead-card hot"><div class="lead-name">Carlos R. — Invisalign</div><div class="lead-meta"><span class="lead-tag src-meta">Meta Ads</span>Preguntó 3 veces por precio</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Próximas citas</div></div>
+          <div class="room-detail-item"><span>09:30 · Laura Pérez</span><span>Revisión Invisalign</span></div>
+          <div class="room-detail-item"><span>10:15 · Antonio Cruz</span><span>Implante — Gab. 1</span></div>
+          <div class="room-detail-item"><span>11:00 · Nieves Ortega</span><span>Endodoncia — Gab. 4</span></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Alertas</div></div>
+          <div class="room-detail-item"><span>Scanner 3D — Gab. 4</span><span style="color:#e0a72e">Revisión en 3 días</span></div>
+          <div class="room-detail-item"><span>Stock composite A2</span><span style="color:#e5484d">Bajo</span></div>
+          <div class="room-detail-item"><span>Autoclave — Esterilización</span><span style="color:#2fbf71">OK</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ PIPELINE ═══════════ -->
+    <section id="page-pipeline" class="page">
+      <div class="topbar">
+        <div><h1>Pipeline de leads</h1><p>Todas las peticiones de Google Ads, Meta Ads y la web, en un único embudo</p></div>
+        <button class="btn btn-primary">+ Añadir lead manual</button>
+      </div>
+      <div class="pipeline">
+        <div class="pcol"><div class="pcol-hd"><span class="n">Nuevo</span><span class="c">6</span></div><div class="pcol-body">
+          <div class="lead-card hot"><div class="lead-name">Marta S.</div><div class="lead-meta"><span class="lead-tag src-google">Google</span>All-on-4</div></div>
+          <div class="lead-card warm"><div class="lead-name">Iván L.</div><div class="lead-meta"><span class="lead-tag src-meta">Meta</span>Blanqueamiento</div></div>
+          <div class="lead-card cold"><div class="lead-name">Rocío D.</div><div class="lead-meta"><span class="lead-tag src-web">Web</span>Consulta general</div></div>
+        </div></div>
+        <div class="pcol"><div class="pcol-hd"><span class="n">Contactado</span><span class="c">4</span></div><div class="pcol-body">
+          <div class="lead-card hot"><div class="lead-name">Carlos R.</div><div class="lead-meta"><span class="lead-tag src-meta">Meta</span>Invisalign</div></div>
+          <div class="lead-card warm"><div class="lead-name">Beatriz N.</div><div class="lead-meta"><span class="lead-tag src-google">Google</span>Carillas</div></div>
+        </div></div>
+        <div class="pcol"><div class="pcol-hd"><span class="n">Presupuesto enviado</span><span class="c">3</span></div><div class="pcol-body">
+          <div class="lead-card warm"><div class="lead-name">Antonio C.</div><div class="lead-meta"><span class="lead-tag src-google">Google</span>Implante único</div></div>
+        </div></div>
+        <div class="pcol"><div class="pcol-hd"><span class="n">Cita agendada</span><span class="c">2</span></div><div class="pcol-body">
+          <div class="lead-card cold"><div class="lead-name">Nieves O.</div><div class="lead-meta"><span class="lead-tag src-web">Web</span>Endodoncia</div></div>
+        </div></div>
+        <div class="pcol"><div class="pcol-hd"><span class="n">Cerrado ✓</span><span class="c">1</span></div><div class="pcol-body">
+          <div class="lead-card" style="border-left-color:#2fbf71"><div class="lead-name">Laura P.</div><div class="lead-meta"><span class="lead-tag src-google">Google</span>Ortodoncia</div></div>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- ═══════════ PACIENTES ═══════════ -->
+    <section id="page-pacientes" class="page">
+      <div class="topbar"><div><h1>Pacientes</h1><p>Ficha completa: historial, tratamientos, presupuestos y documentos</p></div>
+        <button class="btn btn-ghost">Exportar</button></div>
+      <div class="card">
+        <table class="tbl"><thead><tr><th>Paciente</th><th>Tratamiento activo</th><th>Última visita</th><th>Próxima cita</th><th>Aseguradora</th><th>Estado pago</th></tr></thead>
+        <tbody>
+          <tr><td class="strong">Laura Pérez</td><td>Invisalign</td><td>15 jul 2026</td><td>29 jul · Gab. 2</td><td>Particular</td><td><span class="tag ok">Al día</span></td></tr>
+          <tr><td class="strong">Antonio Cruz</td><td>Implante All-on-4</td><td>18 jul 2026</td><td>26 jul · Gab. 1</td><td>Sanitas Dental</td><td><span class="tag warn">Pendiente 800€</span></td></tr>
+          <tr><td class="strong">Nieves Ortega</td><td>Endodoncia</td><td>20 jul 2026</td><td>27 jul · Gab. 4</td><td>Adeslas</td><td><span class="tag ok">Al día</span></td></tr>
+          <tr><td class="strong">Marta Suárez</td><td>Valoración implante</td><td>—</td><td>24 jul · Gab. 1</td><td>Particular</td><td><span class="tag bad">Sin presupuesto</span></td></tr>
+        </tbody></table>
+      </div>
+    </section>
+
+    <!-- ═══════════ ODONTOGRAMA ═══════════ -->
+    <section id="page-odontograma" class="page">
+      <div class="topbar"><div><h1>Odontograma</h1><p>Historial clínico dental por pieza — paciente: Antonio Cruz</p></div>
+        <button class="btn btn-ghost">Imprimir informe</button></div>
+      <div class="card">
+        <div class="card-hd"><div class="card-title">Arcada superior</div></div>
+        <div class="odonto-grid">
+          <div class="tooth healthy">18</div><div class="tooth healthy">17</div><div class="tooth treated">16</div><div class="tooth healthy">15</div><div class="tooth healthy">14</div><div class="tooth pending">13</div><div class="tooth healthy">12</div><div class="tooth healthy">11</div>
+          <div class="tooth healthy">21</div><div class="tooth healthy">22</div><div class="tooth extracted">23</div><div class="tooth healthy">24</div><div class="tooth treated">25</div><div class="tooth healthy">26</div><div class="tooth healthy">27</div><div class="tooth healthy">28</div>
+        </div>
+        <div class="card-hd" style="margin-top:20px"><div class="card-title">Arcada inferior</div></div>
+        <div class="odonto-grid">
+          <div class="tooth healthy">48</div><div class="tooth healthy">47</div><div class="tooth healthy">46</div><div class="tooth treated">45</div><div class="tooth healthy">44</div><div class="tooth healthy">43</div><div class="tooth healthy">42</div><div class="tooth healthy">41</div>
+          <div class="tooth healthy">31</div><div class="tooth healthy">32</div><div class="tooth healthy">33</div><div class="tooth pending">34</div><div class="tooth healthy">35</div><div class="tooth healthy">36</div><div class="tooth healthy">37</div><div class="tooth healthy">38</div>
+        </div>
+        <div class="odonto-legend">
+          <span class="legend-i"><span class="d" style="background:#2fbf71"></span>Sana</span>
+          <span class="legend-i"><span class="d" style="background:#00A3AD"></span>Tratada</span>
+          <span class="legend-i"><span class="d" style="background:#e0a72e"></span>Pendiente</span>
+          <span class="legend-i"><span class="d" style="background:#e5484d"></span>Extraída</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ AGENDA ═══════════ -->
+    <section id="page-agenda" class="page">
+      <div class="topbar"><div><h1>Agenda</h1><p>Vista por doctor y por gabinete, sincronizada con el plano de la clínica</p></div>
+        <button class="btn btn-primary">+ Nueva cita</button></div>
+      <div class="card">
+        <table class="tbl"><thead><tr><th>Hora</th><th>Paciente</th><th>Tratamiento</th><th>Doctor</th><th>Gabinete</th></tr></thead>
+        <tbody>
+          <tr><td>09:30</td><td class="strong">Laura Pérez</td><td>Revisión Invisalign</td><td>Dr. Marrero</td><td>Gab. 2</td></tr>
+          <tr><td>10:15</td><td class="strong">Antonio Cruz</td><td>Implante</td><td>Dra. Adalia</td><td>Gab. 1</td></tr>
+          <tr><td>11:00</td><td class="strong">Nieves Ortega</td><td>Endodoncia</td><td>Dr. Suárez</td><td>Gab. 4</td></tr>
+          <tr><td>12:00</td><td class="strong">Marta Suárez</td><td>Valoración All-on-4</td><td>Dra. Adalia</td><td>Gab. 1</td></tr>
+        </tbody></table>
+      </div>
+    </section>
+
+    <!-- ═══════════ PLANO CLÍNICA (arquitectónico) ═══════════ -->
+    <section id="page-plano" class="page">
+      <div class="topbar"><div><h1>Plano de la clínica</h1><p>Distribución real de la consulta — estado de gabinetes y equipos en tiempo real. Clic en una sala para ver el detalle.</p></div></div>
+      <div class="floor-wrap">
+        <div class="floorplan-card">
+          <svg class="floorplan-svg" viewBox="0 0 800 560" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="20" width="760" height="520" class="fp-floor"/>
+            <rect x="355" y="20" width="90" height="440" class="fp-corridor"/>
+            <text x="400" y="245" text-anchor="middle" class="fp-sub" transform="rotate(-90 400 245)" fill="#3d5352">PASILLO</text>
+
+            <!-- Gab 1 -->
+            <g class="fp-room" onclick="showRoom('Gabinete 1 · Implantes','Ocupada','Dra. Elena Adalia','Antonio Cruz — hasta 12:40','Sillón Kavo · Scanner 3D iTero · Motor de implantes W&amp;H')">
+              <rect x="40" y="40" width="300" height="150" class="fp-room-fill occupied" rx="3"/>
+              <rect x="40" y="40" width="300" height="150" class="fp-room-border occupied" rx="3"/>
+              <rect x="330" y="105" width="26" height="6" fill="#e4edec"/>
+              <path d="M356 108 A26 26 0 0 1 356 134" fill="none" stroke="rgba(20,40,40,.28)" stroke-width="1"/>
+              <text x="58" y="66" class="fp-label">Gabinete 1</text>
+              <text x="58" y="82" class="fp-sub">Implantes · Cirugía</text>
+              <text x="58" y="172" class="fp-sub" fill="#e5484d">● OCUPADA · Dra. Adalia</text>
+            </g>
+
+            <!-- Gab 2 -->
+            <g class="fp-room" onclick="showRoom('Gabinete 2 · Ortodoncia','Ocupada','Dr. Marrero','Laura Pérez — hasta 13:10','Sillón A-dec · escáner intraoral · lámpara LED')">
+              <rect x="40" y="205" width="300" height="150" class="fp-room-fill occupied" rx="3"/>
+              <rect x="40" y="205" width="300" height="150" class="fp-room-border occupied" rx="3"/>
+              <rect x="330" y="270" width="26" height="6" fill="#e4edec"/>
+              <path d="M356 273 A26 26 0 0 1 356 299" fill="none" stroke="rgba(20,40,40,.28)" stroke-width="1"/>
+              <text x="58" y="231" class="fp-label">Gabinete 2</text>
+              <text x="58" y="247" class="fp-sub">Ortodoncia · Invisalign</text>
+              <text x="58" y="337" class="fp-sub" fill="#e5484d">● OCUPADA · Dr. Marrero</text>
+            </g>
+
+            <!-- Gab 3 -->
+            <g class="fp-room" onclick="showRoom('Gabinete 3 · Higiene','En limpieza','—','Libre desde las 11:20','Sillón estándar · ultrasonidos · pulido')">
+              <rect x="40" y="370" width="300" height="110" class="fp-room-fill cleaning" rx="3"/>
+              <rect x="40" y="370" width="300" height="110" class="fp-room-border cleaning" rx="3"/>
+              <rect x="330" y="415" width="26" height="6" fill="#e4edec"/>
+              <path d="M356 418 A26 26 0 0 1 356 444" fill="none" stroke="rgba(20,40,40,.28)" stroke-width="1"/>
+              <text x="58" y="396" class="fp-label">Gabinete 3</text>
+              <text x="58" y="412" class="fp-sub">Higiene · Periodoncia</text>
+              <text x="58" y="462" class="fp-sub" fill="#e0a72e">● LIMPIEZA</text>
+            </g>
+
+            <!-- Gab 4 -->
+            <g class="fp-room" onclick="showRoom('Gabinete 4 · Cirugía guiada','Libre','—','Próxima cita 11:00 · Nieves Ortega','Scanner 3D · escáner intraoral · láser dental')">
+              <rect x="460" y="40" width="300" height="150" class="fp-room-fill free" rx="3"/>
+              <rect x="460" y="40" width="300" height="150" class="fp-room-border free" rx="3"/>
+              <rect x="444" y="105" width="26" height="6" fill="#e4edec"/>
+              <path d="M444 108 A26 26 0 0 0 444 134" fill="none" stroke="rgba(20,40,40,.28)" stroke-width="1"/>
+              <text x="478" y="66" class="fp-label">Gabinete 4</text>
+              <text x="478" y="82" class="fp-sub">Cirugía guiada</text>
+              <text x="478" y="172" class="fp-sub" fill="#2fbf71">● LIBRE</text>
+            </g>
+
+            <!-- Gab 5 -->
+            <g class="fp-room" onclick="showRoom('Gabinete 5 · Odontopediatría','Libre','—','Sin citas pendientes hoy','Sillón infantil · TV de techo · esterilizador propio')">
+              <rect x="460" y="205" width="300" height="150" class="fp-room-fill free" rx="3"/>
+              <rect x="460" y="205" width="300" height="150" class="fp-room-border free" rx="3"/>
+              <rect x="444" y="270" width="26" height="6" fill="#e4edec"/>
+              <path d="M444 273 A26 26 0 0 0 444 299" fill="none" stroke="rgba(20,40,40,.28)" stroke-width="1"/>
+              <text x="478" y="231" class="fp-label">Gabinete 5</text>
+              <text x="478" y="247" class="fp-sub">Odontopediatría</text>
+              <text x="478" y="337" class="fp-sub" fill="#2fbf71">● LIBRE</text>
+            </g>
+
+            <!-- Gab 6 -->
+            <g class="fp-room" onclick="showRoom('Gabinete 6 · Radiología / CBCT','Ocupada','Técnico Silvia G.','Escaneo CBCT en curso — 5 min','Cone Beam CT · radiografía panorámica')">
+              <rect x="460" y="370" width="300" height="110" class="fp-room-fill occupied" rx="3"/>
+              <rect x="460" y="370" width="300" height="110" class="fp-room-border occupied" rx="3"/>
+              <rect x="444" y="415" width="26" height="6" fill="#e4edec"/>
+              <path d="M444 418 A26 26 0 0 0 444 444" fill="none" stroke="rgba(20,40,40,.28)" stroke-width="1"/>
+              <text x="478" y="396" class="fp-label">Gabinete 6</text>
+              <text x="478" y="412" class="fp-sub">Radiología · CBCT</text>
+              <text x="478" y="462" class="fp-sub" fill="#e5484d">● OCUPADA</text>
+            </g>
+
+            <!-- Esterilización (encima del pasillo) -->
+            <g class="fp-room" onclick="showRoom('Esterilización','Operativa','Aux. Marta Díaz','2 ciclos de autoclave en curso','Autoclave Class B ×2 · sellado de bolsas · control biológico')">
+              <rect x="355" y="470" width="90" height="70" class="fp-room-fill support" rx="3"/>
+              <rect x="355" y="470" width="90" height="70" class="fp-room-border support" rx="3"/>
+              <text x="400" y="500" text-anchor="middle" class="fp-sub" fill="#fff" font-weight="700">Esteriliz.</text>
+              <text x="400" y="514" text-anchor="middle" class="fp-sub" fill="#00c7d3">● 2 en curso</text>
+            </g>
+
+            <!-- Recepción y sala de espera -->
+            <g class="fp-room" onclick="showRoom('Recepción','Operativa','Nayra P. · Front desk','Check-in y cobro de pacientes','Terminal TPV · datáfono · impresora de presupuestos')">
+              <rect x="40" y="500" width="150" height="40" class="fp-room-fill support" rx="3"/>
+              <rect x="40" y="500" width="150" height="40" class="fp-room-border support" rx="3"/>
+              <text x="115" y="524" text-anchor="middle" class="fp-sub" fill="#fff" font-weight="700">Recepción</text>
+            </g>
+            <g class="fp-room" onclick="showRoom('Sala de espera','Ocupada','—','4 pacientes esperando ahora','Pantalla informativa · dispensador de agua · wifi paciente')">
+              <rect x="200" y="500" width="140" height="40" class="fp-room-fill free" rx="3"/>
+              <rect x="200" y="500" width="140" height="40" class="fp-room-border free" rx="3"/>
+              <text x="270" y="524" text-anchor="middle" class="fp-sub" fill="#fff" font-weight="700">Sala de espera · 4</text>
+            </g>
+
+            <!-- Staff / office -->
+            <g class="fp-room" onclick="showRoom('Despacho / Sala de personal','Operativa','—','Reunión de equipo 14:00','Escritorios · archivo clínico · zona descanso')">
+              <rect x="610" y="500" width="150" height="40" class="fp-room-fill support" rx="3"/>
+              <rect x="610" y="500" width="150" height="40" class="fp-room-border support" rx="3"/>
+              <text x="685" y="524" text-anchor="middle" class="fp-sub" fill="#fff" font-weight="700">Sala de personal</text>
+            </g>
+            <g class="fp-room" onclick="showRoom('Almacén / Farmacia','Operativa','—','Control de stock','Materiales · fármacos · caja fuerte de historia clínica')">
+              <rect x="460" y="500" width="140" height="40" class="fp-room-fill support" rx="3"/>
+              <rect x="460" y="500" width="140" height="40" class="fp-room-border support" rx="3"/>
+              <text x="530" y="524" text-anchor="middle" class="fp-sub" fill="#fff" font-weight="700">Almacén</text>
+            </g>
+
+            <!-- Entrada -->
+            <text x="400" y="555" text-anchor="middle" class="fp-sub" fill="#5c7473">▲ ENTRADA PRINCIPAL — Av. Primero de Mayo, 22</text>
+
+            <!-- Contorno exterior -->
+            <rect x="20" y="20" width="760" height="520" class="fp-wall" rx="4"/>
+          </svg>
+          <div class="legend-row">
+            <span class="legend-i"><span class="d" style="background:#e5484d"></span>Ocupada</span>
+            <span class="legend-i"><span class="d" style="background:#e0a72e"></span>Limpieza</span>
+            <span class="legend-i"><span class="d" style="background:#2fbf71"></span>Libre</span>
+            <span class="legend-i"><span class="d" style="background:#00A3AD"></span>Zona de apoyo</span>
+          </div>
+        </div>
+        <div class="card" id="room-detail-card">
+          <div class="card-hd"><div class="card-title" id="rd-title">Selecciona una sala</div></div>
+          <div id="rd-body"><div class="card-sub">Haz clic en cualquier sala del plano para ver su estado, doctor asignado y equipamiento.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ STOCK ═══════════ -->
+    <section id="page-stock" class="page">
+      <div class="topbar"><div><h1>Stock &amp; Inventario</h1><p>Materiales clínicos, control de caducidad y pedidos automáticos a proveedor</p></div>
+        <button class="btn btn-primary">+ Registrar pedido</button></div>
+      <div class="card">
+        <table class="tbl"><thead><tr><th>Material</th><th>Categoría</th><th>Stock actual</th><th>Nivel</th><th>Caducidad más próxima</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td class="strong">Composite A2</td><td>Restauración</td><td>4 uds</td><td style="width:140px"><div class="stock-bar"><div class="stock-fill" style="width:15%;background:#e5484d"></div></div></td><td>03/2027</td><td><span class="tag bad">Reponer</span></td></tr>
+          <tr><td class="strong">Anestesia articaína</td><td>Farmacia</td><td>38 uds</td><td style="width:140px"><div class="stock-bar"><div class="stock-fill" style="width:70%;background:#2fbf71"></div></div></td><td>11/2027</td><td><span class="tag ok">OK</span></td></tr>
+          <tr><td class="strong">Implantes Nobel Biocare</td><td>Cirugía</td><td>12 uds</td><td style="width:140px"><div class="stock-bar"><div class="stock-fill" style="width:45%;background:#e0a72e"></div></div></td><td>—</td><td><span class="tag warn">Vigilar</span></td></tr>
+          <tr><td class="strong">Guantes nitrilo M</td><td>Fungible</td><td>26 cajas</td><td style="width:140px"><div class="stock-bar"><div class="stock-fill" style="width:80%;background:#2fbf71"></div></div></td><td>—</td><td><span class="tag ok">OK</span></td></tr>
+        </tbody></table>
+      </div>
+    </section>
+
+    <!-- ═══════════ PERSONAL ═══════════ -->
+    <section id="page-personal" class="page">
+      <div class="topbar"><div><h1>Personal &amp; Turnos</h1><p>Doctores, higienistas y recepción — cuadrante semanal</p></div>
+        <button class="btn btn-primary">+ Añadir turno</button></div>
+      <div class="card">
+        <table class="tbl"><thead><tr><th>Profesional</th><th>Rol</th><th>Hoy</th><th>Gabinete asignado</th><th>Pacientes hoy</th></tr></thead>
+        <tbody>
+          <tr><td class="strong">Dra. Elena Adalia</td><td>Cirugía / Implantes</td><td>09:00–14:00</td><td>Gab. 1</td><td>6</td></tr>
+          <tr><td class="strong">Dr. Marrero</td><td>Ortodoncia</td><td>09:00–17:00</td><td>Gab. 2</td><td>9</td></tr>
+          <tr><td class="strong">Dr. Suárez</td><td>Endodoncia</td><td>10:00–14:00</td><td>Gab. 4</td><td>4</td></tr>
+          <tr><td class="strong">Silvia G.</td><td>Radiología</td><td>09:00–15:00</td><td>Gab. 6</td><td>7</td></tr>
+          <tr><td class="strong">Nayra P.</td><td>Recepción</td><td>08:30–16:30</td><td>Recepción</td><td>—</td></tr>
+        </tbody></table>
+      </div>
+    </section>
+
+    <!-- ═══════════ ASEGURADORAS ═══════════ -->
+    <section id="page-aseguradoras" class="page">
+      <div class="topbar"><div><h1>Aseguradoras</h1><p>Convenios activos, baremos y facturación directa a compañía</p></div></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">
+        <span class="ins-badge"><span class="d" style="background:#2fbf71"></span>Sanitas Dental</span>
+        <span class="ins-badge"><span class="d" style="background:#2fbf71"></span>Adeslas</span>
+        <span class="ins-badge"><span class="d" style="background:#2fbf71"></span>DKV</span>
+        <span class="ins-badge"><span class="d" style="background:#e0a72e"></span>Asisa (pendiente renovación)</span>
+      </div>
+      <div class="card">
+        <table class="tbl"><thead><tr><th>Compañía</th><th>Pacientes activos</th><th>Pendiente de cobro</th><th>Última liquidación</th></tr></thead>
+        <tbody>
+          <tr><td class="strong">Sanitas Dental</td><td>34</td><td>1.240€</td><td>01/07/2026</td></tr>
+          <tr><td class="strong">Adeslas</td><td>21</td><td>860€</td><td>28/06/2026</td></tr>
+          <tr><td class="strong">DKV</td><td>9</td><td>0€</td><td>05/07/2026</td></tr>
+          <tr><td class="strong">Asisa</td><td>3</td><td>410€</td><td>—</td></tr>
+        </tbody></table>
+      </div>
+    </section>
+
+    <!-- ═══════════ MARKETING ═══════════ -->
+    <section id="page-marketing" class="page">
+      <div class="topbar"><div><h1>Marketing &amp; Métricas</h1><p>Google Ads, Meta Ads y web conectados en un único cuadro de mandos</p></div></div>
+      <div class="section-note"><b>ⓘ</b><div>Estas métricas se conectan directamente vía API a Google Ads y Meta Ads Manager — no hace falta salir del CRM para ver qué campaña está generando pacientes reales, no solo clics.</div></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Inversión y resultado por canal — este mes</div></div>
+          <div class="chan-row"><div class="chan-icon chan-google">G</div><div class="chan-info"><div class="chan-name">Google Ads</div><div class="chan-sub">62 leads · CPL 7,90€</div><div class="bar-track"><div class="bar-fill" style="width:78%"></div></div></div><div class="chan-val"><b>489€</b><small>gastado</small></div></div>
+          <div class="chan-row"><div class="chan-icon chan-meta">M</div><div class="chan-info"><div class="chan-name">Meta Ads</div><div class="chan-sub">34 leads · CPL 9,20€</div><div class="bar-track"><div class="bar-fill" style="width:52%"></div></div></div><div class="chan-val"><b>313€</b><small>gastado</small></div></div>
+          <div class="chan-row" style="border:none"><div class="chan-icon chan-web">W</div><div class="chan-info"><div class="chan-name">Web orgánica</div><div class="chan-sub">7 leads · coste 0€</div><div class="bar-track"><div class="bar-fill" style="width:14%"></div></div></div><div class="chan-val"><b>0€</b><small>gastado</small></div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Tratamientos más consultados</div></div>
+          <div class="room-detail-item"><span>Implantes / All-on-4</span><span>34%</span></div>
+          <div class="room-detail-item"><span>Invisalign</span><span>27%</span></div>
+          <div class="room-detail-item"><span>Estética / Carillas</span><span>19%</span></div>
+          <div class="room-detail-item"><span>Blanqueamiento</span><span>12%</span></div>
+          <div class="room-detail-item"><span>Odontopediatría</span><span>8%</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-title">ROI real por campaña</div><div class="card-sub">Cruzando gasto en ads con pacientes que realmente cerraron tratamiento</div></div>
+        <table class="tbl"><thead><tr><th>Campaña</th><th>Canal</th><th>Leads</th><th>Cerrados</th><th>Gasto</th><th>Facturado</th><th>ROI</th></tr></thead>
+        <tbody>
+          <tr><td class="strong">Implantes All-on-4 — Julio</td><td>Google Ads</td><td>22</td><td>4</td><td>210€</td><td>18.400€</td><td><span class="tag ok">×87</span></td></tr>
+          <tr><td class="strong">Invisalign Verano</td><td>Meta Ads</td><td>18</td><td>3</td><td>165€</td><td>7.200€</td><td><span class="tag ok">×43</span></td></tr>
+          <tr><td class="strong">Blanqueamiento Promo</td><td>Meta Ads</td><td>11</td><td>1</td><td>90€</td><td>320€</td><td><span class="tag warn">×3.5</span></td></tr>
+        </tbody></table>
+      </div>
+    </section>
+
+    <!-- ═══════════ FACTURACIÓN ═══════════ -->
+    <section id="page-facturacion" class="page">
+      <div class="topbar"><div><h1>Facturación</h1><p>Presupuestos, cobros y pendientes de pago</p></div>
+        <button class="btn btn-primary">+ Nueva factura</button></div>
+      <div class="kpi-grid" style="margin-bottom:16px">
+        <div class="kpi"><div class="kpi-label">Facturado este mes</div><div class="kpi-val">61.240€</div></div>
+        <div class="kpi"><div class="kpi-label">Pendiente de cobro</div><div class="kpi-val" style="color:#e0a72e">4.860€</div></div>
+        <div class="kpi"><div class="kpi-label">Presupuestos abiertos</div><div class="kpi-val">9</div></div>
+      </div>
+      <div class="card">
+        <table class="tbl"><thead><tr><th>Paciente</th><th>Concepto</th><th>Importe</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td class="strong">Antonio Cruz</td><td>Implante All-on-4 — 2ª cuota</td><td>800€</td><td><span class="tag warn">Pendiente</span></td></tr>
+          <tr><td class="strong">Laura Pérez</td><td>Invisalign — cuota mensual</td><td>120€</td><td><span class="tag ok">Cobrado</span></td></tr>
+          <tr><td class="strong">Nieves Ortega</td><td>Endodoncia</td><td>180€</td><td><span class="tag ok">Cobrado</span></td></tr>
+        </tbody></table>
+      </div>
+    </section>
+
+    <!-- ═══════════ COMUNICACIONES ═══════════ -->
+    <section id="page-comunicaciones" class="page">
+      <div class="topbar"><div><h1>Comunicaciones</h1><p>Recordatorios automáticos de cita, seguimiento de presupuestos y campañas de reactivación</p></div>
+        <button class="btn btn-primary">+ Nueva campaña</button></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Automatizaciones activas</div></div>
+          <div class="room-detail-item"><span>Recordatorio de cita (WhatsApp)</span><span class="tag ok">Activo · 24h antes</span></div>
+          <div class="room-detail-item"><span>Seguimiento presupuesto sin cerrar</span><span class="tag ok">Activo · día 3 y 7</span></div>
+          <div class="room-detail-item"><span>Revisión anual (pacientes inactivos +12m)</span><span class="tag ok">Activo</span></div>
+          <div class="room-detail-item"><span>Encuesta de satisfacción post-tratamiento</span><span class="tag warn">Pausado</span></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Resultado este mes</div></div>
+          <div class="room-detail-item"><span>Mensajes enviados</span><span>412</span></div>
+          <div class="room-detail-item"><span>Citas confirmadas por WhatsApp</span><span>187</span></div>
+          <div class="room-detail-item"><span>No-shows evitados (estimado)</span><span style="color:#2fbf71">-38%</span></div>
+          <div class="room-detail-item"><span>Presupuestos reactivados</span><span>6 · 9.100€</span></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+function go(page,ev){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(ev&&ev.currentTarget)ev.currentTarget.classList.add('active');
+}
+function showRoom(title,status,doctor,detail,equipo){
+  document.getElementById('rd-title').textContent=title;
+  document.getElementById('rd-body').innerHTML=`
+    <div class="room-detail-item"><span>Estado</span><span>${status}</span></div>
+    <div class="room-detail-item"><span>Doctor / técnico</span><span>${doctor}</span></div>
+    <div class="room-detail-item"><span>Detalle</span><span>${detail}</span></div>
+    <div class="room-detail-item"><span>Equipamiento</span><span style="text-align:right;max-width:60%">${equipo}</span></div>
+  `;
+}
+</script>
+</body>
+</html>
