@@ -3885,6 +3885,33 @@ function renderSolicitudes(){
   }).join('');
 }
 
+// Clase Privada: precio progresivo (no tabla fija) — antes solo habia precio para
+// 1 o 2 clases y a partir de la 3a se quedaba en 0. Marginal fijo desde la 3a clase
+// (70/55/40€ segun nº de personas), y para 1 persona el marginal baja a 60€ a partir
+// de la 10a clase y ya no baja mas de ahi ("de ahi no se puede bajar").
+// 1 y 3 personas: tarifa POR PERSONA (se multiplica por el nº real de personas).
+// 2 personas: tarifa YA ES EL TOTAL de los dos juntos, no se multiplica — asi el
+// presupuesto muestra directamente lo que pagan entre los dos, sin ambiguedad.
+const PRIVADA_CFG={
+  1:{c1:75,c2:145,marg:70,margFloor:60,floorDesde:10,perPersona:true},
+  2:{c1:120,c2:230,marg:110,perPersona:false},
+  3:{c1:50,c2:90,marg:40,perPersona:true}
+};
+function precioPrivada(personas,dias){
+  const p=Math.min(Math.max(personas,1),3);
+  const cfg=PRIVADA_CFG[p];
+  const d=Math.max(dias,1);
+  let base=cfg.c1;
+  if(d===2)base=cfg.c2;
+  else if(d>2){
+    base=cfg.c2;
+    for(let i=3;i<=d;i++){
+      const marginal=(cfg.margFloor&&i>=cfg.floorDesde)?cfg.margFloor:cfg.marg;
+      base+=marginal;
+    }
+  }
+  return cfg.perPersona?base*personas:base;
+}
 function calcPresup(service,dias){
   if(!service) return 0;
   const s=service.toLowerCase();
@@ -3902,9 +3929,7 @@ function calcPresup(service,dias){
     return (tabla[best]||0)*personasReal;
   }
   if(s.includes('particular')){
-    const tierPersonas=Math.min(personasReal,3);
-    const precioPersona=(TARIFAS_SOL.particular[tierPersonas+'p']||TARIFAS_SOL.particular['1p']||{})[Math.min(dias,2)]||0;
-    return precioPersona*personasReal;
+    return precioPrivada(personasReal,dias);
   }
   if(s.includes('sup')) return ((TARIFAS_SOL.sup.flat||{})[dias<=1?1:5]||0)*personasReal;
   if(s.includes('surfskate')){const t=TARIFAS_SOL.surfskate;const k=Object.keys(t).map(Number).reduce((a,b)=>Math.abs(b-dias)<Math.abs(a-dias)?b:a);return (t[k]||0)*personasReal;}
@@ -4372,9 +4397,7 @@ function mrCalcularBono(){
     const t=MR_TARIFAS_PRE.surf[nv];const k=mrClosestTier(Object.keys(t).map(Number),dias);
     total=t[k]*personas;
   }else if(tipo==='Clase Privada'){
-    const tierPersonas=Math.min(personas,3);
-    const t=MR_TARIFAS_PRE.particular[tierPersonas];const k=mrClosestTier(Object.keys(t).map(Number),dias);
-    total=t[k]*personas;
+    total=precioPrivada(personas,dias);
   }else if(tipo==='SUP'){
     const k=mrClosestTier([1,5],dias);total=MR_TARIFAS_PRE.sup[k]*personas;
   }else{
