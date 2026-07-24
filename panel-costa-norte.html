@@ -3782,7 +3782,7 @@ function setBotNav(page){
 const SB_URL_SOL='https://vjofxmfwdybktpwiuanc.supabase.co';
 const SB_KEY_SOL='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
 const TARIFAS_SOL={
-  surf:{Iniciacion:{1:35,2:65,3:85,4:113,5:140,6:163,7:185,8:200,9:215,10:230,11:242,12:254,13:266,14:278,15:290,16:308,17:326,18:344,19:362,20:380},Avanzado:{1:50,2:100,5:175,7:280,15:390,20:500}},
+  surf:{Iniciacion:{1:35,2:65,3:85,4:113,5:140,6:163,7:185,8:200,9:215,10:230,11:242,12:254,13:266,14:278,15:290,16:308,17:326,18:344,19:362,20:380},Avanzado:{1:50,2:100,3:135,5:175,7:220,10:280,15:390,20:500}},
   particular:{'1p':{1:75,2:145},'2p':{1:60,2:115},'3p':{1:50,2:90}},
   sup:{flat:{1:35,5:140},olas:{1:40,5:150},race:{1:35,5:140}},
   surfskate:{1:20,4:75,8:135}
@@ -3888,13 +3888,19 @@ function renderSolicitudes(){
 function calcPresup(service,dias){
   if(!service) return 0;
   const s=service.toLowerCase();
-  const nivel=s.includes('avanzado')?'Avanzado':'Iniciacion';
-  let closest=dias;
-  const tiers=[1,2,5,7,15,20];
-  let best=tiers.reduce((a,b)=>Math.abs(b-dias)<Math.abs(a-dias)?b:a);
+  // "Perfeccionamiento" y "Avanzado" usan la misma tarifa (la tabla oficial solo
+  // tiene 2 tramos: Iniciacion y el de nivel alto) — antes Perfeccionamiento no
+  // encajaba en ningun caso y se cobraba por error al precio de Iniciacion.
+  const nivel=(s.includes('avanzado')||s.includes('perfeccionamiento'))?'Avanzado':'Iniciacion';
   const mPersonas=s.match(/\((\d)\s*persona/);
   const personasReal=mPersonas?Math.min(Math.max(+mPersonas[1],1),6):1;
-  if(s.includes('surf - ')||s.includes('surf\n')) return ((TARIFAS_SOL.surf[nivel]||TARIFAS_SOL.surf.Iniciacion)[best]||0)*personasReal;
+  if(s.includes('surf - ')||s.includes('surf\n')){
+    const tabla=TARIFAS_SOL.surf[nivel]||TARIFAS_SOL.surf.Iniciacion;
+    // Tramos reales de la tabla (incluye 3 y 10, que antes faltaban del todo)
+    const tiers=Object.keys(tabla).map(Number);
+    const best=tiers.reduce((a,b)=>Math.abs(b-dias)<Math.abs(a-dias)?b:a);
+    return (tabla[best]||0)*personasReal;
+  }
   if(s.includes('particular')){
     const tierPersonas=Math.min(personasReal,3);
     const precioPersona=(TARIFAS_SOL.particular[tierPersonas+'p']||TARIFAS_SOL.particular['1p']||{})[Math.min(dias,2)]||0;
@@ -4350,7 +4356,7 @@ function newManualReserva(prefill){
 // (costa-norte-reservas.html), para que el precio salga igual sea cual sea
 // el sitio desde el que se cree la reserva.
 const MR_TARIFAS_PRE={
-  surf:{Iniciacion:{1:35,2:65,3:85,4:113,5:140,6:163,7:185,8:200,9:215,10:230,11:242,12:254,13:266,14:278,15:290,16:308,17:326,18:344,19:362,20:380},Avanzado:{1:50,2:100,5:175,7:280,15:390,20:500}},
+  surf:{Iniciacion:{1:35,2:65,3:85,4:113,5:140,6:163,7:185,8:200,9:215,10:230,11:242,12:254,13:266,14:278,15:290,16:308,17:326,18:344,19:362,20:380},Avanzado:{1:50,2:100,3:135,5:175,7:220,10:280,15:390,20:500}},
   particular:{1:{1:75,2:145},2:{1:60,2:115},3:{1:50,2:90}},
   sup:{1:35,5:140}
 };
@@ -4362,7 +4368,7 @@ function mrCalcularBono(){
   const info=document.getElementById('mr-bono-info');
   let total=0,ok=true;
   if(tipo==='Iniciación'||tipo==='Perfeccionamiento'||tipo==='Avanzado'){
-    const nv=tipo==='Avanzado'?'Avanzado':'Iniciacion';
+    const nv=(tipo==='Avanzado'||tipo==='Perfeccionamiento')?'Avanzado':'Iniciacion';
     const t=MR_TARIFAS_PRE.surf[nv];const k=mrClosestTier(Object.keys(t).map(Number),dias);
     total=t[k]*personas;
   }else if(tipo==='Clase Privada'){
