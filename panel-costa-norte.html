@@ -3886,27 +3886,29 @@ function renderSolicitudes(){
 }
 
 // Clase Privada: precio progresivo (no tabla fija) — antes solo habia precio para
-// 1 o 2 clases y a partir de la 3a se quedaba en 0.
+// 1 o 2 clases y a partir de la 3a se quedaba en 0. Maximo reservable: 10 clases.
 // 1 persona: tarifa POR PERSONA. Marginal 70€ desde la 3a clase, y baja a 60€ a
 // partir de la 10a clase, sin bajar mas de ahi ("de ahi no se puede bajar").
 // 2, 3 y 4 personas: tarifa YA ES EL TOTAL del grupo junto (no se multiplica) — asi
 // el presupuesto muestra directamente lo que pagan entre todos, sin ambiguedad.
-// 4 personas usa tabla explicita (la progresion no es un marginal fijo) hasta la
-// clase 10, y de ahi en adelante se suma el marginal de la ultima clase (150€).
+// 4 personas usa tabla explicita (la progresion no es un marginal fijo).
+// 5 y 6 personas: no hay tarifa propia — se coge la de 4 personas y se suma un
+// suplemento fijo de 45€ por cada persona extra (la 5a y la 6a).
 const PRIVADA_CFG={
   1:{c1:75,c2:145,marg:70,margFloor:60,floorDesde:10,perPersona:true},
   2:{c1:120,c2:230,marg:110,perPersona:false},
   3:{c1:150,c2:270,marg:120,perPersona:false},
-  4:{tabla:{1:180,2:340,3:495,4:648,5:800,6:948,7:1092,8:1232,9:1368,10:1500},margExtra:150,perPersona:false}
+  4:{tabla:{1:180,2:340,3:495,4:648,5:800,6:948,7:1092,8:1232,9:1368,10:1500},perPersona:false}
 };
+const PRIVADA_SUPLEMENTO_EXTRA=45;
 function precioPrivada(personas,dias){
-  const p=Math.min(Math.max(personas,1),4);
+  const personasReales=Math.min(Math.max(personas,1),6);
+  const p=Math.min(personasReales,4);
   const cfg=PRIVADA_CFG[p];
-  const d=Math.max(dias,1);
+  const d=Math.min(Math.max(dias,1),10);
   let base;
   if(cfg.tabla){
-    const maxK=Math.max(...Object.keys(cfg.tabla).map(Number));
-    base=d<=maxK?(cfg.tabla[d]||cfg.tabla[maxK]):cfg.tabla[maxK]+cfg.margExtra*(d-maxK);
+    base=cfg.tabla[d]||cfg.tabla[10];
   }else{
     base=cfg.c1;
     if(d===2)base=cfg.c2;
@@ -3918,7 +3920,9 @@ function precioPrivada(personas,dias){
       }
     }
   }
-  return cfg.perPersona?base*personas:base;
+  let total=cfg.perPersona?base*personasReales:base;
+  if(personasReales>4)total+=PRIVADA_SUPLEMENTO_EXTRA*(personasReales-4);
+  return total;
 }
 function calcPresup(service,dias){
   if(!service) return 0;
