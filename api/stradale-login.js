@@ -69,6 +69,7 @@ export default async function handler(req, res) {
       refresh_token: session.session.refresh_token,
       nombre: emp.nombre,
       usuario: emp.usuario,
+      id: emp.id,
     });
   } catch (e) {
     return res.status(500).json({ error: 'Error interno: ' + (e.message || e) });
