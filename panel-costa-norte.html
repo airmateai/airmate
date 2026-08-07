@@ -1196,6 +1196,13 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
             <button class="btn btn-primary" onclick="newInstructor()">+ Nuevo monitor</button>
           </div>
         </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          <span style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;">Recuento de clases de:</span>
+          <button class="btn btn-ghost" onclick="instructorsMonthMove(-1)">‹</button>
+          <span id="instructors-month-label" style="font-weight:600;font-size:13px;min-width:120px;text-align:center;"></span>
+          <button class="btn btn-ghost" onclick="instructorsMonthMove(1)">›</button>
+          <button class="btn btn-ghost" onclick="instructorsMonthToday()">Mes actual</button>
+        </div>
         <div id="instructors-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
       </div>
 
@@ -2098,15 +2105,49 @@ async function savePack(i){
 }
 async function deletePack(i){if(confirm('¿Eliminar pack?')){const p=PACKS[i];await sbDelete('cn_packs',p.id);PACKS.splice(i,1);toast('Pack eliminado');closeModal();renderPacks();}}
 
-// Cuenta las clases reales de un monitor a partir de las reservas (no del numero
-// manual guardado en su ficha), separando por coma los grupos con varios monitores —
-// asi da igual si el monitor se asigno al crear el grupo o despues desde la solicitud.
+// Recuento de clases por monitor — mes independiente del calendario general
+// (antes usaba GANTT_RAW, que es el mes que estuviera abierto en "Clases" en
+// ese momento; si el usuario había navegado a otro mes ahí, el recuento de
+// Instructores salía descuadrado sin ningún aviso de qué mes se veía).
+let instructorsYear = new Date().getFullYear();
+let instructorsMonth = new Date().getMonth();
+let INSTRUCTORS_RAW = [];
+const INSTRUCTORS_MONTH_NAMES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function instructorsMonthMove(dir){
+  instructorsMonth += dir;
+  if(instructorsMonth > 11){instructorsMonth=0; instructorsYear++;}
+  if(instructorsMonth < 0){instructorsMonth=11; instructorsYear--;}
+  loadInstructorsMonth().then(renderInstructors);
+}
+function instructorsMonthToday(){
+  instructorsYear = new Date().getFullYear();
+  instructorsMonth = new Date().getMonth();
+  loadInstructorsMonth().then(renderInstructors);
+}
+async function loadInstructorsMonth(){
+  const first=new Date(instructorsYear,instructorsMonth,1);
+  const last=new Date(instructorsYear,instructorsMonth+1,0,23,59,59);
+  try{
+    const res=await fetch(`${SB_URL_SOL}/rest/v1/appointments?business_slug=eq.costa-norte&starts_at=gte.${first.toISOString()}&starts_at=lte.${last.toISOString()}&select=id,service,starts_at,status,notes`,
+      {headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}});
+    const rows=await res.json();
+    INSTRUCTORS_RAW=Array.isArray(rows)?rows:[];
+  }catch(e){INSTRUCTORS_RAW=[];}
+  const lbl=document.getElementById('instructors-month-label');
+  if(lbl) lbl.textContent=INSTRUCTORS_MONTH_NAMES[instructorsMonth]+' '+instructorsYear;
+}
+
+// Cuenta las clases reales de un monitor a partir de las reservas del mes
+// seleccionado arriba (no del numero manual guardado en su ficha), separando
+// por coma los grupos con varios monitores — asi da igual si el monitor se
+// asigno al crear el grupo o despues desde la solicitud.
 function clasesRealesDe(nombre){
   // Un grupo (mismo dia+hora+tipo+letra) puede tener varios alumnos = varias filas
   // de "appointments", pero es UNA sola clase para el monitor — hay que contar
   // sesiones distintas, no filas, o si no un grupo de 5 alumnos cuenta como 5 clases.
   const sesiones=new Set();
-  GANTT_RAW.forEach(r=>{
+  INSTRUCTORS_RAW.forEach(r=>{
     if(r.status==='cancelled')return;
     let notes={};try{notes=JSON.parse(r.notes||'{}');}catch{}
     const nombres=(notes.instructor||'').split(',').map(x=>x.trim()).filter(Boolean);
@@ -2117,11 +2158,10 @@ function clasesRealesDe(nombre){
   return sesiones.size;
 }
 function renderInstructors(){
-  // El recuento de clases usa GANTT_RAW, que solo se carga al visitar "Clases". Si se
-  // entra directo a Instructores sin haber pasado por ahi, GANTT_RAW esta vacio y todos
-  // salen a 0 clases — lo cargamos aqui tambien para que el recuento sea siempre correcto.
-  if(!GANTT_RAW || !GANTT_RAW.length){
-    loadGanttMonth(true).then(()=>renderInstructors());
+  // El recuento de clases usa INSTRUCTORS_RAW, con su propio mes seleccionable
+  // arriba. Si aún no se ha cargado nada, lo cargamos con el mes actual.
+  if(!INSTRUCTORS_RAW || !INSTRUCTORS_RAW.length){
+    loadInstructorsMonth().then(()=>renderInstructors());
   }
   document.getElementById('instructors-grid').innerHTML=INSTRUCTORS.map((ins,i)=>{
     const exp = ins.exp&&ins.exp!=='null' ? `<span><strong style="color:var(--txt);">${esc(ins.exp)}</strong> exp.</span>` : '<span></span>';
@@ -4301,6 +4341,7 @@ async function saveMonitorAsignado(){
     // por monitor ("Monitores hoy" y Ajustes → Instructores) no se quede desactualizado
     // cuando asignas el monitor desde Solicitudes web.
     await loadGanttMonth();
+    await loadInstructorsMonth();
     if(document.getElementById('page-classes')?.classList.contains('active'))renderDayPanel();
     renderInstructors();
   }catch(e){console.error('saveMonitorAsignado',e);toast('⚠ Error al guardar el monitor');}
