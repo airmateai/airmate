@@ -8020,12 +8020,16 @@ async function _iaExecTool(name, args){
         const horaStr=new Date(cita.starts_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
         try{
           await emailjs.send('service_npmjvvf','template_qnip0mc',{
-            to_email:cita.client_email,
-            cliente:cita.client_name||'',
+            cliente_nombre:cita.client_name||'',
+            cliente_email:cita.client_email,
+            cliente_telefono:cita.client_phone||'—',
+            negocio_nombre:BIZ_NAME||'Jose Acosta Style',
             servicio:cita.service||'',
+            duracion:(cita.duration_minutes||60)+' min',
+            precio:'',
             fecha:fechaStr,
             hora:horaStr,
-            negocio_nombre:BIZ_NAME||'Jose Acosta Style'
+            reply_to:'airmateai@gmail.com'
           });
           return {ok:true,enviado_a:cita.client_email};
         }catch(e){return {ok:false,error:'EmailJS error: '+(e.text||e.message||'')};}
