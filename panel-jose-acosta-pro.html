@@ -3450,8 +3450,9 @@ function encMedidasHtml(m={}){
   <div class="crm-form-row" style="margin-bottom:6px">${n('cadera','Cadera',m.cadera||'')}${n('muslo','Muslo',m.muslo||'')}${n('rodilla','Rodilla',m.rodilla||'')}</div>
   <div class="crm-form-row" style="margin-bottom:6px">${n('gemelo','Gemelo',m.gemelo||'')}${n('bajos','Bajos',m.bajos||'')}${n('tiro','Tiro',m.tiro||'')}</div>
   <div class="crm-form-row" style="margin-bottom:6px">${n('espalda','Espalda',m.espalda||'')}${n('hombros','Hombros',m.hombros||'')}${n('biceps','Bíceps',m.biceps||'')}</div>
-  <div class="crm-form-row" style="margin-bottom:6px">${n('muneca','Muñeca',m.muneca||'')}${n('largo_manga','L.Manga',m.largo_manga||'')}${n('largo_chaqueta','L.Chaqueta',m.largo_chaqueta||'')}</div>
-  <div class="crm-form-row" style="margin-bottom:6px">${n('largo_chaleco','L.Chaleco',m.largo_chaleco||'')}${n('largo_pantalon','L.Pantalón',m.largo_pantalon||'')}${n('zapato','Zapato (nº)',m.zapato||'')}</div>`;
+  <div class="crm-form-row" style="margin-bottom:6px">${n('muneca','Muñeca',m.muneca||'')}${n('largo_manga','L.Manga',m.largo_manga||'')}${n('largo_pantalon','L.Pantalón',m.largo_pantalon||'')}</div>
+  <div class="crm-form-row" style="margin-bottom:6px">${n('largo_chaqueta_frontal','L.Chaqueta Frontal',m.largo_chaqueta_frontal||'')}${n('largo_chaqueta_posterior','L.Chaqueta Posterior',m.largo_chaqueta_posterior||'')}</div>
+  <div class="crm-form-row" style="margin-bottom:6px">${n('largo_chaleco_frontal','L.Chaleco Frontal',m.largo_chaleco_frontal||'')}${n('largo_chaleco_posterior','L.Chaleco Posterior',m.largo_chaleco_posterior||'')}${n('zapato','Zapato (nº)',m.zapato||'')}</div>`;
 }
 
 function encActualizarPago(){
@@ -3628,7 +3629,7 @@ async function crmSaveEncargo(){
   // Medidas corporales
   const m={};
   const tv=cv('enc-talla');if(tv)m.talla=tv;
-  ['altura','peso','cuello','pecho','pecho_alto','estomago_alto','estomago','cintura','cadera','muslo','rodilla','gemelo','bajos','tiro','espalda','hombros','biceps','muneca','largo_manga','largo_chaqueta','largo_chaleco','largo_pantalon','zapato']
+  ['altura','peso','cuello','pecho','pecho_alto','estomago_alto','estomago','cintura','cadera','muslo','rodilla','gemelo','bajos','tiro','espalda','hombros','biceps','muneca','largo_manga','largo_chaqueta_frontal','largo_chaqueta_posterior','largo_chaleco_frontal','largo_chaleco_posterior','largo_pantalon','zapato']
     .forEach(f=>{const v=cv('enc-'+f);if(v)m[f]=Number(v);});
   // Accesorios en medidas
   ['acc-corbata','acc-gemelo','acc-panuelo','acc-otros'].forEach(id=>{const v=cv(id);if(v)m[id.replace('-','_')]=v;});
@@ -4166,7 +4167,7 @@ async function imprimirContrato(id){
   const {data:o}=await _sb.from('crm_orders').select('*').eq('id',id).single();if(!o)return;
   const biz=getBizInfo();
   const m=o.measurements||{};const ev=o.evento||{};const tej=o.tejidos||{};const pg=o.pago||{};
-  const medLabels={altura:'Altura',peso:'Peso (kg)',cuello:'Cuello',pecho:'Pecho',estomago:'Estómago',cintura:'Cintura',cadera:'Cadera',muslo:'Muslo',rodilla:'Rodilla',gemelo:'Gemelo',bajos:'Bajos',tiro:'Tiro',espalda:'Espalda',hombros:'Hombros',biceps:'Bíceps',muneca:'Muñeca',largo_manga:'L. Manga',largo_chaqueta:'L. Chaqueta',largo_chaleco:'L. Chaleco',largo_pantalon:'L. Pantalón',zapato:'Zapato'};
+  const medLabels={altura:'Altura',peso:'Peso (kg)',cuello:'Cuello',pecho:'Pecho',estomago:'Estómago',cintura:'Cintura',cadera:'Cadera',muslo:'Muslo',rodilla:'Rodilla',gemelo:'Gemelo',bajos:'Bajos',tiro:'Tiro',espalda:'Espalda',hombros:'Hombros',biceps:'Bíceps',muneca:'Muñeca',largo_manga:'L. Manga',largo_chaqueta_frontal:'L. Chaqueta Frontal',largo_chaqueta_posterior:'L. Chaqueta Posterior',largo_chaleco_frontal:'L. Chaleco Frontal',largo_chaleco_posterior:'L. Chaleco Posterior',largo_pantalon:'L. Pantalón',zapato:'Zapato'};
   const medRows=Object.entries(medLabels).filter(([k])=>m[k]).map(([k,lbl])=>`<tr><td style="padding:5px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#64748b">${lbl}</td><td style="padding:5px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:600">${m[k]}${k!=='talla'&&k!=='zapato'&&k!=='peso'?' cm':k==='peso'?' kg':''}</td></tr>`).join('');
   const tejRows=Object.entries({tejido_traje:'Tejido traje',forro_traje:'Forro traje',bordado:'Bordado',tejido_chaleco:'Tejido chaleco',forro_chaleco:'Forro chaleco',tejido_camisa:'Tejido camisa',diseno:'Diseño',frase:'Frase',iniciales:'Iniciales'}).filter(([k])=>tej[k]).map(([k,lbl])=>`<tr><td style="padding:5px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#64748b">${lbl}</td><td style="padding:5px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:600">${esc(tej[k])}</td></tr>`).join('');
   document.getElementById('crm-print-body').innerHTML=`
@@ -6497,8 +6498,8 @@ function vistaRealRender(){
 function vistaRealNueva(){
   const clientes=(_crmClientes||[]).slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   const opts=clientes.map(c=>`<option value="${c.id}">${esc(c.name||'')}</option>`).join('');
-  const MED_KEYS=['altura','peso','cuello','pecho','pecho_alto','estomago','cintura','cadera','muslo','rodilla','gemelo','bajos','tiro','espalda','hombros','biceps','muneca','largo_manga','largo_chaqueta','largo_chaleco','largo_pantalon','talla','zapato'];
-  const MED_LABELS={altura:'Altura (cm)',peso:'Peso (kg)',cuello:'Cuello (cm)',pecho:'Pecho (cm)',pecho_alto:'Pecho alto (cm)',estomago:'Estómago (cm)',cintura:'Cintura (cm)',cadera:'Cadera (cm)',muslo:'Muslo (cm)',rodilla:'Rodilla (cm)',gemelo:'Gemelo (cm)',bajos:'Bajos (cm)',tiro:'Tiro (cm)',espalda:'Espalda (cm)',hombros:'Hombros (cm)',biceps:'Bíceps (cm)',muneca:'Muñeca (cm)',largo_manga:'Largo manga (cm)',largo_chaqueta:'Largo chaqueta (cm)',largo_chaleco:'Largo chaleco (cm)',largo_pantalon:'Largo pantalón (cm)',talla:'Talla chaqueta',zapato:'Talla zapato'};
+  const MED_KEYS=['altura','peso','cuello','pecho','pecho_alto','estomago','cintura','cadera','muslo','rodilla','gemelo','bajos','tiro','espalda','hombros','biceps','muneca','largo_manga','largo_chaqueta_frontal','largo_chaqueta_posterior','largo_chaleco_frontal','largo_chaleco_posterior','largo_pantalon','talla','zapato'];
+  const MED_LABELS={altura:'Altura (cm)',peso:'Peso (kg)',cuello:'Cuello (cm)',pecho:'Pecho (cm)',pecho_alto:'Pecho alto (cm)',estomago:'Estómago (cm)',cintura:'Cintura (cm)',cadera:'Cadera (cm)',muslo:'Muslo (cm)',rodilla:'Rodilla (cm)',gemelo:'Gemelo (cm)',bajos:'Bajos (cm)',tiro:'Tiro (cm)',espalda:'Espalda (cm)',hombros:'Hombros (cm)',biceps:'Bíceps (cm)',muneca:'Muñeca (cm)',largo_manga:'Largo manga (cm)',largo_chaqueta_frontal:'Largo chaqueta frontal (cm)',largo_chaqueta_posterior:'Largo chaqueta posterior (cm)',largo_chaleco_frontal:'Largo chaleco frontal (cm)',largo_chaleco_posterior:'Largo chaleco posterior (cm)',largo_pantalon:'Largo pantalón (cm)',talla:'Talla chaqueta',zapato:'Talla zapato'};
   const medFields=MED_KEYS.map(k=>`<div class="crm-form-group" style="min-width:120px"><label class="crm-form-label" style="font-size:10px">${MED_LABELS[k]||k}</label><input type="${['talla','zapato'].includes(k)?'text':'number'}" class="crm-form-ctrl" id="vr-med-${k}" step="0.1" placeholder="—" style="padding:5px 8px;font-size:13px"/></div>`).join('');
   const body=`
     <div class="crm-form-group"><label class="crm-form-label">Cliente *</label>
@@ -6535,7 +6536,7 @@ function vrCargarMedidas(clientId){
   const cl=(_crmClientes||[]).find(c=>c.id===clientId);
   if(!cl)return;
   const ms=cl.medidas||cl.measurements||{};
-  const keys=['altura','peso','cuello','pecho','pecho_alto','estomago','cintura','cadera','muslo','rodilla','gemelo','bajos','tiro','espalda','hombros','biceps','muneca','largo_manga','largo_chaqueta','largo_chaleco','largo_pantalon','talla','zapato'];
+  const keys=['altura','peso','cuello','pecho','pecho_alto','estomago','cintura','cadera','muslo','rodilla','gemelo','bajos','tiro','espalda','hombros','biceps','muneca','largo_manga','largo_chaqueta_frontal','largo_chaqueta_posterior','largo_chaleco_frontal','largo_chaleco_posterior','largo_pantalon','talla','zapato'];
   keys.forEach(k=>{const el=document.getElementById('vr-med-'+k);if(el&&ms[k])el.value=ms[k];});
   if(cl.name){
     const obs=document.getElementById('vr-morfo');
@@ -6544,7 +6545,7 @@ function vrCargarMedidas(clientId){
 }
 
 function vrGenerarPrompt(){
-  const MED_LABELS={altura:'altura',peso:'peso',cuello:'cuello',pecho:'pecho',pecho_alto:'pecho alto',estomago:'estómago',cintura:'cintura',cadera:'cadera',muslo:'muslo',rodilla:'rodilla',gemelo:'gemelo',bajos:'bajos',tiro:'tiro',espalda:'espalda',hombros:'hombros',biceps:'bíceps',muneca:'muñeca',largo_manga:'largo manga',largo_chaqueta:'largo chaqueta',largo_chaleco:'largo chaleco',largo_pantalon:'largo pantalón',talla:'talla chaqueta',zapato:'talla zapato'};
+  const MED_LABELS={altura:'altura',peso:'peso',cuello:'cuello',pecho:'pecho',pecho_alto:'pecho alto',estomago:'estómago',cintura:'cintura',cadera:'cadera',muslo:'muslo',rodilla:'rodilla',gemelo:'gemelo',bajos:'bajos',tiro:'tiro',espalda:'espalda',hombros:'hombros',biceps:'bíceps',muneca:'muñeca',largo_manga:'largo manga',largo_chaqueta_frontal:'largo chaqueta frontal',largo_chaqueta_posterior:'largo chaqueta posterior',largo_chaleco_frontal:'largo chaleco frontal',largo_chaleco_posterior:'largo chaleco posterior',largo_pantalon:'largo pantalón',talla:'talla chaqueta',zapato:'talla zapato'};
   const keys=Object.keys(MED_LABELS);
   const meds=keys.map(k=>{const el=document.getElementById('vr-med-'+k);return el&&el.value?MED_LABELS[k]+': '+el.value+((['talla','zapato'].includes(k))?'':' cm'):null;}).filter(Boolean);
   const desc=document.getElementById('vr-desc')?.value||'';
@@ -6573,7 +6574,7 @@ async function vistaRealGuardar(){
   const color=cv('vr-color');const mat=cv('vr-mat');const morfo=cv('vr-morfo');const obs=cv('vr-obs');
   const promptOut=document.getElementById('vr-prompt-out');const prompt=promptOut?promptOut.value:'';
   const notesParts=[color&&('Color: '+color),mat&&('Tejido: '+mat),morfo&&('Cliente: '+morfo),obs,prompt&&('PROMPT IA: '+prompt)].filter(Boolean);
-  const keys=['altura','peso','cuello','pecho','pecho_alto','estomago','cintura','cadera','muslo','rodilla','gemelo','bajos','tiro','espalda','hombros','biceps','muneca','largo_manga','largo_chaqueta','largo_chaleco','largo_pantalon','talla','zapato'];
+  const keys=['altura','peso','cuello','pecho','pecho_alto','estomago','cintura','cadera','muslo','rodilla','gemelo','bajos','tiro','espalda','hombros','biceps','muneca','largo_manga','largo_chaqueta_frontal','largo_chaqueta_posterior','largo_chaleco_frontal','largo_chaleco_posterior','largo_pantalon','talla','zapato'];
   const meds={};keys.forEach(k=>{const el=document.getElementById('vr-med-'+k);if(el&&el.value)meds[k]=el.value;});
   const {error}=await _sb.from('crm_orders').insert({business_slug:BIZ_SLUG,title:desc,client_id:clientId,client_name:cl?.name||'',status:'vista-real',notes:notesParts.join(' | ')||null,measurements:meds});
   if(error){showToast('Error al guardar');return;}
