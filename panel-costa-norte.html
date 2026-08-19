@@ -4269,6 +4269,31 @@ async function saveEditSolicitud(){
   }catch(e){console.error('saveEditSolicitud',e);toast('⚠ Error al guardar los cambios');}
 }
 
+// Al cancelar o eliminar una clase de perfeccionamiento de un alumno con bono,
+// le devolvemos la sesión (no debe perder la sesión del bono por una cancelación
+// nuestra). Solo aplica a clases de perfeccionamiento — el resto de servicios no
+// se descuentan de "Nuestros Alumnos".
+async function restaurarSesionAlumno(r){
+  try{
+    const servicio=(r.service||'').toLowerCase();
+    if(!servicio.includes('perfeccionamiento'))return;
+    const nombre=(r.client_name||'').trim();
+    if(!nombre)return;
+    const telefono=r.client_phone||null;
+    const key=(telefono||nombre).toLowerCase().trim();
+    const alumno=STUDENTS.find(a=>(a.telefono||a.nombre||'').toLowerCase().trim()===key);
+    if(!alumno)return;
+    const nuevoLeft=(alumno.sesiones_restantes??0)+1;
+    let hist=[];
+    try{hist=JSON.parse(alumno.historial||'[]');}catch{}
+    hist.push({tipo:'Sesión devuelta',fecha:new Date().toISOString().slice(0,10),notas:'Devuelta automáticamente al cancelar/eliminar la clase de perfeccionamiento',ts:Date.now()});
+    const updates={sesiones_restantes:nuevoLeft,historial:JSON.stringify(hist)};
+    await sbUpdate('cn_alumnos',alumno.id,updates);
+    const idx=STUDENTS.findIndex(s=>String(s.id)===String(alumno.id));
+    if(idx>=0)STUDENTS[idx]={...STUDENTS[idx],...updates};
+    toast(`✓ Sesión devuelta a ${alumno.nombre} (${nuevoLeft} disponibles)`);
+  }catch(e){console.error('restaurarSesionAlumno',e);}
+}
 async function syncAlumnoFromSolicitud(r){
   try{
     const nombre=(r.client_name||'').trim();
@@ -4722,6 +4747,7 @@ async function updateSolStatus(status){
   SOL_CUR.status=status;
   if(notes)SOL_CUR.notes=JSON.stringify(notes);
   if(status==='confirmed')await syncAlumnoFromSolicitud(SOL_CUR);
+  if(status==='cancelled')await restaurarSesionAlumno(SOL_CUR);
   renderSolBadge(); renderSolicitudes();
   loadSolicitudes();
   if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
@@ -4736,6 +4762,7 @@ async function deleteSolPermanente(){
     headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}
   });
   if(!res.ok){toast('⚠ Error al eliminar');return;}
+  await restaurarSesionAlumno(SOL_CUR);
   toast('✓ Reserva eliminada');
   closeSolDetail();
   renderSolicitudes();
