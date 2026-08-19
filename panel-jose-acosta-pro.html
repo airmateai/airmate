@@ -2919,11 +2919,14 @@ async function crmSaveCliente(){
   if(fidEl&&fidEl.checked){if(!tagsVal.includes('fidelizado'))tagsVal=(tagsVal?tagsVal+',fidelizado':'fidelizado');}
   else{tagsVal=tagsVal.split(',').map(s=>s.trim()).filter(s=>s&&s!=='fidelizado').join(',');}
   const payload={business_slug:BIZ_SLUG,name,tipo:cv('cf-tipo')||'particular',empresa:cv('cf-empresa')||null,phone:cv('cf-phone')||null,email:cv('cf-email')||null,nif:cv('cf-nif')||null,iban:cv('cf-iban')||null,direccion:cv('cf-direccion')||null,tags:tagsVal||null,notes:cv('cf-notes')||null,measurements:Object.keys(m).length?m:null};
+  let savedId=_crmEditId;
   if(_crmEditId)await _sb.from('crm_clients').update(payload).eq('id',_crmEditId);
-  else await _sb.from('crm_clients').insert(payload);
-  crmCloseModal();crmLoadClientes();showToast('Cliente guardado');
+  else{const {data}=await _sb.from('crm_clients').insert(payload).select().single();savedId=data?.id;}
+  await crmLoadClientes();
+  crmCloseModal();showToast('Cliente guardado');
+  return savedId;
 }
-async function crmDeleteCliente(id){if(!confirm('¿Eliminar cliente?'))return;await _sb.from('crm_clients').delete().eq('id',id);crmLoadClientes();}
+async function crmDeleteCliente(id){if(!confirm('¿Eliminar cliente?'))return;await _sb.from('crm_clients').delete().eq('id',id);await crmLoadClientes();}
 
 // ── FIDELIZADOS ─────────────────────────────────────────────────────────────
 let _filtrFidelizados=false;
