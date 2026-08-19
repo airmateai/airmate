@@ -4170,6 +4170,16 @@ async function saveGrupoEdad(){
   });
   if(!res.ok){toast('⚠ Error al guardar');return;}
   SOL_CUR.notes=JSON.stringify(notes);
+  // Si se ha puesto una edad, marcamos el grupo horario de esta clase como "solo
+  // hasta esa edad" — así queda como grupo de menores para el resto del equipo y
+  // para cuando alguien más reserve en ese mismo hueco.
+  if(edad&&SOL_CUR.starts_at){
+    const dt=new Date(SOL_CUR.starts_at);
+    const fechaGrupo=dt.toISOString().slice(0,10);
+    const horaGrupo=dt.getHours();
+    const tipoGrupo=classifyServiceToRow(SOL_CUR.service);
+    await setRestriccionGrupoHorario(fechaGrupo,horaGrupo,tipoGrupo,grupo,'edad',edad);
+  }
   toast('✓ Grupo/edad actualizados');
   loadSolicitudes();
   if(document.getElementById('page-classes')?.classList.contains('active'))loadGanttMonth();
@@ -4889,6 +4899,18 @@ async function crearGrupoHorario(fecha,hora,tipo,letra,restriccion,valor){
     body:JSON.stringify({business_slug:'costa-norte',fecha,hora,tipo,letra,restriccion:restriccion||null,valor:valor||null})
   });
   if(!r.ok)toast('⚠ Error al crear el grupo (revisa permisos de la tabla cn_grupos_horario)','error');
+  return r.ok;
+}
+// Crea o actualiza la restriccion (idioma/edad) del grupo horario ya existente —
+// a diferencia de crearGrupoHorario (ignore-duplicates, no toca un grupo ya creado),
+// esta SÍ sobreescribe la restriccion de un grupo existente.
+async function setRestriccionGrupoHorario(fecha,hora,tipo,letra,restriccion,valor){
+  const r=await fetch(`${SB_URL_SOL}/rest/v1/cn_grupos_horario`,{
+    method:'POST',
+    headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=minimal,resolution=merge-duplicates'},
+    body:JSON.stringify({business_slug:'costa-norte',fecha,hora,tipo,letra,restriccion:restriccion||null,valor:valor||null})
+  });
+  if(!r.ok)toast('⚠ Error al marcar la restricción del grupo','error');
   return r.ok;
 }
 function siguienteLetraGrupo(fecha,hora,tipo){
