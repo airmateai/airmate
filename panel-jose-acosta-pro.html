@@ -3631,9 +3631,18 @@ async function crmEditEncargo(id){
   _crmEditId=id;
   _encMatsList=Array.isArray(o.materials)?o.materials.map(m=>({...m})):[];
   const body=await _buildEncBody(o);
-  crmOpenModal('Editar encargo',body,`<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button><button class="btn btn-accent" onclick="crmSaveEncargo()">Guardar</button>`);
+  crmOpenModal('Editar encargo',body,`<button class="btn btn-ghost" style="color:#dc2626" onclick="deleteEncargo('${id}')">🗑 Eliminar</button><div style="flex:1"></div><button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button><button class="btn btn-accent" onclick="crmSaveEncargo()">Guardar</button>`);
   encRenderMats();
   if(o.client_id)encCargarMedidas(o.client_id);
+}
+async function deleteEncargo(id){
+  if(!confirm('¿Eliminar este encargo para siempre? Esta acción no se puede deshacer.'))return;
+  const {error}=await _sb.from('crm_orders').delete().eq('id',id);
+  if(error){showToast('Error al eliminar el encargo');return;}
+  crmCloseModal();
+  if(typeof _allEncargos!=='undefined')_allEncargos=_allEncargos.filter(o=>o.id!==id);
+  if(typeof crmLoadEncargos==='function')crmLoadEncargos();
+  showToast('✓ Encargo eliminado');
 }
 
 async function crmSaveEncargo(){
