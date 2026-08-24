@@ -1843,7 +1843,13 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
 <script>
 const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
-const _sb=supabase.createClient(SB_URL,SB_KEY);
+// persistSession:false — sin esto, si en el mismo navegador se ha entrado antes a
+// OTRO panel de Airmate que sí usa sesiones reales (Costa Norte, Stradale...), este
+// panel hereda esa sesión de otro negocio desde el localStorage compartido (mismo
+// proyecto Supabase = misma clave de storage) y las consultas fallan con "0 rows"
+// porque el rol pasa de anon a authenticated de otro negocio. Este panel no usa
+// autenticación real, solo la clave anon, así que no necesita persistir sesión.
+const _sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
 const _sbSrv=_sb; // service_role retirada del cliente por seguridad (fugaba la clave maestra) — funciones que la necesitaban quedan pendientes de mover a un endpoint serverless
 
 let BIZ_SLUG='',BIZ_NAME='';
