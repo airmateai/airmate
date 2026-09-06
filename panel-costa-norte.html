@@ -1300,7 +1300,7 @@ const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJl
 // anterior — con el tiempo eso iba acumulando recursos y ralentizando el
 // navegador. Ahora SB.auth gestiona la sesión (refresh automático) y SB.from()
 // usa el token vigente solo, sin recrear nada.
-const SB=supabase.createClient(SB_URL,SB_ANON);
+const SB=supabase.createClient(SB_URL,SB_ANON,{auth:{storageKey:'cn-panel-auth'}});
 let AUTH_BEARER=SB_ANON;
 async function startAuthSession(access_token,refresh_token){
   await SB.auth.setSession({access_token,refresh_token});
@@ -2335,10 +2335,11 @@ async function addBloqueoHorario(){
 }
 async function deleteBloqueoHorario(id){
   if(!confirm('¿Quitar este bloqueo?'))return;
-  await fetch(`${SB_URL_SOL}/rest/v1/cn_bloqueos_horario?id=eq.${id}`,{
+  const res=await fetch(`${SB_URL_SOL}/rest/v1/cn_bloqueos_horario?id=eq.${id}`,{
     method:'DELETE',
     headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER}
   });
+  if(!res.ok){toast('Error al eliminar el bloqueo. Inténtalo de nuevo.');return;}
   toast('Bloqueo eliminado');
   if(document.getElementById('bloqueos-horario-tbody'))await loadBloqueosHorario();
   if(document.getElementById('gantt-wrap'))await loadGanttMonth();

@@ -164,6 +164,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
   .cal-day{font-size:12px}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -473,6 +474,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
 </div>
 
 <script>
+emailjs.init('i4iBVVP-BkUOOwBE9');
 const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
 const SLUG='costa-norte';
@@ -1301,6 +1303,24 @@ async function enviar(){
 
     // Actualizar concepto con nombre del cliente
     document.getElementById('pay-concepto').textContent=T[LANG].concepto+(nombre+(apellidos?' '+apellidos:''));
+
+    // Email de confirmación — no bloquea la reserva si falla
+    if(email){
+      const horariosPlano=dias.map(ymd=>{
+        const d=fromYMD(ymd);
+        const horas=(S.franjasPorDia[ymd]||[]).map(x=>x.hora).sort().join(' y ');
+        return fmtShort(d)+' → '+horas+' h';
+      }).join(' · ');
+      emailjs.send('service_npmjvvf','template_qnip0mc',{
+        to_email:email,
+        client_name:nombre+(apellidos?' '+apellidos:''),
+        service:tipoLabelsUi[S.tipo]+(S.nivel&&(S.tipo==='surf'||S.tipo==='particular')?' - '+S.nivel:''),
+        fecha:horariosPlano,
+        location:'San Vicente de la Barquera, Cantabria',
+        confirm_code:firstId.slice(0,8).toUpperCase(),
+        reply_to:email,
+      }).catch(e=>console.warn('Email error',e));
+    }
 
     document.getElementById('paso3').classList.add('hidden');
     document.getElementById('success').classList.remove('hidden');
