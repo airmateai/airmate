@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Panel para Escuelas de Surf · Airmate</title>
+<meta name="description" content="Sistema de reservas y agente IA para escuelas de surf: calendario sin choques, bonos con aviso automático, tarifas para grupos y colegios. Desde 597€.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light;
+    --ink:#0b2e33;
+    --ink-soft:#3d5a5c;
+    --paper:#eef1ea;
+    --surface:#ffffff;
+    --line:#c9d3c7;
+    --teal:#1c6b6f;
+    --accent:#e0693e;
+    --accent-soft:#f4d9c9;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Public Sans', system-ui, sans-serif;
+    line-height:1.5;
+  }
+  h1,h2,h3{
+    font-family:'Fraunces', Georgia, serif;
+    text-wrap:balance;
+    font-weight:600;
+    margin:0;
+  }
+  .mono{
+    font-family:'IBM Plex Mono', ui-monospace, monospace;
+    font-variant-numeric:tabular-nums;
+  }
+  a{color:inherit;}
+  img{max-width:100%;}
+  .wrap{max-width:920px;margin:0 auto;padding:0 28px;}
+
+  /* ---- masthead ---- */
+  .masthead{padding:36px 0 0;}
+  .brandline{
+    display:flex;justify-content:space-between;align-items:baseline;
+    border-bottom:1px solid var(--line);padding-bottom:14px;
+  }
+  .brand{font-family:'Fraunces',serif;font-style:italic;font-size:1.05rem;letter-spacing:.01em;}
+  .tag{
+    font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--ink-soft);
+  }
+
+  /* ---- swell divider (canvas) ---- */
+  canvas.swell{display:block;width:100%;height:64px;margin:6px 0 0;}
+
+  /* ---- hero ---- */
+  .hero{padding:34px 0 40px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--accent);margin-bottom:14px;display:block;
+  }
+  h1{font-size:clamp(2rem,4.6vw,3rem);letter-spacing:-.01em;max-width:14ch;}
+  .lede{font-size:1.05rem;color:var(--ink-soft);max-width:52ch;margin-top:16px;}
+
+  /* ---- logbook (case study) ---- */
+  .logbook{
+    background:var(--surface);border:1px solid var(--line);border-radius:2px;
+    padding:26px 28px;margin:8px 0 44px;
+  }
+  .logbook-meta{
+    display:flex;flex-wrap:wrap;gap:18px 28px;
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:.04em;
+    border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:18px;
+  }
+  .logbook-meta span b{display:block;color:var(--ink);font-size:.95rem;
+    font-family:'Public Sans',sans-serif;text-transform:none;letter-spacing:0;margin-top:3px;}
+  .logbook p{max-width:62ch;}
+  .logbook p + p{margin-top:12px;}
+  .redact{
+    background:var(--ink-soft);opacity:.28;border-radius:2px;
+    display:inline-block;width:6.5em;height:.85em;vertical-align:-2px;
+  }
+
+  /* ---- feature grid ---- */
+  section h2{font-size:1.5rem;margin-bottom:6px;}
+  .section-note{color:var(--ink-soft);font-size:.92rem;max-width:56ch;margin-bottom:22px;}
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:48px;
+  }
+  .cell{background:var(--surface);padding:20px 22px;}
+  .cell .num{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--accent);}
+  .cell h3{font-size:1.02rem;margin-top:8px;font-family:'Public Sans',sans-serif;font-weight:600;}
+  .cell p{font-size:.88rem;color:var(--ink-soft);margin-top:6px;}
+
+  /* ---- value math ---- */
+  .valuebar{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);margin-bottom:48px;
+  }
+  .vcell{background:var(--surface);padding:22px;text-align:left;}
+  .vcell .big{font-family:'Fraunces',serif;font-size:2.1rem;color:var(--teal);}
+  .vcell .lbl{font-size:.78rem;color:var(--ink-soft);margin-top:4px;}
+
+  /* ---- interactive demo ---- */
+  .demo-section{margin-bottom:52px;}
+  .demo{
+    background:var(--ink);border-radius:6px;overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .demo-bar{
+    display:flex;align-items:center;gap:18px;padding:10px 16px;
+    background:#082024;
+    border-bottom:1px solid rgba(238,241,234,.12);
+    flex-wrap:wrap;
+  }
+  .demo-dots{display:flex;gap:6px;}
+  .demo-dots span{width:9px;height:9px;border-radius:50%;background:rgba(238,241,234,.22);}
+  .demo-tabs{display:flex;gap:4px;}
+  .demo-tab{
+    font-family:'IBM Plex Mono',monospace;font-size:.74rem;letter-spacing:.02em;
+    background:none;border:none;color:rgba(238,241,234,.6);
+    padding:7px 12px;border-radius:4px;cursor:pointer;
+  }
+  .demo-tab.active{background:rgba(238,241,234,.12);color:var(--paper);}
+  .demo-panel{padding:22px 20px 26px;}
+  .demo-panel-hd{
+    font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(238,241,234,.55);margin-bottom:14px;
+  }
+  .demo-table{width:100%;border-collapse:collapse;font-size:.86rem;color:var(--paper);}
+  .demo-table th{
+    text-align:left;font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;
+    color:rgba(238,241,234,.5);padding:0 10px 8px;
+  }
+  .demo-table td{padding:10px;border-top:1px solid rgba(238,241,234,.1);}
+  .demo-table tbody tr:hover{background:rgba(238,241,234,.05);}
+  .pill{
+    display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:20px;
+    background:rgba(238,241,234,.12);color:var(--paper);
+  }
+  .pill.ok{background:rgba(28,107,111,.35);color:#8fd6d1;}
+  .pill.warn{background:rgba(224,105,62,.22);color:#f0a884;}
+  .pill.alert{background:rgba(224,105,62,.35);color:#f5b696;}
+
+  /* ---- pricing ---- */
+  .pricing{
+    background:var(--ink);color:var(--paper);border-radius:2px;
+    padding:34px 30px;margin-bottom:52px;position:relative;overflow:hidden;
+  }
+  .pricing::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(600px 220px at 85% -10%, rgba(224,105,62,.35), transparent 70%);
+    pointer-events:none;
+  }
+  .pricing-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;position:relative;}
+  .pricing h2{color:var(--paper);}
+  .price{font-family:'IBM Plex Mono',monospace;text-align:right;}
+  .price .setup{font-size:1.9rem;color:var(--accent);}
+  .price .per{font-size:.8rem;color:rgba(238,241,234,.7);margin-top:2px;}
+  .pricing ul{list-style:none;padding:0;margin:24px 0 0;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 24px;
+    position:relative;}
+  .pricing li{font-size:.9rem;padding-left:1.3em;position:relative;color:rgba(238,241,234,.88);}
+  .pricing li::before{content:"→";position:absolute;left:0;color:var(--accent);}
+
+  /* ---- cta ---- */
+  .cta{text-align:left;padding-bottom:60px;}
+  .cta h2{font-size:1.7rem;max-width:18ch;}
+  .cta p{color:var(--ink-soft);margin-top:10px;max-width:50ch;}
+  .cta-row{margin-top:20px;display:flex;gap:14px;flex-wrap:wrap;}
+  .btn{
+    font-family:'IBM Plex Mono',monospace;font-size:.82rem;letter-spacing:.03em;
+    padding:12px 20px;border-radius:2px;text-decoration:none;
+  }
+  .btn.primary{background:var(--accent);color:var(--ink);}
+  .btn.ghost{border:1px solid var(--line);color:var(--ink);}
+  footer{border-top:1px solid var(--line);padding:18px 0 40px;
+    font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--ink-soft);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+
+  @media (max-width:560px){
+    .price{text-align:left;}
+    .pricing-top{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead wrap">
+  <div class="brandline">
+    <span class="brand">Airmate — Marea</span>
+    <span class="tag">Sistema de reservas para escuelas de surf</span>
+  </div>
+</div>
+<canvas class="swell" id="swell"></canvas>
+
+<main class="wrap">
+
+  <section class="hero">
+    <span class="eyebrow">No es un CRM genérico · Es de escuelas de surf</span>
+    <h1>Tu escuela no necesita otro Excel. Necesita dejar de necesitarlo.</h1>
+    <p class="lede">Papel en el mostrador, un Excel que solo entiende una persona, y un WhatsApp que no para en todo el día. Así llevan las reservas la mayoría de escuelas de surf en España — hasta que dos grupos reservan la misma hora y alguien se entera en la arena.</p>
+  </section>
+
+  <div class="logbook">
+    <div class="logbook-meta">
+      <span>Cliente<b>Escuela de surf · Cantabria</b></span>
+      <span>En producción desde<b class="mono">2026</b></span>
+      <span>Monitores activos<b class="mono">Varios, con agenda propia</b></span>
+      <span>Identidad<b><span class="redact"></span></b></span>
+    </div>
+    <p>Esta escuela empezó igual que la mayoría: reservas por WhatsApp, Instagram y llamadas, apuntadas donde se podía — una nota, un Excel, la cabeza del monitor de turno. Funcionaba con poco volumen. En temporada alta, con varios monitores a la vez, dejó de funcionar.</p>
+    <p>Hoy es un sistema especializado en reservas de clases de surf: un agente de IA que responde 24/7 y cualifica el nivel del alumno, un calendario que reparte solo entre monitores, bonos que avisan cuando quedan pocas sesiones, y tarifas especiales ya montadas para grupos y colegios. El dueño ve el día completo desde el móvil, sin abrir el WhatsApp del negocio.</p>
+  </div>
+
+  <section>
+    <h2>Qué lleva el panel</h2>
+    <p class="section-note">No es "un CRM más" adaptado a surf — está pensado desde cero para cómo reserva de verdad una escuela: por niveles, por monitor, por bono, por grupo.</p>
+    <div class="grid">
+      <div class="cell">
+        <span class="num">01</span>
+        <h3>Agente de reservas 24/7</h3>
+        <p>Responde en WhatsApp y web, pregunta el nivel del alumno y agenda directamente, sin que nadie lo toque.</p>
+      </div>
+      <div class="cell">
+        <span class="num">02</span>
+        <h3>Calendario que reparte solo</h3>
+        <p>Asigna monitor por orden de prioridad y evita choques de horario, sin que nadie tenga que mirar tres agendas a la vez.</p>
+      </div>
+      <div class="cell">
+        <span class="num">03</span>
+        <h3>Bonos con aviso automático</h3>
+        <p>El sistema avisa solo cuando a un alumno le quedan pocas sesiones o hay que renovar — nadie tiene que llevar la cuenta a mano.</p>
+      </div>
+      <div class="cell">
+        <span class="num">04</span>
+        <h3>Tarifas para grupos y colegios</h3>
+        <p>Precio por alumno con mínimo de grupo, o precio cerrado para colegios — ya montado, sin negociar cada vez desde cero.</p>
+      </div>
+      <div class="cell">
+        <span class="num">05</span>
+        <h3>Restricciones por nivel e idioma</h3>
+        <p>Bloquea o agrupa franjas por idioma, edad o nivel, para que las clases se formen bien sin coordinarlo a mano.</p>
+      </div>
+      <div class="cell">
+        <span class="num">06</span>
+        <h3>Ficha de cada alumno</h3>
+        <p>Nivel, pack, sesiones restantes e historial — visible al instante, no repartido entre WhatsApp, papel y memoria.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="demo-section">
+    <h2>Muévete por el panel</h2>
+    <p class="section-note">Esto no son capturas — es una versión de ejemplo, con datos ficticios, para que veas cómo se navega de verdad. Cambia de pestaña.</p>
+    <div class="demo">
+      <div class="demo-bar">
+        <div class="demo-dots"><span></span><span></span><span></span></div>
+        <div class="demo-tabs">
+          <button class="demo-tab active" data-tab="agenda">Agenda</button>
+          <button class="demo-tab" data-tab="alumnos">Alumnos &amp; bonos</button>
+          <button class="demo-tab" data-tab="tarifas">Tarifas grupo</button>
+        </div>
+      </div>
+
+      <div class="demo-panel" id="panel-agenda">
+        <div class="demo-panel-hd">Clases de hoy · Martes</div>
+        <table class="demo-table">
+          <thead><tr><th>Hora</th><th>Tipo</th><th>Nivel</th><th>Monitor</th><th>Plazas</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">10:00</td><td>Grupal</td><td><span class="pill ok">Iniciación</span></td><td>Marco</td><td class="mono">6/8</td></tr>
+            <tr><td class="mono">12:00</td><td>Privada</td><td><span class="pill warn">Intermedio</span></td><td>Nagore</td><td class="mono">1/1</td></tr>
+            <tr><td class="mono">17:30</td><td>Grupal</td><td><span class="pill ok">Iniciación</span></td><td>Marco</td><td class="mono">8/8</td></tr>
+            <tr><td class="mono">18:30</td><td>SUP</td><td><span class="pill">Todos</span></td><td>Nagore</td><td class="mono">3/6</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="demo-panel" id="panel-alumnos" hidden>
+        <div class="demo-panel-hd">Alumnos activos</div>
+        <table class="demo-table">
+          <thead><tr><th>Alumno</th><th>Nivel</th><th>Pack</th><th>Sesiones</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>L. Ferreira</td><td><span class="pill">Intermedio</span></td><td>Bono 10</td><td class="mono">7 rest.</td><td></td></tr>
+            <tr><td>D. Otxoa</td><td><span class="pill ok">Iniciación</span></td><td>Bono 5</td><td class="mono">1 rest.</td><td><span class="pill warn">Pocas sesiones</span></td></tr>
+            <tr><td>M. Bianchi</td><td><span class="pill">Avanzado</span></td><td>Bono 10</td><td class="mono">0 rest.</td><td><span class="pill alert">Renovar bono</span></td></tr>
+            <tr><td>P. Cardoso</td><td><span class="pill ok">Kids</span></td><td>Semana</td><td class="mono">3 rest.</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="demo-panel" id="panel-tarifas" hidden>
+        <div class="demo-panel-hd">Tarifas para grupo · configurador</div>
+        <table class="demo-table">
+          <thead><tr><th>Tipo de grupo</th><th>Precio</th><th>Condición</th></tr></thead>
+          <tbody>
+            <tr><td>Estándar</td><td class="mono">28 €/alumno</td><td>Sin mínimo</td></tr>
+            <tr><td>Colegio</td><td class="mono">25 €/alumno</td><td>Mínimo 8 alumnos</td></tr>
+            <tr><td>Colegio · grupo grande</td><td class="mono">22 €/alumno</td><td>Mínimo 15 alumnos</td></tr>
+            <tr><td>Campamento · cerrado</td><td class="mono">18 €/alumno</td><td>Precio cerrado, 25+ alumnos</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:.8rem;color:var(--ink-soft);margin-top:12px;">Material y seguro de actividad incluidos. Configurado una vez, se aplica solo cuando entra un lead de grupo.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Por qué compensa</h2>
+    <p class="section-note">Cálculo con datos de mercado del sector, no del cliente concreto — para que puedas verificarlo con tus propios números antes de decidir.</p>
+    <div class="valuebar">
+      <div class="vcell">
+        <div class="big mono">~5h</div>
+        <div class="lbl">a la semana que deja de perderse en WhatsApp gestionando reservas manualmente</div>
+      </div>
+      <div class="vcell">
+        <div class="big mono">&lt;1min</div>
+        <div class="lbl">tiempo de respuesta a un lead que llega fuera de horario, en vez de al día siguiente</div>
+      </div>
+      <div class="vcell">
+        <div class="big mono">0</div>
+        <div class="lbl">clases dobladas por error de agenda entre monitores</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="pricing">
+    <div class="pricing-top">
+      <div>
+        <h2>Panel + Agente de Reservas</h2>
+        <p style="margin-top:8px;max-width:36ch;color:rgba(238,241,234,.78);">La misma base que ya funciona en la escuela de Cantabria, adaptada a tu marca, tus niveles y tu tarifario.</p>
+      </div>
+      <div class="price">
+        <div class="setup">597 € <span style="font-size:1rem;">setup</span></div>
+        <div class="per">+ 79 €/mes · sin permanencia</div>
+      </div>
+    </div>
+    <ul>
+      <li>Panel con tu marca y tus tipos de clase</li>
+      <li>Agente IA en WhatsApp y web, 24/7</li>
+      <li>Calendario por monitor con drag &amp; drop</li>
+      <li>Bonos de clases y ficha de alumno</li>
+      <li>Pipeline para grupos, campamentos y empresas</li>
+      <li>Entrega en 5–7 días</li>
+    </ul>
+  </div>
+
+  <section class="cta">
+    <h2>¿Vale la pena verlo en marcha?</h2>
+    <p>15 minutos por videollamada, con el panel real delante — sin nombres ni datos de alumnos, solo cómo se mueve un día de clases de principio a fin.</p>
+    <div class="cta-row">
+      <a class="btn primary" href="mailto:airmateai@gmail.com?subject=Panel%20para%20escuela%20de%20surf">Pedir demo → airmateai@gmail.com</a>
+      <a class="btn ghost" href="https://airmate.es">Ver airmate.es</a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <span>Airmate — paneles y agentes IA a medida</span>
+  <span>Marea / escuelas de surf, Cantabria, 2026</span>
+</footer>
+
+<script>
+(function(){
+  var c = document.getElementById('swell');
+  function draw(){
+    var dpr = window.devicePixelRatio || 1;
+    var w = c.clientWidth, h = c.clientHeight;
+    c.width = w*dpr; c.height = h*dpr;
+    var ctx = c.getContext('2d');
+    ctx.scale(dpr,dpr);
+    ctx.clearRect(0,0,w,h);
+    function wave(amp, freq, phase, color, alpha, width){
+      ctx.beginPath();
+      for(var x=0;x<=w;x+=4){
+        var y = h/2 + Math.sin((x/w)*Math.PI*freq + phase)*amp;
+        if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = width;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    wave(10, 3.2, 0, '#c9d3c7', 1, 1);
+    wave(16, 1.6, 1.1, '#1c6b6f', .55, 1.3);
+  }
+  draw();
+  window.addEventListener('resize', draw);
+})();
+
+(function(){
+  var tabs = document.querySelectorAll('.demo-tab');
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      tabs.forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      document.querySelectorAll('.demo-panel').forEach(function(p){ p.hidden = true; });
+      document.getElementById('panel-' + tab.dataset.tab).hidden = false;
+    });
+  });
+})();
+</script>
+</body>
+</html>
