@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Demo Panel · Buena Onda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light;
+    --navy:#15386a; --navy-dk:#0d2547; --navy-mid:#1f4a8a;
+    --teal:#07aaca; --teal-dk:#05829c;
+    --coral:#fba458; --coral-dk:#d97f34;
+    --ink-soft:#5b7086; --paper:#f6f9fb; --surface:#ffffff; --line:#dfe6ec;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{background:var(--paper);color:var(--navy);font-family:'Inter',system-ui,sans-serif;}
+  h1,h2,h3{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0;}
+  .mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;}
+  img{max-width:100%;}
+
+  .app{display:grid;grid-template-columns:230px 1fr;min-height:100vh;}
+
+  /* sidebar */
+  .sidebar{background:var(--navy);color:#fff;padding:20px 14px;display:flex;flex-direction:column;}
+  .side-brand{display:flex;align-items:center;gap:10px;padding:6px 10px 20px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:14px;}
+  .side-brand img{height:40px;width:auto;background:#fff;border-radius:6px;padding:3px 6px;}
+  .side-tag{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.55);padding:0 10px 14px;text-transform:uppercase;letter-spacing:.06em;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;cursor:pointer;
+    font-size:.88rem;color:rgba(255,255,255,.75);margin-bottom:2px;
+  }
+  .nav-item:hover{background:rgba(255,255,255,.08);}
+  .nav-item.active{background:rgba(7,170,202,.28);color:#fff;font-weight:600;}
+  .nav-item .ic{width:16px;text-align:center;font-size:.9rem;}
+  .side-foot{margin-top:auto;padding:12px 10px 0;font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:rgba(255,255,255,.45);border-top:1px solid rgba(255,255,255,.12);}
+
+  /* main */
+  .main{padding:28px 34px;overflow-x:auto;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px;flex-wrap:wrap;gap:10px;}
+  .topbar h1{font-size:1.4rem;}
+  .topbar .sub{font-size:.85rem;color:var(--ink-soft);margin-top:2px;}
+  .demo-badge{
+    font-family:'IBM Plex Mono',monospace;font-size:.68rem;background:var(--coral);color:var(--navy-dk);
+    padding:5px 12px;border-radius:100px;font-weight:600;
+  }
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  /* kpis */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
+  .kpi .lbl{font-size:.72rem;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
+  .kpi .val{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:1.6rem;margin-top:6px;}
+  .kpi .val.teal{color:var(--teal-dk);}
+
+  /* cards / tables */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:20px;}
+  .card h3{font-size:1rem;margin-bottom:14px;}
+  table{width:100%;border-collapse:collapse;font-size:.88rem;}
+  th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);padding:0 10px 10px;font-weight:500;}
+  td{padding:11px 10px;border-top:1px solid var(--line);}
+  tr:hover td{background:var(--paper);}
+  .pill{display:inline-block;font-size:.72rem;padding:2px 9px;border-radius:20px;background:#eef3f6;color:var(--ink-soft);}
+  .pill.ok{background:#e3f6fa;color:var(--teal-dk);}
+  .pill.warn{background:#fdecd9;color:var(--coral-dk);}
+  .pill.alert{background:#fbe0d4;color:var(--coral-dk);font-weight:600;}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--navy);color:var(--teal);display:inline-flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:.78rem;margin-right:8px;vertical-align:middle;}
+
+  /* calendar grid */
+  .cal-grid{display:grid;grid-template-columns:70px repeat(7,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .cal-cell{background:var(--surface);padding:8px;min-height:64px;font-size:.72rem;}
+  .cal-hd{background:var(--navy);color:#fff;padding:8px;font-family:'IBM Plex Mono',monospace;font-size:.68rem;text-align:center;text-transform:uppercase;}
+  .cal-time{background:var(--paper);color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:.68rem;padding:8px;text-align:right;}
+  .cal-ev{background:#e3f6fa;color:var(--teal-dk);border-radius:5px;padding:3px 5px;font-size:.66rem;margin-bottom:3px;font-weight:600;}
+  .cal-ev.b{background:#eaf1fb;color:#2f6fb0;}
+  .cal-ev.c{background:#fdecd9;color:var(--coral-dk);}
+
+  /* kanban */
+  .kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;overflow-x:auto;}
+  .kan-col{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:180px;}
+  .kan-col h4{font-family:'IBM Plex Mono',monospace;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin:0 0 12px;}
+  .kan-card{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:.84rem;margin-bottom:8px;}
+  .kan-card b{display:block;font-size:.76rem;color:var(--ink-soft);font-weight:500;margin-top:3px;}
+
+  /* reservas (vista cliente) */
+  .client-mock{max-width:480px;margin:0 auto;}
+  .browser-chrome{background:#e7edf2;border-radius:12px 12px 0 0;padding:10px 14px;display:flex;align-items:center;gap:8px;}
+  .browser-chrome .dot{width:9px;height:9px;border-radius:50%;background:#c7d2da;}
+  .browser-chrome .url{flex:1;background:#fff;border-radius:6px;padding:5px 10px;font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--ink-soft);margin-left:6px;}
+  .booking-widget{background:var(--navy);border-radius:0 0 16px 16px;padding:24px;color:#fff;}
+  .bw-hd{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:4px;}
+  .bw-title{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:1.15rem;margin-bottom:18px;}
+  .bw-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:rgba(255,255,255,.55);margin-bottom:8px;}
+  .bw-row{margin-bottom:18px;}
+  .bw-pills{display:flex;gap:8px;flex-wrap:wrap;}
+  .bw-pill{font-size:.85rem;padding:8px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.8);cursor:pointer;background:none;font-family:inherit;}
+  .bw-pill.sel{background:var(--teal);color:#fff;border-color:var(--teal);font-weight:600;}
+  .bw-slots{display:flex;flex-direction:column;gap:8px;}
+  .bw-slot{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px solid rgba(255,255,255,.18);border-radius:10px;font-size:.88rem;cursor:pointer;background:none;color:#fff;width:100%;font-family:inherit;}
+  .bw-slot.sel{border-color:var(--teal);background:rgba(7,170,202,.15);}
+  .bw-slot .cnt{font-family:'IBM Plex Mono',monospace;font-size:.76rem;color:rgba(255,255,255,.6);}
+  .bw-confirm-btn{width:100%;padding:13px;background:var(--coral);color:var(--navy-dk);border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:6px;}
+  .bw-confirm{margin-top:14px;background:rgba(7,170,202,.15);border:1px solid rgba(7,170,202,.5);color:#bdf0fb;border-radius:10px;padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:.8rem;display:none;}
+  .reserva-note{max-width:480px;margin:16px auto 0;color:var(--ink-soft);font-size:.85rem;text-align:center;}
+
+  @media (max-width:820px){
+    .app{grid-template-columns:1fr;}
+    .sidebar{flex-direction:row;overflow-x:auto;padding:12px;}
+    .side-brand,.side-tag,.side-foot{display:none;}
+    .nav-item{flex-shrink:0;}
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    .cal-grid{grid-template-columns:50px repeat(7,minmax(70px,1fr));}
+    .kanban{grid-template-columns:repeat(4,200px);}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <nav class="sidebar">
+    <div class="side-brand"><img src="logo-buenaonda.png" alt="Buena Onda"></div>
+    <div class="side-tag">Panel de gestión · Demo</div>
+    <div class="nav-item active" data-view="dashboard"><span class="ic">◆</span> Dashboard</div>
+    <div class="nav-item" data-view="agenda"><span class="ic">▦</span> Agenda</div>
+    <div class="nav-item" data-view="alumnos"><span class="ic">●</span> Alumnos &amp; bonos</div>
+    <div class="nav-item" data-view="tarifas"><span class="ic">€</span> Packs &amp; tarifas</div>
+    <div class="nav-item" data-view="grupos"><span class="ic">▤</span> Grupos &amp; colegios</div>
+    <div class="nav-item" data-view="reservas"><span class="ic">↗</span> Reservas (vista cliente)</div>
+    <div class="side-foot">Datos de ejemplo, ficticios.<br>Powered by Airmate.</div>
+  </nav>
+
+  <main class="main">
+
+    <div class="topbar">
+      <div>
+        <h1 id="view-title">Dashboard</h1>
+        <div class="sub">Escuela Buena Onda · San Vicente de la Barquera</div>
+      </div>
+      <span class="demo-badge">Demo con datos ficticios</span>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section class="view active" id="v-dashboard">
+      <div class="kpis">
+        <div class="kpi"><div class="lbl">Clases hoy</div><div class="val">6</div></div>
+        <div class="kpi"><div class="lbl">Alumnos activos</div><div class="val">42</div></div>
+        <div class="kpi"><div class="lbl">Bonos por renovar</div><div class="val teal">3</div></div>
+        <div class="kpi"><div class="lbl">Leads de grupo abiertos</div><div class="val">2</div></div>
+      </div>
+      <div class="card">
+        <h3>Próximas clases</h3>
+        <table>
+          <thead><tr><th>Hora</th><th>Tipo</th><th>Monitor</th><th>Plazas</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">10:00</td><td>Surfkids</td><td>Arjuna</td><td class="mono">6/8</td><td><span class="pill ok">Confirmada</span></td></tr>
+            <tr><td class="mono">12:00</td><td>SUP olas</td><td>Pablo</td><td class="mono">3/6</td><td><span class="pill ok">Confirmada</span></td></tr>
+            <tr><td class="mono">17:30</td><td>Intensivo</td><td>Arjuna</td><td class="mono">8/8</td><td><span class="pill warn">Completa</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- AGENDA -->
+    <section class="view" id="v-agenda">
+      <div class="card">
+        <h3>Semana · vista calendario</h3>
+        <div class="cal-grid">
+          <div class="cal-hd"></div>
+          <div class="cal-hd">Lun</div><div class="cal-hd">Mar</div><div class="cal-hd">Mié</div>
+          <div class="cal-hd">Jue</div><div class="cal-hd">Vie</div><div class="cal-hd">Sáb</div><div class="cal-hd">Dom</div>
+
+          <div class="cal-time">10:00</div>
+          <div class="cal-cell"></div><div class="cal-cell"><div class="cal-ev">Surfkids</div></div><div class="cal-cell"></div>
+          <div class="cal-cell"><div class="cal-ev">Surfkids</div></div><div class="cal-cell"></div>
+          <div class="cal-cell"><div class="cal-ev">Surfkids</div><div class="cal-ev b">SUP</div></div><div class="cal-cell"><div class="cal-ev">Iniciación</div></div>
+
+          <div class="cal-time">12:00</div>
+          <div class="cal-cell"><div class="cal-ev b">SUP</div></div><div class="cal-cell"></div><div class="cal-cell"><div class="cal-ev b">SUP</div></div>
+          <div class="cal-cell"></div><div class="cal-cell"><div class="cal-ev b">SUP</div></div>
+          <div class="cal-cell"><div class="cal-ev c">Privada</div></div><div class="cal-cell"></div>
+
+          <div class="cal-time">17:30</div>
+          <div class="cal-cell"><div class="cal-ev">Intensivo</div></div><div class="cal-cell"><div class="cal-ev">Intensivo</div></div><div class="cal-cell"></div>
+          <div class="cal-cell"><div class="cal-ev">Intensivo</div></div><div class="cal-cell"><div class="cal-ev">Intensivo</div></div>
+          <div class="cal-cell"></div><div class="cal-cell"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ALUMNOS -->
+    <section class="view" id="v-alumnos">
+      <div class="card">
+        <h3>Alumnos activos</h3>
+        <table>
+          <thead><tr><th>Alumno</th><th>Nivel</th><th>Pack</th><th>Sesiones</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><span class="avatar">N</span>Nora</td><td><span class="pill ok">Surfkids</span></td><td>Bono 10</td><td class="mono">4 rest.</td><td></td></tr>
+            <tr><td><span class="avatar">D</span>Diego</td><td><span class="pill">Iniciación</span></td><td>Bono 5</td><td class="mono">1 rest.</td><td><span class="pill warn">Pocas sesiones</span></td></tr>
+            <tr><td><span class="avatar">M</span>Marta</td><td><span class="pill">Intensivo</span></td><td>5 días</td><td class="mono">2/5</td><td></td></tr>
+            <tr><td><span class="avatar">L</span>Luca</td><td><span class="pill">SUP</span></td><td>Bono 10</td><td class="mono">0 rest.</td><td><span class="pill alert">Renovar bono</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TARIFAS -->
+    <section class="view" id="v-tarifas">
+      <div class="card">
+        <h3>Packs &amp; tarifas</h3>
+        <table>
+          <thead><tr><th>Pack</th><th>Precio</th><th>Condición</th></tr></thead>
+          <tbody>
+            <tr><td>Clase suelta iniciación</td><td class="mono">32 €</td><td>—</td></tr>
+            <tr><td>Bono 5 clases</td><td class="mono">140 €</td><td>Válido 3 meses</td></tr>
+            <tr><td>Intensivo 5 días</td><td class="mono">150 €</td><td>Grupo reducido</td></tr>
+            <tr><td>Surfkids · mensual</td><td class="mono">90 €</td><td>1 clase/semana</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Tarifas de grupo</h3>
+        <table>
+          <thead><tr><th>Tipo</th><th>Precio</th><th>Condición</th></tr></thead>
+          <tbody>
+            <tr><td>Colegio</td><td class="mono">25 €/alumno</td><td>Mínimo 8</td></tr>
+            <tr><td>Campamento cerrado</td><td class="mono">18 €/alumno</td><td>25+ alumnos</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- GRUPOS -->
+    <section class="view" id="v-grupos">
+      <div class="kanban">
+        <div class="kan-col"><h4>Nuevo</h4><div class="kan-card">Colegio Barquera<b>32 alumnos</b></div></div>
+        <div class="kan-col"><h4>Contactado</h4><div class="kan-card">Campamento verano<b>18 personas</b></div></div>
+        <div class="kan-col"><h4>Propuesta</h4><div class="kan-card">Empresa Cantabria<b>10 personas</b></div></div>
+        <div class="kan-col"><h4>Confirmado</h4><div class="kan-card">Colegio Suances<b>22 alumnos</b></div></div>
+      </div>
+    </section>
+
+    <!-- RESERVAS (vista cliente) -->
+    <section class="view" id="v-reservas">
+      <div class="card" style="background:transparent;border:none;padding:0;">
+        <h3 style="margin-bottom:6px;">Así reserva un cliente desde tu propia web</h3>
+        <p style="color:var(--ink-soft);font-size:.9rem;margin:0 0 20px;max-width:56ch;">Este widget se integra directamente en escueladesurfbuenaonda.com — el cliente elige nivel, día y hora, y la clase queda agendada al instante en tu panel, sin que nadie tenga que contestar por WhatsApp.</p>
+        <div class="client-mock">
+          <div class="browser-chrome">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="url">escueladesurfbuenaonda.com/reservar</span>
+          </div>
+          <div class="booking-widget">
+            <div class="bw-hd">Reserva tu clase</div>
+            <div class="bw-title">Buena Onda · Escuela de Surf</div>
+            <div class="bw-row">
+              <div class="bw-label">Nivel</div>
+              <div class="bw-pills" id="bw-nivel">
+                <button class="bw-pill sel" data-v="Iniciación">Iniciación</button>
+                <button class="bw-pill" data-v="Surfkids">Surfkids</button>
+                <button class="bw-pill" data-v="Intensivo">Intensivo</button>
+                <button class="bw-pill" data-v="SUP">SUP</button>
+              </div>
+            </div>
+            <div class="bw-row">
+              <div class="bw-label">Día</div>
+              <div class="bw-pills" id="bw-dia">
+                <button class="bw-pill sel" data-v="Sábado">Sábado</button>
+                <button class="bw-pill" data-v="Domingo">Domingo</button>
+                <button class="bw-pill" data-v="Lunes">Lunes</button>
+              </div>
+            </div>
+            <div class="bw-row">
+              <div class="bw-label">Horario disponible</div>
+              <div class="bw-slots" id="bw-slots">
+                <button class="bw-slot sel" data-v="10:00"><span>10:00 · Grupo reducido</span><span class="cnt">6 plazas</span></button>
+                <button class="bw-slot" data-v="12:00"><span>12:00</span><span class="cnt">1 plaza</span></button>
+              </div>
+            </div>
+            <button class="bw-confirm-btn" id="bw-confirm-btn">Reservar plaza</button>
+            <div class="bw-confirm" id="bw-confirm">✓ Reserva confirmada</div>
+          </div>
+        </div>
+        <p class="reserva-note">Ejemplo interactivo — prueba a cambiar nivel, día y hora, y pulsa "Reservar plaza".</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  var items = document.querySelectorAll('.nav-item');
+  var title = document.getElementById('view-title');
+  items.forEach(function(it){
+    it.addEventListener('click', function(){
+      items.forEach(function(i){ i.classList.remove('active'); });
+      it.classList.add('active');
+      document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+      document.getElementById('v-' + it.dataset.view).classList.add('active');
+      title.textContent = it.textContent.trim();
+    });
+  });
+})();
+
+(function(){
+  function wireGroup(sel){
+    document.querySelectorAll(sel + ' .bw-pill, ' + sel + ' .bw-slot').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        this.parentElement.querySelectorAll('.bw-pill, .bw-slot').forEach(function(b){ b.classList.remove('sel'); });
+        this.classList.add('sel');
+        document.getElementById('bw-confirm').style.display = 'none';
+      });
+    });
+  }
+  wireGroup('#bw-nivel'); wireGroup('#bw-dia'); wireGroup('#bw-slots');
+  document.getElementById('bw-confirm-btn').addEventListener('click', function(){
+    var nivel = document.querySelector('#bw-nivel .sel').dataset.v;
+    var dia = document.querySelector('#bw-dia .sel').dataset.v;
+    var hora = document.querySelector('#bw-slots .sel').dataset.v;
+    var c = document.getElementById('bw-confirm');
+    c.textContent = '✓ Reserva confirmada · ' + dia + ' ' + hora + ' · ' + nivel;
+    c.style.display = 'block';
+  });
+})();
+</script>
+</body>
+</html>
