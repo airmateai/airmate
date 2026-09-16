@@ -168,6 +168,7 @@
       <div class="nav-item" data-view="alumnos"><span class="ic">●</span> Alumnos &amp; bonos</div>
       <div class="nav-item" data-view="tarifas"><span class="ic">€</span> Packs &amp; tarifas</div>
       <div class="nav-item" data-view="grupos"><span class="ic">▤</span> Grupos &amp; colegios</div>
+      <div class="nav-item" data-view="monitores"><span class="ic">◈</span> Monitores</div>
       <div class="sb-section">Cliente</div>
       <div class="nav-item" data-view="reservas"><span class="ic">↗</span> Reservas (vista cliente)</div>
     </div>
@@ -305,9 +306,33 @@
           <thead><tr><th>Tipo</th><th>Precio</th><th>Condición</th></tr></thead>
           <tbody>
             <tr><td>Colegio</td><td class="mono">25 €/alumno</td><td>Mínimo 8</td></tr>
+            <tr><td>Colegio · grupo grande</td><td class="mono">22 €/alumno</td><td>Mínimo 15</td></tr>
             <tr><td>Campamento cerrado</td><td class="mono">18 €/alumno</td><td>25+ alumnos</td></tr>
           </tbody>
         </table>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Calculador de presupuesto de grupo</div><span class="card-hd-meta">Se genera al momento</span></div>
+        <div class="card-body">
+          <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px;">
+            <div>
+              <div class="bw-label" style="color:var(--txt3);margin-bottom:6px;">Tipo de grupo</div>
+              <select id="grp-tipo" style="padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:.85rem;font-family:inherit;background:var(--surface);color:var(--txt);">
+                <option value="25">Colegio (25 €/alumno, mín. 8)</option>
+                <option value="22">Colegio grupo grande (22 €/alumno, mín. 15)</option>
+                <option value="18">Campamento cerrado (18 €/alumno, 25+)</option>
+              </select>
+            </div>
+            <div>
+              <div class="bw-label" style="color:var(--txt3);margin-bottom:6px;">Nº de alumnos</div>
+              <input id="grp-num" type="number" value="20" min="1" style="padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:.85rem;width:90px;font-family:'IBM Plex Mono',monospace;">
+            </div>
+          </div>
+          <div style="background:var(--bg);border-radius:10px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div style="font-size:.85rem;color:var(--txt2);">Material incluido: tabla soft + neopreno por persona · Seguro de actividad incluido · Monitor titulado ISA</div>
+            <div style="font-family:var(--display);font-size:1.5rem;font-weight:700;color:var(--teal-dk);white-space:nowrap;" id="grp-total">500 €</div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -318,6 +343,26 @@
         <div class="kan-col"><div class="kan-col-hd"><span class="kan-col-name">Contactado</span><span class="kan-col-count">1</span></div><div class="kan-card">Campamento verano<b>18 personas</b></div></div>
         <div class="kan-col"><div class="kan-col-hd"><span class="kan-col-name">Propuesta</span><span class="kan-col-count">1</span></div><div class="kan-card">Empresa Cantabria<b>10 personas</b></div></div>
         <div class="kan-col"><div class="kan-col-hd"><span class="kan-col-name">Confirmado</span><span class="kan-col-count">1</span></div><div class="kan-card">Colegio Suances<b>22 alumnos</b></div></div>
+      </div>
+    </section>
+
+    <!-- MONITORES -->
+    <section class="view" id="v-monitores">
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Equipo de monitores</div><span class="card-hd-meta">Orden de prioridad al asignar</span></div>
+        <table>
+          <thead><tr><th>#</th><th>Monitor</th><th>Rol</th><th>Clases esta semana</th><th>Idiomas</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">1</td><td><span class="avatar">A</span>Arjuna Zapatero</td><td><span class="tag tag-info">Director / Senior</span></td><td class="mono">14</td><td>ES · EN</td></tr>
+            <tr><td class="mono">2</td><td><span class="avatar">P</span>Pablo de la Mora</td><td><span class="tag tag-info">Monitor titulado ISA</span></td><td class="mono">11</td><td>ES · FR</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Restricciones de horario</div><span class="card-hd-meta">Bloqueos por franja</span></div>
+        <div class="card-body" style="font-size:.85rem;color:var(--txt2);">
+          Bloquea una franja entera para que no se pueda reservar, o restríngela por idioma/edad para agrupar mejor las clases (por ejemplo, "Surfkids solo en español, de 5 a 8 años").
+        </div>
       </div>
     </section>
 
@@ -380,6 +425,7 @@
     alumnos: 'Ficha, nivel, bonos e historial',
     tarifas: 'Packs individuales y tarifas de grupo',
     grupos: 'Colegios, campamentos y empresas',
+    monitores: 'Equipo, prioridad y restricciones de horario',
     reservas: 'Lo que ve un cliente en tu web'
   };
   items.forEach(function(it){
@@ -414,6 +460,18 @@
     c.textContent = '✓ Reserva confirmada · ' + dia + ' ' + hora + ' · ' + nivel;
     c.style.display = 'block';
   });
+})();
+
+(function(){
+  var tipo = document.getElementById('grp-tipo');
+  var num = document.getElementById('grp-num');
+  var total = document.getElementById('grp-total');
+  function calc(){
+    var precio = parseFloat(tipo.value) || 0;
+    var n = parseInt(num.value) || 0;
+    total.textContent = (precio * n).toLocaleString('es-ES') + ' €';
+  }
+  if(tipo && num){ tipo.addEventListener('change', calc); num.addEventListener('input', calc); calc(); }
 })();
 </script>
 </body>
