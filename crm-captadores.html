@@ -265,7 +265,7 @@ tr:hover td{background:var(--blue-light);}
       <div class="goal-card">
         <div class="goal-top">
           <div class="goal-title">Objetivo diario<span>Contactos nuevos añadidos hoy</span></div>
-          <div class="goal-num" id="goal-num">0<small>/50</small></div>
+          <div class="goal-num" id="goal-num">0<small>/5</small></div>
         </div>
         <div class="goal-bar-wrap"><div class="goal-bar" id="goal-bar" style="width:0%"></div></div>
         <div class="goal-note" id="goal-note">¡Vamos, todavía te quedan contactos por meter hoy!</div>
@@ -813,9 +813,9 @@ function renderMio(){
   const misContactos=ALL_CONTACTOS.filter(c=>c.captador===SESSION.nombre);
   const hoyContactos=misContactos.filter(c=>c.fecha_alta===hoy);
   const pct=Math.min(100,Math.round(hoyContactos.length/50*100));
-  document.getElementById('goal-num').innerHTML=hoyContactos.length+'<small>/50</small>';
+  document.getElementById('goal-num').innerHTML=hoyContactos.length+'<small>/5</small>';
   document.getElementById('goal-bar').style.width=pct+'%';
-  document.getElementById('goal-note').textContent = hoyContactos.length>=50 ? '¡Objetivo del día completado! Gran trabajo.' : `Te quedan ${50-hoyContactos.length} contactos para llegar a tu objetivo de hoy.`;
+  document.getElementById('goal-note').textContent = hoyContactos.length>=5 ? '¡Objetivo del día completado! Gran trabajo.' : `Te quedan ${5-hoyContactos.length} contactos para llegar a tu objetivo de hoy.`;
 
   const followup=misContactos.filter(c=>!c.seguimiento_hecho && c.fecha_alta<hoy);
   document.getElementById('mio-kpi-followup').textContent=followup.length;
@@ -840,11 +840,11 @@ function renderMio(){
   const maxDia=Math.max(1,...dias.map(d=>misContactos.filter(c=>c.fecha_alta===d).length));
   document.getElementById('mio-week-chart').innerHTML=dias.map(d=>{
     const n=misContactos.filter(c=>c.fecha_alta===d).length;
-    const h=Math.max(4,Math.round(n/Math.max(maxDia,50)*100));
+    const h=Math.max(4,Math.round(n/Math.max(maxDia,5)*100));
     const esHoy=d===hoy;
     const dow=diasES[new Date(d+'T00:00:00').getDay()];
     return `<div class="week-col">
-      <div class="week-bar-wrap"><div class="week-bar${n>=50?' full':''}" style="height:${h}%"><span class="week-bar-num">${n}</span></div></div>
+      <div class="week-bar-wrap"><div class="week-bar${n>=5?' full':''}" style="height:${h}%"><span class="week-bar-num">${n}</span></div></div>
       <div class="week-day${esHoy?' today':''}">${dow}</div>
     </div>`;
   }).join('');
@@ -894,7 +894,7 @@ function renderResumen(){
   const hoyContactos=ALL_CONTACTOS.filter(c=>c.fecha_alta===hoy);
   const numCaptadores=CAPTADORES_LIST.length||1;
   document.getElementById('res-kpi-hoy').textContent=hoyContactos.length;
-  document.getElementById('res-kpi-hoy-sub').textContent=`Objetivo: ${numCaptadores*50}`;
+  document.getElementById('res-kpi-hoy-sub').textContent=`Objetivo: ${numCaptadores*5}`;
   document.getElementById('res-kpi-interesados').textContent=ALL_CONTACTOS.filter(c=>['interesado','reunion','cerrado'].includes(c.etapa)).length;
   document.getElementById('res-kpi-reuniones').textContent=ALL_CONTACTOS.filter(c=>c.etapa==='reunion').length;
   document.getElementById('res-kpi-followup').textContent=ALL_CONTACTOS.filter(c=>!c.seguimiento_hecho && c.fecha_alta<hoy).length;
@@ -918,7 +918,7 @@ function renderResumen(){
       <div class="rank-num${i===0&&p.n>0?' gold':''}">${i+1}</div>
       <div class="rank-name">${esc(p.nombre)}</div>
       <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(p.n/maxR*100)}%"></div></div>
-      <div class="rank-count">${p.n}/50</div>
+      <div class="rank-count">${p.n}/5</div>
     </div>`).join(''):'<div class="empty-state"><p>Sin captadores dados de alta</p></div>';
 }
 
