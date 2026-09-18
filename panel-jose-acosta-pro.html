@@ -6128,14 +6128,12 @@ function tpvVista(v) {
   document.getElementById('tpv-caja').style.display = v==='caja'?'grid':'none';
   document.getElementById('tpv-historial').style.display = v==='historial'?'block':'none';
   var bc=document.getElementById('tpv-btn-caja'), bh=document.getElementById('tpv-btn-hist');
-  if(v==='caja'){
-    bc.style.background='#0a0a0a';bc.style.color='#c4a35a';bc.style.border='1px solid rgba(196,163,90,.3)';
-    bh.className='btn btn-ghost btn-sm';
-  } else {
-    bh.style.background='#0a0a0a';bh.style.color='#c4a35a';bh.style.border='1px solid rgba(196,163,90,.3)';
-    bc.className='btn btn-ghost btn-sm';
-    tpvRenderHistorial();
-  }
+  // Reset explícito de ambos botones — antes solo se tocaba el que pasaba a activo
+  // y el otro se quedaba con el fondo negro puesto en el paso anterior.
+  [bc,bh].forEach(function(b){ b.style.background=''; b.style.color=''; b.style.border=''; b.className='btn btn-ghost btn-sm'; });
+  var activo = v==='caja' ? bc : bh;
+  activo.style.background='var(--acc-bg)'; activo.style.color='var(--acc-d)'; activo.style.border='1px solid rgba(196,163,90,.35)';
+  if(v==='historial') tpvRenderHistorial();
 }
 
 function tpvFiltrar() {
