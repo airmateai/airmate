@@ -66,8 +66,8 @@ input,button{font-family:inherit;}
         </div>
         <div class="field">
           <label>Elige tu usuario</label>
-          <input id="r-usuario" placeholder="ej. maria.torres" autocomplete="username">
-          <div class="hint">Sin espacios ni tildes. Lo usarás para entrar al panel.</div>
+          <input id="r-usuario" placeholder="ej. maria.torres" autocomplete="username" oninput="previewUsuario()">
+          <div class="hint">Tu usuario para entrar será: <strong id="r-usuario-preview">—</strong></div>
         </div>
         <div class="field">
           <label>Elige tu contraseña</label>
@@ -107,7 +107,13 @@ function showMsg(text,type){
 function normalizarUsuario(u){
   return u.trim().toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // quita tildes
+    .replace(/\s+/g,'.') // los espacios se convierten en punto, no desaparecen
     .replace(/[^a-z0-9._-]/g,'');
+}
+function previewUsuario(){
+  const raw=document.getElementById('r-usuario').value;
+  const norm=normalizarUsuario(raw);
+  document.getElementById('r-usuario-preview').textContent=norm||'\u2014';
 }
 
 async function registrar(){
