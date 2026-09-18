@@ -2300,6 +2300,7 @@ async function cambiarEstadoCita(id,status){
   if(status==='confirmed')tpl='template_qnip0mc';
   else if(status==='cancelled')tpl='template_lg1l7bi';
   if(!tpl)return;
+  if(!confirm('¿Enviar también un email automático a '+c.client_email+' avisando de este cambio?'))return;
   emailjs.send('service_npmjvvf',tpl,base)
     .then(()=>showToast(' Email enviado a '+c.client_email))
     .catch(e=>{console.error('EmailJS error:',e);showToast('Email error');});
@@ -2364,8 +2365,9 @@ async function crearClienteDesdeCita(id){
   const c=allCitas.find(x=>x.id===id);if(!c)return;
   const {data:exists}=await _sb.from('crm_clients').select('id').eq('business_slug',BIZ_SLUG).eq('phone',c.client_phone||'').maybeSingle();
   if(exists){showToast('Cliente ya existe en CRM');return;}
-  await _sb.from('crm_clients').insert({business_slug:BIZ_SLUG,name:c.client_name,phone:c.client_phone||null,email:c.client_email||null});
-  showToast('Cliente añadido al CRM');
+  const {error}=await _sb.from('crm_clients').insert({business_slug:BIZ_SLUG,name:c.client_name,phone:c.client_phone||null,email:c.client_email||null});
+  if(error){showToast('No se pudo añadir al CRM: '+error.message);return;}
+  showToast('✓ Cliente añadido al CRM');
   closeModal();
 }
 
@@ -2532,9 +2534,10 @@ async function leadToCRM(id){
   const l=allLeads.find(x=>x.id===id);if(!l)return;
   const {data:exists}=await _sb.from('crm_clients').select('id').eq('business_slug',BIZ_SLUG).eq('phone',l.phone||'__none__').maybeSingle();
   if(exists){showToast('Cliente ya existe en CRM');return;}
-  await _sb.from('crm_clients').insert({business_slug:BIZ_SLUG,name:l.name,phone:l.phone||null,email:l.email||null,notes:l.interest||null});
+  const {error}=await _sb.from('crm_clients').insert({business_slug:BIZ_SLUG,name:l.name,phone:l.phone||null,email:l.email||null,notes:l.interest||null});
+  if(error){showToast('No se pudo convertir: '+error.message);return;}
   await _sb.from('leads').update({status:'converted'}).eq('id',id);
-  await loadAll();showToast('Lead convertido a cliente CRM');
+  await loadAll();showToast('✓ Lead convertido a cliente CRM');
 }
 
 function openLeadModal(id){
@@ -2925,10 +2928,16 @@ async function crmSaveCliente(){
   else{tagsVal=tagsVal.split(',').map(s=>s.trim()).filter(s=>s&&s!=='fidelizado').join(',');}
   const payload={business_slug:BIZ_SLUG,name,tipo:cv('cf-tipo')||'particular',empresa:cv('cf-empresa')||null,phone:cv('cf-phone')||null,email:cv('cf-email')||null,nif:cv('cf-nif')||null,iban:cv('cf-iban')||null,direccion:cv('cf-direccion')||null,tags:tagsVal||null,notes:cv('cf-notes')||null,measurements:Object.keys(m).length?m:null};
   let savedId=_crmEditId;
-  if(_crmEditId)await _sb.from('crm_clients').update(payload).eq('id',_crmEditId);
-  else{const {data}=await _sb.from('crm_clients').insert(payload).select().single();savedId=data?.id;}
+  if(_crmEditId){
+    const {error}=await _sb.from('crm_clients').update(payload).eq('id',_crmEditId);
+    if(error){showToast('No se pudo guardar: '+error.message);return null;}
+  }else{
+    const {data,error}=await _sb.from('crm_clients').insert(payload).select().single();
+    if(error){showToast('No se pudo guardar: '+error.message);return null;}
+    savedId=data?.id;
+  }
   await crmLoadClientes();
-  crmCloseModal();showToast('Cliente guardado');
+  crmCloseModal();showToast('✓ Cliente guardado');
   return savedId;
 }
 async function crmDeleteCliente(id){if(!confirm('¿Eliminar cliente?'))return;await _sb.from('crm_clients').delete().eq('id',id);await crmLoadClientes();}
@@ -3427,6 +3436,7 @@ async function _encNotificarCliente(o,col){
   const client=_crmClientes.find(x=>x.id===o.client_id);
   const email=client?.email||o.client_email||null;
   if(!email)return;
+  if(!confirm('¿Enviar también un email automático a '+email+' avisando de este cambio ("'+tpl.subject+'")?'))return;
   const biz=getBizInfo();
   emailjs.send('service_npmjvvf','template_lg1l7bi',{
     cliente_nombre:o.client_name||'',
