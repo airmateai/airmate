@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airmate · Registro de captadores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --navy:#081b3a; --navy2:#0d2a5c; --blue:#1a56db;
+  --white:#ffffff; --bg:#f5f8fd; --ink:#0a1730; --txt2:#4b5b76; --txt3:#8a97af;
+  --border:#e1e8f5;
+  --uae-red:#c8102e; --uae-green:#00732f;
+  --display:'Bricolage Grotesque',sans-serif; --body:'Inter',sans-serif;
+  --shadow-lg:0 24px 64px rgba(8,27,58,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;}
+input,button{font-family:inherit;}
+
+#wrap{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 55%,#123a7a 100%);display:flex;align-items:center;justify-content:center;overflow:auto;padding:24px;}
+#wrap::after{content:'';position:fixed;left:0;right:0;bottom:0;height:6px;
+  background:linear-gradient(90deg,#0a0a0a 0%,#0a0a0a 25%,var(--uae-green) 25%,var(--uae-green) 50%,#fff 50%,#fff 75%,var(--uae-red) 75%);}
+.card{position:relative;z-index:2;width:100%;max-width:400px;background:var(--white);border-radius:20px;padding:40px 36px;box-shadow:var(--shadow-lg);}
+.brand{text-align:center;margin-bottom:6px;}
+.brand .mark{width:130px;margin:0 auto 8px;}
+.brand .mark img{width:100%;}
+.brand h1{font-family:var(--display);font-size:20px;font-weight:800;letter-spacing:-.01em;}
+.brand p{font-size:12px;color:var(--txt3);letter-spacing:.05em;text-transform:uppercase;font-weight:600;margin-top:3px;}
+
+.form{margin-top:26px;display:flex;flex-direction:column;gap:14px;}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;}
+.field input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14.5px;background:var(--bg);color:var(--ink);}
+.field input:focus{outline:none;border-color:var(--blue);background:#fff;}
+.hint{font-size:11.5px;color:var(--txt3);margin-top:4px;}
+#msg{border-radius:8px;padding:10px 12px;font-size:12.5px;font-weight:600;display:none;}
+#msg.err{background:#fef2f2;color:var(--uae-red);border:1px solid #fecaca;display:block;}
+#msg.ok{background:#eafaf0;color:var(--uae-green);border:1px solid #b7ecc9;display:block;}
+#btn{margin-top:4px;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-size:14.5px;font-weight:700;cursor:pointer;}
+#btn:hover{background:var(--blue);}
+#btn:disabled{opacity:.6;cursor:default;}
+
+#done{display:none;text-align:center;}
+#done h2{font-family:var(--display);font-size:19px;margin-bottom:10px;}
+#done p{font-size:13.5px;color:var(--txt2);line-height:1.5;}
+#done a{display:inline-block;margin-top:20px;padding:12px 22px;background:var(--navy);color:#fff;border-radius:10px;text-decoration:none;font-weight:700;font-size:13.5px;}
+</style>
+</head>
+<body>
+
+<div id="wrap">
+  <div class="card">
+    <div class="brand">
+      <div class="mark"><img src="logo.png" alt="Airmate"></div>
+      <h1>Únete como captador</h1>
+      <p>Panel de Captación · Airmate</p>
+    </div>
+
+    <div id="formWrap">
+      <div class="form">
+        <div class="field">
+          <label>Tu nombre</label>
+          <input id="r-nombre" placeholder="Ej. María Torres">
+        </div>
+        <div class="field">
+          <label>Elige tu usuario</label>
+          <input id="r-usuario" placeholder="ej. maria.torres" autocomplete="username">
+          <div class="hint">Sin espacios ni tildes. Lo usarás para entrar al panel.</div>
+        </div>
+        <div class="field">
+          <label>Elige tu contraseña</label>
+          <input id="r-pass" type="password" placeholder="••••••••" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label>Repite la contraseña</label>
+          <input id="r-pass2" type="password" placeholder="••••••••" autocomplete="new-password">
+        </div>
+        <div id="msg"></div>
+        <button id="btn" onclick="registrar()">Crear mi acceso</button>
+      </div>
+    </div>
+
+    <div id="done">
+      <h2>✓ Listo, <span id="done-nombre"></span></h2>
+      <p>Tu acceso ya está creado. Entra al panel con tu usuario y contraseña para empezar a registrar tus contactos.</p>
+      <a href="crm-captadores.html">Ir al panel →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+const SB=supabase.createClient(SB_URL,SB_KEY);
+
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function showMsg(text,type){
+  const el=document.getElementById('msg');
+  el.textContent=text;
+  el.className=type;
+}
+function normalizarUsuario(u){
+  return u.trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // quita tildes
+    .replace(/[^a-z0-9._-]/g,'');
+}
+
+async function registrar(){
+  const nombre=document.getElementById('r-nombre').value.trim();
+  const usuario=normalizarUsuario(document.getElementById('r-usuario').value);
+  const pass=document.getElementById('r-pass').value;
+  const pass2=document.getElementById('r-pass2').value;
+
+  if(!nombre){showMsg('Escribe tu nombre.','err');return;}
+  if(!usuario||usuario.length<3){showMsg('El usuario debe tener al menos 3 caracteres (sin espacios ni tildes).','err');return;}
+  if(!pass||pass.length<6){showMsg('La contraseña debe tener al menos 6 caracteres.','err');return;}
+  if(pass!==pass2){showMsg('Las contraseñas no coinciden.','err');return;}
+
+  const btn=document.getElementById('btn');
+  btn.disabled=true;btn.textContent='Creando...';
+
+  try{
+    const {data:existente}=await SB.from('am_crm_usuarios').select('usuario').eq('usuario',usuario).maybeSingle();
+    if(existente){
+      showMsg('Ese usuario ya existe, elige otro (ej. añade tu apellido o un número).','err');
+      btn.disabled=false;btn.textContent='Crear mi acceso';
+      return;
+    }
+    const password_hash=await sha256(pass);
+    const {error}=await SB.from('am_crm_usuarios').insert({nombre,usuario,password_hash,rol:'captador'});
+    if(error){
+      showMsg('No se pudo crear el acceso: '+error.message,'err');
+      btn.disabled=false;btn.textContent='Crear mi acceso';
+      return;
+    }
+    document.getElementById('done-nombre').textContent=nombre;
+    document.getElementById('formWrap').style.display='none';
+    document.getElementById('done').style.display='block';
+  }catch(e){
+    showMsg('Error de conexión, inténtalo de nuevo.','err');
+    btn.disabled=false;btn.textContent='Crear mi acceso';
+  }
+}
+</script>
+</body>
+</html>
