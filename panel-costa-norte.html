@@ -5023,6 +5023,39 @@ async function toggleDisponibilidadMonitor(fecha,monitor,marcar){
   }catch(e){}
   renderDayPanel();
 }
+// Marcar disponibilidad de un monitor en varios días de golpe (en vez de entrar
+// día a día). Reutiliza toggleDisponibilidadMonitor para cada fecha del rango.
+function abrirRangoDisponibilidad(fechaDefault){
+  openModal('Disponibilidad · varios días',`
+    ${fLbl('Monitor')}${fSel('rango-disp-monitor',INSTRUCTORS[0]?.name||'',INSTRUCTORS.map(x=>x.name))}
+    ${fLbl('¿Disponible o no disponible?')}${fSel('rango-disp-marcar','No disponible',['No disponible','Disponible'])}
+    <div style="display:flex;gap:8px;">
+      <div style="flex:1;">${fLbl('Desde')}<input id="rango-disp-desde" type="date" value="${fechaDefault}" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;"></div>
+      <div style="flex:1;">${fLbl('Hasta')}<input id="rango-disp-hasta" type="date" value="${fechaDefault}" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;"></div>
+    </div>
+    <div style="margin-top:10px;font-size:11.5px;color:var(--txt3);">Se aplica a todos los días del rango (ambos incluidos), incluidos los que aún no tengan disponibilidad configurada.</div>
+    ${fActions('Aplicar al rango','aplicarRangoDisponibilidad()')}
+  `);
+}
+async function aplicarRangoDisponibilidad(){
+  const monitor=document.getElementById('rango-disp-monitor').value;
+  const marcar=document.getElementById('rango-disp-marcar').value==='Disponible';
+  const desde=document.getElementById('rango-disp-desde').value;
+  const hasta=document.getElementById('rango-disp-hasta').value;
+  if(!monitor||!desde||!hasta){toast('⚠ Completa monitor y fechas');return;}
+  if(hasta<desde){toast('⚠ La fecha "hasta" es anterior a "desde"');return;}
+  const dIni=new Date(desde+'T00:00:00'), dFin=new Date(hasta+'T00:00:00');
+  const dias=Math.round((dFin-dIni)/86400000)+1;
+  if(dias>92){toast('⚠ Máximo 92 días por rango');return;}
+  closeModal();
+  toast(`Aplicando a ${dias} día${dias!==1?'s':''}…`);
+  for(let d=new Date(dIni);d<=dFin;d.setDate(d.getDate()+1)){
+    const fecha=d.toISOString().slice(0,10);
+    await toggleDisponibilidadMonitor(fecha,monitor,marcar);
+  }
+  toast(`✓ ${monitor} marcado ${marcar?'disponible':'no disponible'} del ${desde} al ${hasta}`);
+  renderDayPanel();
+}
 function bloqueoFor(day,slotIdx){
   return bloqueosFor(day,slotIdx)[0]||null;
 }
@@ -5223,7 +5256,10 @@ function renderDayPanel(){
     <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">${items.length} reserva${items.length!==1?'s':''}</div>
     <div style="max-height:340px;overflow-y:auto;border:1px solid var(--border2);border-radius:8px;">${slotsHtml}</div>
     <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border2);">
-      <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Monitores hoy ${dispHoy?'':'<span style=\'font-weight:400;text-transform:none;letter-spacing:0;\'>(sin marcar aún · marca quién trabaja hoy)</span>'}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;">Monitores hoy ${dispHoy?'':'<span style=\'font-weight:400;text-transform:none;letter-spacing:0;\'>(sin marcar aún · marca quién trabaja hoy)</span>'}</div>
+        <span onclick="abrirRangoDisponibilidad('${fechaSel}')" style="cursor:pointer;font-size:10.5px;font-weight:700;color:var(--ink);opacity:.6;text-decoration:underline;white-space:nowrap;">📅 varios días</span>
+      </div>
       ${monitoresHtml||'<div style="font-size:11.5px;color:var(--txt3);">Sin monitores</div>'}
       <div style="margin-top:10px;font-size:11px;color:var(--txt3);background:var(--sand-lt);border-radius:6px;padding:7px 9px;">👥 ${numDisp} monitor${numDisp!==1?'es':''} disponible${numDisp!==1?'s':''} · máx. ${numDisp*RATIO_MAX_GRUPO} personas/franja</div>
     </div>
