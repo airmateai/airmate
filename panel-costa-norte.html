@@ -3923,7 +3923,7 @@ function renderSolicitudes(){
     const hora=r.starts_at?new Date(r.starts_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false}):'—';
     const dias=notes.dias_totales||1;
     const st=r.status||'pending';
-    const presup=calcPresup(r.service,dias);
+    const presup=(r.budget!=null&&r.budget>0)?r.budget:calcPresup(r.service,dias);
     const pago=notes.payment_status==='confirmed'?'<span style="background:#f0fdf4;color:#16a34a;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px">Verificado</span>':notes.receipt_url?'<span style="background:#fef9c3;color:#ca8a04;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px">Subido</span>':'<span style="background:#fef2f2;color:#dc2626;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px">Pendiente</span>';
     return `<div onclick="openSol('${r.id}')" style="padding:14px 20px;border-bottom:1px solid #eef1f6;cursor:pointer;transition:background .1s;display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 1fr;align-items:center;gap:8px" onmouseover="this.style.background='#fafbfd'" onmouseout="this.style.background=''">
       <div><div style="font-weight:600;color:#0f1923">${esc(r.client_name)||'—'}</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">${esc(r.client_phone)} · DNI: ${esc(notes.dni)||'—'}</div></div>
@@ -4016,7 +4016,10 @@ async function openSol(id){
   const r=SOL_CUR;
   const notes=solParseNotes(r.notes);
   const dias=notes.dias_totales||1;
-  const presup=calcPresup(r.service,dias);
+  // Si ya se corrigió manualmente el importe (savePresupCorregido), respetamos ese
+  // valor guardado en vez de recalcularlo siempre desde la tarifa oficial — si no,
+  // la corrección se perdía cada vez que se volvía a abrir la solicitud.
+  const presup=(r.budget!=null&&r.budget>0)?r.budget:calcPresup(r.service,dias);
   const fecha=r.starts_at?new Date(r.starts_at).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'—';
   const hora=r.starts_at?new Date(r.starts_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false}):'—';
   const nombre=(r.client_name||'').split(' ')[0];
@@ -4280,10 +4283,18 @@ async function restaurarSesionAlumno(r){
     if(!servicio.includes('perfeccionamiento'))return;
     const nombre=(r.client_name||'').trim();
     if(!nombre)return;
-    const telefono=r.client_phone||null;
-    const key=(telefono||nombre).toLowerCase().trim();
-    const alumno=STUDENTS.find(a=>(a.telefono||a.nombre||'').toLowerCase().trim()===key);
-    if(!alumno)return;
+    const telDigits=(r.client_phone||'').replace(/[^0-9]/g,'');
+    const nombreNorm=nombre.toLowerCase().replace(/\s+/g,' ').trim();
+    // Coincidencia por teléfono (solo dígitos) si ambos lo tienen; si no, por nombre
+    // normalizado. Antes se comparaba un único "key" telefono||nombre contra
+    // a.telefono||a.nombre, que fallaba en silencio si uno tenía teléfono guardado
+    // y el otro no (comparaba teléfono contra nombre).
+    const alumno=STUDENTS.find(a=>{
+      const aTelDigits=(a.telefono||'').replace(/[^0-9]/g,'');
+      if(telDigits&&aTelDigits)return telDigits===aTelDigits;
+      return (a.nombre||'').toLowerCase().replace(/\s+/g,' ').trim()===nombreNorm;
+    });
+    if(!alumno){toast(`⚠ No se encontró a ${nombre} en Alumnos — la sesión no se ha devuelto, hazlo a mano si tiene bono`);return;}
     const nuevoLeft=(alumno.sesiones_restantes??0)+1;
     let hist=[];
     try{hist=JSON.parse(alumno.historial||'[]');}catch{}
@@ -4715,7 +4726,12 @@ async function duplicarClase(){
   const startsAt=new Date(fecha+'T'+String(horaOriginal.getHours()).padStart(2,'0')+':'+String(horaOriginal.getMinutes()).padStart(2,'0')+':00');
   const durMs=new Date(r.ends_at).getTime()-new Date(r.starts_at).getTime();
   const endsAt=new Date(startsAt.getTime()+durMs);
-  const insert={business_slug:'costa-norte',client_name:r.client_name,client_phone:r.client_phone||null,client_email:r.client_email||null,service:r.service,duration_minutes:r.duration_minutes||120,starts_at:startsAt.toISOString(),ends_at:endsAt.toISOString(),status:'confirmed',budget:r.budget||null,notes:r.notes};
+  // La clase duplicada es una fecha nueva — el pago de la clase original no implica
+  // que esta también esté pagada, así que preguntamos en vez de copiar el estado tal cual.
+  const yaPagada=confirm('¿El cliente ya ha pagado también esta clase duplicada del '+fecha+'?\n\nAceptar = sí, ya pagada.\nCancelar = no, pendiente de pago.');
+  const notesDup=solParseNotes(r.notes);
+  if(!yaPagada){delete notesDup.payment_status;delete notesDup.receipt_url;}
+  const insert={business_slug:'costa-norte',client_name:r.client_name,client_phone:r.client_phone||null,client_email:r.client_email||null,service:r.service,duration_minutes:r.duration_minutes||120,starts_at:startsAt.toISOString(),ends_at:endsAt.toISOString(),status:'confirmed',budget:r.budget||null,notes:JSON.stringify(notesDup)};
   const res=await fetch(SB_URL_SOL+'/rest/v1/appointments',{
     method:'POST',
     headers:{'apikey':SB_KEY_SOL,'Authorization':'Bearer '+AUTH_BEARER,'Content-Type':'application/json','Prefer':'return=representation'},
