@@ -345,6 +345,27 @@ tr:last-child td{border-bottom:none;}
         <div class="card"><div class="tbl-wrap" id="tbl-gastos"></div></div>
       </div>
 
+      <!-- RESUMEN -->
+      <div class="tab-pane" id="tab-resumen">
+        <div class="page-hd">
+          <div class="page-title">Resumen de cursos y talleres</div>
+          <div class="page-sub">Alumnas/participantes e ingresos por tipo, desglosados por mes — 2026</div>
+        </div>
+        <div class="card"><div class="tbl-wrap" id="tbl-resumen"></div></div>
+      </div>
+
+      <!-- CONSULTAS -->
+      <div class="tab-pane" id="tab-consultas">
+        <div class="page-hd">
+          <div class="page-title">Consultas</div>
+          <div class="page-sub">Busca en todos los registros de la aplicación</div>
+        </div>
+        <div class="card">
+          <div class="filter-bar"><input id="f-consultas" placeholder="Nombre, teléfono, producto, concepto..." oninput="renderConsultas()" style="min-width:320px"></div>
+          <div id="resultados-consultas"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -452,6 +473,8 @@ const NAV = [
   {id:'ventas', label:'Venta de piezas'},
   {id:'coworking', label:'Coworking y alquiler'},
   {id:'gastos', label:'Gastos fijos'},
+  {id:'resumen', label:'Resumen Cursos y Talleres'},
+  {id:'consultas', label:'Consultas'},
 ];
 
 function esc(str){ return (str==null?'':String(str)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -518,6 +541,8 @@ function renderAll(){
   renderTarifas();
   renderReservas();
   renderGastos();
+  renderResumen();
+  renderConsultas();
 }
 
 function fillMesSelect(){
@@ -833,6 +858,67 @@ function renderGastos(){
       <td>${esc(g.tipo||'—')}</td>
     </tr>`).join('')}
   </table>` : '<div class="empty-state">Sin gastos registrados.</div>';
+}
+
+function renderResumen(){
+  const tipos = {};
+  _data.experiencias.forEach(e=>{
+    const t = e.tipo_experiencia || 'Sin tipo';
+    if(!tipos[t]) tipos[t] = {personas: Array(12).fill(0), importe: Array(12).fill(0)};
+    const mi = MESES.indexOf(e.mes_pago);
+    if(mi>=0){
+      tipos[t].personas[mi] += Number(e.numero_participantes)||1;
+      tipos[t].importe[mi] += Number(e.importe_pagado)||0;
+    }
+  });
+  const cursosPersonas = Array(12).fill(0), cursosImporte = Array(12).fill(0);
+  _data.pagos.forEach(p=>{
+    const mi = MESES.indexOf(p.mes);
+    if(mi>=0) cursosImporte[mi] += Number(p.importe)||0;
+  });
+  const ventasImporte = Array(12).fill(0);
+  _data.ventas.forEach(v=>{
+    const mi = MESES.indexOf(v.mes);
+    if(mi>=0) ventasImporte[mi] += Number(v.importe)||0;
+  });
+
+  const totalRow = (label, arr, isMoney) => `<tr class="total-row"><td>${esc(label)}</td>${arr.map(v=>`<td class="mes-cell">${v?(isMoney?crmFmt(v):v):''}</td>`).join('')}<td class="mes-cell">${isMoney?crmFmt(arr.reduce((a,b)=>a+b,0)):arr.reduce((a,b)=>a+b,0)}</td></tr>`;
+
+  let html = `<table><tr><th>Actividad</th>${MESES_CORTO.map(m=>`<th>${m}</th>`).join('')}<th>Total</th></tr>`;
+  html += `<tr class="grupo-hd"><td colspan="14">CURSOS DE TORNO/CERÁMICA (${_data.inscripciones.length} inscritas)</td></tr>`;
+  html += totalRow('Mensualidades cobradas', cursosImporte, true);
+  html += `<tr class="grupo-hd"><td colspan="14">EXPERIENCIAS Y TALLERES</td></tr>`;
+  Object.keys(tipos).sort().forEach(t=>{
+    html += `<tr><td>${tipoTag(t)}</td>${tipos[t].personas.map((p,i)=>`<td class="mes-cell">${p?`${p}p<br>${tipos[t].importe[i]?Math.round(tipos[t].importe[i]):''}`:''}</td>`).join('')}<td class="mes-cell">${tipos[t].personas.reduce((a,b)=>a+b,0)}p<br>${crmFmt(tipos[t].importe.reduce((a,b)=>a+b,0))}</td></tr>`;
+  });
+  html += `<tr class="grupo-hd"><td colspan="14">VENTA DE PIEZAS</td></tr>`;
+  html += totalRow('Ventas cobradas', ventasImporte, true);
+  html += `</table>`;
+  document.getElementById('tbl-resumen').innerHTML = html;
+}
+
+function renderConsultas(){
+  const q = (document.getElementById('f-consultas')?.value||'').trim().toLowerCase();
+  const el = document.getElementById('resultados-consultas');
+  if(!q){ el.innerHTML = '<div class="empty-state">Escribe algo para buscar en alumnas, experiencias, ventas, gastos...</div>'; return; }
+
+  const matches = (obj, fields) => fields.some(f=>(obj[f]||'').toString().toLowerCase().includes(q));
+  const rContactos = _data.contactos.filter(c=>matches(c,['nombre','telefono','email']));
+  const rInscripciones = _data.inscripciones.filter(a=>matches(a,['nombre','grupo','informacion']));
+  const rExperiencias = _data.experiencias.filter(e=>matches(e,['nombre','tipo_experiencia','telefono']));
+  const rVentas = _data.ventas.filter(v=>matches(v,['producto','autor','observaciones']));
+  const rGastos = _data.gastos.filter(g=>matches(g,['concepto','cuenta']));
+
+  let html = '';
+  const block = (titulo, rows, renderRow) => rows.length ? `<div class="card-hd"><div class="card-hd-title">${titulo} (${rows.length})</div></div><div class="tbl-wrap">${renderRow(rows)}</div>` : '';
+
+  html += block('Contactos', rContactos, rows=>`<table><tr><th>Nombre</th><th>Teléfono</th><th>Email</th></tr>${rows.map(c=>`<tr><td><b>${esc(c.nombre)}</b></td><td>${esc(c.telefono||'—')}</td><td>${esc(c.email||'—')}</td></tr>`).join('')}</table>`);
+  html += block('Alumnas / Inscripciones', rInscripciones, rows=>`<table><tr><th>Nombre</th><th>Grupo</th><th>Info</th></tr>${rows.map(a=>`<tr><td><b>${esc(a.nombre)}</b></td><td>${esc(a.grupo||'—')}</td><td>${esc(a.informacion||'—')}</td></tr>`).join('')}</table>`);
+  html += block('Experiencias', rExperiencias, rows=>`<table><tr><th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Importe</th></tr>${rows.map(e=>`<tr><td>${esc(e.fecha_experiencia_texto||'—')}</td><td>${tipoTag(e.tipo_experiencia)}</td><td>${esc(e.nombre||'—')}</td><td>${e.importe_pagado?crmFmt(e.importe_pagado):'—'}</td></tr>`).join('')}</table>`);
+  html += block('Ventas', rVentas, rows=>`<table><tr><th>Producto</th><th>Autor</th><th>Importe</th></tr>${rows.map(v=>`<tr><td>${esc(v.producto)}</td><td>${esc(v.autor||'—')}</td><td>${v.importe?crmFmt(v.importe):'—'}</td></tr>`).join('')}</table>`);
+  html += block('Gastos', rGastos, rows=>`<table><tr><th>Concepto</th><th>Cuenta</th><th>Importe</th></tr>${rows.map(g=>`<tr><td>${esc(g.concepto)}</td><td>${esc(g.cuenta||'—')}</td><td>${g.importe_con_iva?crmFmt(g.importe_con_iva):'—'}</td></tr>`).join('')}</table>`);
+
+  el.innerHTML = html || '<div class="empty-state">Sin resultados para esa búsqueda.</div>';
 }
 
 function openContactoModal(){ openModal('modal-contacto'); }
