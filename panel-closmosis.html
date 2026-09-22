@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>Panel · Closmosis</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --acc:#b5561f; --acc-d:#94451a; --acc-bg:#fdf2ea;
+  --nav:#20211d; --nav2:#2a2b25; --nav-txt:rgba(255,255,255,.5); --nav-active:rgba(181,86,31,.18);
+  --bg:#faf8f4; --surface:#fff; --border:#e7e0d3; --border2:#f1ece1;
+  --txt:#20211d; --txt2:#5c5648; --txt3:#9a9384;
+  --danger:#ef4444; --warn:#c98a1a; --good:#3f7a4f; --info:#2c5f7c;
+  --rad:10px; --shadow:0 1px 3px rgba(0,0,0,.08); --shadow-md:0 4px 12px rgba(0,0,0,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;}
+button{font-family:inherit;cursor:pointer;}
+input,select{font-family:inherit;}
+
+/* LOGIN */
+#login-screen{min-height:100vh;display:flex;background:linear-gradient(135deg,#20211d 0%,#2a2b25 55%,#3a2a1c 100%);}
+.login-left{flex:1;display:flex;align-items:center;justify-content:center;padding:60px;}
+.login-right{width:460px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:60px;background:var(--surface);}
+@media(max-width:720px){.login-left{display:none;}.login-right{width:100%;background:transparent;}
+  .login-box{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);}
+  .login-box *{color:#fff!important;}.login-box input{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:#fff;}}
+.login-brand{color:#fff;max-width:420px;}
+.login-brand-icon{width:44px;height:44px;background:var(--acc);border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:18px;margin-bottom:26px;}
+.login-brand-tagline{font-size:30px;font-weight:700;line-height:1.3;color:#fff;margin-bottom:14px;}
+.login-brand-sub{font-size:15px;color:rgba(255,255,255,.5);}
+.login-features{margin-top:32px;display:flex;flex-direction:column;gap:10px;}
+.login-feature{display:flex;align-items:center;gap:10px;font-size:14px;color:rgba(255,255,255,.6);}
+.login-feature-dot{width:6px;height:6px;border-radius:50%;background:var(--acc);flex-shrink:0;}
+.login-box{width:100%;max-width:380px;}
+.login-box h2{font-size:23px;font-weight:700;color:var(--txt);margin-bottom:6px;}
+.login-box-sub{font-size:13px;color:var(--txt2);margin-bottom:22px;}
+.field-group{margin-bottom:14px;}
+.field-label{display:block;font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:5px;}
+.field-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;color:var(--txt);outline:none;transition:border-color .15s;}
+.field-input:focus{border-color:var(--acc);}
+.login-btn{width:100%;padding:13px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;margin-top:6px;}
+.login-btn:hover{background:var(--acc-d);}
+#login-err{color:var(--danger);font-size:13px;margin-top:8px;display:none;font-weight:500;}
+
+#app{display:none;min-height:100vh;}
+.app-layout{display:flex;min-height:100vh;}
+.sidebar{width:230px;flex-shrink:0;background:var(--nav);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto;}
+.sidebar-top{padding:18px 14px 14px;border-bottom:1px solid rgba(255,255,255,.06);}
+.sidebar-brand{display:flex;align-items:center;gap:10px;color:#fff;}
+.sidebar-brand-icon{width:30px;height:30px;background:var(--acc);border-radius:8px;display:grid;place-items:center;flex-shrink:0;font-weight:800;font-size:13px;}
+.sidebar-brand-name{font-size:15px;font-weight:700;}
+.sidebar-biz{font-size:11px;color:var(--nav-txt);margin-top:6px;}
+.sidebar-nav{flex:1;padding:10px 8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--nav-txt);font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;width:100%;text-align:left;}
+.nav-item:hover{background:var(--nav-active);color:rgba(255,255,255,.9);}
+.nav-item.active{background:rgba(255,255,255,.1);color:#fff;}
+.sidebar-bottom{padding:10px 8px;border-top:1px solid rgba(255,255,255,.06);}
+.sidebar-user{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;}
+.sidebar-avatar{width:28px;height:28px;background:var(--acc);border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.sidebar-user-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.85);}
+.logout-btn{background:none;border:none;color:rgba(255,255,255,.3);padding:4px;border-radius:6px;margin-left:auto;}
+.logout-btn:hover{color:rgba(255,255,255,.7);}
+
+.main{margin-left:230px;display:flex;flex-direction:column;min-height:100vh;}
+.topbar{height:54px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:50;}
+.topbar-title{font-size:15px;font-weight:600;}
+.content{padding:26px 30px;flex:1;}
+.tab-pane{display:none;}.tab-pane.active{display:block;}
+
+.page-hd{margin-bottom:22px;}
+.page-title{font-size:19px;font-weight:800;letter-spacing:-.02em;}
+.page-title::after{content:'';display:block;width:32px;height:2px;background:linear-gradient(90deg,var(--acc),transparent);border-radius:2px;margin-top:5px;}
+.page-sub{font-size:12px;color:var(--txt2);margin-top:2px;}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px;}
+.stat-card{background:var(--nav);border-radius:var(--rad);padding:18px 18px 14px;border:1px solid rgba(181,86,31,.35);box-shadow:0 4px 20px rgba(0,0,0,.18);}
+.stat-val{font-size:25px;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--acc);font-variant-numeric:tabular-nums;}
+.stat-label{font-size:11px;color:rgba(255,255,255,.45);margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+
+.card{background:var(--surface);border-radius:var(--rad);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px;}
+.card-hd{padding:13px 18px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.card-hd-title{font-size:14px;font-weight:600;}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;border:none;cursor:pointer;}
+.btn-primary{background:var(--nav);color:#fff;}.btn-primary:hover{background:var(--nav2);}
+.btn-accent{background:var(--acc);color:#fff;}.btn-accent:hover{background:var(--acc-d);}
+.btn-ghost{background:transparent;color:var(--txt2);border:1px solid var(--border);}.btn-ghost:hover{background:var(--bg);}
+.btn-danger{background:#fef2f2;color:var(--danger);border:1px solid #fecaca;}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px;}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;padding:9px 14px;background:var(--border2);color:var(--txt2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;}
+td{padding:9px 14px;border-bottom:1px solid var(--border2);white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+.tbl-wrap{overflow-x:auto;}
+.tag{display:inline-flex;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+.tag-good{background:#eaf5ed;color:var(--good);}
+.tag-warn{background:#fdf1de;color:var(--warn);}
+.tag-danger{background:#fef2f2;color:var(--danger);}
+.tag-info{background:#e2edf1;color:var(--info);}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.active{display:flex;}
+.modal{background:#fff;border-radius:14px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;padding:26px;}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:18px;}
+.modal .field-group{margin-bottom:12px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--nav);color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:300;display:none;box-shadow:var(--shadow-md);}
+.toast.show{display:block;}
+.empty-state{padding:40px 20px;text-align:center;color:var(--txt3);font-size:13px;}
+
+@media(max-width:860px){
+  .sidebar{transform:translateX(-100%);transition:transform .2s;}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .content{padding:18px;}
+}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-left">
+    <div class="login-brand">
+      <div class="login-brand-icon">C</div>
+      <div class="login-brand-tagline">Gestión de Closmosis, sin depender del WhatsApp</div>
+      <div class="login-brand-sub">Alumnas de torno, talleres, coworking y venta de piezas — todo en un sitio.</div>
+      <div class="login-features">
+        <div class="login-feature"><span class="login-feature-dot"></span>Calendario de alumnas y pagos mensuales</div>
+        <div class="login-feature"><span class="login-feature-dot"></span>Reservas de talleres y experiencias</div>
+        <div class="login-feature"><span class="login-feature-dot"></span>Ventas de piezas por artista</div>
+        <div class="login-feature"><span class="login-feature-dot"></span>Coworking y alquiler de espacio</div>
+      </div>
+    </div>
+  </div>
+  <div class="login-right">
+    <div class="login-box">
+      <h2>Entrar</h2>
+      <div class="login-box-sub">Panel interno de Closmosis</div>
+      <div class="field-group">
+        <label class="field-label">Usuario</label>
+        <input class="field-input" id="login-user" placeholder="closmosis" autocomplete="username">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Contraseña</label>
+        <input class="field-input" id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="login-btn" onclick="doLogin()">Entrar</button>
+      <div id="login-err">Usuario o contraseña incorrectos.</div>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+<div class="app-layout">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">C</div>
+        <div class="sidebar-brand-name">Closmosis</div>
+      </div>
+      <div class="sidebar-biz">Gestión interna</div>
+    </div>
+    <div class="sidebar-nav" id="sidebar-nav"></div>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar">C</div>
+        <div class="sidebar-user-name">Closmosis</div>
+        <button class="logout-btn" onclick="doLogout()" title="Cerrar sesión">⏻</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="btn btn-ghost btn-sm" style="display:none" id="mob-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="tab-pane active" id="tab-dashboard">
+        <div class="page-hd">
+          <div class="page-title">Dashboard</div>
+          <div class="page-sub">Resumen general de Closmosis</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-val" id="st-alumnos">—</div><div class="stat-label">Alumnas activas</div></div>
+          <div class="stat-card"><div class="stat-val" id="st-experiencias">—</div><div class="stat-label">Talleres este mes</div></div>
+          <div class="stat-card"><div class="stat-val" id="st-ventas">—</div><div class="stat-label">Ventas pendientes</div></div>
+          <div class="stat-card"><div class="stat-val" id="st-coworking">—</div><div class="stat-label">Reservas coworking</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-hd-title">Próximos talleres</div></div>
+          <div class="tbl-wrap" id="dash-experiencias"></div>
+        </div>
+      </div>
+
+      <!-- ALUMNOS -->
+      <div class="tab-pane" id="tab-alumnos">
+        <div class="page-hd">
+          <div class="page-hd-row" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div><div class="page-title">Alumnas de torno</div><div class="page-sub">Calendario de clases y pagos mensuales</div></div>
+            <button class="btn btn-accent" onclick="openAlumnoModal()">+ Nueva alumna</button>
+          </div>
+        </div>
+        <div class="card"><div class="tbl-wrap" id="tbl-alumnos"></div></div>
+      </div>
+
+      <!-- EXPERIENCIAS -->
+      <div class="tab-pane" id="tab-experiencias">
+        <div class="page-hd">
+          <div class="page-hd-row" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div><div class="page-title">Experiencias y talleres</div><div class="page-sub">Reservas de clientes a talleres puntuales</div></div>
+            <button class="btn btn-accent" onclick="openExperienciaModal()">+ Nueva reserva</button>
+          </div>
+        </div>
+        <div class="card"><div class="tbl-wrap" id="tbl-experiencias"></div></div>
+      </div>
+
+      <!-- VENTAS -->
+      <div class="tab-pane" id="tab-ventas">
+        <div class="page-hd">
+          <div class="page-hd-row" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div><div class="page-title">Venta de piezas</div><div class="page-sub">Piezas de artistas, comisión y estado de pago</div></div>
+            <button class="btn btn-accent" onclick="openVentaModal()">+ Nueva venta</button>
+          </div>
+        </div>
+        <div class="card"><div class="tbl-wrap" id="tbl-ventas"></div></div>
+      </div>
+
+      <!-- COWORKING -->
+      <div class="tab-pane" id="tab-coworking">
+        <div class="page-hd">
+          <div class="page-hd-row" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div><div class="page-title">Coworking y alquiler</div><div class="page-sub">Tarifas y reservas de espacio</div></div>
+            <button class="btn btn-accent" onclick="openReservaModal()">+ Nueva reserva</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-hd-title">Tarifas</div></div>
+          <div class="tbl-wrap" id="tbl-tarifas"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-hd-title">Reservas</div></div>
+          <div class="tbl-wrap" id="tbl-reservas"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- MODALES -->
+<div class="modal-overlay" id="modal-alumno">
+  <div class="modal">
+    <h3>Nueva alumna</h3>
+    <div class="field-group"><label class="field-label">Nombre</label><input class="field-input" id="al-nombre"></div>
+    <div class="field-group"><label class="field-label">Día y hora de clase</label><input class="field-input" id="al-dia" placeholder="Lunes 5-7"></div>
+    <div class="field-group"><label class="field-label">Teléfono</label><input class="field-input" id="al-tel"></div>
+    <div class="field-group"><label class="field-label">Método de pago</label>
+      <select class="field-input" id="al-metodo"><option value="Domiciliado">Domiciliado</option><option value="Efectivo">Efectivo</option><option value="Bizum">Bizum</option></select>
+    </div>
+    <div class="field-group"><label class="field-label">Info / observaciones</label><input class="field-input" id="al-info"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-alumno')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveAlumno()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-experiencia">
+  <div class="modal">
+    <h3>Nueva reserva de taller</h3>
+    <div class="field-group"><label class="field-label">Fecha</label><input class="field-input" type="date" id="ex-fecha"></div>
+    <div class="field-group"><label class="field-label">Tipo de experiencia</label><input class="field-input" id="ex-tipo" placeholder="Crear plato, Pintar cerámica..."></div>
+    <div class="field-group"><label class="field-label">Nombre cliente</label><input class="field-input" id="ex-nombre"></div>
+    <div class="field-group"><label class="field-label">Teléfono</label><input class="field-input" id="ex-tel"></div>
+    <div class="field-group"><label class="field-label">Personas</label><input class="field-input" type="number" id="ex-personas" value="1"></div>
+    <div class="field-group"><label class="field-label">Precio total (€)</label><input class="field-input" type="number" id="ex-precio"></div>
+    <div class="field-group"><label class="field-label">Tipo de venta</label>
+      <select class="field-input" id="ex-tipoventa"><option value="Individual">Individual</option><option value="Grupo concertado">Grupo concertado</option><option value="Vale Regalo">Vale Regalo</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-experiencia')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveExperiencia()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-venta">
+  <div class="modal">
+    <h3>Nueva venta de pieza</h3>
+    <div class="field-group"><label class="field-label">Fecha</label><input class="field-input" type="date" id="ve-fecha"></div>
+    <div class="field-group"><label class="field-label">Tipo</label>
+      <select class="field-input" id="ve-tipo"><option value="PIEZA PROPIA">Pieza propia</option><option value="PIEZA 3ºS">Pieza de artista</option><option value="ENCARGO">Encargo</option></select>
+    </div>
+    <div class="field-group"><label class="field-label">Producto</label><input class="field-input" id="ve-producto"></div>
+    <div class="field-group"><label class="field-label">Autor</label><input class="field-input" id="ve-autor" placeholder="Yo, o nombre del artista"></div>
+    <div class="field-group"><label class="field-label">Importe total (€)</label><input class="field-input" type="number" id="ve-importe"></div>
+    <div class="field-group"><label class="field-label">Comisión Closmosis (€)</label><input class="field-input" type="number" id="ve-comision"></div>
+    <div class="field-group"><label class="field-label">Método de pago</label>
+      <select class="field-input" id="ve-pago"><option value="Efectivo">Efectivo</option><option value="Tarjeta">Tarjeta</option><option value="Bizum">Bizum</option><option value="Transf.">Transferencia</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-venta')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveVenta()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-reserva">
+  <div class="modal">
+    <h3>Nueva reserva coworking/alquiler</h3>
+    <div class="field-group"><label class="field-label">Tarifa</label><select class="field-input" id="rs-tarifa"></select></div>
+    <div class="field-group"><label class="field-label">Cliente</label><input class="field-input" id="rs-cliente"></div>
+    <div class="field-group"><label class="field-label">Teléfono</label><input class="field-input" id="rs-tel"></div>
+    <div class="field-group"><label class="field-label">Fecha</label><input class="field-input" type="date" id="rs-fecha"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-reserva')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveReserva()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL = 'https://fmbozcmdqghsyrjvdfyj.supabase.co';
+const SB_KEY = 'sb_publishable_MzmAvIWzScOKGmLX6koJdA_MOpV_O9l';
+const _sb = supabase.createClient(SB_URL, SB_KEY);
+const SESSION_KEY = 'closmosis_session';
+
+const LOGIN_USER = 'closmosis';
+const LOGIN_PASS = 'Closmosis2026';
+
+const NAV = [
+  {id:'dashboard', label:'Dashboard'},
+  {id:'alumnos', label:'Alumnas de torno'},
+  {id:'experiencias', label:'Experiencias y talleres'},
+  {id:'ventas', label:'Venta de piezas'},
+  {id:'coworking', label:'Coworking y alquiler'},
+];
+
+function esc(str){ return (str==null?'':String(str)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function crmFmt(n){ return (Number(n)||0).toLocaleString('es-ES',{style:'currency',currency:'EUR'}); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
+function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+function openModal(id){ document.getElementById(id).classList.add('active'); }
+
+function doLogin(){
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value;
+  if(u===LOGIN_USER && p===LOGIN_PASS){
+    localStorage.setItem(SESSION_KEY, '1');
+    boot();
+  } else {
+    document.getElementById('login-err').style.display='block';
+  }
+}
+function doLogout(){ localStorage.removeItem(SESSION_KEY); location.reload(); }
+
+function renderNav(){
+  const el = document.getElementById('sidebar-nav');
+  el.innerHTML = NAV.map(n=>`<button class="nav-item" id="nav-${n.id}" onclick="showTab('${n.id}')">${esc(n.label)}</button>`).join('');
+}
+function showTab(id){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.getElementById('nav-'+id).classList.add('active');
+  document.getElementById('topbar-title').textContent = NAV.find(n=>n.id===id).label;
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+let _data = { alumnos:[], pagos:[], experiencias:[], ventas:[], tarifas:[], reservas:[] };
+
+async function loadAll(){
+  const [al, pg, ex, ve, tf, rs] = await Promise.all([
+    _sb.from('alumnos').select('*').order('nombre'),
+    _sb.from('alumnos_pagos').select('*'),
+    _sb.from('experiencias').select('*').order('fecha',{ascending:false}),
+    _sb.from('ventas').select('*').order('fecha',{ascending:false}),
+    _sb.from('coworking_tarifas').select('*').order('precio'),
+    _sb.from('coworking_reservas').select('*').order('fecha',{ascending:false}),
+  ]);
+  _data.alumnos = al.data||[];
+  _data.pagos = pg.data||[];
+  _data.experiencias = ex.data||[];
+  _data.ventas = ve.data||[];
+  _data.tarifas = tf.data||[];
+  _data.reservas = rs.data||[];
+  renderAll();
+}
+
+function renderAll(){
+  renderDashboard();
+  renderAlumnos();
+  renderExperiencias();
+  renderVentas();
+  renderTarifas();
+  renderReservas();
+}
+
+function renderDashboard(){
+  document.getElementById('st-alumnos').textContent = _data.alumnos.filter(a=>a.activo!==false).length;
+  document.getElementById('st-experiencias').textContent = _data.experiencias.length;
+  document.getElementById('st-ventas').textContent = _data.ventas.filter(v=>v.estado==='pendiente').length;
+  document.getElementById('st-coworking').textContent = _data.reservas.length;
+
+  const rows = _data.experiencias.slice(0,8);
+  document.getElementById('dash-experiencias').innerHTML = rows.length ? `<table>
+    <tr><th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Personas</th><th>Precio</th></tr>
+    ${rows.map(e=>`<tr><td>${esc(e.fecha||'—')}</td><td>${esc(e.tipo_experiencia||'—')}</td><td>${esc(e.nombre||'—')}</td><td>${esc(e.personas||'—')}</td><td>${e.precio?crmFmt(e.precio):'—'}</td></tr>`).join('')}
+  </table>` : '<div class="empty-state">Aún no hay talleres reservados.</div>';
+}
+
+function renderAlumnos(){
+  const rows = _data.alumnos;
+  document.getElementById('tbl-alumnos').innerHTML = rows.length ? `<table>
+    <tr><th>Nombre</th><th>Día/Clase</th><th>Teléfono</th><th>Método</th><th>Info</th><th>Estado</th></tr>
+    ${rows.map(a=>`<tr>
+      <td><b>${esc(a.nombre)}</b></td>
+      <td>${esc(a.dia_clase||'—')}</td>
+      <td>${esc(a.telefono||'—')}</td>
+      <td>${esc(a.metodo_pago||'—')}</td>
+      <td>${esc(a.info||'—')}</td>
+      <td>${a.activo!==false?'<span class="tag tag-good">Activa</span>':'<span class="tag tag-danger">De baja</span>'}</td>
+    </tr>`).join('')}
+  </table>` : '<div class="empty-state">Aún no hay alumnas registradas. Añade la primera con "+ Nueva alumna".</div>';
+}
+
+function renderExperiencias(){
+  const rows = _data.experiencias;
+  document.getElementById('tbl-experiencias').innerHTML = rows.length ? `<table>
+    <tr><th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Tel.</th><th>Pers.</th><th>Precio</th><th>Tipo venta</th></tr>
+    ${rows.map(e=>`<tr>
+      <td>${esc(e.fecha||'—')}</td>
+      <td>${esc(e.tipo_experiencia||'—')}</td>
+      <td>${esc(e.nombre||'—')}</td>
+      <td>${esc(e.telefono||'—')}</td>
+      <td>${esc(e.personas||'—')}</td>
+      <td>${e.precio?crmFmt(e.precio):'—'}</td>
+      <td>${esc(e.tipo_venta||'—')}</td>
+    </tr>`).join('')}
+  </table>` : '<div class="empty-state">Aún no hay reservas de talleres. Añade la primera con "+ Nueva reserva".</div>';
+}
+
+function renderVentas(){
+  const rows = _data.ventas;
+  document.getElementById('tbl-ventas').innerHTML = rows.length ? `<table>
+    <tr><th>Fecha</th><th>Tipo</th><th>Producto</th><th>Autor</th><th>Importe</th><th>Comisión</th><th>Pago</th><th>Estado</th></tr>
+    ${rows.map(v=>`<tr>
+      <td>${esc(v.fecha||'—')}</td>
+      <td>${esc(v.tipo||'—')}</td>
+      <td>${esc(v.producto||'—')}</td>
+      <td>${esc(v.autor||'—')}</td>
+      <td>${v.importe?crmFmt(v.importe):'—'}</td>
+      <td>${v.comision?crmFmt(v.comision):'—'}</td>
+      <td>${esc(v.pago||'—')}</td>
+      <td>${v.estado==='pagado'?'<span class="tag tag-good">Pagado</span>':'<span class="tag tag-warn">Pendiente</span>'}</td>
+    </tr>`).join('')}
+  </table>` : '<div class="empty-state">Aún no hay ventas registradas. Añade la primera con "+ Nueva venta".</div>';
+}
+
+function renderTarifas(){
+  const rows = _data.tarifas;
+  document.getElementById('tbl-tarifas').innerHTML = rows.length ? `<table>
+    <tr><th>Nombre</th><th>Precio</th><th>Horario</th><th>Horas</th><th>Activa</th></tr>
+    ${rows.map(t=>`<tr>
+      <td><b>${esc(t.nombre)}</b></td>
+      <td>${crmFmt(t.precio)}</td>
+      <td>${esc(t.horario||'—')}</td>
+      <td>${esc(t.horas||'—')}</td>
+      <td>${t.activa!==false?'<span class="tag tag-good">Sí</span>':'<span class="tag tag-danger">No</span>'}</td>
+    </tr>`).join('')}
+  </table>` : '<div class="empty-state">Sin tarifas configuradas.</div>';
+
+  const sel = document.getElementById('rs-tarifa');
+  if(sel) sel.innerHTML = rows.map(t=>`<option value="${t.id}">${esc(t.nombre)} — ${crmFmt(t.precio)}</option>`).join('');
+}
+
+function renderReservas(){
+  const rows = _data.reservas;
+  document.getElementById('tbl-reservas').innerHTML = rows.length ? `<table>
+    <tr><th>Fecha</th><th>Cliente</th><th>Teléfono</th><th>Tarifa</th><th>Estado</th></tr>
+    ${rows.map(r=>{
+      const tarifa = _data.tarifas.find(t=>t.id===r.tarifa_id);
+      return `<tr>
+        <td>${esc(r.fecha||'—')}</td>
+        <td>${esc(r.cliente||'—')}</td>
+        <td>${esc(r.telefono||'—')}</td>
+        <td>${esc(tarifa?tarifa.nombre:'—')}</td>
+        <td>${r.estado==='pagado'?'<span class="tag tag-good">Pagado</span>':'<span class="tag tag-warn">Pendiente</span>'}</td>
+      </tr>`;
+    }).join('')}
+  </table>` : '<div class="empty-state">Aún no hay reservas de coworking/alquiler.</div>';
+}
+
+function openAlumnoModal(){ openModal('modal-alumno'); }
+async function saveAlumno(){
+  const nombre = document.getElementById('al-nombre').value.trim();
+  if(!nombre){ toast('Falta el nombre'); return; }
+  const payload = {
+    nombre,
+    dia_clase: document.getElementById('al-dia').value.trim(),
+    telefono: document.getElementById('al-tel').value.trim(),
+    metodo_pago: document.getElementById('al-metodo').value,
+    info: document.getElementById('al-info').value.trim(),
+  };
+  const {error} = await _sb.from('alumnos').insert(payload);
+  if(error){ toast('Error al guardar'); return; }
+  closeModal('modal-alumno');
+  toast('Alumna guardada ✓');
+  loadAll();
+}
+
+function openExperienciaModal(){ openModal('modal-experiencia'); }
+async function saveExperiencia(){
+  const payload = {
+    fecha: document.getElementById('ex-fecha').value || null,
+    tipo_experiencia: document.getElementById('ex-tipo').value.trim(),
+    nombre: document.getElementById('ex-nombre').value.trim(),
+    telefono: document.getElementById('ex-tel').value.trim(),
+    personas: Number(document.getElementById('ex-personas').value)||1,
+    precio: Number(document.getElementById('ex-precio').value)||null,
+    tipo_venta: document.getElementById('ex-tipoventa').value,
+  };
+  if(!payload.tipo_experiencia){ toast('Falta el tipo de experiencia'); return; }
+  const {error} = await _sb.from('experiencias').insert(payload);
+  if(error){ toast('Error al guardar'); return; }
+  closeModal('modal-experiencia');
+  toast('Reserva guardada ✓');
+  loadAll();
+}
+
+function openVentaModal(){ openModal('modal-venta'); }
+async function saveVenta(){
+  const producto = document.getElementById('ve-producto').value.trim();
+  if(!producto){ toast('Falta el producto'); return; }
+  const payload = {
+    fecha: document.getElementById('ve-fecha').value || null,
+    tipo: document.getElementById('ve-tipo').value,
+    producto,
+    autor: document.getElementById('ve-autor').value.trim() || 'Yo',
+    importe: Number(document.getElementById('ve-importe').value)||null,
+    comision: Number(document.getElementById('ve-comision').value)||null,
+    pago: document.getElementById('ve-pago').value,
+    estado: 'pendiente',
+  };
+  const {error} = await _sb.from('ventas').insert(payload);
+  if(error){ toast('Error al guardar'); return; }
+  closeModal('modal-venta');
+  toast('Venta guardada ✓');
+  loadAll();
+}
+
+function openReservaModal(){ openModal('modal-reserva'); }
+async function saveReserva(){
+  const cliente = document.getElementById('rs-cliente').value.trim();
+  if(!cliente){ toast('Falta el nombre del cliente'); return; }
+  const payload = {
+    tarifa_id: document.getElementById('rs-tarifa').value || null,
+    cliente,
+    telefono: document.getElementById('rs-tel').value.trim(),
+    fecha: document.getElementById('rs-fecha').value || null,
+    estado: 'pendiente',
+  };
+  const {error} = await _sb.from('coworking_reservas').insert(payload);
+  if(error){ toast('Error al guardar'); return; }
+  closeModal('modal-reserva');
+  toast('Reserva guardada ✓');
+  loadAll();
+}
+
+function boot(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  renderNav();
+  showTab('dashboard');
+  loadAll();
+  _sb.channel('closmosis-realtime')
+    .on('postgres_changes',{event:'*',schema:'public',table:'alumnos'},()=>loadAll())
+    .on('postgres_changes',{event:'*',schema:'public',table:'experiencias'},()=>loadAll())
+    .on('postgres_changes',{event:'*',schema:'public',table:'ventas'},()=>loadAll())
+    .on('postgres_changes',{event:'*',schema:'public',table:'coworking_reservas'},()=>loadAll())
+    .subscribe();
+}
+
+if(localStorage.getItem(SESSION_KEY)==='1'){ boot(); }
+
+document.getElementById('login-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>
