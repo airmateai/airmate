@@ -2551,7 +2551,7 @@ function openLeadModal(id){
       </div>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeModal()">Cerrar</button>
-        <button class="btn btn-ghost" style="background:#e0f2fe;color:#0369a1;border-color:#bae6fd" onclick="leadToCRM('${l.id}');closeModal()">→ Convertir a CRM</button>
+        ${l.status!=='converted'?`<button class="btn btn-ghost" style="background:#e0f2fe;color:#0369a1;border-color:#bae6fd" onclick="leadToCRM('${l.id}');closeModal()">→ Convertir a CRM</button>`:''}
       </div>
     </div>`;
   document.getElementById('modal-overlay').classList.add('open');
@@ -4451,7 +4451,9 @@ function _forceOpenPrintOverlay(){
   var _po=document.getElementById('crm-print-overlay');
   if(!_po)return;
   _po.classList.add('open');
-  _po.style.cssText='display:flex !important;position:fixed !important;inset:0 !important;background:rgba(15,23,42,.65) !important;z-index:99999 !important;align-items:center;justify-content:center;pointer-events:all;overflow-y:auto;padding:20px;';
+  // z-index por debajo de #sigpad-overlay (10001) para que "Capturar firma" pueda
+  // abrirse por encima de la vista previa de la factura, en vez de quedar detrás.
+  _po.style.cssText='display:flex !important;position:fixed !important;inset:0 !important;background:rgba(15,23,42,.65) !important;z-index:9000 !important;align-items:center;justify-content:center;pointer-events:all;overflow-y:auto;padding:20px;';
 }
 
 function crmViewFactura(id,idx=0){
@@ -5652,7 +5654,9 @@ async function calcVencimientos(){
 }
 
 // ── FINANZAS · Chart.js + Holded ───────────────────────────────────────────
-const HOLDED_PROXY = 'https://airmate.es/api/holded';
+// (HOLDED_PROXY se declara más abajo, una sola vez — declararlo aquí también
+// producía un SyntaxError de redeclaración que rompía todo el bloque de
+// Recepción de Stock más adelante en el archivo)
 let _finCharts = {};
 let _finCache = { treasury:null, expensesAcc:null, payments:null, salesreceipt:null, creditnote:null, ts:0 };
 const _GOLD = '#c4a35a', _GOLD_DK = '#9a7f45', _GOLD_LT = '#e8c97a', _CREAM = '#faf7ef';
@@ -8378,9 +8382,16 @@ let punteoHistorial = [];
 
 // ── Cargar historial desde Supabase ──
 async function punteoLoadHistorial(){
-  const {data} = await _sb.from('stock_recepciones').select('*').eq('business_slug','jose-acosta').order('created_at',{ascending:false}).limit(10);
-  punteoHistorial = data||[];
-  renderPunteoHistorial();
+  const el = document.getElementById('punteo-historial-tbody');
+  try{
+    const {data,error} = await _sb.from('stock_recepciones').select('*').eq('business_slug','jose-acosta').order('created_at',{ascending:false}).limit(10);
+    if(error) throw error;
+    punteoHistorial = data||[];
+    renderPunteoHistorial();
+  }catch(e){
+    console.error('punteoLoadHistorial',e);
+    if(el) el.innerHTML='<div style="text-align:center;padding:32px;color:#dc2626;font-size:13px;">⚠ No se pudo cargar el historial — falta crear la tabla stock_recepciones (ejecuta stock_recepciones-setup.sql)</div>';
+  }
 }
 
 function renderPunteoHistorial(){
@@ -8648,7 +8659,7 @@ async function punteoConfirmar(){
   }
 
   // Guardar recepción en Supabase
-  await _sb.from('stock_recepciones').insert({
+  const {error: recepcionError} = await _sb.from('stock_recepciones').insert({
     business_slug: 'jose-acosta',
     proveedor: _punteoProveedor||null,
     fecha_albaran: _puntoFecha||null,
@@ -8657,6 +8668,10 @@ async function punteoConfirmar(){
     tiene_imagen: !!punteoImageB64,
     updated_en_holded: updated,
   });
+  if(recepcionError){
+    console.error('punteoConfirmar insert stock_recepciones',recepcionError);
+    toast('⚠ El stock se actualizó pero no se pudo guardar el registro de la recepción');
+  }
 
   // Mostrar éxito
   document.getElementById('punteo-activo').style.display='none';
