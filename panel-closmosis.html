@@ -128,6 +128,14 @@ tr:last-child td{border-bottom:none;}
 .toast.show{display:block;}
 .empty-state{padding:40px 20px;text-align:center;color:var(--txt3);font-size:13px;}
 
+@media print{
+  .sidebar,.topbar,.btn-accent,.filter-bar,.modal-overlay{display:none!important;}
+  .main{margin-left:0!important;}
+  .tab-pane{display:none!important;}
+  .tab-pane.active{display:block!important;}
+  body{background:#fff;}
+  .tbl-wrap{max-height:none!important;overflow:visible!important;}
+}
 @media(max-width:860px){
   .sidebar{transform:translateX(-100%);transition:transform .2s;}
   .sidebar.open{transform:translateX(0);}
@@ -200,14 +208,30 @@ tr:last-child td{border-bottom:none;}
       <!-- DASHBOARD -->
       <div class="tab-pane active" id="tab-dashboard">
         <div class="page-hd">
-          <div class="page-title">Dashboard</div>
-          <div class="page-sub">Resumen general de Closmosis</div>
+          <div class="page-hd-row" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div><div class="page-title">Dashboard</div><div class="page-sub">Resumen de <span id="dash-periodo-label">Closmosis</span></div></div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <select class="field-input" id="dash-anio" style="width:90px" onchange="renderDashboard()"><option value="2026">2026</option></select>
+              <select class="field-input" id="dash-mes" style="width:150px" onchange="renderDashboard()"></select>
+              <button class="btn btn-ghost btn-sm" onclick="exportPdf('clientes')">📄 PDF Clientes</button>
+              <button class="btn btn-ghost btn-sm" onclick="exportPdf('finanzas')">📄 PDF Finanzas</button>
+            </div>
+          </div>
         </div>
         <div class="stats-grid">
+          <div class="stat-card"><div class="stat-val" id="st-ingresos">—</div><div class="stat-label">Ingresos totales</div></div>
+          <div class="stat-card"><div class="stat-val" id="st-cursos">—</div><div class="stat-label">Cursos</div></div>
+          <div class="stat-card"><div class="stat-val" id="st-experiencias">—</div><div class="stat-label">Experiencias</div></div>
+          <div class="stat-card"><div class="stat-val" id="st-comision">—</div><div class="stat-label">Comisión ventas</div></div>
+          <div class="stat-card"><div class="stat-val" id="st-gastos">—</div><div class="stat-label">Gastos mensuales</div></div>
+          <div class="stat-card"><div class="stat-val" id="st-bolsillo">—</div><div class="stat-label">Pal bolsillo</div></div>
           <div class="stat-card"><div class="stat-val" id="st-contactos">—</div><div class="stat-label">Contactos totales</div></div>
-          <div class="stat-card"><div class="stat-val" id="st-inscripciones">—</div><div class="stat-label">Inscripciones activas</div></div>
-          <div class="stat-card"><div class="stat-val" id="st-experiencias">—</div><div class="stat-label">Talleres registrados</div></div>
-          <div class="stat-card"><div class="stat-val" id="st-ventas">—</div><div class="stat-label">Ventas de piezas</div></div>
+          <div class="stat-card"><div class="stat-val" id="st-alumnos-activos">—</div><div class="stat-label">Alumnas activas</div></div>
+          <div class="stat-card"><div class="stat-val" id="st-liquidaciones">—</div><div class="stat-label">Liquidaciones pend.</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-hd-title">Ingresos y gastos mensuales 2026</div></div>
+          <div style="padding:18px;"><canvas id="dash-chart" height="220"></canvas></div>
         </div>
         <div class="card">
           <div class="card-hd"><div class="card-hd-title">Últimas experiencias</div></div>
@@ -483,17 +507,97 @@ function renderAll(){
   renderGastos();
 }
 
+function fillMesSelect(){
+  const sel = document.getElementById('dash-mes');
+  if(sel.options.length) return;
+  sel.innerHTML = MESES.map((m,i)=>`<option value="${i}">${m}</option>`).join('');
+  sel.value = new Date().getMonth();
+}
+
+function gastoAplicaEnMes(g, anio, mesIdx){
+  const fechaMes = new Date(anio, mesIdx, 15);
+  const desde = g.desde ? new Date(g.desde) : null;
+  const hasta = g.hasta ? new Date(g.hasta) : null;
+  if(desde && fechaMes < desde) return false;
+  if(hasta && fechaMes > hasta) return false;
+  return true;
+}
+
 function renderDashboard(){
+  fillMesSelect();
+  const anio = Number(document.getElementById('dash-anio').value);
+  const mesIdx = Number(document.getElementById('dash-mes').value);
+  const mesNombre = MESES[mesIdx];
+  document.getElementById('dash-periodo-label').textContent = `${mesNombre} ${anio}`;
+
+  const ingresosCursos = _data.pagos.filter(p=>p.mes===mesNombre).reduce((s,p)=>s+(Number(p.importe)||0),0);
+  const ingresosExperiencias = _data.experiencias.filter(e=>e.mes_pago===mesNombre).reduce((s,e)=>s+(Number(e.importe_pagado)||0),0);
+  const comisionVentas = _data.ventas.filter(v=>v.mes===mesNombre).reduce((s,v)=>s+(Number(v.comision_closmosis)||0),0);
+  const gastosMes = _data.gastos.filter(g=>gastoAplicaEnMes(g,anio,mesIdx)).reduce((s,g)=>s+(Number(g.importe_con_iva)||0),0);
+  const ingresosTotales = ingresosCursos + ingresosExperiencias + comisionVentas;
+  const palBolsillo = ingresosTotales - gastosMes;
+  const liquidacionesPend = _data.ventas.filter(v=>v.pagado_al_artesano!=='Si').length;
+
+  document.getElementById('st-ingresos').textContent = crmFmt(ingresosTotales);
+  document.getElementById('st-cursos').textContent = crmFmt(ingresosCursos);
+  document.getElementById('st-experiencias').textContent = crmFmt(ingresosExperiencias);
+  document.getElementById('st-comision').textContent = crmFmt(comisionVentas);
+  document.getElementById('st-gastos').textContent = crmFmt(gastosMes);
+  document.getElementById('st-bolsillo').textContent = crmFmt(palBolsillo);
   document.getElementById('st-contactos').textContent = _data.contactos.length;
-  document.getElementById('st-inscripciones').textContent = _data.inscripciones.length;
-  document.getElementById('st-experiencias').textContent = _data.experiencias.length;
-  document.getElementById('st-ventas').textContent = _data.ventas.length;
+  document.getElementById('st-alumnos-activos').textContent = _data.inscripciones.length;
+  document.getElementById('st-liquidaciones').textContent = liquidacionesPend;
+
+  drawChart(anio);
 
   const rows = _data.experiencias.slice(0,10);
   document.getElementById('dash-experiencias').innerHTML = rows.length ? `<table>
     <tr><th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Personas</th><th>Importe</th></tr>
     ${rows.map(e=>`<tr><td>${esc(e.fecha_experiencia_texto||'—')}</td><td>${esc(e.tipo_experiencia||'—')}</td><td>${esc(e.nombre||'—')}</td><td>${esc(e.numero_participantes||'—')}</td><td>${e.importe_pagado?crmFmt(e.importe_pagado):'—'}</td></tr>`).join('')}
   </table>` : '<div class="empty-state">Aún no hay talleres reservados.</div>';
+}
+
+function drawChart(anio){
+  const canvas = document.getElementById('dash-chart');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.parentElement.clientWidth; canvas.width = w; canvas.height = 220;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  const ingresosPorMes = MESES.map(m=>
+    _data.pagos.filter(p=>p.mes===m).reduce((s,p)=>s+(Number(p.importe)||0),0) +
+    _data.experiencias.filter(e=>e.mes_pago===m).reduce((s,e)=>s+(Number(e.importe_pagado)||0),0) +
+    _data.ventas.filter(v=>v.mes===m).reduce((s,v)=>s+(Number(v.comision_closmosis)||0),0)
+  );
+  const gastosPorMes = MESES.map((m,i)=>_data.gastos.filter(g=>gastoAplicaEnMes(g,anio,i)).reduce((s,g)=>s+(Number(g.importe_con_iva)||0),0));
+
+  const max = Math.max(1, ...ingresosPorMes, ...gastosPorMes);
+  const padL = 46, padB = 26, padT = 10;
+  const chartW = canvas.width - padL - 10, chartH = canvas.height - padB - padT;
+  const groupW = chartW / 12;
+
+  ctx.strokeStyle = '#e7e0d3'; ctx.fillStyle = '#9a9384'; ctx.font = '11px Inter, sans-serif';
+  for(let i=0;i<=4;i++){
+    const y = padT + chartH - (chartH*i/4);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(canvas.width-6,y); ctx.stroke();
+    ctx.fillText(Math.round(max*i/4).toLocaleString('es-ES'), 4, y+4);
+  }
+  MESES_CORTO.forEach((m,i)=>{
+    const x = padL + i*groupW;
+    const bw = groupW*0.32;
+    const hIng = (ingresosPorMes[i]/max)*chartH;
+    const hGas = (gastosPorMes[i]/max)*chartH;
+    ctx.fillStyle = '#3f7a4f';
+    ctx.fillRect(x+groupW*0.12, padT+chartH-hIng, bw, hIng);
+    ctx.fillStyle = '#c0562080';
+    ctx.fillRect(x+groupW*0.52, padT+chartH-hGas, bw, hGas);
+    ctx.fillStyle = '#9a9384';
+    ctx.fillText(m, x+groupW*0.28, canvas.height-8);
+  });
+}
+
+function exportPdf(tipo){
+  window.print();
 }
 
 function renderContactos(){
@@ -582,6 +686,22 @@ function renderAlumnos(){
   document.getElementById('tbl-alumnos').innerHTML = html;
 }
 
+const TIPO_PALETTE = ['#f0e0cf','#dce8f0','#e5dcf0','#e0f0e2','#f0e0e8','#f0ecd0','#dcf0ec','#e8dce0'];
+const TIPO_TEXT = ['#94541f','#2c5f7c','#5c3f94','#3f7a4f','#943f6a','#7a6a1f','#1f7a6a','#6a3f4a'];
+const _tipoColorCache = {};
+function tipoColor(tipo){
+  const key = (tipo||'—').toUpperCase();
+  if(!_tipoColorCache[key]){
+    let h=0; for(let i=0;i<key.length;i++) h = (h*31+key.charCodeAt(i))>>>0;
+    _tipoColorCache[key] = h % TIPO_PALETTE.length;
+  }
+  const i = _tipoColorCache[key];
+  return `background:${TIPO_PALETTE[i]};color:${TIPO_TEXT[i]}`;
+}
+function tipoTag(tipo){
+  return `<span class="tag" style="${tipoColor(tipo)}">${esc(tipo||'—')}</span>`;
+}
+
 function renderExperiencias(){
   const q = (document.getElementById('f-experiencias')?.value||'').toLowerCase();
   const rows = _data.experiencias.filter(e=>!q || (e.nombre||'').toLowerCase().includes(q) || (e.tipo_experiencia||'').toLowerCase().includes(q));
@@ -589,7 +709,7 @@ function renderExperiencias(){
     <tr><th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Tel.</th><th>Pers.</th><th>Importe</th><th>Pago</th></tr>
     ${rows.map(e=>`<tr>
       <td>${esc(e.fecha_experiencia_texto||'—')}</td>
-      <td>${esc(e.tipo_experiencia||'—')}</td>
+      <td>${tipoTag(e.tipo_experiencia)}</td>
       <td>${esc(e.nombre||'—')}</td>
       <td>${esc(e.telefono||'—')}</td>
       <td>${esc(e.numero_participantes||'—')}</td>
@@ -605,7 +725,7 @@ function renderVentas(){
     <tr><th>Fecha</th><th>Tipo</th><th>Producto</th><th>Autor</th><th>Importe</th><th>Comisión</th><th>Pago</th><th>Pagado artesano</th></tr>
     ${rows.map(v=>`<tr>
       <td>${esc(v.fecha||'—')}</td>
-      <td>${esc(v.tipo||'—')}</td>
+      <td>${tipoTag(v.tipo)}</td>
       <td>${esc(v.producto||'—')}</td>
       <td>${esc(v.autor||'—')}</td>
       <td>${v.importe?crmFmt(v.importe):'—'}</td>
