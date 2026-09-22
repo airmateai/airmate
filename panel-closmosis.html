@@ -106,6 +106,13 @@ input,select{font-family:inherit;}
 .mes-baja{background:#efece2;color:var(--txt3);}
 .total-row td{font-weight:700;background:var(--border2);}
 
+.cal-grid{display:grid;grid-template-columns:90px repeat(7,1fr);border-top:1px solid var(--border2);border-left:1px solid var(--border2);}
+.cal-cell{border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);padding:8px;min-height:70px;}
+.cal-hd{background:var(--border2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--txt2);text-align:center;padding:8px 4px;min-height:auto;}
+.cal-time{background:var(--bg);font-size:11.5px;font-weight:700;color:var(--txt2);display:flex;align-items:center;justify-content:center;}
+.cal-name{display:inline-block;background:var(--acc-bg);color:var(--acc-d);font-size:11px;font-weight:600;padding:2px 7px;border-radius:12px;margin:2px 3px 0 0;}
+.cal-empty{color:var(--txt3);font-size:11px;text-align:center;padding-top:20px;}
+
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th{text-align:left;padding:9px 14px;background:var(--border2);color:var(--txt2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;}
 td{padding:9px 14px;border-bottom:1px solid var(--border2);white-space:nowrap;}
@@ -262,6 +269,12 @@ tr:last-child td{border-bottom:none;}
           </div>
         </div>
         <div class="card">
+          <div class="card-hd"><div class="card-hd-title">Horario semanal</div></div>
+          <div id="calendario-semanal"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-hd"><div class="card-hd-title">Cuadrante de pagos mensuales</div></div>
           <div class="filter-bar">
             <input id="f-alumnos" placeholder="Buscar por nombre o grupo..." oninput="renderAlumnos()">
             <div class="sem-tabs">
@@ -642,7 +655,43 @@ function metodoTag(metodo){
   return metodo ? esc(metodo) : '—';
 }
 
+const DIAS_SEMANA = ['LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO','DOMINGO'];
+function parseGrupo(grupo){
+  const g = (grupo||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const diaIdx = DIAS_SEMANA.findIndex(d=>g.includes(d.normalize('NFD').replace(/[\u0300-\u036f]/g,'')));
+  if(diaIdx===-1) return null;
+  const hora = (grupo||'').replace(new RegExp(DIAS_SEMANA[diaIdx],'i'),'').trim() || (grupo||'');
+  return {dia: diaIdx, hora};
+}
+
+function renderCalendarioSemanal(){
+  const slots = {}; // hora -> [null,null,...] por dia (7)
+  _data.inscripciones.forEach(a=>{
+    const p = parseGrupo(a.grupo);
+    if(!p) return;
+    if(!slots[p.hora]) slots[p.hora] = Array.from({length:7},()=>[]);
+    slots[p.hora][p.dia].push(a.nombre);
+  });
+  const horas = Object.keys(slots).sort();
+  const el = document.getElementById('calendario-semanal');
+  if(!horas.length){ el.innerHTML = '<div class="empty-state">Aún no hay horario configurado.</div>'; return; }
+
+  let html = `<div class="cal-grid">
+    <div class="cal-cell cal-hd">Hora</div>
+    ${DIAS_SEMANA.map(d=>`<div class="cal-cell cal-hd">${d}</div>`).join('')}`;
+  horas.forEach(h=>{
+    html += `<div class="cal-cell cal-time">${esc(h)}</div>`;
+    for(let d=0; d<7; d++){
+      const nombres = slots[h][d];
+      html += `<div class="cal-cell">${nombres.length ? nombres.map(n=>`<span class="cal-name">${esc(n)}</span>`).join('') : ''}</div>`;
+    }
+  });
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
 function renderAlumnos(){
+  renderCalendarioSemanal();
   const q = (document.getElementById('f-alumnos')?.value||'').toLowerCase();
   let rows = _data.inscripciones.filter(a=>!q || (a.nombre||'').toLowerCase().includes(q) || (a.grupo||'').toLowerCase().includes(q));
 
