@@ -2826,7 +2826,7 @@ async function crmVerCliente(id){
       </div>
       ${c.empresa?`<div><span class="tag tag-cold"> ${esc(c.empresa)}</span></div>`:''}
     </div>`+
-    jaResumenCliente(c,factsArr)+
+    jaResumenCliente(c,factsArr)+jaMaterialesHTML(c,factsArr)+
     siluetaHtml+
     `<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px"> Medidas detalladas</div>`+
     medHtml+saldoHtml+walletHtml+prestamosHtml+timelineHtml+ordsHtml+factsHtml,
@@ -3969,7 +3969,11 @@ async function crmFacturaForm(f={}){
   </div>
   <div class="crm-form-group"><label class="crm-form-label">Líneas</label>
     <div id="crm-inv-lines"></div>
-    <button class="btn btn-ghost btn-sm" style="margin-top:4px" onclick="crmAddLine()">+ Añadir línea</button>
+    <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-ghost btn-sm" onclick="crmAddLine()">+ Añadir línea</button>
+      <select id="ja-conceptos-sel" class="crm-form-ctrl" style="flex:1;min-width:200px;padding:6px 10px" onchange="if(this.value!==''){jaAnadirConcepto(this.value);this.value='';}"><option value="">＋ Añadir concepto frecuente…</option></select>
+      <button class="btn btn-ghost btn-sm" title="Gestionar la lista de conceptos" onclick="jaGestionarConceptos()">⚙ Conceptos</button>
+    </div>
   </div>
   <div class="crm-form-row">
     <div class="crm-form-group"><label class="crm-form-label">Descuento (%)</label><input type="number" class="crm-form-ctrl" id="ff-discount" value="${f.discount||0}" min="0" max="100" step="0.1"/></div>
@@ -4299,8 +4303,8 @@ async function comprasLoad(){
     const totalMes=_compras.filter(c=>c.fecha&&c.fecha.startsWith(mes)).reduce((s,c)=>s+Number(c.importe||0),0);
     const cats=[...new Set(_compras.map(c=>c.categoria).filter(Boolean))].length;
     sg.innerHTML=`
-      <div class="stat-card"><div class="stat-val">—</div><div class="stat-label">Gasto total</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:#f59e0b">—</div><div class="stat-label">Gasto este mes</div></div>
+      <div class="stat-card"><div class="stat-val">${crmFmt(total)}</div><div class="stat-label">Gasto total</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:#f59e0b">${crmFmt(totalMes)}</div><div class="stat-label">Gasto este mes</div></div>
       <div class="stat-card"><div class="stat-val cu-plain" data-target="${cats}">0</div><div class="stat-label">Categorías</div></div>
       <div class="stat-card"><div class="stat-val cu-plain" data-target="${_compras.length}">0</div><div class="stat-label">Facturas registradas</div></div>`;
   setTimeout(function(){sg.querySelectorAll('.cu-plain').forEach(function(el,i){var t=parseFloat(el.dataset.target),cur=el.dataset.cur;setTimeout(function(){var s=0,step=t/(600/16),iv=setInterval(function(){s=Math.min(s+step,t);el.textContent=cur?Math.round(s).toLocaleString('es-ES')+' €':Math.round(s);if(s>=t)clearInterval(iv);},16);},i*50);});},30);
@@ -4310,7 +4314,7 @@ async function comprasLoad(){
   tb.innerHTML=_compras.map(c=>{const {nota,img}=_compraParseNotas(c.notas);return`<tr>
     <td>${c.fecha?new Date(c.fecha+'T00:00:00').toLocaleDateString('es-ES'):'—'}</td>
     <td>${esc(c.proveedor||'—')}</td>
-    <td>${esc(c.concepto||'—')}</td>
+    <td>${esc(c.concepto||'—')}${c.client_id?`<div style="font-size:11px;color:#8a7960">👔 ${esc((_crmClientes.find(x=>x.id===c.client_id)||{}).name||'cliente')}</div>`:''}</td>
     <td>${c.categoria?`<span class="tag tag-cold">${esc(c.categoria)}</span>`:'—'}</td>
     <td>${esc(c.metodo||'—')}</td>
     <td><strong>${Number(c.importe||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})} €</strong></td>
@@ -4386,6 +4390,8 @@ function compraForm(c={}){
   <div class="crm-form-group"><label class="crm-form-label">Proveedor factura transporte (referencia)</label>
     <input class="crm-form-ctrl" id="cp-transporte-ref" value="${esc(c._transporte_ref||'')}" placeholder="Ej: Seur, MRW, referencia factura..."/>
   </div>
+  <div class="crm-form-group"><label class="crm-form-label">¿Para qué cliente? <span style="font-weight:400;color:#94a3b8">(opcional: se suma como gasto en su ficha)</span></label>
+    <select class="crm-form-ctrl" id="cp-cliente"><option value="">— Gasto general, no es de un cliente —</option>${(_crmClientes||[]).slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','es')).map(x=>`<option value="${x.id}"${c.client_id===x.id?' selected':''}>${esc(x.name)}</option>`).join('')}</select></div>
   <div class="crm-form-group"><label class="crm-form-label">Notas</label><textarea class="crm-form-ctrl" id="cp-notas">${esc(nota)}</textarea></div>`;}
 
 function calcCosteTotal(){
@@ -4414,7 +4420,7 @@ async function cpUploadImg(input){
   status.textContent='Leyendo ticket con IA…';
   try{
     const resp=await fetch('https://bot-airmate-1.vercel.app/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      system_prompt:'Eres un asistente de contabilidad español. Analiza la imagen de un ticket o factura y extrae los datos. Responde SOLO con JSON válido sin markdown ni explicaciones: {"fecha":"YYYY-MM-DD o null","importe":numero_decimal o null,"proveedor":"nombre del comercio o null","concepto":"descripcion breve de que se compro o null","metodo":"Metalico|Transferencia|Tarjeta o null"}',
+      system_prompt:'Eres un asistente de contabilidad español. Analiza la imagen de un ticket o factura y extrae los datos. Responde SOLO con JSON válido sin markdown ni explicaciones: {"cliente":"nombre del cliente final para el que es la compra si aparece escrito (referencia, pedido o nombre a mano), o null","fecha":"YYYY-MM-DD o null","importe":numero_decimal o null,"proveedor":"nombre del comercio o null","concepto":"descripcion breve de que se compro o null","metodo":"Metalico|Transferencia|Tarjeta o null"}',
       messages:[{role:'user',content:[{type:'image_url',image_url:{url:b64,detail:'low'}},{type:'text',text:'Extrae los datos de este ticket'}]}]
     })});
     const raw=await resp.json();
@@ -4425,7 +4431,9 @@ async function cpUploadImg(input){
     if(d.proveedor)document.getElementById('cp-proveedor').value=d.proveedor;
     if(d.concepto)document.getElementById('cp-concepto').value=d.concepto;
     if(d.metodo){const sel=document.getElementById('cp-metodo');[...sel.options].forEach(o=>{if(o.value===d.metodo)o.selected=true;});}
-    status.textContent=' Datos rellenados por IA — revisa y guarda';
+    let _cliIA=null;
+    if(d.cliente){ _cliIA=jaBuscarClientePorNombre(d.cliente); const sc=document.getElementById('cp-cliente'); if(_cliIA&&sc&&!sc.value) sc.value=_cliIA.id; }
+    status.textContent=' Datos rellenados por IA'+(_cliIA?' · cliente: '+_cliIA.name:'')+' — revisa y guarda';
   }catch(e){status.textContent=' Foto guardada (IA no disponible)';}
 }
 
@@ -4442,7 +4450,7 @@ async function saveCompra(){
   const costeTotal=importe+transporte;
   const notasExtra=divisa!=='EUR'||transporte>0?`|divisa:${divisa}|cambio:${cambio}|transporte:${transporte}|transporte_ref:${transRef}|coste_total:${costeTotal}`:'';
   const notasRaw=_compraStringifyNotas(cv('cp-notas'),imgUrl)+notasExtra;
-  const payload={business_slug:BIZ_SLUG,proveedor:cv('cp-proveedor')||null,concepto,importe,fecha:cv('cp-fecha')||null,metodo:cv('cp-metodo')||null,categoria:cv('cp-cat')||null,notas:notasRaw};
+  const payload={business_slug:BIZ_SLUG,proveedor:cv('cp-proveedor')||null,concepto,importe,fecha:cv('cp-fecha')||null,metodo:cv('cp-metodo')||null,categoria:cv('cp-cat')||null,notas:notasRaw,client_id:cv('cp-cliente')||null};
   let saveErr;
   if(_crmEditId){const r=await _sbSrv.from('facturas_compra').update(payload).eq('id',_crmEditId);saveErr=r.error;}
   else{const r=await _sbSrv.from('facturas_compra').insert(payload);saveErr=r.error;}
@@ -9092,6 +9100,124 @@ function jaErrorHolded(status){ return (status===503||status===400||status===401
       ${pend.slice(0,6).map(f=>`<div style="display:flex;gap:8px;align-items:center;font-size:12.5px;padding:3px 0;flex-wrap:wrap"><span style="flex:1">${esc(f.client_name||'')} · ${esc(f.invoice_number||'')} · <b>${crmFmt(f.total)}</b></span>${f.receipt_url?`<a href="${esc(f.receipt_url)}" target="_blank" rel="noopener" class="btn btn-ghost btn-xs">Ver</a>`:''}<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0" onclick="jaConfirmarCobro('${f.id}');setTimeout(renderDashboard,700)">✓ Confirmar cobro</button></div>`).join('')}
     </div>`);
   };
+})();
+
+// ═════════════════════════════════════════════════════════════════════
+// Conceptos frecuentes en facturas (reunión 18/07, punto 20) y compras
+// asignadas a un cliente con gasto/ganancia en su ficha (punto 23).
+// ═════════════════════════════════════════════════════════════════════
+let JA_CONCEPTOS=[], JA_CONCEPTOS_AUTO=[], JA_CONCEPTOS_OK=false;
+function jaNorm(t){ return String(t||'').trim().toLowerCase().replace(/\s+/g,' '); }
+async function jaCargarConceptos(){
+  const [propios, docs]=await Promise.all([
+    _sb.from('crm_conceptos').select('*').eq('business_slug',BIZ_SLUG).order('descripcion'),
+    _sb.from('crm_invoices').select('items,issue_date').eq('business_slug',BIZ_SLUG).order('issue_date',{ascending:true}).limit(1000)
+  ]);
+  JA_CONCEPTOS=propios.data||[];
+  // Sugeridos: lo que Jose ya ha facturado, por número de veces y con el último precio usado
+  const m={};
+  (docs.data||[]).forEach(f=>(Array.isArray(f.items)?f.items:[]).forEach(it=>{
+    const d=String(it.desc||'').trim(); if(d.length<3 || /^(Señal 70%|Resto 30%)/.test(d)) return;
+    const k=jaNorm(d); m[k]=m[k]||{ descripcion:d, precio:null, veces:0 }; m[k].veces++;
+    if(Number(it.price)>0) m[k].precio=Number(it.price);
+  }));
+  JA_CONCEPTOS_AUTO=Object.values(m).sort((a,b)=>b.veces-a.veces);
+  JA_CONCEPTOS_OK=true;
+}
+function jaListaConceptos(){
+  const ocultos=new Set(JA_CONCEPTOS.filter(c=>!c.activo).map(c=>jaNorm(c.descripcion)));
+  const propios=JA_CONCEPTOS.filter(c=>c.activo).map(c=>({ descripcion:c.descripcion, precio:c.precio, id:c.id, propio:true }));
+  const ya=new Set(propios.map(c=>jaNorm(c.descripcion)));
+  const auto=JA_CONCEPTOS_AUTO.filter(c=>!ocultos.has(jaNorm(c.descripcion)) && !ya.has(jaNorm(c.descripcion))).slice(0,40);
+  return [...propios, ...auto];
+}
+async function jaPintarSelectConceptos(){
+  const sel=document.getElementById('ja-conceptos-sel'); if(!sel) return;
+  if(!JA_CONCEPTOS_OK){ sel.innerHTML='<option>Cargando conceptos…</option>'; await jaCargarConceptos().catch(()=>{ JA_CONCEPTOS_OK=true; }); }
+  const lista=jaListaConceptos(); window._jaListaConceptos=lista;
+  const propios=lista.filter(c=>c.propio), auto=lista.filter(c=>!c.propio);
+  const op=(c,i)=>`<option value="${i}">${esc(c.descripcion)}${c.precio?' — '+crmFmt(c.precio):''}</option>`;
+  sel.innerHTML=`<option value="">＋ Añadir concepto frecuente…</option>`
+    +(propios.length?`<optgroup label="Mis conceptos">${propios.map(c=>op(c,lista.indexOf(c))).join('')}</optgroup>`:'')
+    +(auto.length?`<optgroup label="Usados en facturas anteriores">${auto.map(c=>op(c,lista.indexOf(c))).join('')}</optgroup>`:'')
+    +(!lista.length?'<option disabled>Aún no hay conceptos: pulsa ⚙ para crearlos</option>':'');
+}
+function jaAnadirConcepto(i){
+  const c=(window._jaListaConceptos||[])[Number(i)]; if(!c) return;
+  const linea={ desc:c.descripcion, qty:1, price:Number(c.precio)||0 };
+  if(_crmLines.length===1 && !_crmLines[0].desc && !Number(_crmLines[0].price)) _crmLines[0]=linea; else _crmLines.push(linea);
+  crmRenderLines();
+}
+async function jaGestionarConceptos(){
+  if(!JA_CONCEPTOS_OK) await jaCargarConceptos();
+  document.getElementById('ja-conc-box')?.remove();
+  const lista=jaListaConceptos(); window._jaListaGestion=lista;
+  const box=document.createElement('div'); box.id='ja-conc-box';
+  box.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:10060;display:grid;place-items:center;padding:16px';
+  box.innerHTML=`<div style="background:#fff;border-radius:12px;padding:20px;max-width:560px;width:100%;max-height:86vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="font-size:16px;font-weight:700;margin-bottom:4px">Conceptos de factura</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:12px">«Mis conceptos» son los que guardas tú. Los demás salen solos de tus facturas anteriores: guárdalos para fijar su precio o quítalos si no los quieres ver.</div>
+    <div style="display:flex;gap:6px;margin-bottom:14px"><input id="ja-conc-nuevo" class="crm-form-ctrl" placeholder="Nuevo concepto (ej. Traje a medida 2 piezas)" style="flex:1"><input id="ja-conc-precio" type="number" step="0.01" class="crm-form-ctrl" placeholder="Precio €" style="width:100px"><button class="btn btn-accent btn-sm" onclick="jaGuardarConcepto(null)">Añadir</button></div>
+    ${lista.length?lista.map((c,i)=>`<div style="display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid #f1f5f9">
+      <span style="flex:1;font-size:13px">${esc(c.descripcion)} ${c.propio?'':`<span style="font-size:10px;color:#94a3b8">(${c.veces} ${c.veces===1?'vez':'veces'})</span>`}</span>
+      <input id="ja-conc-p-${i}" type="number" step="0.01" class="crm-form-ctrl" value="${c.precio??''}" style="width:90px;padding:5px 8px">
+      <button class="btn btn-ghost btn-xs" onclick="jaGuardarConcepto(${i})">${c.propio?'Guardar':'★ Guardar'}</button>
+      <button class="btn btn-ghost btn-xs" style="color:#dc2626" onclick="jaQuitarConcepto(${i})">Quitar</button>
+    </div>`).join(''):'<div style="font-size:13px;color:#94a3b8">Todavía no hay conceptos.</div>'}
+    <div style="text-align:right;margin-top:14px"><button class="btn btn-ghost" onclick="document.getElementById('ja-conc-box').remove();jaPintarSelectConceptos()">Cerrar</button></div>
+  </div>`;
+  document.body.appendChild(box);
+}
+async function jaGuardarConcepto(i){
+  let descripcion, precio, id=null;
+  if(i===null){ descripcion=document.getElementById('ja-conc-nuevo').value.trim(); precio=parseFloat(document.getElementById('ja-conc-precio').value); }
+  else { const c=window._jaListaGestion[i]; descripcion=c.descripcion; id=c.id||null; precio=parseFloat(document.getElementById('ja-conc-p-'+i).value); }
+  if(!descripcion){ showToast('Escribe el concepto'); return; }
+  const fila={ business_slug:BIZ_SLUG, descripcion, precio:isNaN(precio)?null:precio, activo:true };
+  const ex=id||JA_CONCEPTOS.find(c=>jaNorm(c.descripcion)===jaNorm(descripcion))?.id;
+  await sbOk(ex?_sb.from('crm_conceptos').update(fila).eq('id',ex):_sb.from('crm_conceptos').insert(fila),'crm_conceptos');
+  await jaCargarConceptos(); showToast('✓ Concepto guardado'); jaGestionarConceptos();
+}
+async function jaQuitarConcepto(i){
+  const c=window._jaListaGestion[i]; if(!c) return;
+  const ex=c.id||JA_CONCEPTOS.find(x=>jaNorm(x.descripcion)===jaNorm(c.descripcion))?.id;
+  await sbOk(ex?_sb.from('crm_conceptos').update({ activo:false }).eq('id',ex):_sb.from('crm_conceptos').insert({ business_slug:BIZ_SLUG, descripcion:c.descripcion, precio:c.precio, activo:false }),'crm_conceptos');
+  await jaCargarConceptos(); showToast('Concepto quitado de la lista'); jaGestionarConceptos();
+}
+
+// ─── Compras asignadas a un cliente ───
+let JA_COMPRAS_CLIENTE={};
+async function jaCargarComprasCliente(cId){
+  const { data }=await _sb.from('facturas_compra').select('id,fecha,proveedor,concepto,importe').eq('business_slug',BIZ_SLUG).eq('client_id',cId).order('fecha',{ascending:false});
+  JA_COMPRAS_CLIENTE[cId]=data||[];
+}
+function jaMaterialesHTML(c, factsArr){
+  const compras=JA_COMPRAS_CLIENTE[c.id]||[];
+  const gasto=compras.reduce((s,x)=>s+Number(x.importe||0),0);
+  const cobrado=(factsArr||[]).filter(f=>f.status==='pagado').reduce((s,f)=>s+Number(f.total||0),0);
+  const coste=Number(c.coste_captacion||0);
+  const ganancia=cobrado-gasto-coste;
+  return `<div style="margin:-8px 0 18px;padding:12px 14px;background:#fff;border:1px solid rgba(196,163,90,.25);border-radius:10px">
+    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:baseline">
+      <div><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8a7960;font-weight:700">Cobrado</div><div style="font-size:16px;font-weight:800">${crmFmt(cobrado)}</div></div>
+      <div><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8a7960;font-weight:700">Materiales / compras</div><div style="font-size:16px;font-weight:800;color:#b45309">− ${crmFmt(gasto)}</div></div>
+      ${coste?`<div><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8a7960;font-weight:700">Captación</div><div style="font-size:16px;font-weight:800;color:#b45309">− ${crmFmt(coste)}</div></div>`:''}
+      <div><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8a7960;font-weight:700">Ganancia</div><div style="font-size:18px;font-weight:800;color:${ganancia<0?'#dc2626':'#16a34a'}">${crmFmt(ganancia)}</div></div>
+    </div>
+    ${compras.length?`<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;font-weight:700;color:#8a7960">Compras de este cliente (${compras.length})</summary>${compras.map(x=>`<div style="display:flex;gap:10px;font-size:12.5px;padding:4px 0;border-bottom:1px dotted rgba(196,163,90,.3)"><span style="width:84px;color:#8a7960">${x.fecha?new Date(x.fecha+'T00:00:00').toLocaleDateString('es-ES'):'—'}</span><span style="flex:1">${esc(x.proveedor||'')} · ${esc(x.concepto||'')}</span><b>${crmFmt(x.importe)}</b></div>`).join('')}</details>`
+      :'<div style="font-size:11.5px;color:#94a3b8;margin-top:6px">Sin compras asignadas. En «Compras», al subir la factura del proveedor, elige este cliente en «¿Para qué cliente?».</div>'}
+  </div>`;
+}
+function jaBuscarClientePorNombre(nombre){
+  const n=jaNorm(nombre); if(n.length<3) return null;
+  return (_crmClientes||[]).find(c=>jaNorm(c.name)===n) || (_crmClientes||[]).find(c=>{ const cn=jaNorm(c.name); return cn.length>=5 && (n.includes(cn) || cn.includes(n)); }) || null;
+}
+
+(function(){
+  const _rl=crmRenderLines;
+  crmRenderLines=function(){ _rl.apply(this,arguments); const sel=document.getElementById('ja-conceptos-sel'); if(sel && !sel.dataset.pintado){ sel.dataset.pintado='1'; jaPintarSelectConceptos(); } };
+  const _vc=crmVerCliente;
+  crmVerCliente=async function(id){ await jaCargarComprasCliente(id).catch(()=>{ JA_COMPRAS_CLIENTE[id]=[]; }); return _vc.apply(this,arguments); };
 })();
 </script>
 </body>
