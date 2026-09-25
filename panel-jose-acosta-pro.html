@@ -1954,7 +1954,7 @@ async function loadAll(){
     _sb.from('crm_inventory').select('*').eq('business_slug',BIZ_SLUG).order('name'),
     _sb.from('crm_clients').select('id,name,measurements,email,phone,fecha_boda,medidas_updated_at,measurements_history,coste_captacion,created_at').eq('business_slug',BIZ_SLUG).order('name'),
     _sb.from('crm_orders').select('id,title,status,price,client_name,client_id,created_at,updated_at,pago,evento,fotos,status_log').eq('business_slug',BIZ_SLUG).order('created_at',{ascending:false}),
-    _sb.from('crm_invoices').select('id,type,status,total,issue_date,invoice_number,client_id').eq('business_slug',BIZ_SLUG)
+    _sb.from('crm_invoices').select('id,type,status,total,issue_date,invoice_number,client_id,client_name,payment_status,receipt_url,payment_token,tipo_pago').eq('business_slug',BIZ_SLUG)
   ]);
   allCitas=c.data||[];allLeads=l.data||[];_crmInventario=inv.data||[];_crmClientes=cli.data||[];
   _allEncargos=enc.data||[];_crmFacturas=fac.data||[];
@@ -3870,13 +3870,14 @@ function crmRenderFacturasTable(){
     return `<tr>
       <td><strong>${num}</strong></td>
       <td>${esc(f.client_name||'—')}</td>
-      <td><span class="tag ${tb2}">${f.type==='factura'?'Factura':'Presupuesto'}</span></td>
-      <td><span class="tag ${sb2}">${f.status}</span></td>
+      <td><span class="tag ${tb2}">${f.type==='factura'?'Factura':'Presupuesto'}</span>${f.tipo_pago&&JA_TIPO_PAGO[f.tipo_pago]?` <span class="tag" style="background:#fef3c7;color:#92400e;font-size:10px">${JA_TIPO_PAGO[f.tipo_pago]}</span>`:''}</td>
+      <td><span class="tag ${sb2}">${f.status}</span>${f.payment_status==='uploaded'&&f.status!=='pagado'?`<div><a href="${esc(f.receipt_url||'#')}" target="_blank" rel="noopener" style="font-size:11px;color:#1d4ed8;font-weight:700">📎 Comprobante recibido</a></div>`:''}</td>
       <td><strong>${f.total!=null?crmFmt(f.total):'—'}</strong></td>
       <td>${f.issue_date?new Date(f.issue_date).toLocaleDateString('es-ES'):'—'}</td>
       <td style="display:flex;gap:5px;flex-wrap:wrap">
         <button class="btn btn-ghost btn-xs" onclick="crmViewFactura('${f.id}',_crmFacturas.findIndex(x=>x.id==='${f.id}'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
-        <button class="btn btn-xs" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe" onclick="enviarEmailDoc('${f.id}')"></button>
+        <button class="btn btn-xs" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe" onclick="enviarEmailDoc('${f.id}')" title="Enviar por email">✉</button>
+        ${f.type==='factura'&&f.status!=='pagado'&&f.status!=='cancelado'&&f.payment_token?`<button class="btn btn-ghost btn-xs" onclick="jaEnlacePago('${f.id}')" title="Enlace para que el cliente pague por transferencia y suba el justificante">🔗 Pago</button>`:''}
         ${f.type==='presupuesto'?`<button class="btn btn-xs" style="background:#ede9fe;color:#5b21b6;border:1px solid #ddd6fe" onclick="convertirAFactura('${f.id}')">→ Factura</button>`:''}
         ${f.status!=='pagado'&&f.status!=='cancelado'?`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0" onclick="marcarPagada('${f.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Cobrada</button>`:''}
         ${f.type==='factura'?(f.verifactu_csv?`<span class="tag" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;font-size:10px;padding:2px 6px" title="Registrada en AEAT · CSV: ${esc(f.verifactu_csv)}"> AEAT</span>`:`<button class="btn btn-xs" style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa" onclick="verifactuRegistrar('${f.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><path d="M9 2h6a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v0a2 2 0 0 1 2-2z"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Verifactu</button>`):''}
@@ -7796,7 +7797,7 @@ async function sincronizarContactosHolded(){
 
   try{
     const r=await fetch(HOLDED_PROXY+'?slug='+BIZ_SLUG+'&endpoint=contacts');
-    if(!r.ok)throw new Error('Holded HTTP '+r.status);
+    if(!r.ok)throw new Error(jaErrorHolded(r.status));
     const contacts=await r.json();
     if(!Array.isArray(contacts))throw new Error('Respuesta inesperada');
 
@@ -8735,7 +8736,7 @@ _sb.from('stock_recepciones').select('id').limit(1).then(({error})=>{
 async function holdedGet(endpoint, params=''){
   const url = `${HOLDED_PROXY}?slug=jose-acosta&endpoint=${encodeURIComponent(endpoint)}${params?'&params='+encodeURIComponent(params):''}`;
   const r = await fetch(url);
-  if(!r.ok) throw new Error(`Holded ${endpoint}: ${r.status}`);
+  if(!r.ok) throw new Error(jaErrorHolded(r.status));
   return r.json();
 }
 
@@ -8980,6 +8981,116 @@ async function jaAplicarMinimo(id, v){
     const { data:o }=await _sb.from('crm_orders').select('id,created_at,status_log,email_log').eq('id',id).single();
     const body=document.getElementById('crm-modal-body');
     if(o && body && !document.getElementById('ja-enc-historial')) body.insertAdjacentHTML('beforeend', jaHistorialEncargoHTML(o));
+  };
+})();
+
+// ═════════════════════════════════════════════════════════════════════
+// Cobro en 2 partes (70% señal + 30% resto) desde el encargo, enlace de pago
+// para el cliente y revisión de comprobantes subidos (reunión 18/07, puntos
+// 17-19). La página jose-acosta-pago.html y api/jose-acosta.js ya existían;
+// faltaba todo el lado del panel.
+// ═════════════════════════════════════════════════════════════════════
+const JA_URL_PAGO='https://airmate.es/jose-acosta-pago.html?token=';
+const JA_TIPO_PAGO={ senal_70:'Señal 70%', resto_30:'Resto 30%' };
+function jaRedondea(n){ return Math.round(Number(n||0)*100)/100; }
+
+async function jaCobro7030HTML(o){
+  if(!o.price) return `<div id="ja-cobro-7030" style="margin-top:18px;padding-top:14px;border-top:1px solid #f1f5f9;font-size:12px;color:#94a3b8">Pon el precio del encargo para poder cobrarlo en 70% + 30%.</div>`;
+  const { data:docs }=await _sb.from('crm_invoices').select('id,invoice_number,tipo_pago,total,status,payment_status,payment_token,receipt_url').eq('business_slug',BIZ_SLUG).eq('grupo_pago',o.id);
+  const senal=(docs||[]).find(d=>d.tipo_pago==='senal_70'), resto=(docs||[]).find(d=>d.tipo_pago==='resto_30');
+  const s70=jaRedondea(o.price*0.7), r30=jaRedondea(o.price-s70);
+  const fila=(lbl,imp,doc,tipo)=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f8fafc;border-radius:8px;margin-bottom:6px;flex-wrap:wrap">
+      <div style="flex:1;min-width:140px"><div style="font-size:13px;font-weight:700">${lbl} · ${crmFmt(imp)}</div>
+        <div style="font-size:11px;color:#64748b">${doc?`Factura ${esc(doc.invoice_number||'')} · ${doc.status==='pagado'?'✅ cobrada':doc.payment_status==='uploaded'?'📎 comprobante recibido, por revisar':'pendiente de cobro'}`:'sin factura todavía'}</div></div>
+      ${doc?`${doc.status!=='pagado'&&doc.payment_token?`<button class="btn btn-ghost btn-xs" onclick="jaEnlacePago('${doc.id}')">🔗 Enlace de pago</button>`:''}
+             ${doc.receipt_url?`<a class="btn btn-ghost btn-xs" href="${esc(doc.receipt_url)}" target="_blank" rel="noopener">📎 Ver comprobante</a>`:''}
+             ${doc.status!=='pagado'?`<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0" onclick="jaConfirmarCobro('${doc.id}','${o.id}')">✓ Confirmar cobro</button>`:''}`
+          :tipo==='resto_30'&&!senal?'':`<button class="btn btn-accent btn-xs" onclick="jaCrearFactura7030('${o.id}','${tipo}')">Crear factura</button>`}
+    </div>`;
+  return `<div id="ja-cobro-7030" style="margin-top:18px;padding-top:14px;border-top:1px solid #f1f5f9">
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Cobro en 2 partes · total ${crmFmt(o.price)}</div>
+    ${fila('Señal (70%)',s70,senal,'senal_70')}
+    ${fila('Resto (30%)',r30,resto,'resto_30')}
+    <div style="font-size:11px;color:#94a3b8">El cliente recibe un enlace para pagar por transferencia y subir el comprobante. Tú lo revisas en el banco y pulsas «Confirmar cobro».</div>
+  </div>`;
+}
+async function jaCrearFactura7030(orderId, tipo){
+  const { data:o }=await _sb.from('crm_orders').select('id,title,price,client_id,client_name').eq('id',orderId).single();
+  if(!o||!o.price){ showToast('El encargo no tiene precio'); return; }
+  const { data:ya }=await _sb.from('crm_invoices').select('id,invoice_number,total,tipo_pago').eq('business_slug',BIZ_SLUG).eq('grupo_pago',orderId);
+  if((ya||[]).some(d=>d.tipo_pago===tipo)){ showToast('Esa factura ya existe'); return; }
+  const senal=(ya||[]).find(d=>d.tipo_pago==='senal_70');
+  const s70=jaRedondea(o.price*0.7), r30=jaRedondea(o.price-s70);
+  const cli=(_crmClientes||[]).find(c=>c.id===o.client_id)||{};
+  const importe=tipo==='senal_70'?s70:r30;
+  const num=await _nextInvoiceNum('factura');
+  const notas=tipo==='senal_70'
+    ?`Señal del 70% del encargo «${o.title}». Total del encargo: ${crmFmt(o.price)}. Resto pendiente (30%): ${crmFmt(r30)}.`
+    :`Resto del 30% del encargo «${o.title}». Total del encargo: ${crmFmt(o.price)}. Ya abonado como señal (70%)${senal?' en la factura '+senal.invoice_number:''}: ${crmFmt(s70)}. Importe de esta factura: ${crmFmt(r30)}.`;
+  const hoy=localDateStr(new Date());
+  await sbOk(_sb.from('crm_invoices').insert({
+    business_slug:BIZ_SLUG, client_id:o.client_id, client_name:o.client_name, client_nif:cli.nif||null,
+    type:'factura', status:'enviado', issue_date:hoy, invoice_number:num,
+    items:[{ desc:`${JA_TIPO_PAGO[tipo]} · ${o.title}`, qty:1, price:importe }],
+    total:importe, grupo_pago:orderId, tipo_pago:tipo, notes:notas
+  }),'crm_invoices');
+  showToast(`✓ Factura ${num} creada (${JA_TIPO_PAGO[tipo]}: ${crmFmt(importe)})`);
+  await crmLoadFacturas();
+  const box=document.getElementById('ja-cobro-7030'); if(box) box.outerHTML=await jaCobro7030HTML({...o});
+}
+function jaEnlacePago(invId){
+  const f=(_crmFacturas||[]).find(x=>x.id===invId);
+  if(!f||!f.payment_token){ showToast('Esta factura no tiene enlace de pago'); return; }
+  const url=JA_URL_PAGO+f.payment_token;
+  const cli=(_crmClientes||[]).find(c=>c.id===f.client_id)||{};
+  const tel=String(cli.phone||'').replace(/\D/g,'');
+  const msg=`Hola ${(f.client_name||'').split(' ')[0]}, te paso el enlace para el pago de ${JA_TIPO_PAGO[f.tipo_pago]?JA_TIPO_PAGO[f.tipo_pago].toLowerCase()+' de tu traje':'tu factura'} (${crmFmt(f.total)}). Ahí tienes el IBAN y puedes subir el justificante de la transferencia: ${url}\n\nJose Acosta · Sastrería`;
+  window._jaMsgPago=msg;
+  document.getElementById('ja-pago-box')?.remove();
+  const box=document.createElement('div'); box.id='ja-pago-box';
+  box.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:10050;display:grid;place-items:center;padding:16px';
+  box.innerHTML=`<div style="background:#fff;border-radius:12px;padding:20px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="font-size:16px;font-weight:700;margin-bottom:4px">Enlace de pago · ${esc(f.invoice_number||'')}</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:12px">${esc(f.client_name||'')} · ${crmFmt(f.total)}</div>
+    <input class="crm-form-ctrl" value="${esc(url)}" readonly onclick="this.select()" style="font-size:12px;margin-bottom:12px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost" style="flex:1" onclick="navigator.clipboard.writeText('${esc(url)}');showToast('Enlace copiado')">Copiar</button>
+      ${tel?`<button class="btn btn-accent" style="flex:1" onclick="window.open('https://wa.me/${tel.length===9?'34'+tel:tel}?text='+encodeURIComponent(window._jaMsgPago),'_blank')">💬 WhatsApp</button>`:''}
+      <button class="btn btn-ghost" style="flex:1" onclick="document.getElementById('ja-pago-box').remove()">Cerrar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(box);
+}
+async function jaConfirmarCobro(invId, orderId){
+  const f=(_crmFacturas||[]).find(x=>x.id===invId);
+  const b=document.getElementById('ja-conf-'+invId);
+  await sbOk(_sb.from('crm_invoices').update({ status:'pagado' }).eq('id',invId),'crm_invoices');
+  showToast('✓ Cobro confirmado'+(f?.invoice_number?' · '+f.invoice_number:''));
+  await crmLoadFacturas();
+  if(orderId){ const box=document.getElementById('ja-cobro-7030'); if(box){ const { data:o }=await _sb.from('crm_orders').select('id,title,price,client_id,client_name').eq('id',orderId).single(); if(o) box.outerHTML=await jaCobro7030HTML(o); } }
+}
+function jaComprobantesPendientes(){ return (_crmFacturas||[]).filter(f=>f.payment_status==='uploaded' && f.status!=='pagado'); }
+
+// Holded sin llave válida: mensaje claro en vez de un error técnico
+function jaErrorHolded(status){ return (status===503||status===400||status===401||status===403)?'Holded no está conectado ahora mismo (falta la llave nueva de Holded). El resto del panel funciona con normalidad.':'Holded no responde ('+status+')'; }
+
+(function(){
+  const _ee2=crmEditEncargo;
+  crmEditEncargo=async function(id){
+    await _ee2.apply(this,arguments);
+    const { data:o }=await _sb.from('crm_orders').select('id,title,price,client_id,client_name').eq('id',id).single();
+    const body=document.getElementById('crm-modal-body');
+    if(o && body && !document.getElementById('ja-cobro-7030')) body.insertAdjacentHTML('beforeend', await jaCobro7030HTML(o));
+  };
+  const _em=jaDashEsteMes;
+  jaDashEsteMes=function(){
+    _em();
+    const pend=jaComprobantesPendientes(), card=document.getElementById('ja-este-mes');
+    if(!pend.length||!card) return;
+    card.insertAdjacentHTML('afterbegin', `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;color:#1d4ed8;margin-bottom:6px">📎 ${pend.length} comprobante${pend.length>1?'s':''} de transferencia por revisar</div>
+      ${pend.slice(0,6).map(f=>`<div style="display:flex;gap:8px;align-items:center;font-size:12.5px;padding:3px 0;flex-wrap:wrap"><span style="flex:1">${esc(f.client_name||'')} · ${esc(f.invoice_number||'')} · <b>${crmFmt(f.total)}</b></span>${f.receipt_url?`<a href="${esc(f.receipt_url)}" target="_blank" rel="noopener" class="btn btn-ghost btn-xs">Ver</a>`:''}<button class="btn btn-xs" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0" onclick="jaConfirmarCobro('${f.id}');setTimeout(renderDashboard,700)">✓ Confirmar cobro</button></div>`).join('')}
+    </div>`);
   };
 })();
 </script>
