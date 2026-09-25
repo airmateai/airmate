@@ -1952,9 +1952,9 @@ async function loadAll(){
     _sb.from('appointments').select('*').eq('business_slug',BIZ_SLUG).order('starts_at',{ascending:true}),
     _sb.from('leads').select('*').eq('business_slug',BIZ_SLUG).order('created_at',{ascending:false}),
     _sb.from('crm_inventory').select('*').eq('business_slug',BIZ_SLUG).order('name'),
-    _sb.from('crm_clients').select('id,name,measurements,email,phone').eq('business_slug',BIZ_SLUG).order('name'),
-    _sb.from('crm_orders').select('id,title,status,price,client_name,client_id,created_at,updated_at,pago,evento,fotos').eq('business_slug',BIZ_SLUG).order('created_at',{ascending:false}),
-    _sb.from('crm_invoices').select('id,type,status,total,issue_date,invoice_number').eq('business_slug',BIZ_SLUG)
+    _sb.from('crm_clients').select('id,name,measurements,email,phone,fecha_boda,medidas_updated_at,measurements_history,coste_captacion,created_at').eq('business_slug',BIZ_SLUG).order('name'),
+    _sb.from('crm_orders').select('id,title,status,price,client_name,client_id,created_at,updated_at,pago,evento,fotos,status_log').eq('business_slug',BIZ_SLUG).order('created_at',{ascending:false}),
+    _sb.from('crm_invoices').select('id,type,status,total,issue_date,invoice_number,client_id').eq('business_slug',BIZ_SLUG)
   ]);
   allCitas=c.data||[];allLeads=l.data||[];_crmInventario=inv.data||[];_crmClientes=cli.data||[];
   _allEncargos=enc.data||[];_crmFacturas=fac.data||[];
@@ -2160,7 +2160,8 @@ function renderCitasCalendar(){
     const day=new Date(start);day.setDate(day.getDate()+d);
     const dayStr=localDateStr(day);
     const isToday=dayStr===localDateStr(new Date());
-    html+=`<div class="day-col"><div class="day-hd ${isToday?'today-hd':''}">${day.toLocaleDateString('es-ES',{weekday:'short',day:'numeric'})}</div><div class="grid-body">`;
+    const _bodas=jaBodasDelDia(dayStr);
+    html+=`<div class="day-col"><div class="day-hd ${isToday?'today-hd':''}">${day.toLocaleDateString('es-ES',{weekday:'short',day:'numeric'})}${_bodas.length?`<div title="${esc(_bodas.map(b=>b.nombre+(b.lugar?' · '+b.lugar:'')).join('\n'))}" style="font-size:10px;color:#be185d;font-weight:600;cursor:pointer" onclick="${_bodas[0].id?`crmEditEncargo('${_bodas[0].id}')`:`crmVerCliente('${_bodas[0].cliente}')`}">💍 ${esc(_bodas[0].nombre)}${_bodas.length>1?' +'+(_bodas.length-1):''}</div>`:''}</div><div class="grid-body">`;
     html+=hours.map((h)=>`<div class="grid-row" onclick="openNuevaCitaModalFechaHora('${dayStr}','${String(h).padStart(2,'0')}:00')"></div>`).join('');
     const dayCitas=allCitas.filter(c=>apptLocalDate(c.starts_at)===dayStr&&c.status!=='cancelled');
     const isBlocked=dayCitas.some(c=>c.status==='blocked');
@@ -2203,6 +2204,7 @@ function renderCitasMonth(){
     const dayBlk=dayCitas.find(c=>c.status==='blocked');
     const normalCitas=dayCitas.filter(c=>c.status!=='blocked');
     html+=`<div class="month-cell ${ds===today?'today-cell':''}" style="${dayBlk?'background:repeating-linear-gradient(-45deg,rgba(148,163,184,.06) 0,rgba(148,163,184,.06) 4px,transparent 4px,transparent 10px)':''}" onclick="openNuevaCitaModalFecha('${ds}')"><div class="month-num">${d}</div>
+      ${jaBodasDelDia(ds).map(jaPillBoda).join('')}
       ${dayBlk?`<div class="month-appt-pill" style="background:#94a3b822;color:#94a3b8" onclick="event.stopPropagation();openCitaModal('${dayBlk.id}')">🔒 ${esc(dayBlk.service)}</div>`:''}
       ${normalCitas.slice(0,2).map(c=>`<div class="month-appt-pill" style="background:${svcColor(c.service)}22;color:${svcColor(c.service)}" onclick="event.stopPropagation();openCitaModal('${c.id}')">${esc(c.client_name)}</div>`).join('')}
       ${normalCitas.length>2?`<div style="font-size:10px;color:var(--txt3)">+${normalCitas.length-2} más</div>`:''}
@@ -2629,7 +2631,8 @@ let _crmClientes=[],_crmInventario=[],_crmFacturas=[],_crmLines=[],_crmEditId=nu
 const CRM_ST=['presupuesto','produccion','listo_prueba','prueba','ajustes','listo','entregado'];
 
 function crmOpenModal(title,body,footer){
-  document.getElementById('crm-modal-title').textContent=title;
+  // Algunos títulos llevan un icono SVG delante: se quita para que no salga el código como texto
+  document.getElementById('crm-modal-title').textContent=String(title).replace(/<svg[\s\S]*?<\/svg>/g,'').trim();
   document.getElementById('crm-modal-body').innerHTML=body;
   document.getElementById('crm-modal-footer').innerHTML=footer;
   document.getElementById('crm-overlay').classList.add('open');
@@ -2823,6 +2826,7 @@ async function crmVerCliente(id){
       </div>
       ${c.empresa?`<div><span class="tag tag-cold"> ${esc(c.empresa)}</span></div>`:''}
     </div>`+
+    jaResumenCliente(c,factsArr)+
     siluetaHtml+
     `<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px"> Medidas detalladas</div>`+
     medHtml+saldoHtml+walletHtml+prestamosHtml+timelineHtml+ordsHtml+factsHtml,
@@ -2872,6 +2876,10 @@ function crmClienteForm(c={}){
   </div>
   <div class="crm-form-group"><label class="crm-form-label">Dirección fiscal</label><input class="crm-form-ctrl" id="cf-direccion" value="${esc(c.direccion||'')}"/></div>
   <div class="crm-form-row">
+    <div class="crm-form-group"><label class="crm-form-label">Fecha de boda / evento</label><input type="date" class="crm-form-ctrl" id="cf-boda" value="${esc(c.fecha_boda||'')}"/></div>
+    <div class="crm-form-group"><label class="crm-form-label">Coste de captación (€)</label><input type="number" step="0.01" class="crm-form-ctrl" id="cf-coste" value="${c.coste_captacion||''}" placeholder="publicidad, comisión…"/></div>
+  </div>
+  <div class="crm-form-row">
     <div class="crm-form-group"><label class="crm-form-label">Etiquetas (separadas por coma)</label><input class="crm-form-ctrl" id="cf-tags" value="${esc(c.tags||'')}" placeholder="novio, corporativo, vip..."/></div>
     <div class="crm-form-group" style="display:flex;align-items:center;gap:10px;padding-top:22px">
       <input type="checkbox" id="cf-fidelizado" ${(c.tags||'').includes('fidelizado')?'checked':''} style="width:18px;height:18px;accent-color:#c4a35a;cursor:pointer">
@@ -2920,7 +2928,9 @@ async function crmSaveCliente(){
   const fidEl=document.getElementById('cf-fidelizado');
   if(fidEl&&fidEl.checked){if(!tagsVal.includes('fidelizado'))tagsVal=(tagsVal?tagsVal+',fidelizado':'fidelizado');}
   else{tagsVal=tagsVal.split(',').map(s=>s.trim()).filter(s=>s&&s!=='fidelizado').join(',');}
-  const payload={business_slug:BIZ_SLUG,name,tipo:cv('cf-tipo')||'particular',empresa:cv('cf-empresa')||null,phone:cv('cf-phone')||null,email:cv('cf-email')||null,nif:cv('cf-nif')||null,iban:cv('cf-iban')||null,direccion:cv('cf-direccion')||null,tags:tagsVal||null,notes:cv('cf-notes')||null,measurements:Object.keys(m).length?m:null};
+  const payload={business_slug:BIZ_SLUG,name,tipo:cv('cf-tipo')||'particular',empresa:cv('cf-empresa')||null,phone:cv('cf-phone')||null,email:cv('cf-email')||null,nif:cv('cf-nif')||null,iban:cv('cf-iban')||null,direccion:cv('cf-direccion')||null,tags:tagsVal||null,notes:cv('cf-notes')||null,fecha_boda:cv('cf-boda')||null,coste_captacion:parseFloat(cv('cf-coste'))||0};
+  // Las medidas se guardan aparte: se mezclan con las que ya tenía (antes este formulario, que solo
+  // tiene 6 medidas, sobrescribía y BORRABA hombros, manga, cuello… o todas si se dejaba vacío).
   let savedId=_crmEditId;
   if(_crmEditId){
     const {error}=await _sb.from('crm_clients').update(payload).eq('id',_crmEditId);
@@ -2930,6 +2940,7 @@ async function crmSaveCliente(){
     if(error){showToast('No se pudo guardar: '+error.message);return null;}
     savedId=data?.id;
   }
+  if(savedId&&Object.keys(m).length){ try{ await jaGuardarMedidas(savedId,m,'ficha del cliente'); }catch(e){ return null; } }
   await crmLoadClientes();
   crmCloseModal();showToast('✓ Cliente guardado');
   return savedId;
@@ -3408,7 +3419,7 @@ async function encDrop(e,col){
   if(!_dragEncId)return;
   const o=_allEncargos.find(x=>x.id===_dragEncId);
   if(o&&o.status!==col){
-    await sbOk(_sb.from('crm_orders').update({status:col,updated_at:new Date().toISOString()}).eq('id',_dragEncId),'crm_orders');
+    await sbOk(_sb.from('crm_orders').update({status:col,updated_at:new Date().toISOString(),status_log:jaLogEstado(o,col)}).eq('id',_dragEncId),'crm_orders');
     showToast('Estado actualizado');
     if(col==='entregado'){if(typeof fireConfetti==='function')fireConfetti(100);if(typeof soundSuccess==='function')soundSuccess();}
     else if(typeof soundSew==='function')soundSew();
@@ -3442,8 +3453,8 @@ async function _encNotificarCliente(o,col){
     reply_to:biz.email||'airmateai@gmail.com',
     notes:tpl.msg
   })
-  .then(()=>showToast(' Cliente notificado automáticamente'))
-  .catch(()=>{});
+  .then(()=>{ showToast(' Cliente notificado automáticamente'); return jaApuntarEmail(o.id, tpl.subject, email); })
+  .catch(e=>{ console.error('Email encargo',e); showToast('No se pudo enviar el email al cliente'); });
 }
 async function crmEncargosOpts(sel=null){
   if(!_crmClientes.length){const {data}=await _sb.from('crm_clients').select('id,name,measurements').eq('business_slug',BIZ_SLUG).order('name');_crmClientes=data||[];}
@@ -3655,9 +3666,7 @@ async function crmSaveEncargo(){
   ['acc-corbata','acc-gemelo','acc-panuelo','acc-otros'].forEach(id=>{const v=cv(id);if(v)m[id.replace('-','_')]=v;});
   // Guardar medidas en cliente
   if(cId&&Object.keys(m).length){
-    await sbOk(_sb.from('crm_clients').update({measurements:m}).eq('id',cId),'crm_clients');
-    const ci=_crmClientes.findIndex(x=>x.id===cId);
-    if(ci>-1)_crmClientes[ci].measurements=m;
+    await jaGuardarMedidas(cId,m,'encargo «'+title+'»');
   }
   // Evento
   const evento={};
@@ -3696,6 +3705,11 @@ async function crmSaveEncargo(){
     materials:validMats.length?validMats:null,
     fotos:fotos.length?fotos:null,
     notes:cv('ef-notes')||null,updated_at:new Date().toISOString()};
+  { // historial de estados del encargo
+    const prev=_crmEditId?(_allEncargos.find(x=>x.id===_crmEditId)||(await _sb.from('crm_orders').select('status,status_log').eq('id',_crmEditId).single()).data):null;
+    if(!prev) payload.status_log=jaLogEstado(null,payload.status);
+    else if(prev.status!==payload.status) payload.status_log=jaLogEstado(prev,payload.status);
+  }
   if(_crmEditId)await sbOk(_sb.from('crm_orders').update(payload).eq('id',_crmEditId),'crm_orders');
   else await sbOk(_sb.from('crm_orders').insert(payload),'crm_orders');
   crmCloseModal();crmLoadEncargos();if(validMats.length)crmLoadInventario();showToast('Encargo guardado');
@@ -3730,7 +3744,7 @@ async function crmLoadInventario(){
       ${imgCell}
       <td><strong>${esc(i.name)}</strong></td><td>${esc(i.category||'—')}</td>
       <td class="${isLow?'stock-low':'stock-ok'}">${i.stock} ${esc(i.unit||'')}</td>
-      <td>${i.min_stock!==null?i.min_stock:'—'}</td><td>${esc(i.unit||'ud')}</td>
+      <td>${i.min_stock!==null?i.min_stock:'—'}${(()=>{const sg=jaMinimoSugerido(i);return sg&&sg!==i.min_stock?`<div style="font-size:10px;color:#b45309;cursor:pointer;white-space:nowrap" title="Se han gastado ${JA_SALIDAS_90[i.id]} en 90 días. Pulsa para usarlo como mínimo." onclick="jaAplicarMinimo('${i.id}',${sg})">💡 sug. ${sg}</div>`:'';})()}</td><td>${esc(i.unit||'ud')}</td>
       <td>${pc}</td>
       <td>${isLow?'<span class="tag tag-hot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Bajo</span>':'<span class="tag tag-confirmed">OK</span>'}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap">
@@ -8768,6 +8782,206 @@ async function holdedSyncStock(){
 
 // ── Sync contactos Holded → crm_clients ──
 
+
+// ═════════════════════════════════════════════════════════════════════
+// Mejoras de la reunión con Jose del 18/07 (implementadas 25/09/2026):
+// visitas e historial en la ficha, seguimiento manual, historial de medidas,
+// aviso para renovar medidas, coste de captación/ROI, bodas en el calendario,
+// "Este mes" en el inicio, historial de estados y emails de cada encargo,
+// y stock mínimo sugerido según las ventas de los últimos 3 meses.
+// ═════════════════════════════════════════════════════════════════════
+const JA_MESES_MEDIDAS=6; // pasado este tiempo se avisa de volver a tomar medidas
+function jaDig(t){ return String(t||'').replace(/\D/g,'').slice(-9); }
+function jaMesesDesde(iso){ if(!iso) return null; return Math.floor((Date.now()-new Date(iso).getTime())/(30.44*864e5)); }
+function jaFecha(iso,opt){ return iso?new Date(iso).toLocaleDateString('es-ES',opt||{day:'numeric',month:'short',year:'numeric'}):'—'; }
+function jaOrdenar(o){ return JSON.stringify(Object.keys(o||{}).sort().reduce((a,k)=>(a[k]=o[k],a),{})); }
+
+// Citas de un cliente: por teléfono (solo dígitos) o por email, comparados por separado.
+function jaCitasDeCliente(c){
+  const t=jaDig(c.phone), e=(c.email||'').trim().toLowerCase();
+  return allCitas.filter(a=>{
+    if(a.status==='blocked') return false;
+    const ta=jaDig(a.client_phone||a.telefono), ea=(a.client_email||a.email||'').trim().toLowerCase();
+    return (t.length===9 && ta===t) || (e && ea===e);
+  }).sort((a,b)=>new Date(b.starts_at)-new Date(a.starts_at));
+}
+function jaSeguimientosDeCliente(c){
+  const t=jaDig(c.phone), n=(c.name||'').trim().toLowerCase();
+  return allLeads.filter(l=>l.follow_up_date && ((t.length===9 && jaDig(l.phone)===t) || (!t && (l.name||'').trim().toLowerCase()===n)));
+}
+
+// Guarda medidas SIN borrar las que no vienen en el formulario, y archiva las anteriores.
+async function jaGuardarMedidas(cId, nuevas, origen){
+  if(!cId || !nuevas || !Object.keys(nuevas).length) return;
+  let c=_crmClientes.find(x=>x.id===cId);
+  if(!c || !('measurements_history' in c)){
+    const r=await _sb.from('crm_clients').select('id,measurements,measurements_history,medidas_updated_at,created_at').eq('id',cId).single();
+    c=Object.assign(c||{}, r.data||{});
+  }
+  const antes=c.measurements||{};
+  const merged={...antes,...nuevas};
+  if(jaOrdenar(antes)===jaOrdenar(merged)) return;
+  const upd={ measurements:merged, medidas_updated_at:new Date().toISOString() };
+  if(Object.keys(antes).length){
+    const hist=Array.isArray(c.measurements_history)?c.measurements_history:[];
+    upd.measurements_history=[{ desde:c.medidas_updated_at||c.created_at||null, hasta:upd.medidas_updated_at, origen, medidas:antes }, ...hist].slice(0,30);
+  }
+  await sbOk(_sb.from('crm_clients').update(upd).eq('id',cId),'crm_clients');
+  Object.assign(c, upd);
+  const i=_crmClientes.findIndex(x=>x.id===cId); if(i>-1) Object.assign(_crmClientes[i], upd);
+}
+
+// ─── Ficha del cliente: bloque de resumen ───
+function jaResumenCliente(c, factsArr){
+  const citas=jaCitasDeCliente(c);
+  const hoy=new Date();
+  const pasadas=citas.filter(a=>new Date(a.starts_at)<=hoy && a.status!=='cancelled');
+  const proxima=citas.filter(a=>new Date(a.starts_at)>hoy && a.status!=='cancelled').pop();
+  const cobrado=(factsArr||[]).filter(f=>f.status==='pagado').reduce((s,f)=>s+Number(f.total||0),0);
+  const coste=Number(c.coste_captacion||0);
+  const meses=jaMesesDesde(c.medidas_updated_at);
+  const tieneMedidas=c.measurements && Object.keys(c.measurements).length;
+  const bodas=(_allEncargos||[]).filter(o=>o.client_id===c.id && o.evento && o.evento.fecha_evento);
+  const boda=bodas.sort((a,b)=>a.evento.fecha_evento>b.evento.fecha_evento?-1:1)[0];
+  const fechaBoda=boda?.evento?.fecha_evento||c.fecha_boda;
+  const segs=jaSeguimientosDeCliente(c).sort((a,b)=>a.follow_up_date>b.follow_up_date?-1:1);
+  const hist=Array.isArray(c.measurements_history)?c.measurements_history:[];
+  const caja=(lbl,val,sub,col)=>`<div style="background:#fff;border:1px solid rgba(196,163,90,.25);border-radius:10px;padding:10px 12px;"><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8a7960;font-weight:700">${lbl}</div><div style="font-size:17px;font-weight:800;color:${col||'#1a1410'};margin-top:2px">${val}</div>${sub?`<div style="font-size:11px;color:#8a7960;margin-top:2px">${sub}</div>`:''}</div>`;
+  return `<div style="margin-bottom:18px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px">
+      ${caja('Visitas',pasadas.length,pasadas[0]?'última: '+jaFecha(pasadas[0].starts_at):'aún no ha venido')}
+      ${caja('Próxima cita',proxima?jaFecha(proxima.starts_at,{day:'numeric',month:'short'}):'—',proxima?esc(proxima.service||''):'')}
+      ${caja('Boda / evento',fechaBoda?jaFecha(fechaBoda,{day:'numeric',month:'short',year:'numeric'}):'—',boda?.evento?.lugar?'📍 '+esc(boda.evento.lugar):'')}
+      ${caja('Medidas',!tieneMedidas?'Sin medidas':meses==null?'Sin fecha':meses===0?'Este mes':`Hace ${meses} ${meses===1?'mes':'meses'}`,tieneMedidas&&meses!=null&&meses>=JA_MESES_MEDIDAS?'⚠ conviene volver a medir':(hist.length?hist.length+' versiones anteriores':''),tieneMedidas&&meses>=JA_MESES_MEDIDAS?'#ea580c':'')}
+      ${caja('Coste captación',coste?crmFmt(coste):'—',coste?'retorno: '+crmFmt(cobrado-coste)+(coste?` (×${(cobrado/coste).toFixed(1)})`:''):'añádelo en Editar',coste&&cobrado<coste?'#ea580c':'')}
+    </div>
+    ${pasadas.length?`<details style="margin-bottom:8px"><summary style="cursor:pointer;font-size:12px;font-weight:700;color:#8a7960">Historial de visitas (${pasadas.length})</summary>
+      <div style="margin-top:6px">${pasadas.slice(0,15).map(a=>`<div style="display:flex;gap:10px;font-size:12.5px;padding:5px 0;border-bottom:1px dotted rgba(196,163,90,.3)"><span style="width:92px;color:#8a7960">${jaFecha(a.starts_at)}</span><span style="flex:1">${esc(a.service||'Cita')}</span><span style="color:#94a3b8">${esc(statusCita?statusCita(a.status):a.status)}</span></div>`).join('')}</div></details>`:''}
+    ${hist.length?`<details style="margin-bottom:8px"><summary style="cursor:pointer;font-size:12px;font-weight:700;color:#8a7960">Historial de medidas (${hist.length} versiones anteriores)</summary>
+      <div style="margin-top:6px">${hist.map(h=>`<div style="padding:7px 0;border-bottom:1px dotted rgba(196,163,90,.3);font-size:12px"><div style="font-weight:700;color:#1a1410">${h.desde?jaFecha(h.desde):'¿?'} → ${jaFecha(h.hasta)} <span style="font-weight:400;color:#94a3b8">(cambiadas desde ${esc(h.origen||'')})</span></div><div style="color:#64748b;margin-top:2px">${Object.entries(h.medidas||{}).map(([k,v])=>`${esc(k.replace(/_/g,' '))}: <b>${esc(v)}</b>`).join(' · ')}</div></div>`).join('')}</div></details>`:''}
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 6px"><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em">Seguimientos</div>
+      <button class="btn btn-ghost btn-xs" onclick="jaNuevoSeguimiento('${c.id}')">+ Añadir seguimiento</button></div>
+    ${segs.length?segs.slice(0,6).map(l=>`<div style="display:flex;gap:10px;font-size:12.5px;padding:6px 10px;background:#f8fafc;border-radius:8px;margin-bottom:4px"><span style="width:92px;color:${l.follow_up_date<localDateStr(new Date())&&l.status!=='converted'&&l.status!=='lost'?'#dc2626':'#8a7960'}">${jaFecha(l.follow_up_date)}</span><span style="flex:1">${esc(l.interest||l.notes||'Seguimiento')}</span></div>`).join(''):'<div style="font-size:12px;color:#94a3b8;margin-bottom:6px">Sin seguimientos. Apunta aquí cuándo volver a llamarle y por qué.</div>'}
+  </div>`;
+}
+function jaNuevoSeguimiento(cId){
+  const c=_crmClientes.find(x=>x.id===cId); if(!c) return;
+  const d=new Date(); d.setDate(d.getDate()+7);
+  document.getElementById('ja-seg-box')?.remove();
+  const box=document.createElement('div'); box.id='ja-seg-box';
+  box.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:10050;display:grid;place-items:center;padding:16px';
+  box.innerHTML=`<div style="background:#fff;border-radius:12px;padding:20px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="font-size:16px;font-weight:700;margin-bottom:4px">Seguimiento · ${esc(c.name)}</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:14px">Aparecerá en «Seguimientos» y en el inicio el día indicado.</div>
+    <label class="crm-form-label">¿Cuándo?</label><input type="date" id="ja-seg-fecha" class="crm-form-ctrl" value="${localDateStr(d)}" style="margin-bottom:10px">
+    <label class="crm-form-label">Nota</label><textarea id="ja-seg-nota" class="crm-form-ctrl" rows="3" placeholder="Ej.: llamar para la prueba del chaleco, preguntar por la boda del hermano…"></textarea>
+    <div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-ghost" style="flex:1" onclick="document.getElementById('ja-seg-box').remove()">Cancelar</button><button class="btn btn-accent" style="flex:1" onclick="jaGuardarSeguimiento('${cId}')">Guardar</button></div>
+  </div>`;
+  document.body.appendChild(box);
+}
+async function jaGuardarSeguimiento(cId){
+  const c=_crmClientes.find(x=>x.id===cId); if(!c) return;
+  const fecha=document.getElementById('ja-seg-fecha').value, nota=document.getElementById('ja-seg-nota').value.trim();
+  if(!fecha){ showToast('Elige la fecha'); return; }
+  const r=await sbOk(_sb.from('leads').insert({ business_slug:BIZ_SLUG, name:c.name, phone:c.phone||null, email:c.email||null, interest:nota||'Seguimiento de cliente', follow_up_date:fecha, intent_level:'warm', status:'new' }).select(),'leads');
+  if(r.data&&r.data[0]) allLeads.unshift(r.data[0]);
+  document.getElementById('ja-seg-box')?.remove();
+  showToast('✓ Seguimiento guardado para el '+jaFecha(fecha,{day:'numeric',month:'long'}));
+  crmVerCliente(cId);
+}
+
+// ─── Encargos: historial de estados y de emails ───
+function jaLogEstado(o, nuevo){
+  const log=Array.isArray(o?.status_log)?o.status_log:[];
+  return [...log, { status:nuevo, at:new Date().toISOString() }];
+}
+function jaHistorialEncargoHTML(o){
+  const stLabel={presupuesto:'Presupuesto',produccion:'Producción',listo_prueba:'Listo para prueba',prueba:'En prueba',ajustes:'Ajustes',listo:'Listo',entregado:'Entregado'};
+  const est=(Array.isArray(o.status_log)?o.status_log:[]).slice().reverse();
+  const ems=(Array.isArray(o.email_log)?o.email_log:[]).slice().reverse();
+  return `<div id="ja-enc-historial" style="margin-top:18px;padding-top:14px;border-top:1px solid #f1f5f9;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Historial de estados</div>
+      ${est.length?est.map(e=>`<div style="font-size:12px;padding:4px 0;border-bottom:1px dotted #e2e8f0"><b>${esc(stLabel[e.status]||e.status)}</b> <span style="color:#94a3b8">· ${new Date(e.at).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span></div>`).join(''):`<div style="font-size:12px;color:#94a3b8">Creado ${jaFecha(o.created_at)}. Los cambios de estado se apuntarán aquí a partir de ahora.</div>`}</div>
+    <div><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Emails enviados al cliente</div>
+      ${ems.length?ems.map(e=>`<div style="font-size:12px;padding:4px 0;border-bottom:1px dotted #e2e8f0"><b>${esc(e.asunto||'Email')}</b> <span style="color:#94a3b8">· ${new Date(e.at).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span></div>`).join(''):'<div style="font-size:12px;color:#94a3b8">Ninguno todavía.</div>'}</div>
+  </div>`;
+}
+async function jaApuntarEmail(orderId, asunto, email){
+  const { data:o }=await _sb.from('crm_orders').select('email_log').eq('id',orderId).single();
+  const log=Array.isArray(o?.email_log)?o.email_log:[];
+  await sbOk(_sb.from('crm_orders').update({ email_log:[...log,{ asunto, email, at:new Date().toISOString() }] }).eq('id',orderId),'crm_orders');
+}
+
+// ─── Bodas / eventos (de los encargos y de la ficha) ───
+function jaBodasDelDia(ds){
+  const out=[];
+  (_allEncargos||[]).forEach(o=>{ if(o.evento&&o.evento.fecha_evento===ds) out.push({ nombre:o.client_name||o.title, lugar:o.evento.lugar||'', id:o.id }); });
+  (_crmClientes||[]).forEach(c=>{ if(c.fecha_boda===ds && !out.some(b=>b.nombre===c.name)) out.push({ nombre:c.name, lugar:'', cliente:c.id }); });
+  return out;
+}
+function jaPillBoda(b){
+  return `<div class="month-appt-pill" title="${esc(b.lugar?'Boda en '+b.lugar:'Boda / evento')}" style="background:#fdf2f8;color:#be185d;border:1px solid #fbcfe8" onclick="event.stopPropagation();${b.id?`crmEditEncargo('${b.id}')`:`crmVerCliente('${b.cliente}')`}">💍 ${esc(b.nombre)}${b.lugar?' · '+esc(b.lugar):''}</div>`;
+}
+
+// ─── Inicio: bloque "Este mes" ───
+function jaDashEsteMes(){
+  const host=document.getElementById('dash-panels'); if(!host) return;
+  document.getElementById('ja-este-mes')?.remove();
+  const hoy=new Date(), mes=localDateStr(hoy).slice(0,7), hoyS=localDateStr(hoy);
+  // Clientes que han venido este mes
+  const vinieron=[];
+  (_crmClientes||[]).forEach(c=>{ const v=jaCitasDeCliente(c).filter(a=>a.starts_at&&apptLocalDate(a.starts_at).startsWith(mes)&&apptLocalDate(a.starts_at)<=hoyS&&a.status!=='cancelled'); if(v.length) vinieron.push({c,n:v.length}); });
+  // Bodas / eventos de este mes
+  const bodas=[];
+  for(let d=1; d<=31; d++){ const ds=mes+'-'+String(d).padStart(2,'0'); jaBodasDelDia(ds).forEach(b=>bodas.push({...b,ds})); }
+  // Encargos en "presupuesto" sin documento de presupuesto creado para ese cliente
+  const presupuestos=(_crmFacturas||[]);
+  const sinPresu=(_allEncargos||[]).filter(o=>o.status==='presupuesto' && !presupuestos.some(f=>f.type==='presupuesto' && ((f.client_id&&f.client_id===o.client_id)) && (!o.created_at||!f.issue_date||f.issue_date>=o.created_at.slice(0,10))));
+  // Medidas a renovar
+  const medir=(_crmClientes||[]).filter(c=>c.measurements&&Object.keys(c.measurements).length&&jaMesesDesde(c.medidas_updated_at)!=null&&jaMesesDesde(c.medidas_updated_at)>=JA_MESES_MEDIDAS);
+  const fila=(txt,sub,click,col)=>`<div class="dash-row" style="cursor:pointer" onclick="${click}"><div class="dash-color-bar" style="background:${col}"></div><div><div class="dash-row-name">${txt}</div><div class="dash-row-sub">${sub}</div></div></div>`;
+  const bloque=(tit,items,vacio)=>`<div><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:4px 0 6px">${tit}</div>${items.length?items.join(''):`<div style="font-size:12px;color:#94a3b8;padding:4px 0 10px">${vacio}</div>`}</div>`;
+  const card=document.createElement('div');
+  card.className='card'; card.id='ja-este-mes'; card.style.gridColumn='1/-1';
+  card.innerHTML=`<div class="card-hd"><div class="card-hd-title">Este mes · ${hoy.toLocaleDateString('es-ES',{month:'long'})}</div></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
+      ${bloque(`💍 Bodas y eventos (${bodas.length})`, bodas.slice(0,8).map(b=>fila(esc(b.nombre),jaFecha(b.ds,{weekday:'short',day:'numeric'})+(b.lugar?' · 📍 '+esc(b.lugar):''),b.id?`crmEditEncargo('${b.id}')`:`crmVerCliente('${b.cliente}')`,'#be185d')),'Ninguna boda este mes.')}
+      ${bloque(`✉ Falta mandar presupuesto (${sinPresu.length})`, sinPresu.slice(0,8).map(o=>fila(esc(o.client_name||o.title),esc(o.title)+' · desde '+jaFecha(o.created_at,{day:'numeric',month:'short'}),`crmEditEncargo('${o.id}')`,'#f59e0b')),'Todos los presupuestos enviados.')}
+      ${bloque(`👔 Han venido este mes (${vinieron.length})`, vinieron.sort((a,b)=>b.n-a.n).slice(0,8).map(v=>fila(esc(v.c.name),v.n+' visita'+(v.n>1?'s':''),`crmVerCliente('${v.c.id}')`,'#3b82f6')),'Nadie todavía.')}
+      ${bloque(`📏 Volver a tomar medidas (${medir.length})`, medir.slice(0,8).map(c=>fila(esc(c.name),'medidas de hace '+jaMesesDesde(c.medidas_updated_at)+' meses',`crmVerCliente('${c.id}')`,'#ea580c')),'Todas las medidas están al día.')}
+    </div>`;
+  host.prepend(card);
+}
+
+// ─── Stock mínimo sugerido (salidas de los últimos 90 días) ───
+let JA_SALIDAS_90={};
+async function jaCargarSalidas90(){
+  const desde=new Date(); desde.setDate(desde.getDate()-90);
+  const { data }=await _sb.from('crm_inventory_movements').select('inventory_id,cantidad,tipo,created_at').eq('business_slug',BIZ_SLUG).eq('tipo','salida').gte('created_at',desde.toISOString());
+  JA_SALIDAS_90={};
+  (data||[]).forEach(m=>{ JA_SALIDAS_90[m.inventory_id]=(JA_SALIDAS_90[m.inventory_id]||0)+Number(m.cantidad||0); });
+}
+function jaMinimoSugerido(i){ const s=JA_SALIDAS_90[i.id]||0; return s?Math.ceil(s/3):null; } // lo que se gasta en un mes
+async function jaAplicarMinimo(id, v){
+  await sbOk(_sb.from('crm_inventory').update({ min_stock:v }).eq('id',id),'crm_inventory');
+  showToast('✓ Stock mínimo actualizado a '+v);
+  crmLoadInventario();
+}
+
+// ─── Enganches con las funciones existentes ───
+(function(){
+  const _rd=renderDashboard;
+  renderDashboard=function(){ _rd.apply(this,arguments); try{ jaDashEsteMes(); }catch(e){ console.error('Este mes',e); } };
+  const _li=crmLoadInventario;
+  crmLoadInventario=async function(){ await jaCargarSalidas90().catch(()=>{}); return _li.apply(this,arguments); };
+  const _ee=crmEditEncargo;
+  crmEditEncargo=async function(id){
+    await _ee.apply(this,arguments);
+    const { data:o }=await _sb.from('crm_orders').select('id,created_at,status_log,email_log').eq('id',id).single();
+    const body=document.getElementById('crm-modal-body');
+    if(o && body && !document.getElementById('ja-enc-historial')) body.insertAdjacentHTML('beforeend', jaHistorialEncargoHTML(o));
+  };
+})();
 </script>
 </body>
 </html>
