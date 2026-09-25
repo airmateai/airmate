@@ -2269,7 +2269,7 @@ function openCitaModal(id){
 
 async function cambiarEstadoCita(id,status){
   const c=allCitas.find(x=>x.id===id);if(c)c.status=status;
-  await _sb.from('appointments').update({status}).eq('id',id);
+  await sbOk(_sb.from('appointments').update({status}).eq('id',id),'appointments');
   if(typeof closeModal==='function')closeModal();
   renderDashboard();updateBadges();
   renderCitas();
@@ -2351,7 +2351,7 @@ async function updateCita(id){
   const starts_at=new Date(`${date}T${time}`).toISOString();
   const ends_at=new Date(new Date(starts_at).getTime()+dur*60000).toISOString();
   const payload={client_name:document.getElementById('ec-name').value,client_phone:document.getElementById('ec-phone').value||null,client_email:document.getElementById('ec-email').value||null,service:document.getElementById('ec-service').value,starts_at,ends_at,duration_minutes:dur,status:document.getElementById('ec-status').value};
-  await _sb.from('appointments').update(payload).eq('id',id);
+  await sbOk(_sb.from('appointments').update(payload).eq('id',id),'appointments');
   closeModal();loadAll();showToast('Cita actualizada');
 }
 
@@ -2421,7 +2421,7 @@ async function saveCita(){
   const dur=parseInt(document.getElementById('nc-dur').value)||60;
   const ends_at=new Date(new Date(starts_at).getTime()+dur*60000).toISOString();
   const payload={business_slug:BIZ_SLUG,client_name:name,client_phone:document.getElementById('nc-phone').value||null,client_email:document.getElementById('nc-email').value||null,service,starts_at,ends_at,duration_minutes:dur,status:document.getElementById('nc-status').value,notes:document.getElementById('nc-notes').value||null};
-  await _sb.from('appointments').insert(payload);
+  await sbOk(_sb.from('appointments').insert(payload),'appointments');
   closeModal();loadAll();showToast('Cita creada');
 }
 function openBloqueoModal(){
@@ -2458,7 +2458,7 @@ async function saveBloqueo(){
     rows.push({business_slug:BIZ_SLUG,client_name:'— BLOQUEADO —',service:reason,starts_at:ds+'T00:00:00.000Z',ends_at:ds+'T23:59:00.000Z',duration_minutes:1439,status:'blocked',notes:'bloqueo_manual'});
     cur.setDate(cur.getDate()+1);
   }
-  await _sb.from('appointments').insert(rows);
+  await sbOk(_sb.from('appointments').insert(rows),'appointments');
   closeModal();loadAll();showToast(`${rows.length} día(s) bloqueado(s)`);
 }
 
@@ -2520,7 +2520,7 @@ async function leadDrop(e,stage){
   if(!lead||lead.status===stage){_leadDragId=null;return;}
   lead.status=stage;
   renderLeads();
-  await _sb.from('leads').update({status:stage}).eq('id',_leadDragId);
+  await sbOk(_sb.from('leads').update({status:stage}).eq('id',_leadDragId),'leads');
   _leadDragId=null;
 }
 
@@ -2530,7 +2530,7 @@ async function leadToCRM(id){
   if(exists){showToast('Cliente ya existe en CRM');return;}
   const {error}=await _sb.from('crm_clients').insert({business_slug:BIZ_SLUG,name:l.name,phone:l.phone||null,email:l.email||null,notes:l.interest||null});
   if(error){showToast('No se pudo convertir: '+error.message);return;}
-  await _sb.from('leads').update({status:'converted'}).eq('id',id);
+  await sbOk(_sb.from('leads').update({status:'converted'}).eq('id',id),'leads');
   await loadAll();showToast('✓ Lead convertido a cliente CRM');
 }
 
@@ -2598,7 +2598,7 @@ async function saveSeg(){
   const name=document.getElementById('seg-name').value.trim();
   const date=document.getElementById('seg-date').value;
   if(!name||!date){alert('Nombre y fecha son obligatorios');return;}
-  await _sb.from('leads').insert({business_slug:BIZ_SLUG,name,phone:document.getElementById('seg-phone').value||null,interest:document.getElementById('seg-interest').value||null,follow_up_date:date,intent_level:document.getElementById('seg-intent').value,status:'new'});
+  await sbOk(_sb.from('leads').insert({business_slug:BIZ_SLUG,name,phone:document.getElementById('seg-phone').value||null,interest:document.getElementById('seg-interest').value||null,follow_up_date:date,intent_level:document.getElementById('seg-intent').value,status:'new'}),'leads');
   closeModal();loadAll();showToast('Seguimiento añadido');
 }
 function editSegFecha(id,current){
@@ -2618,7 +2618,7 @@ function editSegFecha(id,current){
 async function saveSegFecha(id){
   const date=document.getElementById('seg-new-date').value;
   if(!date)return;
-  await _sb.from('leads').update({follow_up_date:date}).eq('id',id);
+  await sbOk(_sb.from('leads').update({follow_up_date:date}).eq('id',id),'leads');
   closeModal();loadAll();showToast('Fecha actualizada');
 }
 
@@ -2785,10 +2785,10 @@ async function crmVerCliente(id){
   // Préstamos de trajes
   const [prestData]=await Promise.all([_sb.from('crm_orders').select('id,title,status,created_at,notes').eq('business_slug',BIZ_SLUG).eq('client_id',id).in('status',['prestamo','prestamo-devuelto']).order('created_at',{ascending:false})]);
   const prests=prestData.data||[];
-  const prestamosHtml=`<div style="margin-bottom:20px">
+  // Jose pidió quitar "Nuevo préstamo" (reunión 18/07): solo se muestran los préstamos que ya existían.
+  const prestamosHtml=!prests.length?'':`<div style="margin-bottom:20px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em"> Préstamo de trajes</div>
-      <button class="btn btn-ghost btn-xs" onclick="prestamoNuevo('${id}','${esc(c.name)}')">+ Nuevo préstamo</button>
     </div>
     ${prests.length?prests.map(p=>{let nd={};try{nd=JSON.parse(p.notes||'{}')}catch{}return`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8fafc;border-radius:8px;margin-bottom:6px;border:1px solid #e2e8f0"><div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(p.title)}</div><div style="font-size:11px;color:#64748b">Salida: ${nd.fecha_salida||'—'} · Retorno: ${nd.fecha_retorno||'—'}</div></div><span style="font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;${p.status==='prestamo-devuelto'?'background:#f0fdf4;color:#16a34a':'background:#fff7ed;color:#c2410c'}">${p.status==='prestamo-devuelto'?'Devuelto':'En préstamo'}</span>${p.status==='prestamo'?`<button class="btn btn-ghost btn-xs" onclick="prestamoDevolver('${p.id}','${id}')">Devuelto</button>`:''}</div>`}).join(''):'<div style="font-size:12px;color:#94a3b8">Sin préstamos registrados</div>'}
   </div>`;
@@ -2934,7 +2934,7 @@ async function crmSaveCliente(){
   crmCloseModal();showToast('✓ Cliente guardado');
   return savedId;
 }
-async function crmDeleteCliente(id){if(!confirm('¿Eliminar cliente?'))return;await _sb.from('crm_clients').delete().eq('id',id);await crmLoadClientes();}
+async function crmDeleteCliente(id){if(!confirm('¿Eliminar cliente?'))return;await sbOk(_sb.from('crm_clients').delete().eq('id',id),'crm_clients');await crmLoadClientes();}
 
 // ── FIDELIZADOS ─────────────────────────────────────────────────────────────
 let _filtrFidelizados=false;
@@ -2983,7 +2983,7 @@ function fondoSaldo(movs){return movs.reduce((s,m)=>s+Number(m.price||0),0);}
 async function fondoDepositar(clienteId,clienteNombre){
   const importe=parseFloat(prompt('Importe a depositar (€):'));if(!importe||importe<=0)return;
   const notas=prompt('Notas (opcional):');
-  await _sb.from('crm_orders').insert({business_slug:BIZ_SLUG,client_id:clienteId,client_name:clienteNombre,title:'Depósito fondo cliente',status:'fondo',price:importe,notes:notas||null});
+  await sbOk(_sb.from('crm_orders').insert({business_slug:BIZ_SLUG,client_id:clienteId,client_name:clienteNombre,title:'Depósito fondo cliente',status:'fondo',price:importe,notes:notas||null}),'crm_orders');
   showToast('Depósito registrado: '+importe.toFixed(2)+' €');
   crmVerCliente(clienteId);
 }
@@ -2994,7 +2994,7 @@ async function fondoDescontar(clienteId,clienteNombre){
   const importe=parseFloat(prompt(`Saldo disponible: ${saldo.toFixed(2)} €\nImporte a descontar (€):`));if(!importe||importe<=0)return;
   if(importe>saldo){if(!confirm(`El descuento (${importe}€) supera el saldo (${saldo.toFixed(2)}€). ¿Continuar con saldo negativo?`))return;}
   const notas=prompt('Concepto del descuento:');
-  await _sb.from('crm_orders').insert({business_slug:BIZ_SLUG,client_id:clienteId,client_name:clienteNombre,title:'Descuento fondo cliente',status:'fondo',price:-Math.abs(importe),notes:notas||null});
+  await sbOk(_sb.from('crm_orders').insert({business_slug:BIZ_SLUG,client_id:clienteId,client_name:clienteNombre,title:'Descuento fondo cliente',status:'fondo',price:-Math.abs(importe),notes:notas||null}),'crm_orders');
   showToast('Descuento registrado: -'+importe.toFixed(2)+' €');
   crmVerCliente(clienteId);
 }
@@ -3016,12 +3016,12 @@ async function prestamoNuevo(clienteId,clienteNombre){
   const fechaSalida=prompt('Fecha de salida (YYYY-MM-DD):',new Date().toISOString().split('T')[0]);
   const fechaRetorno=prompt('Fecha prevista de retorno (YYYY-MM-DD):');
   const notas=JSON.stringify({tipo:'prestamo',fecha_salida:fechaSalida,fecha_retorno:fechaRetorno||null});
-  await _sb.from('crm_orders').insert({business_slug:BIZ_SLUG,client_id:clienteId,client_name:clienteNombre,title:`Préstamo: ${prenda}`,status:'prestamo',price:0,notes:notas});
+  await sbOk(_sb.from('crm_orders').insert({business_slug:BIZ_SLUG,client_id:clienteId,client_name:clienteNombre,title:`Préstamo: ${prenda}`,status:'prestamo',price:0,notes:notas}),'crm_orders');
   showToast('Préstamo registrado');crmVerCliente(clienteId);
 }
 async function prestamoDevolver(id,clienteId){
   if(!confirm('¿Marcar como devuelto?'))return;
-  await _sb.from('crm_orders').update({status:'prestamo-devuelto',updated_at:new Date().toISOString()}).eq('id',id);
+  await sbOk(_sb.from('crm_orders').update({status:'prestamo-devuelto',updated_at:new Date().toISOString()}).eq('id',id),'crm_orders');
   showToast('Préstamo marcado como devuelto');crmVerCliente(clienteId);
 }
 
@@ -3057,7 +3057,7 @@ async function guardarCierreCaja(){
   const tr=parseFloat(document.getElementById('cc-transf')?.value)||0;
   const tot=ef+ta+bi+tr;
   const notas=JSON.stringify({tipo:'cierre_caja',efectivo:ef,tarjeta:ta,bizum:bi,transferencia:tr,total:tot,obs:document.getElementById('cc-notas')?.value||''});
-  await _sbSrv.from('facturas_compra').insert({business_slug:BIZ_SLUG,proveedor:'CIERRE DE CAJA',concepto:`Cierre caja ${hoy}`,importe:tot,fecha:hoy,categoria:'Cierre de Caja',notas});
+  await sbOk(_sbSrv.from('facturas_compra').insert({business_slug:BIZ_SLUG,proveedor:'CIERRE DE CAJA',concepto:`Cierre caja ${hoy}`,importe:tot,fecha:hoy,categoria:'Cierre de Caja',notas}),'facturas_compra');
   showToast('Cierre de caja guardado — '+tot.toLocaleString('es-ES',{minimumFractionDigits:2})+' €');
   crmCloseModal();
 }
@@ -3183,8 +3183,8 @@ function corpOpenGroupModal(g={}){
 async function corpSaveGroup(){
   const nombre=cv('cg-nombre').trim();if(!nombre){alert('Nombre obligatorio');return;}
   const payload={business_slug:BIZ_SLUG,nombre,sector:cv('cg-sector')||null,contacto:cv('cg-contacto')||null,telefono:cv('cg-tel')||null,email:cv('cg-email')||null,notes:cv('cg-notes')||null};
-  if(_crmEditId)await _sb.from('crm_corporate_groups').update(payload).eq('id',_crmEditId);
-  else await _sb.from('crm_corporate_groups').insert(payload);
+  if(_crmEditId)await sbOk(_sb.from('crm_corporate_groups').update(payload).eq('id',_crmEditId),'crm_corporate_groups');
+  else await sbOk(_sb.from('crm_corporate_groups').insert(payload),'crm_corporate_groups');
   crmCloseModal();corpLoadGroups();showToast('Grupo guardado');
 }
 
@@ -3195,8 +3195,8 @@ function corpEditGroup(id){
 
 async function corpDeleteGroup(id){
   if(!confirm('¿Eliminar este grupo y todos sus miembros?'))return;
-  await _sb.from('crm_corporate_members').delete().eq('group_id',id);
-  await _sb.from('crm_corporate_groups').delete().eq('id',id);
+  await sbOk(_sb.from('crm_corporate_members').delete().eq('group_id',id),'crm_corporate_members');
+  await sbOk(_sb.from('crm_corporate_groups').delete().eq('id',id),'crm_corporate_groups');
   corpLoadGroups();showToast('Grupo eliminado');
 }
 
@@ -3255,8 +3255,8 @@ async function corpSaveMiembro(){
   const zp=cv('cm-zapato');if(zp)ms.zapato=zp;
   const cr=cv('cm-corbata');if(cr)ms.corbata=cr;
   const payload={group_id:_corpEditGroupId,business_slug:BIZ_SLUG,nombre,cargo:cv('cm-cargo')||null,telefono:cv('cm-tel')||null,email:cv('cm-email')||null,measurements:Object.keys(ms).length?ms:null,notes:cv('cm-notes')||null};
-  if(_corpEditMembId)await _sb.from('crm_corporate_members').update(payload).eq('id',_corpEditMembId);
-  else await _sb.from('crm_corporate_members').insert(payload);
+  if(_corpEditMembId)await sbOk(_sb.from('crm_corporate_members').update(payload).eq('id',_corpEditMembId),'crm_corporate_members');
+  else await sbOk(_sb.from('crm_corporate_members').insert(payload),'crm_corporate_members');
   crmCloseModal();corpLoadGroups();showToast('Miembro guardado');
 }
 
@@ -3284,7 +3284,7 @@ async function corpVerMiembro(id){
 
 async function corpDeleteMiembro(id,groupId){
   if(!confirm('¿Eliminar este miembro?'))return;
-  await _sb.from('crm_corporate_members').delete().eq('id',id);
+  await sbOk(_sb.from('crm_corporate_members').delete().eq('id',id),'crm_corporate_members');
   corpLoadGroups();showToast('Miembro eliminado');
 }
 
@@ -3408,7 +3408,7 @@ async function encDrop(e,col){
   if(!_dragEncId)return;
   const o=_allEncargos.find(x=>x.id===_dragEncId);
   if(o&&o.status!==col){
-    await _sb.from('crm_orders').update({status:col,updated_at:new Date().toISOString()}).eq('id',_dragEncId);
+    await sbOk(_sb.from('crm_orders').update({status:col,updated_at:new Date().toISOString()}).eq('id',_dragEncId),'crm_orders');
     showToast('Estado actualizado');
     if(col==='entregado'){if(typeof fireConfetti==='function')fireConfetti(100);if(typeof soundSuccess==='function')soundSuccess();}
     else if(typeof soundSew==='function')soundSew();
@@ -3655,7 +3655,7 @@ async function crmSaveEncargo(){
   ['acc-corbata','acc-gemelo','acc-panuelo','acc-otros'].forEach(id=>{const v=cv(id);if(v)m[id.replace('-','_')]=v;});
   // Guardar medidas en cliente
   if(cId&&Object.keys(m).length){
-    await _sb.from('crm_clients').update({measurements:m}).eq('id',cId);
+    await sbOk(_sb.from('crm_clients').update({measurements:m}).eq('id',cId),'crm_clients');
     const ci=_crmClientes.findIndex(x=>x.id===cId);
     if(ci>-1)_crmClientes[ci].measurements=m;
   }
@@ -3680,8 +3680,8 @@ async function crmSaveEncargo(){
     for(const mat of validMats){
       const inv=_crmInventario.find(x=>x.id===mat.inv_id);
       if(inv){
-        await _sb.from('crm_inventory').update({stock:Math.max(0,inv.stock-mat.qty)}).eq('id',mat.inv_id);
-        await _sb.from('crm_inventory_movements').insert({business_slug:BIZ_SLUG,inventory_id:mat.inv_id,tipo:'salida',cantidad:mat.qty,motivo:`Encargo: ${title}`});
+        await sbOk(_sb.from('crm_inventory').update({stock:Math.max(0,inv.stock-mat.qty)}).eq('id',mat.inv_id),'crm_inventory');
+        await sbOk(_sb.from('crm_inventory_movements').insert({business_slug:BIZ_SLUG,inventory_id:mat.inv_id,tipo:'salida',cantidad:mat.qty,motivo:`Encargo: ${title}`}),'crm_inventory_movements');
       }
     }
   }
@@ -3696,8 +3696,8 @@ async function crmSaveEncargo(){
     materials:validMats.length?validMats:null,
     fotos:fotos.length?fotos:null,
     notes:cv('ef-notes')||null,updated_at:new Date().toISOString()};
-  if(_crmEditId)await _sb.from('crm_orders').update(payload).eq('id',_crmEditId);
-  else await _sb.from('crm_orders').insert(payload);
+  if(_crmEditId)await sbOk(_sb.from('crm_orders').update(payload).eq('id',_crmEditId),'crm_orders');
+  else await sbOk(_sb.from('crm_orders').insert(payload),'crm_orders');
   crmCloseModal();crmLoadEncargos();if(validMats.length)crmLoadInventario();showToast('Encargo guardado');
 }
 
@@ -3705,7 +3705,7 @@ async function generarFacturaDesdeEncargo(id){
   const {data:o}=await _sb.from('crm_orders').select('*').eq('id',id).single();if(!o)return;
   const items=o.price?[{desc:o.title,qty:1,price:o.price}]:[{desc:o.title,qty:1,price:0}];
   const payload={business_slug:BIZ_SLUG,client_id:o.client_id,client_name:o.client_name,type:'presupuesto',status:'borrador',items,total:o.price||0,issue_date:new Date().toISOString().split('T')[0]};
-  await _sb.from('crm_invoices').insert(payload);
+  await sbOk(_sb.from('crm_invoices').insert(payload),'crm_invoices');
   showToast('Presupuesto creado en Facturación');
   showTab('crm-facturacion',document.getElementById('nav-crm-facturacion'));
 }
@@ -3780,11 +3780,11 @@ async function crmSaveInventario(){
   const stock=parseFloat(cv('if-stock'));if(isNaN(stock)){alert('Stock obligatorio');return;}
   const mr=cv('if-minstock');const pc=cv('if-pc');const img=cv('if-img');
   const margen_v=cv('if-margen')||null;const price_v=cv('if-price');const payload={business_slug:BIZ_SLUG,name,category:cv('if-cat')||null,stock,min_stock:mr!==''?parseFloat(mr):null,unit:cv('if-unit')||'ud',precio_compra:pc!==''?parseFloat(pc):null,price:price_v!==''?parseFloat(price_v):null,margen:margen_v,image_url:img||null,sku:cv('if-sku')||null,barcode:cv('if-barcode')||null};
-  if(_crmEditId)await _sb.from('crm_inventory').update(payload).eq('id',_crmEditId);
-  else await _sb.from('crm_inventory').insert(payload);
+  if(_crmEditId)await sbOk(_sb.from('crm_inventory').update(payload).eq('id',_crmEditId),'crm_inventory');
+  else await sbOk(_sb.from('crm_inventory').insert(payload),'crm_inventory');
   crmCloseModal();crmLoadInventario();showToast('Producto guardado');
 }
-async function crmDeleteInventario(id){if(!confirm('¿Eliminar?'))return;await _sb.from('crm_inventory').delete().eq('id',id);crmLoadInventario();}
+async function crmDeleteInventario(id){if(!confirm('¿Eliminar?'))return;await sbOk(_sb.from('crm_inventory').delete().eq('id',id),'crm_inventory');crmLoadInventario();}
 
 function invMovimiento(id, tipo){
   const inv=_crmInventario.find(x=>x.id===id);if(!inv)return;
@@ -3808,8 +3808,8 @@ async function invSaveMovimiento(id,tipo){
   const inv=_crmInventario.find(x=>x.id===id);if(!inv)return;
   const newStock=tipo==='entrada'?inv.stock+qty:Math.max(0,inv.stock-qty);
   await Promise.all([
-    _sb.from('crm_inventory').update({stock:newStock}).eq('id',id),
-    _sb.from('crm_inventory_movements').insert({business_slug:BIZ_SLUG,inventory_id:id,tipo,cantidad:qty,motivo})
+    sbOk(_sb.from('crm_inventory').update({stock:newStock}).eq('id',id),'crm_inventory'),
+    sbOk(_sb.from('crm_inventory_movements').insert({business_slug:BIZ_SLUG,inventory_id:id,tipo,cantidad:qty,motivo}),'crm_inventory_movements')
   ]);
   crmCloseModal();crmLoadInventario();showToast(`${tipo==='entrada'?'Entrada':'Salida'} registrada`);
 }
@@ -4005,11 +4005,11 @@ async function crmSaveFactura(){
   const irpf=parseFloat(cv('ff-irpf'))||0;
   const totalConDesc=total*(1-discount/100)*(1-irpf/100);
   const payload={business_slug:BIZ_SLUG,client_id:cId,client_name:cName,type,status:cv('ff-status'),issue_date:cv('ff-date')||null,due_date:cv('ff-due-date')||null,items:_crmLines,total:Math.round(totalConDesc*100)/100,discount,irpf,tags:cv('ff-tags')||null,notes:cv('ff-notes')||null,...(invoice_number?{invoice_number}:{})};
-  if(_crmEditId)await _sb.from('crm_invoices').update(payload).eq('id',_crmEditId);
-  else await _sb.from('crm_invoices').insert(payload);
+  if(_crmEditId)await sbOk(_sb.from('crm_invoices').update(payload).eq('id',_crmEditId),'crm_invoices');
+  else await sbOk(_sb.from('crm_invoices').insert(payload),'crm_invoices');
   crmCloseModal();crmLoadFacturas();showToast('Documento guardado');
 }
-async function crmDeleteFactura(id){if(!confirm('¿Eliminar?'))return;await _sb.from('crm_invoices').delete().eq('id',id);crmLoadFacturas();}
+async function crmDeleteFactura(id){if(!confirm('¿Eliminar?'))return;await sbOk(_sb.from('crm_invoices').delete().eq('id',id),'crm_invoices');crmLoadFacturas();}
 
 // ── VERIFACTU ──────────────────────────────────────────────────────────────
 // Integración con verifactuapi.es — registra facturas en AEAT en tiempo real
@@ -4069,11 +4069,11 @@ async function verifactuRegistrar(id){
       showToast('Error Verifactu: '+(data.message||data.error||res.status));
       return;
     }
-    await _sb.from('crm_invoices').update({
+    await sbOk(_sb.from('crm_invoices').update({
       verifactu_csv: item.Huella||'',
       verifactu_qr: item.url_qr||'',
       verifactu_at: new Date().toISOString()
-    }).eq('id',id);
+    }).eq('id',id),'crm_invoices');
     if(f){f.verifactu_csv=item.Huella;f.verifactu_qr=item.url_qr;}
     crmLoadFacturas();
     showToast('✓ Factura enviada a Verifactu — estado: '+(item.estado_aeat||'registrada'));
@@ -4150,12 +4150,12 @@ async function confirmarVentaTienda(invId){
   const total=qty*price*(1+ivaPct/100);
   // 1. Descontar stock
   const newStock=Math.max(0,inv.stock-qty);
-  await _sb.from('crm_inventory').update({stock:newStock}).eq('id',invId);
-  await _sb.from('crm_inventory_movements').insert({business_slug:BIZ_SLUG,inventory_id:invId,tipo:'salida',cantidad:qty,motivo:`Venta tienda — ${clientName}`});
+  await sbOk(_sb.from('crm_inventory').update({stock:newStock}).eq('id',invId),'crm_inventory');
+  await sbOk(_sb.from('crm_inventory_movements').insert({business_slug:BIZ_SLUG,inventory_id:invId,tipo:'salida',cantidad:qty,motivo:`Venta tienda — ${clientName}`}),'crm_inventory_movements');
   // 2. Registrar en facturas_compra como ingreso (tabla separada)
   const today=new Date().toISOString().split('T')[0];
   const invoice_number=await _nextInvoiceNum('ticket');
-  await _sb.from('crm_invoices').insert({business_slug:BIZ_SLUG,client_name:clientName,type:'ticket',status:'pagado',items:[{desc:inv.name,qty,price}],total,issue_date:today,notes:`Venta tienda · ${metodo}`,invoice_number});
+  await sbOk(_sb.from('crm_invoices').insert({business_slug:BIZ_SLUG,client_name:clientName,type:'ticket',status:'pagado',items:[{desc:inv.name,qty,price}],total,issue_date:today,notes:`Venta tienda · ${metodo}`,invoice_number}),'crm_invoices');
   // 3. Holded sync
   const holdedRes=await holdedSync('invoices',{
     desc:`Venta: ${inv.name}`,date:Math.floor(Date.now()/1000),
@@ -4434,7 +4434,7 @@ async function saveCompra(){
   if(saveErr){alert('Error al guardar: '+saveErr.message);return;}
   crmCloseModal();comprasLoad();showToast('Compra guardada');
 }
-async function deleteCompra(id){if(!confirm('¿Eliminar?'))return;await _sbSrv.from('facturas_compra').delete().eq('id',id);comprasLoad();}
+async function deleteCompra(id){if(!confirm('¿Eliminar?'))return;await sbOk(_sbSrv.from('facturas_compra').delete().eq('id',id),'facturas_compra');comprasLoad();}
 function exportComprasCSV(){
   if(!_compras.length){showToast('Sin datos para exportar');return;}
   const rows=[['Fecha','Proveedor','Concepto','Categoría','Método','Importe (€)','Notas','Foto URL']];
@@ -4713,7 +4713,7 @@ async function saveBizSettings(){
     if(np!==np2){alert('Las contraseñas no coinciden.');return;}
     if(np.length<6){alert('Mínimo 6 caracteres.');return;}
     const hash=await sha256(np);
-    await _sb.from('bot_configs').update({password_hash:hash}).eq('slug',BIZ_SLUG);
+    await sbOk(_sb.from('bot_configs').update({password_hash:hash}).eq('slug',BIZ_SLUG),'bot_configs');
     showToast(' Contraseña actualizada');
   }
   crmCloseModal();showToast('Datos del negocio guardados');
@@ -4758,7 +4758,7 @@ async function saveAdmin(){
 }
 async function deleteAdmin(id){
   if(!confirm('¿Eliminar este administrador?'))return;
-  await _sb.from('panel_admins').delete().eq('id',id);
+  await sbOk(_sb.from('panel_admins').delete().eq('id',id),'panel_admins');
   showToast('Eliminado');loadAdminsList();
 }
 
@@ -4834,12 +4834,12 @@ async function _doEnviarEmailDoc(id){
 }
 
 async function _doConvertirFactura(id, nextNum){
-  await _sb.from('crm_invoices').update({type:'factura',status:'enviado',invoice_number:nextNum}).eq('id',id);
+  await sbOk(_sb.from('crm_invoices').update({type:'factura',status:'enviado',invoice_number:nextNum}).eq('id',id),'crm_invoices');
   crmCloseModal();crmLoadFacturas();showToast('Factura'+nextNum+' creada');
 }
 
 async function marcarPagada(id){
-  await _sb.from('crm_invoices').update({status:'pagado'}).eq('id',id);
+  await sbOk(_sb.from('crm_invoices').update({status:'pagado'}).eq('id',id),'crm_invoices');
   const f=_crmFacturas.find(x=>x.id===id);if(f)f.status='pagado';
   crmLoadFacturas();showToast('Marcada como cobrada');
   const amt=Number(f&&f.total||0);
@@ -5289,7 +5289,7 @@ async function saveSuitDesign(){
   const spec=jaBuildSpec();
   const btn=document.getElementById('suit-save-btn');
   btn.disabled=true;btn.textContent='Guardando...';
-  await _sb.from('crm_orders').update({suit_design:spec,updated_at:new Date().toISOString()}).eq('id',_suitOrderId);
+  await sbOk(_sb.from('crm_orders').update({suit_design:spec,updated_at:new Date().toISOString()}).eq('id',_suitOrderId),'crm_orders');
   const o=_allEncargos?.find(x=>x.id===_suitOrderId);
   if(o)o.suit_design=spec;
   btn.disabled=false;btn.textContent='✦ Guardar diseño';
@@ -5355,6 +5355,17 @@ function startRealtime(){
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'leads',filter:`business_slug=eq.${BIZ_SLUG}`},()=>loadAll())
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'appointments',filter:`business_slug=eq.${BIZ_SLUG}`},()=>loadAll())
     .subscribe();
+}
+// Comprueba que Supabase ha guardado de verdad; si no, avisa y corta el flujo
+// (antes muchas acciones decían "guardado" aunque la base de datos devolviera error).
+async function sbOk(q, tabla){
+  const r = await q;
+  if (r && r.error) {
+    showToast('❌ No se ha podido guardar ('+tabla+'): '+(r.error.message||'error'), 6000);
+    console.error('Supabase '+tabla, r.error);
+    throw r.error;
+  }
+  return r;
 }
 function showToast(msg,ms=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),ms);}
 
@@ -6392,7 +6403,7 @@ async function tpvCobrar() {
   for(var c of _tpvCarrito){
     var p=TPV_PRODUCTOS.find(function(x){return x.id===c.id;});
     if(p){ p.stock=Math.max(0,p.stock-c.qty); }
-    await _sb.from('crm_inventory').update({stock:Math.max(0,(p?.stock||0))}).eq('id',c.id);
+    await sbOk(_sb.from('crm_inventory').update({stock:Math.max(0,(p?.stock||0))}).eq('id',c.id),'crm_inventory');
   }
 
   var nueva={id:venta.id.slice(0,8).toUpperCase(),
@@ -6617,7 +6628,7 @@ async function vistaRealGuardar(){
 }
 async function vistaRealSubirFoto(id){
   const url=prompt('URL de la foto generada:');if(!url)return;
-  await _sb.from('crm_orders').update({photo_url:url}).eq('id',id);
+  await sbOk(_sb.from('crm_orders').update({photo_url:url}).eq('id',id),'crm_orders');
   vistaRealLoad();showToast('Foto añadida');
 }
 async function vistaRealEnviar(id){
@@ -7770,7 +7781,7 @@ async function sincronizarContactosHolded(){
   if(btn){btn.disabled=true;btn.textContent=' Sincronizando…';}
 
   try{
-    const r=await fetch('https://airmate.es/api/holded?slug='+BIZ_SLUG+'&endpoint=contacts');
+    const r=await fetch(HOLDED_PROXY+'?slug='+BIZ_SLUG+'&endpoint=contacts');
     if(!r.ok)throw new Error('Holded HTTP '+r.status);
     const contacts=await r.json();
     if(!Array.isArray(contacts))throw new Error('Respuesta inesperada');
@@ -8738,7 +8749,7 @@ async function holdedSyncStock(){
       // Upsert por holded_id si existe, si no por nombre
       const {data:existing} = await _sb.from('crm_inventory').select('id').eq('business_slug',BIZ_SLUG).eq('holded_id',p.id).maybeSingle();
       if(existing){
-        await _sb.from('crm_inventory').update({stock:payload.stock, purchase_price:payload.purchase_price, stock_min:payload.stock_min}).eq('id',existing.id);
+        await sbOk(_sb.from('crm_inventory').update({stock:payload.stock, purchase_price:payload.purchase_price, stock_min:payload.stock_min}).eq('id',existing.id),'crm_inventory');
         actualizados++;
       } else {
         await _sb.from('crm_inventory').insert(payload);
