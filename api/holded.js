@@ -1,5 +1,6 @@
 const KEYS = {
-  'jose-acosta': process.env.HOLDED_KEY_JOSE_ACOSTA || 'pat_6a4244076c77500e41039686_11a27d3f1775f1606499bcdf87ff9bcd68c662ae0264a0c8c9b585b33f5b13d0',
+  // La llave va SOLO en las variables de entorno de Vercel (nunca escrita aquí: este repo es público).
+  'jose-acosta': process.env.HOLDED_KEY_JOSE_ACOSTA,
 };
 
 const ALLOWED_GET = new Set([
@@ -16,7 +17,7 @@ export default async function handler(req, res) {
 
   const slug = (req.query.slug || req.body?.slug || 'jose-acosta').toString();
   const key = KEYS[slug];
-  if (!key) return res.status(403).json({ error: 'Sin key para ' + slug });
+  if (!key) return res.status(503).json({ error: 'Falta configurar la llave de Holded en Vercel (HOLDED_KEY_JOSE_ACOSTA)' });
 
   const BASE = 'https://api.holded.com/api/invoicing/v1';
 
