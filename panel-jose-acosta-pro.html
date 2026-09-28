@@ -1020,27 +1020,6 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
         </div>
 
         <!-- SEGUIMIENTOS -->
-        <div id="pane-vista-real" class="tab-pane">
-          <div class="page-hd page-hd-row">
-            <div><div class="page-title">Vista Real</div><div class="page-sub">Genera la foto del traje con IA — entrega en 24h</div></div>
-            <button class="btn btn-accent" onclick="vistaRealNueva()">+ Nueva solicitud</button>
-          </div>
-          <!-- Cómo funciona -->
-          <div class="card" style="margin-bottom:20px;background:linear-gradient(135deg,#1a1208,#0f0a05);border:1px solid rgba(196,163,90,.2)">
-            <div style="padding:18px;display:flex;gap:20px;align-items:flex-start">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#c4a35a" stroke-width="1.5" style="flex-shrink:0;margin-top:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              <div>
-                <div style="font-weight:700;font-size:14px;color:#c4a35a;margin-bottom:6px">¿Cómo funciona Vista Real?</div>
-                <div style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.6">
-                  Con las medidas, el diseño y los materiales del cliente, generamos una foto realista del traje terminado. El cliente recibe la imagen en 24h para validar antes de comenzar la producción.
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Lista de solicitudes -->
-          <div id="vista-real-list" style="display:grid;gap:12px"></div>
-        </div>
-
         <div id="pane-seguimientos" class="tab-pane">
           <div class="page-hd page-hd-row">
             <div><div class="page-title">Seguimientos</div><div class="page-sub">Acciones pendientes con clientes</div></div>
@@ -1922,7 +1901,7 @@ async function doLogin(){
 })();
 
 // ── TABS ───────────────────────────────────────────────────────────────────
-const TAB_TITLES={'vista-real':'Vista Real',dashboard:'Dashboard',citas:'Citas',leads:'Leads',seguimientos:'Seguimientos','crm-clientes':'Clientes','crm-encargos':'Encargos','crm-stock':'Stock / Inventario','crm-facturacion':'Facturación','crm-compras':'Facturas de Compra',contabilidad:'Contabilidad',finanzas:'Finanzas',ventas:'Ventas / TPV'};
+const TAB_TITLES={dashboard:'Dashboard',citas:'Citas',leads:'Leads',seguimientos:'Seguimientos','crm-clientes':'Clientes','crm-encargos':'Encargos','crm-stock':'Stock / Inventario','crm-facturacion':'Facturación','crm-compras':'Facturas de Compra',contabilidad:'Contabilidad',finanzas:'Finanzas',ventas:'Ventas / TPV'};
 function showTab(id,btn){
   const _po=document.getElementById('crm-print-overlay');if(_po){_po.classList.remove('open');_po.style.display='none';}
   mobCloseSidebar();
@@ -6536,136 +6515,6 @@ async function tpvGuardarTrajeAMedida(){
   showTab('crm-encargos',document.getElementById('nav-crm-encargos'));
 }
 
-let _vistaReal=[];
-async function vistaRealLoad(){
-  const {data}=await _sb.from('crm_orders').select('*').eq('business_slug',BIZ_SLUG).eq('status','vista-real').order('created_at',{ascending:false});
-  _vistaReal=data||[];
-  vistaRealRender();
-}
-function vistaRealRender(){
-  const el=document.getElementById('vista-real-list');if(!el)return;
-  if(!_vistaReal.length){el.innerHTML='<div style="text-align:center;padding:40px;color:#94a3b8;font-size:14px">Sin solicitudes pendientes</div>';return;}
-  el.innerHTML=_vistaReal.map(r=>{
-    const cl=(_crmClientes||[]).find(x=>x.id===r.client_id);
-    return`<div class="card" style="padding:16px;display:flex;gap:16px;align-items:flex-start">
-      <div style="width:48px;height:48px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        ${r.photo_url?`<img src="${esc(r.photo_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'}
-      </div>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:14px;margin-bottom:2px">${esc(r.title||'Sin título')}</div>
-        <div style="font-size:12px;color:#64748b;margin-bottom:8px">${esc(cl?.name||r.client_name||'')} · ${r.created_at?new Date(r.created_at).toLocaleDateString('es-ES'):''}</div>
-        ${r.notes?`<div style="font-size:12px;color:#374151;background:#f8fafc;padding:6px 10px;border-radius:6px">${esc(r.notes)}</div>`:''}
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
-        ${r.photo_url?`<a href="${esc(r.photo_url)}" target="_blank" class="btn btn-ghost btn-sm">Ver foto</a>`:'<span style="font-size:11px;color:#94a3b8;padding:4px 0">Pendiente IA</span>'}
-        <button class="btn btn-ghost btn-sm" onclick="vistaRealSubirFoto('${r.id}')">Subir foto</button>
-        <button class="btn btn-ghost btn-sm" onclick="vistaRealEnviar('${r.id}')">Enviar cliente</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-function vistaRealNueva(){
-  const clientes=(_crmClientes||[]).slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-  const opts=clientes.map(c=>`<option value="${c.id}">${esc(c.name||'')}</option>`).join('');
-  const MED_KEYS=['altura','peso','cuello','pecho','pecho_alto','estomago','cintura','cadera','muslo','rodilla','gemelo','bajos','tiro','espalda','hombros','biceps','muneca','largo_manga','largo_chaqueta_frontal','largo_chaqueta_posterior','largo_chaleco_frontal','largo_chaleco_posterior','largo_pantalon','talla','zapato'];
-  const MED_LABELS={altura:'Altura (cm)',peso:'Peso (kg)',cuello:'Cuello (cm)',pecho:'Pecho (cm)',pecho_alto:'Pecho alto (cm)',estomago:'Estómago (cm)',cintura:'Cintura (cm)',cadera:'Cadera (cm)',muslo:'Muslo (cm)',rodilla:'Rodilla (cm)',gemelo:'Gemelo (cm)',bajos:'Bajos (cm)',tiro:'Tiro (cm)',espalda:'Espalda (cm)',hombros:'Hombros (cm)',biceps:'Bíceps (cm)',muneca:'Muñeca (cm)',largo_manga:'Largo manga (cm)',largo_chaqueta_frontal:'Largo chaqueta frontal (cm)',largo_chaqueta_posterior:'Largo chaqueta posterior (cm)',largo_chaleco_frontal:'Largo chaleco frontal (cm)',largo_chaleco_posterior:'Largo chaleco posterior (cm)',largo_pantalon:'Largo pantalón (cm)',talla:'Talla chaqueta',zapato:'Talla zapato'};
-  const medFields=MED_KEYS.map(k=>`<div class="crm-form-group" style="min-width:120px"><label class="crm-form-label" style="font-size:10px">${MED_LABELS[k]||k}</label><input type="${['talla','zapato'].includes(k)?'text':'number'}" class="crm-form-ctrl" id="vr-med-${k}" step="0.1" placeholder="—" style="padding:5px 8px;font-size:13px"/></div>`).join('');
-  const body=`
-    <div class="crm-form-group"><label class="crm-form-label">Cliente *</label>
-      <select class="crm-form-ctrl" id="vr-cliente" onchange="vrCargarMedidas(this.value)"><option value="">— Seleccionar —</option>${opts}</select></div>
-    <div style="border-top:1px solid #f1f5f9;padding-top:12px;margin-bottom:4px">
-      <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Medidas corporales</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px">${medFields}</div>
-    </div>
-    <div style="border-top:1px solid #f1f5f9;padding-top:12px">
-      <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Descripción del encargo</div>
-      <div class="crm-form-group"><label class="crm-form-label">Prendas *</label>
-        <input class="crm-form-ctrl" id="vr-desc" placeholder="Ej: Traje 2 piezas chaqueta + pantalón, chaleco opcional"/></div>
-      <div class="crm-form-group"><label class="crm-form-label">Color / Diseño</label>
-        <input class="crm-form-ctrl" id="vr-color" placeholder="Ej: Azul marino, solapa pico, botonadura dorada 2 botones"/></div>
-      <div class="crm-form-group"><label class="crm-form-label">Tejido / Materiales</label>
-        <input class="crm-form-ctrl" id="vr-mat" placeholder="Ej: Lana 120s Loro Piana azul marino"/></div>
-      <div class="crm-form-group"><label class="crm-form-label">Morfología / estilo del cliente</label>
-        <input class="crm-form-ctrl" id="vr-morfo" placeholder="Ej: Hombre 40 años, complexión atlética, porte elegante"/></div>
-      <div class="crm-form-group"><label class="crm-form-label">Ambiente / postura / detalles</label>
-        <textarea class="crm-form-ctrl" id="vr-obs" rows="2" placeholder="Ej: Postura erguida, fondo estudio neutro, luz cálida lateral"></textarea></div>
-    </div>
-    <div style="border-top:1px solid #f1f5f9;padding-top:12px">
-      <button type="button" class="btn btn-ghost" onclick="vrGenerarPrompt()" style="width:100%;font-size:13px">Generar prompt para IA</button>
-      <textarea id="vr-prompt-out" class="crm-form-ctrl" rows="4" style="display:none;margin-top:8px;font-size:12px;font-family:monospace;background:#f8fafc" placeholder="El prompt aparecerá aquí..." readonly onclick="this.select()"></textarea>
-    </div>`;
-  crmOpenModal('Nueva solicitud Vista Real',body,
-    '<button class="btn btn-ghost" onclick="crmCloseModal()">Cancelar</button>'+
-    '<button class="btn btn-accent" onclick="vistaRealGuardar()">Crear solicitud</button>',
-    {wide:true});
-}
-
-function vrCargarMedidas(clientId){
-  if(!clientId)return;
-  const cl=(_crmClientes||[]).find(c=>c.id===clientId);
-  if(!cl)return;
-  const ms=cl.medidas||cl.measurements||{};
-  const keys=['altura','peso','cuello','pecho','pecho_alto','estomago','cintura','cadera','muslo','rodilla','gemelo','bajos','tiro','espalda','hombros','biceps','muneca','largo_manga','largo_chaqueta_frontal','largo_chaqueta_posterior','largo_chaleco_frontal','largo_chaleco_posterior','largo_pantalon','talla','zapato'];
-  keys.forEach(k=>{const el=document.getElementById('vr-med-'+k);if(el&&ms[k])el.value=ms[k];});
-  if(cl.name){
-    const obs=document.getElementById('vr-morfo');
-    if(obs&&!obs.value)obs.value=(cl.name||'')+', '+((ms.altura?ms.altura+'cm':'')+(ms.peso?' '+ms.peso+'kg':'')).trim();
-  }
-}
-
-function vrGenerarPrompt(){
-  const MED_LABELS={altura:'altura',peso:'peso',cuello:'cuello',pecho:'pecho',pecho_alto:'pecho alto',estomago:'estómago',cintura:'cintura',cadera:'cadera',muslo:'muslo',rodilla:'rodilla',gemelo:'gemelo',bajos:'bajos',tiro:'tiro',espalda:'espalda',hombros:'hombros',biceps:'bíceps',muneca:'muñeca',largo_manga:'largo manga',largo_chaqueta_frontal:'largo chaqueta frontal',largo_chaqueta_posterior:'largo chaqueta posterior',largo_chaleco_frontal:'largo chaleco frontal',largo_chaleco_posterior:'largo chaleco posterior',largo_pantalon:'largo pantalón',talla:'talla chaqueta',zapato:'talla zapato'};
-  const keys=Object.keys(MED_LABELS);
-  const meds=keys.map(k=>{const el=document.getElementById('vr-med-'+k);return el&&el.value?MED_LABELS[k]+': '+el.value+((['talla','zapato'].includes(k))?'':' cm'):null;}).filter(Boolean);
-  const desc=document.getElementById('vr-desc')?.value||'';
-  const color=document.getElementById('vr-color')?.value||'';
-  const mat=document.getElementById('vr-mat')?.value||'';
-  const morfo=document.getElementById('vr-morfo')?.value||'';
-  const obs=document.getElementById('vr-obs')?.value||'';
-  const parts=[];
-  parts.push('Genera una fotografía realista y de alta calidad de un traje a medida.');
-  if(morfo)parts.push('El cliente es: '+morfo+'.');
-  if(meds.length)parts.push('Medidas corporales exactas: '+meds.join(', ')+'.');
-  if(desc)parts.push('Prendas: '+desc+'.');
-  if(color)parts.push('Diseño y color: '+color+'.');
-  if(mat)parts.push('Tejido: '+mat+'.');
-  parts.push('El traje debe ajustarse perfectamente al cuerpo según las medidas indicadas, mostrando la sastrería de alta costura.');
-  if(obs)parts.push(obs);
-  parts.push('Fotografía profesional de moda masculina, iluminación de estudio, fondo neutro.');
-  const prompt=parts.join(' ');
-  const out=document.getElementById('vr-prompt-out');
-  if(out){out.style.display='block';out.value=prompt;out.select();}
-}
-async function vistaRealGuardar(){
-  const clientId=cv('vr-cliente');const desc=cv('vr-desc').trim();
-  if(!clientId||!desc){showToast('Rellena cliente y descripción');return;}
-  const cl=(_crmClientes||[]).find(x=>x.id===clientId);
-  const color=cv('vr-color');const mat=cv('vr-mat');const morfo=cv('vr-morfo');const obs=cv('vr-obs');
-  const promptOut=document.getElementById('vr-prompt-out');const prompt=promptOut?promptOut.value:'';
-  const notesParts=[color&&('Color: '+color),mat&&('Tejido: '+mat),morfo&&('Cliente: '+morfo),obs,prompt&&('PROMPT IA: '+prompt)].filter(Boolean);
-  const keys=['altura','peso','cuello','pecho','pecho_alto','estomago','cintura','cadera','muslo','rodilla','gemelo','bajos','tiro','espalda','hombros','biceps','muneca','largo_manga','largo_chaqueta_frontal','largo_chaqueta_posterior','largo_chaleco_frontal','largo_chaleco_posterior','largo_pantalon','talla','zapato'];
-  const meds={};keys.forEach(k=>{const el=document.getElementById('vr-med-'+k);if(el&&el.value)meds[k]=el.value;});
-  const {error}=await _sb.from('crm_orders').insert({business_slug:BIZ_SLUG,title:desc,client_id:clientId,client_name:cl?.name||'',status:'vista-real',notes:notesParts.join(' | ')||null,measurements:meds});
-  if(error){showToast('Error al guardar');return;}
-  crmCloseModal();showToast('Solicitud creada');vistaRealLoad();
-}
-async function vistaRealSubirFoto(id){
-  const url=prompt('URL de la foto generada:');if(!url)return;
-  await sbOk(_sb.from('crm_orders').update({photo_url:url}).eq('id',id),'crm_orders');
-  vistaRealLoad();showToast('Foto añadida');
-}
-async function vistaRealEnviar(id){
-  const r=_vistaReal.find(x=>x.id===id);if(!r||!r.photo_url){showToast('Primero sube la foto');return;}
-  const cl=(_crmClientes||[]).find(x=>x.id===r.client_id);
-  const tel=cl?.phone||'';
-  if(!tel){showToast('El cliente no tiene teléfono');return;}
-  const msg=encodeURIComponent(`Hola ${cl?.name||''},
-
-Aquí tienes tu Vista Real del traje: ${r.photo_url}
-
-José Acosta Sastrería`);
-  window.open(`https://wa.me/${tel.replace(/\D/g,'')}?text=${msg}`,'_blank');
-}
 function tpvEnviarRecibo(ventaId){
   const html=`<div style="font-size:14px;color:#374151">
     <p style="margin-bottom:12px">Introduce el email del cliente para enviarle el recibo:</p>
