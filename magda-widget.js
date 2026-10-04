@@ -252,20 +252,5 @@ Para reservar o consultar disponibilidad, recoge el nombre del viajero, fechas d
     buildWidget();
   }
 
-  // Insert bot_config in Supabase if not exists
-  async function ensureConfig() {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/bot_configs?slug=eq.${SLUG}&select=slug`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    const data = await r.json();
-    if (data.length === 0) {
-      const SRK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDQ3NTk0NiwiZXhwIjoyMDkwMDUxOTQ2fQ.08g-CtdJ0BvgE3U4v9JppA_114EN24KBs7iBpUaw9cs';
-      await fetch(`${SUPABASE_URL}/rest/v1/bot_configs`, {
-        method: 'POST',
-        headers: { apikey: SRK, Authorization: `Bearer ${SRK}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify({ slug: SLUG, bot_name: 'Asistente Bungalow Punta del Hidalgo', owner_email: 'airmateai@gmail.com', system_prompt: SYSTEM_PROMPT })
-      });
-    }
-  }
-  ensureConfig();
+  // (La configuración del bot ya existe en Supabase; antes se creaba aquí con la clave maestra, que no debe ir en código público)
 })();
