@@ -802,6 +802,18 @@ function getDiasRango(){
   return S.selectedDays.slice();
 }
 
+// Ocupación sin datos personales: hora, servicio y nº de niños (función segura en Supabase).
+// Devuelve filas con la misma forma que antes (starts_at, service, notes) para no tocar el cálculo.
+async function cnOcupacion(desde,hasta){
+  const r=await fetch(SB_URL+'/rest/v1/rpc/cn_ocupacion',{method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({p_desde:desde,p_hasta:hasta})});
+  if(r.ok){ const d=await r.json(); return d.map(x=>({starts_at:x.starts_at,service:x.service,notes:JSON.stringify({ninos:new Array(x.n_ninos||0).fill(1)})})); }
+  const r2=await fetch(`${SB_URL}/rest/v1/appointments?business_slug=eq.${SLUG}&starts_at=gte.${desde}T00:00:00&starts_at=lte.${hasta}T23:59:59&status=neq.cancelled&select=starts_at,service,notes`,
+    {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+  return r2.ok?await r2.json():[];
+}
+
 async function cargarAforoPorDias(){
   document.getElementById('field-franjas').style.display='';
   document.getElementById('franja-loading').classList.remove('hidden');
@@ -810,11 +822,7 @@ async function cargarAforoPorDias(){
   // Query un rango que cubra todos los días
   const fechaMin=dias[0], fechaMax=dias[dias.length-1];
   try{
-    const res=await fetch(
-      `${SB_URL}/rest/v1/appointments?business_slug=eq.${SLUG}&starts_at=gte.${fechaMin}T00:00:00&starts_at=lte.${fechaMax}T23:59:59&status=neq.cancelled&select=starts_at,service,notes`,
-      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}
-    );
-    const rows=await res.json();
+    const rows=await cnOcupacion(fechaMin,fechaMax);
     // Agrupar ocupación por fecha+hora — contando personas reales, no filas
     const oc={};
     rows.forEach(r=>{
@@ -1088,11 +1096,7 @@ async function enviar(){
   dias.forEach(ymd=>(S.franjasPorDia[ymd]||[]).forEach(f=>slots.push({ymd,hora:f.hora})));
   try{
     const fechaMin=dias[0], fechaMax=dias[dias.length-1];
-    const resAforo=await fetch(
-      `${SB_URL}/rest/v1/appointments?business_slug=eq.${SLUG}&starts_at=gte.${fechaMin}T00:00:00&starts_at=lte.${fechaMax}T23:59:59&status=neq.cancelled&select=starts_at,service,notes`,
-      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}
-    );
-    const rowsAforo=await resAforo.json();
+    const rowsAforo=await cnOcupacion(fechaMin,fechaMax);
     const resGrupos=await fetch(
       `${SB_URL}/rest/v1/cn_grupos_horario?business_slug=eq.${SLUG}&fecha=gte.${fechaMin}&fecha=lte.${fechaMax}`,
       {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}
@@ -1395,11 +1399,19 @@ async function subirJustificante(input){
 
     // Actualizar appointment con URL y payment_status
     if(window._aptId){
-      const patchRes=await fetch(SB_URL+'/rest/v1/appointments?id=eq.'+window._aptId,{
-        method:'PATCH',
-        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-        body:JSON.stringify({notes:JSON.stringify(Object.assign(window._aptNotes||{},{payment_status:'uploaded',receipt_url:publicUrl}))})
+      // Función segura: solo marca el justificante de esta reserva (la tabla ya no es pública)
+      let patchRes=await fetch(SB_URL+'/rest/v1/rpc/cn_vincular_justificante',{
+        method:'POST',
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({p_id:window._aptId,p_receipt_url:publicUrl})
       });
+      if(patchRes.status===404){ // función aún no creada: método antiguo
+        patchRes=await fetch(SB_URL+'/rest/v1/appointments?id=eq.'+window._aptId,{
+          method:'PATCH',
+          headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+          body:JSON.stringify({notes:JSON.stringify(Object.assign(window._aptNotes||{},{payment_status:'uploaded',receipt_url:publicUrl}))})
+        });
+      }
       // Si esto falla, el archivo SÍ se ha subido pero la reserva no se marca
       // como "justificante subido" — mejor avisar que fallar en silencio.
       if(!patchRes.ok) throw new Error('No se pudo vincular el justificante a tu reserva (' + patchRes.status + ')');
