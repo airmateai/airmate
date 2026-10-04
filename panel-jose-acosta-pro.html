@@ -1819,6 +1819,17 @@ let allCitas=[],allLeads=[];
 let citasDate=new Date(); citasDate.setHours(0,0,0,0);
 let citasView='week',leadsView='pipeline';
 const SESSION_KEY='airmate_pro_session';
+// Supabase devuelve como máximo 1000 filas por consulta: pedir por páginas hasta tenerlas todas
+async function _sbTodos(build){
+  let out=[],desde=0;
+  for(;;){
+    const {data,error}=await build().range(desde,desde+999);
+    if(error)return {data:out.length?out:null,error};
+    out=out.concat(data||[]);
+    if(!data||data.length<1000)return {data:out,error:null};
+    desde+=1000;
+  }
+}
 const SVC_COLORS=['#6366f1','#8b5cf6','#ec4899','#f59e0b','#0ea5e9','#22c55e','#ef4444','#14b8a6'];
 function svcColor(n){let h=0;for(const c of(n||''))h=(h*31+c.charCodeAt(0))&0xffff;return SVC_COLORS[h%SVC_COLORS.length];}
 
@@ -1934,7 +1945,7 @@ async function loadAll(){
     _sb.from('appointments').select('*').eq('business_slug',BIZ_SLUG).order('starts_at',{ascending:true}),
     _sb.from('leads').select('*').eq('business_slug',BIZ_SLUG).order('created_at',{ascending:false}),
     _sb.from('crm_inventory').select('*').eq('business_slug',BIZ_SLUG).order('name'),
-    _sb.from('crm_clients').select('id,name,measurements,email,phone,fecha_boda,medidas_updated_at,measurements_history,coste_captacion,created_at').eq('business_slug',BIZ_SLUG).order('name'),
+    _sbTodos(()=>_sb.from('crm_clients').select('id,name,measurements,email,phone,fecha_boda,medidas_updated_at,measurements_history,coste_captacion,created_at').eq('business_slug',BIZ_SLUG).order('name')),
     _sb.from('crm_orders').select('id,title,status,price,client_name,client_id,created_at,updated_at,pago,evento,fotos,status_log').eq('business_slug',BIZ_SLUG).order('created_at',{ascending:false}),
     _sb.from('crm_invoices').select('id,type,status,total,issue_date,invoice_number,client_id,client_name,payment_status,receipt_url,payment_token,tipo_pago').eq('business_slug',BIZ_SLUG)
   ]);
@@ -2624,7 +2635,7 @@ function cv(id){return document.getElementById(id)?.value||'';}
 
 // ── CRM CLIENTES ───────────────────────────────────────────────────────────
 async function crmLoadClientes(){
-  const {data}=await _sb.from('crm_clients').select('*').eq('business_slug',BIZ_SLUG).order('created_at',{ascending:false});
+  const {data}=await _sbTodos(()=>_sb.from('crm_clients').select('*').eq('business_slug',BIZ_SLUG).order('created_at',{ascending:false}));
   _crmClientes=data||[];crmRenderClientes(_crmClientes);
 }
 let _cliTab='particular';
@@ -3441,7 +3452,7 @@ async function _encNotificarCliente(o,col){
   .catch(e=>{ console.error('Email encargo',e); showToast('No se pudo enviar el email al cliente'); });
 }
 async function crmEncargosOpts(sel=null){
-  if(!_crmClientes.length){const {data}=await _sb.from('crm_clients').select('id,name,measurements').eq('business_slug',BIZ_SLUG).order('name');_crmClientes=data||[];}
+  if(!_crmClientes.length){const {data}=await _sbTodos(()=>_sb.from('crm_clients').select('id,name,measurements').eq('business_slug',BIZ_SLUG).order('name'));_crmClientes=data||[];}
   return '<option value="">Sin cliente</option>'+_crmClientes.map(c=>`<option value="${c.id}"${c.id===sel?' selected':''}>${esc(c.name)}</option>`).join('');
 }
 
@@ -3935,7 +3946,7 @@ function crmUpdTotal(){const t=_crmLines.reduce((s,l)=>s+(parseFloat(l.qty)*pars
 function crmAddLine(){_crmLines.push({desc:'',qty:1,price:0});crmRenderLines();}
 
 async function crmFacturaForm(f={}){
-  const {data}=await _sb.from('crm_clients').select('id,name').eq('business_slug',BIZ_SLUG).order('name');
+  const {data}=await _sbTodos(()=>_sb.from('crm_clients').select('id,name').eq('business_slug',BIZ_SLUG).order('name'));
   const opts='<option value="">Sin cliente</option>'+(data||[]).map(c=>`<option value="${c.id}"${c.id===f.client_id?' selected':''}>${esc(c.name)}</option>`).join('');
   _crmLines=Array.isArray(f.items)&&f.items.length?f.items:[{desc:'',qty:1,price:0}];
   return `<div class="crm-form-row">
