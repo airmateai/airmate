@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fitenia · Panel de gestión (demo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --side:#111417; --side2:#1b1f24; --bg:#f4f5f7; --card:#fff; --line:#e6e8ec;
+  --ink:#101418; --mut:#6b7280; --acc:#0e9fc4; --acc2:#0b7f9d; --ok:#14a35a; --warn:#d97706; --bad:#dc2626;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Montserrat,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.side{background:var(--side);color:#fff;padding:24px 16px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;overflow-y:auto}
+.side img{width:170px;margin:4px 8px 6px}
+.side .sub{font-size:10px;letter-spacing:.2em;color:#8a9099;margin:0 8px 22px}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav .grp{font-size:10px;letter-spacing:.18em;color:#5f6670;font-weight:700;margin:14px 14px 6px}
+.nav button{background:none;border:0;color:#b9bec6;text-align:left;padding:10px 14px;border-radius:10px;font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.nav button:hover{background:var(--side2);color:#fff}
+.nav button.on{background:var(--side2);color:#fff;box-shadow:inset 3px 0 0 var(--acc)}
+.badge{background:var(--acc);color:#fff;border-radius:999px;font-size:11px;padding:2px 8px}
+.badge.w{background:var(--warn)}
+.side .foot{margin-top:auto;font-size:11px;color:#6b7280;padding:18px 8px 0;line-height:1.6}
+.side .foot button{background:none;border:1px solid #2a2f36;color:#8a9099;border-radius:8px;padding:6px 10px;font-size:11px;margin-top:8px}
+main{padding:28px 34px;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap}
+h1{font-size:26px;margin:0;font-weight:800;letter-spacing:-.02em}
+.sub2{color:var(--mut);font-size:13px;margin-top:3px}
+.btn{background:var(--ink);color:#fff;border:0;border-radius:10px;padding:11px 18px;font-weight:700;font-size:13px;text-decoration:none;display:inline-block}
+.btn.acc{background:var(--acc)} .btn.ok{background:var(--ok)} .btn.bad{background:var(--bad)} .btn.warn{background:var(--warn)} .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:7px 12px;font-size:12px;border-radius:8px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.grid{display:grid;gap:14px}
+.k4{grid-template-columns:repeat(4,1fr)} .k3{grid-template-columns:repeat(3,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.kpi .l{font-size:11px;letter-spacing:.12em;color:var(--mut);font-weight:700;text-transform:uppercase}
+.kpi .v{font-size:28px;font-weight:800;margin-top:6px}
+.kpi .s{font-size:12px;color:var(--mut);margin-top:2px}
+.row{display:flex;gap:14px}
+.ttl{font-size:15px;font-weight:800;margin:0 0 12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;letter-spacing:.08em;color:var(--mut);text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.click:hover td{background:#f8fafb;cursor:pointer}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.t-ok{background:#dcf5e7;color:var(--ok)} .t-warn{background:#fdf0d5;color:#b7791f} .t-bad{background:#fde2e2;color:var(--bad)} .t-acc{background:#dff4fa;color:var(--acc2)} .t-mut{background:#eef0f3;color:var(--mut)}
+.kan{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.col{background:#eceef1;border-radius:14px;padding:12px;min-height:300px}
+.col h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin:4px 6px 12px;display:flex;justify-content:space-between}
+.lead{background:#fff;border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid var(--line)}
+.lead.new{animation:flash 1.6s ease}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--acc)}100%{box-shadow:none}}
+.lead b{font-size:15px}
+.lead .meta{color:var(--mut);font-size:12px;margin:4px 0 10px}
+.lead .acts{display:flex;gap:6px;flex-wrap:wrap}
+.stu{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.sc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.sc:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.06)}
+.av{width:42px;height:42px;border-radius:50%;background:var(--side);color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px;flex-shrink:0}
+.bar{height:8px;background:#eef0f3;border-radius:99px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--acc)}
+input,select,textarea{font-family:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;width:100%;background:#fff}
+label{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--mut);text-transform:uppercase;display:block;margin:12px 0 6px}
+.modal{position:fixed;inset:0;background:rgba(10,12,15,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal.on{display:flex}
+.mbox{background:#fff;border-radius:18px;max-width:640px;width:100%;max-height:90vh;overflow:auto;padding:26px;animation:pop .18s ease}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:none;opacity:1}}
+.mbox h2{margin:0 0 4px;font-size:20px}
+.mact{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+.pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.pick button{background:#fff;border:2px solid var(--line);border-radius:12px;padding:12px;text-align:left;font-weight:700}
+.pick button small{display:block;color:var(--mut);font-weight:500;margin-top:3px}
+.pick button.on{border-color:var(--acc);background:#eaf7fb}
+.chk{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px}
+.chk input{width:18px;height:18px;flex-shrink:0}
+label.chk{text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);font-weight:500;margin:0 0 6px;cursor:pointer}
+.msg{white-space:pre-wrap;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px;font-size:14px;line-height:1.5}
+.sea{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sea div{background:#f1f9fc;border-radius:12px;padding:12px;text-align:center}
+.sea b{display:block;font-size:22px;color:var(--acc2)}
+.sea small{font-size:10px;letter-spacing:.12em;color:var(--mut);font-weight:700}
+.fc{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.fc .d{border-radius:12px;padding:10px 8px;text-align:center;border:1px solid var(--line);background:#fff}
+.fc .d small{display:block;font-size:10px;letter-spacing:.1em;color:var(--mut);font-weight:700;text-transform:uppercase}
+.fc .d b{display:block;font-size:17px;margin:4px 0 2px}
+.fc .d .w{font-size:11px;color:var(--mut)}
+.fc .d .r{margin-top:6px;font-size:10px;font-weight:800;border-radius:99px;padding:3px 6px;display:inline-block}
+.r-ok{background:#dcf5e7;color:var(--ok)} .r-warn{background:#fdf0d5;color:#b7791f} .r-bad{background:#fde2e2;color:var(--bad)} .r-flat{background:#eef0f3;color:var(--mut)}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.wd{background:#fff;border:1px solid var(--line);border-radius:12px;min-height:220px;padding:8px}
+.wd.today{border-color:var(--acc);box-shadow:0 0 0 2px #dff4fa}
+.wd h4{margin:2px 4px 8px;font-size:12px;font-weight:800;display:flex;justify-content:space-between;text-transform:capitalize}
+.cl{border-radius:10px;padding:8px 9px;margin-bottom:6px;cursor:pointer;font-size:12px;border-left:4px solid var(--acc);background:#f1f9fc}
+.cl.realizada{border-color:var(--ok);background:#effaf3}
+.cl.cancelada{border-color:var(--bad);background:#fdf1f1;text-decoration:line-through;color:var(--mut)}
+.cl b{display:block;font-size:12px}
+.occ{height:5px;background:#dfe3e8;border-radius:99px;margin-top:5px;overflow:hidden}.occ i{display:block;height:100%;background:var(--acc2)}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--ink);color:#fff;padding:14px 18px;border-radius:12px;font-weight:600;z-index:60;transform:translateY(140px);transition:transform .25s;max-width:360px}
+.toast.on{transform:none}
+.demo{position:fixed;left:252px;bottom:14px;background:#fff3e0;color:#9a5b00;font-size:11px;font-weight:700;padding:6px 10px;border-radius:99px;z-index:40}
+.page{display:none}.page.on{display:block}
+.empty{color:var(--mut);text-align:center;padding:30px}
+.chart{display:flex;align-items:flex-end;gap:14px;height:200px;padding:10px 4px 0}
+.chart .b{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.chart .b i{width:100%;max-width:56px;background:linear-gradient(180deg,var(--acc),var(--acc2));border-radius:8px 8px 3px 3px;min-height:4px}
+.chart .b span{font-size:11px;color:var(--mut);margin-top:6px;text-transform:capitalize}
+.chart .b em{font-style:normal;font-size:11px;font-weight:700;margin-bottom:4px}
+.hb{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.hb .n{width:150px;font-size:13px;font-weight:600}
+.hb .t{flex:1;height:12px;background:#eef0f3;border-radius:99px;overflow:hidden}.hb .t i{display:block;height:100%;background:var(--acc)}
+.hb .v{width:70px;text-align:right;font-weight:700;font-size:13px}
+.web{background:linear-gradient(160deg,#0b2a36,#0e9fc4);border-radius:16px;padding:22px;color:#fff}
+.web h3{margin:0 0 4px;font-size:20px}.web p{margin:0 0 12px;opacity:.85;font-size:13px}
+.web input,.web select{border:0;margin-bottom:8px}
+.stock{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.stock div{border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.stock b{display:block;font-size:22px}
+.stock small{color:var(--mut);font-size:11px;font-weight:700}
+@media(max-width:1100px){.week,.fc{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:900px){.app{grid-template-columns:1fr}.side{position:static;height:auto}.k4,.k3,.kan{grid-template-columns:1fr 1fr}.row{flex-direction:column}.demo{left:12px}.week,.fc{grid-template-columns:repeat(2,1fr)}main{padding:20px 16px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <img src="logo-fitenia.png" alt="Fitenia Surf School">
+    <div class="sub">PANEL DE GESTIÓN</div>
+    <nav class="nav" id="nav"></nav>
+    <div class="foot">Hecho por Airmate · demo con datos de prueba<br><button onclick="reiniciar()">↺ Reiniciar datos de prueba</button></div>
+  </aside>
+  <main>
+    <section class="page" id="p-inicio"></section>
+    <section class="page" id="p-interesados"></section>
+    <section class="page" id="p-clases"></section>
+    <section class="page" id="p-cobrar"></section>
+    <section class="page" id="p-alumnos"></section>
+    <section class="page" id="p-campamentos"></section>
+    <section class="page" id="p-monitores"></section>
+    <section class="page" id="p-material"></section>
+    <section class="page" id="p-caja"></section>
+    <section class="page" id="p-informes"></section>
+  </main>
+</div>
+<div class="modal" id="modal"><div class="mbox" id="mbox"></div></div>
+<div class="toast" id="toast"></div>
+<div class="demo">DEMO · datos ficticios</div>
+
+<script>
+/* ───────── Utilidades de fecha y formato ───────── */
+const hoy = new Date(); hoy.setHours(0,0,0,0);
+const dd = n => { const d = new Date(hoy); d.setDate(d.getDate()+n); return d; };
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const fmtD = s => new Date(s+'T12:00').toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+const eur = n => Number(n).toLocaleString('es-ES',{minimumFractionDigits:0,maximumFractionDigits:2})+' €';
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $ = id => document.getElementById(id);
+const ini = n => n.split(' ').map(w=>w[0]).slice(0,2).join('');
+const nombre1 = n => n.split(' ')[0];
+const wa = (tel,txt) => `https://wa.me/34${String(tel).replace(/\D/g,'')}?text=${encodeURIComponent(txt)}`;
+
+/* ───────── Catálogo (precios de ejemplo: se ponen los reales de la escuela) ───────── */
+const PRODUCTOS = [
+  {id:'c1', n:'Curso 1 día', clases:1, precio:40},
+  {id:'c2', n:'Curso 2 días', clases:2, precio:75},
+  {id:'c4', n:'Curso 4 días', clases:4, precio:140},
+  {id:'b8', n:'Bono 8 clases', clases:8, precio:240},
+  {id:'part', n:'Clase particular', clases:1, precio:60},
+];
+const EXTRAS = [
+  {id:'alqT', n:'Alquiler tabla (día)', precio:15},
+  {id:'alqN', n:'Alquiler neopreno (día)', precio:8},
+];
+const PLAYAS = ['Playa del Roque', 'Playa de Almáciga'];
+const NIVELES = ['Iniciación', 'Intermedio', 'Avanzado'];
+const TALLAS = ['XS','S','M','L','XL'];
+const TALLAS_NINO = ['6','8','10','12','14'];
+
+/* ───────── Datos de prueba (se guardan en este navegador) ───────── */
+let _id = 1000; const nid = () => ++_id;
+const CLAVE = 'fitenia-demo-v2';
+
+function semilla(){
+  _id = 1000;
+  const S = {};
+  S.monitores = [
+    {id:nid(),nombre:'Dani Hernández',tel:'622 100 201',tarifa:22,color:'#0e9fc4'},
+    {id:nid(),nombre:'Laura Pérez',tel:'622 100 202',tarifa:22,color:'#14a35a'},
+    {id:nid(),nombre:'Rubén Afonso',tel:'622 100 203',tarifa:18,color:'#d97706'},
+  ];
+  S.material = {
+    tablas:[{id:'esp8',n:'Espuma 8\'',total:14},{id:'esp7',n:'Espuma 7\'',total:8},{id:'evo',n:'Evolutiva 7\'2',total:4},{id:'sup',n:'Tabla SUP',total:3}],
+    neoprenos:{XS:4,S:6,M:8,L:7,XL:3,'6':3,'8':4,'10':4,'12':4,'14':3},
+    averiadas:[{id:nid(),que:'Espuma 8\' #11',nota:'Quilla rota',fecha:iso(dd(-3))}],
+  };
+  const A = [
+    ['Carla Méndez','612 345 101','Iniciación','S',false],['Hugo Ferrer','612 345 102','Iniciación','M',false],['Sara Lozano','612 345 103','Intermedio','S',false],
+    ['Leo Castro','612 345 104','Iniciación','12',true],['Irene Soto','612 345 105','Intermedio','M',false],['Daniel Prieto','612 345 106','Avanzado','L',false],
+    ['Noa Herrera','612 345 107','Iniciación','10',true],['Adrián Cano','612 345 108','Intermedio','L',false],['Julia Ramos','612 345 109','Iniciación','S',false],
+    ['Mario Fuentes','612 345 110','Iniciación','XL',false],['Elena Ortiz','612 345 111','Avanzado','M',false],['Bruno Serrano','612 345 112','Intermedio','M',false],
+    ['Martina Díaz','612 345 113','Iniciación','8',true],['Óscar Rivas','612 345 114','Iniciación','L',false],
+  ];
+  S.alumnos = A.map(([nombre,tel,nivel,talla,menor],i)=>({id:nid(),nombre,tel,nivel,talla,menor,tutor:menor?'Madre/padre de '+nombre1(nombre):'',
+    alta:iso(dd(-150+i*9)),total:0,restantes:0,notas:'',origen:['Web','Tienda','Recomendación','Instagram'][i%4]}));
+  S.interesados = [
+    {id:nid(),nombre:'Marta Gil',tel:'611 222 301',interes:'Curso 2 días',fecha:'Este sábado',origen:'Web',estado:'nuevo',creado:iso(hoy)},
+    {id:nid(),nombre:'Pablo Díaz',tel:'611 222 302',interes:'Campamento',fecha:'Julio',origen:'Instagram',estado:'nuevo',creado:iso(dd(-1))},
+    {id:nid(),nombre:'Lucía Vera',tel:'611 222 303',interes:'Curso 1 día',fecha:'Domingo',origen:'Web',estado:'contactado',creado:iso(dd(-2))},
+    {id:nid(),nombre:'Iván Ruiz',tel:'611 222 304',interes:'Bono 8 clases',fecha:'Entre semana',origen:'Tienda',estado:'contactado',creado:iso(dd(-4))},
+  ];
+  /* Historial de cobros de 6 meses (para Informes) */
+  S.pagos = [];
+  let k=0;
+  for(let m=5;m>=0;m--){
+    const nVentas=[7,9,12,16,21,14][5-m];
+    for(let j=0;j<nVentas;j++){
+      const d=new Date(hoy.getFullYear(),hoy.getMonth()-m,1+((j*3+m)%27));
+      if(d>hoy) continue;
+      const prod=PRODUCTOS[(j*7+m)%PRODUCTOS.length];
+      const a=S.alumnos[(j+m*3)%9]; // los 9 primeros son habituales
+      S.pagos.push({id:nid(),alumno:a.id,concepto:prod.n,importe:prod.precio,metodo:['Efectivo','Tarjeta','Bizum'][(k++)%3],fecha:iso(d)});
+    }
+  }
+  /* Los últimos alumnos solo han comprado una vez (nuevos este mes o el anterior) */
+  S.alumnos.slice(9).forEach((a,i)=>{ const prod=PRODUCTOS[i%3]; S.pagos.push({id:nid(),alumno:a.id,concepto:prod.n,importe:prod.precio,metodo:['Tarjeta','Bizum','Efectivo'][i%3],fecha:iso(dd(-(i*6+2)))}); });
+  /* Estado de bonos actual */
+  [[0,'b8',5],[1,'c4',2],[2,'b8',1],[3,'c2',0],[4,'b8',6],[5,'c4',3],[6,'c4',1],[7,'b8',0],[8,'c2',2],[9,'c4',4],[10,'b8',2],[11,'c2',1],[12,'c4',3],[13,'c2',2]].forEach(([i,pid,rest])=>{
+    const a=S.alumnos[i], p=PRODUCTOS.find(x=>x.id===pid); a.total=p.clases; a.restantes=rest;
+  });
+  /* Clases: pasadas, canceladas y convocadas esta semana */
+  const m=S.monitores, al=S.alumnos;
+  const cl=(n,hora,playa,mon,nivel,ids,estado)=>({id:nid(),fecha:iso(dd(n)),hora,playa,monitor:mon.id,nivel,plazas:8,alumnos:ids.map(i=>al[i].id),estado,asistieron:estado==='realizada'?ids.map(i=>al[i].id):[]});
+  S.clases = [
+    cl(-6,'10:00',PLAYAS[0],m[0],'Iniciación',[0,1,6,8,12],'realizada'),
+    cl(-5,'10:00',PLAYAS[1],m[1],'Intermedio',[2,4,7,11],'realizada'),
+    cl(-4,'16:00',PLAYAS[0],m[0],'Iniciación',[0,3,9,13],'cancelada'),
+    cl(-3,'10:00',PLAYAS[0],m[2],'Iniciación',[1,6,8,9,12,13],'realizada'),
+    cl(-2,'10:00',PLAYAS[0],m[0],'Iniciación',[0,1,6],'realizada'),
+    cl(-1,'11:00',PLAYAS[1],m[1],'Intermedio',[2,4],'cancelada'),
+    cl(1,'10:00',PLAYAS[0],m[0],'Iniciación',[0,4,8,9,12,13],'convocada'),
+    cl(2,'11:00',PLAYAS[1],m[1],'Intermedio',[2,7,11],'convocada'),
+    cl(3,'10:00',PLAYAS[0],m[2],'Iniciación',[1,6,8],'convocada'),
+    cl(4,'16:30',PLAYAS[1],m[0],'Avanzado',[5,10],'convocada'),
+  ];
+  /* Campamentos de verano */
+  S.campSemanas = [
+    {id:nid(),nombre:'Semana 1 · 30 jun – 4 jul',plazas:16,precio:180},
+    {id:nid(),nombre:'Semana 2 · 7 – 11 jul',plazas:16,precio:180},
+    {id:nid(),nombre:'Semana 3 · 14 – 18 jul',plazas:16,precio:180},
+  ];
+  const ninos=[['Álex Martín',9,'Ana Martín','633 400 101','',true,true,'10'],['Vega Suárez',11,'Pedro Suárez','633 400 102','Frutos secos',true,true,'12'],
+    ['Teo García',8,'Laura García','633 400 103','',false,true,'8'],['Lola Pérez',12,'Javier Pérez','633 400 104','',true,false,'12'],
+    ['Nico Ramos',10,'Eva Ramos','633 400 105','Asma (lleva inhalador)',true,true,'10'],['Zoe Díaz',7,'Marta Díaz','633 400 106','',false,false,'6'],
+    ['Hugo León',13,'Raúl León','633 400 107','',true,true,'14']];
+  S.campInscritos = ninos.map(([nino,edad,tutor,tel,alergias,aut,pag,talla],i)=>({id:nid(),semana:S.campSemanas[i%3===2?1:0].id,nino,edad,tutor,tel,alergias,autorizacion:aut,pagado:pag,talla}));
+  return S;
+}
+let S;
+function cargar(){
+  try{ const g=localStorage.getItem(CLAVE); if(g){ const d=JSON.parse(g); S=d.S; _id=d.id; return; } }catch(e){}
+  S=semilla();
+}
+function guardar(){ try{ localStorage.setItem(CLAVE,JSON.stringify({S,id:_id})); }catch(e){} }
+function reiniciar(){ try{ localStorage.removeItem(CLAVE); }catch(e){} S=semilla(); toast('↺ Datos de prueba reiniciados'); render(); }
+cargar();
+
+const alumno = id => S.alumnos.find(a=>a.id===id) || {nombre:'(borrado)',tel:'',restantes:0,total:0,talla:'M'};
+const monitor = id => S.monitores.find(m=>m.id===id) || {nombre:'—',tarifa:0,color:'#999'};
+function toast(t){ const e=$('toast'); e.textContent=t; e.classList.add('on'); clearTimeout(e._t); e._t=setTimeout(()=>e.classList.remove('on'),2800); }
+function modal(html){ $('mbox').innerHTML=html; $('modal').classList.add('on'); }
+function cerrar(){ $('modal').classList.remove('on'); }
+$('modal').addEventListener('click',e=>{ if(e.target.id==='modal') cerrar(); });
+function estadoBono(a){
+  if(a.restantes===0) return '<span class="tag t-bad">Sin clases · renovar</span>';
+  if(a.restantes<=1) return '<span class="tag t-warn">Le queda 1</span>';
+  return `<span class="tag t-ok">${a.restantes} clases</span>`;
+}
+
+/* ───────── Navegación ───────── */
+const GRUPOS = [
+  ['Día a día',[['inicio','Inicio'],['interesados','Interesados'],['clases','Clases y mar'],['cobrar','Cobrar']]],
+  ['Escuela',[['alumnos','Alumnos'],['campamentos','Campamentos'],['monitores','Monitores'],['material','Material']]],
+  ['Números',[['caja','Caja'],['informes','Informes']]],
+];
+const IDS = GRUPOS.flatMap(g=>g[1].map(p=>p[0]));
+let actual = IDS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'inicio';
+function go(p){ actual=p; history.replaceState(null,'','#'+p); render(); window.scrollTo(0,0); }
+function renderNav(){
+  const nuevos = S.interesados.filter(i=>i.estado==='nuevo').length;
+  const campPend = S.campInscritos.filter(c=>!c.autorizacion||!c.pagado).length;
+  const faltaMat = faltaMaterial().length;
+  const b = {interesados:nuevos?`<span class="badge">${nuevos}</span>`:'', campamentos:campPend?`<span class="badge w">${campPend}</span>`:'', material:faltaMat?`<span class="badge w">!</span>`:''};
+  $('nav').innerHTML = GRUPOS.map(([g,ps])=>`<div class="grp">${g.toUpperCase()}</div>`+ps.map(([id,n])=>`<button class="${id===actual?'on':''}" onclick="go('${id}')">${n}${b[id]||''}</button>`).join('')).join('');
+}
+const PINTAR = {inicio:rInicio,interesados:rInteresados,clases:rClases,cobrar:rCobrar,alumnos:rAlumnos,campamentos:rCampamentos,monitores:rMonitores,material:rMaterial,caja:rCaja,informes:rInformes};
+function render(){
+  renderNav();
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  $('p-'+actual).classList.add('on');
+  PINTAR[actual]();
+  guardar();
+}
+
+/* ───────── Mar: ahora + previsión 7 días (open-meteo, gratis y en directo) ───────── */
+let MAR = null, PREV = null;
+const LAT=28.578, LON=-16.141; // Almáciga / Roque de las Bodegas
+async function cargarMar(){
+  try{
+    const [m,w] = await Promise.all([
+      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=wave_height,wave_period,sea_surface_temperature&daily=wave_height_max,wave_period_max&timezone=Atlantic%2FCanary&forecast_days=7`).then(r=>r.json()),
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=wind_speed_10m&daily=wind_speed_10m_max,temperature_2m_max&timezone=Atlantic%2FCanary&forecast_days=7`).then(r=>r.json()),
+    ]);
+    MAR = {ola:m.current?.wave_height, periodo:m.current?.wave_period, agua:m.current?.sea_surface_temperature, viento:w.current?.wind_speed_10m};
+    PREV = (m.daily?.time||[]).map((t,i)=>({fecha:t, ola:m.daily.wave_height_max[i], periodo:m.daily.wave_period_max[i], viento:w.daily?.wind_speed_10m_max?.[i], temp:w.daily?.temperature_2m_max?.[i]}));
+  }catch(e){ MAR=null; PREV=null; }
+  if(actual==='inicio'||actual==='clases') render();
+}
+/* Veredicto sencillo para iniciación: lo ajusta la escuela a su criterio */
+function veredicto(d){
+  if(!d||d.ola==null) return {t:'—',c:'r-flat'};
+  if(d.viento!=null&&d.viento>32) return {t:'Mucho viento',c:'r-bad'};
+  if(d.ola>2.0) return {t:'Grande · solo avanzado',c:'r-bad'};
+  if(d.ola>1.5) return {t:'Fuerte · intermedio+',c:'r-warn'};
+  if(d.ola<0.4) return {t:'Casi plano',c:'r-flat'};
+  return {t:'Bueno para clase',c:'r-ok'};
+}
+const prevDe = f => PREV ? PREV.find(p=>p.fecha===f) : null;
+function bloquePrevision(){
+  if(!PREV) return '<div class="empty">Cargando previsión del mar…</div>';
+  return `<div class="fc">${PREV.map(p=>{const v=veredicto(p);const n=S.clases.filter(c=>c.fecha===p.fecha&&c.estado==='convocada').length;return `<div class="d">
+    <small>${new Date(p.fecha+'T12:00').toLocaleDateString('es-ES',{weekday:'short',day:'numeric'})}</small>
+    <b>${p.ola!=null?p.ola.toFixed(1)+' m':'—'}</b><div class="w">${p.periodo!=null?Math.round(p.periodo)+' s':''} · 💨 ${p.viento!=null?Math.round(p.viento):'—'} km/h</div>
+    <span class="r ${v.c}">${v.t}</span>
+    ${n?`<div style="margin-top:6px"><button class="btn sm ${v.c==='r-bad'?'bad':'ghost'}" style="padding:4px 8px;font-size:11px" onclick="cancelarDia('${p.fecha}')">${v.c==='r-bad'?'Cancelar ':''}${n} clase${n>1?'s':''}</button></div>`:''}
+  </div>`}).join('')}</div>`;
+}
+
+/* ───────── Inicio ───────── */
+function rInicio(){
+  const mes = iso(hoy).slice(0,7);
+  const cobradoMes = S.pagos.filter(p=>p.fecha.startsWith(mes)).reduce((s,p)=>s+p.importe,0);
+  const conClases = S.alumnos.filter(a=>a.restantes>0).length;
+  const sinClases = S.alumnos.filter(a=>a.restantes===0);
+  const ultima = S.alumnos.filter(a=>a.restantes===1);
+  const proximas = S.clases.filter(c=>c.fecha>=iso(hoy)&&c.estado==='convocada').sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora));
+  const manana = S.clases.filter(c=>c.fecha===iso(dd(1))&&c.estado==='convocada');
+  const nuevos = S.interesados.filter(i=>i.estado==='nuevo');
+  const campPend = S.campInscritos.filter(c=>!c.autorizacion||!c.pagado);
+  const falta = faltaMaterial();
+  const v = x => x==null?'—':x;
+  const tareas = [
+    ...nuevos.map(i=>`<div class="chk" style="justify-content:space-between"><span>📩 <b>${esc(i.nombre)}</b> pidió info · ${esc(i.interes)}</span><button class="btn sm acc" onclick="go('interesados')">Atender</button></div>`),
+    ...manana.map(c=>`<div class="chk" style="justify-content:space-between"><span>⏰ Recordar la clase de mañana · ${c.hora} · ${c.alumnos.length} alumnos</span><button class="btn sm ok" onclick="mensaje(${c.id},'recordar')">Recordatorio</button></div>`),
+    ...falta.map(f=>`<div class="chk" style="justify-content:space-between"><span>🧯 Faltan <b>${f.falta}</b> neoprenos talla ${f.talla} · ${fmtD(f.fecha)}</span><button class="btn sm warn" onclick="go('material')">Ver</button></div>`),
+    ...ultima.map(a=>`<div class="chk" style="justify-content:space-between"><span>🔔 A <b>${esc(a.nombre)}</b> le queda 1 clase</span><a class="btn sm ghost" target="_blank" href="${wa(a.tel,`¡Hola ${nombre1(a.nombre)}! Te queda 1 clase en tu bono 🏄 Si renuevas ahora te guardamos plaza en las próximas salidas.`)}">Avisar</a></div>`),
+    ...sinClases.map(a=>`<div class="chk" style="justify-content:space-between"><span>🏄 <b>${esc(a.nombre)}</b> no tiene clases</span><a class="btn sm ghost" target="_blank" href="${wa(a.tel,`¡Hola ${nombre1(a.nombre)}! Se te han acabado las clases de tu bono 🏄 ¿Renovamos para seguir surfeando?`)}">Ofrecer bono</a></div>`),
+    ...(campPend.length?[`<div class="chk" style="justify-content:space-between"><span>🏕️ ${campPend.length} inscripciones de campamento sin autorización o sin pagar</span><button class="btn sm ghost" onclick="go('campamentos')">Revisar</button></div>`]:[]),
+  ];
+  $('p-inicio').innerHTML = `
+  <div class="top"><div><h1>Buenos días 👋</h1><div class="sub2" style="text-transform:capitalize">${hoy.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}</div></div>
+    <div class="row" style="gap:8px"><button class="btn ghost" onclick="reservaWeb()">Ver reserva desde la web</button><button class="btn ghost" onclick="go('cobrar')">Cobrar</button><button class="btn acc" onclick="nuevaClase()">+ Convocar clase</button></div></div>
+  <div class="grid k4">
+    <div class="card kpi"><div class="l">Cobrado este mes</div><div class="v">${eur(cobradoMes)}</div></div>
+    <div class="card kpi"><div class="l">Alumnos con clases</div><div class="v">${conClases}</div><div class="s">${S.alumnos.reduce((s,a)=>s+a.restantes,0)} clases pendientes de dar</div></div>
+    <div class="card kpi"><div class="l">Clases esta semana</div><div class="v">${proximas.filter(c=>c.fecha<=iso(dd(6))).length}</div></div>
+    <div class="card kpi"><div class="l">Interesados nuevos</div><div class="v" style="color:var(--acc)">${nuevos.length}</div></div>
+  </div>
+  <div class="row" style="margin-top:14px">
+    <div class="card" style="flex:1.25;min-width:0">
+      <div class="ttl">El mar ahora · El Roque / Almáciga <span class="tag t-acc">En directo</span></div>
+      <div class="sea">
+        <div><small>OLAS</small><b>${MAR?v(MAR.ola)+' m':'…'}</b></div>
+        <div><small>PERIODO</small><b>${MAR?v(MAR.periodo)+' s':'…'}</b></div>
+        <div><small>VIENTO</small><b>${MAR?v(MAR.viento)+' km/h':'…'}</b></div>
+        <div><small>AGUA</small><b>${MAR?v(MAR.agua)+' °C':'…'}</b></div>
+      </div>
+      <div class="ttl" style="margin-top:20px">Próximos 7 días</div>
+      ${bloquePrevision()}
+      <div class="ttl" style="margin-top:20px">Próximas clases</div>
+      ${proximas.length?`<table><tr><th>Día</th><th>Playa</th><th>Monitor</th><th>Furgoneta</th><th></th></tr>${proximas.slice(0,6).map(c=>`<tr><td><b>${fmtD(c.fecha)}</b> · ${c.hora}</td><td>${c.playa}</td><td>${nombre1(monitor(c.monitor).nombre)}</td><td>${c.alumnos.length}/${c.plazas}</td><td style="text-align:right"><button class="btn sm ghost" onclick="verClase(${c.id})">Ver</button></td></tr>`).join('')}</table>`:'<div class="empty">No hay clases convocadas</div>'}
+    </div>
+    <div class="card" style="flex:1;align-self:flex-start">
+      <div class="ttl">Qué hay que hacer <span class="tag t-mut">${tareas.length}</span></div>
+      ${tareas.join('')||'<div class="empty">Todo al día ✓</div>'}
+    </div>
+  </div>`;
+}
+
+/* ───────── Interesados + reserva desde la web ───────── */
+let RECIEN=null;
+function rInteresados(){
+  const col = (est,t) => {
+    const l = S.interesados.filter(i=>i.estado===est);
+    return `<div class="col"><h3>${t}<span>${l.length}</span></h3>${l.map(i=>`
+      <div class="lead ${i.id===RECIEN?'new':''}"><b>${esc(i.nombre)}</b><div class="meta">${esc(i.interes)} · ${esc(i.fecha)} · <span class="tag ${i.origen==='Web'?'t-acc':'t-ok'}">${esc(i.origen)}</span>${i.nota?`<br>“${esc(i.nota)}”`:''}</div>
+      <div class="acts">
+        ${est!=='pagado'?`<a class="btn sm ok" target="_blank" onclick="marcarContactado(${i.id})" href="${wa(i.tel,`¡Hola ${nombre1(i.nombre)}! Somos Fitenia Surf School 🏄 Te escribimos por el ${i.interes}. ¿Te viene bien pasarte por la tienda (Av. Ángel Guimerá 13) para reservar tu plaza?`)}">WhatsApp</a>
+        ${i.interes==='Campamento'?`<button class="btn sm" onclick="inscribirDesdeInteresado(${i.id})">Inscribir en campamento</button>`:`<button class="btn sm" onclick="cobrarInteresado(${i.id})">Cobrar y dar de alta</button>`}
+        <button class="btn sm ghost" onclick="perdido(${i.id})">Descartar</button>`:'<span class="tag t-ok">Ya es alumno ✓</span>'}
+      </div></div>`).join('')||'<div class="empty">—</div>'}</div>`;
+  };
+  const total=S.interesados.length, conv=S.interesados.filter(i=>i.estado==='pagado').length;
+  $('p-interesados').innerHTML = `
+  <div class="top"><div><h1>Interesados</h1><div class="sub2">Los que piden información en la web entran solos · ${total?Math.round(conv/total*100):0}% acaban pagando</div></div>
+  <div class="row" style="gap:8px"><button class="btn ghost" onclick="reservaWeb()">Ver reserva desde la web</button><button class="btn acc" onclick="nuevoInteresado()">+ Añadir interesado</button></div></div>
+  <div class="kan">${col('nuevo','Nuevos')}${col('contactado','Contactados')}${col('pagado','Pagado · alumno')}</div>`;
+  RECIEN=null;
+}
+function marcarContactado(id){ const i=S.interesados.find(x=>x.id===id); if(i.estado==='nuevo'){ i.estado='contactado'; setTimeout(render,300);} }
+function perdido(id){ S.interesados=S.interesados.filter(x=>x.id!==id); toast('Interesado descartado'); render(); }
+function nuevoInteresado(){
+  modal(`<h2>Nuevo interesado</h2><div class="sub2">Alguien que ha preguntado por teléfono, por Instagram o en la tienda</div>
+  <label>Nombre</label><input id="ni-n"><label>Teléfono</label><input id="ni-t">
+  <label>Le interesa</label><select id="ni-i">${PRODUCTOS.map(p=>`<option>${p.n}</option>`).join('')}<option>Campamento</option></select>
+  <div class="row" style="gap:10px"><div style="flex:1"><label>¿Cuándo quiere venir?</label><input id="ni-f" placeholder="Ej: este finde"></div>
+  <div style="flex:1"><label>¿Cómo nos conoció?</label><select id="ni-o"><option>Tienda</option><option>Instagram</option><option>Recomendación</option><option>Teléfono</option></select></div></div>
+  <div class="mact"><button class="btn ghost" onclick="cerrar()">Cancelar</button><button class="btn acc" onclick="guardarInteresado()">Guardar</button></div>`);
+}
+function guardarInteresado(){
+  const n=$('ni-n').value.trim(); if(!n) return toast('⚠ Escribe el nombre');
+  S.interesados.unshift({id:nid(),nombre:n,tel:$('ni-t').value,interes:$('ni-i').value,fecha:$('ni-f').value||'Sin fecha',origen:$('ni-o').value,estado:'nuevo',creado:iso(hoy)});
+  cerrar(); toast('✓ Interesado añadido'); render();
+}
+/* Lo que ve el cliente en la web de Fitenia: el formulario entra directo en el panel */
+function reservaWeb(){
+  modal(`<h2>Así reserva el cliente desde la web</h2><div class="sub2">Este formulario va en escueladesurfentenerife.com. Lo que rellene aparece al instante en «Interesados», sin WhatsApps perdidos.</div>
+  <div class="web" style="margin-top:16px"><h3>Reserva tu clase de surf 🏄</h3><p>Te confirmamos plaza por WhatsApp en menos de 1 hora</p>
+    <input id="rw-n" placeholder="Nombre y apellidos"><input id="rw-t" placeholder="Teléfono (WhatsApp)">
+    <select id="rw-i">${PRODUCTOS.map(p=>`<option>${p.n}</option>`).join('')}<option>Campamento</option></select>
+    <select id="rw-f"><option>Este fin de semana</option><option>Entre semana</option><option>Próxima semana</option><option>Julio</option><option>Agosto</option></select>
+    <input id="rw-c" placeholder="¿Algo que debamos saber? (opcional)">
+    <button class="btn" style="width:100%;background:#fff;color:#0b2a36;margin-top:4px" onclick="enviarWeb()">Quiero mi plaza</button>
+  </div>
+  <div class="mact"><button class="btn ghost" onclick="cerrar()">Cerrar</button></div>`);
+}
+function enviarWeb(){
+  const n=$('rw-n').value.trim()||'Cliente de prueba', t=$('rw-t').value.trim()||'600 000 000';
+  const i={id:nid(),nombre:n,tel:t,interes:$('rw-i').value,fecha:$('rw-f').value,origen:'Web',estado:'nuevo',creado:iso(hoy),nota:$('rw-c').value.trim()};
+  S.interesados.unshift(i); RECIEN=i.id; cerrar(); go('interesados');
+  toast(`🔔 Nuevo interesado desde la web: ${n}`);
+}
+function cobrarInteresado(id){ const i=S.interesados.find(x=>x.id===id); COBRO={interesado:id,alumno:null,producto:(PRODUCTOS.find(p=>p.n===i.interes)||PRODUCTOS[0]).id,metodo:'Efectivo',extras:[]}; go('cobrar'); }
+
+/* ───────── Clases: semana + previsión + lista ───────── */
+let VISTA='semana', SEM=0;
+function rClases(){
+  const est = {convocada:'<span class="tag t-acc">Convocada</span>',realizada:'<span class="tag t-ok">Realizada</span>',cancelada:'<span class="tag t-bad">Cancelada por el mar</span>'};
+  const lunes = dd(SEM*7); // 7 días a partir de hoy
+  const dias = [...Array(7)].map((_,i)=>{const d=new Date(lunes);d.setDate(d.getDate()+i);return iso(d);});
+  const semana = `
+    <div class="ttl" style="margin-top:4px"><span>Del ${fmtD(dias[0])} al ${fmtD(dias[6])}</span>
+      <span class="row" style="gap:6px"><button class="btn sm ghost" onclick="SEM--;rClases()">‹</button><button class="btn sm ghost" onclick="SEM=0;rClases()">Hoy</button><button class="btn sm ghost" onclick="SEM++;rClases()">›</button></span></div>
+    <div class="week">${dias.map(f=>{const cs=S.clases.filter(c=>c.fecha===f).sort((a,b)=>a.hora.localeCompare(b.hora));const v=veredicto(prevDe(f));return `
+      <div class="wd ${f===iso(hoy)?'today':''}"><h4><span>${new Date(f+'T12:00').toLocaleDateString('es-ES',{weekday:'short',day:'numeric'})}</span>${prevDe(f)?`<span class="r ${v.c}" style="font-size:9px;border-radius:99px;padding:2px 6px">${prevDe(f).ola.toFixed(1)}m</span>`:''}</h4>
+      ${cs.map(c=>`<div class="cl ${c.estado}" style="${c.estado==='convocada'?'border-color:'+monitor(c.monitor).color:''}" onclick="verClase(${c.id})"><b>${c.hora} · ${c.nivel}</b>${c.playa.replace('Playa de ','').replace('Playa del ','')} · ${nombre1(monitor(c.monitor).nombre)}
+        <div class="occ"><i style="width:${Math.min(100,c.alumnos.length/c.plazas*100)}%"></i></div><span style="font-size:11px;color:var(--mut)">🚐 ${c.alumnos.length}/${c.plazas}</span></div>`).join('')}
+      ${f>=iso(hoy)?`<button class="btn sm ghost" style="width:100%;margin-top:4px" onclick="nuevaClase('${f}')">+ Clase</button>`:''}
+      </div>`}).join('')}</div>`;
+  const ord = [...S.clases].sort((a,b)=>(b.fecha+b.hora).localeCompare(a.fecha+a.hora));
+  const lista = `<div class="card"><table><tr><th>Día</th><th>Nivel</th><th>Playa</th><th>Monitor</th><th>Alumnos</th><th>Estado</th><th></th></tr>
+  ${ord.map(c=>`<tr><td><b>${fmtD(c.fecha)}</b> · ${c.hora}</td><td>${c.nivel}</td><td>${c.playa}</td><td>${nombre1(monitor(c.monitor).nombre)}</td><td>${c.alumnos.length}/${c.plazas}</td><td>${est[c.estado]}</td>
+  <td style="text-align:right;white-space:nowrap">${botonesClase(c)}</td></tr>`).join('')}</table></div>`;
+  $('p-clases').innerHTML = `
+  <div class="top"><div><h1>Clases y mar</h1><div class="sub2">Convoca según el mar, avisa al grupo, cancela con un clic y pasa lista desde el móvil</div></div>
+  <div class="row" style="gap:8px"><button class="btn ${VISTA==='semana'?'':'ghost'}" onclick="VISTA='semana';rClases()">Semana</button><button class="btn ${VISTA==='lista'?'':'ghost'}" onclick="VISTA='lista';rClases()">Lista</button><button class="btn acc" onclick="nuevaClase()">+ Convocar clase</button></div></div>
+  <div class="card" style="margin-bottom:14px"><div class="ttl">Previsión del mar · próximos 7 días <span class="tag t-acc">open-meteo · en directo</span></div>${bloquePrevision()}
+  <div class="sub2" style="margin-top:10px">El criterio (altura, viento) lo ajusta la escuela. Si un día sale en rojo, «Cancelar» avisa a todos los alumnos y nadie pierde su clase.</div></div>
+  ${VISTA==='semana'?`<div class="card">${semana}</div>`:lista}`;
+}
+function botonesClase(c){
+  if(c.estado!=='convocada') return `<button class="btn sm ghost" onclick="verClase(${c.id})">Ver</button>`;
+  return `<button class="btn sm ok" onclick="mensaje(${c.id},'convocar')">Mensaje grupo</button> <button class="btn sm bad" onclick="cancelar(${c.id})">Cancelar por mar</button> <button class="btn sm" onclick="lista(${c.id})">Pasar lista</button>`;
+}
+function nuevaClase(fecha){
+  const cand = S.alumnos.filter(a=>a.restantes>0).sort((a,b)=>NIVELES.indexOf(a.nivel)-NIVELES.indexOf(b.nivel)||a.nombre.localeCompare(b.nombre));
+  const f = fecha || iso(dd(1));
+  const v = veredicto(prevDe(f));
+  modal(`<h2>Convocar clase</h2><div class="sub2">Te proponemos los alumnos del nivel elegido que tienen clases pendientes</div>
+  <div class="row" style="gap:10px"><div style="flex:1"><label>Día</label><input type="date" id="nc-f" value="${f}" onchange="avisoMar()"></div><div style="flex:1"><label>Hora</label><input type="time" id="nc-h" value="10:00"></div><div style="flex:1"><label>Nivel</label><select id="nc-n" onchange="filtrarNivel()">${NIVELES.map(n=>`<option>${n}</option>`).join('')}</select></div></div>
+  <div id="nc-mar" style="margin-top:8px">${prevDe(f)?`<span class="tag ${v.c==='r-ok'?'t-ok':v.c==='r-bad'?'t-bad':'t-warn'}">🌊 ${prevDe(f).ola.toFixed(1)} m · ${v.t}</span>`:''}</div>
+  <div class="row" style="gap:10px"><div style="flex:1"><label>Playa</label><select id="nc-p">${PLAYAS.map(p=>`<option>${p}</option>`).join('')}</select></div><div style="flex:1"><label>Monitor</label><select id="nc-m">${S.monitores.map(m=>`<option value="${m.id}">${m.nombre}</option>`).join('')}</select></div><div style="flex:.6"><label>Plazas furgo</label><input type="number" id="nc-pl" value="8"></div></div>
+  <label>Alumnos</label><div id="nc-lista">${cand.map(a=>`<label class="chk nc-row" data-nivel="${a.nivel}"><input type="checkbox" class="nc-a" value="${a.id}" ${a.nivel==='Iniciación'?'checked':''}> <b>${esc(a.nombre)}</b> · ${a.nivel} · le quedan ${a.restantes} · talla ${a.talla}</label>`).join('')}</div>
+  <div class="mact"><button class="btn ghost" onclick="cerrar()">Cancelar</button><button class="btn acc" onclick="guardarClase()">Convocar y crear mensaje</button></div>`);
+  filtrarNivel();
+}
+function filtrarNivel(){ const n=$('nc-n').value; document.querySelectorAll('.nc-row').forEach(r=>{ const ok=r.dataset.nivel===n; r.style.display=ok?'':'none'; r.querySelector('input').checked=ok; }); }
+function avisoMar(){ const f=$('nc-f').value, p=prevDe(f), v=veredicto(p); $('nc-mar').innerHTML=p?`<span class="tag ${v.c==='r-ok'?'t-ok':v.c==='r-bad'?'t-bad':'t-warn'}">🌊 ${p.ola.toFixed(1)} m · ${v.t}</span>`:''; }
+function guardarClase(){
+  const ids=[...document.querySelectorAll('.nc-a:checked')].filter(x=>x.closest('.nc-row').style.display!=='none').map(x=>+x.value);
+  const plazas=+$('nc-pl').value||8;
+  if(!ids.length) return toast('⚠ Elige al menos un alumno');
+  if(ids.length>plazas) return toast(`⚠ La furgoneta tiene ${plazas} plazas y has elegido ${ids.length}`);
+  const c={id:nid(),fecha:$('nc-f').value,hora:$('nc-h').value,playa:$('nc-p').value,monitor:+$('nc-m').value,nivel:$('nc-n').value,plazas,alumnos:ids,estado:'convocada',asistieron:[]};
+  S.clases.push(c); render(); mensaje(c.id,'convocar');
+  const f=faltaMaterial().filter(x=>x.fecha===c.fecha); if(f.length) setTimeout(()=>toast(`⚠ Ese día faltan neoprenos talla ${f.map(x=>x.talla).join(', ')}`),600);
+}
+function textoMsg(c,tipo){
+  const nombres=c.alumnos.map(id=>'• '+alumno(id).nombre).join('\n');
+  const m=monitor(c.monitor);
+  if(tipo==='cancelar') return `🌊 AVISO FITENIA\n\nLa clase del ${fmtD(c.fecha)} a las ${c.hora} en ${c.playa} se SUSPENDE por las condiciones del mar.\n\nNo perdéis la clase: os avisamos en cuanto haya buen día 🤙\n\n${nombres}`;
+  if(tipo==='recordar') return `⏰ RECORDATORIO FITENIA\n\nMañana ${fmtD(c.fecha)} tenéis clase a las ${c.hora} en ${c.playa}.\n🚐 Salida en furgoneta desde la tienda (Av. Ángel Guimerá 13), 30 min antes.\n\nTraed bañador, toalla y crema. ¡Hasta mañana! 🤙`;
+  return `🏄 CLASE CONFIRMADA · FITENIA\n\n📅 ${fmtD(c.fecha)} · ${c.hora}\n📍 ${c.playa}\n🚐 Salida en furgoneta desde la tienda (Av. Ángel Guimerá 13), 30 min antes\n👨‍🏫 Monitor: ${nombre1(m.nombre)}\n\nVienen:\n${nombres}\n\nTraed bañador, toalla y crema. ¡Nos vemos en el agua! 🤙`;
+}
+let MSG='';
+function copiarMsg(){ (navigator.clipboard?navigator.clipboard.writeText(MSG):Promise.reject()).then(()=>toast('✓ Mensaje copiado'),()=>toast('Selecciona el texto y cópialo')); }
+function mensaje(id,tipo){
+  const c=S.clases.find(x=>x.id===id), t=textoMsg(c,tipo); MSG=t;
+  const tit={cancelar:'Aviso de cancelación',recordar:'Recordatorio para mañana',convocar:'Mensaje para el grupo'}[tipo];
+  modal(`<h2>${tit}</h2><div class="sub2">Cópialo al grupo de WhatsApp o envíalo a cada alumno</div>
+  <div class="msg" style="margin-top:14px">${esc(t)}</div>
+  <div class="ttl" style="margin-top:16px">Enviar uno a uno</div>
+  ${c.alumnos.map(aid=>{const a=alumno(aid);return `<div class="chk" style="justify-content:space-between"><span>${esc(a.nombre)}${a.menor?' <span class="tag t-mut">menor · al tutor</span>':''}</span><a class="btn sm ok" target="_blank" href="${wa(a.tel,t)}">WhatsApp</a></div>`}).join('')}
+  <div class="mact"><button class="btn ghost" onclick="cerrar()">Cerrar</button><button class="btn acc" onclick="copiarMsg()">Copiar para el grupo</button></div>`);
+}
+function cancelar(id){ const c=S.clases.find(x=>x.id===id); c.estado='cancelada'; toast('Clase cancelada · nadie pierde su clase'); render(); mensaje(id,'cancelar'); }
+function cancelarDia(f){
+  const cs=S.clases.filter(c=>c.fecha===f&&c.estado==='convocada'); if(!cs.length) return;
+  cs.forEach(c=>c.estado='cancelada');
+  const ids=[...new Set(cs.flatMap(c=>c.alumnos))];
+  const fake={fecha:f,hora:cs.map(c=>c.hora).join(' y '),playa:[...new Set(cs.map(c=>c.playa))].join(' / '),alumnos:ids,monitor:cs[0].monitor};
+  MSG=textoMsg(fake,'cancelar'); render();
+  modal(`<h2>${cs.length} clase${cs.length>1?'s':''} cancelada${cs.length>1?'s':''} · ${fmtD(f)}</h2><div class="sub2">${ids.length} alumnos avisados con un mensaje. Ninguno pierde su clase del bono.</div>
+  <div class="msg" style="margin-top:14px">${esc(MSG)}</div>
+  ${ids.map(aid=>{const a=alumno(aid);return `<div class="chk" style="justify-content:space-between;margin-top:6px"><span>${esc(a.nombre)}</span><a class="btn sm ok" target="_blank" href="${wa(a.tel,MSG)}">WhatsApp</a></div>`}).join('')}
+  <div class="mact"><button class="btn ghost" onclick="cerrar()">Cerrar</button><button class="btn acc" onclick="copiarMsg()">Copiar para el grupo</button></div>`);
+}
+function lista(id){
+  const c=S.clases.find(x=>x.id===id);
+  modal(`<h2>Pasar lista</h2><div class="sub2">${fmtD(c.fecha)} · ${c.hora} · ${c.playa}. Al confirmar, se descuenta una clase a quien vino.</div>
+  <div style="margin-top:14px">${c.alumnos.map(aid=>{const a=alumno(aid);return `<label class="chk"><input type="checkbox" class="pl-a" value="${a.id}" checked> <b>${esc(a.nombre)}</b> · le quedan ${a.restantes} <span class="tag t-acc" style="margin-left:auto">Neo ${a.talla}</span></label>`}).join('')}</div>
+  <div class="mact"><button class="btn ghost" onclick="cerrar()">Cancelar</button><button class="btn ok" onclick="confirmarLista(${id})">Confirmar asistencia</button></div>`);
+}
+function confirmarLista(id){
+  const c=S.clases.find(x=>x.id===id);
+  const vinieron=[...document.querySelectorAll('.pl-a:checked')].map(x=>+x.value);
+  vinieron.forEach(aid=>{ const a=alumno(aid); if(a.restantes>0) a.restantes--; });
+  c.asistieron=vinieron; c.estado='realizada';
+  const sin=vinieron.map(alumno).filter(a=>a.restantes===0);
+  cerrar(); toast(`✓ Lista pasada · ${vinieron.length} clases descontadas`+(sin.length?` · ${sin.length} se quedan sin clases`:'')); render();
+}
+function verClase(id){
+  const c=S.clases.find(x=>x.id===id), m=monitor(c.monitor);
+  const tallas={}; c.alumnos.forEach(a=>{const t=alumno(a).talla;tallas[t]=(tallas[t]||0)+1;});
+  modal(`<h2>${fmtD(c.fecha)} · ${c.hora} · ${c.nivel}</h2><div class="sub2">${c.playa} · ${m.nombre} · 🚐 ${c.alumnos.length}/${c.plazas}</div>
+  <div class="ttl" style="margin-top:16px">Material para cargar en la furgo</div>
+  <div class="row" style="gap:8px;flex-wrap:wrap"><span class="tag t-acc">🏄 ${c.alumnos.length} tablas</span>${Object.entries(tallas).map(([t,n])=>`<span class="tag t-mut">Neopreno ${t} × ${n}</span>`).join('')}</div>
+  <div class="ttl" style="margin-top:16px">Alumnos</div>
+  ${c.alumnos.map(aid=>{const a=alumno(aid);return `<div class="chk">${c.asistieron.includes(aid)?'✅':c.estado==='cancelada'?'🌊':c.estado==='convocada'?'🕒':'❌'} ${esc(a.nombre)} <span class="sub2" style="margin:0 0 0 auto">${a.nivel}${a.menor?' · menor':''}</span> <span class="tag t-acc">Neo ${a.talla}</span></div>`}).join('')}
+  <div class="mact"><button class="btn ghost" onclick="cerrar()">Cerrar</button>${c.estado==='convocada'?botonesClase(c):''}</div>`);
+}
+
+/* ───────── Cobrar (TPV) ───────── */
+let COBRO = {alumno:null, producto:'c2', metodo:'Efectivo', extras:[]};
+function rCobrar(){
+  const inter = COBRO.interesado ? S.interesados.find(i=>i.id===COBRO.interesado) : null;
+  const p = PRODUCTOS.find(x=>x.id===COBRO.producto);
+  const ex = EXTRAS.filter(e=>COBRO.extras.includes(e.id));
+  const total = (p?p.precio:0) + ex.reduce((s,e)=>s+e.precio,0);
+  $('p-cobrar').innerHTML = `
+  <div class="top"><div><h1>Cobrar</h1><div class="sub2">Cobras en la tienda y el bono se crea solo</div></div></div>
+  <div class="row">
+    <div class="card" style="flex:1.4">
+      <label style="margin-top:0">Alumno</label>
+      ${inter?`<div class="chk"><b>${esc(inter.nombre)}</b> · nuevo alumno (desde Interesados)</div>`:
+      `<select id="cb-a" onchange="COBRO.alumno=+this.value||null;$('cb-nuevo').style.display=this.value?'none':''"><option value="">+ Alumno nuevo…</option>${S.alumnos.slice().sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(a=>`<option value="${a.id}" ${COBRO.alumno===a.id?'selected':''}>${esc(a.nombre)} · le quedan ${a.restantes}</option>`).join('')}</select>
+      <div id="cb-nuevo" style="${COBRO.alumno?'display:none':''}"><div class="row" style="gap:8px;margin-top:8px"><input id="cb-n" placeholder="Nombre"><input id="cb-t" placeholder="Teléfono"><select id="cb-ta" style="max-width:110px">${TALLAS.map(t=>`<option ${t==='M'?'selected':''}>${t}</option>`).join('')}</select></div></div>`}
+      <label>Qué compra</label>
+      <div class="pick">${PRODUCTOS.map(x=>`<button class="${x.id===COBRO.producto?'on':''}" onclick="COBRO.producto='${x.id}';rCobrar()">${x.n}<small>${x.clases} clase${x.clases>1?'s':''} · ${eur(x.precio)}</small></button>`).join('')}</div>
+      <label>Extras</label>
+      <div class="pick">${EXTRAS.map(x=>`<button class="${COBRO.extras.includes(x.id)?'on':''}" onclick="togExtra('${x.id}')">${x.n}<small>${eur(x.precio)}</small></button>`).join('')}</div>
+      <label>Cómo paga</label>
+      <div class="pick">${['Efectivo','Tarjeta','Bizum'].map(m=>`<button class="${m===COBRO.metodo?'on':''}" onclick="COBRO.metodo='${m}';rCobrar()">${{Efectivo:'💵',Tarjeta:'💳',Bizum:'📱'}[m]} ${m}</button>`).join('')}</div>
+    </div>
+    <div class="card" style="flex:1;align-self:flex-start">
+      <div class="ttl">Resumen</div>
+      <div class="chk" style="justify-content:space-between"><span>${p.n}</span><b>${eur(p.precio)}</b></div>
+      ${ex.map(e=>`<div class="chk" style="justify-content:space-between"><span>${e.n}</span><b>${eur(e.precio)}</b></div>`).join('')}
+      <div class="chk" style="justify-content:space-between"><span>Clases que se suman</span><b>+${p.clases}</b></div>
+      <div class="chk" style="justify-content:space-between"><span>Pago</span><b>${COBRO.metodo}</b></div>
+      <div style="display:flex;justify-content:space-between;font-size:24px;font-weight:800;margin:16px 4px">Total<span>${eur(total)}</span></div>
+      <button class="btn ok" style="width:100%;padding:16px;font-size:15px" onclick="confirmarCobro()">Cobrar ${eur(total)}</button>
+    </div>
+  </div>
+  <div class="sub2" style="margin-top:14px">Precios de ejemplo para la demo: se ponen los reales de la escuela.</div>`;
+}
+function togExtra(id){ COBRO.extras=COBRO.extras.includes(id)?COBRO.extras.filter(x=>x!==id):[...COBRO.extras,id]; rCobrar(); }
+function confirmarCobro(){
+  const p = PRODUCTOS.find(x=>x.id===COBRO.producto);
+  const ex = EXTRAS.filter(e=>COBRO.extras.includes(e.id));
+  let a;
+  if(COBRO.interesado){
+    const i=S.interesados.find(x=>x.id===COBRO.interesado);
+    a={id:nid(),nombre:i.nombre,tel:i.tel,nivel:'Iniciación',talla:'M',menor:false,tutor:'',alta:iso(hoy),total:0,restantes:0,notas:'',origen:i.origen}; S.alumnos.push(a); i.estado='pagado';
+  } else if(COBRO.alumno){ a=alumno(COBRO.alumno); }
+  else {
+    const n=$('cb-n').value.trim(); if(!n) return toast('⚠ Elige un alumno o escribe el nombre');
+    a={id:nid(),nombre:n,tel:$('cb-t').value||'—',nivel:'Iniciación',talla:$('cb-ta').value,menor:false,tutor:'',alta:iso(hoy),total:0,restantes:0,notas:'',origen:'Tienda'}; S.alumnos.push(a);
+  }
+  a.total = a.restantes + p.clases; a.restantes += p.clases;
+  S.pagos.unshift({id:nid(),alumno:a.id,concepto:p.n,importe:p.precio,metodo:COBRO.metodo,fecha:iso(hoy)});
+  ex.forEach(e=>S.pagos.unshift({id:nid(),alumno:a.id,concepto:e.n,importe:e.precio,metodo:COBRO.metodo,fecha:iso(hoy)}));
+  const total=p.precio+ex.reduce((s,e)=>s+e.precio,0);
+  COBRO = {alumno:null, producto:'c2', metodo:'Efectivo', extras:[]};
+  render();
+  modal(`<div style="text-align:center"><div style="font-size:56px">✅</div><h2>Cobrado · ${eur(total)}</h2><div class="sub2">${esc(a.nombre)} ya tiene <b>${a.restantes} clase${a.restantes>1?'s':''}</b> en su bono</div>
+  <div class="mact" style="justify-content:center"><a class="btn ok" target="_blank" href="${wa(a.tel,`¡Gracias ${nombre1(a.nombre)}! 🏄 Pago recibido: ${p.n} (${eur(total)}). Te quedan ${a.restantes} clases. Te avisamos por aquí de cada salida según el mar 🌊`)}">Enviar recibo por WhatsApp</a><button class="btn acc" onclick="cerrar();nuevaClase()">Convocar clase</button></div></div>`);
+}
+
+/* ───────── Alumnos ───────── */
+let filtro='', fNivel='';
+function rAlumnos(){
+  const l = S.alumnos.filter(a=>a.nombre.toLowerCase().includes(filtro.toLowerCase())&&(!fNivel||a.nivel===fNivel)).sort((a,b)=>a.restantes-b.restantes||a.nombre.localeCompare(b.nombre));
+  $('p-alumnos').innerHTML = `
+  <div class="top"><div><h1>Alumnos</h1><div class="sub2">${S.alumnos.length} alumnos · ordenados por clases que les quedan</div></div>
+  <div class="row" style="gap:8px"><select style="max-width:160px" onchange="fNivel=this.value;rAlumnos()"><option value="">Todos los niveles</option>${NIVELES.map(n=>`<option ${n===fNivel?'selected':''}>${n}</option>`).join('')}</select>
+  <input id="al-q" style="max-width:240px" placeholder="Buscar alumno…" value="${esc(filtro)}" oninput="filtro=this.value;rAlumnos();const q=$('al-q');q.focus();q.setSelectionRange(q.value.length,q.value.length)"></div></div>
+  <div class="stu">${l.map(a=>`
+    <div class="sc" onclick="ficha(${a.id})">
+      <div style="display:flex;gap:12px;align-items:center"><div class="av">${ini(a.nombre)}</div><div><b>${esc(a.nombre)}</b><div class="sub2" style="margin:0">${a.nivel}${a.menor?' · menor':''} · neo ${a.talla}</div></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px"><span class="sub2" style="margin:0">Clases</span>${estadoBono(a)}</div>
+      <div class="bar"><i style="width:${a.total?a.restantes/a.total*100:0}%"></i></div>
+    </div>`).join('')||'<div class="empty">Ningún alumno con ese filtro</div>'}</div>`;
+}
+function ficha(id){
+  const a=alumno(id);
+  const pagos=S.pagos.filter(p=>p.alumno===id).sort((x,y)=>y.fecha.localeCompare(x.fecha));
+  const hechas=S.clases.filter(c=>c.asistieron.includes(id));
+  const proximas=S.clases.filter(c=>c.estado==='convocada'&&c.alumnos.includes(id));
+  modal(`<div style="display:flex;gap:14px;align-items:center"><div class="av" style="width:56px;height:56px;font-size:18px">${ini(a.nombre)}</div><div><h2>${esc(a.nombre)}</h2><div class="sub2">${esc(a.tel)} · alumno desde ${fmtD(a.alta)} · llegó por ${esc(a.origen||'—')} · <b>neopreno ${a.talla}</b></div></div></div>
+  <div class="grid k3" style="margin-top:18px">
+    <div class="card kpi"><div class="l">Le quedan</div><div class="v">${a.restantes}</div></div>
+    <div class="card kpi"><div class="l">Clases hechas</div><div class="v">${hechas.length}</div></div>
+    <div class="card kpi"><div class="l">Pagado</div><div class="v">${eur(pagos.reduce((s,p)=>s+p.importe,0))}</div></div>
+  </div>
+  <div class="row" style="gap:10px"><div style="flex:1"><label>Nivel</label><select id="fa-n">${NIVELES.map(n=>`<option ${n===a.nivel?'selected':''}>${n}</option>`).join('')}</select></div>
+  <div style="flex:1"><label>Talla neopreno</label><select id="fa-t">${[...TALLAS,...TALLAS_NINO].map(t=>`<option ${t===a.talla?'selected':''}>${t}</option>`).join('')}</select></div>
+  <div style="flex:1"><label>Menor de edad</label><select id="fa-m"><option value="0">No</option><option value="1" ${a.menor?'selected':''}>Sí</option></select></div></div>
+  ${a.menor?`<label>Tutor</label><input id="fa-tu" value="${esc(a.tutor)}">`:''}
+  <label>Notas (lesiones, miedo al agua, preferencias…)</label><textarea id="fa-no" rows="2">${esc(a.notas)}</textarea>
+  ${proximas.length?`<div class="ttl" style="margin-top:16px">Próximas clases</div>${proximas.map(c=>`<div class="chk">🕒 ${fmtD(c.fecha)} · ${c.hora} · ${c.playa}</div>`).join('')}`:''}
+  <div class="ttl" style="margin-top:16px">Pagos</div>
+  ${pagos.length?`<table>${pagos.slice(0,6).map(p=>`<tr><td>${fmtD(p.fecha)}</td><td>${esc(p.concepto)}</td><td>${p.metodo}</td><td style="text-align:right"><b>${eur(p.importe)}</b></td></tr>`).join('')}</table>`:'<div class="empty">Sin pagos</div>'}
+  <div class="ttl" style="margin-top:16px">Clases a las que vino</div>
+  ${hechas.length?hechas.map(c=>`<div class="chk">✅ ${fmtD(c.fecha)} · ${c.hora} · ${c.playa}</div>`).join(''):'<div class="empty">Todavía ninguna</div>'}
+  <div class="mact"><a class="btn ok" target="_blank" href="${wa(a.tel,`¡Hola ${nombre1(a.nombre)}! 🏄`)}">WhatsApp</a><button class="btn acc" onclick="cerrar();COBRO={alumno:${a.id},producto:'b8',metodo:'Efectivo',extras:[]};go('cobrar')">Renovar bono</button><button class="btn" onclick="guardarFicha(${a.id})">Guardar cambios</button></div>`);
+}
+function guardarFicha(id){
+  const a=alumno(id); a.nivel=$('fa-n').value; a.talla=$('fa-t').value; a.menor=$('fa-m').value==='1'; a.notas=$('fa-no').value;
+  if($('fa-tu')) a.tutor=$('fa-tu').value;
+  cerrar(); toast('✓ Ficha guardada'); render();
+}
+
+/* ───────── Campamentos ───────── */
+let CAMP=null;
+function rCampamentos(){
+  if(!CAMP||!S.campSemanas.find(s=>s.id===CAMP)) CAMP=S.campSemanas[0]?.id;
+  const sem=S.campSemanas.find(s=>s.id===CAMP);
+  const ins=S.campInscritos.filter(c=>c.semana===CAMP);
+  const totalIns=S.campInscritos.length, cobrado=S.campInscritos.filter(c=>c.pagado).length*180;
+  $('p-campamentos').innerHTML = `
+  <div class="top"><div><h1>Campamentos</h1><div class="sub2">Inscripciones de niños, autorizaciones, alergias y pagos en un solo sitio</div></div>
+  <button class="btn acc" onclick="inscribir()">+ Inscribir niño</button></div>
+  <div class="grid k4">
+    <div class="card kpi"><div class="l">Inscritos verano</div><div class="v">${totalIns}</div><div class="s">de ${S.campSemanas.reduce((s,x)=>s+x.plazas,0)} plazas</div></div>
+    <div class="card kpi"><div class="l">Cobrado</div><div class="v">${eur(cobrado)}</div></div>
+    <div class="card kpi"><div class="l">Sin autorización</div><div class="v" style="color:var(--warn)">${S.campInscritos.filter(c=>!c.autorizacion).length}</div></div>
+    <div class="card kpi"><div class="l">Pendiente de pago</div><div class="v" style="color:var(--bad)">${S.campInscritos.filter(c=>!c.pagado).length}</div></div>
+  </div>
+  <div class="row" style="gap:8px;margin:16px 0 12px;flex-wrap:wrap">${S.campSemanas.map(s=>{const n=S.campInscritos.filter(c=>c.semana===s.id).length;return `<button class="btn ${s.id===CAMP?'':'ghost'}" onclick="CAMP=${s.id};rCampamentos()">${s.nombre} · ${n}/${s.plazas}</button>`}).join('')}</div>
+  <div class="card"><div class="ttl">${esc(sem.nombre)} <span class="row" style="gap:6px"><button class="btn sm ghost" onclick="listaCamp()">Lista para monitores</button><button class="btn sm ok" onclick="msgCamp()">Mensaje a las familias</button></span></div>
+  ${ins.length?`<table><tr><th>Niño/a</th><th>Edad</th><th>Tutor</th><th>Alergias / salud</th><th>Talla</th><th>Autorización</th><th>Pago</th></tr>
+  ${ins.map(c=>`<tr><td><b>${esc(c.nino)}</b></td><td>${c.edad}</td><td>${esc(c.tutor)}<div class="sub2" style="margin:0">${esc(c.tel)}</div></td>
+    <td>${c.alergias?`<span class="tag t-bad">⚠ ${esc(c.alergias)}</span>`:'<span class="sub2">—</span>'}</td><td>${c.talla}</td>
+    <td>${c.autorizacion?'<span class="tag t-ok">Firmada</span>':`<a class="btn sm warn" target="_blank" onclick="setTimeout(()=>{marcarCamp(${c.id},'autorizacion')},400)" href="${wa(c.tel,`Hola ${nombre1(c.tutor)}, somos Fitenia 🏄 Para el campamento de ${nombre1(c.nino)} nos falta la autorización firmada. Puedes firmarla aquí: [enlace] o traerla a la tienda. ¡Gracias!`)}">Pedir firma</a>`}</td>
+    <td>${c.pagado?'<span class="tag t-ok">Pagado</span>':`<button class="btn sm" onclick="cobrarCamp(${c.id})">Cobrar ${eur(sem.precio)}</button>`}</td></tr>`).join('')}</table>`:'<div class="empty">Nadie inscrito todavía en esta semana</div>'}
+  </div>`;
+}
+function marcarCamp(id,campo){ const c=S.campInscritos.find(x=>x.id===id); c[campo]=true; toast(campo==='autorizacion'?'✓ Marcada como firmada':'✓ Pagado'); render(); }
+function cobrarCamp(id){
+  const c=S.campInscritos.find(x=>x.id===id), s=S.campSemanas.find(x=>x.id===c.semana);
+  modal(`<h2>Cobrar campamento</h2><div class="sub2">${esc(c.nino)} · ${esc(s.nombre)}</div>
+  <label>Cómo paga</label><div class="pick" id="cc-m">${['Efectivo','Tarjeta','Bizum'].map((m,i)=>`<button class="${i===0?'on':''}" onclick="document.querySelectorAll('#cc-m button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">${m}</button>`).join('')}</div>
+  <div class="mact"><button class="btn ghost" onclick="cerrar()">Cancelar</button><button class="btn ok" onclick="confirmarCamp(${id})">Cobrar ${eur(s.precio)}</button></div>`);
+}
+function confirmarCamp(id){
+  const c=S.campInscritos.find(x=>x.id===id), s=S.campSemanas.find(x=>x.id===c.semana);
+  const metodo=document.querySelector('#cc-m button.on').textContent;
+  let a=S.alumnos.find(x=>x.nombre===c.nino);
+  if(!a){ a={id:nid(),nombre:c.nino,tel:c.tel,nivel:'Iniciación',talla:c.talla,menor:true,tutor:c.tutor,alta:iso(hoy),total:0,restantes:0,notas:c.alergias?'Salud: '+c.alergias:'',origen:'Campamento'}; S.alumnos.push(a); }
+  S.pagos.unshift({id:nid(),alumno:a.id,concepto:'Campamento · '+s.nombre.split('·')[0].trim(),importe:s.precio,metodo,fecha:iso(hoy)});
+  c.pagado=true; cerrar(); toast(`✓ Campamento cobrado · ${eur(s.precio)}`); render();
+}
+function inscribir(nombre,tel,tutor){
+  modal(`<h2>Inscribir en campamento</h2><div class="sub2">Los datos que la familia rellena (también puede hacerlo desde la web)</div>
+  <label>Semana</label><select id="ci-s">${S.campSemanas.map(s=>`<option value="${s.id}" ${s.id===CAMP?'selected':''}>${s.nombre} · ${S.campInscritos.filter(c=>c.semana===s.id).length}/${s.plazas}</option>`).join('')}</select>
+  <div class="row" style="gap:10px"><div style="flex:2"><label>Niño/a</label><input id="ci-n" value="${esc(nombre||'')}"></div><div style="flex:1"><label>Edad</label><input id="ci-e" type="number" value="10"></div><div style="flex:1"><label>Talla</label><select id="ci-t">${TALLAS_NINO.map(t=>`<option>${t}</option>`).join('')}</select></div></div>
+  <div class="row" style="gap:10px"><div style="flex:1"><label>Madre / padre / tutor</label><input id="ci-tu" value="${esc(tutor||'')}"></div><div style="flex:1"><label>Teléfono</label><input id="ci-te" value="${esc(tel||'')}"></div></div>
+  <label>Alergias o algo de salud</label><input id="ci-a" placeholder="Ej: alergia a frutos secos, asma…">
+  <label class="chk" style="margin-top:12px"><input type="checkbox" id="ci-au"> Autorización firmada (salida en furgoneta, baño, fotos)</label>
+  <div class="mact"><button class="btn ghost" onclick="cerrar()">Cancelar</button><button class="btn acc" onclick="guardarInscripcion()">Inscribir</button></div>`);
+}
+function guardarInscripcion(){
+  const n=$('ci-n').value.trim(); if(!n) return toast('⚠ Escribe el nombre del niño/a');
+  const s=+$('ci-s').value, sem=S.campSemanas.find(x=>x.id===s);
+  if(S.campInscritos.filter(c=>c.semana===s).length>=sem.plazas) return toast('⚠ Esa semana está completa');
+  S.campInscritos.push({id:nid(),semana:s,nino:n,edad:+$('ci-e').value,tutor:$('ci-tu').value,tel:$('ci-te').value,alergias:$('ci-a').value.trim(),autorizacion:$('ci-au').checked,pagado:false,talla:$('ci-t').value});
+  CAMP=s; cerrar(); toast('✓ Inscrito'); go('campamentos');
+}
+function inscribirDesdeInteresado(id){ const i=S.interesados.find(x=>x.id===id); i.estado='pagado'; go('campamentos'); inscribir('',i.tel,i.nombre); }
+function listaCamp(){
+  const ins=S.campInscritos.filter(c=>c.semana===CAMP), s=S.campSemanas.find(x=>x.id===CAMP);
+  modal(`<h2>Lista · ${esc(s.nombre)}</h2><div class="sub2">Para el monitor: con teléfonos de los tutores y avisos de salud</div>
+  ${ins.map(c=>`<div class="chk" style="justify-content:space-between"><span><b>${esc(c.nino)}</b> (${c.edad}) · ${esc(c.tutor)} ${esc(c.tel)}</span>${c.alergias?`<span class="tag t-bad">⚠ ${esc(c.alergias)}</span>`:''}</div>`).join('')}
+  <div class="mact"><button class="btn ghost" onclick="cerrar()">Cerrar</button><button class="btn acc" onclick="window.print()">Imprimir</button></div>`);
+}
+function msgCamp(){
+  const ins=S.campInscritos.filter(c=>c.semana===CAMP), s=S.campSemanas.find(x=>x.id===CAMP);
+  MSG=`🏕️ CAMPAMENTO FITENIA · ${s.nombre}\n\n¡Ya queda poco! Recordad:\n• Entrada 9:00 y recogida 14:00 en la tienda (Av. Ángel Guimerá 13)\n• Bañador, toalla, crema, gorra y agua\n• Desayuno a media mañana\n\n¡Va a ser una semana increíble! 🤙`;
+  modal(`<h2>Mensaje a las familias</h2><div class="msg" style="margin-top:12px">${esc(MSG)}</div>
+  ${ins.map(c=>`<div class="chk" style="justify-content:space-between;margin-top:6px"><span>${esc(c.tutor)} · ${esc(c.nino)}</span><a class="btn sm ok" target="_blank" href="${wa(c.tel,MSG)}">WhatsApp</a></div>`).join('')}
+  <div class="mact"><button class="btn ghost" onclick="cerrar()">Cerrar</button><button class="btn acc" onclick="copiarMsg()">Copiar</button></div>`);
+}
+
+/* ───────── Monitores ───────── */
+function rMonitores(){
+  const lunes=dd(-((hoy.getDay()+6)%7)), dom=dd(6-((hoy.getDay()+6)%7));
+  const enSemana=c=>c.fecha>=iso(lunes)&&c.fecha<=iso(dom);
+  const mes=iso(hoy).slice(0,7);
+  $('p-monitores').innerHTML = `
+  <div class="top"><div><h1>Monitores</h1><div class="sub2">Quién da cada clase y cuánto se le paga este mes, sin hacer cuentas a mano</div></div><button class="btn acc" onclick="nuevoMonitor()">+ Añadir monitor</button></div>
+  <div class="grid k3">${S.monitores.map(m=>{
+    const sem=S.clases.filter(c=>c.monitor===m.id&&enSemana(c)&&c.estado!=='cancelada');
+    const dadasMes=S.clases.filter(c=>c.monitor===m.id&&c.estado==='realizada'&&c.fecha.startsWith(mes));
+    const prox=S.clases.filter(c=>c.monitor===m.id&&c.estado==='convocada').sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora));
+    return `<div class="card"><div style="display:flex;gap:12px;align-items:center"><div class="av" style="background:${m.color}">${ini(m.nombre)}</div><div><b>${esc(m.nombre)}</b><div class="sub2" style="margin:0">${eur(m.tarifa)} por clase</div></div></div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:14px">
+      <div class="kpi"><div class="l">Esta semana</div><div class="v" style="font-size:22px">${sem.length} clases</div></div>
+      <div class="kpi"><div class="l">A pagar mes</div><div class="v" style="font-size:22px">${eur(dadasMes.length*m.tarifa)}</div><div class="s">${dadasMes.length} clases dadas</div></div>
+    </div>
+    <div class="ttl" style="margin-top:14px;font-size:13px">Próximas</div>
+    ${prox.slice(0,3).map(c=>`<div class="chk" style="font-size:13px">🕒 ${fmtD(c.fecha)} · ${c.hora} · ${c.nivel} · ${c.alumnos.length} alumnos</div>`).join('')||'<div class="sub2">Sin clases convocadas</div>'}
+    <div class="mact" style="justify-content:flex-start"><a class="btn sm ok" target="_blank" href="${wa(m.tel,`Hola ${nombre1(m.nombre)}, tus próximas clases:\n${prox.map(c=>`• ${fmtD(c.fecha)} ${c.hora} · ${c.playa} · ${c.alumnos.length} alumnos`).join('\n')||'ninguna por ahora'}`)}">Enviarle su horario</a></div></div>`;}).join('')}</div>`;
+}
+function nuevoMonitor(){
+  modal(`<h2>Nuevo monitor</h2><label>Nombre</label><input id="nm-n"><label>Teléfono</label><input id="nm-t"><label>€ por clase</label><input id="nm-p" type="number" value="20">
+  <div class="mact"><button class="btn ghost" onclick="cerrar()">Cancelar</button><button class="btn acc" onclick="guardarMonitor()">Guardar</button></div>`);
+}
+function guardarMonitor(){
+  const n=$('nm-n').value.trim(); if(!n) return toast('⚠ Escribe el nombre');
+  S.monitores.push({id:nid(),nombre:n,tel:$('nm-t').value,tarifa:+$('nm-p').value||20,color:['#7c3aed','#db2777','#0891b2'][S.monitores.length%3]});
+  cerrar(); toast('✓ Monitor añadido'); render();
+}
+
+/* ───────── Material ───────── */
+/* Neoprenos que hacen falta cada día con clases convocadas vs los que hay */
+function faltaMaterial(){
+  const out=[];
+  const dias=[...new Set(S.clases.filter(c=>c.estado==='convocada'&&c.fecha>=iso(hoy)).map(c=>c.fecha))];
+  dias.forEach(f=>{
+    const nec={};
+    S.clases.filter(c=>c.fecha===f&&c.estado==='convocada').forEach(c=>c.alumnos.forEach(a=>{const t=alumno(a).talla;nec[t]=(nec[t]||0)+1;}));
+    Object.entries(nec).forEach(([t,n])=>{const hay=S.material.neoprenos[t]||0; if(n>hay) out.push({fecha:f,talla:t,falta:n-hay});});
+  });
+  return out;
+}
+function rMaterial(){
+  const M=S.material, falta=faltaMaterial();
+  const prox=S.clases.filter(c=>c.estado==='convocada'&&c.fecha>=iso(hoy)).sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora));
+  $('p-material').innerHTML = `
+  <div class="top"><div><h1>Material</h1><div class="sub2">Tablas y neoprenos: qué hay, qué hace falta para cada salida y qué está roto</div></div><button class="btn acc" onclick="averia()">+ Apuntar avería</button></div>
+  ${falta.length?`<div class="card" style="border-color:#f5c27a;background:#fff8ec;margin-bottom:14px"><div class="ttl">⚠ Faltan neoprenos</div>${falta.map(f=>`<div class="chk" style="background:#fff">${fmtD(f.fecha)} · talla <b>${f.talla}</b>: faltan ${f.falta}</div>`).join('')}</div>`:''}
+  <div class="row">
+    <div class="card" style="flex:1"><div class="ttl">Tablas</div><div class="stock">${M.tablas.map(t=>`<div><b>${t.total}</b><small>${esc(t.n)}</small></div>`).join('')}</div>
+      <div class="ttl" style="margin-top:18px">Neoprenos adulto</div><div class="stock">${TALLAS.map(t=>`<div><b>${M.neoprenos[t]||0}</b><small>Talla ${t}</small><div style="margin-top:6px"><button class="btn sm ghost" style="padding:2px 8px" onclick="ajNeo('${t}',-1)">−</button> <button class="btn sm ghost" style="padding:2px 8px" onclick="ajNeo('${t}',1)">+</button></div></div>`).join('')}</div>
+      <div class="ttl" style="margin-top:18px">Neoprenos niño</div><div class="stock">${TALLAS_NINO.map(t=>`<div><b>${M.neoprenos[t]||0}</b><small>Talla ${t}</small><div style="margin-top:6px"><button class="btn sm ghost" style="padding:2px 8px" onclick="ajNeo('${t}',-1)">−</button> <button class="btn sm ghost" style="padding:2px 8px" onclick="ajNeo('${t}',1)">+</button></div></div>`).join('')}</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div class="card"><div class="ttl">Para cargar en la furgo</div>${prox.slice(0,4).map(c=>{const tl={};c.alumnos.forEach(a=>{const t=alumno(a).talla;tl[t]=(tl[t]||0)+1});return `<div class="chk" style="display:block"><b>${fmtD(c.fecha)} · ${c.hora}</b> · ${c.alumnos.length} tablas<div style="margin-top:6px">${Object.entries(tl).map(([t,n])=>`<span class="tag t-mut" style="margin:2px">Neo ${t} × ${n}</span>`).join('')}</div></div>`}).join('')||'<div class="empty">Sin salidas convocadas</div>'}</div>
+      <div class="card"><div class="ttl">Averías</div>${M.averiadas.map(x=>`<div class="chk" style="justify-content:space-between"><span>🔧 <b>${esc(x.que)}</b> · ${esc(x.nota)} · ${fmtD(x.fecha)}</span><button class="btn sm ok" onclick="reparada(${x.id})">Reparada</button></div>`).join('')||'<div class="empty">Todo en orden ✓</div>'}</div>
+    </div>
+  </div>`;
+}
+function ajNeo(t,n){ S.material.neoprenos[t]=Math.max(0,(S.material.neoprenos[t]||0)+n); render(); }
+function averia(){ modal(`<h2>Apuntar avería</h2><label>¿Qué?</label><input id="av-q" placeholder="Ej: Espuma 7' #4"><label>¿Qué le pasa?</label><input id="av-n" placeholder="Ej: quilla rota, neopreno rajado"><div class="mact"><button class="btn ghost" onclick="cerrar()">Cancelar</button><button class="btn acc" onclick="guardarAveria()">Guardar</button></div>`); }
+function guardarAveria(){ const q=$('av-q').value.trim(); if(!q) return toast('⚠ Escribe qué está roto'); S.material.averiadas.push({id:nid(),que:q,nota:$('av-n').value,fecha:iso(hoy)}); cerrar(); toast('✓ Avería apuntada'); render(); }
+function reparada(id){ S.material.averiadas=S.material.averiadas.filter(x=>x.id!==id); toast('✓ Reparada'); render(); }
+
+/* ───────── Caja ───────── */
+function rCaja(){
+  const hoyS=iso(hoy);
+  const deHoy=S.pagos.filter(p=>p.fecha===hoyS);
+  const por=m=>S.pagos.filter(p=>p.fecha.startsWith(hoyS.slice(0,7))&&p.metodo===m).reduce((s,p)=>s+p.importe,0);
+  $('p-caja').innerHTML = `
+  <div class="top"><div><h1>Caja</h1><div class="sub2">Todos los cobros, sin Excel</div></div><button class="btn ghost" onclick="exportar()">Descargar Excel (CSV)</button></div>
+  <div class="grid k4">
+    <div class="card kpi"><div class="l">Hoy</div><div class="v">${eur(deHoy.reduce((s,p)=>s+p.importe,0))}</div><div class="s">${deHoy.length} cobros</div></div>
+    <div class="card kpi"><div class="l">💵 Efectivo (mes)</div><div class="v">${eur(por('Efectivo'))}</div></div>
+    <div class="card kpi"><div class="l">💳 Tarjeta (mes)</div><div class="v">${eur(por('Tarjeta'))}</div></div>
+    <div class="card kpi"><div class="l">📱 Bizum (mes)</div><div class="v">${eur(por('Bizum'))}</div></div>
+  </div>
+  <div class="card" style="margin-top:14px"><div class="ttl">Últimos cobros</div>
+  <table><tr><th>Fecha</th><th>Alumno</th><th>Concepto</th><th>Método</th><th style="text-align:right">Importe</th></tr>
+  ${S.pagos.slice().sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,40).map(p=>`<tr class="click" onclick="ficha(${p.alumno})"><td>${fmtD(p.fecha)}</td><td><b>${esc(alumno(p.alumno).nombre)}</b></td><td>${esc(p.concepto)}</td><td>${p.metodo}</td><td style="text-align:right"><b>${eur(p.importe)}</b></td></tr>`).join('')}
+  </table></div>`;
+}
+function exportar(){
+  const filas=[['Fecha','Alumno','Concepto','Método','Importe'],...S.pagos.slice().sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(p=>[p.fecha,alumno(p.alumno).nombre,p.concepto,p.metodo,String(p.importe).replace('.',',')])];
+  const csv='﻿'+filas.map(f=>f.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='fitenia-cobros.csv'; a.click();
+  toast('✓ Descargado: ábrelo con Excel');
+}
+
+/* ───────── Informes ───────── */
+function rInformes(){
+  const meses=[...Array(6)].map((_,i)=>{const d=new Date(hoy.getFullYear(),hoy.getMonth()-5+i,1);return iso(d).slice(0,7);});
+  const porMes=meses.map(m=>S.pagos.filter(p=>p.fecha.startsWith(m)).reduce((s,p)=>s+p.importe,0));
+  const max=Math.max(...porMes,1);
+  const prod={}; S.pagos.forEach(p=>{prod[p.concepto]=(prod[p.concepto]||0)+p.importe;});
+  const topProd=Object.entries(prod).sort((a,b)=>b[1]-a[1]).slice(0,6), maxP=topProd[0]?.[1]||1;
+  const clasesTot=S.clases.filter(c=>c.estado!=='convocada');
+  const canc=clasesTot.filter(c=>c.estado==='cancelada').length;
+  const real=clasesTot.filter(c=>c.estado==='realizada');
+  const ocup=real.length?Math.round(real.reduce((s,c)=>s+c.asistieron.length/c.plazas,0)/real.length*100):0;
+  const compras={}; S.pagos.forEach(p=>{compras[p.alumno]=(compras[p.alumno]||0)+1;});
+  const repiten=Object.values(compras).filter(n=>n>1).length, conCompra=Object.keys(compras).length;
+  const origen={}; S.alumnos.forEach(a=>{origen[a.origen||'—']=(origen[a.origen||'—']||0)+1;});
+  const ticket=S.pagos.length?S.pagos.reduce((s,p)=>s+p.importe,0)/S.pagos.length:0;
+  $('p-informes').innerHTML = `
+  <div class="top"><div><h1>Informes</h1><div class="sub2">Lo que antes no se veía en el Excel: qué se vende, cuánto se cancela por el mar y quién repite</div></div></div>
+  <div class="grid k4">
+    <div class="card kpi"><div class="l">Ingresos 6 meses</div><div class="v">${eur(porMes.reduce((s,x)=>s+x,0))}</div></div>
+    <div class="card kpi"><div class="l">Ticket medio</div><div class="v">${eur(Math.round(ticket))}</div></div>
+    <div class="card kpi"><div class="l">Alumnos que repiten</div><div class="v">${conCompra?Math.round(repiten/conCompra*100):0}%</div><div class="s">${repiten} de ${conCompra} han comprado más de una vez</div></div>
+    <div class="card kpi"><div class="l">Canceladas por el mar</div><div class="v">${clasesTot.length?Math.round(canc/clasesTot.length*100):0}%</div><div class="s">${canc} de ${clasesTot.length} clases · furgo al ${ocup}%</div></div>
+  </div>
+  <div class="row" style="margin-top:14px">
+    <div class="card" style="flex:1.3"><div class="ttl">Ingresos por mes</div>
+      <div class="chart">${meses.map((m,i)=>`<div class="b"><em>${porMes[i]?eur(porMes[i]):''}</em><i style="height:${porMes[i]/max*85}%"></i><span>${new Date(m+'-15').toLocaleDateString('es-ES',{month:'short'})}</span></div>`).join('')}</div></div>
+    <div class="card" style="flex:1"><div class="ttl">Lo que más se vende</div>
+      ${topProd.map(([n,v])=>`<div class="hb"><div class="n">${esc(n)}</div><div class="t"><i style="width:${v/maxP*100}%"></i></div><div class="v">${eur(v)}</div></div>`).join('')}</div>
+  </div>
+  <div class="card" style="margin-top:14px"><div class="ttl">¿Cómo llegan los alumnos?</div>
+    ${Object.entries(origen).sort((a,b)=>b[1]-a[1]).map(([o,n])=>`<div class="hb"><div class="n">${esc(o)}</div><div class="t"><i style="width:${n/S.alumnos.length*100}%;background:var(--acc2)"></i></div><div class="v">${n} alumnos</div></div>`).join('')}
+  </div>`;
+}
+
+render(); cargarMar();
+</script>
+</body>
+</html>
