@@ -3019,6 +3019,8 @@ async function prestamoDevolver(id,clienteId){
 }
 
 // ── CIERRE DE CAJA ───────────────────────────────────────────────────────────
+// Los cierres se guardan en facturas_compra pero NO son gastos: excluirlos de totales e informes
+function _esCierreCaja(c){return !!c&&(c.categoria==='Cierre de Caja'||c.proveedor==='CIERRE DE CAJA');}
 function abrirCierreCaja(){
   const hoy=new Date().toISOString().split('T')[0];
   crmOpenModal('Cierre de caja — '+hoy,`
@@ -3464,6 +3466,9 @@ function encActualizarPago(){
   const anticipo=parseFloat(document.getElementById('pg-anticipo')?.value)||0;
   const restoEl=document.getElementById('pg-resto');
   if(restoEl)restoEl.value=Math.max(0,total-anticipo).toFixed(2);
+  // El anticipo ya está cobrado: el total cobrado nunca puede ser menor
+  const cobEl=document.getElementById('pg-cobrado');
+  if(cobEl&&anticipo>(parseFloat(cobEl.value)||0))cobEl.value=anticipo.toFixed(2);
 }
 
 function encCargarMedidas(clientId){
@@ -3662,7 +3667,7 @@ async function crmSaveEncargo(){
   const precio=parseFloat(cv('ef-price'))||null;
   const anticipo=parseFloat(cv('pg-anticipo'))||0;
   const pago={};
-  if(precio){pago.total=precio;pago.anticipo=anticipo;pago.resto=Math.max(0,precio-anticipo);pago.cobrado=parseFloat(cv('pg-cobrado'))||0;}
+  if(precio){pago.total=precio;pago.anticipo=anticipo;pago.resto=Math.max(0,precio-anticipo);pago.cobrado=Math.max(parseFloat(cv('pg-cobrado'))||0,anticipo);}
   const pgMetodo=cv('pg-metodo');if(pgMetodo)pago.metodo=pgMetodo;
   const pgFechaAnticipo=cv('pg-fecha-anticipo');if(pgFechaAnticipo)pago.fecha_anticipo=pgFechaAnticipo;
   // Descontar materiales del stock (solo encargo nuevo)
@@ -3876,9 +3881,12 @@ async function crmLoadFacturas(){
   if(sg){
     const nFacturas=_crmFacturas.filter(f=>f.type==='factura').length;
     const nPresupuestos=_crmFacturas.filter(f=>f.type==='presupuesto').length;
+    const _validas=_crmFacturas.filter(f=>f.type==='factura'&&!/anulad|rectific/i.test(f.status||''));
+    const facturado=_validas.reduce((t,f)=>t+(Number(f.total)||0),0);
+    const cobrado=_validas.filter(f=>/pagad|cobrad/i.test(f.status||'')||/paid|pagad/i.test(f.payment_status||'')).reduce((t,f)=>t+(Number(f.total)||0),0);
     sg.innerHTML=`
-      <div class="stat-card"><div class="stat-val">—</div><div class="stat-label">Facturado total</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:#4ade80">—</div><div class="stat-label">Cobrado</div></div>
+      <div class="stat-card"><div class="stat-val cu-plain" data-target="${Math.round(facturado)}" data-cur="1">0</div><div class="stat-label">Facturado total</div></div>
+      <div class="stat-card"><div class="stat-val cu-plain" data-target="${Math.round(cobrado)}" data-cur="1" style="color:#4ade80">0</div><div class="stat-label">Cobrado</div></div>
       <div class="stat-card"><div class="stat-val cu-plain" data-target="${nFacturas}">0</div><div class="stat-label">Facturas emitidas</div></div>
       <div class="stat-card"><div class="stat-val cu-plain" data-target="${nPresupuestos}">0</div><div class="stat-label">Presupuestos</div></div>`;
   setTimeout(function(){sg.querySelectorAll('.cu-plain').forEach(function(el,i){var t=parseFloat(el.dataset.target),cur=el.dataset.cur;setTimeout(function(){var s=0,step=t/(600/16),iv=setInterval(function(){s=Math.min(s+step,t);el.textContent=cur?Math.round(s).toLocaleString('es-ES')+' €':Math.round(s);if(s>=t)clearInterval(iv);},16);},i*50);});},30);
@@ -4280,15 +4288,16 @@ async function comprasLoad(){
   _compras=data||[];
   const sg=document.getElementById('compras-stats-grid');
   if(sg){
-    const total=_compras.reduce((s,c)=>s+Number(c.importe||0),0);
+    const _gastos=_compras.filter(c=>!_esCierreCaja(c));
+    const total=_gastos.reduce((s,c)=>s+Number(c.importe||0),0);
     const mes=new Date().toISOString().slice(0,7);
-    const totalMes=_compras.filter(c=>c.fecha&&c.fecha.startsWith(mes)).reduce((s,c)=>s+Number(c.importe||0),0);
-    const cats=[...new Set(_compras.map(c=>c.categoria).filter(Boolean))].length;
+    const totalMes=_gastos.filter(c=>c.fecha&&c.fecha.startsWith(mes)).reduce((s,c)=>s+Number(c.importe||0),0);
+    const cats=[...new Set(_gastos.map(c=>c.categoria).filter(Boolean))].length;
     sg.innerHTML=`
       <div class="stat-card"><div class="stat-val">${crmFmt(total)}</div><div class="stat-label">Gasto total</div></div>
       <div class="stat-card"><div class="stat-val" style="color:#f59e0b">${crmFmt(totalMes)}</div><div class="stat-label">Gasto este mes</div></div>
       <div class="stat-card"><div class="stat-val cu-plain" data-target="${cats}">0</div><div class="stat-label">Categorías</div></div>
-      <div class="stat-card"><div class="stat-val cu-plain" data-target="${_compras.length}">0</div><div class="stat-label">Facturas registradas</div></div>`;
+      <div class="stat-card"><div class="stat-val cu-plain" data-target="${_gastos.length}">0</div><div class="stat-label">Facturas registradas</div></div>`;
   setTimeout(function(){sg.querySelectorAll('.cu-plain').forEach(function(el,i){var t=parseFloat(el.dataset.target),cur=el.dataset.cur;setTimeout(function(){var s=0,step=t/(600/16),iv=setInterval(function(){s=Math.min(s+step,t);el.textContent=cur?Math.round(s).toLocaleString('es-ES')+' €':Math.round(s);if(s>=t)clearInterval(iv);},16);},i*50);});},30);
   }
   const tb=document.getElementById('compras-tbody');
@@ -5409,7 +5418,7 @@ async function calcRichard(){
     _sb.from('crm_invoices').select('*').eq('business_slug',BIZ_SLUG).eq('type','factura').gte('issue_date',desde).lte('issue_date',hasta).order('issue_date'),
     _sb.from('facturas_compra').select('*').eq('business_slug',BIZ_SLUG).gte('fecha',desde).lte('fecha',hasta).order('fecha')
   ]);
-  _richardFacturas=fData||[];_richardCompras=cData||[];
+  _richardFacturas=fData||[];_richardCompras=(cData||[]).filter(c=>!_esCierreCaja(c));
   const totalIngresos=_richardFacturas.reduce((s,f)=>s+Number(f.total||0),0);
   const totalGastos=_richardCompras.reduce((s,c)=>s+Number(c.importe||0),0);
   const cobrado=_richardFacturas.filter(f=>f.status==='pagado').reduce((s,f)=>s+Number(f.total||0),0);
@@ -5512,7 +5521,7 @@ async function calcIGIC(){
   ]);
 
   const emitidas=factEmit||[];
-  const compras=factComp||[];
+  const compras=(factComp||[]).filter(c=>!_esCierreCaja(c));
 
   // IGIC repercutido (ventas)
   const totalVentas=emitidas.reduce((s,f)=>s+Number(f.total||0),0);
@@ -5624,7 +5633,7 @@ async function calcLibro(){
   } else {
     const {data}=await _sb.from('facturas_compra').select('*').eq('business_slug',BIZ_SLUG).gte('fecha',desde).lte('fecha',hasta).order('fecha');
     const biz=getBizInfo();const igicPct=biz.iva_pct||7;
-    _libroData=(data||[]).map(c=>{const base=Number(c.importe||0)/(1+igicPct/100);const igic=Number(c.importe||0)-base;return{fecha:c.fecha,proveedor:c.proveedor||'—',concepto:c.concepto||'—',base,igic,total:c.importe};});
+    _libroData=(data||[]).filter(c=>!_esCierreCaja(c)).map(c=>{const base=Number(c.importe||0)/(1+igicPct/100);const igic=Number(c.importe||0)-base;return{fecha:c.fecha,proveedor:c.proveedor||'—',concepto:c.concepto||'—',base,igic,total:c.importe};});
     el.innerHTML=`<div class="card"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th>Base imponible</th><th>IGIC ${igicPct}%</th><th>Total</th></tr></thead><tbody>
       ${_libroData.length?_libroData.map(r=>`<tr><td>${r.fecha?new Date(r.fecha+'T00:00:00').toLocaleDateString('es-ES'):'—'}</td><td>${esc(r.proveedor)}</td><td>${esc(r.concepto)}</td><td>—</td><td style="color:#16a34a">—</td><td><strong>—</strong></td></tr>`).join(''):'<tr><td colspan="6" class="empty-state">Sin compras en ${y}</td></tr>'}
       ${_libroData.length?`<tr style="background:#f8fafc;font-weight:700"><td colspan="3">TOTALES</td><td>—</td><td style="color:#16a34a">—</td><td>—</td></tr>`:''}
@@ -6088,7 +6097,7 @@ async function tpvLoadProductos() {
   if(!dbg){
     dbg=document.createElement('div');
     dbg.id='tpv-dbg';
-    dbg.style.cssText='position:fixed;top:60px;right:20px;background:#0d0b07;color:#c4a35a;padding:8px 14px;border-radius:6px;font-size:11px;letter-spacing:.1em;z-index:10000;border:1px solid rgba(196,163,90,.3);font-family:monospace';
+    dbg.style.cssText='position:fixed;top:60px;right:20px;background:#0d0b07;color:#c4a35a;padding:8px 14px;border-radius:6px;font-size:11px;letter-spacing:.1em;z-index:10000;border:1px solid rgba(196,163,90,.3);font-family:monospace;display:none'; // mensajes técnicos: solo en consola
     document.body.appendChild(dbg);
   }
   dbg.textContent='Cargando productos...';
@@ -6116,8 +6125,7 @@ async function tpvLoadProductos() {
       dbg.style.color='#f87171';
       dbg.textContent='BUG: '+TPV_PRODUCTOS.length+' productos pero 0 tarjetas en DOM';
     } else {
-      dbg.style.color='#4ade80';
-      dbg.textContent='OK: '+n+' tarjetas renderizadas';
+      dbg.remove(); return; // todo bien: no mostrar mensaje técnico al cliente
       setTimeout(function(){dbg.style.transition='opacity 1s';dbg.style.opacity='0';setTimeout(function(){if(dbg.parentNode)dbg.parentNode.removeChild(dbg);},1200);},4000);
     }
   },500);
@@ -6429,7 +6437,9 @@ function tpvTicketModal(venta, lineas, sub, total) {
   }).join('');
   var html='<div style="font-family:monospace;width:220px;max-width:220px;margin:0 auto;text-align:center;font-size:11px">'
     +'<div style="font-size:18px;font-weight:900;letter-spacing:.1em;margin-bottom:2px">JOSE ACOSTA STYLE</div>'
-    +'<div style="font-size:11px;color:#94a3b8;letter-spacing:.08em;margin-bottom:16px">SASTRERÍA · Las Palmas</div>'
+    +(function(){var b=getBizInfo();return '<div style="font-size:11px;color:#94a3b8;letter-spacing:.08em;margin-bottom:4px">SASTRERÍA · '+esc(b.address||'Santa Cruz de Tenerife')+'</div>'
+      +'<div style="font-size:11px;color:#94a3b8;margin-bottom:4px">'+esc((b.name||'JOSE ACOSTA')+(b.cif?' · NIF '+b.cif:''))+'</div>'
+      +'<div style="font-size:11px;color:#64748b;margin-bottom:16px">Factura simplificada nº '+esc(venta.id)+'</div>';})()
     +'<div style="border-top:1px dashed #e2e8f0;border-bottom:1px dashed #e2e8f0;padding:12px 0;margin-bottom:12px;text-align:left">'
     +'<table style="width:100%;border-collapse:collapse;font-size:13px">'+filas+'</table>'
     +'</div>'
