@@ -365,18 +365,30 @@ async function renderStep1(){
   const y = state.calYear, m = state.calMonth;
   const from = `${y}-${String(m+1).padStart(2,'0')}-01`;
   const to = `${y}-${String(m+1).padStart(2,'0')}-31`;
-  const {data} = await SB.from('appointments').select('fecha_cita,hora_cita').eq('business_slug','jose-acosta').eq('status','confirmed').gte('fecha_cita',from).lte('fecha_cita',to);
-  // Citas creadas desde el panel (solo tienen starts_at/ends_at): bloquean todo hueco que se solape
-  const desde = canariasISO(from,'00:00'), hasta = canariasISO(`${y}-${String(m+1).padStart(2,'0')}-${new Date(y,m+1,0).getDate()}`,'23:59');
-  const {data:panel} = await SB.from('appointments').select('starts_at,ends_at,duration_minutes,status').eq('business_slug','jose-acosta').is('fecha_cita',null).gte('starts_at',desde).lte('starts_at',hasta);
-  const ocupados = [];
-  (panel||[]).filter(c=>!/cancel|no_show/i.test(c.status||'')).forEach(c=>{
+  const ultimo = `${y}-${String(m+1).padStart(2,'0')}-${new Date(y,m+1,0).getDate()}`;
+  // Huecos ocupados sin datos personales (función segura); si aún no existe, consulta directa
+  let filas = null;
+  const rpc = await SB.rpc('ja_huecos_ocupados', {p_desde: from, p_hasta: ultimo});
+  if(!rpc.error) filas = rpc.data||[];
+  else {
+    const desde = canariasISO(from,'00:00'), hasta = canariasISO(ultimo,'23:59');
+    const [{data:web},{data:panel}] = await Promise.all([
+      SB.from('appointments').select('fecha_cita,hora_cita,status').eq('business_slug','jose-acosta').gte('fecha_cita',from).lte('fecha_cita',to),
+      SB.from('appointments').select('fecha_cita,starts_at,ends_at,duration_minutes,status').eq('business_slug','jose-acosta').is('fecha_cita',null).gte('starts_at',desde).lte('starts_at',hasta)
+    ]);
+    filas = (web||[]).concat(panel||[]);
+  }
+  const reservadas = [], ocupados = [];
+  filas.filter(c=>!/cancel|no_show/i.test(c.status||'')).forEach(c=>{
+    if(c.fecha_cita){ if(c.hora_cita) reservadas.push({fecha_cita:String(c.fecha_cita).slice(0,10), hora_cita:String(c.hora_cita).slice(0,5)}); return; }
+    // Citas creadas desde el panel (solo starts_at/ends_at): bloquean todo hueco que se solape
+    if(!c.starts_at) return;
     const ini = horaCanarias(c.starts_at);
     const finMin = c.ends_at ? horaCanarias(c.ends_at).min : ini.min + (c.duration_minutes||60);
     ALL_SLOTS.forEach(sl=>{ const [h,mi]=sl.split(':').map(Number), sMin=h*60+mi;
       if(sMin < finMin && sMin+45 > ini.min) ocupados.push({fecha_cita:ini.fecha, hora_cita:sl}); });
   });
-  state.bookedSlots = (data||[]).concat(ocupados);
+  state.bookedSlots = reservadas.concat(ocupados);
 
   renderCalendar();
 }
