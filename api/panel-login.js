@@ -3,31 +3,38 @@ import crypto from 'crypto';
 
 const SB_URL = process.env.SUPABASE_URL;
 const SB_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
-// Contraseña interna fija para los usuarios "vehículo" que generan la sesión real
-// de Supabase Auth (no es la contraseña del negocio — esa ya se valida arriba
-// contra bot_configs.password_hash antes de llegar aquí).
-const INTERNAL_PASSWORD = 'Airmate!Internal-2026-fXk9qLp3zVwR8mNc';
-
 const admin = createClient(SB_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 async function sha256Hex(str) {
   return crypto.createHash('sha256').update(str).digest('hex');
 }
 
+// Usuario «vehículo» de Supabase Auth por negocio. La sesión se abre con un enlace de un solo
+// uso generado aquí (sin contraseña): la antigua contraseña interna estaba en el repo público,
+// así que en cada login se sustituye por una aleatoria que nadie conoce.
+// El negocio va en app_metadata (solo el servidor puede cambiarlo; lo usan las políticas RLS).
 async function ensureAuthUser(slug) {
   const email = `panel+${slug}@internal.airmate.es`;
+  const randomPass = crypto.randomBytes(32).toString('base64url');
   const { data: created, error: createErr } = await admin.auth.admin.createUser({
     email,
-    password: INTERNAL_PASSWORD,
+    password: randomPass,
     email_confirm: true,
     user_metadata: { business_slug: slug },
+    app_metadata: { business_slug: slug },
   });
-  if (!createErr) return email;
-  // Ya existía — seguimos, el login normal se encarga de autenticar
-  if (createErr.message && /already been registered|already exists/i.test(createErr.message)) {
-    return email;
-  }
-  throw createErr;
+  if (!createErr) return created.user;
+  if (!(createErr.message && /already been registered|already exists/i.test(createErr.message))) throw createErr;
+  // Ya existía: localizarlo y asegurar app_metadata + contraseña aleatoria
+  const { data: link, error: linkErr } = await admin.auth.admin.generateLink({ type: 'magiclink', email });
+  if (linkErr) throw linkErr;
+  const user = link.user;
+  await admin.auth.admin.updateUserById(user.id, {
+    password: randomPass,
+    app_metadata: { ...(user.app_metadata || {}), business_slug: slug },
+    user_metadata: { ...(user.user_metadata || {}), business_slug: slug },
+  });
+  return user;
 }
 
 export default async function handler(req, res) {
@@ -59,11 +66,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const email = await ensureAuthUser(slug);
-    const authClient = createClient(SB_URL, SB_ANON_KEY);
-    const { data: session, error: signInErr } = await authClient.auth.signInWithPassword({
-      email,
-      password: INTERNAL_PASSWORD,
+    const user = await ensureAuthUser(slug);
+    const { data: link, error: linkErr } = await admin.auth.admin.generateLink({ type: 'magiclink', email: user.email });
+    if (linkErr) throw linkErr;
+    const authClient = createClient(SB_URL, SB_ANON_KEY, { auth: { persistSession: false } });
+    const { data: session, error: signInErr } = await authClient.auth.verifyOtp({
+      type: 'magiclink',
+      token_hash: link.properties.hashed_token,
     });
     if (signInErr || !session?.session) {
       return res.status(500).json({ error: 'No se pudo generar la sesión' });

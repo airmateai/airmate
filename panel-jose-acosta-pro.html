@@ -1813,8 +1813,7 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 // autenticación real, solo la clave anon, así que no necesita persistir sesión.
 // Sesión real de Supabase: sin ella la base de datos no devuelve datos de Jose (RLS)
 const _sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'ja-panel-auth'}});
-// Cada negocio entra con un usuario de Supabase Auth; el «slug» del login se traduce a su email interno
-const PANEL_EMAILS={'jose-acosta':'jose-acosta@panel.airmate.es'};
+const PANEL_LOGIN_URL='https://airmate-phi.vercel.app/api/panel-login';
 const _sbSrv=_sb; // service_role retirada del cliente por seguridad (fugaba la clave maestra) — funciones que la necesitaban quedan pendientes de mover a un endpoint serverless
 
 let BIZ_SLUG='',BIZ_NAME='';
@@ -1884,11 +1883,16 @@ async function doLogin(){
   const errEl=document.getElementById('login-err');
   errEl.style.display='none';
   if(!pass){errEl.textContent='Introduce la contraseña.';errEl.style.display='block';return;}
-  const email=slugInput.includes('@')?slugInput:PANEL_EMAILS[slugInput];
-  if(!email){errEl.textContent='Negocio no encontrado.';errEl.style.display='block';return;}
   btn.disabled=true;btn.textContent='Verificando…';
-  const {data,error}=await _sb.auth.signInWithPassword({email,password:pass});
-  if(error||!data.session){errEl.textContent=/invalid/i.test(error?.message||'')?'Contraseña incorrecta.':'No se pudo iniciar sesión: '+(error?.message||'');errEl.style.display='block';btn.disabled=false;btn.textContent='Acceder al panel';return;}
+  // El servidor comprueba la contraseña del negocio y devuelve una sesión real de Supabase
+  const fallo=m=>{errEl.textContent=m;errEl.style.display='block';btn.disabled=false;btn.textContent='Acceder al panel';};
+  let r;
+  try{ r=await fetch(PANEL_LOGIN_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:slugInput,password:pass})}); }
+  catch(e){ return fallo('Sin conexión. Inténtalo de nuevo.'); }
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok||!j.token) return fallo(j.error||'No se pudo iniciar sesión.');
+  const {data,error}=await _sb.auth.setSession({access_token:j.token,refresh_token:j.refresh_token});
+  if(error||!data.session) return fallo('No se pudo iniciar sesión: '+(error?.message||''));
   await _entrarConSesion(data.session);
 }
 // Con una sesión válida: negocio desde app_metadata (solo Airmate puede fijarlo)
