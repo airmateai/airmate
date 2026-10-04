@@ -1343,8 +1343,17 @@ function logout(){localStorage.removeItem('cn_session');localStorage.removeItem(
 (function(){
   if(localStorage.getItem('cn_session')==='1'&&localStorage.getItem('cn_token')&&localStorage.getItem('cn_refresh')){
     AUTH_BEARER=localStorage.getItem('cn_token');
-    startAuthSession(localStorage.getItem('cn_token'),localStorage.getItem('cn_refresh'));
-    document.addEventListener('DOMContentLoaded',()=>{
+    // Comprobar que la sesión guardada sigue siendo válida: si caducó, pedir la contraseña
+    // (antes el panel seguía «funcionando» sin sesión porque las reservas eran públicas)
+    const sesionOk=startAuthSession(localStorage.getItem('cn_token'),localStorage.getItem('cn_refresh'))
+      .then(async()=>!!(await SB.auth.getSession()).data.session).catch(()=>false);
+    document.addEventListener('DOMContentLoaded',async()=>{
+      if(!(await sesionOk)){
+        logout();
+        const e=document.getElementById('lg-err');
+        if(e){e.textContent='Tu sesión ha caducado. Vuelve a entrar con tu contraseña.';e.style.display='block';}
+        return;
+      }
       document.getElementById('login').classList.add('hidden');
       initApp();
     });
