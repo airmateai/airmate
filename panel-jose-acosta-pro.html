@@ -1882,11 +1882,13 @@ async function doLogin(){
   enterApp(BIZ_NAME);
 }
 
-// Restaurar sesión o entrar directo si no hay contraseña
-(async()=>{
+// Restaurar sesión o entrar directo si no hay contraseña.
+// Espera a que la página termine de cargar: antes se ejecutaba a mitad del script,
+// startRealtime fallaba (_realtimeChannel aún no existía) y volvía a salir el login.
+const _restaurarSesion=async()=>{
   const saved=localStorage.getItem(SESSION_KEY);
   if(saved){
-    try{const s=JSON.parse(saved);BIZ_SLUG=s.slug;BIZ_NAME=s.name;enterApp(BIZ_NAME);return;}catch{}
+    try{const s=JSON.parse(saved);BIZ_SLUG=s.slug;BIZ_NAME=s.name;enterApp(BIZ_NAME);return;}catch(e){console.error('No se pudo restaurar la sesión',e);}
   }
   const slug=new URLSearchParams(location.search).get('c')||'jose-acosta';
   const {data:cfg}=await _sb.from('bot_configs').select('slug,bot_name,password_hash').eq('slug',slug).single();
@@ -1898,7 +1900,8 @@ async function doLogin(){
   } else {
     document.getElementById('login-screen').style.display='flex';
   }
-})();
+};
+document.readyState==='loading'?document.addEventListener('DOMContentLoaded',_restaurarSesion):_restaurarSesion();
 
 // ── TABS ───────────────────────────────────────────────────────────────────
 const TAB_TITLES={dashboard:'Dashboard',citas:'Citas',leads:'Leads',seguimientos:'Seguimientos','crm-clientes':'Clientes','crm-encargos':'Encargos','crm-stock':'Stock / Inventario','crm-facturacion':'Facturación','crm-compras':'Facturas de Compra',contabilidad:'Contabilidad',finanzas:'Finanzas',ventas:'Ventas / TPV'};
