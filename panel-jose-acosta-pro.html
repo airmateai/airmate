@@ -271,10 +271,10 @@ tbody tr:hover td{background:rgba(196,163,90,.05);}
 #modal-overlay.open{display:flex!important;pointer-events:all!important;}
 #modal-overlay.open{display:flex;}
 .modal{background:var(--surface);border-radius:14px;width:100%;max-width:500px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18);}
-#app .modal-hd{padding:18px 22px 14px;border-bottom:1px solid var(--border2);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:sticky;top:0;background:var(--surface);}
+#app .modal-hd,#modal-box .modal-hd{padding:18px 22px 14px;border-bottom:1px solid var(--border2);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:sticky;top:0;background:var(--surface);}
 .modal-hd h3{font-size:16px;font-weight:700;}
-#app .modal-close{width:28px;height:28px;border-radius:7px;background:var(--bg);border:1px solid var(--border);color:var(--txt2);display:grid;place-items:center;flex-shrink:0;transition:all .15s;}
-#app .modal-close:hover{background:#fee2e2;border-color:#fecaca;color:var(--danger);}
+#app .modal-close,#modal-box .modal-close{width:28px;height:28px;border-radius:7px;background:var(--bg);border:1px solid var(--border);color:var(--txt2);display:grid;place-items:center;flex-shrink:0;transition:all .15s;}
+#app .modal-close:hover,#modal-box .modal-close:hover{background:#fee2e2;border-color:#fecaca;color:var(--danger);}
 .modal-body{padding:18px 22px;}
 .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
 .modal-field label{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;}
@@ -1968,7 +1968,7 @@ function updateBadges(){
   const pend=allCitas.filter(c=>c.status==='pending').length;
   const hot=allLeads.filter(l=>l.intent_level==='hot'&&l.status==='new').length;
   const today=localDateStr(new Date());
-  const venc=allLeads.filter(l=>l.follow_up_date&&l.follow_up_date<=today&&l.status!=='converted'&&l.status!=='lost').length;
+  const venc=allLeads.filter(l=>l.follow_up_date&&l.follow_up_date<=today&&l.status!=='converted'&&l.status!=='lost'&&l.status!=='seguimiento_hecho').length;
   const set=(id,n)=>{const el=document.getElementById(id);if(el){el.textContent=n;el.style.display=n?'':'none';}};
   set('badge-citas',pend);set('badge-leads',hot);set('badge-seg',venc);
   set('mbadge-citas',pend);
@@ -1980,7 +1980,7 @@ function renderDashboard(){
   const hoy=allCitas.filter(c=>apptLocalDate(c.starts_at)===today&&c.status!=='cancelled').length;
   const pend=allCitas.filter(c=>c.status==='pending'&&apptLocalDate(c.starts_at)>=today).length;
   const hot=allLeads.filter(l=>l.intent_level==='hot'&&l.status==='new').length;
-  const venc=allLeads.filter(l=>l.follow_up_date&&l.follow_up_date<=today&&l.status!=='converted'&&l.status!=='lost').length;
+  const venc=allLeads.filter(l=>l.follow_up_date&&l.follow_up_date<=today&&l.status!=='converted'&&l.status!=='lost'&&l.status!=='seguimiento_hecho').length;
   const lowStock=_crmInventario.filter(i=>i.min_stock!==null&&i.stock<=i.min_stock);
   const weekAgo=new Date();weekAgo.setDate(weekAgo.getDate()-7);const weekAgoStr=localDateStr(weekAgo);
   const twoWkAgo=new Date();twoWkAgo.setDate(twoWkAgo.getDate()-14);const twoWkStr=localDateStr(twoWkAgo);
@@ -2019,7 +2019,7 @@ function renderDashboard(){
     </div>`;
   setTimeout(_animateStatCards,40);
   const proxCitas=allCitas.filter(c=>c.status==='pending'&&apptLocalDate(c.starts_at)>=today).slice(0,5);
-  const proxSeg=allLeads.filter(l=>l.follow_up_date&&l.follow_up_date>=today&&l.status!=='converted'&&l.status!=='lost').sort((a,b)=>a.follow_up_date>b.follow_up_date?1:-1).slice(0,5);
+  const proxSeg=allLeads.filter(l=>l.follow_up_date&&l.follow_up_date>=today&&l.status!=='converted'&&l.status!=='lost'&&l.status!=='seguimiento_hecho').sort((a,b)=>a.follow_up_date>b.follow_up_date?1:-1).slice(0,5);
   // Encargos próximos a su fecha de evento
   const encargosPendEntrega=_allEncargos.filter(o=>o.status==='listo'||o.status==='listo_prueba').slice(0,4);
   const stockAlertCard=lowStock.length?`
@@ -2463,6 +2463,7 @@ function renderLeads(){
   const q=(document.getElementById('leads-search')?.value||'').toLowerCase();
   const sf=document.getElementById('leads-status')?.value||'';
   let list=allLeads.filter(l=>(!q||(l.name||'').toLowerCase().includes(q)||(l.phone||'').includes(q))||(l.interest||'').toLowerCase().includes(q));
+  list=list.filter(l=>!String(l.status||'').startsWith('seguimiento')); // seguimientos de clientes: no son leads
   if(sf)list=list.filter(l=>l.status===sf);
   if(leadsView==='tabla'){
     document.getElementById('leads-view').innerHTML='<div class="card"><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Interés</th><th>Intención</th><th>Estado</th><th>Seguimiento</th><th></th></tr></thead><tbody>'+
@@ -2551,9 +2552,16 @@ function openLeadModal(id){
 }
 
 // ── SEGUIMIENTOS ───────────────────────────────────────────────────────────
+// Seguimiento hecho: los de clientes se cierran; en un lead solo se quita la fecha (sigue en el embudo)
+async function segHecho(id){
+  const l=allLeads.find(x=>x.id===id);if(!l)return;
+  const cambio=l.status==='seguimiento'?{status:'seguimiento_hecho'}:{follow_up_date:null};
+  await sbOk(_sb.from('leads').update(cambio).eq('id',id),'leads');
+  Object.assign(l,cambio);renderSeguimientos();showToast('✓ Seguimiento hecho');
+}
 function renderSeguimientos(){
   const today=localDateStr(new Date());
-  const list=allLeads.filter(l=>l.follow_up_date&&l.status!=='converted'&&l.status!=='lost').sort((a,b)=>a.follow_up_date>b.follow_up_date?1:-1);
+  const list=allLeads.filter(l=>l.follow_up_date&&l.status!=='converted'&&l.status!=='lost'&&l.status!=='seguimiento_hecho').sort((a,b)=>a.follow_up_date>b.follow_up_date?1:-1);
   document.getElementById('seg-view').innerHTML=list.length?'<div class="card"><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Interés</th><th>Fecha seguimiento</th><th>Estado</th><th>Intención</th><th></th></tr></thead><tbody>'+
     list.map(l=>`<tr>
       <td><strong>${esc(l.name)}</strong><div style="font-size:11px;color:var(--txt3)">${esc(l.phone||'')}</div></td>
@@ -2563,7 +2571,8 @@ function renderSeguimientos(){
       <td><span class="tag tag-${l.intent_level||'cold'}">${intentLabel(l.intent_level)}</span></td>
       <td style="display:flex;gap:5px">
         <button class="btn btn-ghost btn-xs" onclick="editSegFecha('${l.id}','${l.follow_up_date}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>
-        <button class="btn btn-ghost btn-xs" style="background:#e0f2fe;color:#0369a1;border-color:#bae6fd" onclick="leadToCRM('${l.id}')">→ CRM</button>
+        <button class="btn btn-ghost btn-xs" style="background:#ecfdf5;color:#047857;border-color:#a7f3d0" onclick="segHecho('${l.id}')">✓ Hecho</button>
+        ${l.status!=='seguimiento'?`<button class="btn btn-ghost btn-xs" style="background:#e0f2fe;color:#0369a1;border-color:#bae6fd" onclick="leadToCRM('${l.id}')">→ CRM</button>`:''}
       </td>
     </tr>`).join('')+
   '</tbody></table></div></div>':'<div class="empty-state">Sin seguimientos pendientes <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg></div>';
@@ -3773,7 +3782,7 @@ function crmInvForm(i={}){return `
     <div class="crm-form-group"><label class="crm-form-label">Código de barras</label><input class="crm-form-ctrl" id="if-barcode" value="${esc(i.barcode||'')}"/></div>
   </div>
   <div class="crm-form-row">
-    <div class="crm-form-group"><label class="crm-form-label">Precio venta (€)</label><input type="number" class="crm-form-ctrl" id="if-price" step="0.01" min="0" value="${i.price??''}"/></div>
+    <div class="crm-form-group"><label class="crm-form-label">Precio venta (€)</label><input type="number" class="crm-form-ctrl" id="if-price" step="0.01" min="0" value="${i.precio_venta??i.price??''}"/></div>
     <div class="crm-form-group"><label class="crm-form-label">Margen</label>
       <select class="crm-form-ctrl" id="if-margen">
         <option value="">Sin especificar</option>
@@ -3791,9 +3800,12 @@ async function crmSaveInventario(){
   const name=cv('if-name').trim();if(!name){alert('Nombre obligatorio');return;}
   const stock=parseFloat(cv('if-stock'));if(isNaN(stock)){alert('Stock obligatorio');return;}
   const mr=cv('if-minstock');const pc=cv('if-pc');const img=cv('if-img');
-  const margen_v=cv('if-margen')||null;const price_v=cv('if-price');const payload={business_slug:BIZ_SLUG,name,category:cv('if-cat')||null,stock,min_stock:mr!==''?parseFloat(mr):null,unit:cv('if-unit')||'ud',precio_compra:pc!==''?parseFloat(pc):null,price:price_v!==''?parseFloat(price_v):null,margen:margen_v,image_url:img||null,sku:cv('if-sku')||null,barcode:cv('if-barcode')||null};
-  if(_crmEditId)await sbOk(_sb.from('crm_inventory').update(payload).eq('id',_crmEditId),'crm_inventory');
-  else await sbOk(_sb.from('crm_inventory').insert(payload),'crm_inventory');
+  const margen_v=cv('if-margen')||null;const price_v=cv('if-price');const payload={business_slug:BIZ_SLUG,name,category:cv('if-cat')||null,stock,min_stock:mr!==''?parseFloat(mr):null,unit:cv('if-unit')||'ud',precio_compra:pc!==''?parseFloat(pc):null,precio_venta:price_v!==''?parseFloat(price_v):null,margen:margen_v,image_url:img||null,sku:cv('if-sku')||null,barcode:cv('if-barcode')||null};
+  // La columna «margen» puede no existir todavía en la base de datos: si falta, guardar sin ella
+  const _guardar=pl=>_crmEditId?_sb.from('crm_inventory').update(pl).eq('id',_crmEditId):_sb.from('crm_inventory').insert(pl);
+  let r=await _guardar(payload);
+  if(r.error&&/margen/.test(r.error.message||'')){const {margen,...sinMargen}=payload;r=await _guardar(sinMargen);}
+  if(r.error){showToast('❌ No se ha podido guardar el producto: '+r.error.message);return;}
   crmCloseModal();crmLoadInventario();showToast('Producto guardado');
 }
 async function crmDeleteInventario(id){if(!confirm('¿Eliminar?'))return;await sbOk(_sb.from('crm_inventory').delete().eq('id',id),'crm_inventory');crmLoadInventario();}
@@ -5341,7 +5353,7 @@ function apptLocalDate(iso){if(!iso)return '';const d=new Date(iso);return local
 function fmtDateTime(iso){if(!iso)return '—';const d=new Date(iso);return d.toLocaleDateString('es-ES',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});}
 function intentLabel(l){return l==='hot'?'Caliente':l==='warm'?'Tibio':'Frío';}
 function statusCita(s){return {pending:'Pendiente',confirmed:'Confirmada',cancelled:'Cancelada',completed:'Completada'}[s]||s;}
-function statusLead(s){return {new:'Nuevo',contacted:'Contactado',qualified:'Cualificado',converted:'Convertido',lost:'Perdido'}[s]||s;}
+function statusLead(s){return {new:'Nuevo',contacted:'Contactado',qualified:'Cualificado',converted:'Convertido',lost:'Perdido',seguimiento:'Seguimiento',seguimiento_hecho:'Hecho'}[s]||s;}
 // ── MOBILE NAV ─────────────────────────────────────────────────────────────
 function mobToggleSidebar(){
   document.querySelector('.sidebar').classList.toggle('open');
@@ -5359,6 +5371,8 @@ function mobShowTab(id,btnId){
 }
 
 function notificar(msg){
+  // Los avisos llevan iconos SVG que el toast y las notificaciones mostraban como código: solo texto
+  msg=String(msg).replace(/<[^>]*>/g,'').replace(/^[\s\uFE0F]+/,'').trim();
   showToast(msg,4000);
   // audio desactivado
   if(Notification.permission==='granted') new Notification('José Acosta · Panel',{body:msg,icon:''});
@@ -6771,7 +6785,7 @@ function iaThinking(show) {
 }
 
 function _iaShowChips() {
-  const leads = (allLeads||[]).filter(l=>l.status!=='converted'&&l.status!=='lost');
+  const leads = (allLeads||[]).filter(l=>l.status!=='converted'&&l.status!=='lost'&&l.status!=='seguimiento_hecho');
   const chipsList = leads.length > 1
     ? ['Resumen del día', ...leads.map(l=>`WhatsApp a ${l.name}`), '¿Qué encargos están listos?', 'Sugerencias de hoy']
     : ['Resumen del día','Redactar WhatsApp a lead','¿Qué encargos están listos?','Sugerencias de hoy'];
@@ -8743,7 +8757,7 @@ function jaResumenCliente(c, factsArr){
       <div style="margin-top:6px">${hist.map(h=>`<div style="padding:7px 0;border-bottom:1px dotted rgba(196,163,90,.3);font-size:12px"><div style="font-weight:700;color:#1a1410">${h.desde?jaFecha(h.desde):'¿?'} → ${jaFecha(h.hasta)} <span style="font-weight:400;color:#94a3b8">(cambiadas desde ${esc(h.origen||'')})</span></div><div style="color:#64748b;margin-top:2px">${Object.entries(h.medidas||{}).map(([k,v])=>`${esc(k.replace(/_/g,' '))}: <b>${esc(v)}</b>`).join(' · ')}</div></div>`).join('')}</div></details>`:''}
     <div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 6px"><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em">Seguimientos</div>
       <button class="btn btn-ghost btn-xs" onclick="jaNuevoSeguimiento('${c.id}')">+ Añadir seguimiento</button></div>
-    ${segs.length?segs.slice(0,6).map(l=>`<div style="display:flex;gap:10px;font-size:12.5px;padding:6px 10px;background:#f8fafc;border-radius:8px;margin-bottom:4px"><span style="width:92px;color:${l.follow_up_date<localDateStr(new Date())&&l.status!=='converted'&&l.status!=='lost'?'#dc2626':'#8a7960'}">${jaFecha(l.follow_up_date)}</span><span style="flex:1">${esc(l.interest||l.notes||'Seguimiento')}</span></div>`).join(''):'<div style="font-size:12px;color:#94a3b8;margin-bottom:6px">Sin seguimientos. Apunta aquí cuándo volver a llamarle y por qué.</div>'}
+    ${segs.length?segs.slice(0,6).map(l=>`<div style="display:flex;gap:10px;font-size:12.5px;padding:6px 10px;background:#f8fafc;border-radius:8px;margin-bottom:4px"><span style="width:92px;color:${l.follow_up_date<localDateStr(new Date())&&l.status!=='converted'&&l.status!=='lost'&&l.status!=='seguimiento_hecho'?'#dc2626':'#8a7960'}">${jaFecha(l.follow_up_date)}</span><span style="flex:1">${esc(l.interest||l.notes||'Seguimiento')}</span></div>`).join(''):'<div style="font-size:12px;color:#94a3b8;margin-bottom:6px">Sin seguimientos. Apunta aquí cuándo volver a llamarle y por qué.</div>'}
   </div>`;
 }
 function jaNuevoSeguimiento(cId){
@@ -8765,7 +8779,7 @@ async function jaGuardarSeguimiento(cId){
   const c=_crmClientes.find(x=>x.id===cId); if(!c) return;
   const fecha=document.getElementById('ja-seg-fecha').value, nota=document.getElementById('ja-seg-nota').value.trim();
   if(!fecha){ showToast('Elige la fecha'); return; }
-  const r=await sbOk(_sb.from('leads').insert({ business_slug:BIZ_SLUG, name:c.name, phone:c.phone||null, email:c.email||null, interest:nota||'Seguimiento de cliente', follow_up_date:fecha, intent_level:'warm', status:'new' }).select(),'leads');
+  const r=await sbOk(_sb.from('leads').insert({ business_slug:BIZ_SLUG, name:c.name, phone:c.phone||null, email:c.email||null, interest:nota||'Seguimiento de cliente', follow_up_date:fecha, intent_level:'warm', status:'seguimiento' }).select(),'leads');
   if(r.data&&r.data[0]) allLeads.unshift(r.data[0]);
   document.getElementById('ja-seg-box')?.remove();
   showToast('✓ Seguimiento guardado para el '+jaFecha(fecha,{day:'numeric',month:'long'}));
