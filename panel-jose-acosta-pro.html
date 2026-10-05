@@ -6462,6 +6462,21 @@ async function tpvCobrar() {
   tpvTicketModal(nueva,carritoCopy,sub,total);
 }
 
+/* Imprime SOLO el ticket, a ancho de impresora térmica de 58 mm (antes salía la hoja en blanco:
+   la regla general de impresión del panel ocultaba todo lo que no fuese una factura) */
+function tpvImprimirTicket(){
+  const html=window._ticketHTML||''; if(!html) return;
+  let fr=document.getElementById('ticket-print-frame');
+  if(fr) fr.remove();
+  fr=document.createElement('iframe'); fr.id='ticket-print-frame';
+  fr.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+  document.body.appendChild(fr);
+  const d=fr.contentDocument;
+  d.open();
+  d.write('<!doctype html><html><head><meta charset="utf-8"><style>@page{size:58mm auto;margin:2mm}html,body{margin:0;padding:0;background:#fff;color:#000}body{width:54mm;font-family:"Courier New",monospace}body>div{width:100%!important;max-width:100%!important}*{color:#000!important}</style></head><body>'+html+'</body></html>');
+  d.close();
+  setTimeout(()=>{ try{ fr.contentWindow.focus(); fr.contentWindow.print(); }catch(e){ console.error(e); showToast('No se pudo imprimir el ticket'); } },250);
+}
 function tpvTicketModal(venta, lineas, sub, total) {
   var filas=lineas.map(function(c){
     return '<tr><td style="padding:5px 0">'+c.nombre+'</td><td style="text-align:right;padding:5px 0">'+c.qty+'</td><td style="text-align:right;padding:5px 0;font-weight:600">'+(c.precio*c.qty)+' €</td></tr>';
@@ -6480,9 +6495,9 @@ function tpvTicketModal(venta, lineas, sub, total) {
     +'<div style="font-size:12px;color:#94a3b8">'+venta.fecha+' '+venta.hora+' · '+venta.pago+'</div>'
     +'<div style="margin-top:16px;font-size:11px;color:#c4a35a;letter-spacing:.06em">GRACIAS POR SU CONFIANZA</div>'
     +'</div>';
+  window._ticketHTML=html;
   crmOpenModal('Ticket de venta', html,
-    '<style>@media print{@page{size:58mm auto;margin:3mm}.crm-modal-overlay,.crm-modal-close,.btn{display:none!important}.crm-modal-box{box-shadow:none!important;width:58mm!important;max-width:58mm!important}}</style>'
-    +'<button class="btn btn-primary" onclick="window.print()">Imprimir</button>'
+    '<button class="btn btn-primary" onclick="tpvImprimirTicket()">Imprimir</button>'
     +'<button class="btn btn-xs" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="tpvEnviarRecibo(\''+venta.id+'\')">Email recibo</button>'
     +'<button class="btn btn-ghost" onclick="crmCloseModal()">Cerrar</button>');
 }
