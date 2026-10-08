@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Panel Coach · Airmate (demo)</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#071A2F;--azul:#12395C;--lima:#B7F34A;--bg:#F5F7FA;--card:#fff;--line:#E2E8F0;--gris:#8995A5;--txt:#0B1B2E;--rojo:#E5383B;--ambar:#F59E0B;--verde:#16A34A}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+aside{background:var(--navy);color:#fff;padding:24px 16px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:6px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;margin:0 8px 22px}
+.brand i{width:12px;height:12px;border-radius:50%;background:var(--lima)}
+.brand small{display:block;font-weight:500;font-size:12px;color:var(--gris)}
+.nav{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;color:#C8D2DE;font-weight:600;font-size:15px;text-align:left;width:100%}
+.nav svg{width:20px;height:20px;flex:none}
+.nav.on{background:rgba(255,255,255,.08);color:#fff}
+.nav.on svg{color:var(--lima)}
+.nav .badge{margin-left:auto;background:var(--lima);color:var(--navy);font-size:12px;font-weight:800;border-radius:999px;padding:2px 8px}
+aside .pie{margin-top:auto;font-size:12px;color:var(--gris);padding:0 8px}
+aside .pie button{color:var(--lima);font-weight:700;font-size:12px;margin-top:6px}
+main{padding:28px 32px 120px;max-width:1100px;width:100%}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+h1{font-size:30px;font-weight:800;letter-spacing:-.03em}
+.sub{color:var(--gris);font-size:14px;margin-top:4px;font-weight:500}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:#fff;font-weight:700;font-size:14px;padding:11px 18px;border-radius:12px}
+.btn.lima{background:var(--lima);color:var(--navy)}
+.btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:10px}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+.kpi .l{color:var(--gris);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.kpi .v{font-size:32px;font-weight:800;letter-spacing:-.04em;margin-top:4px}
+.kpi .e{font-size:12px;font-weight:600;color:var(--gris);margin-top:2px}
+.kpi.alerta .v{color:var(--rojo)}
+.cols{grid-template-columns:1.3fr 1fr;margin-top:14px}
+.ct{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.ct h3{font-size:16px;font-weight:800}
+.row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.av{width:38px;height:38px;border-radius:50%;background:var(--azul);color:var(--lima);display:grid;place-items:center;font-weight:800;font-size:14px;flex:none}
+.row .n{font-weight:700;font-size:14px}
+.row .m{color:var(--gris);font-size:12px;font-weight:500;margin-top:2px}
+.row .r{margin-left:auto;display:flex;gap:6px;align-items:center;flex:none}
+.hora{font-weight:800;font-size:14px;width:52px;flex:none}
+.pill{display:inline-block;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;background:#EEF2F7;color:var(--azul);white-space:nowrap}
+.pill.ok{background:#DCFCE7;color:#166534}.pill.mal{background:#FEE2E2;color:#991B1B}.pill.av2{background:#FEF3C7;color:#92400E}.pill.lima{background:var(--lima);color:var(--navy)}
+.wa{width:34px;height:34px;border-radius:10px;background:#25D366;display:grid;place-items:center}
+.wa svg{width:18px;height:18px;fill:#fff}
+.vacio{color:var(--gris);font-size:14px;padding:14px 0}
+/* agenda */
+.semana{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+.dia{background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px;min-height:260px}
+.dia.hoy{border-color:var(--navy);box-shadow:0 0 0 2px var(--lima)}
+.dia h4{font-size:12px;font-weight:800;color:var(--gris);letter-spacing:.06em;margin-bottom:8px;text-transform:uppercase}
+.ses{border-radius:12px;padding:8px 9px;margin-bottom:8px;background:#EEF2F7;font-size:12px;cursor:pointer;border-left:4px solid var(--azul)}
+.ses.grupo{background:#F3FCE3;border-left-color:#65A30D}
+.ses.hecha{opacity:.55}
+.ses b{display:block;font-size:13px}
+/* clientes */
+.buscar{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:12px}
+.lista .row{cursor:pointer;padding:12px 8px;border-radius:12px;border-bottom:0}
+.lista .row:hover{background:#F1F5F9}
+.bono{display:flex;gap:4px}
+.bono i{width:12px;height:18px;border-radius:4px;background:var(--lima)}
+.bono i.u{background:#E2E8F0}
+/* ficha */
+.ficha-top{display:flex;gap:16px;align-items:center}
+.ficha-top .av{width:64px;height:64px;font-size:22px}
+.datos{grid-template-columns:repeat(3,1fr);margin-top:16px}
+.dato .l{color:var(--gris);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.dato .v{font-weight:800;font-size:18px;margin-top:4px}
+svg.graf{width:100%;height:140px}
+.nota{background:#F8FAFC;border-radius:12px;padding:10px 12px;font-size:13px;margin-top:8px}
+.nota small{color:var(--gris);font-weight:600;display:block;margin-bottom:2px}
+/* interesados */
+.kanban{grid-template-columns:repeat(4,1fr)}
+.col{background:#EEF2F7;border-radius:16px;padding:12px;min-height:300px}
+.col h4{font-size:13px;font-weight:800;margin-bottom:10px;display:flex;justify-content:space-between}
+.lead{background:#fff;border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid var(--line)}
+.lead .n{font-weight:700;font-size:14px}.lead .m{font-size:12px;color:var(--gris);margin-top:3px}
+.lead .acc{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(7,26,47,.45);display:none;align-items:flex-end;justify-content:center;z-index:50;padding:16px}
+.modal.on{display:flex}
+.hoja{background:#fff;border-radius:22px;padding:22px;width:100%;max-width:560px;max-height:90vh;overflow:auto;animation:sube .25s ease}
+@keyframes sube{from{transform:translateY(40px);opacity:0}}
+.hoja h3{font-size:20px;font-weight:800;margin-bottom:14px}
+.campo{margin-bottom:12px}
+.campo label{display:block;font-size:12px;font-weight:700;color:var(--gris);margin-bottom:5px;letter-spacing:.04em}
+.campo input,.campo select,.campo textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.acciones{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 18px;border-radius:12px;font-weight:600;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:60}
+.toast.on{opacity:1}
+.demo-tag{position:fixed;top:12px;right:12px;background:var(--lima);color:var(--navy);font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;z-index:40}
+/* móvil */
+.bottom{display:none}
+@media(max-width:860px){
+  .app{grid-template-columns:1fr}
+  aside{display:none}
+  main{padding:20px 16px 110px}
+  h1{font-size:24px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .cols{grid-template-columns:1fr}
+  .semana{grid-template-columns:repeat(7,minmax(150px,1fr));overflow-x:auto;padding-bottom:6px}
+  .kanban{grid-template-columns:repeat(4,minmax(230px,1fr));overflow-x:auto}
+  .datos{grid-template-columns:repeat(2,1fr)}
+  .bottom{display:flex;position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:30;justify-content:space-around}
+  .bottom button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--gris);padding:4px 8px;position:relative}
+  .bottom button svg{width:22px;height:22px}
+  .bottom button.on{color:var(--navy)}
+  .bottom button.on svg{color:var(--navy)}
+  .bottom .dot{position:absolute;top:0;right:8px;width:8px;height:8px;border-radius:50%;background:var(--rojo)}
+  .modal{padding:0}.hoja{border-radius:22px 22px 0 0;max-height:92vh}
+}
+</style>
+</head>
+<body>
+<div class="demo-tag">DEMO · datos de ejemplo</div>
+<div class="app">
+  <aside>
+    <div class="brand"><i></i><div>Tu Coaching<small>Panel de gestión</small></div></div>
+    <div id="navSide"></div>
+    <div class="pie">Demo de Airmate<br><button onclick="reiniciar()">Reiniciar datos de ejemplo</button></div>
+  </aside>
+  <main id="vista"></main>
+</div>
+<nav class="bottom" id="navBottom"></nav>
+<div class="modal" id="modal" onclick="if(event.target===this)cerrar()"><div class="hoja" id="hoja"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════ Iconos ════════ */
+const I={
+ hoy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12l9-8 9 8M5 10v10h14V10"/></svg>',
+ agenda:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+ clientes:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0112 0v1M17 11a3 3 0 100-6M22 21v-1a5 5 0 00-4-4.9"/></svg>',
+ leads:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4h18l-7 9v6l-4 2v-8z"/></svg>',
+ pagos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>',
+ wa:'<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.6 15.1L2 22l5-1.3A10 10 0 1012 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2.1 1-2.4c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.4 1.8 2.2 1.2 1.1 2.2 1.4 2.5 1.6.3.1.5.1.7-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.5.3.1.2.1.7-.1 1.4z"/></svg>'
+};
+const VISTAS=[['hoy','Hoy'],['agenda','Agenda'],['clientes','Clientes'],['leads','Interesados'],['pagos','Pagos']];
+
+/* ════════ Datos de ejemplo (inventados) ════════ */
+const HOY=new Date(); HOY.setHours(0,0,0,0);
+const dia=(n)=>{const d=new Date(HOY);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+function semilla(){
+ const C=[
+  {id:1,nombre:'Laura Méndez',tel:'600000001',objetivo:'Perder grasa y ganar fuerza',plan:'Bono 8 sesiones',bonoTotal:8,bonoUsado:5,ultima:dia(-2),pesos:[72,71.2,70.5,69.8,69.1],notas:[{f:dia(-2),t:'Mejora en sentadilla: 50 kg x 8. Dormir más.'}]},
+  {id:2,nombre:'Carlos Ruiz',tel:'600000002',objetivo:'Volver a la rutina tras lesión',plan:'Bono 4 sesiones',bonoTotal:4,bonoUsado:4,ultima:dia(-1),pesos:[88,87.5,87.1],notas:[{f:dia(-1),t:'Rodilla bien. Último día del bono → renovar.'}]},
+  {id:3,nombre:'Marta Gil',tel:'600000003',objetivo:'Preparar carrera 10K',plan:'Mensual online',bonoTotal:0,bonoUsado:0,ultima:dia(-12),pesos:[61,60.6,60.4],notas:[{f:dia(-12),t:'Plan de carrera semana 3 enviado.'}]},
+  {id:4,nombre:'Sergio Torres',tel:'600000004',objetivo:'Ganar masa muscular',plan:'Bono 8 sesiones',bonoTotal:8,bonoUsado:2,ultima:dia(-3),pesos:[70,70.8,71.5],notas:[]},
+  {id:5,nombre:'Elena Vidal',tel:'600000005',objetivo:'Salud y energía (vida ocupada)',plan:'Grupo playa',bonoTotal:10,bonoUsado:7,ultima:dia(-9),pesos:[65,64.5],notas:[{f:dia(-9),t:'Viaja por trabajo, retomar la semana que viene.'}]},
+  {id:6,nombre:'Pablo Díaz',tel:'600000006',objetivo:'Primera dominada',plan:'Bono 4 sesiones',bonoTotal:4,bonoUsado:1,ultima:dia(-4),pesos:[79,78.6],notas:[]},
+ ];
+ const S=[
+  {id:1,f:dia(0),h:'08:00',tipo:'ind',cliente:1,txt:'Fuerza tren inferior',hecha:false},
+  {id:2,f:dia(0),h:'09:00',tipo:'grupo',cliente:null,txt:'Grupo playa · 6 personas',hecha:false},
+  {id:3,f:dia(0),h:'18:30',tipo:'ind',cliente:4,txt:'Hipertrofia torso',hecha:false},
+  {id:4,f:dia(1),h:'07:30',tipo:'ind',cliente:6,txt:'Dominadas asistidas',hecha:false},
+  {id:5,f:dia(1),h:'19:00',tipo:'ind',cliente:2,txt:'Movilidad + fuerza',hecha:false},
+  {id:6,f:dia(2),h:'09:00',tipo:'grupo',cliente:null,txt:'Funcional al aire libre',hecha:false},
+  {id:7,f:dia(3),h:'08:00',tipo:'ind',cliente:1,txt:'Full body',hecha:false},
+  {id:8,f:dia(4),h:'18:00',tipo:'ind',cliente:4,txt:'Pierna',hecha:false},
+  {id:9,f:dia(5),h:'10:00',tipo:'grupo',cliente:null,txt:'Grupo playa · sábado',hecha:false},
+ ];
+ const L=[
+  {id:1,nombre:'Andrea S.',origen:'Instagram',msg:'¿Cuánto cuesta el entrenamiento personal?',estado:'nuevo',f:dia(0)},
+  {id:2,nombre:'Javier M.',origen:'Web',msg:'Quiero empezar en noviembre, tengo poco tiempo.',estado:'nuevo',f:dia(0)},
+  {id:3,nombre:'Nuria P.',origen:'Recomendación',msg:'Me lo dijo Laura. ¿Grupos de playa?',estado:'contactado',f:dia(-1)},
+  {id:4,nombre:'Diego R.',origen:'Instagram',msg:'Primera sesión reservada para el jueves.',estado:'prueba',f:dia(-2)},
+ ];
+ const P=[
+  {id:1,cliente:1,concepto:'Bono 8 sesiones',importe:280,f:dia(-20),pagado:true},
+  {id:2,cliente:4,concepto:'Bono 8 sesiones',importe:280,f:dia(-6),pagado:true},
+  {id:3,cliente:3,concepto:'Mensual online · octubre',importe:79,f:dia(-5),pagado:false},
+  {id:4,cliente:5,concepto:'Grupo playa · 10 clases',importe:120,f:dia(-15),pagado:true},
+  {id:5,cliente:6,concepto:'Bono 4 sesiones',importe:150,f:dia(-4),pagado:false},
+ ];
+ return {C,S,L,P,seq:100};
+}
+let D;
+function cargar(){try{D=JSON.parse(localStorage.getItem('airmate-coach-demo'))}catch(e){D=null} if(!D||!D.C)D=semilla()}
+function guardar(){try{localStorage.setItem('airmate-coach-demo',JSON.stringify(D))}catch(e){}}
+function reiniciar(){D=semilla();guardar();ir(vista);toast('Datos de ejemplo reiniciados')}
+const nid=()=>++D.seq;
+
+/* ════════ Utilidades ════════ */
+const $=(id)=>document.getElementById(id);
+const esc=(s)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cli=(id)=>D.C.find(c=>c.id===id);
+const ini=(n)=>n.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
+const eur=(n)=>n.toLocaleString('es-ES',{minimumFractionDigits:0,maximumFractionDigits:2})+' €';
+const diasDesde=(f)=>Math.round((HOY-new Date(f+'T00:00:00'))/864e5);
+const fDia=(f)=>{const d=new Date(f+'T00:00:00');return d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric'})};
+const restantes=(c)=>c.bonoTotal?Math.max(0,c.bonoTotal-c.bonoUsado):null;
+function waLink(c,texto){return 'https://wa.me/34'+c.tel+'?text='+encodeURIComponent(texto)}
+function waBtn(c,texto){return `<a class="wa" href="${waLink(c,texto)}" target="_blank" rel="noopener" title="WhatsApp" onclick="event.stopPropagation()">${I.wa}</a>`}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2200)}
+function abrir(html){$('hoja').innerHTML=html;$('modal').classList.add('on')}
+function cerrar(){$('modal').classList.remove('on')}
+
+/* alertas: a quién recuperar, bonos acabados, pagos pendientes */
+const recuperar=()=>D.C.filter(c=>diasDesde(c.ultima)>=7);
+const bonoAcabado=()=>D.C.filter(c=>c.bonoTotal&&restantes(c)===0);
+const pendientes=()=>D.P.filter(p=>!p.pagado);
+const leadsNuevos=()=>D.L.filter(l=>l.estado==='nuevo');
+
+/* ════════ Navegación ════════ */
+let vista='hoy';
+function pintaNav(){
+ const b={leads:leadsNuevos().length,pagos:pendientes().length};
+ $('navSide').innerHTML=VISTAS.map(([k,n])=>`<button class="nav ${vista===k?'on':''}" onclick="ir('${k}')">${I[k]}${n}${b[k]?`<span class="badge">${b[k]}</span>`:''}</button>`).join('');
+ $('navBottom').innerHTML=VISTAS.map(([k,n])=>`<button class="${vista===k?'on':''}" onclick="ir('${k}')">${I[k]}${n}${b[k]?'<span class="dot"></span>':''}</button>`).join('');
+}
+function ir(v){vista=v;pintaNav();({hoy:vHoy,agenda:vAgenda,clientes:vClientes,leads:vLeads,pagos:vPagos})[v]();window.scrollTo(0,0)}
+
+/* ════════ HOY ════════ */
+function vHoy(){
+ const hoyS=D.S.filter(s=>s.f===dia(0)).sort((a,b)=>a.h.localeCompare(b.h));
+ const cobradoMes=D.P.filter(p=>p.pagado&&new Date(p.f+'T00:00:00').getMonth()===HOY.getMonth()).reduce((a,p)=>a+p.importe,0);
+ const debe=pendientes().reduce((a,p)=>a+p.importe,0);
+ const rec=recuperar(), acab=bonoAcabado();
+ $('vista').innerHTML=`
+ <div class="top"><div><h1>Hola, coach 👋</h1><div class="sub">${HOY.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}</div></div>
+  <button class="btn lima" onclick="nuevaSesion()">+ Nueva sesión</button></div>
+ <div class="grid kpis">
+  <div class="card kpi"><div class="l">Sesiones hoy</div><div class="v">${hoyS.length}</div><div class="e">${hoyS.filter(s=>s.hecha).length} hechas</div></div>
+  <div class="card kpi"><div class="l">Clientes activos</div><div class="v">${D.C.length}</div><div class="e">${acab.length} con el bono acabado</div></div>
+  <div class="card kpi"><div class="l">Cobrado este mes</div><div class="v">${eur(cobradoMes)}</div><div class="e">en bonos y cuotas</div></div>
+  <div class="card kpi ${debe?'alerta':''}"><div class="l">Te deben</div><div class="v">${eur(debe)}</div><div class="e">${pendientes().length} pagos pendientes</div></div>
+ </div>
+ <div class="grid cols">
+  <div class="card"><div class="ct"><h3>Tu día</h3><button class="btn ghost sm" onclick="ir('agenda')">Ver semana</button></div>
+   ${hoyS.length?hoyS.map(s=>filaSesion(s)).join(''):'<div class="vacio">Hoy no tienes sesiones.</div>'}
+  </div>
+  <div class="grid" style="gap:14px">
+   <div class="card"><div class="ct"><h3>A recuperar</h3><span class="pill mal">${rec.length}</span></div>
+    ${rec.length?rec.map(c=>`<div class="row"><div class="av">${ini(c.nombre)}</div><div><div class="n">${esc(c.nombre)}</div><div class="m">No viene desde hace ${diasDesde(c.ultima)} días</div></div><div class="r">${waBtn(c,`¡Hola ${c.nombre.split(' ')[0]}! Te echo de menos en los entrenos 💪 ¿Te reservo una sesión esta semana?`)}</div></div>`).join(''):'<div class="vacio">Todos tus clientes vienen con regularidad 👌</div>'}
+   </div>
+   <div class="card"><div class="ct"><h3>Bonos por renovar</h3><span class="pill av2">${acab.length}</span></div>
+    ${acab.length?acab.map(c=>`<div class="row"><div class="av">${ini(c.nombre)}</div><div><div class="n">${esc(c.nombre)}</div><div class="m">${esc(c.plan)} · terminado</div></div><div class="r"><button class="btn sm" onclick="renovar(${c.id})">Renovar</button>${waBtn(c,`¡Hola ${c.nombre.split(' ')[0]}! Se te ha terminado el bono. ¿Te preparo uno nuevo para seguir con el plan?`)}</div></div>`).join(''):'<div class="vacio">Ningún bono terminado.</div>'}
+   </div>
+   <div class="card"><div class="ct"><h3>Nuevos interesados</h3><button class="btn ghost sm" onclick="ir('leads')">Ver todos</button></div>
+    ${leadsNuevos().length?leadsNuevos().map(l=>`<div class="row"><div class="av" style="background:var(--lima);color:var(--navy)">${ini(l.nombre)}</div><div><div class="n">${esc(l.nombre)} <span class="pill">${esc(l.origen)}</span></div><div class="m">${esc(l.msg)}</div></div></div>`).join(''):'<div class="vacio">Sin interesados nuevos.</div>'}
+   </div>
+  </div>
+ </div>`;
+}
+function filaSesion(s){
+ const c=s.cliente?cli(s.cliente):null;
+ return `<div class="row"><div class="hora">${s.h}</div><div><div class="n">${c?esc(c.nombre):esc(s.txt)}</div><div class="m">${c?esc(s.txt)+(c.bonoTotal?` · bono ${restantes(c)} restantes`:''):'Clase en grupo'}</div></div>
+ <div class="r">${s.hecha?'<span class="pill ok">✓ Hecha</span>':`<button class="btn sm lima" onclick="marcarHecha(${s.id})">Marcar hecha</button>`}</div></div>`;
+}
+function marcarHecha(id){
+ const s=D.S.find(x=>x.id===id); if(!s||s.hecha)return; s.hecha=true;
+ const c=s.cliente?cli(s.cliente):null;
+ if(c){c.ultima=s.f; if(c.bonoTotal&&c.bonoUsado<c.bonoTotal)c.bonoUsado++;}
+ guardar(); ir(vista);
+ toast(c&&c.bonoTotal?`Sesión hecha · a ${c.nombre.split(' ')[0]} le quedan ${restantes(c)}`:'Sesión marcada como hecha');
+}
+function renovar(id){
+ const c=cli(id); c.bonoUsado=0; D.P.push({id:nid(),cliente:id,concepto:c.plan+' (renovación)',importe:c.bonoTotal>=8?280:150,f:dia(0),pagado:false});
+ guardar(); ir(vista); toast(`Bono renovado · pago pendiente añadido`);
+}
+
+/* ════════ AGENDA ════════ */
+function vAgenda(){
+ const dias=[...Array(7)].map((_,i)=>dia(i));
+ $('vista').innerHTML=`<div class="top"><div><h1>Agenda</h1><div class="sub">Próximos 7 días · toca una sesión para marcarla</div></div><button class="btn lima" onclick="nuevaSesion()">+ Nueva sesión</button></div>
+ <div class="semana">${dias.map((f,i)=>`<div class="dia ${i===0?'hoy':''}"><h4>${i===0?'Hoy':fDia(f)}</h4>
+  ${D.S.filter(s=>s.f===f).sort((a,b)=>a.h.localeCompare(b.h)).map(s=>{const c=s.cliente?cli(s.cliente):null;return `<div class="ses ${s.tipo==='grupo'?'grupo':''} ${s.hecha?'hecha':''}" onclick="marcarHecha(${s.id})"><b>${s.h} · ${c?esc(c.nombre.split(' ')[0]):'Grupo'}</b>${esc(s.txt)}${s.hecha?' ✓':''}</div>`}).join('')||'<div class="vacio" style="font-size:12px">Libre</div>'}
+ </div>`).join('')}</div>`;
+}
+function nuevaSesion(){
+ abrir(`<h3>Nueva sesión</h3>
+ <div class="campo"><label>TIPO</label><select id="ns_tipo" onchange="$('ns_cli_w').style.display=this.value==='ind'?'block':'none'"><option value="ind">Individual</option><option value="grupo">Grupo</option></select></div>
+ <div class="campo" id="ns_cli_w"><label>CLIENTE</label><select id="ns_cli">${D.C.map(c=>`<option value="${c.id}">${esc(c.nombre)}</option>`).join('')}</select></div>
+ <div class="campo"><label>DÍA</label><input type="date" id="ns_f" value="${dia(0)}"></div>
+ <div class="campo"><label>HORA</label><input type="time" id="ns_h" value="18:00"></div>
+ <div class="campo"><label>QUÉ VAIS A TRABAJAR</label><input id="ns_txt" placeholder="Ej: fuerza tren superior"></div>
+ <div class="acciones"><button class="btn ghost" onclick="cerrar()">Cancelar</button><button class="btn lima" onclick="guardarSesion()">Guardar</button></div>`);
+}
+function guardarSesion(){
+ const tipo=$('ns_tipo').value;
+ D.S.push({id:nid(),f:$('ns_f').value||dia(0),h:$('ns_h').value||'18:00',tipo,cliente:tipo==='ind'?+$('ns_cli').value:null,txt:$('ns_txt').value.trim()||(tipo==='grupo'?'Clase en grupo':'Entrenamiento'),hecha:false});
+ guardar(); cerrar(); ir(vista); toast('Sesión añadida a la agenda');
+}
+
+/* ════════ CLIENTES ════════ */
+function vClientes(q=''){
+ const lista=D.C.filter(c=>c.nombre.toLowerCase().includes(q.toLowerCase()));
+ $('vista').innerHTML=`<div class="top"><div><h1>Clientes</h1><div class="sub">${D.C.length} clientes · toca uno para ver su ficha</div></div><button class="btn lima" onclick="nuevoCliente()">+ Nuevo cliente</button></div>
+ <input class="buscar" placeholder="Buscar cliente…" value="${esc(q)}" oninput="vClientes(this.value);this.focus();this.setSelectionRange(this.value.length,this.value.length)">
+ <div class="card lista">${lista.map(c=>{const r=restantes(c);const d=diasDesde(c.ultima);return `<div class="row" onclick="ficha(${c.id})"><div class="av">${ini(c.nombre)}</div>
+  <div><div class="n">${esc(c.nombre)}</div><div class="m">${esc(c.plan)} · última sesión hace ${d} día${d===1?'':'s'}</div></div>
+  <div class="r">${r===null?'<span class="pill">Online</span>':`<div class="bono">${[...Array(c.bonoTotal)].map((_,i)=>`<i class="${i<c.bonoUsado?'u':''}"></i>`).join('')}</div>`}${d>=7?'<span class="pill mal">Recuperar</span>':''}</div></div>`}).join('')||'<div class="vacio">Sin resultados.</div>'}</div>`;
+}
+function ficha(id){
+ const c=cli(id), r=restantes(c), pg=D.P.filter(p=>p.cliente===id);
+ const ps=c.pesos, mn=Math.min(...ps)-1, mx=Math.max(...ps)+1;
+ const pts=ps.map((p,i)=>`${(i/(ps.length-1||1))*300},${120-((p-mn)/(mx-mn))*110}`).join(' ');
+ const prox=D.S.filter(s=>s.cliente===id&&!s.hecha&&s.f>=dia(0)).sort((a,b)=>(a.f+a.h).localeCompare(b.f+b.h))[0];
+ abrir(`<div class="ficha-top"><div class="av">${ini(c.nombre)}</div><div><h3 style="margin:0">${esc(c.nombre)}</h3><div class="sub">${esc(c.objetivo)}</div></div></div>
+ <div class="grid datos">
+  <div class="dato"><div class="l">Plan</div><div class="v" style="font-size:15px">${esc(c.plan)}</div></div>
+  <div class="dato"><div class="l">Bono</div><div class="v">${r===null?'—':r+' / '+c.bonoTotal}</div></div>
+  <div class="dato"><div class="l">Próxima</div><div class="v" style="font-size:15px">${prox?fDia(prox.f)+' · '+prox.h:'Sin reservar'}</div></div>
+ </div>
+ <div class="card" style="margin-top:14px;padding:14px"><div class="ct" style="margin-bottom:4px"><h3>Progreso · peso (kg)</h3><span class="pill lima">${(ps[ps.length-1]-ps[0]>0?'+':'')+(ps[ps.length-1]-ps[0]).toFixed(1)} kg</span></div>
+  <svg class="graf" viewBox="0 0 300 130" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="#12395C" stroke-width="3"/>${ps.map((p,i)=>`<circle cx="${(i/(ps.length-1||1))*300}" cy="${120-((p-mn)/(mx-mn))*110}" r="4" fill="#B7F34A" stroke="#12395C" stroke-width="2"/>`).join('')}</svg>
+  <div style="display:flex;gap:8px"><input id="f_peso" class="buscar" style="margin:0" type="number" step="0.1" placeholder="Nuevo peso"><button class="btn sm" onclick="addPeso(${id})">Añadir</button></div>
+ </div>
+ <div style="margin-top:14px"><div class="ct"><h3>Notas de seguimiento</h3></div>
+  ${c.notas.slice().reverse().map(n=>`<div class="nota"><small>${fDia(n.f)}</small>${esc(n.t)}</div>`).join('')||'<div class="vacio">Sin notas todavía.</div>'}
+  <div style="display:flex;gap:8px;margin-top:8px"><input id="f_nota" class="buscar" style="margin:0" placeholder="Ej: mejora en press banca"><button class="btn sm" onclick="addNota(${id})">Guardar</button></div>
+ </div>
+ <div style="margin-top:14px"><div class="ct"><h3>Pagos</h3></div>${pg.map(p=>`<div class="row"><div><div class="n">${esc(p.concepto)}</div><div class="m">${fDia(p.f)}</div></div><div class="r"><b>${eur(p.importe)}</b>${p.pagado?'<span class="pill ok">Pagado</span>':'<span class="pill mal">Pendiente</span>'}</div></div>`).join('')||'<div class="vacio">Sin pagos.</div>'}</div>
+ <div class="acciones"><a class="btn ghost" href="${waLink(c,`¡Hola ${c.nombre.split(' ')[0]}!`)}" target="_blank" rel="noopener">WhatsApp</a>${c.bonoTotal?`<button class="btn" onclick="renovar(${id});cerrar()">Renovar bono</button>`:''}<button class="btn lima" onclick="cerrar()">Cerrar</button></div>`);
+}
+function addPeso(id){const v=parseFloat($('f_peso').value);if(!v)return;cli(id).pesos.push(v);guardar();ficha(id);toast('Progreso actualizado')}
+function addNota(id){const t=$('f_nota').value.trim();if(!t)return;cli(id).notas.push({f:dia(0),t});guardar();ficha(id);toast('Nota guardada')}
+function nuevoCliente(pref={}){
+ abrir(`<h3>Nuevo cliente</h3>
+ <div class="campo"><label>NOMBRE</label><input id="nc_n" value="${esc(pref.nombre||'')}"></div>
+ <div class="campo"><label>WHATSAPP</label><input id="nc_t" placeholder="600 000 000"></div>
+ <div class="campo"><label>OBJETIVO</label><input id="nc_o" placeholder="Ej: ganar fuerza"></div>
+ <div class="campo"><label>PLAN</label><select id="nc_p"><option value="8">Bono 8 sesiones · 280 €</option><option value="4">Bono 4 sesiones · 150 €</option><option value="0">Mensual online · 79 €</option></select></div>
+ <div class="acciones"><button class="btn ghost" onclick="cerrar()">Cancelar</button><button class="btn lima" onclick="guardarCliente(${pref.leadId||0})">Guardar</button></div>`);
+}
+function guardarCliente(leadId){
+ const n=$('nc_n').value.trim(); if(!n){toast('Escribe el nombre');return}
+ const b=+$('nc_p').value, id=nid();
+ D.C.push({id,nombre:n,tel:($('nc_t').value.replace(/\D/g,'')||'600000000').slice(-9),objetivo:$('nc_o').value.trim()||'Sin definir',plan:b?`Bono ${b} sesiones`:'Mensual online',bonoTotal:b,bonoUsado:0,ultima:dia(0),pesos:[70],notas:[]});
+ D.P.push({id:nid(),cliente:id,concepto:b?`Bono ${b} sesiones`:'Mensual online',importe:b===8?280:b===4?150:79,f:dia(0),pagado:false});
+ if(leadId){D.L=D.L.filter(l=>l.id!==leadId)}
+ guardar(); cerrar(); ir('clientes'); toast('Cliente creado · pago pendiente añadido');
+}
+
+/* ════════ INTERESADOS ════════ */
+const EST=[['nuevo','Nuevos'],['contactado','Contactados'],['prueba','Primera sesión'],['perdido','No interesados']];
+function vLeads(){
+ $('vista').innerHTML=`<div class="top"><div><h1>Interesados</h1><div class="sub">La gente que te escribe por Instagram, la web o recomendación</div></div><button class="btn lima" onclick="nuevoLead()">+ Añadir</button></div>
+ <div class="grid kanban">${EST.map(([k,n])=>{const ls=D.L.filter(l=>l.estado===k);return `<div class="col"><h4>${n}<span>${ls.length}</span></h4>
+  ${ls.map(l=>`<div class="lead"><div class="n">${esc(l.nombre)} <span class="pill">${esc(l.origen)}</span></div><div class="m">${esc(l.msg)}</div><div class="acc">
+   ${k==='nuevo'?`<button class="btn sm" onclick="moverLead(${l.id},'contactado')">Contactado</button>`:''}
+   ${k==='contactado'?`<button class="btn sm" onclick="moverLead(${l.id},'prueba')">Reservó prueba</button>`:''}
+   ${k==='prueba'?`<button class="btn sm lima" onclick="nuevoCliente({nombre:'${esc(l.nombre).replace(/'/g,'')}',leadId:${l.id}})">Hacer cliente</button>`:''}
+   ${k!=='perdido'?`<button class="btn sm ghost" onclick="moverLead(${l.id},'perdido')">✕</button>`:''}
+  </div></div>`).join('')||'<div class="vacio" style="font-size:13px">—</div>'}</div>`}).join('')}</div>`;
+}
+function moverLead(id,e){D.L.find(l=>l.id===id).estado=e;guardar();ir('leads');toast('Interesado actualizado')}
+function nuevoLead(){
+ abrir(`<h3>Nuevo interesado</h3>
+ <div class="campo"><label>NOMBRE</label><input id="nl_n"></div>
+ <div class="campo"><label>DE DÓNDE VIENE</label><select id="nl_o"><option>Instagram</option><option>Web</option><option>Recomendación</option><option>WhatsApp</option></select></div>
+ <div class="campo"><label>QUÉ BUSCA</label><textarea id="nl_m" rows="2"></textarea></div>
+ <div class="acciones"><button class="btn ghost" onclick="cerrar()">Cancelar</button><button class="btn lima" onclick="guardarLead()">Guardar</button></div>`);
+}
+function guardarLead(){const n=$('nl_n').value.trim();if(!n){toast('Escribe el nombre');return}D.L.push({id:nid(),nombre:n,origen:$('nl_o').value,msg:$('nl_m').value.trim()||'—',estado:'nuevo',f:dia(0)});guardar();cerrar();ir('leads');toast('Interesado añadido')}
+
+/* ════════ PAGOS ════════ */
+function vPagos(){
+ const pend=pendientes(), hechos=D.P.filter(p=>p.pagado).sort((a,b)=>b.f.localeCompare(a.f));
+ $('vista').innerHTML=`<div class="top"><div><h1>Pagos</h1><div class="sub">Quién te ha pagado y quién te debe</div></div></div>
+ <div class="grid kpis"><div class="card kpi"><div class="l">Cobrado</div><div class="v">${eur(hechos.reduce((a,p)=>a+p.importe,0))}</div></div>
+  <div class="card kpi ${pend.length?'alerta':''}"><div class="l">Pendiente</div><div class="v">${eur(pend.reduce((a,p)=>a+p.importe,0))}</div></div></div>
+ <div class="card" style="margin-top:14px"><div class="ct"><h3>Pendientes de cobro</h3></div>
+  ${pend.map(p=>{const c=cli(p.cliente);return `<div class="row"><div class="av">${ini(c.nombre)}</div><div><div class="n">${esc(c.nombre)}</div><div class="m">${esc(p.concepto)} · ${fDia(p.f)}</div></div><div class="r"><b>${eur(p.importe)}</b><button class="btn sm lima" onclick="cobrar(${p.id})">Cobrado</button>${waBtn(c,`¡Hola ${c.nombre.split(' ')[0]}! Te recuerdo el pago de ${p.concepto} (${eur(p.importe)}). ¡Gracias! 🙌`)}</div></div>`}).join('')||'<div class="vacio">Nadie te debe nada 👌</div>'}
+ </div>
+ <div class="card" style="margin-top:14px"><div class="ct"><h3>Cobrados</h3></div>
+  ${hechos.map(p=>{const c=cli(p.cliente);return `<div class="row"><div class="av">${ini(c.nombre)}</div><div><div class="n">${esc(c.nombre)}</div><div class="m">${esc(p.concepto)} · ${fDia(p.f)}</div></div><div class="r"><b>${eur(p.importe)}</b><span class="pill ok">Pagado</span></div></div>`}).join('')}
+ </div>`;
+}
+function cobrar(id){D.P.find(p=>p.id===id).pagado=true;guardar();ir('pagos');toast('Pago registrado')}
+
+cargar(); ir('hoy');
+</script>
+</body>
+</html>
