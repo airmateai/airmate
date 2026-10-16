@@ -1,0 +1,145 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Rakoon Atlántico · Panel de gestión (demo)</title>
+<meta name="theme-color" content="#04343e">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--n:#04343e;--n2:#004a59;--t:#31cdcf;--t2:#1aa8ab;--bg:#f2f6f6;--card:#fff;--tx:#0c2a30;--mu:#6b8086;--bd:#e1e9ea;--ok:#16a34a;--warn:#f59e0b;--bad:#dc2626;--e:cubic-bezier(.16,1,.3,1);--s:cubic-bezier(.34,1.56,.64,1)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:Inter,system-ui,sans-serif;font-size:14px}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+aside{background:linear-gradient(180deg,var(--n),#022329);color:#d6eef0;padding:22px 14px;position:sticky;top:0;height:100vh;overflow:hidden}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px 22px}.brand i{width:38px;height:38px;border-radius:12px;background:var(--t);color:var(--n);display:grid;place-items:center;font-style:normal;font-weight:900;font-size:18px}
+.brand b{display:block;font-size:15px;color:#fff}.brand small{font-size:11px;opacity:.6}
+nav{position:relative}.glide{position:absolute;left:0;right:0;height:42px;border-radius:12px;background:rgba(49,205,207,.16);box-shadow:inset 3px 0 0 var(--t);transition:top .5s var(--s)}
+nav button{position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border-radius:12px;font-weight:600;color:#bcdde0;transition:color .3s}
+nav button.on{color:#fff}nav button span{width:22px;text-align:center}
+.side-foot{position:absolute;left:14px;right:14px;bottom:18px;font-size:11px;opacity:.55;line-height:1.5}
+main{padding:26px 30px 60px;max-width:1200px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+h1{font-family:Fraunces,serif;font-weight:800;font-size:32px;margin:0;letter-spacing:-.01em}h1 em{font-style:normal;color:var(--t2)}
+.sub{color:var(--mu);margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--n2);color:#fff;font-weight:700;padding:11px 16px;border-radius:12px;transition:transform .3s var(--s)}.btn:active{transform:scale(.95)}
+.btn.g{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.page{display:none}.page.on{display:block;animation:pin .6s var(--e)}
+@keyframes pin{from{opacity:0;transform:translateY(14px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
+.kpi{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:18px;position:relative;overflow:hidden;opacity:0;animation:up .7s var(--e) forwards;animation-delay:calc(var(--i)*70ms)}
+.kpi::before{content:'';position:absolute;left:0;top:0;height:3px;width:100%;background:linear-gradient(90deg,var(--t),transparent);transform-origin:left;animation:ln 1s var(--e) both;animation-delay:calc(var(--i)*70ms + .3s)}
+@keyframes ln{from{transform:scaleX(0)}}@keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.kpi small{color:var(--mu);font-weight:600;font-size:12px}.kpi b{display:block;font-family:Fraunces,serif;font-size:30px;margin-top:6px}.kpi em{font-style:normal;font-size:12px;color:var(--ok);font-weight:700}
+.grid2{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:18px;opacity:0;animation:up .7s var(--e) forwards;animation-delay:calc(var(--i,2)*80ms)}
+.card h3{margin:0 0 12px;font-size:15px;display:flex;justify-content:space-between;align-items:center}.card h3 small{color:var(--mu);font-weight:600;font-size:12px}
+.row{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--bd)}.row:first-of-type{border-top:0}
+.av{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}
+.row .tx{flex:1;min-width:0}.row b{display:block;font-size:14px}.row small{color:var(--mu)}
+.tag{font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;white-space:nowrap}
+.t-ok{background:#e7f8ee;color:#11823f}.t-w{background:#fff4dc;color:#a96500}.t-b{background:#fde8e8;color:#b42318}.t-i{background:#e1f6f6;color:#0b7c7e}.t-n{background:#eef1f2;color:#4b5f64}
+.bars{display:flex;align-items:flex-end;gap:10px;height:150px;padding-top:10px}.bars div{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.bars i{display:block;width:100%;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,var(--t),var(--n2));transform-origin:bottom;animation:gr 1s var(--e) both;animation-delay:calc(var(--i)*70ms + .3s)}
+@keyframes gr{from{transform:scaleY(0)}}.bars small{font-size:11px;color:var(--mu)}
+.kan{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
+.col{background:#e9f0f1;border-radius:16px;padding:12px;min-height:300px}.col h4{margin:2px 4px 12px;font-size:13px;display:flex;justify-content:space-between}
+.pc{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:13px;margin-bottom:10px;cursor:grab;opacity:0;animation:up .6s var(--e) forwards;animation-delay:calc(var(--i)*60ms);transition:transform .3s var(--s),box-shadow .3s}
+.pc:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(4,52,62,.12)}.pc b{display:block;font-size:13.5px}.pc small{color:var(--mu);display:block;margin-top:3px}
+.prog{height:6px;border-radius:9px;background:#e6eeef;margin-top:10px;overflow:hidden}.prog i{display:block;height:100%;background:var(--t2);border-radius:9px;transform-origin:left;animation:ln 1.2s var(--e) both .4s}
+.pc .ft{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:12px;color:var(--mu)}
+.cal{display:grid;grid-template-columns:60px repeat(5,1fr);gap:6px;margin-top:22px;background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:14px}
+.cal .h{font-weight:700;font-size:12px;color:var(--mu);text-align:center;padding:6px}.cal .hr{font-size:11px;color:var(--mu);padding-top:6px}
+.cal .s{min-height:56px;border-radius:10px;background:#f6f9f9}
+.ev{border-radius:10px;padding:8px 9px;font-size:12px;color:#fff;height:100%;opacity:0;animation:up .6s var(--e) forwards;animation-delay:calc(var(--i)*50ms)}
+.ev b{display:block;font-size:12.5px}
+table{width:100%;border-collapse:collapse;margin-top:6px}th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);padding:10px 8px;border-bottom:1px solid var(--bd)}
+td{padding:12px 8px;border-bottom:1px solid var(--bd)}tbody tr{opacity:0;animation:up .5s var(--e) forwards;animation-delay:calc(var(--i)*45ms)}tbody tr:hover{background:#f6fafa}
+.vf{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#0b7c7e}.vf::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px #dcf5e6}
+.toast{position:fixed;right:22px;bottom:22px;background:var(--n);color:#fff;padding:13px 18px;border-radius:14px;font-weight:600;transform:translateY(140%);transition:transform .5s var(--s);z-index:50;box-shadow:0 14px 34px rgba(0,0,0,.25)}.toast.on{transform:none}
+.demo{position:fixed;left:50%;top:10px;transform:translateX(-50%);background:#fff4dc;color:#7a4b00;font-size:12px;font-weight:700;padding:6px 12px;border-radius:99px;z-index:40;box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.mob{display:none}
+@media(max-width:900px){.app{grid-template-columns:1fr}aside{display:none}main{padding:56px 14px 90px}.kpis{grid-template-columns:1fr 1fr}.grid2,.kan{grid-template-columns:1fr}.cal{overflow-x:auto;grid-template-columns:50px repeat(5,minmax(110px,1fr))}
+ .mob{display:flex;position:fixed;left:0;right:0;bottom:0;background:var(--n);z-index:30;padding:8px 6px calc(8px + env(safe-area-inset-bottom))}.mob button{flex:1;color:#9fcfd2;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:3px}.mob button.on{color:var(--t)}.mob span{font-size:18px}
+ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}h1{font-size:26px}}
+</style></head><body>
+<div class="demo">DEMO · datos de ejemplo</div>
+<div class="app">
+<aside><div class="brand"><i>R</i><div><b>Rakoon Atlántico</b><small>Mentes Ágiles · Panel</small></div></div>
+<nav id="nav"><div class="glide" id="glide"></div></nav>
+<div class="side-foot">Hecho a medida por Airmate<br>Facturación preparada para Verifactu</div></aside>
+<main>
+<section class="page on" id="p-inicio">
+  <div class="top"><div><h1>Buenos días, <em>Ainhoa</em></h1><div class="sub" id="hoy"></div></div><button class="btn" onclick="go('agenda')">＋ Nueva sesión</button></div>
+  <div class="kpis">
+    <div class="kpi" style="--i:0"><small>Facturado este mes</small><b data-n="6840">0 €</b><em>▲ 18% vs. septiembre</em></div>
+    <div class="kpi" style="--i:1"><small>Proyectos en curso</small><b data-n="7">0</b><em>2 subvencionados</em></div>
+    <div class="kpi" style="--i:2"><small>Sesiones esta semana</small><b data-n="14">0</b><em>coaching y mentoring</em></div>
+    <div class="kpi" style="--i:3"><small>Horas de formación</small><b data-n="126">0</b><em>de 340 h del programa</em></div>
+  </div>
+  <div class="grid2">
+    <div class="card" style="--i:4"><h3>Ingresos por línea <small>últimos 6 meses</small></h3><div class="bars" id="bars"></div></div>
+    <div class="card" style="--i:5"><h3>Hoy <small id="nHoy"></small></h3><div id="listaHoy"></div></div>
+  </div>
+  <div class="grid2">
+    <div class="card" style="--i:6"><h3>Pendiente de cobro <small>3 facturas</small></h3><div id="cobros"></div></div>
+    <div class="card" style="--i:7"><h3>Justificaciones de subvención <small>próximos plazos</small></h3><div id="justif"></div></div>
+  </div>
+</section>
+<section class="page" id="p-proyectos">
+  <div class="top"><div><h1>Proyectos</h1><div class="sub">Desde la propuesta hasta la justificación. Arrastra cada proyecto de columna.</div></div><button class="btn" onclick="toast('Proyecto creado')">＋ Proyecto</button></div>
+  <div class="kan" id="kan"></div>
+</section>
+<section class="page" id="p-agenda">
+  <div class="top"><div><h1>Agenda</h1><div class="sub">Sesiones individuales, grupales, team building y formación</div></div><button class="btn" onclick="toast('Recordatorio enviado por WhatsApp a las 4 sesiones de mañana')">💬 Recordar las de mañana</button></div>
+  <div class="cal" id="cal"></div>
+</section>
+<section class="page" id="p-clientes">
+  <div class="top"><div><h1>Clientes</h1><div class="sub">Personas, empresas y entidades públicas en un mismo sitio</div></div><button class="btn" onclick="toast('Cliente añadido')">＋ Cliente</button></div>
+  <div class="card" style="margin-top:22px;--i:0"><table><thead><tr><th>Cliente</th><th>Tipo</th><th>Servicio</th><th>Sesiones</th><th>Estado</th></tr></thead><tbody id="cli"></tbody></table></div>
+</section>
+<section class="page" id="p-facturas">
+  <div class="top"><div><h1>Facturas</h1><div class="sub">Cada factura se registra automáticamente en Verifactu (AEAT)</div></div><button class="btn" onclick="nuevaFactura()">＋ Nueva factura</button></div>
+  <div class="card" style="margin-top:22px;--i:0"><table><thead><tr><th>Nº</th><th>Cliente</th><th>Concepto</th><th>Importe</th><th>Estado</th></tr></thead><tbody id="fac"></tbody></table></div>
+</section>
+</main></div>
+<div class="mob" id="mob"></div>
+<div class="toast" id="toast"></div>
+<script>
+const PAG=[['inicio','🏠','Inicio'],['proyectos','🗂️','Proyectos'],['agenda','🗓️','Agenda'],['clientes','👥','Clientes'],['facturas','🧾','Facturas']];
+const nav=document.getElementById('nav'),mob=document.getElementById('mob'),glide=document.getElementById('glide');
+PAG.forEach(([k,ic,t])=>{nav.insertAdjacentHTML('beforeend',`<button data-k="${k}" onclick="go('${k}')"><span>${ic}</span>${t}</button>`);mob.insertAdjacentHTML('beforeend',`<button data-k="${k}" onclick="go('${k}')"><span>${ic}</span>${t}</button>`)});
+function go(k){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.id==='p-'+k));document.querySelectorAll('[data-k]').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+ const b=nav.querySelector(`[data-k="${k}"]`);glide.style.top=b.offsetTop+'px';const pg=document.getElementById('p-'+k);pg.querySelectorAll('[style*="--i"]').forEach(e=>{e.style.animation='none';void e.offsetWidth;e.style.animation=''});contar(pg);scrollTo({top:0,behavior:'smooth'})}
+function toast(m){const t=document.getElementById('toast');t.textContent='✓ '+m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2400)}
+function contar(r){r.querySelectorAll('[data-n]').forEach(el=>{const n=+el.dataset.n,eur=el.textContent.includes('€'),t0=performance.now();(function p(t){const k=Math.min(1,(t-t0)/1200),v=Math.round(n*(1-Math.pow(1-k,4)));el.textContent=v.toLocaleString('es-ES',{useGrouping:'always'})+(eur?' €':'');if(k<1)requestAnimationFrame(p)})(t0)})}
+const C=['#004a59','#1aa8ab','#7c3aed','#e4572e','#f59e0b','#2563eb','#16a34a'];
+const ini=n=>n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
+document.getElementById('hoy').textContent=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}).replace(/^./,c=>c.toUpperCase());
+// barras
+const M=['May','Jun','Jul','Ago','Sep','Oct'],V=[3900,4600,3100,2400,5800,6840];
+document.getElementById('bars').innerHTML=V.map((v,i)=>`<div><b style="font-size:11px">${(v/1000).toFixed(1).replace('.',',')}k</b><i style="height:${v/6840*110}px;--i:${i}"></i><small>${M[i]}</small></div>`).join('');
+// hoy
+const HOY=[['10:00','Laura P.','Sesión de coaching individual · 3/8','#1aa8ab'],['12:00','Equipo Distribuciones Norte','Team building · 14 personas','#7c3aed'],['16:30','Grupo Liderazgo','Formación · módulo 4 de 6','#004a59'],['18:00','Marcos R.','Mentoring emprendimiento','#e4572e']];
+document.getElementById('nHoy').textContent=HOY.length+' sesiones';
+document.getElementById('listaHoy').innerHTML=HOY.map(([h,n,d,c])=>`<div class="row"><div class="av" style="background:${c}">${ini(n)}</div><div class="tx"><b>${h} · ${n}</b><small>${d}</small></div><button class="tag t-i" onclick="toast('Recordatorio enviado a ${n}')">💬 Recordar</button></div>`).join('');
+document.getElementById('cobros').innerHTML=[['Consultora Ría S.L.','Plan de transformación digital','1.450 €','Vence en 3 días','t-w'],['Asociación Vecinal Mar','Taller de comunicación','480 €','Vencida hace 6 días','t-b'],['Clínica Dental Sonrisa','Team building','720 €','Vence en 12 días','t-n']].map(([n,d,i,e,c])=>`<div class="row"><div class="tx"><b>${n}</b><small>${d}</small></div><div style="text-align:right"><b>${i}</b><span class="tag ${c}">${e}</span></div></div>`).join('');
+document.getElementById('justif').innerHTML=[['Programa Empleo Joven','Memoria final + hojas de firmas','31 oct','t-b',80],['Plan de Igualdad municipal','Informe de seguimiento','15 nov','t-w',55],['Formación Agentes del Cambio','Certificados de asistencia','30 nov','t-i',30]].map(([n,d,f,c,p])=>`<div class="row"><div class="tx"><b>${n}</b><small>${d}</small><div class="prog"><i style="width:${p}%"></i></div></div><span class="tag ${c}">${f}</span></div>`).join('');
+// kanban
+const K={'Propuesta':[['Ayuntamiento costero','Plan de Igualdad','6.200 €',10],['Consultora Ría S.L.','Agile para equipos','2.800 €',5]],'En curso':[['Programa Empleo Joven','Orientación laboral · 24 alumnos','18.500 €',72],['Grupo Liderazgo','Formación 340 h','9.400 €',37],['Distribuciones Norte','Team building trimestral','2.160 €',50]],'Justificación':[['Plan de Igualdad municipal','Informe de seguimiento','4.900 €',85]],'Cerrado':[['Escuela de verano emprendimiento','Talleres en institutos','3.100 €',100]]};
+document.getElementById('kan').innerHTML=Object.entries(K).map(([col,ps],ci)=>`<div class="col" data-col="${col}"><h4>${col}<span class="tag t-n">${ps.length}</span></h4>${ps.map((p,i)=>`<div class="pc" draggable="true" style="--i:${ci*3+i}"><b>${p[0]}</b><small>${p[1]}</small><div class="prog"><i style="width:${p[3]}%"></i></div><div class="ft"><span>${p[3]}% completado</span><b style="color:var(--tx)">${p[2]}</b></div></div>`).join('')}</div>`).join('');
+let drag=null;document.querySelectorAll('.pc').forEach(c=>{c.addEventListener('dragstart',()=>drag=c)});
+document.querySelectorAll('.col').forEach(col=>{col.addEventListener('dragover',e=>e.preventDefault());col.addEventListener('drop',()=>{if(drag){col.appendChild(drag);col.querySelectorAll('h4 .tag').forEach(t=>t.textContent=col.querySelectorAll('.pc').length);document.querySelectorAll('.col').forEach(c=>c.querySelector('h4 .tag').textContent=c.querySelectorAll('.pc').length);toast('Proyecto movido a «'+col.dataset.col+'»')}})});
+// agenda
+const D=['Lun','Mar','Mié','Jue','Vie'],H=['9:00','10:00','11:00','12:00','16:00','17:00','18:00'];
+const EV={'0-1':['Laura P.','Coaching','#1aa8ab'],'0-4':['Grupo Liderazgo','Formación','#004a59'],'1-0':['Ayto. costero','Reunión propuesta','#f59e0b'],'1-3':['Distribuciones Norte','Team building','#7c3aed'],'2-1':['Marcos R.','Mentoring','#e4572e'],'2-5':['Empleo Joven','Orientación grupal','#2563eb'],'3-2':['Consultora Ría','Agile · sesión 2','#16a34a'],'3-4':['Grupo Liderazgo','Formación','#004a59'],'4-0':['Laura P.','Coaching','#1aa8ab'],'4-6':['Webinar','Comunicación','#e4572e']};
+let cal='<div></div>'+D.map(d=>`<div class="h">${d}</div>`).join('');let n=0;
+H.forEach((h,hi)=>{cal+=`<div class="hr">${h}</div>`;D.forEach((_,di)=>{const e=EV[di+'-'+hi];cal+=`<div class="s">${e?`<div class="ev" style="background:${e[2]};--i:${n++}" onclick="toast('Sesión de ${e[0]} abierta')"><b>${e[0]}</b>${e[1]}</div>`:''}</div>`})});
+document.getElementById('cal').innerHTML=cal;
+// clientes
+const CL=[['Laura P.','Particular','Coaching individual','3 / 8','t-ok','Activa'],['Distribuciones Norte','Empresa','Team building','4 / 4','t-ok','Activa'],['Ayuntamiento costero','Entidad pública','Plan de Igualdad','—','t-w','Propuesta enviada'],['Marcos R.','Particular','Mentoring emprendimiento','5 / 6','t-ok','Activo'],['Consultora Ría S.L.','Empresa','Agile para equipos','2 / 6','t-ok','Activa'],['Asociación Vecinal Mar','Asociación','Taller comunicación','1 / 1','t-b','Factura vencida'],['Grupo Liderazgo','Grupo','Formación 340 h','126 h','t-i','En curso']];
+document.getElementById('cli').innerHTML=CL.map((c,i)=>`<tr style="--i:${i}"><td><div style="display:flex;align-items:center;gap:10px"><div class="av" style="background:${C[i%7]};width:30px;height:30px;font-size:11px">${ini(c[0])}</div><b>${c[0]}</b></div></td><td>${c[1]}</td><td>${c[2]}</td><td>${c[3]}</td><td><span class="tag ${c[4]}">${c[5]}</span></td></tr>`).join('');
+// facturas
+const F=[['2026-041','Distribuciones Norte','Team building octubre','720,00 €','t-ok','Pagada'],['2026-040','Consultora Ría S.L.','Plan transformación digital','1.450,00 €','t-w','Pendiente'],['2026-039','Laura P.','Bono 8 sesiones coaching','560,00 €','t-ok','Pagada'],['2026-038','Asociación Vecinal Mar','Taller de comunicación','480,00 €','t-b','Vencida'],['2026-037','Grupo Liderazgo','Formación · septiembre','2.350,00 €','t-ok','Pagada']];
+function pintaF(){document.getElementById('fac').innerHTML=F.map((f,i)=>`<tr style="--i:${i}"><td><b>${f[0]}</b><div class="vf">Verifactu ✓</div></td><td>${f[1]}</td><td>${f[2]}</td><td><b>${f[3]}</b></td><td><span class="tag ${f[4]}">${f[5]}</span></td></tr>`).join('')}
+pintaF();
+function nuevaFactura(){F.unshift(['2026-042','Marcos R.','Mentoring · 6 sesiones','390,00 €','t-w','Pendiente']);pintaF();toast('Factura 2026-042 creada y registrada en Verifactu')}
+requestAnimationFrame(()=>go('inicio'));
+</script></body></html>
