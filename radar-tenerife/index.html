@@ -1,184 +1,422 @@
 <!doctype html>
 <html lang="es"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Radar Tenerife</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Radar Canarias</title>
 <meta name="theme-color" content="#07080a">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Radar">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-512.png"><link rel="icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#07080a;--panel:#0f1115;--line:#1f232b;--txt:#e9edf2;--mut:#7b8492;--red:#ff2d3d;--amb:#ffb020;--grn:#2dff8a;--blu:#3db8ff;--vio:#b46bff}
+:root{--bg:#07080a;--panel:#0f1115;--line:#1f232b;--txt:#e9edf2;--mut:#7b8492;--red:#ff2d3d;--amb:#ffb020;--grn:#2dff8a;--blu:#3db8ff;--vio:#b46bff;--skin:#ff2d3d;--lcdbg:linear-gradient(180deg,#0d0f13,#050608)}
+body[data-skin="uniden"]{--skin:#3db8ff;--lcdbg:linear-gradient(180deg,#07121c,#02070c)}
+body[data-skin="valentine"]{--skin:#ff3b2f;--lcdbg:linear-gradient(180deg,#120707,#060202)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;overflow:hidden}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
+button{font-family:inherit}
 #app{display:grid;grid-template-rows:auto 1fr auto;height:100dvh}
 header{display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:linear-gradient(#0c0e12,#07080a);border-bottom:1px solid var(--line)}
-.logo{font-family:Orbitron;font-weight:900;letter-spacing:.14em;font-size:15px}.logo b{color:var(--red)}
+.logo{font-family:Orbitron;font-weight:900;letter-spacing:.14em;font-size:15px}.logo b{color:var(--skin)}
 .gps{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);font-weight:600}
 .dot{width:9px;height:9px;border-radius:50%;background:#444}.dot.on{background:var(--grn);box-shadow:0 0 10px var(--grn);animation:pulse 1.6s infinite}
 @keyframes pulse{50%{opacity:.35}}
 main{position:relative;min-height:0}
 #map{position:absolute;inset:0;background:#0b0d10}
-.leaflet-container{background:#0b0d10}.leaflet-tile-pane{filter:invert(1) hue-rotate(185deg) brightness(.82) contrast(.92) saturate(.5)}.leaflet-control-attribution{background:rgba(0,0,0,.55)!important;color:#777!important;font-size:9px}.leaflet-control-attribution a{color:#999!important}
+.leaflet-container{background:#0b0d10}.leaflet-tile-pane{filter:invert(1) hue-rotate(185deg) brightness(.82) contrast(.92) saturate(.5)}
+.leaflet-control-attribution{background:rgba(0,0,0,.55)!important;color:#777!important;font-size:9px}.leaflet-control-attribution a{color:#999!important}
 .cam{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle,#ff4757 0 38%,rgba(255,45,61,.25) 40%);display:grid;place-items:center;font:800 9px Inter;color:#fff;box-shadow:0 0 14px rgba(255,45,61,.7)}
+.cam.tr{background:radial-gradient(circle,#ffb020 0 38%,rgba(255,176,32,.25) 40%);box-shadow:0 0 14px rgba(255,176,32,.7);color:#111}
+.cam.sem{background:radial-gradient(circle,#b46bff 0 38%,rgba(180,107,255,.25) 40%);box-shadow:0 0 14px rgba(180,107,255,.7)}
+.cam.com{background:radial-gradient(circle,#3db8ff 0 38%,rgba(61,184,255,.25) 40%);box-shadow:0 0 14px rgba(61,184,255,.7);font-size:13px}
+.gas{background:#0f1a12;border:1px solid #2dff8a;color:#2dff8a;border-radius:8px;padding:2px 5px;font:800 10px Inter;white-space:nowrap;box-shadow:0 0 10px rgba(45,255,138,.35)}
+.gas.best{background:#2dff8a;color:#04140a}
 .me{width:20px;height:20px;border-radius:50%;background:var(--blu);border:3px solid #fff;box-shadow:0 0 0 8px rgba(61,184,255,.25),0 0 20px var(--blu)}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#14171c;color:var(--txt);border:1px solid var(--line)}
-.pop b{font-family:Orbitron;color:var(--red);font-size:18px}.pop small{display:block;color:var(--mut);margin-top:4px;max-width:200px}
-/* Pantalla del detector */
-.det{position:absolute;left:12px;right:12px;top:12px;z-index:500;background:linear-gradient(180deg,#0d0f13,#050608);border:1px solid #23272f;border-radius:16px;padding:12px 14px;box-shadow:0 20px 50px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04);display:flex;align-items:center;gap:14px}
+.pop b{font-family:Orbitron;color:var(--red);font-size:18px}.pop small{display:block;color:var(--mut);margin-top:4px;max-width:220px}
+/* Detector */
+.det{position:absolute;left:12px;right:12px;top:12px;z-index:500;background:var(--lcdbg);border:1px solid #23272f;border-radius:16px;padding:12px 14px;box-shadow:0 20px 50px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04);display:flex;align-items:center;gap:12px}
 .lcd{flex:1;min-width:0}
-.band{font-family:Orbitron;font-weight:900;font-size:26px;letter-spacing:.06em;color:inherit;text-shadow:0 0 14px currentColor;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.band{font-family:Orbitron;font-weight:900;font-size:24px;letter-spacing:.06em;color:inherit;text-shadow:0 0 14px currentColor;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sub{font-size:12px;color:var(--mut);margin-top:6px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bars{display:flex;gap:3px;align-items:flex-end;height:34px}
 .bars i{width:6px;border-radius:2px;background:#1c2027;transition:background .08s}
 .bars i.on{background:currentColor;box-shadow:0 0 8px currentColor}
-.spd{text-align:right}.spd b{font-family:Orbitron;font-size:30px;font-weight:900;display:block;line-height:1}.spd span{font-size:10px;color:var(--mut);letter-spacing:.2em}
+.spd{text-align:right}.spd b{font-family:Orbitron;font-size:28px;font-weight:900;display:block;line-height:1;color:var(--txt)}.spd span{font-size:10px;color:var(--mut);letter-spacing:.2em}
+.limit{width:44px;height:44px;border-radius:50%;background:#fff;border:5px solid #e3202a;display:none;place-items:center;font:900 16px Inter;color:#111;flex:none}
+.limit.on{display:grid}.limit.over{animation:flash2 .5s steps(2) infinite}@keyframes flash2{50%{background:#e3202a;color:#fff}}
+.arrows{display:none;flex-direction:column;gap:3px;align-items:center}
+body[data-skin="valentine"] .arrows{display:flex}
+.arrows i{width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;opacity:.18;color:inherit}
+.arrows .up{border-bottom:14px solid currentColor}.arrows .dn{border-top:14px solid currentColor}.arrows .sd{width:22px;height:5px;border:0;background:currentColor;border-radius:2px}
+.arrows i.on{opacity:1;filter:drop-shadow(0 0 6px currentColor)}
 .det.alert{animation:flash .35s steps(2) infinite}@keyframes flash{50%{border-color:currentColor;box-shadow:0 0 40px -6px currentColor}}
+.tramo{position:absolute;left:12px;right:12px;top:96px;z-index:500;background:#1a1405;border:1px solid var(--amb);color:var(--amb);border-radius:12px;padding:8px 12px;font-size:13px;font-weight:700;display:none;justify-content:space-between;align-items:center}
+.tramo.on{display:flex}.tramo b{font-family:Orbitron;font-size:20px}
 .fab{position:absolute;right:12px;bottom:12px;z-index:500;display:flex;flex-direction:column;gap:8px}
 .fab button{width:46px;height:46px;border-radius:14px;border:1px solid var(--line);background:#111419;color:var(--txt);font-size:19px;cursor:pointer}
 .fab button.on{border-color:var(--blu);color:var(--blu)}
-.count{position:absolute;left:12px;bottom:12px;z-index:500;background:#111419;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:12px;color:var(--mut)}.count b{color:var(--red);font-family:Orbitron}
-/* Botonera */
-footer{background:#0a0b0e;border-top:1px solid var(--line);padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
-.pads{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-.pad{position:relative;border:1px solid var(--line);background:linear-gradient(180deg,#14171d,#0c0e12);border-radius:14px;padding:12px 4px 10px;color:var(--c);cursor:pointer;font-family:Orbitron;font-weight:700;font-size:13px;letter-spacing:.04em;transition:transform .08s;overflow:hidden}
-.pad small{display:block;font-family:Inter;font-size:9.5px;color:var(--mut);font-weight:600;margin-top:4px;letter-spacing:0}
+.fab .rep{background:#0b2233;border-color:var(--blu);color:var(--blu);font-size:22px}
+.count{position:absolute;left:12px;bottom:12px;z-index:500;background:#111419;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:11.5px;color:var(--mut);line-height:1.5}.count b{font-family:Orbitron}
+/* Hoja inferior */
+footer{background:#0a0b0e;border-top:1px solid var(--line);padding:0 12px calc(10px + env(safe-area-inset-bottom));display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;gap:4px;padding:8px 0}
+.tabs button{flex:1;background:none;border:0;color:var(--mut);font-weight:700;font-size:12px;padding:8px 2px;border-radius:10px;cursor:pointer}
+.tabs button.on{background:#15181e;color:var(--txt)}
+.tab{display:none;max-height:34dvh;overflow:auto}.tab.on{display:block}
+.pads{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.pad{position:relative;border:1px solid var(--line);background:linear-gradient(180deg,#14171d,#0c0e12);border-radius:13px;padding:11px 3px 9px;color:var(--c);cursor:pointer;font-family:Orbitron;font-weight:700;font-size:12.5px;letter-spacing:.03em;transition:transform .08s;overflow:hidden}
+.pad small{display:block;font-family:Inter;font-size:9px;color:var(--mut);font-weight:600;margin-top:4px;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pad:active{transform:scale(.95)}
+.pad.mio::after{content:'●';position:absolute;top:4px;right:6px;font-size:8px;color:var(--grn)}body.edit .pad{border-style:dashed;border-color:var(--amb)}
 .pad.play{border-color:var(--c);box-shadow:0 0 24px -6px var(--c),inset 0 0 20px -8px var(--c)}
-.opts{display:flex;gap:8px;margin-top:10px;align-items:center;font-size:12px;color:var(--mut)}
-.opts label{display:flex;align-items:center;gap:6px}.opts select,.opts button{background:#14171d;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:6px 8px;font:inherit}
-.opts .r{margin-left:auto}
-.warn{font-size:10.5px;color:#5c6470;margin-top:8px;line-height:1.4}
-@media (max-width:420px){.pad{font-size:11px;padding:11px 2px 9px}.pad small{font-size:8.5px}.band{font-size:21px}.spd b{font-size:24px}}
-@media (min-width:900px){#app{grid-template-columns:1fr 420px;grid-template-rows:auto 1fr}header{grid-column:1/3}footer{border-top:0;border-left:1px solid var(--line);overflow:auto}.pads{grid-template-columns:1fr 1fr}.pad{padding:22px 8px;font-size:17px}}
-</style></head><body>
+.row{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--mut);margin:8px 0;flex-wrap:wrap}
+.row select,.row button,.btn{background:#14171d;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:8px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.btn.prim{border-color:var(--grn);color:var(--grn)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}.seg button{background:none;border:0;color:var(--mut);padding:8px 12px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}.seg button.on{background:#1b1f26;color:var(--txt)}
+.lst{display:flex;flex-direction:column;gap:6px}
+.it{display:flex;align-items:center;gap:10px;background:#101318;border:1px solid var(--line);border-radius:11px;padding:9px 11px;font-size:12.5px;cursor:pointer}
+.it .p{font-family:Orbitron;font-weight:900;font-size:16px;color:var(--grn);min-width:62px}
+.it .n{flex:1;min-width:0}.it .n b{display:block;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.it .n small{color:var(--mut)}
+.it .d{color:var(--mut);font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.st{background:#101318;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}.st b{display:block;font-family:Orbitron;font-size:20px}.st span{font-size:10.5px;color:var(--mut)}
+.warn{font-size:10.5px;color:#5c6470;margin-top:10px;line-height:1.45}
+label.ck{display:flex;align-items:center;gap:7px}
+/* Modo coche */
+#coche{position:fixed;inset:0;z-index:2000;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:2vh;padding:env(safe-area-inset-top) 20px env(safe-area-inset-bottom)}
+#coche.on{display:flex}
+#coche .big{font-family:Orbitron;font-weight:900;font-size:min(34vw,38vh);line-height:.9;color:#fff}
+#coche .u{font-size:14px;letter-spacing:.4em;color:var(--mut)}
+#coche .lim{width:min(22vw,20vh);height:min(22vw,20vh);border-radius:50%;background:#fff;border:min(2.6vw,2.4vh) solid #e3202a;display:grid;place-items:center;font:900 min(8vw,7vh) Inter;color:#111}
+#coche .nx{font-family:Orbitron;font-size:min(6vw,5vh);font-weight:700;text-align:center;color:var(--grn)}
+#coche .nx.al{color:var(--red);animation:pulse .5s infinite}
+#coche .x{position:absolute;top:calc(14px + env(safe-area-inset-top));right:16px;background:#15181e;border:1px solid var(--line);color:#fff;border-radius:12px;padding:10px 14px;font-size:14px}
+#coche .tr{color:var(--amb);font-weight:700;font-size:min(4.4vw,3.6vh)}
+#coche.over .big{color:var(--red)}
+@media (orientation:landscape) and (max-height:600px){#coche{flex-direction:row;gap:6vw}#coche .big{font-size:52vh}}
+/* modal */
+.mod{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center}
+.mod.on{display:flex}.mod .bx{background:#101318;border:1px solid var(--line);border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));width:100%;max-width:520px}
+.mod h3{margin:0 0 12px;font-family:Orbitron;font-size:15px;letter-spacing:.08em}
+.mod .g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mod .g button{background:#15181e;border:1px solid var(--line);color:var(--txt);border-radius:14px;padding:16px 8px;font-size:14px;font-weight:700;cursor:pointer}
+.toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);opacity:0;transition:.25s;background:#15181e;border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-size:13px;z-index:4000;pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%)}
+@media (max-width:380px){.pad{font-size:11px}.band{font-size:20px}.spd b{font-size:23px}}
+@media (min-width:900px){#app{grid-template-columns:1fr 440px;grid-template-rows:auto 1fr}header{grid-column:1/3}footer{border-top:0;border-left:1px solid var(--line);overflow:auto}.tab{max-height:none}.pads{grid-template-columns:repeat(3,1fr)}.pad{padding:18px 6px;font-size:15px}}
+</style></head><body data-skin="escort">
 <div id="app">
-<header><div class="logo">RADAR<b>·</b>TENERIFE</div><div class="gps"><span class="dot" id="gdot"></span><span id="gtxt">GPS apagado</span></div></header>
+<header><div class="logo">RADAR<b>·</b>CANARIAS</div><div class="gps"><span class="dot" id="gdot"></span><span id="gtxt">GPS apagado</span></div></header>
 <main>
   <div id="map"></div>
   <div class="det" id="det" style="color:var(--grn)">
     <div class="bars" id="bars"></div>
+    <div class="arrows" id="arrows"><i class="up"></i><i class="sd"></i><i class="dn"></i></div>
     <div class="lcd"><div class="band" id="band">READY</div><div class="sub" id="sub">Pulsa ◎ para activar el GPS</div></div>
+    <div class="limit" id="limit">--</div>
     <div class="spd"><b id="kmh">--</b><span>KM/H</span></div>
   </div>
-  <div class="count"><b id="ncam">0</b> radares fijos</div>
-  <div class="fab"><button id="bgps" title="Activar GPS">◎</button><button id="bfol" title="Seguirme">➤</button><button id="bmute" title="Silencio">🔊</button></div>
+  <div class="tramo" id="tramo"><span>TRAMO <span id="trv"></span> · media</span><b id="trm">--</b><span id="trd">0 m</span></div>
+  <div class="count" id="count"></div>
+  <div class="fab"><button class="rep" id="brep" title="Avisar">＋</button><button id="bgps" title="Activar GPS">◎</button><button id="bfol" title="Seguirme">➤</button><button id="bcar" title="Modo coche">🚗</button><button id="bmute" title="Silencio">🔊</button></div>
 </main>
 <footer>
-  <div class="pads">
-    <button class="pad" data-s="x" style="--c:var(--amb)">X<small>X band</small></button>
-    <button class="pad" data-s="k" style="--c:var(--grn)">K<small>K band</small></button>
-    <button class="pad" data-s="ka" style="--c:var(--red)">Ka<small>Ka band</small></button>
-    <button class="pad" data-s="laser" style="--c:var(--vio)">LASER<small>Laser</small></button>
-    <button class="pad" data-s="gps" style="--c:var(--blu)">GPS<small>GPS connected</small></button>
+  <div class="tabs"><button class="on" data-t="snd">Sonidos</button><button data-t="gas">Gasolina</button><button data-t="via">Viaje</button><button data-t="cfg">Ajustes</button></div>
+  <div class="tab on" id="t-snd">
+    <div class="pads" id="pads"></div>
+    <div class="row"><button class="btn" id="bdemo">🎬 Modo demo: OFF</button><button class="btn" id="bedit">✏️ Mis sonidos</button></div>
+    <div class="warn" id="edittx" style="display:none;color:var(--amb)">Toca un botón para grabar o subir tu propio sonido. Se guarda solo en este móvil. Pulsa otra vez «Mis sonidos» para terminar.</div>
   </div>
-  <div class="opts"><label><input type="checkbox" id="voz" checked> Voz</label><label>Aviso a <select id="dist"><option>300</option><option selected>500</option><option>800</option><option>1000</option></select> m</label><button class="r" id="bupd">↻ Actualizar radares</button></div>
-  <div class="warn">Datos de radares fijos: OpenStreetMap. Pueden no estar completos ni actualizados. Los sonidos de bandas son efectos de demostración; esta app no detecta señales de radar. Conduce respetando los límites.</div>
+  <div class="tab" id="t-gas">
+    <div class="row"><div class="seg" id="fuel"><button class="on" data-f="Precio Gasolina 95 E5">Gasolina 95</button><button data-f="Precio Gasoleo A">Diésel</button><button data-f="Precio Gasolina 98 E5">98</button></div><span id="gasinfo"></span></div>
+    <div class="lst" id="gaslist"><div class="it">Cargando precios oficiales…</div></div>
+  </div>
+  <div class="tab" id="t-via">
+    <div class="stats"><div class="st"><b id="v-km">0,0</b><span>km</span></div><div class="st"><b id="v-max">0</b><span>vel. máx.</span></div><div class="st"><b id="v-med">0</b><span>media km/h</span></div><div class="st"><b id="v-t">0:00</b><span>tiempo</span></div><div class="st"><b id="v-rad">0</b><span>radares</span></div><div class="st"><b id="v-exc">0</b><span>excesos</span></div></div>
+    <div class="row"><button class="btn" id="vreset">↺ Nuevo viaje</button><span>Se guarda en este móvil</span></div>
+  </div>
+  <div class="tab" id="t-cfg">
+    <div class="row">Estilo <div class="seg" id="skins"><button class="on" data-s="escort">Escort</button><button data-s="uniden">Uniden</button><button data-s="valentine">Valentine</button></div></div>
+    <div class="row">Aviso a <select id="dist"><option>300</option><option selected>500</option><option>800</option><option>1000</option></select> m · Voz <select id="lang"><option value="en">Inglés (USA)</option><option value="es">Español</option></select></div>
+    <div class="row"><label class="ck"><input type="checkbox" id="ckfijo" checked> Fijos</label><label class="ck"><input type="checkbox" id="cktr" checked> Tramos</label><label class="ck"><input type="checkbox" id="cksem" checked> Semáforos</label><label class="ck"><input type="checkbox" id="ckcom" checked> Avisos</label><label class="ck"><input type="checkbox" id="ckgas" checked> Gasolineras</label></div>
+    <div class="row">Voz <select id="voz" style="max-width:190px"></select><button class="btn" id="bvdet">🎚 Estilo detector</button></div>
+    <div class="row">Tono <input type="range" id="vpitch" min="0.5" max="1.6" step="0.05" value="1.1" style="flex:1"> Velocidad <input type="range" id="vrate" min="0.6" max="1.4" step="0.05" value="0.95" style="flex:1"></div>
+    <div class="row"><label class="ck"><input type="checkbox" id="cklim" checked> Avisar si paso el límite de la vía</label></div>
+    <div class="row"><button class="btn" id="bupd">↻ Actualizar radares</button><button class="btn" id="btest">🔈 Probar sonido</button></div>
+    <div class="warn">Radares fijos, de tramo y de semáforo: OpenStreetMap (pueden faltar o estar desactualizados). Precios: Ministerio para la Transición Ecológica. Los sonidos de bandas son efectos: esta app no detecta señales de radar (los detectores están prohibidos en España; los avisadores por GPS, no). En iPhone, sube el volumen; suena aunque esté en silencio. Conduce respetando los límites.</div>
+  </div>
 </footer>
 </div>
+<div id="coche"><button class="x" id="cx">✕ Salir</button><div><div class="big" id="cbig">--</div><div class="u" style="text-align:center">KM/H</div></div><div style="display:flex;flex-direction:column;align-items:center;gap:2vh"><div class="lim" id="clim">--</div><div class="nx" id="cnx">Sin radares cerca</div><div class="tr" id="ctr"></div></div></div>
+<div class="mod" id="mrep"><div class="bx"><h3>¿QUÉ HAY AQUÍ?</h3><div class="g">
+  <button data-r="control">👮 Control policía</button><button data-r="movil">📸 Radar móvil</button><button data-r="accidente">💥 Accidente</button><button data-r="obra">🚧 Obras / atasco</button></div>
+  <div class="row" style="justify-content:center"><button class="btn" id="mrepx">Cancelar</button></div><div class="warn" style="text-align:center">El aviso se ve en el mapa de todos durante 90 minutos.</div></div></div>
+<div class="mod" id="mson"><div class="bx"><h3 id="msontit">SONIDO</h3>
+  <div class="g"><button id="mgrab">🎙 Grabar</button><button id="msub">📁 Subir audio</button><button id="mprob">▶️ Probar</button><button id="mquit">↺ Original</button></div>
+  <input type="file" id="mfile" accept="audio/*,video/*" style="display:none">
+  <div class="row" style="justify-content:center"><button class="btn" id="msonx">Cerrar</button></div><div class="warn" style="text-align:center" id="msoninfo"></div></div></div>
+<div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-let CAMS = [{"lat": 28.472686, "lon": -16.426773, "v": 80, "dir": "270", "d": "Radar 100 kmh; F100 CHIN Tenerife TF-5 Km 20.66 Curva Sauzal DIR Puerto Cruz CL", "t": "fijo"}, {"lat": 28.476178, "lon": -16.307214, "v": 60, "dir": "10", "d": "Radar 60 kmh; RADAR FIJO 60km/h", "t": "fijo"}, {"lat": 28.382304, "lon": -16.36276, "v": 100, "dir": "0", "d": "Radar 120 kmh; F120 GUAN CHIN Tenerife TF-1 Km 13.85 Caletillas DIR StaCruz CL", "t": "fijo"}, {"lat": 28.479082, "lon": -16.307758, "v": 60, "dir": "160", "d": "Radar 60 kmh", "t": "fijo"}, {"lat": 28.057966, "lon": -16.583248, "v": 120, "dir": "240", "d": "Radar 120 kmh; F120 CHIN Tenerife TF-1 Km 59.27 Aeropuerto DIR Sur CL", "t": "fijo"}, {"lat": 28.49101, "lon": -16.374494, "v": 120, "dir": "60", "d": "Radar 120 kmh; F120 CHIN Tenerife TF-5 Km 15.01 Guamasa DIR Sta. Cruz CL", "t": "fijo"}, {"lat": 28.470525, "lon": -16.432884, "v": null, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.094445, "lon": -16.729959, "v": null, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.470226, "lon": -16.433263, "v": null, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.472682, "lon": -16.42715, "v": 80, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.468594, "lon": -16.433776, "v": 80, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.435344, "lon": -16.301436, "v": null, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.46438, "lon": -16.439699, "v": 80, "dir": "55", "d": "", "t": "fijo"}, {"lat": 28.46481, "lon": -16.439206, "v": 80, "dir": "235", "d": "", "t": "fijo"}, {"lat": 28.472441, "lon": -16.42674, "v": null, "dir": "85", "d": "", "t": "fijo"}, {"lat": 28.472708, "lon": -16.426837, "v": 80, "dir": "270", "d": "", "t": "fijo"}, {"lat": 28.453743, "lon": -16.278092, "v": null, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.453812, "lon": -16.278096, "v": null, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.453971, "lon": -16.278149, "v": null, "dir": "160", "d": "", "t": "fijo"}, {"lat": 28.463504, "lon": -16.25695, "v": null, "dir": "80", "d": "", "t": "fijo"}, {"lat": 28.463558, "lon": -16.256799, "v": null, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.388468, "lon": -16.669028, "v": 70, "dir": "260", "d": "", "t": "fijo"}, {"lat": 28.049406, "lon": -16.630924, "v": 50, "dir": "320", "d": "", "t": "fijo"}, {"lat": 28.052081, "lon": -16.641735, "v": 50, "dir": "300", "d": "", "t": "fijo"}, {"lat": 28.472953, "lon": -16.339724, "v": 70, "dir": "70", "d": "", "t": "fijo"}, {"lat": 28.434745, "lon": -16.301621, "v": 70, "dir": "1", "d": "", "t": "fijo"}, {"lat": 28.177555, "lon": -16.4494, "v": 60, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.095307, "lon": -16.730183, "v": 120, "dir": "150", "d": "", "t": "fijo"}, {"lat": 28.033742, "lon": -16.645086, "v": 50, "dir": "80", "d": "", "t": "fijo"}, {"lat": 28.023193, "lon": -16.679701, "v": 70, "dir": "300", "d": "", "t": "fijo"}, {"lat": 28.034289, "lon": -16.598373, "v": 70, "dir": "130", "d": "", "t": "fijo"}, {"lat": 28.4051, "lon": -16.522984, "v": 70, "dir": "320", "d": "", "t": "fijo"}];
+// ======= Datos =======
+let DATA = {"fijos": [{"lat": 28.047245, "lon": -15.423882, "v": 100, "d": "F100 A300 GranCanaria GC-3 Km 1.5 Marzag$n DIR Aeropuerto CL"}, {"lat": 28.472686, "lon": -16.426773, "v": 80, "d": "Radar 100 kmh; F100 CHIN Tenerife TF-5 Km 20.66 Curva Sauzal DIR Puerto Cruz CL"}, {"lat": 28.476178, "lon": -16.307214, "v": 60, "d": "Radar 60 kmh; RADAR FIJO 60km/h"}, {"lat": 28.48076, "lon": -13.868737, "v": 90, "d": ""}, {"lat": 28.382304, "lon": -16.36276, "v": 100, "d": "Radar 120 kmh; F120 GUAN CHIN Tenerife TF-1 Km 13.85 Caletillas DIR StaCruz CL"}, {"lat": 28.957817, "lon": -13.578434, "v": 100, "d": ""}, {"lat": 27.949072, "lon": -15.387136, "v": 100, "d": "F100 A300 GranCanaria GC-1 Km 15.3 Gando DIR Las Palmas CL"}, {"lat": 28.474567, "lon": -13.868509, "v": 90, "d": ""}, {"lat": 28.479082, "lon": -16.307758, "v": 60, "d": "Radar 60 kmh"}, {"lat": 28.057966, "lon": -16.583248, "v": 120, "d": "Radar 120 kmh; F120 CHIN Tenerife TF-1 Km 59.27 Aeropuerto DIR Sur CL"}, {"lat": 28.49101, "lon": -16.374494, "v": 120, "d": "Radar 120 kmh; F120 CHIN Tenerife TF-5 Km 15.01 Guamasa DIR Sta. Cruz CL"}, {"lat": 28.958048, "lon": -13.578744, "v": 100, "d": ""}, {"lat": 27.951676, "lon": -15.387507, "v": 100, "d": "F100 A300 GranCanaria GC-1 Km 15.0 Gando DIR Sur CL"}, {"lat": 28.095619, "lon": -15.41229, "v": 80, "d": ""}, {"lat": 28.236817, "lon": -14.059666, "v": 60, "d": ""}, {"lat": 28.031231, "lon": -15.400758, "v": 100, "d": "F100 A300 GranCanaria GC-1 Km 5.35 Jin$mar DIR Las Palmas CL"}, {"lat": 28.079365, "lon": -15.416065, "v": 80, "d": ""}, {"lat": 28.086532, "lon": -15.416131, "v": 80, "d": ""}, {"lat": 28.125123, "lon": -15.427217, "v": 80, "d": ""}, {"lat": 27.775033, "lon": -15.550214, "v": 100, "d": "F100 A300 GranCanaria GC-1 Km 42.2 Playa Ingles DIR Sur CL"}, {"lat": 27.770201, "lon": -15.674589, "v": 100, "d": "Radar 100 kmh; F100 A300 GranCanaria GC-1 Km 56.6 Arguinegu$n DIR Las Palmas CL"}, {"lat": 28.114992, "lon": -15.418021, "v": 80, "d": ""}, {"lat": 28.653702, "lon": -17.852252, "v": 50, "d": ""}, {"lat": 28.063681, "lon": -15.437719, "v": 80, "d": ""}, {"lat": 28.116363, "lon": -15.510037, "v": 30, "d": ""}, {"lat": 28.988111, "lon": -13.684563, "v": 60, "d": ""}, {"lat": 29.00091, "lon": -13.684054, "v": 60, "d": ""}, {"lat": 28.656114, "lon": -17.909987, "v": 40, "d": ""}, {"lat": 28.658539, "lon": -17.919616, "v": 30, "d": ""}, {"lat": 28.95545, "lon": -13.735058, "v": 60, "d": ""}, {"lat": 28.980165, "lon": -13.695825, "v": 60, "d": ""}, {"lat": 28.97131, "lon": -13.709217, "v": 60, "d": ""}, {"lat": 28.388468, "lon": -16.669028, "v": 70, "d": ""}, {"lat": 29.025977, "lon": -13.6852, "v": 60, "d": ""}, {"lat": 28.677726, "lon": -17.769752, "v": 30, "d": ""}, {"lat": 28.686022, "lon": -17.768516, "v": 30, "d": ""}, {"lat": 28.036302, "lon": -15.488196, "v": 40, "d": ""}, {"lat": 28.472953, "lon": -16.339724, "v": 70, "d": ""}, {"lat": 28.434745, "lon": -16.301621, "v": 70, "d": ""}, {"lat": 28.177555, "lon": -16.4494, "v": 60, "d": ""}, {"lat": 28.095307, "lon": -16.730183, "v": 120, "d": ""}, {"lat": 28.033742, "lon": -16.645086, "v": 50, "d": ""}, {"lat": 28.023193, "lon": -16.679701, "v": 70, "d": ""}, {"lat": 28.034289, "lon": -16.598373, "v": 70, "d": ""}, {"lat": 28.120255, "lon": -15.514847, "v": 80, "d": ""}, {"lat": 28.4051, "lon": -16.522984, "v": 70, "d": ""}], "tramos": [{"a": [28.472638, -16.426845], "b": [28.464664, -16.439393], "v": 80}, {"a": [28.950686, -13.78348], "b": [28.93882, -13.813071], "v": 60}, {"a": [28.114003, -15.441741], "b": [28.09191, -15.447704], "v": 80}, {"a": [28.049485, -16.630973], "b": [28.052124, -16.641876], "v": 50}, {"a": [28.052124, -16.641876], "b": [28.049485, -16.630973], "v": 50}, {"a": [28.93882, -13.813071], "b": [28.950686, -13.78348], "v": 60}, {"a": [28.959027, -13.757357], "b": [29.043742, -13.692739], "v": 60}, {"a": [28.991106, -13.741436], "b": [28.959027, -13.757357], "v": 60}, {"a": [29.011379, -13.733351], "b": [29.043742, -13.692739], "v": 60}, {"a": [29.011379, -13.733351], "b": [28.991106, -13.741436], "v": 60}, {"a": [28.991106, -13.741436], "b": [29.011379, -13.733351], "v": 60}, {"a": [28.936772, -13.817064], "b": [28.881519, -13.832788], "v": 60}, {"a": [28.881519, -13.832788], "b": [28.936772, -13.817064], "v": 60}, {"a": [28.46448, -16.439617], "b": [28.472341, -16.425475], "v": 80}], "rojos": [{"lat": 28.453971, "lon": -16.278149}, {"lat": 28.463504, "lon": -16.25695}]};
+// Avisos de la comunidad: se activan al poner aquí el proyecto de Supabase
+const COM = { url: '', key: '' };
+const COM_ON = /^https:/.test(COM.url);
 const $ = id => document.getElementById(id);
-// ---------- Mapa ----------
-const map = L.map('map',{zoomControl:false,attributionControl:true}).setView([28.29,-16.55],10);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
-let capa = L.layerGroup().addTo(map);
-function pintarCams(){
-  capa.clearLayers();
-  CAMS.forEach(c=>{
-    const ic = L.divIcon({className:'',html:`<div class="cam">${c.v||''}</div>`,iconSize:[30,30],iconAnchor:[15,15]});
-    L.marker([c.lat,c.lon],{icon:ic}).addTo(capa).bindPopup(`<div class="pop"><b>${c.v?c.v+' km/h':'Radar'}</b><div>Radar fijo</div><small>${(c.d||'').replace(/</g,'&lt;')}</small></div>`);
-  });
-  $('ncam').textContent = CAMS.length;
-}
-pintarCams();
-// Actualizar en vivo desde OpenStreetMap (Overpass)
-$('bupd').onclick = async () => {
-  const b=$('bupd'); b.textContent='Cargando…';
-  try{
-    const q='[out:json][timeout:25];node["highway"="speed_camera"](27.95,-17.0,28.6,-16.1);out;';
-    const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)});
-    if(!r.ok) throw 0;
-    const j=await r.json();
-    const n=j.elements.map(e=>({lat:e.lat,lon:e.lon,v:parseInt(e.tags.maxspeed)||null,dir:e.tags.direction,d:e.tags.description||e.tags.name||''}));
-    if(n.length){ CAMS=n; pintarCams(); }
-    b.textContent='✓ '+n.length+' radares';
-  }catch(e){ b.textContent='Sin conexión'; }
-  setTimeout(()=>b.textContent='↻ Actualizar radares',2500);
-};
-// ---------- Barras de señal ----------
-const bars=$('bars'); for(let i=0;i<8;i++){const x=document.createElement('i');x.style.height=(8+i*3.6)+'px';bars.appendChild(x);}
-function setBars(n){ [...bars.children].forEach((b,i)=>b.classList.toggle('on',i<n)); }
-function pantalla(txt,sub,color,alerta){ const d=$('det'); d.style.color=color; $('band').textContent=txt; $('sub').textContent=sub; d.classList.toggle('alert',!!alerta); }
-// ---------- Audio (sintetizado con Web Audio) ----------
-let AC=null, mute=false;
-function ac(){ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); return AC; }
-function tono(f,t0,dur,tipo='square',vol=.18,f2){ const a=ac(),o=a.createOscillator(),g=a.createGain(); o.type=tipo; o.frequency.setValueAtTime(f,a.currentTime+t0); if(f2) o.frequency.linearRampToValueAtTime(f2,a.currentTime+t0+dur);
-  g.gain.setValueAtTime(0,a.currentTime+t0); g.gain.linearRampToValueAtTime(vol,a.currentTime+t0+.005); g.gain.setValueAtTime(vol,a.currentTime+t0+dur-.01); g.gain.linearRampToValueAtTime(0,a.currentTime+t0+dur);
-  o.connect(g).connect(a.destination); o.start(a.currentTime+t0); o.stop(a.currentTime+t0+dur+.02); }
-function voz(t){ if(!$('voz').checked||mute||!('speechSynthesis' in window)) return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; u.rate=1.05; const v=speechSynthesis.getVoices().find(v=>/en-US/i.test(v.lang)&&/Samantha|Google US|Aria|Jenny/i.test(v.name)); if(v) u.voice=v; speechSynthesis.speak(u); }
-function vozEs(t){ if(!$('voz').checked||mute||!('speechSynthesis' in window)) return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='es-ES'; speechSynthesis.speak(u); }
-let anim=null;
-function animarBarras(ms,max,rapido){ clearInterval(anim); let t=0; anim=setInterval(()=>{ t+=60; setBars(Math.min(max, Math.round(max*(rapido?1:Math.min(1,t/ms*1.6)))*(Math.random()>.15?1:.7)|0)); if(t>=ms){clearInterval(anim);setBars(0);} },60); }
-const SONIDOS={
-  x:  {txt:'X BAND', sub:'10.525 GHz', col:'var(--amb)', dur:2600, voz:'X band', play(){ for(let i=0;i<8;i++){ tono(1050,i*.32,.13,'square',.16); } }},
-  k:  {txt:'K BAND', sub:'24.150 GHz', col:'var(--grn)', dur:2600, voz:'K band', play(){ for(let i=0;i<12;i++){ tono(1350,i*.2,.09,'square',.16); } }},
-  ka: {txt:'Ka BAND', sub:'34.700 GHz', col:'var(--red)', dur:2800, voz:'K A band', play(){ for(let i=0;i<22;i++){ tono(i%2?1900:1650,i*.11,.075,'square',.17); } }},
-  laser:{txt:'LASER', sub:'904 nm · LIDAR', col:'var(--vio)', dur:2600, voz:'Laser!', play(){ for(let i=0;i<16;i++){ tono(2200,i*.14,.12,'sawtooth',.13,3200); tono(1100,i*.14+.06,.05,'square',.08); } }},
-  gps:{txt:'GPS', sub:'Connected · '+CAMS.length+' radares', col:'var(--blu)', dur:1600, voz:'G P S connected', play(){ [523,659,784,1047].forEach((f,i)=>tono(f,i*.11,.16,'triangle',.22)); }}
-};
-let fin=null;
-function sonar(k){
-  const s=SONIDOS[k]; ac();
-  document.querySelectorAll('.pad').forEach(p=>p.classList.toggle('play',p.dataset.s===k));
-  pantalla(s.txt,k==='gps'?'Connected · '+CAMS.length+' radares':s.sub,s.col,k!=='gps');
-  if(!mute){ voz(s.voz); setTimeout(()=>s.play(), k==='gps'?0:650); }
-  animarBarras(s.dur+650,8,k==='laser');
-  clearTimeout(fin); fin=setTimeout(()=>{ document.querySelectorAll('.pad').forEach(p=>p.classList.remove('play')); restaurar(); }, s.dur+800);
-  if(navigator.vibrate&&k!=='gps') navigator.vibrate([120,80,120,80,120]);
-}
-document.querySelectorAll('.pad').forEach(p=>p.onclick=()=>sonar(p.dataset.s));
-$('bmute').onclick=()=>{ mute=!mute; $('bmute').textContent=mute?'🔇':'🔊'; if(mute&&window.speechSynthesis) speechSynthesis.cancel(); };
-// ---------- GPS y avisos de radar ----------
-let yo=null, miPos=null, seguir=true, watch=null, avisados={};
+const LS = { get(k,d){ try{ const v=localStorage.getItem('rc_'+k); return v==null?d:JSON.parse(v); }catch(e){ return d; } }, set(k,v){ try{ localStorage.setItem('rc_'+k,JSON.stringify(v)); }catch(e){} } };
+function toast(t){ const e=$('toast'); e.textContent=t; e.classList.add('on'); clearTimeout(e._t); e._t=setTimeout(()=>e.classList.remove('on'),2400); }
+const esc = t => String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function distM(a,b,c,d){ const R=6371e3,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }
 function rumbo(a,b,c,d){ const r=Math.PI/180,y=Math.sin((d-b)*r)*Math.cos(c*r),x=Math.cos(a*r)*Math.sin(c*r)-Math.sin(a*r)*Math.cos(c*r)*Math.cos((d-b)*r); return (Math.atan2(y,x)/r+360)%360; }
+
+// ======= Mapa =======
+const map = L.map('map',{zoomControl:false}).setView([28.29,-16.55],10);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+const capas = { fijo:L.layerGroup().addTo(map), tr:L.layerGroup().addTo(map), sem:L.layerGroup().addTo(map), com:L.layerGroup().addTo(map), gas:L.layerGroup().addTo(map) };
+const ico = (cls,txt) => L.divIcon({className:'',html:`<div class="cam ${cls}">${txt}</div>`,iconSize:[30,30],iconAnchor:[15,15]});
+function pintar(){
+  Object.values(capas).forEach(c=>c!==capas.gas&&c.clearLayers());
+  DATA.fijos.forEach(c=>L.marker([c.lat,c.lon],{icon:ico('',c.v||'')}).addTo(capas.fijo).bindPopup(`<div class="pop"><b>${c.v?c.v+' km/h':'Radar'}</b><div>Radar fijo</div><small>${esc(c.d)}</small></div>`));
+  DATA.tramos.forEach(t=>{ L.polyline([t.a,t.b],{color:'#ffb020',weight:4,opacity:.8,dashArray:'8 8'}).addTo(capas.tr);
+    L.marker(t.a,{icon:ico('tr',t.v||'')}).addTo(capas.tr).bindPopup(`<div class="pop"><b style="color:var(--amb)">${t.v||''} km/h</b><div>Inicio de tramo de velocidad media</div></div>`);
+    L.marker(t.b,{icon:ico('tr','FIN')}).addTo(capas.tr).bindPopup('<div class="pop"><b style="color:var(--amb)">FIN</b><div>Fin de tramo</div></div>'); });
+  DATA.rojos.forEach(r=>L.marker([r.lat,r.lon],{icon:ico('sem','🚦')}).addTo(capas.sem).bindPopup('<div class="pop"><b style="color:var(--vio)">Foto-rojo</b><div>Cámara de semáforo</div></div>'));
+  COMS.forEach(a=>L.marker([a.lat,a.lon],{icon:ico('com',REP[a.tipo]?.e||'⚠️')}).addTo(capas.com).bindPopup(`<div class="pop"><b style="color:var(--blu)">${REP[a.tipo]?.t||'Aviso'}</b><small>Hace ${Math.max(1,Math.round((Date.now()-new Date(a.creado).getTime())/60000))} min · ${a.votos||1} confirmación${(a.votos||1)>1?'es':''}</small></div>`));
+  $('count').innerHTML = `<b style="color:var(--red)">${DATA.fijos.length}</b> fijos · <b style="color:var(--amb)">${DATA.tramos.length}</b> tramos · <b style="color:var(--vio)">${DATA.rojos.length}</b> foto-rojo${COM_ON?` · <b style="color:var(--blu)">${COMS.length}</b> avisos`:''}`;
+}
+[['ckfijo','fijo'],['cktr','tr'],['cksem','sem'],['ckcom','com'],['ckgas','gas']].forEach(([id,k])=>{ $(id).checked=LS.get(id,true); const ap=()=>{ $(id).checked?capas[k].addTo(map):capas[k].remove(); LS.set(id,$(id).checked); }; $(id).onchange=ap; ap(); });
+if(!COM_ON){ $('brep').style.display='none'; $('ckcom').parentElement.style.display='none'; }
+
+// ======= Audio: se renderiza a WAV y se reproduce como <audio> (suena aunque el iPhone esté en silencio) =======
+try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
+const RATE=44100, CACHE={};
+function wav(buf){ const ch=buf.getChannelData(0),n=ch.length,ab=new ArrayBuffer(44+n*2),v=new DataView(ab);
+  const w=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,RATE,true);v.setUint32(28,RATE*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){ const s=Math.max(-1,Math.min(1,ch[i])); v.setInt16(44+i*2,s*32767,true); } return URL.createObjectURL(new Blob([ab],{type:'audio/wav'})); }
+async function render(dur,fn){ const C=window.OfflineAudioContext||window.webkitOfflineAudioContext; const ctx=new C(1,Math.ceil(RATE*dur),RATE);
+  const out=ctx.createGain(); out.gain.value=.9; out.connect(ctx.destination);
+  const tono=(f,t0,d,tipo='square',vol=.3,f2)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.type=tipo; o.frequency.setValueAtTime(f,t0); if(f2) o.frequency.linearRampToValueAtTime(f2,t0+d);
+    g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(vol,t0+.004); g.gain.setValueAtTime(vol,Math.max(t0+.005,t0+d-.01)); g.gain.linearRampToValueAtTime(0,t0+d); o.connect(g).connect(out); o.start(t0); o.stop(t0+d+.01); };
+  fn(tono); return wav(await ctx.startRendering()); }
+const PLAYER=new Audio(); PLAYER.preload='auto'; PLAYER.setAttribute('playsinline','');
+let desbloqueado=false;
+function desbloquear(){ if(desbloqueado) return; desbloqueado=true; PLAYER.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='; PLAYER.play().catch(()=>{}); if('speechSynthesis' in window){ const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); } }
+document.addEventListener('touchend',desbloquear,{once:true}); document.addEventListener('click',desbloquear,{once:true});
+// Sonidos propios guardados en el móvil (IndexedDB)
+const MIOS={};
+function idb(){ return new Promise((res,rej)=>{ const r=indexedDB.open('radar_sonidos',1); r.onupgradeneeded=()=>r.result.createObjectStore('s'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function idbOp(mode,fn){ const db=await idb(); return new Promise((res,rej)=>{ const tx=db.transaction('s',mode), q=fn(tx.objectStore('s')); tx.oncomplete=()=>res(q&&q.result); tx.onerror=()=>rej(tx.error); }); }
+async function cargarMios(){ try{ const db=await idb(); const tx=db.transaction('s','readonly'), st=tx.objectStore('s'); const ks=await new Promise(r=>{ const q=st.getAllKeys(); q.onsuccess=()=>r(q.result); });
+  for(const k of ks){ const b=await new Promise(r=>{ const q=db.transaction('s').objectStore('s').get(k); q.onsuccess=()=>r(q.result); }); if(b) MIOS[k]=URL.createObjectURL(b); } marcarMios(); }catch(e){} }
+function marcarMios(){ document.querySelectorAll('.pad').forEach(p=>p.classList.toggle('mio',!!MIOS[p.dataset.s])); }
+async function guardarMio(k,blob){ try{ await idbOp('readwrite',st=>st.put(blob,k)); }catch(e){} if(MIOS[k]) URL.revokeObjectURL(MIOS[k]); MIOS[k]=URL.createObjectURL(blob); marcarMios(); toast('✓ Sonido guardado'); }
+async function quitarMio(k){ try{ await idbOp('readwrite',st=>st.delete(k)); }catch(e){} delete MIOS[k]; marcarMios(); toast('Vuelve el sonido original'); }
+async function reproducir(k){ if(mute) return; const s=SND[k]; if(!CACHE[k]) CACHE[k]=await render(s.len,s.gen); PLAYER.pause(); PLAYER.src=CACHE[k]; PLAYER.currentTime=0; try{ await PLAYER.play(); }catch(e){ toast('Toca la pantalla para activar el sonido'); } }
+let VOCES=[]; const cargaV=()=>{ VOCES=speechSynthesis.getVoices(); pintarVoces(); }; if('speechSynthesis' in window){ cargaV(); speechSynthesis.onvoiceschanged=cargaV; }
+function vocesIdioma(){ const l=$('lang').value==='es'?'es':'en'; return VOCES.filter(v=>v.lang.toLowerCase().startsWith(l)); }
+function vozPorDefecto(){ const l=vocesIdioma(); return l.find(v=>/Samantha|Google US English|Aria|Jenny|Ava|Allison|Susan|Zira|Mónica|Monica|Paulina|Google español/i.test(v.name))||l[0]; }
+function pintarVoces(){ const sel=$('voz'); if(!sel) return; const l=vocesIdioma(), g=LS.get('voz_'+$('lang').value,''); sel.innerHTML=l.map(v=>`<option value="${esc(v.name)}">${esc(v.name)} (${esc(v.lang)})</option>`).join('')||'<option>Voz del sistema</option>'; const d=l.find(v=>v.name===g)||vozPorDefecto(); if(d) sel.value=d.name; }
+function hablar(en,es){ if(mute||!('speechSynthesis' in window)) return; const lang=$('lang').value, t=lang==='es'&&es?es:en; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t);
+  u.lang=lang==='es'&&es?'es-ES':'en-US'; u.rate=+$('vrate').value; u.pitch=+$('vpitch').value; const v=VOCES.find(v=>v.name===$('voz').value)||vozPorDefecto(); if(v){ u.voice=v; u.lang=v.lang; } speechSynthesis.speak(u); }
+// Sonidos
+const SND={
+  x:{t:'X',s:'X band',c:'--amb',txt:'X BAND',sub:'10.525 GHz',en:'X band',es:'Banda X',len:2.6,gen:T=>{ for(let i=0;i<8;i++) T(1050,i*.32,.13); }},
+  k:{t:'K',s:'K band',c:'--grn',txt:'K BAND',sub:'24.150 GHz',en:'K band',es:'Banda K',len:2.5,gen:T=>{ for(let i=0;i<12;i++) T(1350,i*.2,.09); }},
+  ka:{t:'Ka',s:'Ka band',c:'--red',txt:'Ka BAND',sub:'34.700 GHz',en:'K A band',es:'Banda K A',len:2.6,gen:T=>{ for(let i=0;i<22;i++) T(i%2?1900:1650,i*.11,.075); }},
+  ka347:{t:'34.7',s:'Ka 34.7',c:'--red',txt:'Ka 34.7',sub:'Ka band · 34.700 GHz',en:'K A, 34 point 7',es:'K A, 34 coma 7',len:3.2,gen:T=>{ for(let i=0;i<28;i++) T(2000+((i%4)*120),i*.1,.07); }},
+  laser:{t:'LASER',s:'Laser',c:'--vio',txt:'LASER',sub:'904 nm · LIDAR',en:'Laser!',es:'¡Láser!',len:2.4,gen:T=>{ for(let i=0;i<16;i++){ T(2200,i*.14,.12,'sawtooth',.25,3200); T(1100,i*.14+.06,.05,'square',.15); } }},
+  photo:{t:'PHOTO',s:'Photo enforcement',c:'--amb',txt:'PHOTO',sub:'Speed camera ahead',en:'Photo enforcement area',es:'Zona de radar fotográfico',len:1.6,gen:T=>{ [880,660,880,660].forEach((f,i)=>T(f,i*.32,.26,'triangle',.4)); }},
+  rojo:{t:'RED',s:'Red light camera',c:'--vio',txt:'RED LIGHT',sub:'Red light camera',en:'Red light camera',es:'Cámara de semáforo',len:1.5,gen:T=>{ [1200,900,1200].forEach((f,i)=>T(f,i*.4,.3,'square',.3)); }},
+  trap:{t:'TRAP',s:'Speed trap',c:'--blu',txt:'SPEED TRAP',sub:'Reported ahead',en:'Speed trap reported ahead',es:'Control avisado más adelante',len:1.6,gen:T=>{ for(let i=0;i<6;i++) T(i%2?740:990,i*.22,.18,'triangle',.4); }},
+  gps:{t:'GPS',s:'GPS connected',c:'--blu',txt:'GPS',sub:'Connected',en:'G P S connected',es:'GPS conectado',len:.9,gen:T=>{ [523,659,784,1047].forEach((f,i)=>T(f,i*.11,.16,'triangle',.45)); }},
+  power:{t:'POWER',s:'Power on',c:'--grn',txt:'SELF TEST',sub:'Power on · all bands',en:'Escort ready',es:'Sistema listo',len:1.8,gen:T=>{ for(let i=0;i<10;i++) T(500+i*150,i*.08,.07,'square',.25); T(1600,.95,.5,'triangle',.4); }},
+  clear:{t:'CLEAR',s:'Alert cleared',c:'--grn',txt:'CLEAR',sub:'Alert cleared',en:'Alert cleared',es:'Alerta terminada',len:.7,gen:T=>{ T(1047,0,.14,'triangle',.4); T(784,.16,.2,'triangle',.4); }},
+  mute:{t:'MUTE',s:'Mute',c:'--mut',txt:'MUTED',sub:'Audio muted',en:'Mute',es:'Silencio',len:.4,gen:T=>{ T(600,0,.12,'square',.3); T(400,.15,.15,'square',.3); }},
+  aviso:{len:.9,gen:T=>{ for(let i=0;i<4;i++) T(1500,i*.18,.1,'square',.35); }},
+  limite:{len:.8,gen:T=>{ T(2000,0,.15,'square',.35); T(2000,.3,.15,'square',.35); }}
+};
+const PADS=['x','k','ka','ka347','laser','photo','rojo','trap','gps','power','clear','mute'];
+$('pads').innerHTML=PADS.map(k=>`<button class="pad" data-s="${k}" style="--c:var(${SND[k].c})">${SND[k].t}<small>${SND[k].s}</small></button>`).join('');
+
+// ======= Pantalla del detector =======
+const bars=$('bars'); for(let i=0;i<8;i++){const x=document.createElement('i');x.style.height=(8+i*3.6)+'px';bars.appendChild(x);}
+function setBars(n){ [...bars.children].forEach((b,i)=>b.classList.toggle('on',i<n)); }
+function flechas(dir){ const a=$('arrows').children; a[0].classList.toggle('on',dir==='up'); a[1].classList.toggle('on',dir==='sd'); a[2].classList.toggle('on',dir==='dn'); }
+function pantalla(txt,sub,color,alerta){ const d=$('det'); d.style.color=color; $('band').textContent=txt; $('sub').textContent=sub; d.classList.toggle('alert',!!alerta); }
+let anim=null, fin=null, sonando=false;
+function animarBarras(ms,rapido){ clearInterval(anim); let t=0; anim=setInterval(()=>{ t+=60; const n=rapido?8:Math.min(8,Math.round(8*Math.min(1,t/ms*1.8))); setBars(Math.random()>.15?n:n-1); if(t>=ms){clearInterval(anim);setBars(0);} },60); }
+function sonar(k){
+  const s=SND[k]; desbloquear(); sonando=k!=='clear'&&k!=='mute';
+  document.querySelectorAll('.pad').forEach(p=>p.classList.toggle('play',p.dataset.s===k));
+  pantalla(s.txt,k==='gps'?'Connected · '+DATA.fijos.length+' radares':s.sub,`var(${s.c})`,!['gps','power','clear','mute'].includes(k));
+  if(MIOS[k]){ PLAYER.pause(); PLAYER.src=MIOS[k]; PLAYER.currentTime=0; if(!mute) PLAYER.play().catch(()=>{}); }
+  else { hablar(s.en,s.es); setTimeout(()=>reproducir(k), ['gps','clear','mute','power'].includes(k)?0:700); }
+  if(!['gps','clear','mute','power'].includes(k)){ animarBarras(s.len*1000+700,k==='laser'); flechas(['up','up','sd','dn'][Math.floor(Math.random()*4)]); if(navigator.vibrate) navigator.vibrate([120,80,120,80,120]); }
+  clearTimeout(fin); fin=setTimeout(()=>{ sonando=false; flechas(''); document.querySelectorAll('.pad').forEach(p=>p.classList.remove('play')); restaurar(); }, s.len*1000+900);
+}
+let EDIT=false, PADED=null, rec=null;
+document.querySelectorAll('.pad').forEach(p=>p.onclick=()=>{ if(EDIT){ PADED=p.dataset.s; $('msontit').textContent='SONIDO · '+SND[PADED].s.toUpperCase(); $('msoninfo').textContent=MIOS[PADED]?'Tiene tu sonido.':'Ahora suena el original.'; $('mgrab').textContent='🎙 Grabar'; $('mson').classList.add('on'); } else sonar(p.dataset.s); });
+$('bedit').onclick=()=>{ EDIT=!EDIT; document.body.classList.toggle('edit',EDIT); $('edittx').style.display=EDIT?'':'none'; $('bedit').classList.toggle('prim',EDIT); };
+$('msonx').onclick=()=>{ if(rec&&rec.state==='recording') rec.stop(); $('mson').classList.remove('on'); };
+$('msub').onclick=()=>$('mfile').click();
+$('mfile').onchange=e=>{ const f=e.target.files[0]; if(!f) return; if(f.size>15e6){ toast('Máximo 15 MB'); return; } guardarMio(PADED,f); $('msoninfo').textContent='Tiene tu sonido.'; e.target.value=''; };
+$('mprob').onclick=()=>{ const k=PADED; $('mson').classList.remove('on'); sonar(k); setTimeout(()=>EDIT&&$('mson').classList.add('on'),(SND[k].len*1000)+1200); };
+$('mquit').onclick=()=>{ quitarMio(PADED); $('msoninfo').textContent='Ahora suena el original.'; };
+$('mgrab').onclick=async()=>{
+  if(rec&&rec.state==='recording'){ rec.stop(); return; }
+  try{ const st=await navigator.mediaDevices.getUserMedia({audio:true}); const trozos=[]; rec=new MediaRecorder(st);
+    rec.ondataavailable=e=>e.data.size&&trozos.push(e.data);
+    rec.onstop=()=>{ st.getTracks().forEach(t=>t.stop()); $('mgrab').textContent='🎙 Grabar'; if(trozos.length){ guardarMio(PADED,new Blob(trozos,{type:rec.mimeType||'audio/mp4'})); $('msoninfo').textContent='Tiene tu sonido.'; } };
+    rec.start(); $('mgrab').textContent='⏹ Parar'; $('msoninfo').textContent='Grabando… (máx. 10 s)'; setTimeout(()=>rec&&rec.state==='recording'&&rec.stop(),10000);
+  }catch(e){ toast('Sin permiso de micrófono'); } };
+cargarMios();
+let mute=false;
+$('bmute').onclick=()=>{ mute=!mute; $('bmute').textContent=mute?'🔇':'🔊'; if(mute){ PLAYER.pause(); if(window.speechSynthesis) speechSynthesis.cancel(); } };
+$('btest').onclick=()=>sonar('power');
+// pestañas y ajustes
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b)); document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='t-'+b.dataset.t)); if(b.dataset.t==='gas') cargarGas(); });
+function skin(s){ document.body.dataset.skin=s; document.querySelectorAll('#skins button').forEach(b=>b.classList.toggle('on',b.dataset.s===s)); LS.set('skin',s); }
+document.querySelectorAll('#skins button').forEach(b=>b.onclick=()=>{ skin(b.dataset.s); sonar('power'); }); skin(LS.get('skin','escort'));
+$('lang').addEventListener('change',pintarVoces);
+$('voz').onchange=()=>{ LS.set('voz_'+$('lang').value,$('voz').value); hablar('K band','Banda K'); };
+$('bvdet').onclick=()=>{ $('lang').value='en'; LS.set('lang','en'); pintarVoces(); const l=vocesIdioma(), f=l.find(v=>/Samantha|Allison|Ava|Susan|Aria|Jenny|Google US English|Zira/i.test(v.name)); if(f){ $('voz').value=f.name; LS.set('voz_en',f.name); } $('vpitch').value=1.15; $('vrate').value=.92; LS.set('vpitch','1.15'); LS.set('vrate','0.92'); hablar('K A band. Laser. G P S connected'); };
+['vpitch','vrate'].forEach(id=>$(id).addEventListener('change',()=>hablar('K band','Banda K')));
+['dist','lang','cklim','vpitch','vrate'].forEach(id=>{ const el=$(id), v=LS.get(id,null); if(v!=null){ if(el.type==='checkbox') el.checked=v; else el.value=v; } el.addEventListener('change',()=>LS.set(id,el.type==='checkbox'?el.checked:el.value)); });
+
+pintarVoces();
+// ======= Modo demo =======
+let demo=null;
+$('bdemo').onclick=()=>{ if(demo){ clearTimeout(demo); demo=null; $('bdemo').textContent='🎬 Modo demo: OFF'; $('bdemo').classList.remove('prim'); return; }
+  $('bdemo').textContent='🎬 Modo demo: ON'; $('bdemo').classList.add('prim'); desbloquear();
+  const sig=()=>{ const ops=['k','k','ka','ka347','x','laser','photo','trap']; sonar(ops[Math.floor(Math.random()*ops.length)]); demo=setTimeout(sig, 7000+Math.random()*15000); }; demo=setTimeout(sig,1500); };
+
+// ======= GPS: radares, tramos, límite de la vía, viaje =======
+let yo=null, miPos=null, seguir=true, watch=null, avisados={}, prev=null;
+let TR=null; // tramo en curso
+let LIM={v:null,at:0,pos:null,cargando:false}, avisoLim=0;
+let VIAJE=LS.get('viaje',{km:0,max:0,t:0,rad:0,exc:0,ini:Date.now()});
+function cercanos(la,lo,hd,mov){ const lim=+$('dist').value, r=[];
+  const delante=(c)=>{ if(hd==null||isNaN(hd)||!mov) return true; let df=Math.abs(rumbo(la,lo,c.lat,c.lon)-hd); df=Math.min(df,360-df); return df<=70; };
+  if($('ckfijo').checked) DATA.fijos.forEach((c,i)=>{ const d=distM(la,lo,c.lat,c.lon); if(d<=lim&&delante(c)) r.push({k:'f'+i,d,v:c.v,tipo:'fijo',lat:c.lat,lon:c.lon}); });
+  if($('cktr').checked) DATA.tramos.forEach((t,i)=>{ const d=distM(la,lo,t.a[0],t.a[1]); if(d<=lim&&delante({lat:t.a[0],lon:t.a[1]})) r.push({k:'t'+i,d,v:t.v,tipo:'tramo'}); });
+  if($('cksem').checked) DATA.rojos.forEach((c,i)=>{ const d=distM(la,lo,c.lat,c.lon); if(d<=lim&&delante(c)) r.push({k:'s'+i,d,tipo:'rojo'}); });
+  if(COM_ON&&$('ckcom').checked) COMS.forEach(a=>{ const d=distM(la,lo,a.lat,a.lon); if(d<=lim&&delante(a)) r.push({k:'c'+a.id,d,tipo:'com',sub:a.tipo}); });
+  return r.sort((a,b)=>a.d-b.d); }
+const NOMBRE={fijo:'Radar fijo',tramo:'Inicio de tramo',rojo:'Foto-rojo',com:'Aviso'};
 function restaurar(){ if(!miPos) return pantalla('READY','Pulsa ◎ para activar el GPS','var(--grn)'); revisar(miPos,true); }
 function revisar(p,soloPantalla){
-  const {latitude:la,longitude:lo,heading:hd}=p.coords; const lim=+$('dist').value;
-  let mejor=null;
-  CAMS.forEach((c,i)=>{ const d=distM(la,lo,c.lat,c.lon); if(d>lim) return;
-    // si vamos en movimiento, solo radares que quedan por delante
-    if(hd!=null&&!isNaN(hd)&&p.coords.speed>3){ let df=Math.abs(rumbo(la,lo,c.lat,c.lon)-hd); df=Math.min(df,360-df); if(df>70) return; }
-    if(!mejor||d<mejor.d) mejor={i,d,c}; });
-  if(mejor){
-    const sp=p.coords.speed!=null?p.coords.speed*3.6:null, exceso=mejor.c.v&&sp&&sp>mejor.c.v+3;
-    pantalla(`RADAR ${mejor.c.v?mejor.c.v:''}`, `${Math.round(mejor.d)} m · radar fijo${exceso?' · ¡REDUCE!':''}`, exceso?'var(--red)':'var(--amb)', true);
-    setBars(Math.max(1,Math.round(8*(1-mejor.d/lim))));
-    if(!soloPantalla && !avisados[mejor.i]){ avisados[mejor.i]=Date.now(); if(!mute){ for(let i=0;i<4;i++) tono(1500,i*.18,.1,'square',.2); setTimeout(()=>vozEs(`Radar fijo a ${Math.round(mejor.d/50)*50} metros${mejor.c.v?', límite '+mejor.c.v:''}`),800); } if(navigator.vibrate) navigator.vibrate([200,100,200]); }
-  } else if(!document.querySelector('.pad.play')){
-    pantalla('GPS OK', `Sin radares en ${lim} m · ${CAMS.length} en la isla`, 'var(--grn)'); setBars(0);
-  }
-  Object.keys(avisados).forEach(k=>{ const c=CAMS[k]; if(c&&distM(la,lo,c.lat,c.lon)>lim*1.6) delete avisados[k]; });
+  const {latitude:la,longitude:lo,heading:hd}=p.coords, sp=p.coords.speed!=null&&p.coords.speed>=0?p.coords.speed*3.6:null, mov=sp!=null&&sp>10;
+  const c=cercanos(la,lo,hd,mov)[0], lim=+$('dist').value;
+  let cocheTxt='Sin radares cerca', cocheAl=false;
+  if(c){
+    const exceso=c.v&&sp&&sp>c.v+3, nom=c.tipo==='com'?(REP[c.sub]?.t||'Aviso'):NOMBRE[c.tipo];
+    if(!sonando){ pantalla(`${c.tipo==='rojo'?'RED LIGHT':c.tipo==='com'?'REPORT':c.tipo==='tramo'?'TRAMO':'RADAR'} ${c.v||''}`.trim(), `${Math.round(c.d)} m · ${nom}${exceso?' · ¡REDUCE!':''}`, exceso?'var(--red)':c.tipo==='rojo'?'var(--vio)':c.tipo==='com'?'var(--blu)':'var(--amb)', true); setBars(Math.max(1,Math.round(8*(1-c.d/lim)))); flechas('up'); }
+    cocheTxt=`${nom} ${c.v?c.v+' ':''}· ${Math.round(c.d)} m`; cocheAl=true;
+    if(!soloPantalla && !avisados[c.k]){ avisados[c.k]=1; VIAJE.rad++; reproducir(c.tipo==='com'?'trap':'aviso');
+      const m=Math.round(c.d/50)*50;
+      setTimeout(()=>hablar(c.tipo==='rojo'?'Red light camera ahead':c.tipo==='com'?'Speed trap reported ahead':c.tipo==='tramo'?`Average speed zone, ${c.v||''}`:`Photo enforcement, ${m} meters${c.v?', limit '+c.v:''}`,
+        c.tipo==='rojo'?`Cámara de semáforo a ${m} metros`:c.tipo==='com'?`${REP[c.sub]?.t||'Aviso'} a ${m} metros`:c.tipo==='tramo'?`Tramo de velocidad media${c.v?', límite '+c.v:''}`:`Radar fijo a ${m} metros${c.v?', límite '+c.v:''}`),900);
+      if(navigator.vibrate) navigator.vibrate([200,100,200]); }
+  } else if(!sonando){ pantalla('GPS OK', `Nada en ${lim} m${LIM.v?' · límite '+LIM.v:''}`, 'var(--grn)'); setBars(0); flechas(''); }
+  Object.keys(avisados).forEach(k=>{ const t=k[0], i=k.slice(1); let q=null; if(t==='f') q=DATA.fijos[i]; else if(t==='s') q=DATA.rojos[i]; else if(t==='t'){ const x=DATA.tramos[i]; q=x&&{lat:x.a[0],lon:x.a[1]}; } else q=COMS.find(a=>String(a.id)===i); if(!q||distM(la,lo,q.lat,q.lon)>lim*1.6) delete avisados[k]; });
+  // modo coche
+  $('cnx').textContent=cocheTxt; $('cnx').classList.toggle('al',cocheAl);
+}
+function tramoCheck(la,lo,dPaso){
+  if(!TR){ DATA.tramos.forEach((t,i)=>{ if(distM(la,lo,t.a[0],t.a[1])<70){ TR={i,t0:Date.now(),d:0,v:t.v,b:t.b}; hablar('Average speed zone started','Empieza tramo de velocidad media'); } }); }
+  else { TR.d+=dPaso; const h=(Date.now()-TR.t0)/3600000, med=h>0?TR.d/1000/h:0;
+    $('tramo').classList.add('on'); $('trv').textContent=TR.v?TR.v+' km/h':''; $('trm').textContent=Math.round(med)+' km/h'; $('trd').textContent=Math.round(TR.d)+' m';
+    $('tramo').style.color=TR.v&&med>TR.v?'var(--red)':'var(--amb)'; $('ctr').textContent=`Tramo · media ${Math.round(med)}${TR.v?' / '+TR.v:''} km/h`;
+    if(distM(la,lo,TR.b[0],TR.b[1])<70||Date.now()-TR.t0>40*60000){ const ok=!TR.v||med<=TR.v; hablar(ok?'Average speed zone cleared':'Average speed over the limit',`Fin de tramo, media ${Math.round(med)}`); toast(`Fin de tramo · media ${Math.round(med)} km/h`); if(!ok) VIAJE.exc++; TR=null; $('tramo').classList.remove('on'); $('ctr').textContent=''; } }
+}
+// Límite de la vía (OpenStreetMap, consulta cada ~200 m)
+async function limiteVia(la,lo){
+  if(LIM.cargando||!$('cklim').checked) return; if(LIM.pos&&distM(la,lo,LIM.pos[0],LIM.pos[1])<200&&Date.now()-LIM.at<60000) return;
+  LIM.cargando=true; LIM.pos=[la,lo]; LIM.at=Date.now();
+  try{ const q=`[out:json][timeout:10];way(around:25,${la},${lo})[highway][maxspeed];out tags 3;`;
+    const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)}); if(!r.ok) throw 0; const j=await r.json();
+    const w=(j.elements||[]).map(e=>parseInt(e.tags.maxspeed)).filter(n=>n>0); LIM.v=w.length?w[0]:null;
+  }catch(e){} LIM.cargando=false; pintarLimite(); }
+function pintarLimite(sp){ const el=$('limit'), cl=$('clim'); if(LIM.v){ el.textContent=LIM.v; cl.textContent=LIM.v; el.classList.add('on'); cl.style.visibility=''; } else { el.classList.remove('on'); cl.style.visibility='hidden'; }
+  const over=LIM.v&&sp!=null&&sp>LIM.v+5; el.classList.toggle('over',!!over); $('coche').classList.toggle('over',!!over);
+  if(over&&$('cklim').checked&&Date.now()-avisoLim>30000){ avisoLim=Date.now(); VIAJE.exc++; reproducir('limite'); setTimeout(()=>hablar(`Speed limit ${LIM.v}`,`Límite ${LIM.v}`),700); } }
+function pintarViaje(){ $('v-km').textContent=(VIAJE.km).toFixed(1).replace('.',','); $('v-max').textContent=Math.round(VIAJE.max); const h=VIAJE.t/3600; $('v-med').textContent=h>0.01?Math.round(VIAJE.km/h):0;
+  const m=Math.floor(VIAJE.t/60); $('v-t').textContent=Math.floor(m/60)+':'+String(m%60).padStart(2,'0'); $('v-rad').textContent=VIAJE.rad; $('v-exc').textContent=VIAJE.exc; }
+$('vreset').onclick=()=>{ VIAJE={km:0,max:0,t:0,rad:0,exc:0,ini:Date.now()}; LS.set('viaje',VIAJE); pintarViaje(); toast('Viaje nuevo'); };
+pintarViaje();
+function onPos(p){
+  const ll=[p.coords.latitude,p.coords.longitude], sp=p.coords.speed!=null&&p.coords.speed>=0?p.coords.speed*3.6:null;
+  if(!yo) yo=L.marker(ll,{icon:L.divIcon({className:'',html:'<div class="me"></div>',iconSize:[20,20],iconAnchor:[10,10]}),zIndexOffset:1000}).addTo(map); else yo.setLatLng(ll);
+  if(seguir) map.setView(ll, miPos?map.getZoom():15);
+  $('kmh').textContent=sp!=null?Math.round(sp):'--'; $('cbig').textContent=sp!=null?Math.round(sp):'--';
+  $('gdot').classList.add('on'); $('gtxt').textContent='GPS ±'+Math.round(p.coords.accuracy)+' m'; $('bgps').classList.add('on');
+  let dPaso=0; if(prev&&p.coords.accuracy<60){ dPaso=distM(prev.coords.latitude,prev.coords.longitude,ll[0],ll[1]); const dt=(p.timestamp-prev.timestamp)/1000; if(dPaso<dt*70){ VIAJE.km+=dPaso/1000; if(sp>3) VIAJE.t+=dt; } }
+  if(sp!=null&&sp<250) VIAJE.max=Math.max(VIAJE.max,sp); LS.set('viaje',VIAJE); pintarViaje();
+  const primera=!miPos; miPos=p; if(!prev||p.coords.accuracy<60) prev=p;
+  if(primera) sonar('gps'); else revisar(p);
+  tramoCheck(ll[0],ll[1],dPaso); limiteVia(ll[0],ll[1]); pintarLimite(sp);
 }
 $('bgps').onclick=()=>{
-  if(watch!=null){ navigator.geolocation.clearWatch(watch); watch=null; $('bgps').classList.remove('on'); $('gdot').classList.remove('on'); $('gtxt').textContent='GPS apagado'; miPos=null; restaurar(); return; }
+  desbloquear();
+  if(watch!=null){ navigator.geolocation.clearWatch(watch); watch=null; $('bgps').classList.remove('on'); $('gdot').classList.remove('on'); $('gtxt').textContent='GPS apagado'; miPos=null; prev=null; restaurar(); return; }
   if(!navigator.geolocation){ pantalla('NO GPS','Este navegador no tiene GPS','var(--red)'); return; }
-  ac(); $('gtxt').textContent='Buscando…';
-  let primera=true;
-  watch=navigator.geolocation.watchPosition(p=>{
-    miPos=p; const ll=[p.coords.latitude,p.coords.longitude];
-    if(!yo) yo=L.marker(ll,{icon:L.divIcon({className:'',html:'<div class="me"></div>',iconSize:[20,20],iconAnchor:[10,10]})}).addTo(map); else yo.setLatLng(ll);
-    if(seguir) map.setView(ll, primera?15:map.getZoom());
-    $('kmh').textContent = p.coords.speed!=null ? Math.round(p.coords.speed*3.6) : '--';
-    $('gdot').classList.add('on'); $('gtxt').textContent='GPS ±'+Math.round(p.coords.accuracy)+' m'; $('bgps').classList.add('on');
-    if(primera){ primera=false; sonar('gps'); } else if(!document.querySelector('.pad.play')) revisar(p);
-  },e=>{ $('gtxt').textContent='GPS sin permiso'; pantalla('GPS OFF','Permite la ubicación en el navegador','var(--red)'); watch=null; },{enableHighAccuracy:true,maximumAge:1000,timeout:20000});
+  $('gtxt').textContent='Buscando…';
+  watch=navigator.geolocation.watchPosition(onPos,e=>{ $('gtxt').textContent='GPS sin permiso'; pantalla('GPS OFF','Permite la ubicación en el navegador','var(--red)'); watch=null; },{enableHighAccuracy:true,maximumAge:1000,timeout:20000});
 };
 $('bfol').classList.add('on');
 $('bfol').onclick=()=>{ seguir=!seguir; $('bfol').classList.toggle('on',seguir); if(seguir&&miPos) map.setView([miPos.coords.latitude,miPos.coords.longitude],15); };
 map.on('dragstart',()=>{ seguir=false; $('bfol').classList.remove('on'); });
-// mantener pantalla encendida
-async function wake(){ try{ if('wakeLock' in navigator) await navigator.wakeLock.request('screen'); }catch(e){} }
+// Modo coche
+let wl=null; async function wake(){ try{ if('wakeLock' in navigator) wl=await navigator.wakeLock.request('screen'); }catch(e){} }
+$('bcar').onclick=()=>{ $('coche').classList.add('on'); wake(); if(watch==null) $('bgps').click(); try{ document.documentElement.requestFullscreen?.(); }catch(e){} };
+$('cx').onclick=()=>{ $('coche').classList.remove('on'); try{ document.fullscreenElement&&document.exitFullscreen(); }catch(e){} };
 document.addEventListener('click',wake,{once:true}); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&watch!=null) wake(); });
+
+// ======= Gasolineras (precios oficiales del Ministerio) =======
+let GAS=null, FUEL=LS.get('fuel','Precio Gasolina 95 E5');
+const num=s=>parseFloat(String(s||'').replace(',','.'));
+async function cargarGas(){
+  if(GAS) return pintarGas();
+  try{ const base='https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroProvincia/';
+    const rs=await Promise.all(['35','38'].map(p=>fetch(base+p).then(r=>r.json())));
+    GAS=rs.flatMap(r=>r.ListaEESSPrecio||[]).map(e=>({n:e['Rótulo'],dir:e['Dirección'],mun:e['Municipio'],h:e['Horario'],lat:num(e['Latitud']),lon:num(e['Longitud (WGS84)']),p:e})).filter(e=>e.lat&&e.lon);
+    $('gasinfo').textContent=(rs[0].Fecha||'').split(' ')[0]?'Precios del '+rs[0].Fecha.split(' ')[0]:'';
+  }catch(e){ $('gaslist').innerHTML='<div class="it">No se pudieron cargar los precios. Prueba más tarde.</div>'; return; }
+  pintarGas(); }
+function pintarGas(){
+  const c=miPos?[miPos.coords.latitude,miPos.coords.longitude]:[map.getCenter().lat,map.getCenter().lng];
+  const l=GAS.map(g=>({...g,precio:num(g.p[FUEL]),d:distM(c[0],c[1],g.lat,g.lon)})).filter(g=>g.precio>0);
+  const cerca=l.filter(g=>g.d<12000).sort((a,b)=>a.precio-b.precio||a.d-b.d);
+  const lista=(cerca.length?cerca:l.sort((a,b)=>a.d-b.d).slice(0,15)).slice(0,15);
+  capas.gas.clearLayers(); const min=lista.length?lista[0].precio:0;
+  lista.forEach(g=>L.marker([g.lat,g.lon],{icon:L.divIcon({className:'',html:`<div class="gas ${g.precio===min?'best':''}">${g.precio.toFixed(3).replace('.',',')}</div>`,iconSize:[52,20],iconAnchor:[26,10]})}).addTo(capas.gas).bindPopup(`<div class="pop"><b style="color:var(--grn)">${g.precio.toFixed(3).replace('.',',')} €</b><div>${esc(g.n)}</div><small>${esc(g.dir)}, ${esc(g.mun)} · ${esc(g.h)}</small></div>`));
+  $('gaslist').innerHTML=lista.length?lista.map((g,i)=>`<div class="it" data-i="${i}"><span class="p">${g.precio.toFixed(3).replace('.',',')}</span><span class="n"><b>${esc(g.n)}</b><small>${esc(g.mun)} · ${esc(g.dir)}</small></span><span class="d">${g.d<1000?Math.round(g.d)+' m':(g.d/1000).toFixed(1).replace('.',',')+' km'}</span></div>`).join(''):'<div class="it">Sin datos para este combustible.</div>';
+  $('gaslist').querySelectorAll('.it[data-i]').forEach(el=>el.onclick=()=>{ const g=lista[+el.dataset.i]; seguir=false; $('bfol').classList.remove('on'); map.setView([g.lat,g.lon],15); window.open(`https://www.google.com/maps/dir/?api=1&destination=${g.lat},${g.lon}`,'_blank'); });
+}
+document.querySelectorAll('#fuel button').forEach(b=>{ b.classList.toggle('on',b.dataset.f===FUEL); b.onclick=()=>{ FUEL=b.dataset.f; LS.set('fuel',FUEL); document.querySelectorAll('#fuel button').forEach(x=>x.classList.toggle('on',x===b)); if(GAS) pintarGas(); }; });
+
+// ======= Avisos de la comunidad =======
+const REP={control:{t:'Control policía',e:'👮'},movil:{t:'Radar móvil',e:'📸'},accidente:{t:'Accidente',e:'💥'},obra:{t:'Obras / atasco',e:'🚧'}};
+let COMS=[];
+async function sb(path,opt={}){ const r=await fetch(COM.url+'/rest/v1/'+path,{...opt,headers:{apikey:COM.key,Authorization:'Bearer '+COM.key,'Content-Type':'application/json',...(opt.headers||{})}}); if(!r.ok) throw new Error(await r.text()); return r.status===204?null:r.json(); }
+async function cargarComs(){ if(!COM_ON) return; try{ COMS=await sb('avisos_radar?select=id,tipo,lat,lon,creado,votos&order=creado.desc&limit=300'); pintar(); }catch(e){} }
+$('brep').onclick=()=>{ if(!miPos){ toast('Activa el GPS para avisar'); return; } $('mrep').classList.add('on'); };
+$('mrepx').onclick=()=>$('mrep').classList.remove('on');
+document.querySelectorAll('#mrep [data-r]').forEach(b=>b.onclick=async()=>{ $('mrep').classList.remove('on');
+  try{ await sb('rpc/avisar_radar',{method:'POST',body:JSON.stringify({p_tipo:b.dataset.r,p_lat:miPos.coords.latitude,p_lon:miPos.coords.longitude})}); toast('✓ Aviso enviado. ¡Gracias!'); cargarComs(); }catch(e){ toast('No se pudo enviar el aviso'); } });
+if(COM_ON){ cargarComs(); setInterval(cargarComs,60000); }
+
+// ======= Actualizar radares desde OpenStreetMap =======
+$('bupd').onclick=async()=>{ const b=$('bupd'); b.textContent='Cargando…';
+  try{ const q='[out:json][timeout:30];(node["highway"="speed_camera"](27.5,-18.3,29.5,-13.3););out;';
+    const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)}); if(!r.ok) throw 0; const j=await r.json();
+    const n=j.elements.map(e=>({lat:e.lat,lon:e.lon,v:parseInt(e.tags.maxspeed)||null,d:e.tags.description||e.tags.name||''}));
+    if(n.length){ DATA.fijos=n; pintar(); } b.textContent='✓ '+n.length+' fijos'; }catch(e){ b.textContent='Sin conexión'; }
+  setTimeout(()=>b.textContent='↻ Actualizar radares',2500); };
+
+pintar();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body></html>
