@@ -143,7 +143,7 @@ label.ck{display:flex;align-items:center;gap:7px}
     <div class="row">Tono <input type="range" id="vpitch" min="0.5" max="1.6" step="0.05" value="1.1" style="flex:1"> Velocidad <input type="range" id="vrate" min="0.6" max="1.4" step="0.05" value="0.95" style="flex:1"></div>
     <div class="row"><label class="ck"><input type="checkbox" id="cklim" checked> Avisar si paso el límite de la vía</label></div>
     <div class="row"><button class="btn" id="bupd">↻ Actualizar radares</button><button class="btn" id="btest">🔈 Probar sonido</button></div>
-    <div class="warn">Radares fijos, de tramo y de semáforo: OpenStreetMap (pueden faltar o estar desactualizados). Precios: Ministerio para la Transición Ecológica. Los sonidos de bandas son efectos: esta app no detecta señales de radar (los detectores están prohibidos en España; los avisadores por GPS, no). En iPhone, sube el volumen; suena aunque esté en silencio. Conduce respetando los límites.</div>
+    <div class="warn">Radares fijos, de tramo y de semáforo: OpenStreetMap (pueden faltar o estar desactualizados). Precios: Ministerio para la Transición Ecológica. Los sonidos de bandas son efectos: esta app no detecta señales de radar (los detectores están prohibidos en España; los avisadores por GPS, no). Voces: LJSpeech (dominio público) y davefx (CC0), generadas con Piper. En iPhone, sube el volumen; suena aunque esté en silencio. Conduce respetando los límites.</div>
   </div>
 </footer>
 </div>
@@ -200,6 +200,23 @@ async function render(dur,fn){ const C=window.OfflineAudioContext||window.webkit
   const tono=(f,t0,d,tipo='square',vol=.3,f2)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.type=tipo; o.frequency.setValueAtTime(f,t0); if(f2) o.frequency.linearRampToValueAtTime(f2,t0+d);
     g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(vol,t0+.004); g.gain.setValueAtTime(vol,Math.max(t0+.005,t0+d-.01)); g.gain.linearRampToValueAtTime(0,t0+d); o.connect(g).connect(out); o.start(t0); o.stop(t0+d+.01); };
   fn(tono); return wav(await ctx.startRendering()); }
+// Voz grabada (archivos en voz/en y voz/es) + pitidos, mezclados en un único WAV
+const VBUF={};
+async function vozBuf(id){ const lang=$('lang').value==='es'?'es':'en', k=lang+'/'+id; if(k in VBUF) return VBUF[k];
+  try{ const r=await fetch('voz/'+k+'.mp3'); if(!r.ok) throw 0; const ab=await r.arrayBuffer(); const C=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+    VBUF[k]=await new Promise((res,rej)=>{ const c=new C(1,1,RATE); const pr=c.decodeAudioData(ab,res,rej); if(pr&&pr.then) pr.then(res,rej); }); }catch(e){ VBUF[k]=null; } return VBUF[k]; }
+const MIX={};
+async function mezcla(partes){ const key=$('lang').value+'|'+JSON.stringify(partes); if(MIX[key]) return MIX[key];
+  const segs=[]; let t=0;
+  for(const p of partes){ if(p.v){ const b=await vozBuf(p.v); if(b){ segs.push({b,t}); t+=b.duration+.12; } } else if(p.g){ segs.push({g:SND[p.g].gen,t}); t+=SND[p.g].len; } }
+  const C=window.OfflineAudioContext||window.webkitOfflineAudioContext, ctx=new C(1,Math.ceil(RATE*(t+.1)),RATE), out=ctx.createGain(); out.gain.value=.9; out.connect(ctx.destination);
+  segs.forEach(s=>{ if(s.b){ const src=ctx.createBufferSource(); src.buffer=s.b; const g=ctx.createGain(); g.gain.value=1.1; src.connect(g).connect(out); src.start(s.t); }
+    else s.g((f,t0,d,tipo='square',vol=.3,f2)=>{ t0+=s.t; const o=ctx.createOscillator(),g=ctx.createGain(); o.type=tipo; o.frequency.setValueAtTime(f,t0); if(f2) o.frequency.linearRampToValueAtTime(f2,t0+d);
+      g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(vol,t0+.004); g.gain.setValueAtTime(vol,Math.max(t0+.005,t0+d-.01)); g.gain.linearRampToValueAtTime(0,t0+d); o.connect(g).connect(out); o.start(t0); o.stop(t0+d+.01); }); });
+  return MIX[key]=wav(await ctx.startRendering()); }
+async function sonarMezcla(partes){ if(mute) return; const u=await mezcla(partes); PLAYER.pause(); PLAYER.src=u; PLAYER.currentTime=0; try{ await PLAYER.play(); }catch(e){ toast('Toca la pantalla para activar el sonido'); } }
+// decir: con voz natural usa los audios; con una voz del móvil, la síntesis
+function decir(ids,en,es,pitido){ if(mute) return; if(natural()) sonarMezcla([...(pitido?[{g:pitido}]:[]),...ids.filter(Boolean).map(v=>({v}))]); else { if(pitido) reproducir(pitido); setTimeout(()=>hablar(en,es),pitido?800:0); } }
 const PLAYER=new Audio(); PLAYER.preload='auto'; PLAYER.setAttribute('playsinline','');
 let desbloqueado=false;
 function desbloquear(){ if(desbloqueado) return; desbloqueado=true; PLAYER.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='; PLAYER.play().catch(()=>{}); if('speechSynthesis' in window){ const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); } }
@@ -217,7 +234,8 @@ async function reproducir(k){ if(mute) return; const s=SND[k]; if(!CACHE[k]) CAC
 let VOCES=[]; const cargaV=()=>{ VOCES=speechSynthesis.getVoices(); pintarVoces(); }; if('speechSynthesis' in window){ cargaV(); speechSynthesis.onvoiceschanged=cargaV; }
 function vocesIdioma(){ const l=$('lang').value==='es'?'es':'en'; return VOCES.filter(v=>v.lang.toLowerCase().startsWith(l)); }
 function vozPorDefecto(){ const l=vocesIdioma(); return l.find(v=>/Samantha|Google US English|Aria|Jenny|Ava|Allison|Susan|Zira|Mónica|Monica|Paulina|Google español/i.test(v.name))||l[0]; }
-function pintarVoces(){ const sel=$('voz'); if(!sel) return; const l=vocesIdioma(), g=LS.get('voz_'+$('lang').value,''); sel.innerHTML=l.map(v=>`<option value="${esc(v.name)}">${esc(v.name)} (${esc(v.lang)})</option>`).join('')||'<option>Voz del sistema</option>'; const d=l.find(v=>v.name===g)||vozPorDefecto(); if(d) sel.value=d.name; }
+function pintarVoces(){ const sel=$('voz'); if(!sel) return; const l=vocesIdioma(), g=LS.get('voz_'+$('lang').value,''); sel.innerHTML='<option value="__nat">⭐ Natural (recomendada)</option>'+l.map(v=>`<option value="${esc(v.name)}">${esc(v.name)} (${esc(v.lang)})</option>`).join(''); const d=g==='__nat'||!g?null:l.find(v=>v.name===g); sel.value=d?d.name:'__nat'; }
+const natural=()=>!$('voz')||$('voz').value==='__nat';
 function hablar(en,es){ if(mute||!('speechSynthesis' in window)) return; const lang=$('lang').value, t=lang==='es'&&es?es:en; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t);
   u.lang=lang==='es'&&es?'es-ES':'en-US'; u.rate=+$('vrate').value; u.pitch=+$('vpitch').value; const v=VOCES.find(v=>v.name===$('voz').value)||vozPorDefecto(); if(v){ u.voice=v; u.lang=v.lang; } speechSynthesis.speak(u); }
 // Sonidos
@@ -252,6 +270,7 @@ function sonar(k){
   document.querySelectorAll('.pad').forEach(p=>p.classList.toggle('play',p.dataset.s===k));
   pantalla(s.txt,k==='gps'?'Connected · '+DATA.fijos.length+' radares':s.sub,`var(${s.c})`,!['gps','power','clear','mute'].includes(k));
   if(MIOS[k]){ PLAYER.pause(); PLAYER.src=MIOS[k]; PLAYER.currentTime=0; if(!mute) PLAYER.play().catch(()=>{}); }
+  else if(natural()) sonarMezcla([{v:k},{g:k}]);
   else { hablar(s.en,s.es); setTimeout(()=>reproducir(k), ['gps','clear','mute','power'].includes(k)?0:700); }
   if(!['gps','clear','mute','power'].includes(k)){ animarBarras(s.len*1000+700,k==='laser'); flechas(['up','up','sd','dn'][Math.floor(Math.random()*4)]); if(navigator.vibrate) navigator.vibrate([120,80,120,80,120]); }
   clearTimeout(fin); fin=setTimeout(()=>{ sonando=false; flechas(''); document.querySelectorAll('.pad').forEach(p=>p.classList.remove('play')); restaurar(); }, s.len*1000+900);
@@ -280,9 +299,9 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{ document.qu
 function skin(s){ document.body.dataset.skin=s; document.querySelectorAll('#skins button').forEach(b=>b.classList.toggle('on',b.dataset.s===s)); LS.set('skin',s); }
 document.querySelectorAll('#skins button').forEach(b=>b.onclick=()=>{ skin(b.dataset.s); sonar('power'); }); skin(LS.get('skin','escort'));
 $('lang').addEventListener('change',pintarVoces);
-$('voz').onchange=()=>{ LS.set('voz_'+$('lang').value,$('voz').value); hablar('K band','Banda K'); };
-$('bvdet').onclick=()=>{ $('lang').value='en'; LS.set('lang','en'); pintarVoces(); const l=vocesIdioma(), f=l.find(v=>/Samantha|Allison|Ava|Susan|Aria|Jenny|Google US English|Zira/i.test(v.name)); if(f){ $('voz').value=f.name; LS.set('voz_en',f.name); } $('vpitch').value=1.15; $('vrate').value=.92; LS.set('vpitch','1.15'); LS.set('vrate','0.92'); hablar('K A band. Laser. G P S connected'); };
-['vpitch','vrate'].forEach(id=>$(id).addEventListener('change',()=>hablar('K band','Banda K')));
+$('voz').onchange=()=>{ LS.set('voz_'+$('lang').value,$('voz').value); sonar('k'); };
+$('bvdet').onclick=()=>{ $('lang').value='en'; LS.set('lang','en'); pintarVoces(); const l=vocesIdioma(), f=l.find(v=>/Samantha|Allison|Ava|Susan|Aria|Jenny|Google US English|Zira/i.test(v.name)); if(f){ $('voz').value=f.name; LS.set('voz_en',f.name); } $('vpitch').value=1.15; $('vrate').value=.92; LS.set('vpitch','1.15'); LS.set('vrate','0.92'); $('voz').value='__nat'; LS.set('voz_en','__nat'); sonar('ka'); };
+['vpitch','vrate'].forEach(id=>$(id).addEventListener('change',()=>{ if(natural()){ toast('Tono y velocidad son para las voces del móvil'); } else hablar('K band','Banda K'); }));
 ['dist','lang','cklim','vpitch','vrate'].forEach(id=>{ const el=$(id), v=LS.get(id,null); if(v!=null){ if(el.type==='checkbox') el.checked=v; else el.value=v; } el.addEventListener('change',()=>LS.set(id,el.type==='checkbox'?el.checked:el.value)); });
 
 pintarVoces();
@@ -314,10 +333,10 @@ function revisar(p,soloPantalla){
     const exceso=c.v&&sp&&sp>c.v+3, nom=c.tipo==='com'?(REP[c.sub]?.t||'Aviso'):NOMBRE[c.tipo];
     if(!sonando){ pantalla(`${c.tipo==='rojo'?'RED LIGHT':c.tipo==='com'?'REPORT':c.tipo==='tramo'?'TRAMO':'RADAR'} ${c.v||''}`.trim(), `${Math.round(c.d)} m · ${nom}${exceso?' · ¡REDUCE!':''}`, exceso?'var(--red)':c.tipo==='rojo'?'var(--vio)':c.tipo==='com'?'var(--blu)':'var(--amb)', true); setBars(Math.max(1,Math.round(8*(1-c.d/lim)))); flechas('up'); }
     cocheTxt=`${nom} ${c.v?c.v+' ':''}· ${Math.round(c.d)} m`; cocheAl=true;
-    if(!soloPantalla && !avisados[c.k]){ avisados[c.k]=1; VIAJE.rad++; reproducir(c.tipo==='com'?'trap':'aviso');
-      const m=Math.round(c.d/50)*50;
-      setTimeout(()=>hablar(c.tipo==='rojo'?'Red light camera ahead':c.tipo==='com'?'Speed trap reported ahead':c.tipo==='tramo'?`Average speed zone, ${c.v||''}`:`Photo enforcement, ${m} meters${c.v?', limit '+c.v:''}`,
-        c.tipo==='rojo'?`Cámara de semáforo a ${m} metros`:c.tipo==='com'?`${REP[c.sub]?.t||'Aviso'} a ${m} metros`:c.tipo==='tramo'?`Tramo de velocidad media${c.v?', límite '+c.v:''}`:`Radar fijo a ${m} metros${c.v?', límite '+c.v:''}`),900);
+    if(!soloPantalla && !avisados[c.k]){ avisados[c.k]=1; VIAJE.rad++;
+      const m=Math.round(c.d/50)*50, lv=c.v&&c.v%10===0&&c.v>=20&&c.v<=120?'lim_'+c.v:null;
+      decir([c.tipo==='com'?'a_'+c.sub:'a_'+c.tipo,c.tipo==='rojo'||c.tipo==='com'?null:lv],c.tipo==='rojo'?'Red light camera ahead':c.tipo==='com'?'Speed trap reported ahead':c.tipo==='tramo'?`Average speed zone, ${c.v||''}`:`Photo enforcement, ${m} meters${c.v?', limit '+c.v:''}`,
+        c.tipo==='rojo'?`Cámara de semáforo a ${m} metros`:c.tipo==='com'?`${REP[c.sub]?.t||'Aviso'} a ${m} metros`:c.tipo==='tramo'?`Tramo de velocidad media${c.v?', límite '+c.v:''}`:`Radar fijo a ${m} metros${c.v?', límite '+c.v:''}`, c.tipo==='com'?'trap':'aviso');
       if(navigator.vibrate) navigator.vibrate([200,100,200]); }
   } else if(!sonando){ pantalla('GPS OK', `Nada en ${lim} m${LIM.v?' · límite '+LIM.v:''}`, 'var(--grn)'); setBars(0); flechas(''); }
   Object.keys(avisados).forEach(k=>{ const t=k[0], i=k.slice(1); let q=null; if(t==='f') q=DATA.fijos[i]; else if(t==='s') q=DATA.rojos[i]; else if(t==='t'){ const x=DATA.tramos[i]; q=x&&{lat:x.a[0],lon:x.a[1]}; } else q=COMS.find(a=>String(a.id)===i); if(!q||distM(la,lo,q.lat,q.lon)>lim*1.6) delete avisados[k]; });
@@ -325,11 +344,11 @@ function revisar(p,soloPantalla){
   $('cnx').textContent=cocheTxt; $('cnx').classList.toggle('al',cocheAl);
 }
 function tramoCheck(la,lo,dPaso){
-  if(!TR){ DATA.tramos.forEach((t,i)=>{ if(distM(la,lo,t.a[0],t.a[1])<70){ TR={i,t0:Date.now(),d:0,v:t.v,b:t.b}; hablar('Average speed zone started','Empieza tramo de velocidad media'); } }); }
+  if(!TR){ DATA.tramos.forEach((t,i)=>{ if(distM(la,lo,t.a[0],t.a[1])<70){ TR={i,t0:Date.now(),d:0,v:t.v,b:t.b}; decir(['a_tramo',t.v&&t.v%10===0?'lim_'+t.v:null],'Average speed zone started','Empieza tramo de velocidad media'); } }); }
   else { TR.d+=dPaso; const h=(Date.now()-TR.t0)/3600000, med=h>0?TR.d/1000/h:0;
     $('tramo').classList.add('on'); $('trv').textContent=TR.v?TR.v+' km/h':''; $('trm').textContent=Math.round(med)+' km/h'; $('trd').textContent=Math.round(TR.d)+' m';
     $('tramo').style.color=TR.v&&med>TR.v?'var(--red)':'var(--amb)'; $('ctr').textContent=`Tramo · media ${Math.round(med)}${TR.v?' / '+TR.v:''} km/h`;
-    if(distM(la,lo,TR.b[0],TR.b[1])<70||Date.now()-TR.t0>40*60000){ const ok=!TR.v||med<=TR.v; hablar(ok?'Average speed zone cleared':'Average speed over the limit',`Fin de tramo, media ${Math.round(med)}`); toast(`Fin de tramo · media ${Math.round(med)} km/h`); if(!ok) VIAJE.exc++; TR=null; $('tramo').classList.remove('on'); $('ctr').textContent=''; } }
+    if(distM(la,lo,TR.b[0],TR.b[1])<70||Date.now()-TR.t0>40*60000){ const ok=!TR.v||med<=TR.v; decir([ok?'a_tramo_fin':'a_tramo_mal'],ok?'Average speed zone cleared':'Average speed over the limit',`Fin de tramo, media ${Math.round(med)}`,ok?'clear':'limite'); toast(`Fin de tramo · media ${Math.round(med)} km/h`); if(!ok) VIAJE.exc++; TR=null; $('tramo').classList.remove('on'); $('ctr').textContent=''; } }
 }
 // Límite de la vía (OpenStreetMap, consulta cada ~200 m)
 async function limiteVia(la,lo){
@@ -341,7 +360,7 @@ async function limiteVia(la,lo){
   }catch(e){} LIM.cargando=false; pintarLimite(); }
 function pintarLimite(sp){ const el=$('limit'), cl=$('clim'); if(LIM.v){ el.textContent=LIM.v; cl.textContent=LIM.v; el.classList.add('on'); cl.style.visibility=''; } else { el.classList.remove('on'); cl.style.visibility='hidden'; }
   const over=LIM.v&&sp!=null&&sp>LIM.v+5; el.classList.toggle('over',!!over); $('coche').classList.toggle('over',!!over);
-  if(over&&$('cklim').checked&&Date.now()-avisoLim>30000){ avisoLim=Date.now(); VIAJE.exc++; reproducir('limite'); setTimeout(()=>hablar(`Speed limit ${LIM.v}`,`Límite ${LIM.v}`),700); } }
+  if(over&&$('cklim').checked&&Date.now()-avisoLim>30000){ avisoLim=Date.now(); VIAJE.exc++; decir([LIM.v%10===0&&LIM.v<=120?'lim_'+LIM.v:'a_limite'],`Speed limit ${LIM.v}`,`Límite ${LIM.v}`,'limite'); } }
 function pintarViaje(){ $('v-km').textContent=(VIAJE.km).toFixed(1).replace('.',','); $('v-max').textContent=Math.round(VIAJE.max); const h=VIAJE.t/3600; $('v-med').textContent=h>0.01?Math.round(VIAJE.km/h):0;
   const m=Math.floor(VIAJE.t/60); $('v-t').textContent=Math.floor(m/60)+':'+String(m%60).padStart(2,'0'); $('v-rad').textContent=VIAJE.rad; $('v-exc').textContent=VIAJE.exc; }
 $('vreset').onclick=()=>{ VIAJE={km:0,max:0,t:0,rad:0,exc:0,ini:Date.now()}; LS.set('viaje',VIAJE); pintarViaje(); toast('Viaje nuevo'); };
