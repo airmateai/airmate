@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Radar Tenerife</title>
+<meta name="theme-color" content="#07080a">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07080a;--panel:#0f1115;--line:#1f232b;--txt:#e9edf2;--mut:#7b8492;--red:#ff2d3d;--amb:#ffb020;--grn:#2dff8a;--blu:#3db8ff;--vio:#b46bff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;overflow:hidden}
+#app{display:grid;grid-template-rows:auto 1fr auto;height:100dvh}
+header{display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:linear-gradient(#0c0e12,#07080a);border-bottom:1px solid var(--line)}
+.logo{font-family:Orbitron;font-weight:900;letter-spacing:.14em;font-size:15px}.logo b{color:var(--red)}
+.gps{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);font-weight:600}
+.dot{width:9px;height:9px;border-radius:50%;background:#444}.dot.on{background:var(--grn);box-shadow:0 0 10px var(--grn);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.35}}
+main{position:relative;min-height:0}
+#map{position:absolute;inset:0;background:#0b0d10}
+.leaflet-container{background:#0b0d10}.leaflet-tile-pane{filter:invert(1) hue-rotate(185deg) brightness(.82) contrast(.92) saturate(.5)}.leaflet-control-attribution{background:rgba(0,0,0,.55)!important;color:#777!important;font-size:9px}.leaflet-control-attribution a{color:#999!important}
+.cam{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle,#ff4757 0 38%,rgba(255,45,61,.25) 40%);display:grid;place-items:center;font:800 9px Inter;color:#fff;box-shadow:0 0 14px rgba(255,45,61,.7)}
+.me{width:20px;height:20px;border-radius:50%;background:var(--blu);border:3px solid #fff;box-shadow:0 0 0 8px rgba(61,184,255,.25),0 0 20px var(--blu)}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#14171c;color:var(--txt);border:1px solid var(--line)}
+.pop b{font-family:Orbitron;color:var(--red);font-size:18px}.pop small{display:block;color:var(--mut);margin-top:4px;max-width:200px}
+/* Pantalla del detector */
+.det{position:absolute;left:12px;right:12px;top:12px;z-index:500;background:linear-gradient(180deg,#0d0f13,#050608);border:1px solid #23272f;border-radius:16px;padding:12px 14px;box-shadow:0 20px 50px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04);display:flex;align-items:center;gap:14px}
+.lcd{flex:1;min-width:0}
+.band{font-family:Orbitron;font-weight:900;font-size:26px;letter-spacing:.06em;color:inherit;text-shadow:0 0 14px currentColor;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{font-size:12px;color:var(--mut);margin-top:6px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bars{display:flex;gap:3px;align-items:flex-end;height:34px}
+.bars i{width:6px;border-radius:2px;background:#1c2027;transition:background .08s}
+.bars i.on{background:currentColor;box-shadow:0 0 8px currentColor}
+.spd{text-align:right}.spd b{font-family:Orbitron;font-size:30px;font-weight:900;display:block;line-height:1}.spd span{font-size:10px;color:var(--mut);letter-spacing:.2em}
+.det.alert{animation:flash .35s steps(2) infinite}@keyframes flash{50%{border-color:currentColor;box-shadow:0 0 40px -6px currentColor}}
+.fab{position:absolute;right:12px;bottom:12px;z-index:500;display:flex;flex-direction:column;gap:8px}
+.fab button{width:46px;height:46px;border-radius:14px;border:1px solid var(--line);background:#111419;color:var(--txt);font-size:19px;cursor:pointer}
+.fab button.on{border-color:var(--blu);color:var(--blu)}
+.count{position:absolute;left:12px;bottom:12px;z-index:500;background:#111419;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:12px;color:var(--mut)}.count b{color:var(--red);font-family:Orbitron}
+/* Botonera */
+footer{background:#0a0b0e;border-top:1px solid var(--line);padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+.pads{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.pad{position:relative;border:1px solid var(--line);background:linear-gradient(180deg,#14171d,#0c0e12);border-radius:14px;padding:12px 4px 10px;color:var(--c);cursor:pointer;font-family:Orbitron;font-weight:700;font-size:13px;letter-spacing:.04em;transition:transform .08s;overflow:hidden}
+.pad small{display:block;font-family:Inter;font-size:9.5px;color:var(--mut);font-weight:600;margin-top:4px;letter-spacing:0}
+.pad:active{transform:scale(.95)}
+.pad.play{border-color:var(--c);box-shadow:0 0 24px -6px var(--c),inset 0 0 20px -8px var(--c)}
+.opts{display:flex;gap:8px;margin-top:10px;align-items:center;font-size:12px;color:var(--mut)}
+.opts label{display:flex;align-items:center;gap:6px}.opts select,.opts button{background:#14171d;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:6px 8px;font:inherit}
+.opts .r{margin-left:auto}
+.warn{font-size:10.5px;color:#5c6470;margin-top:8px;line-height:1.4}
+@media (max-width:420px){.pad{font-size:11px;padding:11px 2px 9px}.pad small{font-size:8.5px}.band{font-size:21px}.spd b{font-size:24px}}
+@media (min-width:900px){#app{grid-template-columns:1fr 420px;grid-template-rows:auto 1fr}header{grid-column:1/3}footer{border-top:0;border-left:1px solid var(--line);overflow:auto}.pads{grid-template-columns:1fr 1fr}.pad{padding:22px 8px;font-size:17px}}
+</style></head><body>
+<div id="app">
+<header><div class="logo">RADAR<b>·</b>TENERIFE</div><div class="gps"><span class="dot" id="gdot"></span><span id="gtxt">GPS apagado</span></div></header>
+<main>
+  <div id="map"></div>
+  <div class="det" id="det" style="color:var(--grn)">
+    <div class="bars" id="bars"></div>
+    <div class="lcd"><div class="band" id="band">READY</div><div class="sub" id="sub">Pulsa ◎ para activar el GPS</div></div>
+    <div class="spd"><b id="kmh">--</b><span>KM/H</span></div>
+  </div>
+  <div class="count"><b id="ncam">0</b> radares fijos</div>
+  <div class="fab"><button id="bgps" title="Activar GPS">◎</button><button id="bfol" title="Seguirme">➤</button><button id="bmute" title="Silencio">🔊</button></div>
+</main>
+<footer>
+  <div class="pads">
+    <button class="pad" data-s="x" style="--c:var(--amb)">X<small>X band</small></button>
+    <button class="pad" data-s="k" style="--c:var(--grn)">K<small>K band</small></button>
+    <button class="pad" data-s="ka" style="--c:var(--red)">Ka<small>Ka band</small></button>
+    <button class="pad" data-s="laser" style="--c:var(--vio)">LASER<small>Laser</small></button>
+    <button class="pad" data-s="gps" style="--c:var(--blu)">GPS<small>GPS connected</small></button>
+  </div>
+  <div class="opts"><label><input type="checkbox" id="voz" checked> Voz</label><label>Aviso a <select id="dist"><option>300</option><option selected>500</option><option>800</option><option>1000</option></select> m</label><button class="r" id="bupd">↻ Actualizar radares</button></div>
+  <div class="warn">Datos de radares fijos: OpenStreetMap. Pueden no estar completos ni actualizados. Los sonidos de bandas son efectos de demostración; esta app no detecta señales de radar. Conduce respetando los límites.</div>
+</footer>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let CAMS = [{"lat": 28.472686, "lon": -16.426773, "v": 80, "dir": "270", "d": "Radar 100 kmh; F100 CHIN Tenerife TF-5 Km 20.66 Curva Sauzal DIR Puerto Cruz CL", "t": "fijo"}, {"lat": 28.476178, "lon": -16.307214, "v": 60, "dir": "10", "d": "Radar 60 kmh; RADAR FIJO 60km/h", "t": "fijo"}, {"lat": 28.382304, "lon": -16.36276, "v": 100, "dir": "0", "d": "Radar 120 kmh; F120 GUAN CHIN Tenerife TF-1 Km 13.85 Caletillas DIR StaCruz CL", "t": "fijo"}, {"lat": 28.479082, "lon": -16.307758, "v": 60, "dir": "160", "d": "Radar 60 kmh", "t": "fijo"}, {"lat": 28.057966, "lon": -16.583248, "v": 120, "dir": "240", "d": "Radar 120 kmh; F120 CHIN Tenerife TF-1 Km 59.27 Aeropuerto DIR Sur CL", "t": "fijo"}, {"lat": 28.49101, "lon": -16.374494, "v": 120, "dir": "60", "d": "Radar 120 kmh; F120 CHIN Tenerife TF-5 Km 15.01 Guamasa DIR Sta. Cruz CL", "t": "fijo"}, {"lat": 28.470525, "lon": -16.432884, "v": null, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.094445, "lon": -16.729959, "v": null, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.470226, "lon": -16.433263, "v": null, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.472682, "lon": -16.42715, "v": 80, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.468594, "lon": -16.433776, "v": 80, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.435344, "lon": -16.301436, "v": null, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.46438, "lon": -16.439699, "v": 80, "dir": "55", "d": "", "t": "fijo"}, {"lat": 28.46481, "lon": -16.439206, "v": 80, "dir": "235", "d": "", "t": "fijo"}, {"lat": 28.472441, "lon": -16.42674, "v": null, "dir": "85", "d": "", "t": "fijo"}, {"lat": 28.472708, "lon": -16.426837, "v": 80, "dir": "270", "d": "", "t": "fijo"}, {"lat": 28.453743, "lon": -16.278092, "v": null, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.453812, "lon": -16.278096, "v": null, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.453971, "lon": -16.278149, "v": null, "dir": "160", "d": "", "t": "fijo"}, {"lat": 28.463504, "lon": -16.25695, "v": null, "dir": "80", "d": "", "t": "fijo"}, {"lat": 28.463558, "lon": -16.256799, "v": null, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.388468, "lon": -16.669028, "v": 70, "dir": "260", "d": "", "t": "fijo"}, {"lat": 28.049406, "lon": -16.630924, "v": 50, "dir": "320", "d": "", "t": "fijo"}, {"lat": 28.052081, "lon": -16.641735, "v": 50, "dir": "300", "d": "", "t": "fijo"}, {"lat": 28.472953, "lon": -16.339724, "v": 70, "dir": "70", "d": "", "t": "fijo"}, {"lat": 28.434745, "lon": -16.301621, "v": 70, "dir": "1", "d": "", "t": "fijo"}, {"lat": 28.177555, "lon": -16.4494, "v": 60, "dir": null, "d": "", "t": "fijo"}, {"lat": 28.095307, "lon": -16.730183, "v": 120, "dir": "150", "d": "", "t": "fijo"}, {"lat": 28.033742, "lon": -16.645086, "v": 50, "dir": "80", "d": "", "t": "fijo"}, {"lat": 28.023193, "lon": -16.679701, "v": 70, "dir": "300", "d": "", "t": "fijo"}, {"lat": 28.034289, "lon": -16.598373, "v": 70, "dir": "130", "d": "", "t": "fijo"}, {"lat": 28.4051, "lon": -16.522984, "v": 70, "dir": "320", "d": "", "t": "fijo"}];
+const $ = id => document.getElementById(id);
+// ---------- Mapa ----------
+const map = L.map('map',{zoomControl:false,attributionControl:true}).setView([28.29,-16.55],10);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+let capa = L.layerGroup().addTo(map);
+function pintarCams(){
+  capa.clearLayers();
+  CAMS.forEach(c=>{
+    const ic = L.divIcon({className:'',html:`<div class="cam">${c.v||''}</div>`,iconSize:[30,30],iconAnchor:[15,15]});
+    L.marker([c.lat,c.lon],{icon:ic}).addTo(capa).bindPopup(`<div class="pop"><b>${c.v?c.v+' km/h':'Radar'}</b><div>Radar fijo</div><small>${(c.d||'').replace(/</g,'&lt;')}</small></div>`);
+  });
+  $('ncam').textContent = CAMS.length;
+}
+pintarCams();
+// Actualizar en vivo desde OpenStreetMap (Overpass)
+$('bupd').onclick = async () => {
+  const b=$('bupd'); b.textContent='Cargando…';
+  try{
+    const q='[out:json][timeout:25];node["highway"="speed_camera"](27.95,-17.0,28.6,-16.1);out;';
+    const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)});
+    if(!r.ok) throw 0;
+    const j=await r.json();
+    const n=j.elements.map(e=>({lat:e.lat,lon:e.lon,v:parseInt(e.tags.maxspeed)||null,dir:e.tags.direction,d:e.tags.description||e.tags.name||''}));
+    if(n.length){ CAMS=n; pintarCams(); }
+    b.textContent='✓ '+n.length+' radares';
+  }catch(e){ b.textContent='Sin conexión'; }
+  setTimeout(()=>b.textContent='↻ Actualizar radares',2500);
+};
+// ---------- Barras de señal ----------
+const bars=$('bars'); for(let i=0;i<8;i++){const x=document.createElement('i');x.style.height=(8+i*3.6)+'px';bars.appendChild(x);}
+function setBars(n){ [...bars.children].forEach((b,i)=>b.classList.toggle('on',i<n)); }
+function pantalla(txt,sub,color,alerta){ const d=$('det'); d.style.color=color; $('band').textContent=txt; $('sub').textContent=sub; d.classList.toggle('alert',!!alerta); }
+// ---------- Audio (sintetizado con Web Audio) ----------
+let AC=null, mute=false;
+function ac(){ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); return AC; }
+function tono(f,t0,dur,tipo='square',vol=.18,f2){ const a=ac(),o=a.createOscillator(),g=a.createGain(); o.type=tipo; o.frequency.setValueAtTime(f,a.currentTime+t0); if(f2) o.frequency.linearRampToValueAtTime(f2,a.currentTime+t0+dur);
+  g.gain.setValueAtTime(0,a.currentTime+t0); g.gain.linearRampToValueAtTime(vol,a.currentTime+t0+.005); g.gain.setValueAtTime(vol,a.currentTime+t0+dur-.01); g.gain.linearRampToValueAtTime(0,a.currentTime+t0+dur);
+  o.connect(g).connect(a.destination); o.start(a.currentTime+t0); o.stop(a.currentTime+t0+dur+.02); }
+function voz(t){ if(!$('voz').checked||mute||!('speechSynthesis' in window)) return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; u.rate=1.05; const v=speechSynthesis.getVoices().find(v=>/en-US/i.test(v.lang)&&/Samantha|Google US|Aria|Jenny/i.test(v.name)); if(v) u.voice=v; speechSynthesis.speak(u); }
+function vozEs(t){ if(!$('voz').checked||mute||!('speechSynthesis' in window)) return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='es-ES'; speechSynthesis.speak(u); }
+let anim=null;
+function animarBarras(ms,max,rapido){ clearInterval(anim); let t=0; anim=setInterval(()=>{ t+=60; setBars(Math.min(max, Math.round(max*(rapido?1:Math.min(1,t/ms*1.6)))*(Math.random()>.15?1:.7)|0)); if(t>=ms){clearInterval(anim);setBars(0);} },60); }
+const SONIDOS={
+  x:  {txt:'X BAND', sub:'10.525 GHz', col:'var(--amb)', dur:2600, voz:'X band', play(){ for(let i=0;i<8;i++){ tono(1050,i*.32,.13,'square',.16); } }},
+  k:  {txt:'K BAND', sub:'24.150 GHz', col:'var(--grn)', dur:2600, voz:'K band', play(){ for(let i=0;i<12;i++){ tono(1350,i*.2,.09,'square',.16); } }},
+  ka: {txt:'Ka BAND', sub:'34.700 GHz', col:'var(--red)', dur:2800, voz:'K A band', play(){ for(let i=0;i<22;i++){ tono(i%2?1900:1650,i*.11,.075,'square',.17); } }},
+  laser:{txt:'LASER', sub:'904 nm · LIDAR', col:'var(--vio)', dur:2600, voz:'Laser!', play(){ for(let i=0;i<16;i++){ tono(2200,i*.14,.12,'sawtooth',.13,3200); tono(1100,i*.14+.06,.05,'square',.08); } }},
+  gps:{txt:'GPS', sub:'Connected · '+CAMS.length+' radares', col:'var(--blu)', dur:1600, voz:'G P S connected', play(){ [523,659,784,1047].forEach((f,i)=>tono(f,i*.11,.16,'triangle',.22)); }}
+};
+let fin=null;
+function sonar(k){
+  const s=SONIDOS[k]; ac();
+  document.querySelectorAll('.pad').forEach(p=>p.classList.toggle('play',p.dataset.s===k));
+  pantalla(s.txt,k==='gps'?'Connected · '+CAMS.length+' radares':s.sub,s.col,k!=='gps');
+  if(!mute){ voz(s.voz); setTimeout(()=>s.play(), k==='gps'?0:650); }
+  animarBarras(s.dur+650,8,k==='laser');
+  clearTimeout(fin); fin=setTimeout(()=>{ document.querySelectorAll('.pad').forEach(p=>p.classList.remove('play')); restaurar(); }, s.dur+800);
+  if(navigator.vibrate&&k!=='gps') navigator.vibrate([120,80,120,80,120]);
+}
+document.querySelectorAll('.pad').forEach(p=>p.onclick=()=>sonar(p.dataset.s));
+$('bmute').onclick=()=>{ mute=!mute; $('bmute').textContent=mute?'🔇':'🔊'; if(mute&&window.speechSynthesis) speechSynthesis.cancel(); };
+// ---------- GPS y avisos de radar ----------
+let yo=null, miPos=null, seguir=true, watch=null, avisados={};
+function distM(a,b,c,d){ const R=6371e3,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }
+function rumbo(a,b,c,d){ const r=Math.PI/180,y=Math.sin((d-b)*r)*Math.cos(c*r),x=Math.cos(a*r)*Math.sin(c*r)-Math.sin(a*r)*Math.cos(c*r)*Math.cos((d-b)*r); return (Math.atan2(y,x)/r+360)%360; }
+function restaurar(){ if(!miPos) return pantalla('READY','Pulsa ◎ para activar el GPS','var(--grn)'); revisar(miPos,true); }
+function revisar(p,soloPantalla){
+  const {latitude:la,longitude:lo,heading:hd}=p.coords; const lim=+$('dist').value;
+  let mejor=null;
+  CAMS.forEach((c,i)=>{ const d=distM(la,lo,c.lat,c.lon); if(d>lim) return;
+    // si vamos en movimiento, solo radares que quedan por delante
+    if(hd!=null&&!isNaN(hd)&&p.coords.speed>3){ let df=Math.abs(rumbo(la,lo,c.lat,c.lon)-hd); df=Math.min(df,360-df); if(df>70) return; }
+    if(!mejor||d<mejor.d) mejor={i,d,c}; });
+  if(mejor){
+    const sp=p.coords.speed!=null?p.coords.speed*3.6:null, exceso=mejor.c.v&&sp&&sp>mejor.c.v+3;
+    pantalla(`RADAR ${mejor.c.v?mejor.c.v:''}`, `${Math.round(mejor.d)} m · radar fijo${exceso?' · ¡REDUCE!':''}`, exceso?'var(--red)':'var(--amb)', true);
+    setBars(Math.max(1,Math.round(8*(1-mejor.d/lim))));
+    if(!soloPantalla && !avisados[mejor.i]){ avisados[mejor.i]=Date.now(); if(!mute){ for(let i=0;i<4;i++) tono(1500,i*.18,.1,'square',.2); setTimeout(()=>vozEs(`Radar fijo a ${Math.round(mejor.d/50)*50} metros${mejor.c.v?', límite '+mejor.c.v:''}`),800); } if(navigator.vibrate) navigator.vibrate([200,100,200]); }
+  } else if(!document.querySelector('.pad.play')){
+    pantalla('GPS OK', `Sin radares en ${lim} m · ${CAMS.length} en la isla`, 'var(--grn)'); setBars(0);
+  }
+  Object.keys(avisados).forEach(k=>{ const c=CAMS[k]; if(c&&distM(la,lo,c.lat,c.lon)>lim*1.6) delete avisados[k]; });
+}
+$('bgps').onclick=()=>{
+  if(watch!=null){ navigator.geolocation.clearWatch(watch); watch=null; $('bgps').classList.remove('on'); $('gdot').classList.remove('on'); $('gtxt').textContent='GPS apagado'; miPos=null; restaurar(); return; }
+  if(!navigator.geolocation){ pantalla('NO GPS','Este navegador no tiene GPS','var(--red)'); return; }
+  ac(); $('gtxt').textContent='Buscando…';
+  let primera=true;
+  watch=navigator.geolocation.watchPosition(p=>{
+    miPos=p; const ll=[p.coords.latitude,p.coords.longitude];
+    if(!yo) yo=L.marker(ll,{icon:L.divIcon({className:'',html:'<div class="me"></div>',iconSize:[20,20],iconAnchor:[10,10]})}).addTo(map); else yo.setLatLng(ll);
+    if(seguir) map.setView(ll, primera?15:map.getZoom());
+    $('kmh').textContent = p.coords.speed!=null ? Math.round(p.coords.speed*3.6) : '--';
+    $('gdot').classList.add('on'); $('gtxt').textContent='GPS ±'+Math.round(p.coords.accuracy)+' m'; $('bgps').classList.add('on');
+    if(primera){ primera=false; sonar('gps'); } else if(!document.querySelector('.pad.play')) revisar(p);
+  },e=>{ $('gtxt').textContent='GPS sin permiso'; pantalla('GPS OFF','Permite la ubicación en el navegador','var(--red)'); watch=null; },{enableHighAccuracy:true,maximumAge:1000,timeout:20000});
+};
+$('bfol').classList.add('on');
+$('bfol').onclick=()=>{ seguir=!seguir; $('bfol').classList.toggle('on',seguir); if(seguir&&miPos) map.setView([miPos.coords.latitude,miPos.coords.longitude],15); };
+map.on('dragstart',()=>{ seguir=false; $('bfol').classList.remove('on'); });
+// mantener pantalla encendida
+async function wake(){ try{ if('wakeLock' in navigator) await navigator.wakeLock.request('screen'); }catch(e){} }
+document.addEventListener('click',wake,{once:true}); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&watch!=null) wake(); });
+</script>
+</body></html>
