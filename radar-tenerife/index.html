@@ -100,6 +100,16 @@ label.ck{display:flex;align-items:center;gap:7px}
 .mod h3{margin:0 0 12px;font-family:Orbitron;font-size:15px;letter-spacing:.08em}
 .mod .g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .mod .g button{background:#15181e;border:1px solid var(--line);color:var(--txt);border-radius:14px;padding:16px 8px;font-size:14px;font-weight:700;cursor:pointer}
+.nav{position:absolute;left:12px;right:12px;top:96px;z-index:510;background:#0b1a10;border:1px solid var(--grn);border-radius:14px;padding:10px 12px;display:none;align-items:center;gap:12px;box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.nav.on{display:flex}.nav .ar{font-size:34px;line-height:1;width:44px;text-align:center;color:var(--grn)}.nav .tx{flex:1;min-width:0}.nav .tx b{display:block;font-size:16px;line-height:1.2}.nav .tx small{color:var(--mut);font-size:12px}
+.nav .dm{font-family:Orbitron;font-weight:900;font-size:20px;color:var(--grn);text-align:right}.nav .dm small{display:block;font-family:Inter;font-size:11px;color:var(--mut);font-weight:600}
+.nav .x{background:none;border:0;color:var(--mut);font-size:18px;padding:4px;cursor:pointer}
+body.navon .tramo{top:176px}
+.rq{width:100%;background:#14171d;border:1px solid var(--line);color:var(--txt);border-radius:11px;padding:12px;font:inherit;font-size:15px;outline:none;-webkit-user-select:text;user-select:text}.rq:focus{border-color:var(--grn)}
+.ro{background:#101318;border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}.ro.on{border-color:var(--grn);box-shadow:0 0 0 1px var(--grn) inset}
+.ro b{font-family:Orbitron;font-size:17px}.ro .m{color:var(--mut);font-size:12px;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
+.trf{width:26px;height:26px;border-radius:7px;background:#2a1c05;border:1px solid var(--amb);display:grid;place-items:center;font-size:14px;box-shadow:0 0 12px rgba(255,176,32,.5)}
+.trf.alto{background:#2c0a0d;border-color:var(--red)}
 .toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);opacity:0;transition:.25s;background:#15181e;border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-size:13px;z-index:4000;pointer-events:none}
 .toast.on{opacity:1;transform:translateX(-50%)}
 @media (max-width:380px){.pad{font-size:11px}.band{font-size:20px}.spd b{font-size:23px}}
@@ -117,11 +127,19 @@ label.ck{display:flex;align-items:center;gap:7px}
     <div class="spd"><b id="kmh">--</b><span>KM/H</span></div>
   </div>
   <div class="tramo" id="tramo"><span>TRAMO <span id="trv"></span> · media</span><b id="trm">--</b><span id="trd">0 m</span></div>
+  <div class="nav" id="nav"><div class="ar" id="nar">↑</div><div class="tx"><b id="ntx">—</b><small id="nsub"></small></div><div class="dm" id="ndm">--<small id="neta"></small></div><button class="x" id="nx">✕</button></div>
   <div class="count" id="count"></div>
   <div class="fab"><button class="rep" id="brep" title="Avisar">＋</button><button id="bgps" title="Activar GPS">◎</button><button id="bfol" title="Seguirme">➤</button><button id="bcar" title="Modo coche">🚗</button><button id="bmute" title="Silencio">🔊</button></div>
 </main>
 <footer>
-  <div class="tabs"><button class="on" data-t="snd">Sonidos</button><button data-t="gas">Gasolina</button><button data-t="via">Viaje</button><button data-t="cfg">Ajustes</button></div>
+  <div class="tabs"><button data-t="ruta">Ruta</button><button class="on" data-t="snd">Sonidos</button><button data-t="gas">Gasolina</button><button data-t="via">Viaje</button><button data-t="cfg">Ajustes</button></div>
+  <div class="tab" id="t-ruta">
+    <input class="rq" id="rq" placeholder="¿A dónde vas? (calle, sitio, pueblo…)" autocomplete="off" enterkeyhint="search">
+    <div class="lst" id="rres" style="margin-top:8px"></div>
+    <div class="lst" id="ropts" style="margin-top:8px"></div>
+    <div class="row" id="racts" style="display:none"><button class="btn prim" id="rgo">▶ Iniciar ruta</button><button class="btn" id="rgm">Google Maps</button><button class="btn" id="rwz">Waze</button><button class="btn" id="rclr">✕</button></div>
+    <div class="warn">Consejo: mantén pulsado en el mapa para elegir el destino. Rutas: OSRM / OpenStreetMap. Tráfico: incidencias oficiales de la DGT (obras, cortes, desprendimientos), cada 15 min.</div>
+  </div>
   <div class="tab on" id="t-snd">
     <div class="pads" id="pads"></div>
     <div class="row"><button class="btn" id="bdemo">🎬 Modo demo: OFF</button><button class="btn" id="bedit">✏️ Mis sonidos</button></div>
@@ -138,7 +156,7 @@ label.ck{display:flex;align-items:center;gap:7px}
   <div class="tab" id="t-cfg">
     <div class="row">Estilo <div class="seg" id="skins"><button class="on" data-s="escort">Escort</button><button data-s="uniden">Uniden</button><button data-s="valentine">Valentine</button></div></div>
     <div class="row">Aviso a <select id="dist"><option>300</option><option selected>500</option><option>800</option><option>1000</option></select> m · Voz <select id="lang"><option value="en">Inglés (USA)</option><option value="es">Español</option></select></div>
-    <div class="row"><label class="ck"><input type="checkbox" id="ckfijo" checked> Fijos</label><label class="ck"><input type="checkbox" id="cktr" checked> Tramos</label><label class="ck"><input type="checkbox" id="cksem" checked> Semáforos</label><label class="ck"><input type="checkbox" id="ckcom" checked> Avisos</label><label class="ck"><input type="checkbox" id="ckgas" checked> Gasolineras</label></div>
+    <div class="row"><label class="ck"><input type="checkbox" id="ckfijo" checked> Fijos</label><label class="ck"><input type="checkbox" id="cktr" checked> Tramos</label><label class="ck"><input type="checkbox" id="cksem" checked> Semáforos</label><label class="ck"><input type="checkbox" id="ckcom" checked> Avisos</label><label class="ck"><input type="checkbox" id="ckgas" checked> Gasolineras</label><label class="ck"><input type="checkbox" id="cktraf" checked> Tráfico DGT</label></div>
     <div class="row">Voz <select id="voz" style="max-width:190px"></select><button class="btn" id="bvdet">🎚 Estilo detector</button></div>
     <div class="row">Tono <input type="range" id="vpitch" min="0.5" max="1.6" step="0.05" value="1.1" style="flex:1"> Velocidad <input type="range" id="vrate" min="0.6" max="1.4" step="0.05" value="0.95" style="flex:1"></div>
     <div class="row"><label class="ck"><input type="checkbox" id="cklim" checked> Avisar si paso el límite de la vía</label></div>
@@ -173,19 +191,19 @@ function rumbo(a,b,c,d){ const r=Math.PI/180,y=Math.sin((d-b)*r)*Math.cos(c*r),x
 // ======= Mapa =======
 const map = L.map('map',{zoomControl:false}).setView([28.29,-16.55],10);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
-const capas = { fijo:L.layerGroup().addTo(map), tr:L.layerGroup().addTo(map), sem:L.layerGroup().addTo(map), com:L.layerGroup().addTo(map), gas:L.layerGroup().addTo(map) };
+const capas = { traf:L.layerGroup().addTo(map), ruta:L.layerGroup().addTo(map), fijo:L.layerGroup().addTo(map), tr:L.layerGroup().addTo(map), sem:L.layerGroup().addTo(map), com:L.layerGroup().addTo(map), gas:L.layerGroup().addTo(map) };
 const ico = (cls,txt) => L.divIcon({className:'',html:`<div class="cam ${cls}">${txt}</div>`,iconSize:[30,30],iconAnchor:[15,15]});
 function pintar(){
-  Object.values(capas).forEach(c=>c!==capas.gas&&c.clearLayers());
+  [capas.fijo,capas.tr,capas.sem,capas.com].forEach(c=>c.clearLayers());
   DATA.fijos.forEach(c=>L.marker([c.lat,c.lon],{icon:ico('',c.v||'')}).addTo(capas.fijo).bindPopup(`<div class="pop"><b>${c.v?c.v+' km/h':'Radar'}</b><div>Radar fijo</div><small>${esc(c.d)}</small></div>`));
   DATA.tramos.forEach(t=>{ L.polyline([t.a,t.b],{color:'#ffb020',weight:4,opacity:.8,dashArray:'8 8'}).addTo(capas.tr);
     L.marker(t.a,{icon:ico('tr',t.v||'')}).addTo(capas.tr).bindPopup(`<div class="pop"><b style="color:var(--amb)">${t.v||''} km/h</b><div>Inicio de tramo de velocidad media</div></div>`);
     L.marker(t.b,{icon:ico('tr','FIN')}).addTo(capas.tr).bindPopup('<div class="pop"><b style="color:var(--amb)">FIN</b><div>Fin de tramo</div></div>'); });
   DATA.rojos.forEach(r=>L.marker([r.lat,r.lon],{icon:ico('sem','🚦')}).addTo(capas.sem).bindPopup('<div class="pop"><b style="color:var(--vio)">Foto-rojo</b><div>Cámara de semáforo</div></div>'));
   COMS.forEach(a=>L.marker([a.lat,a.lon],{icon:ico('com',REP[a.tipo]?.e||'⚠️')}).addTo(capas.com).bindPopup(`<div class="pop"><b style="color:var(--blu)">${REP[a.tipo]?.t||'Aviso'}</b><small>Hace ${Math.max(1,Math.round((Date.now()-new Date(a.creado).getTime())/60000))} min · ${a.votos||1} confirmación${(a.votos||1)>1?'es':''}</small></div>`));
-  $('count').innerHTML = `<b style="color:var(--red)">${DATA.fijos.length}</b> fijos · <b style="color:var(--amb)">${DATA.tramos.length}</b> tramos · <b style="color:var(--vio)">${DATA.rojos.length}</b> foto-rojo${COM_ON?` · <b style="color:var(--blu)">${COMS.length}</b> avisos`:''}`;
+  $('count').innerHTML = `<b style="color:var(--red)">${DATA.fijos.length}</b> fijos · <b style="color:var(--amb)">${DATA.tramos.length}</b> tramos · <b style="color:var(--vio)">${DATA.rojos.length}</b> foto-rojo${COM_ON?` · <b style="color:var(--blu)">${COMS.length}</b> avisos`:''}${TRAF.length?` · <b style="color:var(--amb)">${TRAF.length}</b> incidencias`:''}`;
 }
-[['ckfijo','fijo'],['cktr','tr'],['cksem','sem'],['ckcom','com'],['ckgas','gas']].forEach(([id,k])=>{ $(id).checked=LS.get(id,true); const ap=()=>{ $(id).checked?capas[k].addTo(map):capas[k].remove(); LS.set(id,$(id).checked); }; $(id).onchange=ap; ap(); });
+[['cktraf','traf'],['ckfijo','fijo'],['cktr','tr'],['cksem','sem'],['ckcom','com'],['ckgas','gas']].forEach(([id,k])=>{ $(id).checked=LS.get(id,true); const ap=()=>{ $(id).checked?capas[k].addTo(map):capas[k].remove(); LS.set(id,$(id).checked); }; $(id).onchange=ap; ap(); });
 if(!COM_ON){ $('brep').style.display='none'; $('ckcom').parentElement.style.display='none'; }
 
 // ======= Audio: se renderiza a WAV y se reproduce como <audio> (suena aunque el iPhone esté en silencio) =======
@@ -376,7 +394,7 @@ function onPos(p){
   if(sp!=null&&sp<250) VIAJE.max=Math.max(VIAJE.max,sp); LS.set('viaje',VIAJE); pintarViaje();
   const primera=!miPos; miPos=p; if(!prev||p.coords.accuracy<60) prev=p;
   if(primera) sonar('gps'); else revisar(p);
-  tramoCheck(ll[0],ll[1],dPaso); limiteVia(ll[0],ll[1]); pintarLimite(sp);
+  tramoCheck(ll[0],ll[1],dPaso); limiteVia(ll[0],ll[1]); pintarLimite(sp); if(NAV) navPos(p);
 }
 $('bgps').onclick=()=>{
   desbloquear();
@@ -435,6 +453,115 @@ $('bupd').onclick=async()=>{ const b=$('bupd'); b.textContent='Cargando…';
     const n=j.elements.map(e=>({lat:e.lat,lon:e.lon,v:parseInt(e.tags.maxspeed)||null,d:e.tags.description||e.tags.name||''}));
     if(n.length){ DATA.fijos=n; pintar(); } b.textContent='✓ '+n.length+' fijos'; }catch(e){ b.textContent='Sin conexión'; }
   setTimeout(()=>b.textContent='↻ Actualizar radares',2500); };
+
+// ======= Tráfico DGT (lo descarga un robot cada 15 min a una rama del repositorio) =======
+let TRAF=[];
+const TRAF_T={obra:['🚧','Obras'],desprendimiento:['🪨','Desprendimiento'],accidente:['💥','Accidente'],retencion:['🚗','Retención'],corte:['⛔','Carretera cortada'],carril:['↔️','Carril cortado'],inundacion:['🌊','Inundación'],incendio:['🔥','Incendio'],velocidad:['🐢','Límite reducido'],aviso:['⚠️','Incidencia']};
+async function cargarTrafico(){ try{ const r=await fetch('https://raw.githubusercontent.com/airmateai/airmate/datos-trafico/trafico.json?t='+Math.floor(Date.now()/300000)); if(!r.ok) throw 0; const j=await r.json(); TRAF=j.incidencias||[];
+  capas.traf.clearLayers(); TRAF.forEach(t=>{ const [e,n]=TRAF_T[t.tipo]||TRAF_T.aviso; const alto=/high|highest/.test(t.sev)||t.tipo==='corte'; if(t.p.length>1) L.polyline(t.p,{color:alto?'#ff2d3d':'#ffb020',weight:6,opacity:.55}).addTo(capas.traf);
+    L.marker(t.p[0],{icon:L.divIcon({className:'',html:`<div class="trf ${alto?'alto':''}">${e}</div>`,iconSize:[26,26],iconAnchor:[13,13]})}).addTo(capas.traf).bindPopup(`<div class="pop"><b style="color:var(--amb)">${n}</b><div>${esc(t.via)}${t.km!=null?' · km '+String(t.km).replace('.',','):''}</div><small>DGT · ${new Date(j.actualizado).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</small></div>`); });
+  pintar(); }catch(e){} }
+cargarTrafico(); setInterval(cargarTrafico,5*60000);
+
+// ======= Rutas y navegación =======
+let DEST=null, RUTAS=[], RSEL=0, NAV=null;
+const P=(a,b,lat0)=>[(b-0)*Math.cos(lat0*Math.PI/180)*111320,(a-0)*110540];
+function distLinea(la,lo,coords,desde=0,hasta=coords.length-1){ // distancia mínima (m) de un punto a la polilínea [lon,lat]
+  let best={d:1e12,i:desde}; const c=Math.cos(la*Math.PI/180), X=lo*c*111320, Y=la*110540;
+  for(let i=Math.max(0,desde);i<Math.min(hasta,coords.length-1);i++){ const ax=coords[i][0]*c*111320, ay=coords[i][1]*110540, bx=coords[i+1][0]*c*111320, by=coords[i+1][1]*110540;
+    const dx=bx-ax, dy=by-ay, L2=dx*dx+dy*dy; let t=L2?((X-ax)*dx+(Y-ay)*dy)/L2:0; t=Math.max(0,Math.min(1,t)); const ex=ax+t*dx-X, ey=ay+t*dy-Y, d=Math.hypot(ex,ey); if(d<best.d) best={d,i,t}; }
+  return best; }
+let rqT=null;
+$('rq').oninput=()=>{ clearTimeout(rqT); const q=$('rq').value.trim(); if(q.length<3){ $('rres').innerHTML=''; return; } rqT=setTimeout(()=>buscar(q),350); };
+async function buscar(q){ try{ const c=miPos?`&lat=${miPos.coords.latitude}&lon=${miPos.coords.longitude}`:'&lat=28.29&lon=-16.55';
+  const r=await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6&lang=default&bbox=-18.3,27.5,-13.3,29.5${c}`); const j=await r.json();
+  const l=(j.features||[]).map(f=>{ const p=f.properties; return {lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],n:p.name||[p.street,p.housenumber].filter(Boolean).join(' '),s:[p.street&&p.name?p.street:'',p.city||p.town||p.village||p.county||'',p.state&&!/Canarias/.test(p.state)?p.state:''].filter(Boolean).join(' · ')}; });
+  $('rres').innerHTML=l.length?l.map((x,i)=>`<div class="it" data-i="${i}"><span style="font-size:18px">📍</span><span class="n"><b>${esc(x.n||'Sin nombre')}</b><small>${esc(x.s)}</small></span></div>`).join(''):'<div class="it">Sin resultados</div>';
+  $('rres').querySelectorAll('[data-i]').forEach(el=>el.onclick=()=>{ const x=l[+el.dataset.i]; $('rq').value=x.n; $('rres').innerHTML=''; $('rq').blur(); fijarDestino(x.lat,x.lon,x.n); });
+}catch(e){ $('rres').innerHTML='<div class="it">Sin conexión</div>'; } }
+map.on('contextmenu',e=>{ fijarDestino(e.latlng.lat,e.latlng.lng,'Punto del mapa'); document.querySelector('.tabs button[data-t="ruta"]').click(); });
+async function origen(){ if(miPos) return [miPos.coords.latitude,miPos.coords.longitude];
+  if(watch==null) $('bgps').click(); for(let i=0;i<40&&!miPos;i++) await new Promise(r=>setTimeout(r,250)); if(miPos) return [miPos.coords.latitude,miPos.coords.longitude];
+  toast('Sin GPS: salgo desde el centro del mapa'); const c=map.getCenter(); return [c.lat,c.lng]; }
+async function fijarDestino(lat,lon,nombre){ DEST={lat,lon,n:nombre}; $('ropts').innerHTML='<div class="it">Calculando rutas…</div>'; await calcular(await origen(),false); }
+async function calcular(o,silencio){
+  try{ const r=await fetch(`https://router.project-osrm.org/route/v1/driving/${o[1]},${o[0]};${DEST.lon},${DEST.lat}?overview=full&geometries=geojson&steps=true&alternatives=${silencio?'false':'true'}`); if(!r.ok) throw 0; const j=await r.json(); if(j.code!=='Ok'||!j.routes.length) throw 0;
+    RUTAS=j.routes.map(rt=>{ const c=rt.geometry.coordinates;
+      const rad=DATA.fijos.filter(f=>distLinea(f.lat,f.lon,c).d<45).length+DATA.rojos.filter(f=>distLinea(f.lat,f.lon,c).d<35).length;
+      const tr=DATA.tramos.filter(t=>distLinea(t.a[0],t.a[1],c).d<40).length;
+      const inc=TRAF.filter(t=>t.p.some(p=>distLinea(p[0],p[1],c).d<120));
+      const steps=rt.legs[0].steps; let j0=0; const idx=steps.map(st=>{ const [lo,la]=st.maneuver.location; let b=j0,bd=1e12; for(let j=j0;j<c.length;j++){ const d=Math.abs(c[j][0]-lo)+Math.abs(c[j][1]-la); if(d<bd){bd=d;b=j;} if(bd<1e-6) break; } j0=b; return b; });
+      return {rt,c,rad,tr,inc,steps,idx}; });
+    if(silencio){ RSEL=0; return true; }
+    RSEL=0; pintarRutas(); return true;
+  }catch(e){ if(!silencio) $('ropts').innerHTML='<div class="it">No se pudo calcular la ruta. Prueba otra vez.</div>'; return false; } }
+const fmtMin=s=>{ const m=Math.round(s/60); return m<60?m+' min':Math.floor(m/60)+' h '+String(m%60).padStart(2,'0'); };
+const fmtKm=m=>m<1000?Math.round(m)+' m':(m/1000).toFixed(m<10000?1:0).replace('.',',')+' km';
+function pintarRutas(){
+  capas.ruta.clearLayers();
+  RUTAS.forEach((R,i)=>{ if(i!==RSEL) L.polyline(R.c.map(x=>[x[1],x[0]]),{color:'#5d6b7a',weight:6,opacity:.6}).addTo(capas.ruta).on('click',()=>{ RSEL=i; pintarRutas(); }); });
+  const R=RUTAS[RSEL]; const ln=L.polyline(R.c.map(x=>[x[1],x[0]]),{color:'#2dff8a',weight:7,opacity:.9}).addTo(capas.ruta);
+  L.marker([DEST.lat,DEST.lon],{icon:L.divIcon({className:'',html:'<div style="font-size:28px;filter:drop-shadow(0 0 6px #000)">🏁</div>',iconSize:[30,30],iconAnchor:[6,28]})}).addTo(capas.ruta);
+  if(!NAV){ seguir=false; $('bfol').classList.remove('on'); map.fitBounds(ln.getBounds(),{padding:[40,40],paddingTopLeft:[20,110]}); }
+  $('ropts').innerHTML=RUTAS.map((R,i)=>`<div class="ro ${i===RSEL?'on':''}" data-i="${i}"><b>${fmtMin(R.rt.duration)}</b> · ${fmtKm(R.rt.distance)}${i===0?' <small style="color:var(--grn)">más rápida</small>':''}
+    <div class="m"><span>📸 ${R.rad} radar${R.rad!==1?'es':''}</span>${R.tr?`<span>⏱ ${R.tr} tramo${R.tr>1?'s':''}</span>`:''}<span>${R.inc.length?'🚧 '+R.inc.map(t=>(TRAF_T[t.tipo]||TRAF_T.aviso)[1]+' '+t.via).join(', '):'✓ Sin incidencias DGT'}</span></div></div>`).join('');
+  $('ropts').querySelectorAll('.ro').forEach(el=>el.onclick=()=>{ RSEL=+el.dataset.i; pintarRutas(); });
+  $('racts').style.display='flex'; }
+$('rclr').onclick=()=>{ pararNav(); DEST=null; RUTAS=[]; capas.ruta.clearLayers(); $('ropts').innerHTML=''; $('racts').style.display='none'; $('rq').value=''; };
+$('rgm').onclick=()=>DEST&&window.open(`https://www.google.com/maps/dir/?api=1&destination=${DEST.lat},${DEST.lon}&travelmode=driving`,'_blank');
+$('rwz').onclick=()=>DEST&&window.open(`https://waze.com/ul?ll=${DEST.lat},${DEST.lon}&navigate=yes`,'_blank');
+// Instrucciones
+const FLECHA={'uturn':'⤸','sharp right':'↱','right':'→','slight right':'↗','straight':'↑','slight left':'↖','left':'←','sharp left':'↰'};
+function instr(st){ const m=st.maneuver, t=m.type, md=m.modifier||'straight', via=st.name||st.ref||'';
+  const dir={right:'a la derecha',left:'a la izquierda','slight right':'ligeramente a la derecha','slight left':'ligeramente a la izquierda','sharp right':'fuerte a la derecha','sharp left':'fuerte a la izquierda',straight:'recto',uturn:'cambio de sentido'}[md]||'recto';
+  const lado=/right/.test(md)?'derecha':'izquierda';
+  const clipGiro={right:'n_derecha',left:'n_izquierda','slight right':'n_lig_derecha','slight left':'n_lig_izquierda','sharp right':'n_fuerte_derecha','sharp left':'n_fuerte_izquierda',straight:'n_recto',uturn:'n_cambio'}[md]||'n_recto';
+  let tx, clips, ar=FLECHA[md]||'↑';
+  if(t==='arrive'){ tx='Llegas a tu destino'; clips=['n_llegada']; ar='🏁'; }
+  else if(t==='depart'){ tx='Sal '+(via?'por '+via:'hacia la ruta'); clips=['n_inicio']; }
+  else if(/roundabout|rotary/.test(t)&&t!=='exit roundabout'&&t!=='roundabout turn'){ const n=m.exit||1; tx=`En la rotonda, toma la ${['1ª','2ª','3ª','4ª','5ª','6ª'][n-1]||n+'ª'} salida${via?' hacia '+via:''}`; clips=['n_rotonda','n_sal'+Math.min(6,n)]; ar='⟳'; }
+  else if(t==='off ramp'){ tx=`Toma la salida a la ${lado}${via?' hacia '+via:''}`; clips=[lado==='derecha'?'n_salida_derecha':'n_salida_izquierda']; }
+  else if(t==='fork'||t==='use lane'||(t==='on ramp'&&/slight/.test(md))){ tx=`Mantente a la ${lado}${via?' hacia '+via:''}`; clips=[lado==='derecha'?'n_mant_derecha':'n_mant_izquierda']; }
+  else if(t==='merge'||t==='on ramp'){ tx='Incorpórate'+(via?' a '+via:''); clips=['n_incorpora']; }
+  else if(md==='straight'||t==='new name'||t==='continue'&&md==='straight'){ tx='Sigue recto'+(via?' por '+via:''); clips=['n_recto']; }
+  else { tx=(md==='uturn'?'Cambia de sentido':'Gira '+dir)+(via?' por '+via:''); clips=[clipGiro]; }
+  return {tx,clips,ar}; }
+$('rgo').onclick=async()=>{ if(!RUTAS.length) return; if(watch==null) $('bgps').click(); const R=RUTAS[RSEL];
+  NAV={R,i:1,dichos:{},fuera:0,ultRec:0,incDichas:{}}; document.body.classList.add('navon'); $('nav').classList.add('on'); seguir=true; $('bfol').classList.add('on');
+  if(miPos) map.setView([miPos.coords.latitude,miPos.coords.longitude],16);
+  decir(['n_inicio'],'Route started','Ruta iniciada'); pintarNav(null);
+  if(R.inc.length) setTimeout(()=>decir(['t_'+(TRAF_T[R.inc[0].tipo]?R.inc[0].tipo:'aviso')],'Incident on your route','Incidencia en la ruta'),2500);
+  document.querySelector('.tabs button[data-t="snd"]').click(); };
+function pararNav(){ NAV=null; document.body.classList.remove('navon'); $('nav').classList.remove('on'); }
+$('nx').onclick=pararNav;
+function pintarNav(p){ const st=NAV.R.steps[NAV.i]||NAV.R.steps[NAV.R.steps.length-1], I=instr(st);
+  $('nar').textContent=I.ar; $('ntx').textContent=I.tx;
+  let d=null; if(p){ const [lo,la]=st.maneuver.location; d=distM(p.coords.latitude,p.coords.longitude,la,lo); }
+  $('ndm').firstChild.textContent=d!=null?fmtKm(d):'--';
+  const pv=NAV.R.steps[NAV.i-1], resto=NAV.R.steps.slice(NAV.i).reduce((a,s)=>a+s.duration,0)+(pv&&d!=null&&pv.distance?pv.duration*Math.min(1,d/pv.distance):0), restoD=NAV.R.steps.slice(NAV.i).reduce((a,s)=>a+s.distance,0)+(d||0);
+  const eta=new Date(Date.now()+resto*1000); $('neta').textContent=`${fmtKm(restoD)} · llegada ${eta.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`;
+  $('nsub').textContent=NAV.R.steps[NAV.i+1]&&NAV.R.steps[NAV.i+1].maneuver.type!=='arrive'?'Después: '+instr(NAV.R.steps[NAV.i+1]).tx:'';
+  $('cnx').textContent=d!=null?`${I.ar} ${fmtKm(d)} · ${I.tx}`:$('cnx').textContent; return d; }
+async function navPos(p){
+  const la=p.coords.latitude, lo=p.coords.longitude, sp=p.coords.speed!=null?p.coords.speed*3.6:0;
+  // llegada
+  if(distM(la,lo,DEST.lat,DEST.lon)<35){ decir(['n_llegada'],'You have arrived','Has llegado a tu destino'); toast('🏁 Has llegado'); pararNav(); return; }
+  // ¿fuera de ruta? recalcular
+  const off=distLinea(la,lo,NAV.R.c).d;
+  if(off>70&&p.coords.accuracy<50){ NAV.fuera++; if(NAV.fuera>=3&&Date.now()-NAV.ultRec>15000){ NAV.ultRec=Date.now(); NAV.fuera=0; decir(['n_recalculo'],'Recalculating','Recalculando ruta');
+      if(await calcular([la,lo],true)&&NAV){ NAV.R=RUTAS[0]; NAV.i=1; NAV.dichos={}; pintarRutas(); } return; } } else NAV.fuera=0;
+  // paso siguiente: la primera maniobra que queda por delante de donde estoy en la ruta
+  const pos=distLinea(la,lo,NAV.R.c).i; let ni=NAV.R.idx.findIndex((ix,k)=>k>0&&ix>pos); if(ni<0) ni=NAV.R.steps.length-1;
+  if(ni!==NAV.i) NAV.i=ni;
+  let d=pintarNav(p);
+  if(d!=null&&d<18&&NAV.i<NAV.R.steps.length-1){ NAV.i++; d=pintarNav(p); }
+  // avisos de voz a 1 km / 300 m / ahora
+  const st=NAV.R.steps[NAV.i]; if(!st||d==null) return; const I=instr(st), k=NAV.i;
+  const dec=(tag,pre)=>{ if(NAV.dichos[k+tag]) return; NAV.dichos[k+tag]=1; decir([pre,...I.clips],I.tx,I.tx); };
+  if(d<1100&&d>850&&sp>60) dec('1k','n_d1000'); else if(d<340&&d>220) dec('300','n_d300'); else if(d<(sp>50?110:60)) dec('now',sp>50?'n_d100':'n_ahora');
+  // incidencias DGT cerca, por delante en la ruta
+  TRAF.forEach((t,ix)=>{ if(!NAV.incDichas[ix]&&distM(la,lo,t.p[0][0],t.p[0][1])<1500&&distLinea(t.p[0][0],t.p[0][1],NAV.R.c).d<120){ NAV.incDichas[ix]=1; decir(['t_'+(TRAF_T[t.tipo]?t.tipo:'aviso')],'Incident on your route','Incidencia en la ruta','aviso'); toast(`${(TRAF_T[t.tipo]||TRAF_T.aviso).join(' ')} · ${t.via}`); } });
+}
 
 pintar();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});

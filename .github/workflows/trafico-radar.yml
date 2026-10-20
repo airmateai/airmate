@@ -1,0 +1,21 @@
+name: Tráfico DGT para Radar Canarias
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: trafico-radar
+jobs:
+  datos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: radar-tenerife/tools
+      - run: python3 radar-tenerife/tools/trafico_dgt.py /tmp/trafico.json
+      # Se guarda en una rama aparte con un solo commit: no publica la web ni llena el historial
+      - run: |
+          mkdir /tmp/d && cd /tmp/d && git init -q -b datos-trafico && cp /tmp/trafico.json .
+          git add . && git -c user.name=radar-bot -c user.email=radar-bot@users.noreply.github.com commit -qm "Tráfico DGT"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" datos-trafico
