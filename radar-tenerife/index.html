@@ -194,11 +194,12 @@ const RATE=44100, CACHE={};
 function wav(buf){ const ch=buf.getChannelData(0),n=ch.length,ab=new ArrayBuffer(44+n*2),v=new DataView(ab);
   const w=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
   w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,RATE,true);v.setUint32(28,RATE*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
-  for(let i=0;i<n;i++){ const s=Math.max(-1,Math.min(1,ch[i])); v.setInt16(44+i*2,s*32767,true); } return URL.createObjectURL(new Blob([ab],{type:'audio/wav'})); }
+  let pk=0; for(let i=0;i<n;i++){ const a=Math.abs(ch[i]); if(a>pk) pk=a; } const esc2=pk>0?0.7/pk:1;
+  for(let i=0;i<n;i++){ const s=Math.max(-1,Math.min(1,ch[i]*esc2)); v.setInt16(44+i*2,s*32767,true); } return URL.createObjectURL(new Blob([ab],{type:'audio/wav'})); }
 async function render(dur,fn){ const C=window.OfflineAudioContext||window.webkitOfflineAudioContext; const ctx=new C(1,Math.ceil(RATE*dur),RATE);
-  const out=ctx.createGain(); out.gain.value=.9; out.connect(ctx.destination);
+  const out=ctx.createGain(); out.gain.value=.5; const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3800; lp.Q.value=.5; out.connect(lp).connect(ctx.destination);
   const tono=(f,t0,d,tipo='square',vol=.3,f2)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.type=tipo; o.frequency.setValueAtTime(f,t0); if(f2) o.frequency.linearRampToValueAtTime(f2,t0+d);
-    g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(vol,t0+.004); g.gain.setValueAtTime(vol,Math.max(t0+.005,t0+d-.01)); g.gain.linearRampToValueAtTime(0,t0+d); o.connect(g).connect(out); o.start(t0); o.stop(t0+d+.01); };
+    g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(vol,t0+.006); g.gain.setValueAtTime(vol,Math.max(t0+.007,t0+d-.015)); g.gain.linearRampToValueAtTime(0,t0+d); o.connect(g).connect(out); o.start(t0); o.stop(t0+d+.01); };
   fn(tono); return wav(await ctx.startRendering()); }
 // Voz grabada (archivos en voz/en y voz/es) + pitidos, mezclados en un único WAV
 const VBUF={};
@@ -209,10 +210,10 @@ const MIX={};
 async function mezcla(partes){ const key=$('lang').value+'|'+JSON.stringify(partes); if(MIX[key]) return MIX[key];
   const segs=[]; let t=0;
   for(const p of partes){ if(p.v){ const b=await vozBuf(p.v); if(b){ segs.push({b,t}); t+=b.duration+.12; } } else if(p.g){ segs.push({g:SND[p.g].gen,t}); t+=SND[p.g].len; } }
-  const C=window.OfflineAudioContext||window.webkitOfflineAudioContext, ctx=new C(1,Math.ceil(RATE*(t+.1)),RATE), out=ctx.createGain(); out.gain.value=.9; out.connect(ctx.destination);
-  segs.forEach(s=>{ if(s.b){ const src=ctx.createBufferSource(); src.buffer=s.b; const g=ctx.createGain(); g.gain.value=1.1; src.connect(g).connect(out); src.start(s.t); }
+  const C=window.OfflineAudioContext||window.webkitOfflineAudioContext, ctx=new C(1,Math.ceil(RATE*(t+.1)),RATE), out=ctx.createGain(); out.gain.value=.5; out.connect(ctx.destination); const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3800; lp.Q.value=.5; lp.connect(out);
+  segs.forEach(s=>{ if(s.b){ const src=ctx.createBufferSource(); src.buffer=s.b; const g=ctx.createGain(); g.gain.value=1.6; src.connect(g).connect(out); src.start(s.t); }
     else s.g((f,t0,d,tipo='square',vol=.3,f2)=>{ t0+=s.t; const o=ctx.createOscillator(),g=ctx.createGain(); o.type=tipo; o.frequency.setValueAtTime(f,t0); if(f2) o.frequency.linearRampToValueAtTime(f2,t0+d);
-      g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(vol,t0+.004); g.gain.setValueAtTime(vol,Math.max(t0+.005,t0+d-.01)); g.gain.linearRampToValueAtTime(0,t0+d); o.connect(g).connect(out); o.start(t0); o.stop(t0+d+.01); }); });
+      vol*=.6; g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(vol,t0+.006); g.gain.setValueAtTime(vol,Math.max(t0+.007,t0+d-.015)); g.gain.linearRampToValueAtTime(0,t0+d); o.connect(g).connect(lp); o.start(t0); o.stop(t0+d+.01); }); });
   return MIX[key]=wav(await ctx.startRendering()); }
 async function sonarMezcla(partes){ if(mute) return; const u=await mezcla(partes); PLAYER.pause(); PLAYER.src=u; PLAYER.currentTime=0; try{ await PLAYER.play(); }catch(e){ toast('Toca la pantalla para activar el sonido'); } }
 // decir: con voz natural usa los audios; con una voz del móvil, la síntesis
