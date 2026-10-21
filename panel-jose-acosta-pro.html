@@ -854,6 +854,10 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             <span>Finanzas</span>
           </button>
+          <button class="nav-item" id="nav-actualizaciones" onclick="showTab('actualizaciones',this)">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
+            <span>Actualizaciones</span><span id="upd-badge" style="display:none;margin-left:auto;background:#3BE29A;color:#08281a;font-size:10px;font-weight:900;padding:2px 7px;border-radius:999px">NUEVO</span>
+          </button>
         </div>
       </nav>
       <button id="ja-theme-toggle" onclick="jaToggleTheme()"> Modo oscuro</button>
@@ -1350,6 +1354,7 @@ textarea.crm-form-ctrl{resize:vertical;min-height:70px;}
         </div>
 
         <!-- FINANZAS -->
+        <div id="pane-actualizaciones" class="tab-pane"><div id="upd-host" style="padding:4px 2px"></div></div>
         <div id="pane-finanzas" class="tab-pane">
           <div class="page-hd page-hd-row">
             <div><div class="page-title">Finanzas</div><div class="page-sub">Análisis financiero · Holded</div></div>
@@ -1921,7 +1926,7 @@ _sb.auth.onAuthStateChange((ev)=>{ if(ev==='SIGNED_OUT'){ localStorage.removeIte
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',_restaurarSesion):_restaurarSesion();
 
 // ── TABS ───────────────────────────────────────────────────────────────────
-const TAB_TITLES={dashboard:'Dashboard',citas:'Citas',leads:'Leads',seguimientos:'Seguimientos','crm-clientes':'Clientes','crm-encargos':'Encargos','crm-stock':'Stock / Inventario','crm-facturacion':'Facturación','crm-compras':'Facturas de Compra',contabilidad:'Contabilidad',finanzas:'Finanzas',ventas:'Ventas / TPV'};
+const TAB_TITLES={dashboard:'Dashboard',citas:'Citas',leads:'Leads',seguimientos:'Seguimientos','crm-clientes':'Clientes','crm-encargos':'Encargos','crm-stock':'Stock / Inventario','crm-facturacion':'Facturación','crm-compras':'Facturas de Compra',contabilidad:'Contabilidad',finanzas:'Finanzas',ventas:'Ventas / TPV',actualizaciones:'Actualizaciones'};
 function showTab(id,btn){
   const _po=document.getElementById('crm-print-overlay');if(_po){_po.classList.remove('open');_po.style.display='none';}
   mobCloseSidebar();
@@ -1931,6 +1936,7 @@ function showTab(id,btn){
   if(btn)btn.classList.add('active');
   document.getElementById('pane-'+id).classList.add('active');
   document.getElementById('topbar-title').textContent=TAB_TITLES[id]||id;
+  if(id==='actualizaciones')montarActualizaciones();
   if(id==='citas')renderCitas();
   else if(id==='leads')renderLeads();
   else if(id==='seguimientos')renderSeguimientos();
@@ -9127,6 +9133,14 @@ function jaBuscarClientePorNombre(nombre){
   const _vc=crmVerCliente;
   crmVerCliente=async function(id){ await jaCargarComprasCliente(id).catch(()=>{ JA_COMPRAS_CLIENTE[id]=[]; }); return _vc.apply(this,arguments); };
 })();
+</script>
+<!-- Airmate · apartado Actualizaciones (catálogo central en airmate.es, sin precios) -->
+<script src="https://airmate.es/actualizaciones/core.js" defer></script>
+<script src="https://airmate.es/actualizaciones/actualizaciones.js" defer></script>
+<script>
+const UPD_CFG={ cliente:'Jose Acosta', instalados:[] };
+function montarActualizaciones(){ if(!window.AirmateActualizaciones){ setTimeout(montarActualizaciones,300); return; } AirmateActualizaciones.mount(document.getElementById('upd-host'),UPD_CFG); const b=document.getElementById('upd-badge'); if(b) b.style.display='none'; }
+window.addEventListener('load',()=>setTimeout(async()=>{ if(!window.AirmateActualizaciones) return; const n=await AirmateActualizaciones.hayNuevos(UPD_CFG); const b=document.getElementById('upd-badge'); if(b&&n) b.style.display='inline-block'; },1500));
 </script>
 </body>
 </html>

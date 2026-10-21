@@ -955,6 +955,9 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       <button class="nav-item" onclick="go('ajustes',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Ajustes
       </button>
+      <button class="nav-item" onclick="go('actualizaciones',this);montarActualizaciones()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>Actualizaciones <span id="upd-badge" style="display:none;margin-left:auto;background:#3BE29A;color:#08281a;font-size:10px;font-weight:900;padding:2px 7px;border-radius:999px">NUEVO</span>
+      </button>
     </nav>
     <div class="sb-foot">
       <button class="theme-toggle" onclick="toggleTheme()">◐ Modo oscuro</button>
@@ -1179,6 +1182,7 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
     </div>
 
     <!-- PAGINA AJUSTES -->
+    <div id="page-actualizaciones" class="page"><div id="upd-host"></div></div>
     <div id="page-ajustes" class="page">
       <div class="page-hd">
         <div><h1>Ajustes <em>del panel</em></h1><div class="page-sub">Configuración general de Costa Norte</div></div>
@@ -1369,7 +1373,7 @@ function go(p,el){
     const links=document.querySelectorAll('.nav-item');
     const labels={dashboard:'Dashboard',agenda:'Agenda',apt:'Mapa',cal:'Calendario',res:'Reservas',clean:'Limpieza',maint:'Mantenimiento',classes:'Clases',students:'Alumnos',packs:'Packs',instructors:'Instructores',rental:'Alquileres',shop:'TPV',stock:'Stock',clients:'Clientes',invoices:'Facturas',reports:'Informes',inbox:'Bandeja IA',widget:'Widget',team:'Equipo',settings:'Ajustes'};
   }
-  const titles={dashboard:'Dashboard',solicitudes:'Solicitudes web',agenda:'Agenda del día',classes:'Horario de clases',students:'Alumnos',clientes:'Clientes',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',gastos:'Gastos deducibles',reports:'Gestor financiero',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes',ajustes:'Ajustes'};
+  const titles={dashboard:'Dashboard',solicitudes:'Solicitudes web',agenda:'Agenda del día',classes:'Horario de clases',students:'Alumnos',clientes:'Clientes',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',gastos:'Gastos deducibles',reports:'Gestor financiero',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes',ajustes:'Ajustes',actualizaciones:'Actualizaciones'};
   document.getElementById('tb-title').textContent=titles[p]||'';
   document.getElementById('sb').classList.remove('open');
   const ov=document.getElementById('mob-overlay');if(ov)ov.classList.remove('on');
@@ -5618,6 +5622,14 @@ if(typeof renderClasses !== 'undefined'){
 }
 // También inicializar si ya está visible
 document.addEventListener('DOMContentLoaded', ()=>{ if(document.getElementById('gantt-wrap')) renderGantt(); });
+</script>
+<!-- Airmate · apartado Actualizaciones (catálogo central en airmate.es, sin precios) -->
+<script src="https://airmate.es/actualizaciones/core.js" defer></script>
+<script src="https://airmate.es/actualizaciones/actualizaciones.js" defer></script>
+<script>
+const UPD_CFG={ cliente:'Costa Norte', instalados:[] };
+function montarActualizaciones(){ if(!window.AirmateActualizaciones){ setTimeout(montarActualizaciones,300); return; } AirmateActualizaciones.mount(document.getElementById('upd-host'),UPD_CFG); const b=document.getElementById('upd-badge'); if(b) b.style.display='none'; }
+window.addEventListener('load',()=>setTimeout(async()=>{ if(!window.AirmateActualizaciones) return; const n=await AirmateActualizaciones.hayNuevos(UPD_CFG); const b=document.getElementById('upd-badge'); if(b&&n) b.style.display='inline-block'; },1500));
 </script>
 </body>
 </html>
