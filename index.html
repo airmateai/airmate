@@ -209,6 +209,20 @@ footer a:hover{color:var(--ink)}
   .vid .wrap{grid-template-columns:1fr;justify-items:center}
   .trust-track{gap:48px}.tl{height:52px}.tl img.divas{height:40px}.tt{font-size:23px}
 }
+/* Actualizaciones */
+.upd-sec{background:#07100c;color:#fff;position:relative;overflow:hidden}
+.upd-sec::before{content:"";position:absolute;width:900px;height:900px;left:50%;top:-420px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(59,226,154,.22),transparent);pointer-events:none}
+.upd-sec .wrap{position:relative}
+.upd-sec .eyebrow{color:#3BE29A}.upd-sec h2{color:#fff}.upd-sec h2 em{font-family:Georgia,serif;font-style:italic;font-weight:400;color:#3BE29A}
+.upd-sec .lead{color:rgba(255,255,255,.66);max-width:620px;margin-top:16px}
+.upd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-top:46px}
+.upd-c{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:22px;transition:border-color .25s,transform .25s,background .25s}
+.upd-c:hover{border-color:rgba(59,226,154,.55);background:rgba(59,226,154,.06);transform:translateY(-3px)}
+.upd-c .e{font-size:30px}.upd-c h3{font-size:18px;letter-spacing:-.02em;margin:12px 0 6px;color:#fff}
+.upd-c p{font-size:14.5px;color:rgba(255,255,255,.6)}
+.upd-c .para{display:inline-block;margin-top:14px;font-size:12px;font-weight:600;color:#3BE29A;background:rgba(59,226,154,.1);padding:4px 10px;border-radius:999px}
+.upd-pie{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:34px;color:rgba(255,255,255,.6);font-size:15px}
+.upd-pie .btn{background:#3BE29A;color:#06291a}.upd-pie .btn:hover{background:#5cf0b0}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
 </style>
 </head>
@@ -217,7 +231,7 @@ footer a:hover{color:var(--ink)}
 <nav class="nav dark" id="nav">
   <div class="wrap">
     <a href="#" class="brand"><img src="assets/web/logo-negro.png" alt="">Airmate</a>
-    <div class="links"><a href="#web-gratis">Web gratis</a><a href="#panel">El panel</a><a href="#como">Cómo trabajamos</a><a href="#contacto">Contacto</a></div>
+    <div class="links"><a href="#web-gratis">Web gratis</a><a href="#panel">El panel</a><a href="#actualizaciones">Actualizaciones</a><a href="#como">Cómo trabajamos</a><a href="#contacto">Contacto</a></div>
     <div class="cta"><a href="#web-gratis" class="btn btn-dark">Web gratis</a></div>
     <button class="menu" onclick="document.getElementById('nav').classList.toggle('open')" aria-label="Menú">☰</button>
   </div>
@@ -354,6 +368,17 @@ footer a:hover{color:var(--ink)}
   </div>
 </section>
 
+<!-- Actualizaciones: módulos que se añaden a un panel (catálogo central /actualizaciones/catalogo.json, sin precios) -->
+<section class="upd-sec" id="actualizaciones">
+  <div class="wrap">
+    <div class="eyebrow reveal">✨ Actualizaciones</div>
+    <h2 class="reveal d1" style="margin-top:14px">Tu panel crece<br><em>contigo.</em></h2>
+    <p class="lead reveal d2">Cada panel Airmate trae su apartado de Actualizaciones. Cuando tu negocio necesita algo más, eliges la función y nosotros la instalamos, sin parar tu día a día.</p>
+    <div class="upd-grid" id="upd-web"></div>
+    <div class="upd-pie reveal"><a class="btn" href="https://wa.me/34646427613?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20las%20actualizaciones%20del%20panel%20Airmate" target="_blank">Preguntar por WhatsApp</a><span>Te lo instalamos nosotros y te enseñamos a usarlo.</span></div>
+  </div>
+</section>
+
 <!-- Vídeo -->
 <section class="vid">
   <div class="wrap">
@@ -440,5 +465,10 @@ document.querySelectorAll('[data-count]').forEach(c=>ioc.observe(c));
 })();
 </script>
 
+<script>
+fetch('actualizaciones/catalogo.json').then(r=>r.json()).then(c=>{const el=document.getElementById('upd-web');if(!el)return;const esc=t=>String(t||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+el.innerHTML=c.modulos.map((m,i)=>`<div class="upd-c reveal ${['','d1','d2'][i%3]}"><div class="e">${m.icono}</div><h3>${esc(m.nombre)}</h3><p>${esc(m.resuelve)}</p><span class="para">${esc(m.para)}</span></div>`).join('')+'<div class="upd-c reveal d1" style="border-style:dashed"><div class="e">＋</div><h3>Lo que tu negocio necesite</h3><p>Si te falta algo que no está aquí, lo construimos a medida para tu panel.</p><span class="para">A medida</span></div>';
+el.querySelectorAll('.reveal').forEach(x=>typeof io!=='undefined'?io.observe(x):x.classList.add('in'));}).catch(()=>{const s=document.getElementById('actualizaciones');if(s)s.style.display='none';});
+</script>
 </body>
 </html>
