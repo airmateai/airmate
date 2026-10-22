@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Captación Tenerife</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#ffffff;--ink:#0b0c0e;--mut:#6f7277;--line:#e7e8ea;--soft:#f5f6f7;--ok:#1f7a4d;--okbg:#e8f4ee;--wa:#128c4a;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d0e10;--ink:#f1f2f3;--mut:#9a9da3;--line:#26282c;--soft:#16181b;--ok:#5cc28f;--okbg:#14261d;--wa:#3ccf7f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d0e10;--ink:#f1f2f3;--mut:#9a9da3;--line:#26282c;--soft:#16181b;--ok:#5cc28f;--okbg:#14261d;--wa:#3ccf7f;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,-apple-system,sans-serif}
+body{margin:0}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:28px 60px;display:grid;gap:22px}
+h1{font:400 44px/1.05 "Instrument Serif",Georgia,serif;margin:0;text-wrap:balance}
+h1 i{font-style:italic}
+.sub{color:var(--mut);margin:6px 0 0;max-width:60ch}
+.cfg{display:grid;gap:10px;padding:16px;border:1px solid var(--line);border-radius:12px}
+.cfg label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.cfg input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;box-sizing:border-box}
+.cfg input:focus,.btn:focus-visible,select:focus{outline:2px solid var(--ink);outline-offset:2px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:6px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.prog{font-size:13px;color:var(--mut);font-variant-numeric:tabular-nums}
+.list{display:grid;gap:0;border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:1fr auto;gap:8px 14px;padding:16px 2px;border-bottom:1px solid var(--line);align-items:center}
+.row.done .name{text-decoration:line-through;color:var(--mut)}
+.name{font-weight:600}
+.meta{font-size:13px;color:var(--mut);font-variant-numeric:tabular-nums}
+.meta .tel{user-select:all;color:var(--ink)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn{font:inherit;font-size:13px;font-weight:500;border-radius:8px;padding:8px 12px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--ink);text-decoration:none;white-space:nowrap}
+.btn.wa{background:var(--wa);border-color:var(--wa);color:#fff}
+.btn.mk[aria-pressed="true"]{background:var(--okbg);color:var(--ok);border-color:transparent}
+details{border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+summary{cursor:pointer;font-weight:600}
+.msg{white-space:pre-wrap;background:var(--soft);border-radius:8px;padding:12px;font-size:14px;margin:10px 0 0}
+.note{font-size:13px;color:var(--mut)}
+@media (max-width:520px){.row{grid-template-columns:1fr}.acts{justify-content:flex-start}h1{font-size:36px}}
+</style>
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Captación <i>Tenerife</i></h1>
+    <p class="sub">Negocios encontrados por Harvey. Pon tu nombre, pulsa «WhatsApp» y se abre el chat con el mensaje ya escrito. Revísalo y envíalo tú desde tu móvil.</p>
+  </header>
+
+  <div class="cfg">
+    <label for="nombre">Tu nombre (va en el mensaje)</label>
+    <input id="nombre" placeholder="Ej.: Laura" autocomplete="given-name">
+  </div>
+
+  <div class="bar">
+    <div class="chips" id="filtros"></div>
+    <span class="prog" id="prog"></span>
+  </div>
+
+  <div class="list" id="lista"></div>
+
+  <details>
+    <summary>Ver los mensajes por sector</summary>
+    <div id="plantillas"></div>
+  </details>
+
+  <p class="note">«Escrito» se guarda solo en este móvil u ordenador. Para no escribir dos veces al mismo negocio, repartíos los sectores entre captadores. Un mensaje por negocio: si no contestan, no insistáis más de una vez.</p>
+</div>
+
+<script>
+const NEGOCIOS = [
+  ["Estética","Academia Mystic Nails","Tenerife","+34 697 505 813"],
+  ["Estética","Estética Colonial","Tenerife","+34 666 164 723"],
+  ["Estética","Nua Beauty Center","Tenerife","+34 677 52 51 24"],
+  ["Gimnasio","BioReed","Puerto de la Cruz","+34 627 695 664"],
+  ["Gimnasio","Coliseum Box","Santa Cruz","+34 661 35 03 53"],
+  ["Gimnasio","Electro Gym","Tenerife","+34 636 102 053"],
+  ["Gimnasio","Elite Training Center","Puerto de la Cruz","+34 678 03 88 91"],
+  ["Gimnasio","Endorfina Plus","Los Cristianos","+34 602 480 173"],
+  ["Gimnasio","Gimnasio Aguere","La Laguna","+34 633 120 655"],
+  ["Gimnasio","Green Padel","Tenerife","+34 622 645 484"],
+  ["Gimnasio","Yogasastra","Tenerife","+34 623 931 589"],
+  ["Sastrería","Arreglos de Ropa M&L","Tenerife","+34 647 820 680"]
+];
+const MENSAJES = {
+  "Estética": "Hola, ¿qué tal? Soy {yo}, de Airmate. Creamos sistemas de gestión a medida para centros de estética: agenda, bonos, caja y ficha de cada clienta en un solo panel, adaptado a cómo trabajáis en {negocio}.\n\nTrabajamos con pocos centros a la vez y este mes estamos eligiendo con quién empezar en Tenerife. ¿Te enseño en 10 minutos cómo lo usa un centro como el vuestro?\n\nairmate.es",
+  "Gimnasio": "Hola, ¿qué tal? Soy {yo}, de Airmate. Creamos sistemas de gestión a medida para centros deportivos: reservas de clases, bonos, caja y ficha de cada socio en un solo panel, adaptado a cómo funciona {negocio}.\n\nTrabajamos con pocos negocios a la vez y este mes estamos eligiendo con quién empezar en Tenerife. ¿Te enseño en 10 minutos cómo quedaría para vosotros?\n\nairmate.es",
+  "Sastrería": "Hola, ¿qué tal? Soy {yo}, de Airmate. Creamos sistemas de gestión a medida para negocios como {negocio}: encargos y arreglos pendientes, clientes y cobros en un solo panel, adaptado a cómo trabajáis.\n\nTrabajamos con pocos negocios a la vez y este mes estamos eligiendo con quién empezar en Tenerife. ¿Te enseño en 10 minutos cómo quedaría para vosotros?\n\nairmate.es"
+};
+const ls = { get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } }, set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} } };
+let hechos = ls.get('cap_hechos', {}), filtro = ls.get('cap_filtro', 'Todos');
+const $nombre = document.getElementById('nombre');
+$nombre.value = ls.get('cap_nombre', '');
+$nombre.addEventListener('input', () => { ls.set('cap_nombre', $nombre.value.trim()); pintar(); });
+const texto = (n) => MENSAJES[n[0]].replace('{yo}', $nombre.value.trim() || '[tu nombre]').replace('{negocio}', n[1]);
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function pintar(){
+  const sectores = ['Todos', ...new Set(NEGOCIOS.map(n => n[0]))];
+  document.getElementById('filtros').innerHTML = sectores.map(s => `<button class="chip" aria-pressed="${s===filtro}" data-s="${s}">${s}</button>`).join('');
+  const vis = NEGOCIOS.filter(n => filtro === 'Todos' || n[0] === filtro);
+  document.getElementById('lista').innerHTML = vis.map(n => { const id = n[1], tel = n[3].replace(/\D/g, ''), ok = !!hechos[id];
+    return `<div class="row${ok?' done':''}"><div><div class="name">${esc(n[1])}</div><div class="meta">${n[0]} · ${esc(n[2])} · <span class="tel">${n[3]}</span></div></div>
+      <div class="acts"><a class="btn wa" href="https://wa.me/${tel}?text=${encodeURIComponent(texto(n))}" target="_blank" rel="noopener" data-id="${esc(id)}">WhatsApp</a>
+      <button class="btn cp" data-id="${esc(id)}">Copiar mensaje</button>
+      <button class="btn mk" aria-pressed="${ok}" data-id="${esc(id)}">${ok?'Escrito ✓':'Marcar escrito'}</button></div></div>`; }).join('');
+  const total = vis.length, hech = vis.filter(n => hechos[n[1]]).length;
+  document.getElementById('prog').textContent = `${hech} de ${total} escritos`;
+  document.getElementById('plantillas').innerHTML = Object.keys(MENSAJES).map(s => `<p style="margin:14px 0 0;font-weight:600">${s}</p><div class="msg">${esc(MENSAJES[s].replace('{yo}', $nombre.value.trim() || '[tu nombre]').replace('{negocio}', '[negocio]'))}</div>`).join('');
+}
+document.addEventListener('click', async e => {
+  const chip = e.target.closest('.chip'); if (chip){ filtro = chip.dataset.s; ls.set('cap_filtro', filtro); pintar(); return; }
+  const mk = e.target.closest('.mk'); if (mk){ const id = mk.dataset.id; hechos[id] ? delete hechos[id] : hechos[id] = Date.now(); ls.set('cap_hechos', hechos); pintar(); return; }
+  const cp = e.target.closest('.cp'); if (cp){ const n = NEGOCIOS.find(x => x[1] === cp.dataset.id);
+    try { await navigator.clipboard.writeText(texto(n)); cp.textContent = 'Copiado'; } catch(err){ cp.textContent = 'Mantén pulsado para copiar'; const m = document.createElement('div'); m.className='msg'; m.textContent = texto(n); cp.closest('.row').appendChild(m); }
+    setTimeout(() => { cp.textContent = 'Copiar mensaje'; }, 1800); }
+});
+pintar();
+</script>
+</body>
+</html>
