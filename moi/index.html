@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>IA para Moi · Airmate</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+:root{--bg:#ffffff;--ink:#0b0b0c;--mut:#6c6e73;--line:#e8e8ea;--soft:#f5f5f6;--red:#c8102e;--okbg:#eef6f1;--ok:#1d6b45;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c0c0d;--ink:#f2f2f3;--mut:#9b9da3;--line:#242528;--soft:#161719;--red:#ff4d5e;--okbg:#13251b;--ok:#6fd19c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0c0c0d;--ink:#f2f2f3;--mut:#9b9da3;--line:#242528;--soft:#161719;--red:#ff4d5e;--okbg:#13251b;--ok:#6fd19c;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Inter Tight",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding-inline:20px}
+.serif{font-family:"Instrument Serif",Georgia,serif;font-weight:400}
+i.serif,.serif i{font-style:italic}
+header.top{display:flex;justify-content:space-between;align-items:center;padding-block:22px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:600;font-size:18px;letter-spacing:-.02em;color:var(--ink);text-decoration:none}
+.logo img{height:22px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .logo img{filter:invert(1)}}
+:root[data-theme="dark"] .logo img{filter:invert(1)}
+.tag{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.hero{padding-block:48px 34px}
+.hero h1{font-size:clamp(48px,11vw,92px);line-height:.95;margin:0;letter-spacing:-.01em}
+.hero p{font-size:19px;color:var(--mut);max-width:34ch;margin:22px 0 0}
+.hero .para{margin-top:28px;display:flex;flex-wrap:wrap;gap:8px}
+.pill{font-size:13px;border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+nav.idx{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-block:1px solid var(--line)}
+nav.idx .wrap{display:flex;gap:6px;overflow-x:auto;padding-block:10px;scrollbar-width:none}
+nav.idx a{flex:none;font-size:13.5px;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 12px;white-space:nowrap}
+nav.idx a.hecho{background:var(--okbg);color:var(--ok);border-color:transparent}
+section.nivel{padding-block:56px 20px;border-bottom:1px solid var(--line)}
+.num{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--red);font-weight:600}
+h2{font-size:clamp(34px,7vw,52px);line-height:1.02;margin:10px 0 14px;text-wrap:balance}
+h3{font-size:19px;margin:34px 0 8px;letter-spacing:-.01em}
+p{margin:0 0 14px}
+.lead{font-size:18px;color:var(--mut);max-width:58ch}
+ul.pasos{padding-left:20px;margin:0 0 16px}
+ul.pasos li{margin:0 0 8px}
+.tabla{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 18px}
+.caja{border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.caja b{display:block;margin-bottom:4px}
+.caja.mal{border-color:color-mix(in srgb,var(--red) 35%,var(--line))}
+.caja.bien{border-color:color-mix(in srgb,var(--ok) 45%,var(--line))}
+.caja .et{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+.caja.mal .et{color:var(--red)} .caja.bien .et{color:var(--ok)}
+.prompt{position:relative;background:var(--soft);border-radius:12px;padding:16px 16px 14px;margin:12px 0 18px;font-size:15px;white-space:pre-wrap}
+.prompt .t{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:8px;font-weight:600}
+.copiar{position:absolute;top:10px;right:10px;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:5px 10px;cursor:pointer}
+.copiar:focus-visible,nav.idx a:focus-visible,.check:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.nota{border-left:3px solid var(--red);padding:2px 0 2px 14px;color:var(--ink);margin:18px 0}
+.hoy{background:var(--okbg);border-radius:12px;padding:16px 18px;margin:22px 0 10px}
+.hoy b{color:var(--ok)}
+.check{margin-top:18px;font:inherit;font-weight:600;font-size:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:9px 16px;cursor:pointer}
+.check[aria-pressed="true"]{background:var(--okbg);color:var(--ok);border-color:transparent}
+.herr{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:14px 0}
+.herr a{color:inherit;text-decoration:none}
+.herr .caja:hover{border-color:var(--ink)}
+.imagina{padding-block:64px 30px}
+.imagina h2{font-size:clamp(40px,9vw,72px)}
+.chat{border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:10px;margin:22px 0}
+.b{max-width:85%;padding:10px 14px;border-radius:14px;font-size:15px}
+.b.yo{justify-self:end;background:var(--ink);color:var(--bg);border-bottom-right-radius:4px}
+.b.ia{background:var(--soft);border-bottom-left-radius:4px}
+.modulos{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:18px 0}
+.modulos .caja b{font-size:16px}
+.cta{margin:40px 0 70px;padding:28px;border-radius:18px;background:var(--ink);color:var(--bg)}
+.cta h3{margin:0 0 8px;font-size:24px}
+.cta p{color:color-mix(in srgb,var(--bg) 75%,transparent);margin:0}
+footer{padding-block:0 50px;color:var(--mut);font-size:13px}
+@media (max-width:520px){.tabla{grid-template-columns:1fr}.hero p{font-size:17px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <a class="logo" href="/"><img src="/assets/web/logo-negro.png" alt="">Airmate</a>
+    <span class="tag">Fight Club · Fight2One</span>
+  </header>
+
+  <section class="hero">
+    <span class="tag">Guía privada para Moi</span>
+    <h1 class="serif">La IA, <i>a tu ritmo.</i></h1>
+    <p>Desde cero hasta usarla para el gimnasio y las veladas. Un nivel cada día, 20 minutos.</p>
+    <div class="para"><span class="pill">7 niveles</span><span class="pill">Ejemplos listos para copiar</span><span class="pill">Un reto al final de cada nivel</span></div>
+  </section>
+</div>
+
+<nav class="idx" aria-label="Niveles">
+  <div class="wrap" id="indice">
+    <a href="#n0">0 · Qué es</a><a href="#n1">1 · Cómo hablarle</a><a href="#n2">2 · Día a día</a><a href="#n3">3 · Gimnasio</a><a href="#n4">4 · Fight2One</a><a href="#n5">5 · Diseños de ropa</a><a href="#n6">6 · Trucos</a><a href="#imagina">Imagina</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ═══ NIVEL 0 ═══ -->
+<section class="nivel" id="n0">
+  <span class="num">Nivel 0</span>
+  <h2 class="serif">Qué es y <i>dónde está.</i></h2>
+  <p class="lead">La IA es un ayudante al que le hablas como a una persona. Entiende lo que escribes, lo que le dices por voz y las fotos que le mandas. Te contesta en segundos.</p>
+
+  <h3>Piensa en ella como en un ayudante nuevo</h3>
+  <p>Es muy listo, rápido y trabaja 24 horas. Pero el primer día no sabe nada de tu gimnasio ni de tus veladas. <b>Cuanto mejor le explicas, mejor trabaja.</b> Es igual que con un alumno nuevo: si le dices «entrena», no sabe qué hacer; si le dices «3 asaltos de 3 minutos de sombra, guardia alta», lo hace perfecto.</p>
+
+  <h3>Dónde se usa</h3>
+  <div class="herr">
+    <a class="caja" href="https://chatgpt.com" target="_blank" rel="noopener"><b>ChatGPT</b>El más conocido. Empieza por aquí. App gratis en el móvil y en chatgpt.com</a>
+    <a class="caja" href="https://gemini.google.com" target="_blank" rel="noopener"><b>Gemini</b>El de Google. Muy bueno con fotos y con todo lo de Google.</a>
+    <a class="caja" href="https://claude.ai" target="_blank" rel="noopener"><b>Claude</b>Muy bueno escribiendo textos largos y documentos.</a>
+  </div>
+  <p>No hace falta usar los tres. <b>Quédate con ChatGPT</b>, que ya lo conoces. La versión gratis vale para aprender. Si lo usas todos los días, el plan de pago (unos 20 al mes) contesta mejor y te deja hacer más imágenes.</p>
+
+  <div class="nota">Regla de oro: la IA se equivoca a veces y lo dice muy segura. Para datos importantes (normas, leyes, cifras), compruébalo siempre.</div>
+
+  <div class="hoy"><b>Reto de hoy:</b> descarga la app de ChatGPT, inicia sesión y pulsa el icono del micrófono. Pregúntale por voz: «¿Qué cosas me puedes ayudar a hacer si tengo un gimnasio de deportes de contacto?».</div>
+  <button class="check" data-n="n0" aria-pressed="false">Marcar nivel como hecho</button>
+</section>
+
+<!-- ═══ NIVEL 1 ═══ -->
+<section class="nivel" id="n1">
+  <span class="num">Nivel 1</span>
+  <h2 class="serif">Cómo hablarle <i>para que lo clave.</i></h2>
+  <p class="lead">El 90 % de que te salga bien es cómo se lo pides. Hay una fórmula de 4 partes que funciona siempre.</p>
+
+  <h3>La fórmula: Quién + Qué + Para quién + Cómo</h3>
+  <ul class="pasos">
+    <li><b>Quién eres:</b> «Soy el dueño de un gimnasio de Muay Thai y K1 en Tenerife».</li>
+    <li><b>Qué quieres:</b> «Escríbeme un post para Instagram…».</li>
+    <li><b>Para quién:</b> «…para gente de 20 a 40 años que nunca ha entrenado».</li>
+    <li><b>Cómo lo quieres:</b> «Corto, cercano, con 3 emojis como mucho y que termine invitando a una clase de prueba».</li>
+  </ul>
+
+  <div class="tabla">
+    <div class="caja mal"><span class="et">Así no</span>Hazme un post del gimnasio.</div>
+    <div class="caja bien"><span class="et">Así sí</span>Soy dueño de un gimnasio de Muay Thai y K1 en Añaza, Tenerife. Escríbeme un post para Instagram para gente que nunca ha entrenado y le da miedo empezar. Cercano, corto, máximo 3 emojis, y que acabe invitando a una clase de prueba gratis.</div>
+  </div>
+
+  <h3>El segundo secreto: corrígela</h3>
+  <p>La primera respuesta casi nunca es la buena. No empieces de cero: <b>dile qué cambiar</b>, como a un alumno.</p>
+  <div class="prompt"><span class="t">Frases para corregirla</span>Más corto.
+Más directo, como hablo yo, sin palabras raras.
+Dame 5 versiones distintas.
+Esto no me gusta: [lo que no te gusta]. Cámbialo.
+Ponlo en una tabla.
+Explícamelo como si tuviera 12 años.<button class="copiar">Copiar</button></div>
+
+  <h3>El tercer secreto: que te pregunte ella</h3>
+  <p>Cuando no sepas cómo pedir algo, pídele que te entreviste primero.</p>
+  <div class="prompt"><span class="t">Copia y pega</span>Quiero que me ayudes con [lo que necesites]. Antes de hacer nada, hazme las preguntas que necesites para hacerlo perfecto. Pregúntame de una en una.<button class="copiar">Copiar</button></div>
+
+  <div class="hoy"><b>Reto de hoy:</b> pide el post del gimnasio con la fórmula y corrígelo 3 veces hasta que te guste de verdad.</div>
+  <button class="check" data-n="n1" aria-pressed="false">Marcar nivel como hecho</button>
+</section>
+
+<!-- ═══ NIVEL 2 ═══ -->
+<section class="nivel" id="n2">
+  <span class="num">Nivel 2</span>
+  <h2 class="serif">Tu día a día, <i>más fácil.</i></h2>
+  <p class="lead">Cosas pequeñas que te ahorran tiempo desde hoy mismo.</p>
+
+  <h3>Háblale en vez de escribir</h3>
+  <p>En la app, pulsa el micrófono y suéltalo todo como si fuera un audio de WhatsApp, aunque sea desordenado. Ella lo ordena. Perfecto para cuando sales de entrenar o vas en el coche (con el móvil en el soporte).</p>
+  <div class="prompt"><span class="t">Dilo por voz</span>Te voy a contar todo lo que tengo pendiente esta semana, desordenado. Ordénamelo por prioridad y dime qué hago primero mañana.<button class="copiar">Copiar</button></div>
+
+  <h3>Mándale fotos</h3>
+  <p>Pulsa el «+» y haz una foto: un presupuesto, una factura, un contrato, una etiqueta, una pantalla que no entiendes…</p>
+  <div class="prompt"><span class="t">Con una foto</span>Te mando la foto de un presupuesto. Explícame en 5 líneas qué me están cobrando, si hay algo raro y qué preguntaría yo antes de aceptarlo.<button class="copiar">Copiar</button></div>
+
+  <h3>Traduce y escribe a peleadores de fuera</h3>
+  <div class="prompt"><span class="t">Copia y pega</span>Tradúceme este mensaje al inglés (o francés/tailandés/portugués) de forma natural y profesional, como lo escribiría un promotor de eventos de peleas. Mensaje: [pega tu mensaje en español]<button class="copiar">Copiar</button></div>
+
+  <h3>Mensajes difíciles</h3>
+  <div class="prompt"><span class="t">Copia y pega</span>Tengo que decirle a [persona] que [situación: no paga la cuota / se cae del combate / cambia la fecha]. Escríbeme un WhatsApp firme pero educado, corto, que no rompa la relación.<button class="copiar">Copiar</button></div>
+
+  <div class="hoy"><b>Reto de hoy:</b> mándale por voz todo lo que tienes pendiente y pídele el orden. Después, hazle una foto a cualquier papel del gimnasio y pídele que te lo explique.</div>
+  <button class="check" data-n="n2" aria-pressed="false">Marcar nivel como hecho</button>
+</section>
+
+<!-- ═══ NIVEL 3 ═══ -->
+<section class="nivel" id="n3">
+  <span class="num">Nivel 3</span>
+  <h2 class="serif">Para el <i>gimnasio.</i></h2>
+  <p class="lead">Redes, socios, precios y organización. Cambia lo que está entre [corchetes] y listo.</p>
+
+  <h3>Un mes de Instagram en 5 minutos</h3>
+  <div class="prompt"><span class="t">Copia y pega</span>Soy dueño del Fight Club en Añaza (Tenerife), gimnasio de kickboxing, Muay Thai, K1 y MMA, con campeones del mundo entrenando aquí. Hazme un calendario de publicaciones para las próximas 4 semanas: 3 posts por semana. Para cada uno: idea del vídeo o foto, el texto y la hora recomendada. Mezcla: entrenamientos, logros de los peleadores, clases para principiantes y la próxima velada.<button class="copiar">Copiar</button></div>
+
+  <h3>Recuperar socios que han dejado de venir</h3>
+  <div class="prompt"><span class="t">Copia y pega</span>Escríbeme 3 mensajes de WhatsApp distintos para socios que llevan más de un mes sin venir al gimnasio. Cercanos, sin sonar a venta, que les den ganas de volver. Uno con humor, uno motivador y uno con una oferta de vuelta: [tu oferta].<button class="copiar">Copiar</button></div>
+
+  <h3>Responder reseñas de Google</h3>
+  <div class="prompt"><span class="t">Copia y pega</span>Responde a esta reseña de Google de mi gimnasio. Agradecido, natural, firmando como Moi. Si es mala, calmado y profesional, sin discutir. Reseña: [pega la reseña]<button class="copiar">Copiar</button></div>
+
+  <h3>Precios y bonos</h3>
+  <div class="prompt"><span class="t">Copia y pega</span>Estas son mis tarifas actuales: [pega tus precios]. Tengo unos [número] socios. Propónme 3 formas de organizar los precios (bonos, trimestral, familiar, clases sueltas) para ganar más sin perder socios. Explícame lo bueno y lo malo de cada una en una tabla.<button class="copiar">Copiar</button></div>
+
+  <h3>Horarios y clases</h3>
+  <div class="prompt"><span class="t">Copia y pega</span>Te paso mi horario de clases: [pega el horario]. Ordénalo en una tabla clara por días para colgarla en la recepción y en Instagram. Dime también si ves huecos o clases que se pisan.<button class="copiar">Copiar</button></div>
+
+  <div class="hoy"><b>Reto de hoy:</b> saca el calendario de Instagram del mes y elige los 3 primeros posts para esta semana.</div>
+  <button class="check" data-n="n3" aria-pressed="false">Marcar nivel como hecho</button>
+</section>
+
+<!-- ═══ NIVEL 4 ═══ -->
+<section class="nivel" id="n4">
+  <span class="num">Nivel 4</span>
+  <h2 class="serif">Para <i>Fight2One.</i></h2>
+  <p class="lead">Patrocinios, carteles, organización y prensa. Aquí es donde más tiempo te puede ahorrar.</p>
+
+  <h3>Dossier para conseguir patrocinadores</h3>
+  <div class="prompt"><span class="t">Copia y pega</span>Organizo Fight2One, una velada de MMA, Muay Thai y K1 en Tenerife. Datos: [número de edición], [público aproximado], [seguidores en redes], [sale en televisión: sí/no], [fecha y pabellón]. Hazme el texto de un dossier para patrocinadores con: quiénes somos, por qué patrocinar, qué ve el público, y 3 paquetes de patrocinio (básico, medio y principal) con lo que incluye cada uno: logo en el ring, menciones, redes, entradas VIP… Los precios los pongo yo.<button class="copiar">Copiar</button></div>
+
+  <h3>Mensaje para un patrocinador concreto</h3>
+  <div class="prompt"><span class="t">Copia y pega</span>Escríbeme un mensaje corto para proponer a [nombre de la empresa], que es [a qué se dedica], patrocinar la próxima Fight2One. Que vea qué gana su negocio en concreto. Tono de igual a igual, nada de rogar.<button class="copiar">Copiar</button></div>
+
+  <h3>Presentar cada combate en redes</h3>
+  <div class="prompt"><span class="t">Copia y pega</span>Escríbeme el texto de Instagram para anunciar este combate de la Fight2One: [peleador 1, récord, de dónde es] contra [peleador 2, récord, de dónde es], en [modalidad y peso]. Con tensión, como un promotor de UFC, corto, y con el enlace de entradas al final.<button class="copiar">Copiar</button></div>
+
+  <h3>Lista de todo lo que hay que hacer para la velada</h3>
+  <div class="prompt"><span class="t">Copia y pega</span>Hazme una lista de tareas completa para organizar una velada de deportes de contacto dentro de [semanas] semanas: peleadores, médicos, pesaje, jueces, vuelos y hoteles, transporte, pabellón, montaje, entradas, patrocinadores, merch, prensa, seguridad y el día del evento. Ordenada por semanas y con quién se encarga de cada cosa.<button class="copiar">Copiar</button></div>
+
+  <h3>Presupuesto del evento</h3>
+  <div class="prompt"><span class="t">Copia y pega</span>Ayúdame a hacer el presupuesto de la próxima velada en una tabla. Gastos: [bolsas de peleadores, vuelos, hoteles, pabellón, jueces, médicos, producción, publicidad…]. Ingresos: [entradas, patrocinadores, merch…]. Calcula el total, el beneficio y cuántas entradas necesito vender para no perder dinero.<button class="copiar">Copiar</button></div>
+
+  <h3>Nota de prensa</h3>
+  <div class="prompt"><span class="t">Copia y pega</span>Escríbeme una nota de prensa para periódicos y televisión sobre la próxima Fight2One: [fecha, pabellón, combates estelares, títulos en juego, precio de entradas, dónde comprarlas]. Estilo periodístico, con un titular fuerte y una frase mía entre comillas.<button class="copiar">Copiar</button></div>
+
+  <div class="nota">Contratos de peleadores: la IA te hace un primer borrador muy bueno, pero que lo revise siempre un abogado antes de firmarlo.</div>
+
+  <div class="hoy"><b>Reto de hoy:</b> haz el dossier de patrocinio con los datos reales de la próxima Fight2One. Es el que más dinero te puede hacer ganar de toda esta guía.</div>
+  <button class="check" data-n="n4" aria-pressed="false">Marcar nivel como hecho</button>
+</section>
+
+<!-- ═══ NIVEL 5 ═══ -->
+<section class="nivel" id="n5">
+  <span class="num">Nivel 5</span>
+  <h2 class="serif">Diseños de ropa <i>y carteles.</i></h2>
+  <p class="lead">ChatGPT puede dibujar. Sirve para sacar ideas muy rápido y enseñárselas a tu diseñador o a la serigrafía.</p>
+
+  <h3>Cómo pedir un diseño</h3>
+  <p>Igual que con los textos: cuantos más detalles, mejor. Di <b>qué prenda</b>, <b>qué estilo</b>, <b>qué colores</b>, <b>qué texto</b> y <b>dónde va</b>.</p>
+  <div class="prompt"><span class="t">Copia y pega</span>Diseña una camiseta negra para el gimnasio Fight Club de Tenerife. Estilo [Muay Thai tradicional / urbano / minimalista / tatuaje]. En el pecho, el texto «FIGHT CLUB» y debajo «TENERIFE» más pequeño. En la espalda, un tigre con guantes de boxeo. Solo 2 colores: blanco y rojo. Enséñamela de frente y de espalda, sobre un fondo liso.<button class="copiar">Copiar</button></div>
+
+  <h3>A partir de un diseño que ya tienes</h3>
+  <div class="prompt"><span class="t">Con una foto</span>Te mando la foto de nuestra camiseta actual. Hazme 4 variaciones: una más moderna, una más agresiva, una para mujer y una edición especial para la Fight2One [número].<button class="copiar">Copiar</button></div>
+
+  <h3>Cartel de la velada</h3>
+  <div class="prompt"><span class="t">Copia y pega</span>Haz un cartel vertical para la velada Fight2One [número], el [fecha] en el [pabellón], Tenerife. Combate estelar: [peleador 1] contra [peleador 2]. Estilo cartel de boxeo profesional, fondo oscuro, iluminación dramática. Deja espacio abajo para los logos de los patrocinadores.<button class="copiar">Copiar</button></div>
+
+  <div class="nota">Ojo con 3 cosas: a veces escribe mal las letras (revísalas), las fotos de peleadores reales salen inventadas (usa fotos de verdad para el cartel final) y para imprimir, el diseñador tiene que pasar la idea a un archivo de calidad.</div>
+
+  <div class="hoy"><b>Reto de hoy:</b> pide 4 diseños de camiseta, quédate con el mejor y corrígelo hasta que te lo pondrías tú.</div>
+  <button class="check" data-n="n5" aria-pressed="false">Marcar nivel como hecho</button>
+</section>
+
+<!-- ═══ NIVEL 6 ═══ -->
+<section class="nivel" id="n6">
+  <span class="num">Nivel 6</span>
+  <h2 class="serif">Trucos <i>de nivel pro.</i></h2>
+  <p class="lead">Para que la IA deje de ser genérica y empiece a conocerte.</p>
+
+  <h3>1. Cuéntale quién eres, una sola vez</h3>
+  <p>En ChatGPT, entra en tu perfil → <b>Personalización</b> y rellena quién eres y cómo quieres que te conteste. A partir de ahí, lo tiene en cuenta siempre.</p>
+  <div class="prompt"><span class="t">Para pegar en Personalización</span>Soy Moi Ruibal, campeón del mundo de kickboxing, dueño del gimnasio Fight Club en Añaza (Tenerife) y promotor de las veladas Fight2One (MMA, Muay Thai y K1). Háblame claro, directo y en español de España. Respuestas cortas y prácticas, con pasos concretos. Si no sabes algo, dímelo.<button class="copiar">Copiar</button></div>
+
+  <h3>2. Un chat para cada cosa</h3>
+  <p>Crea un <b>Proyecto</b> (o una conversación fija) para Fight2One y otro para el gimnasio. Así no se mezclan las cosas y cada uno recuerda lo que habéis hablado.</p>
+
+  <h3>3. Dale tus documentos</h3>
+  <p>Súbele el Excel de gastos, el reglamento o el dossier y pregúntale sobre ellos: «¿cuánto gastamos en hoteles en la última velada?».</p>
+
+  <h3>4. Lo que nunca deberías pegar</h3>
+  <ul class="pasos">
+    <li>Contraseñas y claves del banco.</li>
+    <li>DNI o pasaportes de peleadores y socios.</li>
+    <li>Datos médicos o de salud de nadie.</li>
+  </ul>
+  <p>Para lo demás, sin miedo.</p>
+
+  <div class="hoy"><b>Reto de hoy:</b> rellena la Personalización con el texto de arriba y vuelve a pedirle el post del nivel 1. Vas a notar la diferencia.</div>
+  <button class="check" data-n="n6" aria-pressed="false">Marcar nivel como hecho</button>
+</section>
+
+<!-- ═══ IMAGINA ═══ -->
+<section class="imagina" id="imagina">
+  <span class="num">Y ahora, imagina</span>
+  <h2 class="serif">Una IA que conoce <i>tu negocio</i> de memoria.</h2>
+  <p class="lead">Hasta aquí, la IA sabe mucho de todo, pero nada de lo tuyo. Cada vez le tienes que explicar quién pelea, cuánto llevas gastado o qué falta por hacer.</p>
+  <p>Ahora imagina que toda la información de Fight2One y del gimnasio está ordenada en <b>un solo sitio</b>, y que la IA está conectada a ese sitio:</p>
+
+  <div class="chat" aria-label="Ejemplo de conversación">
+    <div class="b yo">¿Qué peleadores de la próxima velada todavía no tienen el vuelo?</div>
+    <div class="b ia">Faltan 3: [peleador A], [peleador B] y [peleador C]. ¿Quieres que te prepare un mensaje para cada uno?</div>
+    <div class="b yo">¿Cuánto llevamos gastado y cuánto nos falta por cobrar de patrocinios?</div>
+    <div class="b ia">Llevas [X] € de gastos. Te faltan por cobrar 2 patrocinadores, [Y] € en total. Al ritmo de venta actual, cubres gastos con [Z] entradas más.</div>
+    <div class="b yo">Hazme 3 diseños de camiseta para esta edición.</div>
+    <div class="b ia">Aquí los tienes, ya con la fecha, el cartel principal y los colores de Fight2One.</div>
+  </div>
+  <p class="tag">Ejemplo ilustrativo · los datos entre corchetes serían los tuyos</p>
+
+  <h3>Cómo sería, en concreto</h3>
+  <div class="modulos">
+    <div class="caja"><b>Panel de Fight2One</b>Peleadores con su ficha (peso, récord, vuelo, hotel, transporte), cartel de combates, personal, tareas por semana, gastos, patrocinadores y entradas. Todo en el móvil.</div>
+    <div class="caja"><b>Tu asistente de IA</b>Le preguntas lo que quieras sobre la velada o el gimnasio y te contesta con tus datos reales, no con datos genéricos.</div>
+    <div class="caja"><b>Diseños con tu marca</b>Ideas de ropa y carteles que ya salen con tu logo, tus colores y los datos de cada edición.</div>
+    <div class="caja"><b>Panel del gimnasio</b>Socios, cuotas y bonos, clases y asistencia, caja. Y avisos de quién lleva tiempo sin venir.</div>
+    <div class="caja"><b>Web con tienda</b>Tu merch a la venta online, con pago con tarjeta, y las entradas de las veladas.</div>
+    <div class="caja"><b>App para los socios</b>Reservar clase, ver su bono y recibir avisos del gimnasio.</div>
+  </div>
+  <p>No es un programa genérico. <b>Se construye a medida</b>, escuchando cómo trabajas tú, y empezando por lo que más te quite tiempo hoy.</p>
+
+  <div class="cta">
+    <h3 class="serif" style="font-size:30px">¿Por dónde <i>empezamos?</i></h3>
+    <p>Lo vemos juntos en el gimnasio. Tú me cuentas qué te quita más tiempo de una velada, y te enseño cómo quedaría.<br><br>— Fabio · Airmate</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="wrap">Airmate · airmate.es · Guía preparada para Moi Ruibal, Fight Club & Fight2One</footer>
+
+<script>
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let hechos=ls.get('moi_hechos',{});
+function pintar(){
+  document.querySelectorAll('.check').forEach(b=>{const ok=!!hechos[b.dataset.n];b.setAttribute('aria-pressed',ok);b.textContent=ok?'Nivel hecho ✓':'Marcar nivel como hecho';});
+  document.querySelectorAll('#indice a').forEach(a=>a.classList.toggle('hecho',!!hechos[a.getAttribute('href').slice(1)]));
+}
+document.addEventListener('click',async e=>{
+  const c=e.target.closest('.check'); if(c){const n=c.dataset.n; hechos[n]?delete hechos[n]:hechos[n]=1; ls.set('moi_hechos',hechos); pintar(); return;}
+  const b=e.target.closest('.copiar'); if(!b) return;
+  const caja=b.closest('.prompt'); const t=[...caja.childNodes].filter(x=>x.nodeType===3).map(x=>x.textContent).join('').trim();
+  try{await navigator.clipboard.writeText(t); b.textContent='Copiado ✓';}
+  catch(err){const r=document.createRange(); r.selectNodeContents(caja); const s=getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent='Selecciona y copia';}
+  setTimeout(()=>{b.textContent='Copiar'},1800);
+});
+pintar();
+</script>
+</body>
+</html>
