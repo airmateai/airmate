@@ -27,6 +27,9 @@ main{position:relative;min-height:0}
 .cam{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle,#ff4757 0 38%,rgba(255,45,61,.25) 40%);display:grid;place-items:center;font:800 9px Inter;color:#fff;box-shadow:0 0 14px rgba(255,45,61,.7)}
 .cam.tr{background:radial-gradient(circle,#ffb020 0 38%,rgba(255,176,32,.25) 40%);box-shadow:0 0 14px rgba(255,176,32,.7);color:#111}
 .cam.sem{background:radial-gradient(circle,#b46bff 0 38%,rgba(180,107,255,.25) 40%);box-shadow:0 0 14px rgba(180,107,255,.7)}
+.cam.mio{background:radial-gradient(circle,#2ee6a6 0 38%,rgba(46,230,166,.25) 40%);box-shadow:0 0 14px rgba(46,230,166,.7);font-size:13px}
+.cam.osm{width:22px;height:22px;background:rgba(17,20,25,.85);border:1px solid #555;box-shadow:none;font-size:11px}
+.markmode #map{cursor:crosshair}
 .cam.com{background:radial-gradient(circle,#3db8ff 0 38%,rgba(61,184,255,.25) 40%);box-shadow:0 0 14px rgba(61,184,255,.7);font-size:13px}
 .gas{background:#0f1a12;border:1px solid #2dff8a;color:#2dff8a;border-radius:8px;padding:2px 5px;font:800 10px Inter;white-space:nowrap;box-shadow:0 0 10px rgba(45,255,138,.35)}
 .gas.best{background:#2dff8a;color:#04140a}
@@ -129,7 +132,7 @@ body.navon .tramo{top:176px}
   <div class="tramo" id="tramo"><span>TRAMO <span id="trv"></span> · media</span><b id="trm">--</b><span id="trd">0 m</span></div>
   <div class="nav" id="nav"><div class="ar" id="nar">↑</div><div class="tx"><b id="ntx">—</b><small id="nsub"></small></div><div class="dm" id="ndm">--<small id="neta"></small></div><button class="x" id="nx">✕</button></div>
   <div class="count" id="count"></div>
-  <div class="fab"><button class="rep" id="brep" title="Avisar">＋</button><button id="bgps" title="Activar GPS">◎</button><button id="bfol" title="Seguirme">➤</button><button id="bcar" title="Modo coche">🚗</button><button id="bmute" title="Silencio">🔊</button></div>
+  <div class="fab"><button class="rep" id="brep" title="Avisar">＋</button><button id="bgps" title="Activar GPS">◎</button><button id="bfol" title="Seguirme">➤</button><button id="bcar" title="Modo coche">🚗</button><button id="bmute" title="Silencio">🔊</button><button id="bmark" title="Marcar un punto en el mapa">📍</button></div>
 </main>
 <footer>
   <div class="tabs"><button data-t="ruta">Ruta</button><button class="on" data-t="snd">Sonidos</button><button data-t="gas">Gasolina</button><button data-t="via">Viaje</button><button data-t="cfg">Ajustes</button></div>
@@ -156,7 +159,7 @@ body.navon .tramo{top:176px}
   <div class="tab" id="t-cfg">
     <div class="row">Estilo <div class="seg" id="skins"><button class="on" data-s="escort">Escort</button><button data-s="uniden">Uniden</button><button data-s="valentine">Valentine</button></div></div>
     <div class="row">Aviso a <select id="dist"><option>300</option><option selected>500</option><option>800</option><option>1000</option></select> m · Voz <select id="lang"><option value="en">Inglés (USA)</option><option value="es">Español</option></select></div>
-    <div class="row"><label class="ck"><input type="checkbox" id="ckfijo" checked> Fijos</label><label class="ck"><input type="checkbox" id="cktr" checked> Tramos</label><label class="ck"><input type="checkbox" id="cksem" checked> Semáforos</label><label class="ck"><input type="checkbox" id="ckcom" checked> Avisos</label><label class="ck"><input type="checkbox" id="ckgas" checked> Gasolineras</label><label class="ck"><input type="checkbox" id="cktraf" checked> Tráfico DGT</label></div>
+    <div class="row"><label class="ck"><input type="checkbox" id="ckfijo" checked> Fijos</label><label class="ck"><input type="checkbox" id="cktr" checked> Tramos</label><label class="ck"><input type="checkbox" id="cksem" checked> Semáforos</label><label class="ck"><input type="checkbox" id="ckcom" checked> Avisos</label><label class="ck"><input type="checkbox" id="ckmio" checked> Mis puntos</label><label class="ck"><input type="checkbox" id="ckosm" checked> Semáforos y stops</label><label class="ck"><input type="checkbox" id="ckgas" checked> Gasolineras</label><label class="ck"><input type="checkbox" id="cktraf" checked> Tráfico DGT</label></div>
     <div class="row">Voz <select id="voz" style="max-width:190px"></select><button class="btn" id="bvdet">🎚 Estilo detector</button></div>
     <div class="row">Tono <input type="range" id="vpitch" min="0.5" max="1.6" step="0.05" value="1.1" style="flex:1"> Velocidad <input type="range" id="vrate" min="0.6" max="1.4" step="0.05" value="0.95" style="flex:1"></div>
     <div class="row"><label class="ck"><input type="checkbox" id="cklim" checked> Avisar si paso el límite de la vía</label></div>
@@ -191,7 +194,7 @@ function rumbo(a,b,c,d){ const r=Math.PI/180,y=Math.sin((d-b)*r)*Math.cos(c*r),x
 // ======= Mapa =======
 const map = L.map('map',{zoomControl:false}).setView([28.29,-16.55],10);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
-const capas = { traf:L.layerGroup().addTo(map), ruta:L.layerGroup().addTo(map), fijo:L.layerGroup().addTo(map), tr:L.layerGroup().addTo(map), sem:L.layerGroup().addTo(map), com:L.layerGroup().addTo(map), gas:L.layerGroup().addTo(map) };
+const capas = { traf:L.layerGroup().addTo(map), ruta:L.layerGroup().addTo(map), fijo:L.layerGroup().addTo(map), tr:L.layerGroup().addTo(map), sem:L.layerGroup().addTo(map), com:L.layerGroup().addTo(map), gas:L.layerGroup().addTo(map), mio:L.layerGroup().addTo(map), osm:L.layerGroup().addTo(map) };
 const ico = (cls,txt) => L.divIcon({className:'',html:`<div class="cam ${cls}">${txt}</div>`,iconSize:[30,30],iconAnchor:[15,15]});
 function pintar(){
   [capas.fijo,capas.tr,capas.sem,capas.com].forEach(c=>c.clearLayers());
@@ -203,20 +206,23 @@ function pintar(){
   COMS.forEach(a=>L.marker([a.lat,a.lon],{icon:ico('com',REP[a.tipo]?.e||'⚠️')}).addTo(capas.com).bindPopup(`<div class="pop"><b style="color:var(--blu)">${REP[a.tipo]?.t||'Aviso'}</b><small>Hace ${Math.max(1,Math.round((Date.now()-new Date(a.creado).getTime())/60000))} min · ${a.votos||1} confirmación${(a.votos||1)>1?'es':''}</small></div>`));
   $('count').innerHTML = `<b style="color:var(--red)">${DATA.fijos.length}</b> fijos · <b style="color:var(--amb)">${DATA.tramos.length}</b> tramos · <b style="color:var(--vio)">${DATA.rojos.length}</b> foto-rojo${COM_ON?` · <b style="color:var(--blu)">${COMS.length}</b> avisos`:''}${TRAF.length?` · <b style="color:var(--amb)">${TRAF.length}</b> incidencias`:''}`;
 }
-[['cktraf','traf'],['ckfijo','fijo'],['cktr','tr'],['cksem','sem'],['ckcom','com'],['ckgas','gas']].forEach(([id,k])=>{ $(id).checked=LS.get(id,true); const ap=()=>{ $(id).checked?capas[k].addTo(map):capas[k].remove(); LS.set(id,$(id).checked); }; $(id).onchange=ap; ap(); });
+[['cktraf','traf'],['ckfijo','fijo'],['cktr','tr'],['cksem','sem'],['ckcom','com'],['ckgas','gas'],['ckmio','mio'],['ckosm','osm']].forEach(([id,k])=>{ $(id).checked=LS.get(id,true); const ap=()=>{ $(id).checked?capas[k].addTo(map):capas[k].remove(); LS.set(id,$(id).checked); }; $(id).onchange=ap; ap(); });
 if(!COM_ON){ $('brep').style.display='none'; $('ckcom').parentElement.style.display='none'; }
 
 // ======= Audio: se renderiza a WAV y se reproduce como <audio> (suena aunque el iPhone esté en silencio) =======
 try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
 const RATE=44100, CACHE={};
+// En el altavoz del móvil las ondas cuadradas y de sierra saturan: se tocan como triangulares (más suaves)
+const suave=t=>t==='square'||t==='sawtooth'?'triangle':t;
 function wav(buf){ const ch=buf.getChannelData(0),n=ch.length,ab=new ArrayBuffer(44+n*2),v=new DataView(ab);
   const w=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
   w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,RATE,true);v.setUint32(28,RATE*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
-  let pk=0; for(let i=0;i<n;i++){ const a=Math.abs(ch[i]); if(a>pk) pk=a; } const esc2=pk>0?0.7/pk:1;
+  let pk=0, sq=0; for(let i=0;i<n;i++){ const a=Math.abs(ch[i]); if(a>pk) pk=a; sq+=ch[i]*ch[i]; } const rms=Math.sqrt(sq/Math.max(1,n));
+  const esc2=pk>0?Math.min(0.5/pk, rms>0?0.16/rms:9):1;   // pico máx. −6 dB y volumen medio contenido: sin saturar el altavoz
   for(let i=0;i<n;i++){ const s=Math.max(-1,Math.min(1,ch[i]*esc2)); v.setInt16(44+i*2,s*32767,true); } return URL.createObjectURL(new Blob([ab],{type:'audio/wav'})); }
 async function render(dur,fn){ const C=window.OfflineAudioContext||window.webkitOfflineAudioContext; const ctx=new C(1,Math.ceil(RATE*dur),RATE);
-  const out=ctx.createGain(); out.gain.value=.5; const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3800; lp.Q.value=.5; out.connect(lp).connect(ctx.destination);
-  const tono=(f,t0,d,tipo='square',vol=.3,f2)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.type=tipo; o.frequency.setValueAtTime(f,t0); if(f2) o.frequency.linearRampToValueAtTime(f2,t0+d);
+  const out=ctx.createGain(); out.gain.value=.5; const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3000; lp.Q.value=.5; out.connect(lp).connect(ctx.destination);
+  const tono=(f,t0,d,tipo='square',vol=.3,f2)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.type=suave(tipo); o.frequency.setValueAtTime(f,t0); if(f2) o.frequency.linearRampToValueAtTime(f2,t0+d);
     g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(vol,t0+.006); g.gain.setValueAtTime(vol,Math.max(t0+.007,t0+d-.015)); g.gain.linearRampToValueAtTime(0,t0+d); o.connect(g).connect(out); o.start(t0); o.stop(t0+d+.01); };
   fn(tono); return wav(await ctx.startRendering()); }
 // Voz grabada (archivos en voz/en y voz/es) + pitidos, mezclados en un único WAV
@@ -228,9 +234,9 @@ const MIX={};
 async function mezcla(partes){ const key=$('lang').value+'|'+JSON.stringify(partes); if(MIX[key]) return MIX[key];
   const segs=[]; let t=0;
   for(const p of partes){ if(p.v){ const b=await vozBuf(p.v); if(b){ segs.push({b,t}); t+=b.duration+.12; } } else if(p.g){ segs.push({g:SND[p.g].gen,t}); t+=SND[p.g].len; } }
-  const C=window.OfflineAudioContext||window.webkitOfflineAudioContext, ctx=new C(1,Math.ceil(RATE*(t+.1)),RATE), out=ctx.createGain(); out.gain.value=.5; out.connect(ctx.destination); const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3800; lp.Q.value=.5; lp.connect(out);
-  segs.forEach(s=>{ if(s.b){ const src=ctx.createBufferSource(); src.buffer=s.b; const g=ctx.createGain(); g.gain.value=1.6; src.connect(g).connect(out); src.start(s.t); }
-    else s.g((f,t0,d,tipo='square',vol=.3,f2)=>{ t0+=s.t; const o=ctx.createOscillator(),g=ctx.createGain(); o.type=tipo; o.frequency.setValueAtTime(f,t0); if(f2) o.frequency.linearRampToValueAtTime(f2,t0+d);
+  const C=window.OfflineAudioContext||window.webkitOfflineAudioContext, ctx=new C(1,Math.ceil(RATE*(t+.1)),RATE), out=ctx.createGain(); out.gain.value=.5; out.connect(ctx.destination); const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3000; lp.Q.value=.5; lp.connect(out);
+  segs.forEach(s=>{ if(s.b){ const src=ctx.createBufferSource(); src.buffer=s.b; const g=ctx.createGain(); g.gain.value=1.0; src.connect(g).connect(out); src.start(s.t); }
+    else s.g((f,t0,d,tipo='square',vol=.3,f2)=>{ t0+=s.t; const o=ctx.createOscillator(),g=ctx.createGain(); o.type=suave(tipo); o.frequency.setValueAtTime(f,t0); if(f2) o.frequency.linearRampToValueAtTime(f2,t0+d);
       vol*=.6; g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(vol,t0+.006); g.gain.setValueAtTime(vol,Math.max(t0+.007,t0+d-.015)); g.gain.linearRampToValueAtTime(0,t0+d); o.connect(g).connect(lp); o.start(t0); o.stop(t0+d+.01); }); });
   return MIX[key]=wav(await ctx.startRendering()); }
 async function sonarMezcla(partes){ if(mute) return; const u=await mezcla(partes); PLAYER.pause(); PLAYER.src=u; PLAYER.currentTime=0; try{ await PLAYER.play(); }catch(e){ toast('Toca la pantalla para activar el sonido'); } }
@@ -340,25 +346,32 @@ function cercanos(la,lo,hd,mov){ const lim=+$('dist').value, r=[];
   if($('ckfijo').checked) DATA.fijos.forEach((c,i)=>{ const d=distM(la,lo,c.lat,c.lon); if(d<=lim&&delante(c)) r.push({k:'f'+i,d,v:c.v,tipo:'fijo',lat:c.lat,lon:c.lon}); });
   if($('cktr').checked) DATA.tramos.forEach((t,i)=>{ const d=distM(la,lo,t.a[0],t.a[1]); if(d<=lim&&delante({lat:t.a[0],lon:t.a[1]})) r.push({k:'t'+i,d,v:t.v,tipo:'tramo'}); });
   if($('cksem').checked) DATA.rojos.forEach((c,i)=>{ const d=distM(la,lo,c.lat,c.lon); if(d<=lim&&delante(c)) r.push({k:'s'+i,d,tipo:'rojo'}); });
+  if($('ckmio').checked) MISP.forEach(a=>{ const d=distM(la,lo,a.lat,a.lon); if(d<=lim&&delante(a)) r.push({k:'m'+a.id,d,tipo:'mio',sub:a.tipo,v:a.v}); });
+  if($('ckosm').checked&&mov) OSMS.forEach(a=>{ const d=distM(la,lo,a.lat,a.lon); if(d<=Math.min(lim,200)&&delante(a)) r.push({k:'o'+a.id,d,tipo:'osm',sub:a.tipo}); });
   if(COM_ON&&$('ckcom').checked) COMS.forEach(a=>{ const d=distM(la,lo,a.lat,a.lon); if(d<=lim&&delante(a)) r.push({k:'c'+a.id,d,tipo:'com',sub:a.tipo}); });
   return r.sort((a,b)=>a.d-b.d); }
 const NOMBRE={fijo:'Radar fijo',tramo:'Inicio de tramo',rojo:'Foto-rojo',com:'Aviso'};
+// Mis puntos y señales: textos, voz grabada (voz/es|en/m_*.mp3) y pantalla
+const PT={radar:{t:'Radar marcado',e:'📸',v:'m_radar',en:'Marked speed camera',es:'Radar marcado',p:'RADAR'},semaforo:{t:'Semáforo',e:'🚦',v:'m_semaforo',en:'Traffic light ahead',es:'Semáforo',p:'SEMÁFORO'},
+  stop:{t:'Stop',e:'🛑',v:'m_stop',en:'Stop sign ahead',es:'Stop',p:'STOP'},ceda:{t:'Ceda el paso',e:'🔻',v:'m_ceda',en:'Yield ahead',es:'Ceda el paso',p:'CEDA'},otro:{t:'Punto marcado',e:'📍',v:'m_punto',en:'Marked point ahead',es:'Atención, punto marcado',p:'AVISO'}};
 function restaurar(){ if(!miPos) return pantalla('READY','Pulsa ◎ para activar el GPS','var(--grn)'); revisar(miPos,true); }
 function revisar(p,soloPantalla){
   const {latitude:la,longitude:lo,heading:hd}=p.coords, sp=p.coords.speed!=null&&p.coords.speed>=0?p.coords.speed*3.6:null, mov=sp!=null&&sp>10;
   const c=cercanos(la,lo,hd,mov)[0], lim=+$('dist').value;
   let cocheTxt='Sin radares cerca', cocheAl=false;
   if(c){
-    const exceso=c.v&&sp&&sp>c.v+3, nom=c.tipo==='com'?(REP[c.sub]?.t||'Aviso'):NOMBRE[c.tipo];
-    if(!sonando){ pantalla(`${c.tipo==='rojo'?'RED LIGHT':c.tipo==='com'?'REPORT':c.tipo==='tramo'?'TRAMO':'RADAR'} ${c.v||''}`.trim(), `${Math.round(c.d)} m · ${nom}${exceso?' · ¡REDUCE!':''}`, exceso?'var(--red)':c.tipo==='rojo'?'var(--vio)':c.tipo==='com'?'var(--blu)':'var(--amb)', true); setBars(Math.max(1,Math.round(8*(1-c.d/lim)))); flechas('up'); }
+    const pt=(c.tipo==='mio'||c.tipo==='osm')?(PT[c.sub]||PT.otro):null;
+    const exceso=c.v&&sp&&sp>c.v+3, nom=pt?pt.t:c.tipo==='com'?(REP[c.sub]?.t||'Aviso'):NOMBRE[c.tipo];
+    if(!sonando){ pantalla(`${pt?pt.p:c.tipo==='rojo'?'RED LIGHT':c.tipo==='com'?'REPORT':c.tipo==='tramo'?'TRAMO':'RADAR'} ${c.v||''}`.trim(), `${Math.round(c.d)} m · ${nom}${exceso?' · ¡REDUCE!':''}`, exceso?'var(--red)':c.tipo==='rojo'?'var(--vio)':c.tipo==='com'?'var(--blu)':'var(--amb)', true); setBars(Math.max(1,Math.round(8*(1-c.d/lim)))); flechas('up'); }
     cocheTxt=`${nom} ${c.v?c.v+' ':''}· ${Math.round(c.d)} m`; cocheAl=true;
     if(!soloPantalla && !avisados[c.k]){ avisados[c.k]=1; VIAJE.rad++;
       const m=Math.round(c.d/50)*50, lv=c.v&&c.v%10===0&&c.v>=20&&c.v<=120?'lim_'+c.v:null;
-      decir([c.tipo==='com'?'a_'+c.sub:'a_'+c.tipo,c.tipo==='rojo'||c.tipo==='com'?null:lv],c.tipo==='rojo'?'Red light camera ahead':c.tipo==='com'?'Speed trap reported ahead':c.tipo==='tramo'?`Average speed zone, ${c.v||''}`:`Photo enforcement, ${m} meters${c.v?', limit '+c.v:''}`,
+      if(pt) decir([pt.v, c.sub==='radar'?lv:null], `${pt.en}, ${m} meters`, `${pt.es} a ${m} metros`, c.sub==='radar'||c.tipo==='mio'?'aviso':null);
+      else decir([c.tipo==='com'?'a_'+c.sub:'a_'+c.tipo,c.tipo==='rojo'||c.tipo==='com'?null:lv],c.tipo==='rojo'?'Red light camera ahead':c.tipo==='com'?'Speed trap reported ahead':c.tipo==='tramo'?`Average speed zone, ${c.v||''}`:`Photo enforcement, ${m} meters${c.v?', limit '+c.v:''}`,
         c.tipo==='rojo'?`Cámara de semáforo a ${m} metros`:c.tipo==='com'?`${REP[c.sub]?.t||'Aviso'} a ${m} metros`:c.tipo==='tramo'?`Tramo de velocidad media${c.v?', límite '+c.v:''}`:`Radar fijo a ${m} metros${c.v?', límite '+c.v:''}`, c.tipo==='com'?'trap':'aviso');
       if(navigator.vibrate) navigator.vibrate([200,100,200]); }
   } else if(!sonando){ pantalla('GPS OK', `Nada en ${lim} m${LIM.v?' · límite '+LIM.v:''}`, 'var(--grn)'); setBars(0); flechas(''); }
-  Object.keys(avisados).forEach(k=>{ const t=k[0], i=k.slice(1); let q=null; if(t==='f') q=DATA.fijos[i]; else if(t==='s') q=DATA.rojos[i]; else if(t==='t'){ const x=DATA.tramos[i]; q=x&&{lat:x.a[0],lon:x.a[1]}; } else q=COMS.find(a=>String(a.id)===i); if(!q||distM(la,lo,q.lat,q.lon)>lim*1.6) delete avisados[k]; });
+  Object.keys(avisados).forEach(k=>{ const t=k[0], i=k.slice(1); let q=null; if(t==='f') q=DATA.fijos[i]; else if(t==='s') q=DATA.rojos[i]; else if(t==='t'){ const x=DATA.tramos[i]; q=x&&{lat:x.a[0],lon:x.a[1]}; } else if(t==='m') q=MISP.find(a=>String(a.id)===i); else if(t==='o') q=OSMS.find(a=>String(a.id)===i); else q=COMS.find(a=>String(a.id)===i); if(!q||distM(la,lo,q.lat,q.lon)>lim*1.6) delete avisados[k]; });
   // modo coche
   $('cnx').textContent=cocheTxt; $('cnx').classList.toggle('al',cocheAl);
 }
@@ -394,13 +407,14 @@ function onPos(p){
   if(sp!=null&&sp<250) VIAJE.max=Math.max(VIAJE.max,sp); LS.set('viaje',VIAJE); pintarViaje();
   const primera=!miPos; miPos=p; if(!prev||p.coords.accuracy<60) prev=p;
   if(primera) sonar('gps'); else revisar(p);
-  tramoCheck(ll[0],ll[1],dPaso); limiteVia(ll[0],ll[1]); pintarLimite(sp); if(NAV) navPos(p);
+  tramoCheck(ll[0],ll[1],dPaso); limiteVia(ll[0],ll[1]); senalesCerca(ll[0],ll[1]); pintarLimite(sp); if(NAV) navPos(p);
 }
 $('bgps').onclick=()=>{
   desbloquear();
-  if(watch!=null){ navigator.geolocation.clearWatch(watch); watch=null; $('bgps').classList.remove('on'); $('gdot').classList.remove('on'); $('gtxt').textContent='GPS apagado'; miPos=null; prev=null; restaurar(); return; }
+  if(watch!=null){ LS.set('gpsOn',false); navigator.geolocation.clearWatch(watch); watch=null; $('bgps').classList.remove('on'); $('gdot').classList.remove('on'); $('gtxt').textContent='GPS apagado'; miPos=null; prev=null; restaurar(); return; }
   if(!navigator.geolocation){ pantalla('NO GPS','Este navegador no tiene GPS','var(--red)'); return; }
   $('gtxt').textContent='Buscando…';
+  LS.set('gpsOn',true);
   watch=navigator.geolocation.watchPosition(onPos,e=>{ $('gtxt').textContent='GPS sin permiso'; pantalla('GPS OFF','Permite la ubicación en el navegador','var(--red)'); watch=null; },{enableHighAccuracy:true,maximumAge:1000,timeout:20000});
 };
 $('bfol').classList.add('on');
@@ -439,6 +453,29 @@ document.querySelectorAll('#fuel button').forEach(b=>{ b.classList.toggle('on',b
 const REP={control:{t:'Control policía',e:'👮'},movil:{t:'Radar móvil',e:'📸'},accidente:{t:'Accidente',e:'💥'},obra:{t:'Obras / atasco',e:'🚧'}};
 let COMS=[];
 async function sb(path,opt={}){ const r=await fetch(COM.url+'/rest/v1/'+path,{...opt,headers:{apikey:COM.key,Authorization:'Bearer '+COM.key,'Content-Type':'application/json',...(opt.headers||{})}}); if(!r.ok) throw new Error(await r.text()); return r.status===204?null:r.json(); }
+// ======= Mis puntos (se guardan en este móvil) =======
+let MISP=LS.get('mispuntos',[]), MARCANDO=false;
+function pintarMios(){ capas.mio.clearLayers(); MISP.forEach(a=>{ const pt=PT[a.tipo]||PT.otro;
+  L.marker([a.lat,a.lon],{icon:ico('mio',pt.e)}).addTo(capas.mio).bindPopup(`<div class="pop"><b style="color:#2ee6a6">${pt.t}${a.v?' · '+a.v+' km/h':''}</b><div>Marcado por ti · te avisa al acercarte</div><button onclick="borrarPunto('${a.id}')" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;border:1px solid #444;background:#1a1d22;color:#ff6b6b;font-weight:700">Borrar</button></div>`); }); }
+function borrarPunto(id){ MISP=MISP.filter(a=>String(a.id)!==String(id)); LS.set('mispuntos',MISP); map.closePopup(); pintarMios(); toast('Punto borrado'); }
+function guardarPunto(lat,lon,tipo){ let v=null; if(tipo==='radar'){ const r=prompt('Límite de velocidad del radar (km/h, opcional)',''); v=parseInt(r)||null; }
+  MISP.push({id:Date.now().toString(36),lat,lon,tipo,v}); LS.set('mispuntos',MISP); map.closePopup(); pintarMios(); toast('✓ '+(PT[tipo]||PT.otro).t+' guardado: te avisará al acercarte'); }
+function modoMarcar(on){ MARCANDO=on; document.body.classList.toggle('markmode',on); $('bmark').classList.toggle('on',on); if(on) toast('Toca el mapa donde está el radar, semáforo o señal'); }
+$('bmark').onclick=()=>modoMarcar(!MARCANDO);
+map.on('click',e=>{ if(!MARCANDO) return; modoMarcar(false); const {lat,lng}=e.latlng;
+  L.popup().setLatLng(e.latlng).setContent(`<div class="pop"><b>¿Qué hay aquí?</b><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">${Object.entries(PT).map(([k,p])=>`<button onclick="guardarPunto(${lat},${lng},'${k}')" style="padding:9px 6px;border-radius:8px;border:1px solid #444;background:#1a1d22;color:#fff;font-weight:700">${p.e} ${p.t}</button>`).join('')}</div></div>`).openOn(map); });
+pintarMios();
+// ======= Semáforos, stops y ceda el paso cercanos (OpenStreetMap, se cargan según avanzas) =======
+let OSMS=[], OSM_POS=null, OSM_CARGANDO=false;
+async function senalesCerca(la,lo){
+  if(OSM_CARGANDO||!$('ckosm').checked) return; if(OSM_POS&&distM(la,lo,OSM_POS[0],OSM_POS[1])<500) return;
+  OSM_CARGANDO=true; OSM_POS=[la,lo];
+  try{ const q=`[out:json][timeout:12];node(around:1200,${la},${lo})[highway~"^(traffic_signals|stop|give_way)$"];out 200;`;
+    const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)}); if(!r.ok) throw 0; const j=await r.json();
+    const vistos=new Set(OSMS.map(a=>a.id)); (j.elements||[]).forEach(e=>{ if(vistos.has(e.id)) return; OSMS.push({id:e.id,lat:e.lat,lon:e.lon,tipo:e.tags.highway==='traffic_signals'?'semaforo':e.tags.highway==='stop'?'stop':'ceda'}); });
+    if(OSMS.length>1500) OSMS=OSMS.filter(a=>distM(la,lo,a.lat,a.lon)<5000);
+    capas.osm.clearLayers(); OSMS.forEach(a=>L.marker([a.lat,a.lon],{icon:L.divIcon({className:'',html:`<div class="cam osm">${(PT[a.tipo]||PT.otro).e}</div>`,iconSize:[22,22],iconAnchor:[11,11]})}).addTo(capas.osm));
+  }catch(e){} OSM_CARGANDO=false; }
 async function cargarComs(){ if(!COM_ON) return; try{ COMS=await sb('avisos_radar?select=id,tipo,lat,lon,creado,votos&order=creado.desc&limit=300'); pintar(); }catch(e){} }
 $('brep').onclick=()=>{ if(!miPos){ toast('Activa el GPS para avisar'); return; } $('mrep').classList.add('on'); };
 $('mrepx').onclick=()=>$('mrep').classList.remove('on');
@@ -565,5 +602,8 @@ async function navPos(p){
 
 pintar();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+// Si el GPS estaba activado la última vez, se enciende solo al abrir la app
+if(LS.get('gpsOn',false)) setTimeout(()=>{ if(watch==null) $('bgps').click(); },800);
 </script>
 </body></html>
