@@ -239,7 +239,13 @@ async function mezcla(partes){ const key=$('lang').value+'|'+JSON.stringify(part
     else s.g((f,t0,d,tipo='square',vol=.3,f2)=>{ t0+=s.t; const o=ctx.createOscillator(),g=ctx.createGain(); o.type=suave(tipo); o.frequency.setValueAtTime(f,t0); if(f2) o.frequency.linearRampToValueAtTime(f2,t0+d);
       vol*=.6; g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(vol,t0+.006); g.gain.setValueAtTime(vol,Math.max(t0+.007,t0+d-.015)); g.gain.linearRampToValueAtTime(0,t0+d); o.connect(g).connect(lp); o.start(t0); o.stop(t0+d+.01); }); });
   return MIX[key]=wav(await ctx.startRendering()); }
-async function sonarMezcla(partes){ if(mute) return; const u=await mezcla(partes); PLAYER.pause(); PLAYER.src=u; PLAYER.currentTime=0; try{ await PLAYER.play(); }catch(e){ toast('Toca la pantalla para activar el sonido'); } }
+// Reproducción por archivos: pitidos pregrabados (sonidos/*.mp3) y voz (voz/es|en/*.mp3) uno detrás de otro.
+// No se sintetiza nada en el navegador: el Safari del iPhone deformaba el audio generado al vuelo.
+let _colaTok=0;
+function reproducirLista(urls){ if(mute||!urls.length) return; const tok=++_colaTok; let i=0; PLAYER.pause();
+  const sig=()=>{ if(tok!==_colaTok||i>=urls.length) return; PLAYER.src=urls[i++]; PLAYER.currentTime=0; PLAYER.play().catch(()=>toast('Toca la pantalla para activar el sonido')); };
+  PLAYER.onended=sig; sig(); }
+async function sonarMezcla(partes){ if(mute) return; const lang=$('lang').value==='es'?'es':'en'; reproducirLista(partes.filter(p=>p.g||p.v).map(p=>p.g?'sonidos/'+p.g+'.mp3':'voz/'+lang+'/'+p.v+'.mp3')); }
 // decir: con voz natural usa los audios; con una voz del móvil, la síntesis
 function decir(ids,en,es,pitido){ if(mute) return; if(natural()) sonarMezcla([...(pitido?[{g:pitido}]:[]),...ids.filter(Boolean).map(v=>({v}))]); else { if(pitido) reproducir(pitido); setTimeout(()=>hablar(en,es),pitido?800:0); } }
 const PLAYER=new Audio(); PLAYER.preload='auto'; PLAYER.setAttribute('playsinline','');
@@ -255,7 +261,7 @@ async function cargarMios(){ try{ const db=await idb(); const tx=db.transaction(
 function marcarMios(){ document.querySelectorAll('.pad').forEach(p=>p.classList.toggle('mio',!!MIOS[p.dataset.s])); }
 async function guardarMio(k,blob){ try{ await idbOp('readwrite',st=>st.put(blob,k)); }catch(e){} if(MIOS[k]) URL.revokeObjectURL(MIOS[k]); MIOS[k]=URL.createObjectURL(blob); marcarMios(); toast('✓ Sonido guardado'); }
 async function quitarMio(k){ try{ await idbOp('readwrite',st=>st.delete(k)); }catch(e){} delete MIOS[k]; marcarMios(); toast('Vuelve el sonido original'); }
-async function reproducir(k){ if(mute) return; const s=SND[k]; if(!CACHE[k]) CACHE[k]=await render(s.len,s.gen); PLAYER.pause(); PLAYER.src=CACHE[k]; PLAYER.currentTime=0; try{ await PLAYER.play(); }catch(e){ toast('Toca la pantalla para activar el sonido'); } }
+async function reproducir(k){ if(mute) return; reproducirLista(['sonidos/'+k+'.mp3']); }
 let VOCES=[]; const cargaV=()=>{ VOCES=speechSynthesis.getVoices(); pintarVoces(); }; if('speechSynthesis' in window){ cargaV(); speechSynthesis.onvoiceschanged=cargaV; }
 function vocesIdioma(){ const l=$('lang').value==='es'?'es':'en'; return VOCES.filter(v=>v.lang.toLowerCase().startsWith(l)); }
 function vozPorDefecto(){ const l=vocesIdioma(); return l.find(v=>/Samantha|Google US English|Aria|Jenny|Ava|Allison|Susan|Zira|Mónica|Monica|Paulina|Google español/i.test(v.name))||l[0]; }
@@ -294,7 +300,7 @@ function sonar(k){
   const s=SND[k]; desbloquear(); sonando=k!=='clear'&&k!=='mute';
   document.querySelectorAll('.pad').forEach(p=>p.classList.toggle('play',p.dataset.s===k));
   pantalla(s.txt,k==='gps'?'Connected · '+DATA.fijos.length+' radares':s.sub,`var(${s.c})`,!['gps','power','clear','mute'].includes(k));
-  if(MIOS[k]){ PLAYER.pause(); PLAYER.src=MIOS[k]; PLAYER.currentTime=0; if(!mute) PLAYER.play().catch(()=>{}); }
+  if(MIOS[k]){ _colaTok++; PLAYER.onended=null; PLAYER.pause(); PLAYER.src=MIOS[k]; PLAYER.currentTime=0; if(!mute) PLAYER.play().catch(()=>{}); }
   else if(natural()) sonarMezcla([{v:k},{g:k}]);
   else { hablar(s.en,s.es); setTimeout(()=>reproducir(k), ['gps','clear','mute','power'].includes(k)?0:700); }
   if(!['gps','clear','mute','power'].includes(k)){ animarBarras(s.len*1000+700,k==='laser'); flechas(['up','up','sd','dn'][Math.floor(Math.random()*4)]); if(navigator.vibrate) navigator.vibrate([120,80,120,80,120]); }
