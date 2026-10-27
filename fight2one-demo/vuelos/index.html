@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#000000">
+<title>Fight2One · Vuelos</title>
+<link rel="icon" href="../logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter+Tight:wght@400;500;600;700;800&display=swap">
+<style>
+:root{--bg:#000;--panel:rgba(12,12,13,.93);--panel2:#19191b;--line:#2b2b2e;--ink:#f3f3f3;--mut:#a0a0a5;--acc:#d4a72c;--accsoft:#2a2108;--red:#ff5a68;--redsoft:#3a1418;--ok:#3ecf8e;--oksoft:#0f2b20;--amb:#f0b43c;--live:#ff3b4b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:'Inter Tight',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden;touch-action:none}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+#globo{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+#etiquetas{position:fixed;inset:0;pointer-events:none}
+.lbl{pointer-events:auto;cursor:pointer;background:rgba(0,0,0,.78);border:1px solid #d4a72c77;color:#fff;border-radius:9px;padding:3px 8px;font-size:11px;font-weight:600;white-space:nowrap;transform:translateY(-16px);transition:opacity .2s}
+.lbl i{font-style:normal;color:var(--acc);font-weight:800;margin-left:5px}
+.lbl.vivo{border-color:var(--live)}
+.lbl.tfn{background:var(--acc);color:#000;border-color:var(--acc);font-weight:800}
+.top{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:linear-gradient(#000d,#0000);z-index:5}
+.marca{display:flex;align-items:center;gap:9px;min-width:0;text-decoration:none;color:inherit}
+.marca img{width:34px;height:34px;border-radius:8px}
+.marca b{font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.05em;font-size:18px;display:block;line-height:1}
+.marca small{color:var(--mut);font-size:11px;display:block}
+.reloj{margin-left:auto;text-align:right;font-size:11px;color:var(--mut)}
+.reloj b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:20px;color:var(--ink);letter-spacing:.03em}
+.volver{border:1px solid var(--line);background:rgba(20,20,22,.9);border-radius:999px;padding:8px 12px;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--ink);white-space:nowrap}
+.panel{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--panel);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:6px 14px calc(12px + env(safe-area-inset-bottom));max-height:56vh;display:flex;flex-direction:column;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.panel.cerrado .cuerpo{display:none}
+.asa{border:none;background:none;width:100%;padding:6px 0 4px;display:flex;justify-content:center}
+.asa span{width:42px;height:5px;border-radius:9px;background:#444}
+.res{display:flex;align-items:center;gap:10px;padding:2px 0 10px}
+.res h1{margin:0;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:20px;letter-spacing:.04em}
+.res p{margin:2px 0 0;font-size:12px;color:var(--mut)}
+.cifras{margin-left:auto;display:flex;gap:6px}
+.cifra{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:5px 9px;text-align:center;font-size:10px;color:var(--mut)}
+.cifra b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:17px;color:var(--ink)}
+.cuerpo{overflow-y:auto;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.buscar{display:flex;gap:6px}
+.buscar input{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;text-transform:uppercase}
+.buscar input::placeholder{text-transform:none;color:#6d6d72}
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:12px;padding:10px 14px;font-weight:700;font-size:13.5px}
+.btn.acc{background:var(--acc);border-color:var(--acc);color:#000}
+.msg{font-size:12px;color:var(--mut);min-height:16px}
+.vuelo{display:grid;grid-template-columns:1fr auto;gap:3px 10px;text-align:left;border:1px solid var(--line);background:var(--panel2);border-radius:14px;padding:10px 12px;width:100%}
+.vuelo.on{border-color:var(--acc)}
+.vuelo .n{font-weight:700;font-size:14px}
+.vuelo .n small{font-weight:600;color:var(--mut);font-size:11.5px;margin-left:4px}
+.vuelo .r{grid-column:1/3;font-size:12px;color:var(--mut);display:flex;justify-content:space-between;gap:8px}
+.barra{grid-column:1/3;height:5px;border-radius:9px;background:#2a2a2d;overflow:hidden}
+.barra i{display:block;height:100%;border-radius:9px;background:var(--acc)}
+.tag{display:inline-block;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:800;white-space:nowrap}
+.tag.ok{background:var(--oksoft);color:var(--ok)}.tag.no{background:var(--redsoft);color:var(--red)}.tag.med{background:var(--accsoft);color:var(--acc)}.tag.vivo{background:var(--live);color:#fff}
+.tag.vivo::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#fff;margin-right:5px;vertical-align:1px;animation:lat 1s infinite}
+@keyframes lat{50%{opacity:.2}}
+.nota{font-size:11px;color:var(--mut);line-height:1.45}
+.ficha{position:fixed;left:0;right:0;bottom:0;z-index:8;background:#0e0e0f;border-top:1px solid var(--acc);border-radius:18px 18px 0 0;max-height:70vh;overflow-y:auto;padding:16px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .25s ease;touch-action:pan-y}
+.ficha.on{transform:none}
+.ficha .cab{display:flex;gap:10px;align-items:flex-start}
+.ficha h2{margin:0;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:24px;letter-spacing:.03em;line-height:1.1}
+.ficha .sub{color:var(--mut);font-size:12.5px;margin-top:3px}
+.cerrar{margin-left:auto;border:1px solid var(--line);background:var(--panel2);border-radius:50%;width:38px;height:38px;flex:0 0 auto}
+.ruta{display:flex;align-items:center;gap:10px;margin:14px 0 6px}
+.ruta .ap{text-align:center;min-width:64px}
+.ruta .ap b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:28px;letter-spacing:.04em}
+.ruta .ap small{color:var(--mut);font-size:11px}
+.ruta .linea{flex:1;position:relative;height:2px;background:#333;border-radius:2px}
+.ruta .linea i{position:absolute;left:0;top:0;bottom:0;background:var(--acc);border-radius:2px}
+.ruta .linea span{position:absolute;top:-11px;font-size:16px;transform:translateX(-50%) rotate(90deg)}
+.datos{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:12px}
+.dato{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-size:11.5px;color:var(--mut)}
+.dato b{display:block;color:var(--ink);font-size:15px;margin-top:2px}
+.cargando{position:fixed;inset:0;display:grid;place-items:center;z-index:20;background:#000;color:var(--mut);font-size:13px;transition:opacity .5s;text-align:center}
+.cargando b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;color:var(--acc);font-size:28px;letter-spacing:.06em;margin-bottom:6px}
+.cargando.fuera{opacity:0;pointer-events:none}
+@media (min-width:900px){
+  .panel{left:16px;right:auto;top:calc(66px + env(safe-area-inset-top));bottom:16px;width:380px;max-height:none;border-radius:18px;border:1px solid var(--line)}
+  .panel .asa{display:none}.panel.cerrado .cuerpo{display:flex}
+  .ficha{left:auto;right:16px;top:calc(66px + env(safe-area-inset-top));bottom:auto;width:380px;border-radius:18px;border:1px solid var(--acc);transform:translateX(115%)}
+  .ficha.on{transform:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/","topojson-client":"https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/+esm"}}
+</script>
+</head>
+<body>
+<div class="cargando" id="cargando"><div><b>FIGHT2ONE</b>Cargando el mapa del mundo…</div></div>
+<canvas id="globo" tabindex="0" aria-label="Globo terráqueo en 3D con los vuelos de los peleadores hacia Tenerife Norte. Arrastra para girarlo y pellizca para acercarte. La lista tiene los mismos datos."></canvas>
+<header class="top">
+  <a class="marca" href="../estadio/"><img src="../logo.jpg" alt=""><span><b>VUELOS</b><small>Fight2One 13 · llegadas a Tenerife</small></span></a>
+  <div class="reloj" aria-live="off"><b id="reloj">--:--</b>Hora de Canarias</div>
+  <a class="volver" href="../estadio/">🏟️ Pabellón</a>
+</header>
+<section class="panel cerrado" id="panel" aria-label="Vuelos de los peleadores">
+  <button class="asa" id="asa" aria-label="Abrir o cerrar la lista" aria-expanded="false"><span></span></button>
+  <div class="res">
+    <div><h1>LLEGADAS</h1><p id="res-sub"></p></div>
+    <div class="cifras"><div class="cifra"><b id="n-aire">0</b>en el aire</div><div class="cifra"><b id="n-tierra">0</b>en Tenerife</div><div class="cifra"><b id="n-sin">0</b>sin billete</div></div>
+  </div>
+  <div class="cuerpo">
+    <form class="buscar" id="buscar" autocomplete="off">
+      <input id="q" maxlength="10" placeholder="Seguir un vuelo real: IB3936, VY1234…" aria-label="Número de vuelo">
+      <button class="btn acc" type="submit">Seguir</button>
+    </form>
+    <div class="msg" id="msg" role="status"></div>
+    <div id="lista" style="display:flex;flex-direction:column;gap:8px"></div>
+    <p class="nota">Los vuelos de los peleadores son <b>de ejemplo</b> y su posición se calcula con la hora de salida y de llegada. Con un número de vuelo real, el avión sale en directo con datos abiertos de ADS-B (adsb.lol): posición, altura y velocidad, actualizadas cada 30 segundos.</p>
+  </div>
+</section>
+<aside class="ficha" id="ficha" role="dialog" aria-labelledby="ficha-tit"></aside>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { feature, mesh } from 'topojson-client';
+
+/* ═══════════════════════════════════════════════════════════════
+   Fight2One · Vuelos en 3D — DEMO
+   Cada peleador es un avión camino de Tenerife Norte. Sin número de vuelo
+   real la posición se calcula con la hora de salida y llegada; con número
+   real se pide al servidor (función «vuelo» de Supabase → adsb.lol).
+   Desarrollado por Airmate.
+   ═══════════════════════════════════════════════════════════════ */
+// Función del servidor (Supabase de Airmate). Hasta que se despliegue, el seguimiento real avisa de que no está activo.
+const _srv=new URLSearchParams(location.search).get('servidor')||'';
+const SERVIDOR=/^http:\/\/localhost:\d+$/.test(_srv)?_srv:'https://vjofxmfwdybktpwiuanc.supabase.co/functions/v1/vuelo'; // ?servidor=http://localhost:PUERTO solo para probar en local
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const REDUCIDO=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const MOVIL=innerWidth<900||matchMedia('(pointer: coarse)').matches;
+const ZONA='Atlantic/Canary';
+const hora=d=>d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:ZONA});
+const diaHora=d=>{ const hoy=new Date().toLocaleDateString('es-ES',{timeZone:ZONA}), x=d.toLocaleDateString('es-ES',{timeZone:ZONA}); return (x===hoy?'':d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',timeZone:ZONA})+' · ')+hora(d); };
+const dur=min=>{ min=Math.max(0,Math.round(min)); const h=Math.floor(min/60), m=min%60; return h?`${h} h ${String(m).padStart(2,'0')} min`:`${m} min`; };
+
+const AEROPUERTOS={TFN:[28.4827,-16.3415,'Tenerife Norte'],TFS:[28.0445,-16.5725,'Tenerife Sur'],LPA:[27.9319,-15.3866,'Gran Canaria'],ACE:[28.9455,-13.6052,'Lanzarote'],FUE:[28.4527,-13.8638,'Fuerteventura'],SPC:[28.6265,-17.7556,'La Palma'],
+  MAD:[40.4719,-3.5626,'Madrid'],BCN:[41.2971,2.0785,'Barcelona'],SVQ:[37.418,-5.8931,'Sevilla'],AGP:[36.6749,-4.4991,'Málaga'],VLC:[39.4893,-0.4816,'Valencia'],BIO:[43.3011,-2.9106,'Bilbao'],
+  ORY:[48.7233,2.3794,'París Orly'],CDG:[49.0097,2.5479,'París CDG'],FCO:[41.8003,12.2389,'Roma'],MXP:[45.6306,8.7281,'Milán'],LIS:[38.7813,-9.1359,'Lisboa'],OPO:[41.2481,-8.6814,'Oporto'],
+  LHR:[51.47,-0.4543,'Londres'],LGW:[51.1537,-0.1821,'Londres Gatwick'],AMS:[52.3105,4.7683,'Ámsterdam'],FRA:[50.0379,8.5622,'Fráncfort'],MUC:[48.3538,11.7861,'Múnich'],BRU:[50.9014,4.4844,'Bruselas'],DUB:[53.4213,-6.2701,'Dublín'],
+  WAW:[52.1657,20.9671,'Varsovia'],OTP:[44.5711,26.085,'Bucarest'],TBS:[41.6692,44.9547,'Tiflis'],IST:[41.2753,28.7519,'Estambul'],CMN:[33.3675,-7.5899,'Casablanca'],RAK:[31.6069,-8.0363,'Marrakech'],CAI:[30.1219,31.4056,'El Cairo'],
+  DSS:[14.67,-17.07,'Dakar'],ABJ:[5.2614,-3.9263,'Abiyán'],LOS:[6.5774,3.3212,'Lagos'],NBO:[-1.3192,36.9278,'Nairobi'],LUN:[-15.3308,28.4526,'Lusaka'],DXB:[25.2532,55.3657,'Dubái'],DOH:[25.2731,51.6081,'Doha'],BKK:[13.69,100.7501,'Bangkok'],
+  GIG:[-22.809,-43.2506,'Río de Janeiro'],GRU:[-23.4356,-46.4731,'São Paulo'],EZE:[-34.8222,-58.5358,'Buenos Aires'],BOG:[4.7016,-74.1469,'Bogotá'],CCS:[10.6012,-66.9913,'Caracas'],HAV:[22.9892,-82.4091,'La Habana'],
+  MGA:[12.1415,-86.1682,'Managua'],TGU:[14.0608,-87.2172,'Tegucigalpa'],JFK:[40.6413,-73.7781,'Nueva York'],MIA:[25.7959,-80.287,'Miami']};
+
+// Vuelos de ejemplo (horas relativas a ahora para que se vea el mapa en movimiento)
+const AHORA=Date.now(), MIN=60000;
+const VUELOS=[
+  {nom:'Youssef Amrani',combate:'Estelar · MMA 70 kg',desde:'CMN',num:'AT 970',sale:-70,dura:125,estado:'confirmado'},
+  {nom:'Lucas Moreau',combate:'K1 65 kg',desde:'ORY',num:'VY 3132',sale:-150,dura:255,estado:'confirmado'},
+  {nom:'Somchai Kaew',combate:'Título mundial · Muay Thai 61 kg',desde:'BKK',num:'',estado:'pendiente'},
+  {nom:'Dani Quesada',combate:'MMA 77 kg',desde:'LPA',num:'NT 104',sale:-120,dura:35,estado:'confirmado'},
+  {nom:'Marco Bellini',combate:'MMA 77 kg',desde:'FCO',num:'AZ 1862',sale:20*60,dura:280,estado:'reservado'},
+  {nom:'Ana Kowalska',combate:'Título europeo · K1 57 kg',desde:'WAW',num:'LO 459',sale:180,dura:345,estado:'confirmado'},
+  {nom:'Rui Carvalho',combate:'Muay Thai 67 kg',desde:'LIS',num:'TP 1478',sale:-40,dura:120,estado:'confirmado'},
+  {nom:'Tomás Ferraz',combate:'MMA 84 kg',desde:'GIG',num:'',estado:'pendiente'},
+  {nom:'Adrián Vidal',combate:'K1 75 kg',desde:'MAD',num:'UX 9116',sale:-95,dura:160,estado:'confirmado'},
+].map((v,i)=>({...v,id:'v'+i,ejemplo:true,salida:v.sale!=null?new Date(AHORA+v.sale*MIN):null,llegada:v.sale!=null?new Date(AHORA+(v.sale+v.dura)*MIN):null}));
+
+/* ───────── Escena ───────── */
+const canvas=$('#globo');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,MOVIL?1.75:2)); renderer.outputColorSpace=THREE.SRGBColorSpace;
+const lbl=new CSS2DRenderer(); lbl.domElement.id='etiquetas'; document.body.insertBefore(lbl.domElement,$('.top'));
+const scene=new THREE.Scene(); scene.background=new THREE.Color('#020203');
+const camera=new THREE.PerspectiveCamera(42,1,0.01,100);
+const controls=new OrbitControls(camera,canvas); controls.enablePan=false; controls.enableDamping=true; controls.dampingFactor=0.07; controls.minDistance=1.25; controls.maxDistance=6; controls.rotateSpeed=0.55; controls.zoomSpeed=0.8;
+controls.autoRotate=!REDUCIDO; controls.autoRotateSpeed=0.25; controls.addEventListener('start',()=>{ controls.autoRotate=false; vuelo=null; });
+scene.add(new THREE.AmbientLight(0xffffff,0.6)); const sol=new THREE.DirectionalLight(0xfff2d8,1.2); sol.position.set(-3,2,4); scene.add(sol);
+
+const D=Math.PI/180;
+function aVec(lat,lon,r=1){ const phi=(90-lat)*D, th=(lon+180)*D; return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(th), r*Math.cos(phi), r*Math.sin(phi)*Math.sin(th)); }
+function aLatLon(v){ const n=v.clone().normalize(); return [90-Math.acos(n.y)/D, ((Math.atan2(n.z,-n.x)/D)+180+540)%360-180]; }
+
+// Estrellas
+{ const g=new THREE.BufferGeometry(), n=2500, p=new Float32Array(n*3); for(let i=0;i<n;i++){ const v=new THREE.Vector3().randomDirection().multiplyScalar(30+Math.random()*30); p.set([v.x,v.y,v.z],i*3); }
+  g.setAttribute('position',new THREE.BufferAttribute(p,3)); scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:'#9a9aa8',size:0.06,sizeAttenuation:true,transparent:true,opacity:.7}))); }
+// Planeta: esfera oscura + brillo de atmósfera
+const tierra=new THREE.Mesh(new THREE.SphereGeometry(1,96,64),new THREE.MeshStandardMaterial({color:'#0b0c10',roughness:.85,metalness:.1})); scene.add(tierra);
+const atm=new THREE.Mesh(new THREE.SphereGeometry(1.09,64,48),new THREE.ShaderMaterial({ side:THREE.BackSide, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+  uniforms:{c:{value:new THREE.Color('#d4a72c')}},
+  vertexShader:'varying vec3 vN; varying vec3 vP; void main(){ vN=normalize(normalMatrix*normal); vec4 mv=modelViewMatrix*vec4(position,1.); vP=mv.xyz; gl_Position=projectionMatrix*mv; }',
+  fragmentShader:'uniform vec3 c; varying vec3 vN; varying vec3 vP; void main(){ float f=pow(clamp(0.62+dot(vN,normalize(-vP)),0.,1.),5.0); gl_FragColor=vec4(c*f*0.9,f*0.9); }' })); scene.add(atm);
+
+// Continentes en puntos dorados (máscara de tierra dibujada a partir de world-atlas)
+async function pintarMundo(){
+  const [land,paises]=await Promise.all([fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-50m.json').then(r=>r.json()),fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json').then(r=>r.json())]);
+  const W=2048,H=1024, c=document.createElement('canvas'); c.width=W; c.height=H; const g=c.getContext('2d',{willReadFrequently:true});
+  const px=([lon,lat])=>[(lon+180)/360*W,(90-lat)/180*H];
+  const dibujar=geo=>{ const polys=geo.type==='Polygon'?[geo.coordinates]:geo.type==='MultiPolygon'?geo.coordinates:[]; polys.forEach(p=>p.forEach(anillo=>{ g.beginPath(); let prev=null; anillo.forEach((pt,i)=>{ const q=px(pt); if(i===0||(prev&&Math.abs(q[0]-prev[0])>W/2)) g.moveTo(q[0],q[1]); else g.lineTo(q[0],q[1]); prev=q; }); g.closePath(); g.fill('evenodd'); })); };
+  g.fillStyle='#fff'; feature(land,land.objects.land).features.forEach(f=>dibujar(f.geometry));
+  const img=g.getImageData(0,0,W,H).data;
+  const pos=[], col=[]; const oro=new THREE.Color('#d4a72c'), tenue=new THREE.Color('#5b4713');
+  const tf=aVec(28.48,-16.34);
+  for(let lat=-80;lat<=84;lat+=0.62){ const paso=0.62/Math.max(0.15,Math.cos(lat*D)); for(let lon=-180;lon<180;lon+=paso){
+    const [x,y]=px([lon,lat]); if(img[(Math.floor(y)*W+Math.floor(x))*4]<128) continue;
+    const v=aVec(lat,lon,1.002); pos.push(v.x,v.y,v.z); const cerca=Math.max(0,1-v.distanceTo(tf)/0.9); const cc=tenue.clone().lerp(oro,cerca*0.85); col.push(cc.r,cc.g,cc.b); } }
+  const gp=new THREE.BufferGeometry(); gp.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); gp.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  scene.add(new THREE.Points(gp,new THREE.PointsMaterial({size:MOVIL?0.0085:0.0072,vertexColors:true,sizeAttenuation:true})));
+  // fronteras finas
+  const bordes=mesh(paises,paises.objects.countries,(a,b)=>a!==b), pts=[];
+  bordes.coordinates.forEach(l=>{ for(let i=1;i<l.length;i++){ if(Math.abs(l[i][0]-l[i-1][0])>180) continue; const a=aVec(l[i-1][1],l[i-1][0],1.0025), b=aVec(l[i][1],l[i][0],1.0025); pts.push(a.x,a.y,a.z,b.x,b.y,b.z); } });
+  const gb=new THREE.BufferGeometry(); gb.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
+  scene.add(new THREE.LineSegments(gb,new THREE.LineBasicMaterial({color:'#3a2f12',transparent:true,opacity:.55})));
+}
+
+// Tenerife Norte
+const TFN=AEROPUERTOS.TFN, pTFN=aVec(TFN[0],TFN[1],1.003);
+const anillos=[0,1,2].map(i=>{ const m=new THREE.Mesh(new THREE.RingGeometry(0.012,0.016,48),new THREE.MeshBasicMaterial({color:'#d4a72c',transparent:true,side:THREE.DoubleSide,depthWrite:false})); m.position.copy(pTFN); m.lookAt(pTFN.clone().multiplyScalar(2)); m.userData.f=i/3; scene.add(m); return m; });
+{ const d=new THREE.Mesh(new THREE.SphereGeometry(0.009,16,12),new THREE.MeshBasicMaterial({color:'#ffd76a'})); d.position.copy(pTFN); scene.add(d);
+  const e=document.createElement('div'); e.className='lbl tfn'; e.textContent='TFN · Tenerife'; const o=new CSS2DObject(e); o.position.copy(pTFN); scene.add(o); }
+
+/* ───────── Rutas y aviones ───────── */
+const geoAvion=(()=>{ const g=new THREE.Group(); const m=new THREE.MeshStandardMaterial({color:'#f2f2f2',roughness:.4,metalness:.3});
+  const fus=new THREE.Mesh(new THREE.CapsuleGeometry(0.0045,0.03,4,8),m); fus.rotation.x=Math.PI/2; g.add(fus);
+  const ala=new THREE.Mesh(new THREE.BoxGeometry(0.036,0.0012,0.009),m); ala.position.z=0.002; g.add(ala);
+  const cola=new THREE.Mesh(new THREE.BoxGeometry(0.014,0.001,0.005),m); cola.position.z=-0.016; g.add(cola);
+  const der=new THREE.Mesh(new THREE.BoxGeometry(0.001,0.007,0.006),m); der.position.set(0,0.0035,-0.016); g.add(der); return g; })();
+const COLOR={confirmado:'#d4a72c',reservado:'#f0b43c',pendiente:'#ff5a68',vivo:'#ff3b4b'};
+function arco(a,b,n=96){ const va=a.clone().normalize(), vb=b.clone().normalize(), ang=va.angleTo(vb), alto=Math.min(0.32,0.06+ang*0.16), pts=[];
+  for(let i=0;i<=n;i++){ const t=i/n; const v=new THREE.Vector3().copy(va).multiplyScalar(Math.sin((1-t)*ang)/Math.sin(ang)).add(vb.clone().multiplyScalar(Math.sin(t*ang)/Math.sin(ang))); pts.push(v.multiplyScalar(1.003+Math.sin(Math.PI*t)*alto)); } return pts; }
+const matRuta=(color)=>new THREE.ShaderMaterial({ transparent:true, depthWrite:false, uniforms:{prog:{value:0},c:{value:new THREE.Color(color)},t:{value:0}},
+  vertexShader:'varying float u; void main(){ u=uv.x; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }',
+  fragmentShader:'uniform float prog; uniform vec3 c; uniform float t; varying float u; void main(){ float hecho=step(u,prog); float trazo=step(0.5,fract(u*60.-t)); float a=mix(0.18+0.25*trazo,0.95,hecho); gl_FragColor=vec4(c*(0.6+0.6*hecho),a); }' });
+const RUTAS=[];
+function crearRuta(v){
+  const o=AEROPUERTOS[v.desde]; if(!o) return;
+  const pO=aVec(o[0],o[1],1.003), puntos=arco(pO,pTFN), curva=new THREE.CatmullRomCurve3(puntos);
+  const color=COLOR[v.vivo?'vivo':v.estado]||'#d4a72c';
+  const tubo=new THREE.Mesh(new THREE.TubeGeometry(curva,160,v.estado==='pendiente'?0.0016:0.0024,6,false),matRuta(color)); scene.add(tubo);
+  const punto=new THREE.Mesh(new THREE.SphereGeometry(0.0065,12,10),new THREE.MeshBasicMaterial({color})); punto.position.copy(pO); scene.add(punto);
+  const avion=geoAvion.clone(); avion.scale.setScalar(MOVIL?1.35:1.1); scene.add(avion); avion.visible=v.estado!=='pendiente';
+  avion.traverse(m=>{ if(m.isMesh){ m.userData.id=v.id; } });
+  const e=document.createElement('div'); e.className='lbl'+(v.vivo?' vivo':''); e.addEventListener('click',()=>abrirFicha(v.id)); e.addEventListener('pointerdown',ev=>ev.stopPropagation());
+  const et=new CSS2DObject(e); scene.add(et);
+  RUTAS.push({v,curva,tubo,punto,avion,et,e,pO});
+}
+function estadoDe(v){
+  if(v.estado==='pendiente') return {k:'sin',t:'Sin billete',cls:'no',prog:0};
+  if(v.vivo) return v.live?.en_tierra?{k:'tierra',t:'En tierra',cls:'ok',prog:1}:{k:'aire',t:'En directo',cls:'vivo',prog:v.progLive??0.5};
+  const now=Date.now(); if(now<v.salida) return {k:'espera',t:v.estado==='reservado'?'Reservado':'Sale '+diaHora(v.salida),cls:'med',prog:0};
+  if(now>=v.llegada) return {k:'tierra',t:'En Tenerife',cls:'ok',prog:1};
+  return {k:'aire',t:'En vuelo',cls:'med',prog:(now-v.salida)/(v.llegada-v.salida)};
+}
+const _a=new THREE.Vector3(), _b=new THREE.Vector3();
+function colocar(r){
+  const s=estadoDe(r.v); r.tubo.material.uniforms.prog.value=s.prog;
+  let p;
+  if(r.v.vivo&&r.v.live){ const L=r.v.live; p=aVec(L.lat,L.lon,1.003+Math.min(0.08,(L.altitud_m||0)/1e5*0.6)); const dir=aVec(L.lat+Math.cos((L.rumbo||0)*D)*0.5,L.lon+Math.sin((L.rumbo||0)*D)*0.5/Math.max(.2,Math.cos(L.lat*D)),p.length());
+    r.avion.position.copy(p); r.avion.up.copy(p).normalize(); r.avion.lookAt(dir); }
+  else if(s.k==='sin'){ p=r.pO.clone(); }
+  else { const t=Math.min(0.999,Math.max(0.001,s.prog)); p=r.curva.getPointAt(t); r.curva.getPointAt(Math.min(1,t+0.002),_b);
+    r.avion.position.copy(p); r.avion.up.copy(p).normalize(); r.avion.lookAt(_b); r.avion.visible=s.k==='aire'; }
+  r.et.position.copy(s.k==='tierra'?pTFN:p);
+  r.e.innerHTML=`${esc(r.v.vivo?r.v.num:r.v.nom.split(' ')[0])}${r.v.vivo?'<i style="color:var(--live)">EN DIRECTO</i>':s.k==='aire'?`<i>${Math.round(s.prog*100)}%</i>`:s.k==='sin'?'<i style="color:var(--red)">sin billete</i>':''}`;
+  r.et.visible=!((s.k==='tierra'||s.k==='espera')&&!r.sel);
+  r.punto.material.color.set(s.k==='sin'?'#ff5a68':COLOR[r.v.vivo?'vivo':r.v.estado]);
+  return s;
+}
+
+/* ───────── Lista ───────── */
+let SEL=null;
+function pintarLista(){
+  const cuenta={aire:0,tierra:0,sin:0};
+  $('#lista').innerHTML=RUTAS.map(r=>{ const v=r.v, s=estadoDe(v); if(cuenta[s.k]!=null) cuenta[s.k]++; const o=AEROPUERTOS[v.desde];
+    const linea=v.vivo?(v.live?`${new Intl.NumberFormat('es-ES').format(v.live.altitud_m)} m · ${v.live.velocidad_kmh} km/h`+(v.restaMin?` · a ${dur(v.restaMin)} de Tenerife`:''):''):s.k==='aire'?`Llega a las ${hora(v.llegada)} · faltan ${dur((v.llegada-Date.now())/MIN)}`:s.k==='tierra'?`Aterrizó a las ${hora(v.llegada)}`:s.k==='espera'?`Sale a las ${diaHora(v.salida)} · llega ${hora(v.llegada)}`:'Hay que comprar el billete';
+    return `<button class="vuelo ${SEL===v.id?'on':''}" data-id="${v.id}"><span class="n">${esc(v.nom)}<small>${esc(v.num||'—')}</small></span><span class="tag ${s.cls}">${esc(s.t)}</span>
+      <span class="r"><span>${esc(o?o[2]:v.desde)} → Tenerife Norte</span><span>${esc(v.combate||'')}</span></span>
+      ${s.k==='sin'?'':`<span class="barra"><i style="width:${Math.round(s.prog*100)}%;${s.k==='tierra'?'background:var(--ok)':''}"></i></span>`}
+      <span class="r"><span>${linea}</span></span></button>`; }).join('');
+  $('#n-aire').textContent=cuenta.aire; $('#n-tierra').textContent=cuenta.tierra; $('#n-sin').textContent=cuenta.sin;
+  $('#res-sub').textContent=`${RUTAS.filter(r=>!r.v.vivo).length} peleadores · ${cuenta.tierra} ya en la isla`;
+}
+$('#lista').addEventListener('click',e=>{ const b=e.target.closest('.vuelo'); if(b) abrirFicha(b.dataset.id); });
+$('#asa').addEventListener('click',()=>{ const p=$('#panel'); p.classList.toggle('cerrado'); $('#asa').setAttribute('aria-expanded',String(!p.classList.contains('cerrado'))); });
+
+/* ───────── Ficha de un vuelo ───────── */
+function abrirFicha(id){ const r=RUTAS.find(x=>x.v.id===id); if(!r) return; SEL=id; RUTAS.forEach(x=>x.sel=x===r); const v=r.v, s=estadoDe(v), o=AEROPUERTOS[v.desde], L=v.live;
+  $('#ficha').innerHTML=`<div class="cab"><div><h2 id="ficha-tit">${esc(v.nom)}</h2><div class="sub">${esc(v.combate||'')}${v.num?' · vuelo '+esc(v.num):''}</div></div><button class="cerrar" aria-label="Cerrar" id="f-cerrar">✕</button></div>
+    <div style="margin-top:8px"><span class="tag ${s.cls}">${esc(s.t)}</span>${v.ejemplo?' <span class="tag med">Ejemplo</span>':''}</div>
+    <div class="ruta"><div class="ap"><b>${v.vivo?'📍':esc(v.desde||'?')}</b><small>${esc(o?o[2]:'Origen')}</small></div><div class="linea"><i style="width:${Math.round(s.prog*100)}%"></i>${s.k==='aire'?`<span style="left:${Math.round(s.prog*100)}%">✈️</span>`:''}</div><div class="ap"><b>TFN</b><small>Tenerife Norte</small></div></div>
+    <div class="datos">
+      ${v.salida?`<div class="dato">Salida<b>${diaHora(v.salida)}</b></div><div class="dato">Llegada<b>${diaHora(v.llegada)}</b></div>`:''}
+      ${s.k==='aire'&&!v.vivo?`<div class="dato">Recorrido<b>${Math.round(s.prog*100)}%</b></div><div class="dato">Falta<b>${dur((v.llegada-Date.now())/MIN)}</b></div>`:''}
+      ${L?`<div class="dato">Altura<b>${L.en_tierra?'En tierra':new Intl.NumberFormat('es-ES').format(L.altitud_m)+' m'}</b></div><div class="dato">Velocidad<b>${L.velocidad_kmh} km/h</b></div><div class="dato">Avión<b>${esc(L.avion||'—')} ${esc(L.matricula||'')}</b></div><div class="dato">Señal<b>hace ${Math.round(L.visto_hace_s||0)} s</b></div>`:''}
+      ${s.k==='sin'?'<div class="dato" style="grid-column:1/3">Pendiente<b>Comprar billete desde '+esc(o?o[2]:v.desde)+'</b></div>':''}
+    </div>
+    <p class="nota" style="margin-top:12px">${v.vivo?'Posición real con datos abiertos de ADS-B (adsb.lol). Se actualiza cada 30 segundos.':'Posición calculada con la hora de salida y de llegada. Con el número de vuelo real se sigue en directo.'}</p>`;
+  $('#f-cerrar').onclick=cerrarFicha; $('#ficha').classList.add('on'); pintarLista(); irA(r.avion.visible?r.avion.position:r.pO); }
+function cerrarFicha(){ $('#ficha').classList.remove('on'); SEL=null; RUTAS.forEach(x=>x.sel=false); pintarLista(); }
+addEventListener('keydown',e=>{ if(e.key==='Escape') cerrarFicha(); });
+
+// Girar el globo hasta un punto
+let vuelo=null;
+function irA(p){ if(!p||p.length()<0.5) return; const dist=MOVIL?2.5:2.15; const destino=p.clone().normalize().multiplyScalar(dist); controls.autoRotate=false;
+  if(REDUCIDO){ camera.position.copy(destino); return; } vuelo={de:camera.position.clone(),a:destino,ini:performance.now(),dur:1300}; }
+
+/* ───────── Seguir un vuelo real ───────── */
+let VIVOS=0;
+async function pedirVuelo(num){ const r=await fetch(SERVIDOR+'?vuelo='+encodeURIComponent(num),{signal:AbortSignal.timeout(10000)}); if(!r.ok) throw new Error('servidor '+r.status); return r.json(); }
+$('#buscar').addEventListener('submit',async e=>{ e.preventDefault(); const num=$('#q').value.trim().toUpperCase(); if(!/^[A-Z0-9 ]{3,10}$/.test(num)){ $('#msg').textContent='Escribe un número de vuelo, por ejemplo IB3936.'; return; }
+  $('#msg').textContent='Buscando '+num+'…';
+  try{ const d=await pedirVuelo(num);
+    if(d.error){ $('#msg').textContent=d.error; return; }
+    if(!d.encontrado){ $('#msg').textContent=`${num} no está en el aire ahora mismo (aún no ha salido, ya aterrizó o no emite posición).`; return; }
+    const v={id:'vivo'+(++VIVOS),nom:'Vuelo '+num,num,combate:'Seguimiento en directo',desde:null,estado:'confirmado',vivo:true,live:d};
+    // origen aproximado: el aeropuerto conocido más cercano a la ruta no se sabe; se dibuja desde su posición actual
+    const p=aVec(d.lat,d.lon), restoKm=p.angleTo(pTFN.clone().normalize())*6371; v.restaMin=d.velocidad_kmh>50?restoKm/d.velocidad_kmh*60:null; v.progLive=0.5;
+    AEROPUERTOS['@'+v.id]=[d.lat,d.lon,'Posición actual']; v.desde='@'+v.id; crearRuta(v); const r=RUTAS[RUTAS.length-1]; r.punto.visible=false; r.tubo.visible=false; r.avion.visible=true; colocar(r);
+    $('#msg').textContent=`✓ ${num} encontrado: ${new Intl.NumberFormat('es-ES').format(d.altitud_m)} m · ${d.velocidad_kmh} km/h`; abrirFicha(v.id);
+    setInterval(async()=>{ try{ const n=await pedirVuelo(num); if(n.encontrado){ v.live=n; if(SEL===v.id) abrirFicha(v.id); } }catch(_){} },30000);
+  }catch(err){ $('#msg').innerHTML='El servidor de vuelos aún no está activado. <b>La posición de los peleadores se calcula por horario.</b>'; }
+});
+
+/* ───────── Bucle ───────── */
+function tam(){ const w=innerWidth,h=innerHeight; renderer.setSize(w,h,false); lbl.setSize(w,h); const lado=w>=900?396:0;
+  camera.aspect=(w+lado)/h; if(lado) camera.setViewOffset(w+lado,h,0,0,w,h); else camera.clearViewOffset(); camera.updateProjectionMatrix(); }
+addEventListener('resize',tam);
+const _v=new THREE.Vector3(); let cuadro=0, ultimaLista=0;
+function bucle(now){ cuadro++;
+  if(vuelo){ const k=Math.min(1,(now-vuelo.ini)/vuelo.dur), q=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2; const r=vuelo.de.length()+(vuelo.a.length()-vuelo.de.length())*q;
+    camera.position.copy(vuelo.de.clone().normalize().lerp(vuelo.a.clone().normalize(),q).normalize().multiplyScalar(r)); if(k>=1) vuelo=null; }
+  controls.update();
+  const t=now/1000;
+  anillos.forEach(m=>{ const f=((t*0.5+m.userData.f)%1); m.scale.setScalar(1+f*3.5); m.material.opacity=(1-f)*0.8; });
+  RUTAS.forEach(r=>{ r.tubo.material.uniforms.t.value=REDUCIDO?0:t*0.8; if(cuadro%20===0||cuadro<3) colocar(r);
+    r.et.getWorldPosition(_v); const visible=_v.clone().normalize().dot(camera.position.clone().normalize())>0.15; r.e.style.opacity=visible?'1':'0'; r.e.style.pointerEvents=visible?'auto':'none'; });
+  if(now-ultimaLista>15000){ ultimaLista=now; pintarLista(); }
+  $('#reloj').textContent=hora(new Date());
+  renderer.render(scene,camera); lbl.render(scene,camera); requestAnimationFrame(bucle); }
+
+// Tocar un avión abre su ficha
+const ray=new THREE.Raycaster(), ptr=new THREE.Vector2(); let abajo=null;
+canvas.addEventListener('pointerdown',e=>abajo={x:e.clientX,y:e.clientY,t:performance.now()});
+canvas.addEventListener('pointerup',e=>{ if(!abajo) return; const mov=Math.hypot(e.clientX-abajo.x,e.clientY-abajo.y); abajo=null; if(mov>8) return;
+  const r=canvas.getBoundingClientRect(); ptr.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1); ray.setFromCamera(ptr,camera); ray.params.Points={threshold:0};
+  const objs=[]; RUTAS.forEach(x=>{ if(x.avion.visible) x.avion.traverse(m=>m.isMesh&&objs.push(m)); });
+  const h=ray.intersectObjects(objs,false)[0]; if(h) abrirFicha(h.object.userData.id); });
+
+/* ───────── Arranque ───────── */
+(async()=>{
+  tam(); const ini=aVec(33,-6,MOVIL?3.6:3.0); camera.position.copy(ini);
+  VUELOS.forEach(crearRuta); RUTAS.forEach(colocar); pintarLista();
+  if(innerWidth<900) $('#panel').classList.add('cerrado');
+  requestAnimationFrame(bucle);
+  try{ await pintarMundo(); }catch(e){ console.warn('Mapa del mundo no disponible',e); }
+  $('#cargando').classList.add('fuera');
+})();
+</script>
+</body>
+</html>

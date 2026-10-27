@@ -809,7 +809,7 @@ const VISTAS={
   marcador:{nom:'✅ Marcador',p:[10,10,10],t:[0,14,0],a:[7,7],m:[0,14,0]},
 };
 const CARD_VISTA={recinto:'general',combates:'jaula',grada:'gradas',ring:'jaula',mesas:'vip',entradas:'taquilla',patro:'patro',pagos:'luces',viajes:'pasillo',equipo:'equipo',tareas:'oficina',merch:'merch',vestuarios:'vestuarios'};
-$('#vistas').innerHTML=`<button class="andar" id="btn-andar">🎮 Caminar</button>`+Object.entries(VISTAS).map(([k,x])=>`<button data-v="${k}">${x.nom}</button>`).join('');
+$('#vistas').innerHTML=`<button class="andar" id="btn-andar">🎮 Caminar</button><button onclick="location.href='../vuelos/'">🌍 Vuelos en 3D</button>`+Object.entries(VISTAS).map(([k,x])=>`<button data-v="${k}">${x.nom}</button>`).join('');
 $('#vistas').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; if(b.id==='btn-andar'){ MODO==='andar'?salirAndar():entrarAndar(); return; } irA(b.dataset.v); });
 function irA(k){ const P=VISTAS[k]; if(!P) return; controls.autoRotate=false;
   document.querySelectorAll('#vistas button[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===k));
@@ -958,6 +958,7 @@ function fichaHTML(k){
       ${pend.map(g=>`<div class="fila"><span class="t">${esc(g[0])}</span><span class="d">${eur(g[1])}</span></div>`).join('')}
       ${!pend.length&&bolsasPend<=0?'<div class="fila"><span class="t">Todo pagado</span>'+tagEstado('Hecho','ok')+'</div>':''}</div>`; }
   if(k==='viajes') return cab('Viajes y hotel','Cada vuelo y habitación cerrados alargan el pasillo de salida')
+    +`<a class="btn acc" href="../vuelos/" style="display:block;text-align:center;text-decoration:none;margin-top:4px">🌍 Ver los aviones en el globo 3D</a>`
     +(ed.vuelos.length?`<div class="filas">${ed.vuelos.map(v=>`<div class="fila"><span class="t">✈️ ${esc(v[0])}<small>Desde ${esc(v[1])}${v[3]?' · '+esc(v[3]):''}</small></span>${v[2]==='confirmado'?tagEstado('Cerrado','ok'):v[2]==='reservado'?tagEstado('Reservado','med'):tagEstado('Sin billete','no')}</div>`).join('')}
       ${ed.hoteles.map(h=>`<div class="fila"><span class="t">🛏️ ${esc(h[0])}<small>${esc(h[1])}</small></span>${h[2]==='confirmada'?tagEstado('Cerrada','ok'):tagEstado('Pendiente','no')}</div>`).join('')}</div>`:'<p class="nota">Edición cerrada.</p>');
   if(k==='equipo') return cab('Equipo de la velada','Cada persona confirmada aparece en su sitio del pabellón')
