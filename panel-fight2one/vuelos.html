@@ -153,7 +153,8 @@ const AEROPUERTOS={TFN:[28.4827,-16.3415,'Tenerife Norte'],TFS:[28.0445,-16.5725
   MGA:[12.1415,-86.1682,'Managua'],TGU:[14.0608,-87.2172,'Tegucigalpa'],JFK:[40.6413,-73.7781,'Nueva York'],MIA:[25.7959,-80.287,'Miami']};
 
 import { createClient } from 'supabase';
-const sb=createClient('https://vjofxmfwdybktpwiuanc.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE',{auth:{storageKey:'f2o-panel-auth'}});
+const sb=(()=>{ try{ if(window.parent!==window&&window.parent.sbF2O) return window.parent.sbF2O; }catch(e){} return createClient('https://vjofxmfwdybktpwiuanc.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE',{auth:{storageKey:'f2o-panel-auth'}}); })();
+async function sesion(){ for(let i=0;i<6;i++){ const { data }=await sb.auth.getSession(); if(data?.session) return data.session; await new Promise(r=>setTimeout(r,500)); } return null; }
 if(window.self!==window.top) document.body.classList.add('embed');
 const MIN=60000;
 let VELADA=new Date(Date.now()+30*864e5);
@@ -161,7 +162,7 @@ function skyscanner(desde,dia){ const d=dia||new Date(VELADA.getTime()-3*864e5);
   return `https://www.skyscanner.es/transporte/vuelos/${desde.toLowerCase()}/tfn/${yymmdd}/?adultsv2=1&cabinclass=economy&rtn=0`; }
 // Viajes reales de la velada (misma sesión que el panel)
 async function cargarVuelos(){
-  const { data:{ session } }=await sb.auth.getSession();
+  const session=await sesion();
   if(!session){ document.getElementById('cargando').innerHTML='<div><b>FIGHT2ONE</b>Entra en el panel para ver los vuelos.</div>'; throw new Error('sin sesión'); }
   const q=async p=>{ const { data, error }=await p; if(error) throw error; return data||[]; };
   const id=new URLSearchParams(location.search).get('velada');

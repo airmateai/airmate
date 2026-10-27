@@ -219,12 +219,13 @@ const MOVIL=innerWidth<900 || TACTIL;
 
 /* ───────── Datos reales del panel (Supabase, misma sesión que el CRM) ───────── */
 import { createClient } from 'supabase';
-const sb=createClient('https://vjofxmfwdybktpwiuanc.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE',{auth:{storageKey:'f2o-panel-auth'}});
+const sb=(()=>{ try{ if(window.parent!==window&&window.parent.sbF2O) return window.parent.sbF2O; }catch(e){} return createClient('https://vjofxmfwdybktpwiuanc.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE',{auth:{storageKey:'f2o-panel-auth'}}); })();
+async function sesion(){ for(let i=0;i<6;i++){ const { data }=await sb.auth.getSession(); if(data?.session) return data.session; await new Promise(r=>setTimeout(r,500)); } return null; }
 if(window.self!==window.top) document.body.classList.add('embed');
 const CIUDAD_IATA={TFN:'Tenerife Norte',TFS:'Tenerife Sur',LPA:'Gran Canaria',ACE:'Lanzarote',FUE:'Fuerteventura',SPC:'La Palma',MAD:'Madrid',BCN:'Barcelona',SVQ:'Sevilla',AGP:'Málaga',VLC:'Valencia',BIO:'Bilbao',ORY:'París Orly',CDG:'París CDG',FCO:'Roma',MXP:'Milán',LIS:'Lisboa',OPO:'Oporto',LHR:'Londres',LGW:'Londres Gatwick',AMS:'Ámsterdam',FRA:'Fráncfort',MUC:'Múnich',BRU:'Bruselas',DUB:'Dublín',WAW:'Varsovia',OTP:'Bucarest',TBS:'Tiflis',IST:'Estambul',CMN:'Casablanca',RAK:'Marrakech',CAI:'El Cairo',DSS:'Dakar',ABJ:'Abiyán',LOS:'Lagos',NBO:'Nairobi',LUN:'Lusaka',DXB:'Dubái',DOH:'Doha',BKK:'Bangkok',GIG:'Río de Janeiro',GRU:'São Paulo',EZE:'Buenos Aires',BOG:'Bogotá',CCS:'Caracas',HAV:'La Habana',MGA:'Managua',TGU:'Tegucigalpa',JFK:'Nueva York',MIA:'Miami'};
 const SIN_COMBATE={a:{nom:'Por decidir'},b:{nom:'Por decidir'},mod:'',titulo:'',peso:'',estado:'pendiente'};
 async function cargarDatos(){
-  const { data:{ session } }=await sb.auth.getSession();
+  const session=await sesion();
   if(!session){ document.getElementById('sin-sesion').style.display='grid'; document.getElementById('cargando').classList.add('fuera'); throw new Error('sin sesión'); }
   const q=async p=>{ const { data, error }=await p; if(error) throw error; return data||[]; };
   const id=new URLSearchParams(location.search).get('velada');
