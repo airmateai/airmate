@@ -498,7 +498,7 @@ texCupula.wrapS=THREE.RepeatWrapping; texCupula.repeat.set(4,1);
 const fuera=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.MeshStandardMaterial({color:'#0b0b0c',roughness:1})); fuera.rotation.x=-Math.PI/2; fuera.position.y=-0.03; scene.add(fuera);
 const plaza=new THREE.Mesh(new THREE.CircleGeometry(1,96),new THREE.MeshStandardMaterial({color:'#4a4946',roughness:.95})); plaza.rotation.x=-Math.PI/2; plaza.scale.set(EXT_A+9,EXT_B+9,1); plaza.position.y=-0.02; scene.add(plaza);
 const suelo=new THREE.Mesh(new THREE.CircleGeometry(1,96),MAT.hormigon); suelo.rotation.x=-Math.PI/2; suelo.scale.set(EXT_A,EXT_B,1); suelo.position.y=-0.01; suelo.receiveShadow=true; scene.add(suelo);
-const pista=new THREE.Mesh(new THREE.CircleGeometry(1,128),new THREE.MeshStandardMaterial({map:texParquet,roughness:.35,metalness:.05})); pista.rotation.x=-Math.PI/2; pista.scale.set(ELA,ELB,1); pista.position.y=0.012; pista.receiveShadow=true; scene.add(pista); clicable(pista,'recinto');
+const pista=new THREE.Mesh(new THREE.CircleGeometry(1,128),new THREE.MeshStandardMaterial({map:texParquet,roughness:.55,metalness:.05,color:'#b9b2a6'})); pista.rotation.x=-Math.PI/2; pista.scale.set(ELA,ELB,1); pista.position.y=0.012; pista.receiveShadow=true; scene.add(pista); clicable(pista,'recinto');
 texParquet.repeat.set(1.6,1.2);
 const moqueta=new THREE.Mesh(new THREE.PlaneGeometry(26,24),new THREE.MeshStandardMaterial({color:'#0e0e10',roughness:.9})); moqueta.rotation.x=-Math.PI/2; moqueta.position.y=0.02; moqueta.receiveShadow=true; scene.add(moqueta);
 
@@ -544,7 +544,7 @@ for(let i=0;i<casa.length;i++){ const d=new THREE.Mesh(new THREE.CircleGeometry(
 // desde dentro no tapan, y desde lejos la cúpula se ve entera y se vuelve transparente al acercarse.
 const muroFuera=new THREE.Mesh(new THREE.CylinderGeometry(1,1,ALTO_MURO,128,1,true),new THREE.MeshStandardMaterial({map:texBloque,roughness:.95}));
 muroFuera.scale.set(EXT_A,1,EXT_B); muroFuera.position.y=ALTO_MURO/2; scene.add(muroFuera);
-const alero=new THREE.Mesh(new THREE.CylinderGeometry(1.012,1.0,0.8,128,1,true),new THREE.MeshStandardMaterial({color:'#e9e9e6',roughness:.6,side:THREE.DoubleSide}));
+const alero=new THREE.Mesh(new THREE.CylinderGeometry(1.012,1.0,0.8,128,1,true),new THREE.MeshStandardMaterial({color:'#8d8e8a',roughness:.8,side:THREE.DoubleSide}));
 alero.scale.set(EXT_A,1,EXT_B); alero.position.y=ALTO_MURO+0.2; scene.add(alero);
 const matCupula=new THREE.MeshStandardMaterial({map:texCupula,roughness:.55,metalness:.05,transparent:true,opacity:1});
 const cupula=new THREE.Mesh(new THREE.SphereGeometry(1,128,32,0,Math.PI*2,0,Math.PI/2),matCupula);
@@ -850,9 +850,9 @@ function pintar(){
   const llave=[filasHechas,Math.round(fG*ASIENTOS.length),Math.round(fR*RING.length),Math.round(fM*MESAS.length),v.recinto>0?1:0,RESALTAR?1:0].join('|');
   if(llave!==cacheAsientos){ cacheAsientos=llave;
     const nG=Math.round(fG*ASIENTOS.length);
-    ASIENTOS.forEach((a,i)=>{ const hay=a.fila<filasHechas, ocu=hay&&rangoG[i]<nG; ponerInst(sillas,i,a.x,a.y,a.z,a.rot,hay?1:0); ponerInst(cuerpos,i,a.x,a.y,a.z,a.rot,ocu&&!RESALTAR?1:0); ponerInst(cabezas,i,a.x,a.y,a.z,a.rot,ocu&&!RESALTAR?1:0);
+    ASIENTOS.forEach((a,i)=>{ const hay=true, ocu=rangoG[i]<nG; ponerInst(sillas,i,a.x,a.y,a.z,a.rot,hay?1:0); ponerInst(cuerpos,i,a.x,a.y,a.z,a.rot,ocu&&!RESALTAR?1:0); ponerInst(cabezas,i,a.x,a.y,a.z,a.rot,ocu&&!RESALTAR?1:0);
       sillas.setColorAt(i,RESALTAR?(ocu?COLOR_SILLA_ORO:COLOR_APAGADO):colorSilla[i]); cuerpos.setColorAt(i,colorRopa[i]); cabezas.setColorAt(i,colorPiel[i]); });
-    ESCALONES.forEach((s,i)=>ponerInst(escalones,i,s.x,s.y+0.11,s.z,s.rot,s.fila<filasHechas?1:0));
+    ESCALONES.forEach((s,i)=>ponerInst(escalones,i,s.x,s.y+0.11,s.z,s.rot,1));
     [sillas,cuerpos,cabezas,escalones].forEach(m=>{ m.instanceMatrix.needsUpdate=true; if(m.instanceColor) m.instanceColor.needsUpdate=true; });
     const nR=Math.round(fR*RING.length), hayPista=v.recinto>0;
     RING.forEach((s,i)=>{ const ocu=hayPista&&rangoR[i]<nR; ponerInst(sillasR,i,s.x,0,s.z,s.rot,hayPista?1:0); ponerInst(cuerposR,i,s.x,0,s.z,s.rot,ocu&&!RESALTAR?1:0); ponerInst(cabezasR,i,s.x,0,s.z,s.rot,ocu&&!RESALTAR?1:0);
@@ -1246,7 +1246,7 @@ function bucle(now){
     o.element.style.opacity=ver?'1':'0'; o.element.style.pointerEvents=ver?'auto':'none'; });
   if(cuadro%3===0&&MODO==='andar') dibujarMapa();
   if(MODO==='aire'){ const hd=Math.hypot(camera.position.x,camera.position.z), dentro=eDist(camera.position.x,camera.position.z)<EXT_A-ELA-1&&camera.position.y<ALTO_MURO+ALTO_CUPULA;
-    const op=dentro?0:cl((hd-88)/22); matCupula.opacity=op; cupula.visible=op>0.02; alero.visible=hd>50; }
+    const op=dentro?0:cl((hd-88)/22); matCupula.opacity=op; cupula.visible=op>0.02; alero.visible=op>0.02; }
   else { cupula.visible=false; }
   { const meta=ambiente?0.25:1; const k=casa[0].userData.k??1; const nk=k+(meta-k)*Math.min(1,dt*3); casa.forEach(l=>{ l.userData.k=nk; l.intensity=(l.userData.base??l.intensity)*0+((45+15*(1-ACTUAL.pagos))*nk); }); scene.children.find(o=>o.isHemisphereLight).intensity=0.55*(0.35+0.65*nk); }
   composer.render(); lbl.render(scene,camera);
