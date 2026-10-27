@@ -1279,11 +1279,12 @@ const seguidor=new THREE.SpotLight(0xffffff,0,0,0.06,0.4,1); seguidor.position.s
 const conoSeg=new THREE.Mesh(conoGeo(1.4,60),new THREE.MeshBasicMaterial({color:0xfff6e0,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));
 conoSeg.position.copy(seguidor.position); conoSeg.visible=false; scene.add(conoSeg);
 const _col=new THREE.Color(), _tg=new THREE.Vector3();
-let salaK=1;
+let salaK=1, MATS=null, envUlt=1;
+function envK(k){ if(Math.abs(k-envUlt)<0.01) return; envUlt=k; if(!MATS){ MATS=new Set(); scene.traverse(o=>{ (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ if(m&&m.isMeshStandardMaterial) MATS.add(m); }); }); } MATS.forEach(m=>m.envMapIntensity=k); }
 function aplicarLuces(dt,t){
-  if(!SHOW.on){ const k=salaK+(1-salaK)*Math.min(1,dt*3); salaK=k; casa.forEach(l=>l.intensity=(45+15*(1-ACTUAL.pagos))*k); hemi.intensity=0.55*(0.35+0.65*k); scene.fog.density=0.0042; return; }
+  if(!SHOW.on){ const k=salaK+(1-salaK)*Math.min(1,dt*3); salaK=k; casa.forEach(l=>l.intensity=(45+15*(1-ACTUAL.pagos))*k); hemi.intensity=0.55*(0.35+0.65*k); scene.fog.density=0.0042; envK(1); return; }
   const sala=SHOW.sala/100; salaK+=(sala-salaK)*Math.min(1,dt*3);
-  casa.forEach(l=>l.intensity=60*salaK); hemi.intensity=0.55*(0.2+0.8*salaK);
+  casa.forEach(l=>l.intensity=60*salaK); hemi.intensity=0.55*(0.08+0.92*salaK); envK(0.06+0.94*salaK);
   if(SHOW.estrobo&&!REDUCIDO){ const on=Math.floor(t*12)%2===0; hemi.intensity=on?2.6:0.05; }
   scene.fog.density=SHOW.humo?0.011:0.0042;
   _col.set(SHOW.color); const jaula=SHOW.jaula/100;
