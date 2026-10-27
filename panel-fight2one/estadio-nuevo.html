@@ -124,8 +124,8 @@ body.andando .hoja,body.andando .aviso{display:none}
 @media (max-width:899px){ #mapa{top:auto;bottom:calc(150px + env(safe-area-inset-bottom));right:12px;width:120px;height:100px} body.andando #mapa{bottom:auto;top:calc(110px + env(safe-area-inset-top))} }
 /* ── Composición 2 (pabellón protagonista) ── */
 .top{display:none!important}
-.barra{position:fixed;top:calc(10px + env(safe-area-inset-top));left:12px;right:12px;z-index:6;display:flex;align-items:center;gap:8px;pointer-events:none}
-.barra>*{pointer-events:auto}
+.barra-sup{position:fixed;top:calc(10px + env(safe-area-inset-top));left:12px;right:12px;z-index:6;display:flex;align-items:center;gap:8px;pointer-events:none}
+.barra-sup>*{pointer-events:auto}
 .estado{display:flex;align-items:center;gap:8px;border:1px solid #ffffff14;background:rgba(10,10,11,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:14px;padding:5px 12px 5px 6px;text-align:left}
 .estado b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:17px;line-height:1}
 .estado small{display:block;color:var(--mut);font-size:11px;white-space:nowrap}
@@ -175,7 +175,7 @@ body.andando #mapa{display:block}
 .fila{background:#ffffff06!important;border-color:#ffffff10!important}
 @media (min-width:900px){ .ficha{top:calc(62px + env(safe-area-inset-top))!important;right:12px!important;bottom:12px!important;width:380px!important;border-radius:16px!important} }
 @media (max-width:899px){
-  .barra{flex-wrap:wrap;right:12px}
+  .barra-sup{flex-wrap:wrap;right:12px}
   .seg{order:3;width:100%;overflow-x:auto;scrollbar-width:none}
   .seg button{flex:1}
   .pill.andar{margin-left:0}
@@ -204,7 +204,7 @@ body.embed .toast{top:60px}
 <canvas id="escena" tabindex="0" aria-label="Pabellón en 3D de la velada. En vista aérea arrastra para girar y pellizca para acercarte; en modo caminar muévete con el joystick o las teclas WASD. Toca cualquier cosa para ver sus datos. Todo está también en la lista."></canvas>
 
 <header class="top"><span id="sub-ed" hidden></span></header>
-<div class="barra" id="barra">
+<div class="barra-sup" id="barra">
   <button class="estado" id="btn-estado" aria-expanded="false" aria-controls="hoja" title="Cómo va la preparación">
     <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="13" fill="none" stroke="#2a2a2d" stroke-width="4"/><circle id="est-arco" cx="17" cy="17" r="13" fill="none" stroke="#d4a72c" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 82" transform="rotate(-90 17 17)"/></svg>
     <span><b id="est-pc">0%</b><small id="est-sub">Preparación</small></span>
@@ -496,7 +496,7 @@ texCupula.wrapS=THREE.RepeatWrapping; texCupula.repeat.set(4,1);
 
 // Suelo: plaza exterior, interior del edificio y pista de parqué con la moqueta negra del evento
 const fuera=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.MeshStandardMaterial({color:'#0b0b0c',roughness:1})); fuera.rotation.x=-Math.PI/2; fuera.position.y=-0.03; scene.add(fuera);
-const plaza=new THREE.Mesh(new THREE.CircleGeometry(1,96),new THREE.MeshStandardMaterial({color:'#8b8a86',roughness:.95})); plaza.rotation.x=-Math.PI/2; plaza.scale.set(EXT_A+9,EXT_B+9,1); plaza.position.y=-0.02; scene.add(plaza);
+const plaza=new THREE.Mesh(new THREE.CircleGeometry(1,96),new THREE.MeshStandardMaterial({color:'#4a4946',roughness:.95})); plaza.rotation.x=-Math.PI/2; plaza.scale.set(EXT_A+9,EXT_B+9,1); plaza.position.y=-0.02; scene.add(plaza);
 const suelo=new THREE.Mesh(new THREE.CircleGeometry(1,96),MAT.hormigon); suelo.rotation.x=-Math.PI/2; suelo.scale.set(EXT_A,EXT_B,1); suelo.position.y=-0.01; suelo.receiveShadow=true; scene.add(suelo);
 const pista=new THREE.Mesh(new THREE.CircleGeometry(1,128),new THREE.MeshStandardMaterial({map:texParquet,roughness:.35,metalness:.05})); pista.rotation.x=-Math.PI/2; pista.scale.set(ELA,ELB,1); pista.position.y=0.012; pista.receiveShadow=true; scene.add(pista); clicable(pista,'recinto');
 texParquet.repeat.set(1.6,1.2);
@@ -550,7 +550,7 @@ const matCupula=new THREE.MeshStandardMaterial({map:texCupula,roughness:.55,meta
 const cupula=new THREE.Mesh(new THREE.SphereGeometry(1,128,32,0,Math.PI*2,0,Math.PI/2),matCupula);
 cupula.scale.set(EXT_A+0.3,ALTO_CUPULA,EXT_B+0.3); cupula.position.y=ALTO_MURO+0.5; scene.add(cupula);
 const texRotulo=textura(2048,160,(g,w,h)=>{ g.clearRect(0,0,w,h); g.fillStyle='#e8e2d6'; g.font='92px Anton, Impact, sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText('PABELLÓN DE DEPORTES DE TENERIFE SANTIAGO MARTÍN',w/2,h/2+6); });
-const rotulo=new THREE.Mesh(new THREE.PlaneGeometry(40,3.1),new THREE.MeshBasicMaterial({map:texRotulo,transparent:true})); rotulo.position.set(0,ALTO_MURO-2.6,EXT_B+0.35); scene.add(rotulo);
+const rotulo=new THREE.Mesh(new THREE.CylinderGeometry(1,1,3.1,64,1,true,-0.5,1.0),new THREE.MeshBasicMaterial({map:texRotulo,transparent:true})); rotulo.scale.set(EXT_A+0.25,1,EXT_B+0.25); rotulo.position.y=ALTO_MURO-2.6; scene.add(rotulo);
 const exterior=[muroFuera,alero,cupula,rotulo];
 
 // Asientos con respaldo + público (instanciados). Colores como en el real: azul con dibujos blancos y algo de rojo
@@ -938,7 +938,7 @@ function textosEtiquetas(){
 /* ───────── Vistas (aérea y caminando) ───────── */
 const frente=(x,z,dist,y)=>{ const l=Math.hypot(x,z); return [x-x/l*dist,y,z-z/l*dist]; };
 const VISTAS={
-  general:{nom:'General',p:[44,34,56],t:[0,2,0],a:[14,0],m:[0,1.5,0],grupo:'vista'},
+  general:{nom:'General',p:[26,40,34],t:[0,0,0],a:[14,0],m:[0,1.5,0],grupo:'vista'},
   superior:{nom:'Superior',p:[0.1,96,0.1],t:[0,0,0],a:[0,8.6],m:[0,1.5,0],grupo:'vista'},
   jaula:{nom:'Ring',p:[9,6,11],t:[0,1.4,0],a:[8.4,3.2],m:[0,1.6,0],grupo:'vista'},
   exterior:{nom:'Exterior',p:[96,52,118],t:[0,9,0],a:[14,0],m:[0,1.5,0],grupo:'vista'},
@@ -1246,7 +1246,7 @@ function bucle(now){
     o.element.style.opacity=ver?'1':'0'; o.element.style.pointerEvents=ver?'auto':'none'; });
   if(cuadro%3===0&&MODO==='andar') dibujarMapa();
   if(MODO==='aire'){ const hd=Math.hypot(camera.position.x,camera.position.z), dentro=eDist(camera.position.x,camera.position.z)<EXT_A-ELA-1&&camera.position.y<ALTO_MURO+ALTO_CUPULA;
-    const op=dentro?0:cl((hd-68)/30); matCupula.opacity=op; cupula.visible=op>0.02; alero.visible=hd>50; }
+    const op=dentro?0:cl((hd-88)/22); matCupula.opacity=op; cupula.visible=op>0.02; alero.visible=hd>50; }
   else { cupula.visible=false; }
   { const meta=ambiente?0.25:1; const k=casa[0].userData.k??1; const nk=k+(meta-k)*Math.min(1,dt*3); casa.forEach(l=>{ l.userData.k=nk; l.intensity=(l.userData.base??l.intensity)*0+((45+15*(1-ACTUAL.pagos))*nk); }); scene.children.find(o=>o.isHemisphereLight).intensity=0.55*(0.35+0.65*nk); }
   composer.render(); lbl.render(scene,camera);
