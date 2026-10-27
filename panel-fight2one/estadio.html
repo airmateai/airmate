@@ -253,7 +253,7 @@ async function cargarDatos(){
     hotel:v.hotel||'',
     entradas:ent.map(e=>({nom:e.tipo,precio:Number(e.precio),cupo:e.cupo,vend:e.vendidas,zona:e.zona})),
     patro:pat.filter(p=>p.estado!=='rechazado').map(p=>[p.nombre,p.paquete||'',Number(p.importe),p.estado==='propuesta'?'propuesta':p.estado]),
-    objetivoPatro:Number(v.objetivo_patrocinio)||Math.max(1,pat.reduce((a,p)=>a+Number(p.importe),0)),
+    objetivoPatro:Number(v.objetivo_patrocinio)||pat.reduce((a,p)=>a+Number(p.importe),0),
     gastos:[...gas.map(g=>[g.concepto,Number(g.importe),g.pagado?1:0]),...equ.filter(e=>Number(e.pago)).map(e=>[e.nombre+' ('+e.rol+')',Number(e.pago),e.pagado?1:0]),...via.filter(x=>Number(x.precio)+Number(x.hotel_precio)).map(x=>['Viaje de '+nombreDe(x),Number(x.precio)+Number(x.hotel_precio),x.pagado?1:0])],
     bolsasPagadas:com.filter(c=>c.estado!=='cancelado').reduce((a,c)=>a+Number(c.pagado_a)+Number(c.pagado_b),0),
     equipo:equ.map(e=>[e.nombre,e.rol,e.confirmado?1:0]),
@@ -284,22 +284,22 @@ function calcular(ed){
   const conf=ed.combates.filter(c=>c.estado==='confirmado').length;
   const papeles=ed.combates.flatMap(c=>[c.a,c.b]).filter(p=>p.doc).length, totPap=ed.combates.length*2;
   E.push({ id:'combates', ic:'🥊', nom:'Combates', que:'monta la jaula y los vestuarios', peso:2,
-    v:Math.min(1,conf/ed.objetivoCombates)*0.75+(totPap?(totPap-papeles)/totPap:1)*0.25,
+    v:Math.min(1,conf/ed.objetivoCombates)*0.75+(totPap?(totPap-papeles)/totPap:0)*0.25,
     falta:`${conf} de ${ed.objetivoCombates} combates cerrados`+(papeles?` · ${papeles} peleador${papeles>1?'es':''} con papeles pendientes`:' · papeles en regla') });
   const vOk=ed.vuelos.filter(v=>v[2]==='confirmado').length, hOk=ed.hoteles.filter(h=>h[2]==='confirmada').length, vt=ed.vuelos.length+ed.hoteles.length;
-  E.push({ id:'viajes', ic:'✈️', nom:'Viajes y hotel', que:'abre el pasillo de salida', peso:1, v:vt?(vOk+hOk)/vt:1,
-    falta:vt?(vOk+hOk===vt?'Todos los vuelos y habitaciones cerrados':`Faltan ${ed.vuelos.length-vOk} vuelo${ed.vuelos.length-vOk===1?'':'s'} y ${ed.hoteles.length-hOk} habitación${ed.hoteles.length-hOk===1?'':'es'}`):'Edición cerrada' });
+  E.push({ id:'viajes', ic:'✈️', nom:'Viajes y hotel', que:'abre el pasillo de salida', peso:1, v:vt?(vOk+hOk)/vt:(ed.cerrada?1:0),
+    falta:vt?(vOk+hOk===vt?'Todos los vuelos y habitaciones cerrados':`Faltan ${ed.vuelos.length-vOk} vuelo${ed.vuelos.length-vOk===1?'':'s'} y ${ed.hoteles.length-hOk} habitación${ed.hoteles.length-hOk===1?'':'es'}`):(ed.cerrada?'Edición cerrada':'Sin viajes apuntados todavía') });
   const z=zonas(ed); const asientos=z.grada.c+z.ring.c+z.mesas.c*4, ocup=z.grada.v+z.ring.v+z.mesas.v*4;
   const ingresos=ed.entradas.reduce((a,t,i)=>a+(Math.min(t.cupo,t.vend+(i===0?EXTRA[ed.id]:0)))*t.precio,0);
   E.push({ id:'entradas', ic:'🎟️', nom:'Entradas', que:'llena las gradas de público', peso:2, v:asientos?ocup/asientos:0, zonas:z, ingresos,
     falta:`${num(ocup)} de ${num(asientos)} asientos vendidos · ${eur(ingresos)}` });
   const pc=ed.patro.filter(p=>CONF_PATRO.includes(p[3])), pIng=pc.reduce((a,p)=>a+p[2],0), abiertas=ed.patro.length-pc.length;
   E.push({ id:'patro', ic:'🤝', nom:'Patrocinadores', que:'enciende pantallas y banderolas', peso:1, v:ed.objetivoPatro?Math.min(1,pIng/ed.objetivoPatro):0,
-    falta:`${eur(pIng)} de ${eur(ed.objetivoPatro)}`+(abiertas?` · ${abiertas} propuesta${abiertas>1?'s':''} abierta${abiertas>1?'s':''}`:'') });
+    falta:(!ed.objetivoPatro?'Pon el objetivo de patrocinio en la velada':`${eur(pIng)} de ${eur(ed.objetivoPatro)}`)+(abiertas?` · ${abiertas} propuesta${abiertas>1?'s':''} abierta${abiertas>1?'s':''}`:'') });
   const bolsas=ed.combates.reduce((a,c)=>a+(c.bolsas||0),0);
   const gTot=ed.gastos.reduce((a,g)=>a+g[1],0)+bolsas, gPag=ed.gastos.filter(g=>g[2]).reduce((a,g)=>a+g[1],0)+ed.bolsasPagadas;
-  E.push({ id:'pagos', ic:'💶', nom:'Pagos', que:'enciende los focos', peso:2, v:gTot?gPag/gTot:1, total:gTot, pagado:gPag, bolsas,
-    falta:gPag>=gTot?'Todo pagado':`Pagado ${eur(gPag)} de ${eur(gTot)} · faltan ${eur(gTot-gPag)}` });
+  E.push({ id:'pagos', ic:'💶', nom:'Pagos', que:'enciende los focos', peso:2, v:gTot?gPag/gTot:(ed.cerrada?1:0), total:gTot, pagado:gPag, bolsas,
+    falta:!gTot?'Sin gastos apuntados todavía':gPag>=gTot?'Todo pagado':`Pagado ${eur(gPag)} de ${eur(gTot)} · faltan ${eur(gTot-gPag)}` });
   const eqOk=ed.equipo.filter(e=>e[2]).length, eqNo=ed.equipo.filter(e=>!e[2]).map(e=>e[0]);
   E.push({ id:'equipo', ic:'🧑‍⚖️', nom:'Equipo', que:'pone a cada persona en su sitio', peso:1, v:ed.equipo.length?eqOk/ed.equipo.length:0,
     falta:eqNo.length?`${eqOk} de ${ed.equipo.length} confirmados · falta ${lista(eqNo)}`:'Todo el equipo confirmado' });
