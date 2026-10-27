@@ -332,7 +332,7 @@ const scene=new THREE.Scene(); scene.background=new THREE.Color('#060607'); scen
 const pmrem=new THREE.PMREMGenerator(renderer); scene.environment=pmrem.fromScene(new RoomEnvironment(renderer),0.04).texture;
 const camera=new THREE.PerspectiveCamera(50,1,0.08,300); camera.rotation.order='YXZ';
 const controls=new OrbitControls(camera, canvas);
-controls.enableDamping=true; controls.dampingFactor=0.08; controls.maxPolarAngle=Math.PI*0.48; controls.minDistance=2.5; controls.maxDistance=80;
+controls.enableDamping=true; controls.dampingFactor=0.08; controls.maxPolarAngle=Math.PI*0.48; controls.minDistance=0.8; controls.maxDistance=80; controls.zoomSpeed=1.8; controls.zoomToCursor=true;
 controls.autoRotate=!REDUCIDO; controls.autoRotateSpeed=0.4; controls.target.set(0,2,0);
 controls.addEventListener('start',()=>{ controls.autoRotate=false; vuelo=null; });
 const composer=new EffectComposer(renderer);
@@ -553,6 +553,8 @@ function tablaEstados(g,W,H,titulo,color,sub,filas,vacio){ g.fillStyle='#07080a'
     g.textAlign='left'; g.fillStyle='#f2f2f2'; g.font=`600 ${fh*0.5}px "Inter Tight", sans-serif`; g.fillText(corta(g,f[0],W*0.42),34,y);
     g.fillStyle='#9a9aa0'; g.fillText(corta(g,f[1],W*0.28),W*0.47,y);
     g.textAlign='right'; g.font=`800 ${fh*0.46}px "Inter Tight", sans-serif`; g.fillStyle=f[3]; g.fillText(f[2],W-34,y); }); }
+const IATA_CIUDAD={'Casablanca':'CMN','París':'ORY','Bangkok':'BKK','Gran Canaria':'LPA','Roma':'FCO','Varsovia':'WAW','Lisboa':'LIS','Río de Janeiro':'GIG','Madrid':'MAD'};
+function skyscanner(ciudad){ const iata=IATA_CIUDAD[ciudad]; if(!iata) return ''; const d=new Date(ED[ACT].fecha.getTime()-3*864e5); const yymmdd=String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); return `https://www.skyscanner.es/transporte/vuelos/${iata.toLowerCase()}/tfn/${yymmdd}/?adultsv2=1&cabinclass=economy&rtn=0`; }
 const ESTADO_V={confirmado:['CONFIRMADO','#3ecf8e'],reservado:['RESERVADO','#f0b43c'],pendiente:['SIN BILLETE','#ff5a68']};
 pizarra({w:5.2,h:2.9,pos:[24,2.6,-ANCHO_Z+0.12],rot:0,card:'viajes',draw:(g,W,H)=>{ const ed=ED[ACT];
   tablaEstados(g,W,H,'✈ LLEGADAS','#f0b43c','Aeropuerto Tenerife Norte',ed.vuelos.map(v=>[v[0],'Desde '+v[1]+(v[3]?' · '+v[3]:''),...ESTADO_V[v[2]]]),'Edición cerrada'); }});
@@ -959,7 +961,7 @@ function fichaHTML(k){
       ${!pend.length&&bolsasPend<=0?'<div class="fila"><span class="t">Todo pagado</span>'+tagEstado('Hecho','ok')+'</div>':''}</div>`; }
   if(k==='viajes') return cab('Viajes y hotel','Cada vuelo y habitación cerrados alargan el pasillo de salida')
     +`<a class="btn acc" href="../vuelos/" style="display:block;text-align:center;text-decoration:none;margin-top:4px">🌍 Ver los aviones en el globo 3D</a>`
-    +(ed.vuelos.length?`<div class="filas">${ed.vuelos.map(v=>`<div class="fila"><span class="t">✈️ ${esc(v[0])}<small>Desde ${esc(v[1])}${v[3]?' · '+esc(v[3]):''}</small></span>${v[2]==='confirmado'?tagEstado('Cerrado','ok'):v[2]==='reservado'?tagEstado('Reservado','med'):tagEstado('Sin billete','no')}</div>`).join('')}
+    +(ed.vuelos.length?`<div class="filas">${ed.vuelos.map(v=>`<div class="fila"><span class="t">✈️ ${esc(v[0])}<small>Desde ${esc(v[1])}${v[3]?' · '+esc(v[3]):''}</small></span>${v[2]==='confirmado'?tagEstado('Cerrado','ok'):v[2]==='reservado'?tagEstado('Reservado','med'):tagEstado('Sin billete','no')}${v[2]==='pendiente'&&skyscanner(v[1])?`<a class="btn acc" style="padding:5px 10px;font-size:12px;text-decoration:none" href="${skyscanner(v[1])}" target="_blank" rel="noopener">Buscar ✈️</a>`:''}</div>`).join('')}
       ${ed.hoteles.map(h=>`<div class="fila"><span class="t">🛏️ ${esc(h[0])}<small>${esc(h[1])}</small></span>${h[2]==='confirmada'?tagEstado('Cerrada','ok'):tagEstado('Pendiente','no')}</div>`).join('')}</div>`:'<p class="nota">Edición cerrada.</p>');
   if(k==='equipo') return cab('Equipo de la velada','Cada persona confirmada aparece en su sitio del pabellón')
     +`<div class="filas">${ed.equipo.map(e=>`<div class="fila"><span class="t">${esc(e[0])}<small>${esc(e[1])}</small></span>${e[2]?tagEstado('Confirmado','ok'):tagEstado('Sin confirmar','no')}</div>`).join('')}</div>`;

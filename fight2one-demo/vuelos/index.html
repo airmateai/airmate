@@ -152,6 +152,10 @@ const AEROPUERTOS={TFN:[28.4827,-16.3415,'Tenerife Norte'],TFS:[28.0445,-16.5725
 
 // Vuelos de ejemplo (horas relativas a ahora para que se vea el mapa en movimiento)
 const AHORA=Date.now(), MIN=60000;
+// Velada (ejemplo: dentro de 31 días). Los peleadores deben llegar 3 días antes por el pesaje.
+const VELADA=new Date(AHORA+31*864e5);
+function skyscanner(desde,dia){ const d=dia||new Date(VELADA.getTime()-3*864e5); const yymmdd=String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  return `https://www.skyscanner.es/transporte/vuelos/${desde.toLowerCase()}/tfn/${yymmdd}/?adultsv2=1&cabinclass=economy&rtn=0`; }
 const VUELOS=[
   {nom:'Youssef Amrani',combate:'Estelar · MMA 70 kg',desde:'CMN',num:'AT 970',sale:-70,dura:125,estado:'confirmado'},
   {nom:'Lucas Moreau',combate:'K1 65 kg',desde:'ORY',num:'VY 3132',sale:-150,dura:255,estado:'confirmado'},
@@ -171,7 +175,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,MOVIL?1.75:2)); renderer.output
 const lbl=new CSS2DRenderer(); lbl.domElement.id='etiquetas'; document.body.insertBefore(lbl.domElement,$('.top'));
 const scene=new THREE.Scene(); scene.background=new THREE.Color('#020203');
 const camera=new THREE.PerspectiveCamera(42,1,0.01,100);
-const controls=new OrbitControls(camera,canvas); controls.enablePan=false; controls.enableDamping=true; controls.dampingFactor=0.07; controls.minDistance=1.25; controls.maxDistance=6; controls.rotateSpeed=0.55; controls.zoomSpeed=0.8;
+const controls=new OrbitControls(camera,canvas); controls.enablePan=false; controls.enableDamping=true; controls.dampingFactor=0.07; controls.minDistance=1.03; controls.maxDistance=6; controls.rotateSpeed=0.55; controls.zoomSpeed=2.2;
 controls.autoRotate=!REDUCIDO; controls.autoRotateSpeed=0.25; controls.addEventListener('start',()=>{ controls.autoRotate=false; vuelo=null; });
 scene.add(new THREE.AmbientLight(0xffffff,0.6)); const sol=new THREE.DirectionalLight(0xfff2d8,1.2); sol.position.set(-3,2,4); scene.add(sol);
 
@@ -274,7 +278,7 @@ function pintarLista(){
     return `<button class="vuelo ${SEL===v.id?'on':''}" data-id="${v.id}"><span class="n">${esc(v.nom)}<small>${esc(v.num||'—')}</small></span><span class="tag ${s.cls}">${esc(s.t)}</span>
       <span class="r"><span>${esc(o?o[2]:v.desde)} → Tenerife Norte</span><span>${esc(v.combate||'')}</span></span>
       ${s.k==='sin'?'':`<span class="barra"><i style="width:${Math.round(s.prog*100)}%;${s.k==='tierra'?'background:var(--ok)':''}"></i></span>`}
-      <span class="r"><span>${linea}</span></span></button>`; }).join('');
+      <span class="r"><span>${linea}</span>${s.k==='sin'&&o?`<a href="${skyscanner(v.desde)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--acc);font-weight:800;text-decoration:none;white-space:nowrap">Buscar en Skyscanner →</a>`:''}</span></button>`; }).join('');
   $('#n-aire').textContent=cuenta.aire; $('#n-tierra').textContent=cuenta.tierra; $('#n-sin').textContent=cuenta.sin;
   $('#res-sub').textContent=`${RUTAS.filter(r=>!r.v.vivo).length} peleadores · ${cuenta.tierra} ya en la isla`;
 }
@@ -292,6 +296,8 @@ function abrirFicha(id){ const r=RUTAS.find(x=>x.v.id===id); if(!r) return; SEL=
       ${L?`<div class="dato">Altura<b>${L.en_tierra?'En tierra':new Intl.NumberFormat('es-ES').format(L.altitud_m)+' m'}</b></div><div class="dato">Velocidad<b>${L.velocidad_kmh} km/h</b></div><div class="dato">Avión<b>${esc(L.avion||'—')} ${esc(L.matricula||'')}</b></div><div class="dato">Señal<b>hace ${Math.round(L.visto_hace_s||0)} s</b></div>`:''}
       ${s.k==='sin'?'<div class="dato" style="grid-column:1/3">Pendiente<b>Comprar billete desde '+esc(o?o[2]:v.desde)+'</b></div>':''}
     </div>
+    ${!v.vivo&&o?`<a class="btn ${s.k==='sin'?'acc':''}" href="${skyscanner(v.desde)}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin-top:12px">✈️ ${s.k==='sin'?'Buscar billete':'Ver otros vuelos'} en Skyscanner · ${esc(o[2])} → Tenerife Norte</a>
+      <p class="nota" style="margin-top:6px">Busca para el ${new Date(VELADA.getTime()-3*864e5).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}: 3 días antes de la velada, para llegar al pesaje.</p>`:''}
     <p class="nota" style="margin-top:12px">${v.vivo?'Posición real con datos abiertos de ADS-B (adsb.lol). Se actualiza cada 30 segundos.':'Posición calculada con la hora de salida y de llegada. Con el número de vuelo real se sigue en directo.'}</p>`;
   $('#f-cerrar').onclick=cerrarFicha; $('#ficha').classList.add('on'); pintarLista(); irA(r.avion.visible?r.avion.position:r.pO); }
 function cerrarFicha(){ $('#ficha').classList.remove('on'); SEL=null; RUTAS.forEach(x=>x.sel=false); pintarLista(); }
@@ -327,7 +333,7 @@ const _v=new THREE.Vector3(); let cuadro=0, ultimaLista=0;
 function bucle(now){ cuadro++;
   if(vuelo){ const k=Math.min(1,(now-vuelo.ini)/vuelo.dur), q=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2; const r=vuelo.de.length()+(vuelo.a.length()-vuelo.de.length())*q;
     camera.position.copy(vuelo.de.clone().normalize().lerp(vuelo.a.clone().normalize(),q).normalize().multiplyScalar(r)); if(k>=1) vuelo=null; }
-  controls.update();
+  controls.rotateSpeed=Math.min(0.6,0.08+(camera.position.length()-1)*0.4); controls.update();
   const t=now/1000;
   anillos.forEach(m=>{ const f=((t*0.5+m.userData.f)%1); m.scale.setScalar(1+f*3.5); m.material.opacity=(1-f)*0.8; });
   RUTAS.forEach(r=>{ r.tubo.material.uniforms.t.value=REDUCIDO?0:t*0.8; if(cuadro%20===0||cuadro<3) colocar(r);
