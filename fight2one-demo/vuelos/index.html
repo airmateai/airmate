@@ -310,7 +310,9 @@ function irA(p){ if(!p||p.length()<0.5) return; const dist=MOVIL?2.5:2.15; const
 
 /* ───────── Seguir un vuelo real ───────── */
 let VIVOS=0;
-async function pedirVuelo(num){ const r=await fetch(SERVIDOR+'?vuelo='+encodeURIComponent(num),{signal:AbortSignal.timeout(10000)}); if(!r.ok) throw new Error('servidor '+r.status); return r.json(); }
+// La función pide la clave pública del proyecto (anon), la misma que usa cualquier página de Airmate
+const CLAVE_PUBLICA='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+async function pedirVuelo(num){ const r=await fetch(SERVIDOR+'?vuelo='+encodeURIComponent(num),{headers:{Authorization:'Bearer '+CLAVE_PUBLICA,apikey:CLAVE_PUBLICA},signal:AbortSignal.timeout(10000)}); if(!r.ok) throw new Error('servidor '+r.status); return r.json(); }
 $('#buscar').addEventListener('submit',async e=>{ e.preventDefault(); const num=$('#q').value.trim().toUpperCase(); if(!/^[A-Z0-9 ]{3,10}$/.test(num)){ $('#msg').textContent='Escribe un número de vuelo, por ejemplo IB3936.'; return; }
   $('#msg').textContent='Buscando '+num+'…';
   try{ const d=await pedirVuelo(num);

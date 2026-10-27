@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Fight2One · Panel</title>
+<link rel="icon" href="logo.jpg">
+<link rel="apple-touch-icon" href="logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter+Tight:wght@400;500;600;700;800&display=swap">
+<style>
+:root{--bg:#000;--p1:#0f0f10;--p2:#19191b;--p3:#232326;--line:#2c2c30;--ink:#f4f4f4;--mut:#a3a3a8;--acc:#d4a72c;--acc2:#b88a12;--accsoft:#2a2108;--red:#ff5a68;--redsoft:#3a1418;--ok:#3ecf8e;--oksoft:#0f2b20;--amb:#f0b43c;--ambsoft:#33270b;--r:16px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter Tight',system-ui,sans-serif;font-size:16px;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--acc)}
+h1,h2,h3{margin:0}
+.anton{font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.04em}
+.oculto{display:none!important}
+/* Entrada */
+#entrada{min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:radial-gradient(800px 400px at 50% -10%,#d4a72c22,transparent 70%),#000}
+.caja-entrada{width:min(380px,100%);background:var(--p1);border:1px solid var(--line);border-radius:22px;padding:26px 22px;text-align:center}
+.caja-entrada img{width:72px;height:72px;border-radius:16px}
+.caja-entrada h1{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:30px;letter-spacing:.05em;margin:12px 0 2px}
+.caja-entrada p{color:var(--mut);margin:0 0 18px;font-size:14px}
+.campo{display:flex;flex-direction:column;gap:6px;text-align:left;margin-bottom:12px}
+.campo>span{font-size:13px;font-weight:700;color:var(--mut)}
+.campo input,.campo select,.campo textarea{width:100%;background:var(--p2);border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:16px;outline:none}
+.campo input:focus,.campo select:focus,.campo textarea:focus{border-color:var(--acc)}
+.campo textarea{min-height:84px;resize:vertical}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border:1px solid var(--line);background:var(--p2);border-radius:14px;padding:12px 18px;font-weight:700;font-size:15px;text-decoration:none;color:var(--ink)}
+.btn.acc{background:var(--acc);border-color:var(--acc);color:#000}
+.btn.peligro{color:var(--red)}
+.btn.ancho{width:100%}
+.btn.peq{min-height:38px;padding:8px 12px;font-size:13.5px;border-radius:11px}
+.btn:disabled{opacity:.5}
+.error{color:var(--red);font-size:13.5px;min-height:18px;margin:6px 0 0}
+/* Estructura */
+#app{min-height:100vh}
+.cab{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:rgba(0,0,0,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.cab img{width:34px;height:34px;border-radius:9px}
+.cab .velada{flex:1;min-width:0}
+.cab select{width:100%;max-width:320px;background:var(--p2);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-weight:800;font-size:15px}
+.cab .yo{border:1px solid var(--line);background:var(--p2);border-radius:999px;padding:8px 12px;font-size:13px;font-weight:700;white-space:nowrap}
+.lateral{display:none}
+main{padding:16px 16px calc(96px + env(safe-area-inset-bottom));max-width:900px;margin:0 auto}
+main.lleno{max-width:none;padding:0}
+.abajo{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(5,1fr);background:rgba(10,10,11,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+.abajo button,.lateral button{border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;font-size:11.5px;font-weight:700;color:var(--mut);border-radius:12px}
+.abajo button .i{font-size:22px;line-height:1}
+.abajo button.on,.lateral button.on{color:var(--acc)}
+.titulo{display:flex;align-items:center;gap:10px;margin:4px 0 14px}
+.titulo h2{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:28px;letter-spacing:.04em}
+.titulo .btn{margin-left:auto}
+.sub{color:var(--mut);font-size:14px;margin:-8px 0 14px}
+.tarjeta{background:var(--p1);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.lista{display:flex;flex-direction:column;gap:10px}
+.item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--p1);border:1px solid var(--line);border-radius:var(--r);padding:14px;min-height:64px}
+.item:active{background:var(--p2)}
+.item .t{flex:1;min-width:0}
+.item .t b{display:block;font-size:16px}
+.item .t small{display:block;color:var(--mut);font-size:13.5px;margin-top:2px;line-height:1.35}
+.item .d{text-align:right;font-weight:800;white-space:nowrap}
+.item .ic{font-size:24px;width:32px;text-align:center;flex:0 0 auto}
+.tag{display:inline-block;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:800;white-space:nowrap}
+.tag.ok{background:var(--oksoft);color:var(--ok)}.tag.no{background:var(--redsoft);color:var(--red)}.tag.med{background:var(--ambsoft);color:var(--amb)}.tag.gris{background:var(--p3);color:var(--mut)}
+.vacio{text-align:center;color:var(--mut);padding:28px 12px;border:1px dashed var(--line);border-radius:var(--r)}
+.vacio b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+.grupo{font-size:12.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin:18px 2px 8px}
+/* Inicio */
+.portada{display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,#1a1405,#0b0b0c);border:1px solid #d4a72c55;border-radius:20px;padding:16px;margin-bottom:14px}
+.dona{position:relative;width:86px;height:86px;flex:0 0 auto}
+.dona svg{transform:rotate(-90deg)}
+.dona b{position:absolute;inset:0;display:grid;place-items:center;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:24px}
+.portada h1{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:26px;letter-spacing:.04em;line-height:1.05}
+.portada p{margin:4px 0 0;color:var(--mut);font-size:14px}
+.atajos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.atajo{display:flex;flex-direction:column;align-items:flex-start;gap:4px;border:1px solid var(--line);background:var(--p1);border-radius:var(--r);padding:14px;text-align:left;min-height:86px}
+.atajo .i{font-size:26px}
+.atajo b{font-size:15px}
+.atajo small{color:var(--mut);font-size:12.5px}
+.falta .item{border-left:4px solid var(--amb)}
+.falta .item.urg{border-left-color:var(--red)}
+.cifras{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.cifra{background:var(--p1);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.cifra small{color:var(--mut);font-size:12.5px;font-weight:700}
+.cifra b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:24px;letter-spacing:.02em;margin-top:2px}
+.cifra.ok b{color:var(--ok)}.cifra.no b{color:var(--red)}.cifra.acc b{color:var(--acc)}
+/* Combates */
+.combate{display:block;width:100%;text-align:left;background:var(--p1);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.combate .arriba{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--mut);font-weight:700}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin:10px 0 8px}
+.vs .p{font-weight:800;font-size:16px}
+.vs .p small{display:block;font-weight:600;color:var(--mut);font-size:12.5px}
+.vs .p.b{text-align:right}
+.vs .x{font-family:Anton,Impact,sans-serif;color:var(--acc);font-size:18px}
+.papeles{display:flex;flex-wrap:wrap;gap:6px}
+/* Viajes */
+.chip-row{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--p2);border-radius:999px;padding:10px 14px;font-weight:700;font-size:14px;min-height:44px}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#000}
+.cont{display:flex;align-items:center;gap:8px}
+.cont button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--p2);font-weight:800;font-size:15px}
+/* Formulario */
+.velo{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center}
+.form{width:min(560px,100%);max-height:92vh;overflow-y:auto;background:#0e0e0f;border:1px solid var(--line);border-bottom:none;border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+.form .fcab{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.form h3{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:24px;letter-spacing:.04em}
+.form .x{margin-left:auto;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--p2);font-size:18px}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form .pie{display:flex;gap:10px;margin-top:16px;position:sticky;bottom:-18px;background:#0e0e0f;padding:10px 0 4px}
+.form .pie .btn{flex:1}
+.check{display:flex;align-items:center;gap:12px;background:var(--p2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-weight:700;cursor:pointer}
+.check input{width:24px;height:24px;accent-color:var(--acc)}
+.bloque{border:1px solid var(--line);border-radius:14px;padding:12px;margin:6px 0 12px}
+.bloque>b{display:block;margin-bottom:8px}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);z-index:60;background:var(--ink);color:#000;font-weight:800;border-radius:999px;padding:12px 18px;opacity:0;transition:.2s;pointer-events:none;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.toast.mal{background:var(--red);color:#fff}
+.marco3d{position:relative;height:calc(100vh - 62px - 72px - env(safe-area-inset-bottom));border:none;width:100%;display:block;background:#000}
+.menu-mas{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (min-width:900px){
+  .abajo{display:none}
+  .lateral{display:flex;flex-direction:column;gap:4px;position:fixed;top:63px;left:0;bottom:0;width:220px;padding:14px 10px;border-right:1px solid var(--line);background:#050505;overflow-y:auto}
+  .lateral button{flex-direction:row;gap:12px;font-size:15px;padding:12px 14px;justify-content:flex-start}
+  .lateral button .i{font-size:20px;width:24px}
+  .lateral button.on{background:var(--accsoft)}
+  .lateral .sep{height:1px;background:var(--line);margin:8px 6px}
+  main{margin-left:220px;padding:22px 28px 40px}
+  main.lleno{margin-left:220px}
+  .marco3d{height:calc(100vh - 63px)}
+  .velo{align-items:center}
+  .form{border-radius:22px;border-bottom:1px solid var(--line)}
+  .toast{bottom:24px}
+  .atajos{grid-template-columns:repeat(4,1fr)}
+  .cifras{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+</head>
+<body>
+<div id="entrada">
+  <form class="caja-entrada" id="form-entrada" autocomplete="on">
+    <img src="logo.jpg" alt="Fight2One">
+    <h1>FIGHT2ONE</h1>
+    <p>Panel de las veladas</p>
+    <label class="campo"><span>Usuario</span><input id="e-usuario" autocomplete="username" autocapitalize="none" required></label>
+    <label class="campo"><span>Contraseña</span><input id="e-clave" type="password" autocomplete="current-password" required></label>
+    <button class="btn acc ancho" id="e-btn">Entrar</button>
+    <p class="error" id="e-error" role="alert"></p>
+  </form>
+</div>
+
+<div id="app" class="oculto">
+  <header class="cab">
+    <img src="logo.jpg" alt="">
+    <div class="velada"><select id="sel-velada" aria-label="Velada"></select></div>
+    <button class="yo" id="btn-yo" title="Salir"></button>
+  </header>
+  <nav class="lateral" id="lateral" aria-label="Secciones"></nav>
+  <main id="main"></main>
+  <nav class="abajo" id="abajo" aria-label="Secciones"></nav>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   Fight2One · Panel de veladas
+   Supabase AIRMATE 1, tablas f2o_* (solo miembros de f2o_usuarios).
+   Sesión propia (storageKey f2o-panel-auth) para no mezclarse con otros paneles.
+   Desarrollado por Airmate.
+   ═══════════════════════════════════════════════════════════════ */
+const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+const DOMINIO_USUARIO='@f2o.airmate.es';
+const sb=supabase.createClient(SB_URL,SB_ANON,{auth:{storageKey:'f2o-panel-auth',persistSession:true,autoRefreshToken:true}});
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur=n=>new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0,useGrouping:'always'}).format(Number(n)||0);
+const num=n=>new Intl.NumberFormat('es-ES',{useGrouping:'always'}).format(Number(n)||0);
+const ZONA='Atlantic/Canary';
+const fechaLarga=d=>d?new Date(d).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',timeZone:ZONA}):'';
+const fechaCorta=d=>d?new Date(d).toLocaleDateString('es-ES',{day:'numeric',month:'short',timeZone:ZONA}):'';
+const horaCorta=d=>d?new Date(d).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:ZONA}):'';
+const diasHasta=d=>d?Math.ceil((new Date(d)-new Date())/864e5):null;
+let _tt; function toast(t,mal){ const el=$('#toast'); el.textContent=t; el.classList.toggle('mal',!!mal); el.classList.add('on'); clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('on'),mal?4200:2200); }
+function textoError(e){ const m=String(e?.message||e||''); if(/JWT|session|token/i.test(m)) return 'La sesión ha caducado. Vuelve a entrar.'; if(/permission|policy|42501|row-level/i.test(m)) return 'No tienes permiso para guardar esto.'; if(/Failed to fetch|network/i.test(m)) return 'Sin conexión. Revisa internet y prueba otra vez.'; return m||'Error desconocido'; }
+
+/* ───────── Aeropuertos (origen de los vuelos) ───────── */
+const AEROPUERTOS={TFN:'Tenerife Norte',TFS:'Tenerife Sur',LPA:'Gran Canaria',ACE:'Lanzarote',FUE:'Fuerteventura',SPC:'La Palma',MAD:'Madrid',BCN:'Barcelona',SVQ:'Sevilla',AGP:'Málaga',VLC:'Valencia',BIO:'Bilbao',
+  ORY:'París Orly',CDG:'París CDG',FCO:'Roma',MXP:'Milán',LIS:'Lisboa',OPO:'Oporto',LHR:'Londres',LGW:'Londres Gatwick',AMS:'Ámsterdam',FRA:'Fráncfort',MUC:'Múnich',BRU:'Bruselas',DUB:'Dublín',
+  WAW:'Varsovia',OTP:'Bucarest',TBS:'Tiflis',IST:'Estambul',CMN:'Casablanca',RAK:'Marrakech',CAI:'El Cairo',DSS:'Dakar',ABJ:'Abiyán',LOS:'Lagos',NBO:'Nairobi',LUN:'Lusaka',DXB:'Dubái',DOH:'Doha',BKK:'Bangkok',
+  GIG:'Río de Janeiro',GRU:'São Paulo',EZE:'Buenos Aires',BOG:'Bogotá',CCS:'Caracas',HAV:'La Habana',MGA:'Managua',TGU:'Tegucigalpa',JFK:'Nueva York',MIA:'Miami'};
+function skyscanner(origen,velada){ if(!origen||!AEROPUERTOS[origen]) return ''; const base=velada?.fecha?new Date(new Date(velada.fecha).getTime()-3*864e5):new Date(Date.now()+14*864e5);
+  const yymmdd=String(base.getFullYear()).slice(2)+String(base.getMonth()+1).padStart(2,'0')+String(base.getDate()).padStart(2,'0');
+  return `https://www.skyscanner.es/transporte/vuelos/${origen.toLowerCase()}/tfn/${yymmdd}/?adultsv2=1&cabinclass=economy&rtn=0`; }
+
+/* ───────── Estado ───────── */
+const S={ yo:null, veladas:[], velada:null, peleadores:[], combates:[], papeles:[], viajes:[], entradas:[], patro:[], gastos:[], equipo:[], tareas:[], merch:[] };
+const TIPOS_PAPEL=['Contrato','Licencia','Certificado médico'];
+let SECCION='inicio';
+try{ SECCION=localStorage.getItem('f2o_seccion')||'inicio'; }catch(e){}
+
+/* ───────── Entrar / salir ───────── */
+$('#form-entrada').addEventListener('submit',async e=>{ e.preventDefault(); const btn=$('#e-btn'), err=$('#e-error');
+  let u=$('#e-usuario').value.trim().toLowerCase(); if(!u.includes('@')) u+=DOMINIO_USUARIO;
+  btn.disabled=true; err.textContent='';
+  const { error }=await sb.auth.signInWithPassword({ email:u, password:$('#e-clave').value });
+  btn.disabled=false;
+  if(error){ err.textContent=/Invalid login/i.test(error.message)?'Usuario o contraseña incorrectos.':textoError(error); return; }
+  arrancar(); });
+$('#btn-yo').addEventListener('click',async()=>{ if(!confirmarDoble($('#btn-yo'),'¿Salir? Pulsa otra vez')) return; await sb.auth.signOut(); location.reload(); });
+function confirmarDoble(btn,txt){ if(btn.dataset.ok==='1') return true; const prev=btn.textContent; btn.dataset.ok='1'; btn.textContent=txt; setTimeout(()=>{ btn.dataset.ok=''; btn.textContent=prev; },3000); return false; }
+
+async function arrancar(){
+  const { data:{ session } }=await sb.auth.getSession();
+  if(!session){ $('#entrada').classList.remove('oculto'); $('#app').classList.add('oculto'); return; }
+  const { data:yo, error }=await sb.from('f2o_usuarios').select('nombre,rol').eq('user_id',session.user.id).maybeSingle();
+  if(error||!yo){ await sb.auth.signOut(); $('#e-error').textContent=error?textoError(error):'Este usuario no tiene acceso al panel de Fight2One.'; $('#entrada').classList.remove('oculto'); $('#app').classList.add('oculto'); return; }
+  S.yo=yo; $('#btn-yo').textContent=yo.nombre.split(' ')[0]+' · Salir';
+  $('#entrada').classList.add('oculto'); $('#app').classList.remove('oculto');
+  pintarMenus();
+  await cargarVeladas();
+  suscribir();
+}
+
+/* ───────── Carga de datos ───────── */
+async function q(p){ const { data, error }=await p; if(error) throw error; return data||[]; }
+async function cargarVeladas(){
+  try{ S.veladas=await q(sb.from('f2o_veladas').select('*').order('fecha',{ascending:false,nullsFirst:true})); }
+  catch(e){ toast(textoError(e),true); return; }
+  let id=null; try{ id=localStorage.getItem('f2o_velada'); }catch(e){}
+  const abierta=S.veladas.find(v=>v.estado==='preparacion');
+  S.velada=S.veladas.find(v=>v.id===id)||abierta||S.veladas[0]||null;
+  pintarSelector(); await cargarTodo();
+}
+function pintarSelector(){ const s=$('#sel-velada');
+  s.innerHTML=S.veladas.map(v=>`<option value="${v.id}" ${S.velada?.id===v.id?'selected':''}>${esc(v.nombre)}${v.estado==='cerrada'?' · celebrada':''}</option>`).join('')+'<option value="__nueva">+ Nueva velada</option>'; }
+$('#sel-velada').addEventListener('change',async e=>{ if(e.target.value==='__nueva'){ pintarSelector(); abrirForm('velada'); return; }
+  S.velada=S.veladas.find(v=>v.id===e.target.value); try{ localStorage.setItem('f2o_velada',S.velada.id); }catch(_){} await cargarTodo(); });
+async function cargarTodo(){
+  const v=S.velada?.id;
+  try{
+    S.peleadores=await q(sb.from('f2o_peleadores').select('*').order('nombre'));
+    if(!v){ ['combates','papeles','viajes','entradas','patro','gastos','equipo','tareas','merch'].forEach(k=>S[k]=[]); pintar(); return; }
+    const [c,p,vi,en,pa,g,eq,t,m]=await Promise.all([
+      q(sb.from('f2o_combates').select('*').eq('velada_id',v).order('orden').order('created_at')),
+      q(sb.from('f2o_papeles').select('*').eq('velada_id',v)),
+      q(sb.from('f2o_viajes').select('*').eq('velada_id',v).order('llegada',{nullsFirst:true})),
+      q(sb.from('f2o_entradas').select('*').eq('velada_id',v).order('precio')),
+      q(sb.from('f2o_patrocinadores').select('*').eq('velada_id',v).order('importe',{ascending:false})),
+      q(sb.from('f2o_gastos').select('*').eq('velada_id',v).order('vence',{nullsFirst:false})),
+      q(sb.from('f2o_equipo').select('*').eq('velada_id',v).order('rol')),
+      q(sb.from('f2o_tareas').select('*').eq('velada_id',v).order('fecha',{nullsFirst:false})),
+      q(sb.from('f2o_merch').select('*').eq('velada_id',v).order('nombre')) ]);
+    Object.assign(S,{combates:c,papeles:p,viajes:vi,entradas:en,patro:pa,gastos:g,equipo:eq,tareas:t,merch:m});
+  }catch(e){ toast(textoError(e),true); }
+  pintar();
+}
+let _rt=null, _rtT=null;
+function suscribir(){ if(_rt) return; _rt=sb.channel('f2o');
+  ['f2o_veladas','f2o_peleadores','f2o_combates','f2o_papeles','f2o_viajes','f2o_entradas','f2o_patrocinadores','f2o_gastos','f2o_equipo','f2o_tareas','f2o_merch'].forEach(t=>_rt.on('postgres_changes',{event:'*',schema:'public',table:t},()=>{ clearTimeout(_rtT); _rtT=setTimeout(()=>{ if(!$('.velo')) (t==='f2o_veladas'?cargarVeladas():cargarTodo()); },700); }));
+  _rt.subscribe(); }
+
+/* ───────── Guardar y borrar (siempre comprobando que se escribió) ───────── */
+async function guardar(tabla,fila,id){
+  const r=id?await sb.from(tabla).update(fila).eq('id',id).select():await sb.from(tabla).insert(fila).select();
+  if(r.error) throw r.error; if(!r.data?.length) throw new Error('No se guardó (sin permiso)'); return r.data[0];
+}
+async function borrar(tabla,id){ const r=await sb.from(tabla).delete().eq('id',id).select('id'); if(r.error) throw r.error; if(!r.data?.length) throw new Error('No se borró (sin permiso)'); }
+
+/* ───────── Cálculos ───────── */
+const pel=id=>S.peleadores.find(p=>p.id===id);
+const nombrePel=id=>pel(id)?.nombre||'Por decidir';
+const papelesDe=pid=>TIPOS_PAPEL.map(t=>({tipo:t,fila:S.papeles.find(x=>x.peleador_id===pid&&x.tipo===t)}));
+const papelPendiente=pid=>papelesDe(pid).filter(x=>x.fila?.estado!=='ok');
+const peleadoresVelada=()=>{ const ids=[]; S.combates.filter(c=>c.estado!=='cancelado').forEach(c=>[c.peleador_a,c.peleador_b].forEach(p=>{ if(p&&!ids.includes(p)) ids.push(p); })); return ids; };
+function dinero(){
+  const entradas=S.entradas.reduce((a,e)=>a+e.vendidas*e.precio,0), patro=S.patro.filter(p=>['aceptado','facturado','cobrado'].includes(p.estado)).reduce((a,p)=>a+Number(p.importe),0),
+    merch=S.merch.reduce((a,m)=>a+m.vendidas*m.precio,0);
+  const bolsas=S.combates.filter(c=>c.estado!=='cancelado').reduce((a,c)=>a+Number(c.bolsa_a)+Number(c.bolsa_b),0), bolsasPag=S.combates.filter(c=>c.estado!=='cancelado').reduce((a,c)=>a+Number(c.pagado_a)+Number(c.pagado_b),0);
+  const gastos=S.gastos.reduce((a,g)=>a+Number(g.importe),0), gastosPag=S.gastos.filter(g=>g.pagado).reduce((a,g)=>a+Number(g.importe),0);
+  const equipo=S.equipo.reduce((a,e)=>a+Number(e.pago),0), equipoPag=S.equipo.filter(e=>e.pagado).reduce((a,e)=>a+Number(e.pago),0);
+  const viajes=S.viajes.reduce((a,v)=>a+Number(v.precio)+Number(v.hotel_precio),0), viajesPag=S.viajes.filter(v=>v.pagado).reduce((a,v)=>a+Number(v.precio)+Number(v.hotel_precio),0);
+  const ingresos=entradas+patro+merch, total=bolsas+gastos+equipo+viajes, pagado=bolsasPag+gastosPag+equipoPag+viajesPag;
+  return { entradas,patro,merch,ingresos,bolsas,bolsasPag,gastos,equipo,viajes,total,pagado,porPagar:total-pagado,balance:ingresos-total };
+}
+function progreso(){ // mismas partes que el pabellón 3D
+  const v=S.velada; if(!v) return 0;
+  const pab=S.tareas.filter(t=>t.area==='Pabellón'), resto=S.tareas.filter(t=>t.area!=='Pabellón');
+  const r=(a,b)=>b?Math.min(1,a/b):0;
+  const conf=S.combates.filter(c=>c.estado==='confirmado').length, ids=peleadoresVelada(), pap=ids.length*TIPOS_PAPEL.length, papOk=ids.reduce((a,id)=>a+papelesDe(id).filter(x=>x.fila?.estado==='ok').length,0);
+  const vt=S.viajes.length+S.viajes.filter(x=>x.hotel_estado!=='sin').length, vOk=S.viajes.filter(x=>x.estado==='confirmado').length+S.viajes.filter(x=>x.hotel_estado==='confirmada').length;
+  const cupo=S.entradas.reduce((a,e)=>a+e.cupo*(e.zona==='mesas'?4:1),0), vend=S.entradas.reduce((a,e)=>a+e.vendidas*(e.zona==='mesas'?4:1),0);
+  const d=dinero(), patroObj=Number(v.objetivo_patrocinio)||0;
+  const partes=[ [r(pab.filter(t=>t.estado==='hecha').length,pab.length),1], [r(conf,v.objetivo_combates)*0.75+r(papOk,pap)*0.25,2], [r(vOk,vt),1], [r(vend,cupo),2],
+    [patroObj?r(d.patro,patroObj):0,1], [r(d.pagado,d.total),2], [r(S.equipo.filter(e=>e.confirmado).length,S.equipo.length),1], [r(resto.filter(t=>t.estado==='hecha').length,resto.length),1] ];
+  return partes.reduce((a,[x,w])=>a+x*w,0)/partes.reduce((a,[,w])=>a+w,0);
+}
+
+/* ───────── Lo que falta (para que Moi no tenga que acordarse de nada) ───────── */
+function loQueFalta(){
+  const v=S.velada, out=[]; if(!v) return out;
+  const dias=diasHasta(v.fecha);
+  const add=(urg,ic,t,sub,accion)=>out.push({urg,ic,t,sub,accion});
+  if(!v.fecha||!v.recinto) add(true,'📅','Pon la fecha y el pabellón','Sin esto no se puede organizar nada más',"abrirForm('velada','"+v.id+"')");
+  const conf=S.combates.filter(c=>c.estado==='confirmado').length;
+  S.combates.filter(c=>c.estado==='pendiente').forEach(c=>add(dias!=null&&dias<21,'🥊',`Cerrar combate: ${nombrePel(c.peleador_a)} vs ${nombrePel(c.peleador_b)}`,[c.modalidad,c.peso].filter(Boolean).join(' · ')||'Combate por cerrar',`abrirForm('combate','${c.id}')`));
+  if(S.combates.filter(c=>c.estado!=='cancelado').length<v.objetivo_combates) add(false,'➕',`Faltan ${v.objetivo_combates-S.combates.filter(c=>c.estado!=='cancelado').length} combates para completar el cartel`,`Tienes ${conf} cerrados de ${v.objetivo_combates}`,"abrirForm('combate')");
+  peleadoresVelada().forEach(id=>{ const f=papelPendiente(id); if(f.length){ const c=S.combates.find(x=>x.peleador_a===id||x.peleador_b===id); add(dias!=null&&dias<14,'📄',`Papeles de ${nombrePel(id)}`,'Falta: '+f.map(x=>x.tipo.toLowerCase()+(x.fila?.estado==='recibido'?' (recibido, sin revisar)':'')).join(', '),`abrirForm('combate','${c.id}')`); } });
+  S.papeles.filter(p=>p.estado==='ok'&&p.caduca&&v.fecha&&new Date(p.caduca)<new Date(v.fecha)).forEach(p=>{ const c=S.combates.find(x=>x.peleador_a===p.peleador_id||x.peleador_b===p.peleador_id); if(c) add(true,'⚠️',`${p.tipo} de ${nombrePel(p.peleador_id)} caduca antes de la velada`,'Caduca el '+fechaCorta(p.caduca),`abrirForm('combate','${c.id}')`); });
+  const conViaje=S.viajes.map(x=>x.peleador_id);
+  S.combates.filter(c=>c.estado==='confirmado').forEach(c=>[c.peleador_a,c.peleador_b].forEach(id=>{ if(!id) return; const p=pel(id); const local=/canari|tenerife/i.test((p?.ciudad||'')+(p?.notas||''));
+    if(!local&&!conViaje.includes(id)) add(dias!=null&&dias<30,'✈️',`¿Viaja ${p?.nombre}?`,'Si viene de fuera, añade su vuelo. Si es de aquí, pon «Canarias» en su ciudad.',`abrirForm('viaje',null,{peleador_id:'${id}'})`); }));
+  S.viajes.forEach(x=>{ const quien=x.peleador_id?nombrePel(x.peleador_id):x.persona;
+    if(x.estado!=='confirmado') add(dias!=null&&dias<30,'✈️',`${x.estado==='reservado'?'Confirmar':'Comprar'} billete de ${quien}`,x.origen?`Desde ${AEROPUERTOS[x.origen]||x.origen}`:'Falta el aeropuerto de salida',`abrirForm('viaje','${x.id}')`,x);
+    if(x.hotel_estado==='pendiente') add(false,'🛏️',`Hotel de ${quien}`,'Habitación por confirmar',`abrirForm('viaje','${x.id}')`); });
+  S.gastos.filter(g=>!g.pagado).forEach(g=>{ const dv=diasHasta(g.vence); add(dv!=null&&dv<=7,'💶',`Pagar: ${g.concepto} · ${eur(g.importe)}`,g.vence?(dv<0?`Venció hace ${-dv} días`:dv===0?'Vence hoy':`Vence en ${dv} días`):'Sin fecha de pago',`abrirForm('gasto','${g.id}')`); });
+  const d=dinero(); if(d.bolsas-d.bolsasPag>0) add(dias!=null&&dias<7,'🥊',`Bolsas por pagar: ${eur(d.bolsas-d.bolsasPag)}`,'Ver lo que se debe a cada peleador',"ir('combates')");
+  S.patro.filter(p=>p.estado==='propuesta').forEach(p=>add(false,'🤝',`Respuesta de ${p.nombre}`,`Propuesta de ${eur(p.importe)}`,`abrirForm('patro','${p.id}')`));
+  S.equipo.filter(e=>!e.confirmado).forEach(e=>add(dias!=null&&dias<14,'🧑‍⚖️',`Confirmar a ${e.nombre}`,e.rol,`abrirForm('equipo','${e.id}')`));
+  S.tareas.filter(t=>t.estado!=='hecha').forEach(t=>add(t.prioridad==='urgente'||(t.fecha&&diasHasta(t.fecha)<=2),'✅',t.titulo,[t.area,t.quien,t.fecha?fechaCorta(t.fecha):''].filter(Boolean).join(' · '),`abrirForm('tarea','${t.id}')`));
+  if(!S.entradas.length) add(false,'🎟️','Añade los tipos de entrada','Anticipada, taquilla, VIP… con su precio y cuántas hay',"abrirForm('entrada')");
+  return out.sort((a,b)=>b.urg-a.urg);
+}
+
+/* ───────── Menús ───────── */
+const SECCIONES=[ ['inicio','🏠','Inicio'],['estadio','🏟️','Pabellón 3D'],['combates','🥊','Combates'],['viajes','✈️','Viajes'],['vuelos3d','🌍','Vuelos 3D'],['dinero','💶','Dinero'],
+  ['peleadores','👊','Peleadores'],['equipo','🧑‍⚖️','Equipo'],['tareas','✅','Tareas'],['merch','👕','Merch'],['velada','📅','Velada'] ];
+const ABAJO=['inicio','combates','viajes','dinero','mas'];
+function pintarMenus(){
+  $('#lateral').innerHTML=SECCIONES.map(([k,i,t],n)=>(n===2||n===6?'<div class="sep"></div>':'')+`<button data-s="${k}"><span class="i">${i}</span>${t}</button>`).join('');
+  $('#abajo').innerHTML=ABAJO.map(k=>{ const s=SECCIONES.find(x=>x[0]===k)||['mas','☰','Más']; return `<button data-s="${s[0]}"><span class="i">${s[1]}</span>${s[2]}</button>`; }).join('');
+  document.querySelectorAll('[data-s]').forEach(b=>b.addEventListener('click',()=>ir(b.dataset.s)));
+}
+function ir(s){ SECCION=s; try{ localStorage.setItem('f2o_seccion',s); }catch(e){} pintar(); scrollTo(0,0); }
+window.ir=ir;
+
+/* ───────── Pintar secciones ───────── */
+function pintar(){
+  document.querySelectorAll('[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===SECCION||(SECCION!=='inicio'&&!ABAJO.includes(SECCION)&&b.dataset.s==='mas'&&b.closest('.abajo'))));
+  const m=$('#main'); m.classList.toggle('lleno',SECCION==='estadio'||SECCION==='vuelos3d');
+  if(!S.velada&&!['peleadores','mas'].includes(SECCION)){ m.innerHTML=`<div class="vacio" style="margin-top:30px"><b>Aún no hay ninguna velada</b>Crea la primera para empezar.<br><br><button class="btn acc" onclick="abrirForm('velada')">+ Nueva velada</button></div>`; return; }
+  const f=PANTALLAS[SECCION]||PANTALLAS.inicio; m.innerHTML=f();
+}
+const v_=()=>S.velada;
+const PANTALLAS={
+  inicio(){ const v=v_(), p=progreso(), dias=diasHasta(v.fecha), falta=loQueFalta(), d=dinero();
+    return `<div class="portada"><div class="dona"><svg width="86" height="86" viewBox="0 0 86 86"><circle cx="43" cy="43" r="36" fill="none" stroke="#2a2a2d" stroke-width="9"/><circle cx="43" cy="43" r="36" fill="none" stroke="#d4a72c" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(p*226).toFixed(1)} 227"/></svg><b>${Math.round(p*100)}%</b></div>
+      <div><h1>${esc(v.nombre)}</h1><p>${v.fecha?`${fechaLarga(v.fecha)} · ${horaCorta(v.fecha)}`:'Sin fecha'}${v.recinto?' · '+esc(v.recinto):''}</p><p style="color:var(--acc);font-weight:800">${v.estado==='cerrada'?'Velada celebrada':dias==null?'':dias>0?`Faltan ${dias} días`:dias===0?'¡Es hoy!':'Ya pasó'}</p></div></div>
+    <div class="atajos">
+      <button class="atajo" onclick="ir('estadio')"><span class="i">🏟️</span><b>Pabellón 3D</b><small>Se construye con lo que apuntas</small></button>
+      <button class="atajo" onclick="ir('vuelos3d')"><span class="i">🌍</span><b>Vuelos 3D</b><small>Dónde va cada peleador</small></button>
+      <button class="atajo" onclick="ir('combates')"><span class="i">🥊</span><b>${S.combates.filter(c=>c.estado==='confirmado').length} de ${v.objetivo_combates}</b><small>combates cerrados</small></button>
+      <button class="atajo" onclick="ir('dinero')"><span class="i">💶</span><b>${eur(d.porPagar)}</b><small>por pagar</small></button>
+    </div>
+    <div class="titulo"><h2>LO QUE FALTA</h2><span class="tag ${falta.length?'med':'ok'}">${falta.length}</span></div>
+    ${falta.length?`<div class="lista falta">${falta.map(x=>`<button class="item ${x.urg?'urg':''}" onclick="${x.accion}"><span class="ic">${x.ic}</span><span class="t"><b>${esc(x.t)}</b><small>${esc(x.sub)}</small></span>${x.urg?'<span class="tag no">Urgente</span>':''}</button>`).join('')}</div>`
+      :'<div class="vacio"><b>Todo en orden 💪</b>No hay nada pendiente ahora mismo.</div>'}`; },
+
+  estadio(){ return `<iframe class="marco3d" src="estadio.html?velada=${v_().id}" title="Pabellón en 3D de la velada" allow="fullscreen"></iframe>`; },
+  vuelos3d(){ return `<iframe class="marco3d" src="vuelos.html?velada=${v_().id}" title="Vuelos de los peleadores en un globo 3D"></iframe>`; },
+
+  combates(){ const lista=S.combates; const d=dinero();
+    return `<div class="titulo"><h2>COMBATES</h2><button class="btn acc peq" onclick="abrirForm('combate')">+ Combate</button></div>
+      <p class="sub">${lista.filter(c=>c.estado==='confirmado').length} cerrados de ${v_().objetivo_combates} · bolsas ${eur(d.bolsas)} · pagado ${eur(d.bolsasPag)}</p>
+      ${lista.length?`<div class="lista">${lista.map((c,i)=>{ const pa=pel(c.peleador_a), pb=pel(c.peleador_b); const debe=Number(c.bolsa_a)+Number(c.bolsa_b)-Number(c.pagado_a)-Number(c.pagado_b);
+        const chips=id=>id?papelesDe(id).map(x=>`<span class="tag ${x.fila?.estado==='ok'?'ok':x.fila?.estado==='recibido'?'med':'no'}">${x.fila?.estado==='ok'?'✓':x.fila?.estado==='recibido'?'…':'✕'} ${x.tipo==='Certificado médico'?'Médico':x.tipo}</span>`).join(''):'';
+        return `<button class="combate" onclick="abrirForm('combate','${c.id}')"><div class="arriba"><span>${i===0?'⭐ ESTELAR · ':''}${esc([c.modalidad,c.peso,c.titulo].filter(Boolean).join(' · ')||'Combate')}</span><span class="tag ${c.estado==='confirmado'?'ok':c.estado==='cancelado'?'gris':'no'}">${c.estado==='confirmado'?'Cerrado':c.estado==='cancelado'?'Cancelado':'Por cerrar'}</span></div>
+          <div class="vs"><span class="p">${esc(pa?.nombre||'Por decidir')}${c.ganador==='a'?' 🏆':''}<small>${esc(pa?.pais||'')}</small></span><span class="x">VS</span><span class="p b">${c.ganador==='b'?'🏆 ':''}${esc(pb?.nombre||'Por decidir')}<small>${esc(pb?.pais||'')}</small></span></div>
+          ${v_().estado==='cerrada'?'':`<div class="papeles">${chips(c.peleador_a)}${c.peleador_b?'<span style="width:100%"></span>'+chips(c.peleador_b):''}</div>`}
+          ${Number(c.bolsa_a)+Number(c.bolsa_b)>0?`<div class="sub" style="margin:8px 0 0">Bolsas ${eur(Number(c.bolsa_a)+Number(c.bolsa_b))}${debe>0?` · <b style="color:var(--red)">se debe ${eur(debe)}</b>`:' · <b style="color:var(--ok)">pagadas</b>'}</div>`:''}</button>`; }).join('')}</div>`
+      :`<div class="vacio"><b>Sin combates todavía</b>Añade el primero: elige los dos peleadores y listo.<br><br><button class="btn acc" onclick="abrirForm('combate')">+ Añadir combate</button></div>`}`; },
+
+  viajes(){ const sin=peleadoresVelada().filter(id=>!S.viajes.some(x=>x.peleador_id===id));
+    return `<div class="titulo"><h2>VIAJES</h2><button class="btn acc peq" onclick="abrirForm('viaje')">+ Viaje</button></div>
+      <p class="sub">Vuelo y hotel de cada uno. Con el número de vuelo, el avión se ve en directo en <a href="#" onclick="ir('vuelos3d');return false">Vuelos 3D</a>.</p>
+      ${S.viajes.length?`<div class="lista">${S.viajes.map(x=>{ const quien=x.peleador_id?nombrePel(x.peleador_id):x.persona; const sk=x.estado==='sin_billete'?skyscanner(x.origen,v_()):'';
+        return `<div class="item" style="flex-wrap:wrap;cursor:pointer" onclick="abrirForm('viaje','${x.id}')"><span class="ic">✈️</span><span class="t"><b>${esc(quien||'Sin nombre')}</b><small>${x.origen?esc(AEROPUERTOS[x.origen]||x.origen)+' → Tenerife Norte':'Falta el aeropuerto de salida'}${x.vuelo?' · '+esc(x.vuelo):''}${x.llegada?' · llega '+fechaCorta(x.llegada)+' '+horaCorta(x.llegada):''}</small>
+          <small>🛏️ ${x.hotel_estado==='sin'?'Sin hotel':esc((x.hotel_habitacion?'Hab. '+x.hotel_habitacion:'Habitación')+(x.hotel_entrada?' · del '+fechaCorta(x.hotel_entrada)+' al '+fechaCorta(x.hotel_salida):''))}</small></span>
+          <span class="d" style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><span class="tag ${x.estado==='confirmado'?'ok':x.estado==='reservado'?'med':'no'}">${x.estado==='confirmado'?'Billete OK':x.estado==='reservado'?'Reservado':'Sin billete'}</span>${x.hotel_estado!=='sin'?`<span class="tag ${x.hotel_estado==='confirmada'?'ok':'med'}">Hotel ${x.hotel_estado==='confirmada'?'OK':'pendiente'}</span>`:''}</span>
+          ${sk?`<a class="btn acc peq" style="width:100%;margin-top:4px" href="${sk}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Buscar vuelos en Skyscanner →</a>`:''}</div>`; }).join('')}</div>`
+      :'<div class="vacio"><b>Sin viajes todavía</b>Añade el vuelo y el hotel de cada peleador que venga de fuera.</div>'}
+      ${sin.length?`<div class="grupo">Peleadores de esta velada sin viaje apuntado</div><div class="lista">${sin.map(id=>`<button class="item" onclick="abrirForm('viaje',null,{peleador_id:'${id}'})"><span class="ic">➕</span><span class="t"><b>${esc(nombrePel(id))}</b><small>${esc(pel(id)?.ciudad||pel(id)?.pais||'')} · toca para añadir su vuelo</small></span></button>`).join('')}</div>`:''}`; },
+
+  dinero(){ const d=dinero();
+    return `<div class="titulo"><h2>DINERO</h2></div>
+      <div class="cifras"><div class="cifra acc"><small>Entra</small><b>${eur(d.ingresos)}</b></div><div class="cifra"><small>Cuesta</small><b>${eur(d.total)}</b></div><div class="cifra no"><small>Por pagar</small><b>${eur(d.porPagar)}</b></div><div class="cifra ${d.balance>=0?'ok':'no'}"><small>Queda</small><b>${eur(d.balance)}</b></div></div>
+      <div class="titulo" style="margin-top:6px"><h2 style="font-size:22px">🎟️ ENTRADAS</h2><button class="btn peq" onclick="abrirForm('entrada')">+ Tipo</button></div>
+      ${S.entradas.length?`<div class="lista">${S.entradas.map(e=>`<div class="item" style="flex-wrap:wrap"><span class="t" onclick="abrirForm('entrada','${e.id}')" style="cursor:pointer"><b>${esc(e.tipo)} · ${eur(e.precio)}</b><small>${num(e.vendidas)} vendidas de ${num(e.cupo)} · ${eur(e.vendidas*e.precio)}</small></span>
+        <span class="cont"><button onclick="sumarEntradas('${e.id}',-1)" aria-label="Quitar una">−1</button><button onclick="sumarEntradas('${e.id}',1)" aria-label="Sumar una">+1</button><button onclick="sumarEntradas('${e.id}',10)" aria-label="Sumar diez">+10</button></span></div>`).join('')}</div>`
+        :'<div class="vacio">Sin tipos de entrada. Añade anticipada, taquilla, VIP…</div>'}
+      <div class="titulo" style="margin-top:18px"><h2 style="font-size:22px">🤝 PATROCINADORES</h2><button class="btn peq" onclick="abrirForm('patro')">+ Añadir</button></div>
+      <p class="sub">${eur(d.patro)} cerrado${Number(v_().objetivo_patrocinio)?' de '+eur(v_().objetivo_patrocinio)+' de objetivo':''}</p>
+      ${S.patro.length?`<div class="lista">${S.patro.map(p=>`<button class="item" onclick="abrirForm('patro','${p.id}')"><span class="t"><b>${esc(p.nombre)}</b><small>${esc([p.paquete,p.contacto].filter(Boolean).join(' · '))}</small></span><span class="d">${eur(p.importe)}<br><span class="tag ${p.estado==='cobrado'?'ok':p.estado==='propuesta'?'med':p.estado==='rechazado'?'gris':'ok'}">${({propuesta:'Propuesta',aceptado:'Aceptado',facturado:'Facturado',cobrado:'Cobrado',rechazado:'No'})[p.estado]}</span></span></button>`).join('')}</div>`:'<div class="vacio">Sin patrocinadores todavía.</div>'}
+      <div class="titulo" style="margin-top:18px"><h2 style="font-size:22px">💸 GASTOS</h2><button class="btn peq" onclick="abrirForm('gasto')">+ Gasto</button></div>
+      ${S.gastos.length?`<div class="lista">${S.gastos.map(g=>`<div class="item"><span class="t" onclick="abrirForm('gasto','${g.id}')" style="cursor:pointer"><b>${esc(g.concepto)}</b><small>${esc([g.proveedor,g.vence?'paga antes del '+fechaCorta(g.vence):''].filter(Boolean).join(' · '))}</small></span><span class="d">${eur(g.importe)}<br>${g.pagado?'<span class="tag ok">Pagado</span>':`<button class="btn acc peq" style="margin-top:4px" onclick="marcarPagado('${g.id}')">Pagar ✓</button>`}</span></div>`).join('')}</div>`:'<div class="vacio">Sin gastos apuntados.</div>'}
+      <p class="sub" style="margin-top:14px">También cuentan aquí las bolsas (${eur(d.bolsas)}), el equipo (${eur(d.equipo)}) y los viajes y hoteles (${eur(d.viajes)}).</p>`; },
+
+  peleadores(){ return `<div class="titulo"><h2>PELEADORES</h2><button class="btn acc peq" onclick="abrirForm('peleador')">+ Peleador</button></div>
+      <label class="campo"><input id="buscar-pel" placeholder="Buscar por nombre, país o gimnasio…" oninput="filtrarPel(this.value)"></label>
+      <div class="lista" id="lista-pel">${listaPel('')}</div>`; },
+
+  equipo(){ const roles=['Árbitro','Juez','Médico','Seguridad','Producción'];
+    return `<div class="titulo"><h2>EQUIPO</h2><button class="btn acc peq" onclick="abrirForm('equipo')">+ Persona</button></div>
+      <p class="sub">${S.equipo.filter(e=>e.confirmado).length} de ${S.equipo.length} confirmados · ${eur(dinero().equipo)} en pagos</p>
+      ${S.equipo.length?`<div class="lista">${S.equipo.slice().sort((a,b)=>roles.indexOf(a.rol)-roles.indexOf(b.rol)).map(e=>`<button class="item" onclick="abrirForm('equipo','${e.id}')"><span class="t"><b>${esc(e.nombre)}</b><small>${esc(e.rol)}${Number(e.pago)?' · '+eur(e.pago)+(e.pagado?' pagado':' por pagar'):''}</small></span>${e.confirmado?'<span class="tag ok">Confirmado</span>':'<span class="tag no">Sin confirmar</span>'}</button>`).join('')}</div>`
+      :'<div class="vacio">Añade árbitros, jueces, médico, seguridad, speaker…</div>'}`; },
+
+  tareas(){ const grupos=[['por_hacer','Por hacer'],['en_marcha','En marcha'],['hecha','Hechas']];
+    return `<div class="titulo"><h2>TAREAS</h2><button class="btn acc peq" onclick="abrirForm('tarea')">+ Tarea</button></div>
+      ${S.tareas.length?grupos.map(([k,t])=>{ const l=S.tareas.filter(x=>x.estado===k); return l.length?`<div class="grupo">${t} · ${l.length}</div><div class="lista">${l.map(x=>`<div class="item"><span class="t" onclick="abrirForm('tarea','${x.id}')" style="cursor:pointer"><b>${x.estado==='hecha'?'<s>'+esc(x.titulo)+'</s>':esc(x.titulo)}</b><small>${esc([x.area,x.quien,x.fecha?fechaCorta(x.fecha):''].filter(Boolean).join(' · '))}</small></span>${x.prioridad==='urgente'&&x.estado!=='hecha'?'<span class="tag no">Urgente</span>':''}${x.estado!=='hecha'?`<button class="btn acc peq" onclick="tareaHecha('${x.id}')">Hecha ✓</button>`:''}</div>`).join('')}</div>`:''; }).join('')
+      :'<div class="vacio">Sin tareas.</div>'}`; },
+
+  merch(){ return `<div class="titulo"><h2>MERCH</h2><button class="btn acc peq" onclick="abrirForm('merch')">+ Producto</button></div>
+      ${S.merch.length?`<div class="lista">${S.merch.map(m=>`<div class="item" style="flex-wrap:wrap"><span class="t" onclick="abrirForm('merch','${m.id}')" style="cursor:pointer"><b>${esc(m.nombre)} · ${eur(m.precio)}</b><small>${m.vendidas} vendidas · quedan ${Math.max(0,m.stock-m.vendidas)} · ${eur(m.vendidas*m.precio)}</small></span><span class="cont"><button onclick="sumarMerch('${m.id}',-1)">−1</button><button onclick="sumarMerch('${m.id}',1)">+1</button></span></div>`).join('')}</div>`
+      :'<div class="vacio">Camisetas, sudaderas… lo que se venda en la velada.</div>'}`; },
+
+  velada(){ const v=v_(); return `<div class="titulo"><h2>VELADA</h2><button class="btn acc peq" onclick="abrirForm('velada','${v.id}')">Editar</button></div>
+      <div class="lista">
+        <div class="item"><span class="ic">📅</span><span class="t"><b>${v.fecha?fechaLarga(v.fecha)+' · '+horaCorta(v.fecha):'Sin fecha'}</b><small>Fecha y hora</small></span></div>
+        <div class="item"><span class="ic">🏟️</span><span class="t"><b>${esc(v.recinto||'Sin pabellón')}</b><small>${esc(v.ciudad||'')} · aforo ${num(v.aforo)}</small></span></div>
+        <div class="item"><span class="ic">🛏️</span><span class="t"><b>${esc(v.hotel||'Sin hotel')}</b><small>Hotel de los peleadores</small></span></div>
+        <div class="item"><span class="ic">🎯</span><span class="t"><b>${v.objetivo_combates} combates · ${eur(v.objetivo_patrocinio)} en patrocinios</b><small>Objetivos de la velada</small></span></div>
+      </div>
+      <div class="grupo">Preparativos del pabellón</div>
+      <div class="lista">${S.tareas.filter(t=>t.area==='Pabellón').map(t=>`<div class="item"><span class="t"><b>${esc(t.titulo)}</b></span>${t.estado==='hecha'?'<span class="tag ok">Hecho</span>':`<button class="btn acc peq" onclick="tareaHecha('${t.id}')">Hecho ✓</button>`}</div>`).join('')||'<div class="vacio">Sin preparativos.</div>'}</div>`; },
+
+  mas(){ return `<div class="titulo"><h2>MÁS</h2></div><div class="menu-mas">${SECCIONES.filter(s=>!ABAJO.includes(s[0])).map(([k,i,t])=>`<button class="atajo" onclick="ir('${k}')"><span class="i">${i}</span><b>${t}</b></button>`).join('')}</div>`; },
+};
+function listaPel(f){ f=f.toLowerCase(); const l=S.peleadores.filter(p=>!f||[p.nombre,p.apodo,p.pais,p.gimnasio].join(' ').toLowerCase().includes(f));
+  return l.length?l.map(p=>`<button class="item" onclick="abrirForm('peleador','${p.id}')"><span class="t"><b>${esc(p.nombre)}${p.apodo?' «'+esc(p.apodo)+'»':''}</b><small>${esc([p.pais,p.gimnasio,p.modalidad,p.peso,p.record].filter(Boolean).join(' · '))}</small></span></button>`).join(''):'<div class="vacio">No hay peleadores.</div>'; }
+window.filtrarPel=f=>{ $('#lista-pel').innerHTML=listaPel(f); };
+
+/* Acciones rápidas */
+window.sumarEntradas=async(id,n)=>{ const e=S.entradas.find(x=>x.id===id); const v=Math.max(0,Math.min(e.cupo||1e9,e.vendidas+n)); try{ const r=await guardar('f2o_entradas',{vendidas:v},id); Object.assign(e,r); pintar(); toast(`${e.tipo}: ${v} vendidas`); }catch(err){ toast(textoError(err),true); } };
+window.sumarMerch=async(id,n)=>{ const m=S.merch.find(x=>x.id===id); const v=Math.max(0,m.vendidas+n); try{ const r=await guardar('f2o_merch',{vendidas:v},id); Object.assign(m,r); pintar(); toast(`${m.nombre}: ${v} vendidas`); }catch(err){ toast(textoError(err),true); } };
+window.marcarPagado=async id=>{ try{ const r=await guardar('f2o_gastos',{pagado:true},id); Object.assign(S.gastos.find(x=>x.id===id),r); pintar(); toast('✓ Pagado'); }catch(err){ toast(textoError(err),true); } };
+window.tareaHecha=async id=>{ try{ const r=await guardar('f2o_tareas',{estado:'hecha'},id); Object.assign(S.tareas.find(x=>x.id===id),r); pintar(); toast('✓ Hecho'); }catch(err){ toast(textoError(err),true); } };
+
+/* ───────── Formularios ───────── */
+const ORIGENES=Object.entries(AEROPUERTOS).filter(([k])=>!['TFN','TFS'].includes(k)).sort((a,b)=>a[1].localeCompare(b[1],'es'));
+const opts=(lista,val)=>lista.map(([k,t])=>`<option value="${esc(k)}" ${String(val??'')===String(k)?'selected':''}>${esc(t)}</option>`).join('');
+const chips=(nombre,lista,val)=>`<div class="chip-row" data-chips="${nombre}">${lista.map(([k,t])=>`<button type="button" class="chip ${String(val??'')===String(k)?'on':''}" data-v="${esc(k)}">${esc(t)}</button>`).join('')}</div><input type="hidden" name="${nombre}" value="${esc(val??'')}">`;
+const campo=(l,html)=>`<label class="campo"><span>${l}</span>${html}</label>`;
+const inp=(n,val,extra='')=>`<input name="${n}" value="${esc(val??'')}" ${extra}>`;
+const dtLocal=d=>{ if(!d) return ''; const x=new Date(d); return new Date(x.getTime()-x.getTimezoneOffset()*6e4).toISOString().slice(0,16); };
+const selPel=(n,val)=>`<select name="${n}" data-pel><option value="">— Elegir —</option>${S.peleadores.map(p=>`<option value="${p.id}" ${p.id===val?'selected':''}>${esc(p.nombre)}${p.pais?' · '+esc(p.pais):''}</option>`).join('')}<option value="__nuevo">+ Peleador nuevo…</option></select><input name="${n}__nuevo" placeholder="Nombre y apellidos del peleador nuevo" class="oculto" style="margin-top:8px">`;
+
+const FORMS={
+  velada:{ tabla:'f2o_veladas', titulo:'Velada', fila:id=>S.veladas.find(x=>x.id===id), html:v=>`
+    ${campo('Nombre',inp('nombre',v?.nombre||'Fight2One ','required'))}
+    ${campo('Fecha y hora',`<input type="datetime-local" name="fecha" value="${dtLocal(v?.fecha)}">`)}
+    <div class="dos">${campo('Pabellón',inp('recinto',v?.recinto))}${campo('Ciudad',inp('ciudad',v?.ciudad))}</div>
+    <div class="dos">${campo('Aforo',inp('aforo',v?.aforo,'type="number" inputmode="numeric" min="0"'))}${campo('Combates en el cartel',inp('objetivo_combates',v?.objetivo_combates??8,'type="number" inputmode="numeric" min="1"'))}</div>
+    ${campo('Objetivo de patrocinio (€)',inp('objetivo_patrocinio',v?.objetivo_patrocinio??0,'type="number" inputmode="decimal" min="0"'))}
+    ${campo('Hotel de los peleadores',inp('hotel',v?.hotel))}
+    ${campo('Estado',chips('estado',[['preparacion','En preparación'],['cerrada','Celebrada']],v?.estado||'preparacion'))}
+    ${campo('Notas',`<textarea name="notas">${esc(v?.notas||'')}</textarea>`)}`,
+    leer:f=>({ nombre:f.nombre.trim(), fecha:f.fecha?new Date(f.fecha).toISOString():null, recinto:f.recinto||null, ciudad:f.ciudad||null, aforo:f.aforo?Number(f.aforo):null, objetivo_combates:Number(f.objetivo_combates)||8, objetivo_patrocinio:Number(f.objetivo_patrocinio)||0, hotel:f.hotel||null, estado:f.estado||'preparacion', notas:f.notas||null }),
+    despues:async(r,nuevo)=>{ if(nuevo){ // preparativos habituales del pabellón
+        const base=['Reservar el pabellón','Pagar el pabellón','Seguro del evento','Jaula, luces y sonido','Ambulancia y médico','Permisos del ayuntamiento'];
+        const ins=await sb.from('f2o_tareas').insert(base.map(t=>({velada_id:r.id,titulo:t,area:'Pabellón'}))).select('id'); if(ins.error) toast('La velada se creó, pero no los preparativos: '+textoError(ins.error),true);
+        S.velada=r; try{ localStorage.setItem('f2o_velada',r.id); }catch(e){} }
+      await cargarVeladas(); } },
+  peleador:{ tabla:'f2o_peleadores', titulo:'Peleador', fila:id=>pel(id), html:p=>`
+    ${campo('Nombre y apellidos',inp('nombre',p?.nombre,'required'))}
+    <div class="dos">${campo('Apodo',inp('apodo',p?.apodo))}${campo('País',inp('pais',p?.pais))}</div>
+    <div class="dos">${campo('Ciudad',inp('ciudad',p?.ciudad))}${campo('Gimnasio',inp('gimnasio',p?.gimnasio))}</div>
+    <div class="dos">${campo('Teléfono (WhatsApp)',inp('telefono',p?.telefono,'type="tel" inputmode="tel"'))}${campo('Email',inp('email',p?.email,'type="email"'))}</div>
+    ${campo('Modalidad',chips('modalidad',[['MMA','MMA'],['K1','K1'],['Muay Thai','Muay Thai'],['Boxeo','Boxeo']],p?.modalidad))}
+    <div class="dos">${campo('Peso',inp('peso',p?.peso,'placeholder="70 kg"'))}${campo('Récord',inp('record',p?.record,'placeholder="12-3-0"'))}</div>
+    ${campo('Foto (enlace)',inp('foto_url',p?.foto_url,'type="url" placeholder="https://…"'))}
+    ${campo('Notas',`<textarea name="notas">${esc(p?.notas||'')}</textarea>`)}
+    ${p?.telefono?`<a class="btn ancho" href="https://wa.me/${esc(p.telefono.replace(/[^\d]/g,''))}" target="_blank" rel="noopener">💬 Escribir por WhatsApp</a>`:''}`,
+    leer:f=>({ nombre:f.nombre.trim(), apodo:f.apodo||null, pais:f.pais||null, ciudad:f.ciudad||null, gimnasio:f.gimnasio||null, telefono:f.telefono||null, email:f.email||null, modalidad:f.modalidad||null, peso:f.peso||null, record:f.record||null, foto_url:f.foto_url||null, notas:f.notas||null }) },
+  combate:{ tabla:'f2o_combates', titulo:'Combate', fila:id=>S.combates.find(x=>x.id===id), html:c=>`
+    ${campo('🔴 Esquina roja',selPel('peleador_a',c?.peleador_a))}
+    ${campo('🔵 Esquina azul',selPel('peleador_b',c?.peleador_b))}
+    ${campo('Estado',chips('estado',[['pendiente','Por cerrar'],['confirmado','Cerrado'],['cancelado','Cancelado']],c?.estado||'pendiente'))}
+    ${campo('Modalidad',chips('modalidad',[['MMA','MMA'],['K1','K1'],['Muay Thai','Muay Thai'],['Boxeo','Boxeo']],c?.modalidad))}
+    <div class="dos">${campo('Peso',inp('peso',c?.peso,'placeholder="70 kg"'))}${campo('Asaltos',inp('asaltos',c?.asaltos,'type="number" inputmode="numeric" min="1"'))}</div>
+    ${campo('Título en juego',inp('titulo',c?.titulo,'placeholder="Título mundial, europeo…"'))}
+    ${campo('Orden en el cartel (1 = estelar)',inp('orden',c?.orden??(S.combates.length+1),'type="number" inputmode="numeric" min="0"'))}
+    <div class="bloque"><b>💶 Bolsas</b><div class="dos">${campo('Bolsa rojo (€)',inp('bolsa_a',c?.bolsa_a??0,'type="number" inputmode="decimal" min="0"'))}${campo('Ya pagado al rojo',inp('pagado_a',c?.pagado_a??0,'type="number" inputmode="decimal" min="0"'))}</div>
+      <div class="dos">${campo('Bolsa azul (€)',inp('bolsa_b',c?.bolsa_b??0,'type="number" inputmode="decimal" min="0"'))}${campo('Ya pagado al azul',inp('pagado_b',c?.pagado_b??0,'type="number" inputmode="decimal" min="0"'))}</div></div>
+    <div class="bloque"><b>📄 Papeles</b>${['a','b'].map(lado=>{ const id=c?.[lado==='a'?'peleador_a':'peleador_b']; return `<div style="margin-bottom:10px"><div style="font-size:13px;color:var(--mut);font-weight:700;margin-bottom:6px">${lado==='a'?'🔴 Rojo':'🔵 Azul'}${id?' · '+esc(nombrePel(id)):' (elige primero al peleador)'}</div>
+      ${TIPOS_PAPEL.map(t=>{ const f=id?S.papeles.find(x=>x.peleador_id===id&&x.tipo===t):null; return `<div style="margin-bottom:8px"><div style="font-size:13px;margin-bottom:4px">${t}</div>${chips(`papel_${lado}_${t}`,[['falta','Falta'],['recibido','Recibido'],['ok','Revisado ✓']],f?.estado||'falta')}</div>`; }).join('')}</div>`; }).join('')}</div>
+    ${campo('Ganador',chips('ganador',[['','Sin resultado'],['a','🔴 Rojo'],['b','🔵 Azul'],['empate','Empate']],c?.ganador||''))}
+    ${campo('Cómo ganó',inp('metodo',c?.metodo,'placeholder="KO, decisión, sumisión…"'))}
+    ${campo('Notas',`<textarea name="notas">${esc(c?.notas||'')}</textarea>`)}`,
+    leer:f=>({ velada_id:S.velada.id, peleador_a:f.peleador_a||null, peleador_b:f.peleador_b||null, estado:f.estado||'pendiente', modalidad:f.modalidad||null, peso:f.peso||null, asaltos:f.asaltos?Number(f.asaltos):null, titulo:f.titulo||null, orden:Number(f.orden)||0,
+      bolsa_a:Number(f.bolsa_a)||0, pagado_a:Number(f.pagado_a)||0, bolsa_b:Number(f.bolsa_b)||0, pagado_b:Number(f.pagado_b)||0, ganador:f.ganador||null, metodo:f.metodo||null, notas:f.notas||null }),
+    antes:async f=>{ for(const k of ['peleador_a','peleador_b']){ if(f[k]==='__nuevo'){ const n=(f[k+'__nuevo']||'').trim(); if(!n) throw new Error('Escribe el nombre del peleador nuevo'); const p=await guardar('f2o_peleadores',{nombre:n}); S.peleadores.push(p); f[k]=p.id; } } },
+    despues:async(r,_n,f)=>{ const filas=[]; ['a','b'].forEach(l=>{ const pid=r['peleador_'+l]; if(!pid) return; TIPOS_PAPEL.forEach(t=>{ const est=f[`papel_${l}_${t}`]||'falta'; const ya=S.papeles.find(x=>x.peleador_id===pid&&x.tipo===t); if(ya?.estado!==est||!ya) filas.push({velada_id:S.velada.id,peleador_id:pid,tipo:t,estado:est}); }); });
+      if(filas.length){ const u=await sb.from('f2o_papeles').upsert(filas,{onConflict:'velada_id,peleador_id,tipo'}).select('id'); if(u.error) throw u.error; if((u.data||[]).length!==filas.length) throw new Error('Los papeles no se guardaron'); } } },
+  viaje:{ tabla:'f2o_viajes', titulo:'Viaje y hotel', fila:id=>S.viajes.find(x=>x.id===id), html:(x,extra)=>{ const pid=x?.peleador_id||extra?.peleador_id||''; return `
+    ${campo('Peleador',`<select name="peleador_id"><option value="">— Otra persona —</option>${peleadoresVelada().concat(pid&&!peleadoresVelada().includes(pid)?[pid]:[]).map(id=>`<option value="${id}" ${id===pid?'selected':''}>${esc(nombrePel(id))}</option>`).join('')}</select>`)}
+    ${campo('Si no es peleador: nombre',inp('persona',x?.persona,'placeholder="Entrenador, árbitro…"'))}
+    <div class="bloque"><b>✈️ Vuelo</b>
+      ${campo('Sale desde',`<select name="origen"><option value="">— Elegir aeropuerto —</option>${opts(ORIGENES.map(([k,t])=>[k,t+' ('+k+')']),x?.origen)}</select>`)}
+      ${campo('Estado del billete',chips('estado',[['sin_billete','Sin billete'],['reservado','Reservado'],['confirmado','Comprado ✓']],x?.estado||'sin_billete'))}
+      <div class="dos">${campo('Número de vuelo',inp('vuelo',x?.vuelo,'placeholder="IB 3936" autocapitalize="characters"'))}${campo('Localizador',inp('localizador',x?.localizador,'autocapitalize="characters"'))}</div>
+      <div class="dos">${campo('Sale',`<input type="datetime-local" name="salida" value="${dtLocal(x?.salida)}">`)}${campo('Llega a Tenerife',`<input type="datetime-local" name="llegada" value="${dtLocal(x?.llegada)}">`)}</div>
+      ${campo('Precio del billete (€)',inp('precio',x?.precio??0,'type="number" inputmode="decimal" min="0"'))}
+      ${x?.estado!=='confirmado'&&x?.origen?`<a class="btn acc ancho" href="${skyscanner(x.origen,S.velada)}" target="_blank" rel="noopener">Buscar vuelos en Skyscanner →</a>`:'<p class="sub" style="margin:0">Elige el aeropuerto y guarda: saldrá el botón de Skyscanner.</p>'}</div>
+    <div class="bloque"><b>🛏️ Hotel</b>
+      ${campo('Habitación',chips('hotel_estado',[['sin','No necesita'],['pendiente','Por reservar'],['confirmada','Reservada ✓']],x?.hotel_estado||'sin'))}
+      <div class="dos">${campo('Número de habitación',inp('hotel_habitacion',x?.hotel_habitacion))}${campo('Precio hotel (€)',inp('hotel_precio',x?.hotel_precio??0,'type="number" inputmode="decimal" min="0"'))}</div>
+      <div class="dos">${campo('Entra',`<input type="date" name="hotel_entrada" value="${x?.hotel_entrada||''}">`)}${campo('Sale',`<input type="date" name="hotel_salida" value="${x?.hotel_salida||''}">`)}</div></div>
+    <label class="check"><input type="checkbox" name="pagado" ${x?.pagado?'checked':''}> Vuelo y hotel pagados</label>
+    ${campo('Notas',`<textarea name="notas">${esc(x?.notas||'')}</textarea>`)}`; },
+    leer:f=>({ velada_id:S.velada.id, peleador_id:f.peleador_id||null, persona:f.persona||null, origen:f.origen||null, estado:f.estado||'sin_billete', vuelo:(f.vuelo||'').toUpperCase().trim()||null, localizador:(f.localizador||'').toUpperCase().trim()||null,
+      salida:f.salida?new Date(f.salida).toISOString():null, llegada:f.llegada?new Date(f.llegada).toISOString():null, precio:Number(f.precio)||0, hotel_estado:f.hotel_estado||'sin', hotel_habitacion:f.hotel_habitacion||null, hotel_precio:Number(f.hotel_precio)||0,
+      hotel_entrada:f.hotel_entrada||null, hotel_salida:f.hotel_salida||null, pagado:!!f.pagado, notas:f.notas||null }),
+    validar:f=>(!f.peleador_id&&!f.persona)?'Elige un peleador o escribe el nombre de la persona':'' },
+  entrada:{ tabla:'f2o_entradas', titulo:'Tipo de entrada', fila:id=>S.entradas.find(x=>x.id===id), html:e=>`
+    ${campo('Nombre',inp('tipo',e?.tipo,'required placeholder="Anticipada, Taquilla, VIP…"'))}
+    <div class="dos">${campo('Precio (€)',inp('precio',e?.precio??0,'type="number" inputmode="decimal" min="0"'))}${campo('Cuántas hay',inp('cupo',e?.cupo??0,'type="number" inputmode="numeric" min="0"'))}</div>
+    ${campo('Vendidas',inp('vendidas',e?.vendidas??0,'type="number" inputmode="numeric" min="0"'))}
+    ${campo('Dónde se sientan',chips('zona',[['grada','Grada'],['ring','Ringside'],['mesas','Mesa VIP (4 personas)']],e?.zona||'grada'))}`,
+    leer:f=>({ velada_id:S.velada.id, tipo:f.tipo.trim(), precio:Number(f.precio)||0, cupo:Number(f.cupo)||0, vendidas:Number(f.vendidas)||0, zona:f.zona||'grada' }) },
+  patro:{ tabla:'f2o_patrocinadores', titulo:'Patrocinador', fila:id=>S.patro.find(x=>x.id===id), html:p=>`
+    ${campo('Empresa',inp('nombre',p?.nombre,'required'))}
+    <div class="dos">${campo('Persona de contacto',inp('contacto',p?.contacto))}${campo('Teléfono',inp('telefono',p?.telefono,'type="tel" inputmode="tel"'))}</div>
+    <div class="dos">${campo('Paquete',inp('paquete',p?.paquete,'placeholder="Principal, básico, canje…"'))}${campo('Importe (€)',inp('importe',p?.importe??0,'type="number" inputmode="decimal" min="0"'))}</div>
+    ${campo('Estado',chips('estado',[['propuesta','Propuesta'],['aceptado','Aceptado'],['facturado','Facturado'],['cobrado','Cobrado ✓'],['rechazado','No']],p?.estado||'propuesta'))}
+    ${campo('Qué le damos / notas',`<textarea name="notas" placeholder="Logo en la lona, pantallas, redes…">${esc(p?.notas||'')}</textarea>`)}
+    ${p?.telefono?`<a class="btn ancho" href="https://wa.me/${esc(p.telefono.replace(/[^\d]/g,''))}" target="_blank" rel="noopener">💬 Escribir por WhatsApp</a>`:''}`,
+    leer:f=>({ velada_id:S.velada.id, nombre:f.nombre.trim(), contacto:f.contacto||null, telefono:f.telefono||null, paquete:f.paquete||null, importe:Number(f.importe)||0, estado:f.estado||'propuesta', notas:f.notas||null }) },
+  gasto:{ tabla:'f2o_gastos', titulo:'Gasto', fila:id=>S.gastos.find(x=>x.id===id), html:g=>`
+    ${campo('Qué es',inp('concepto',g?.concepto,'required placeholder="Alquiler del pabellón, ambulancia…"'))}
+    <div class="dos">${campo('Proveedor',inp('proveedor',g?.proveedor))}${campo('Importe (€)',inp('importe',g?.importe??0,'type="number" inputmode="decimal" min="0"'))}</div>
+    ${campo('Pagar antes del',`<input type="date" name="vence" value="${g?.vence||''}">`)}
+    <label class="check"><input type="checkbox" name="pagado" ${g?.pagado?'checked':''}> Ya está pagado</label>
+    ${campo('Notas',`<textarea name="notas">${esc(g?.notas||'')}</textarea>`)}`,
+    leer:f=>({ velada_id:S.velada.id, concepto:f.concepto.trim(), proveedor:f.proveedor||null, importe:Number(f.importe)||0, vence:f.vence||null, pagado:!!f.pagado, notas:f.notas||null }) },
+  equipo:{ tabla:'f2o_equipo', titulo:'Persona del equipo', fila:id=>S.equipo.find(x=>x.id===id), html:e=>`
+    ${campo('Nombre',inp('nombre',e?.nombre,'required'))}
+    ${campo('Qué hace',chips('rol',[['Árbitro','Árbitro'],['Juez','Juez'],['Médico','Médico'],['Seguridad','Seguridad'],['Producción','Producción']],e?.rol||'Producción'))}
+    <div class="dos">${campo('Teléfono',inp('telefono',e?.telefono,'type="tel" inputmode="tel"'))}${campo('Se le paga (€)',inp('pago',e?.pago??0,'type="number" inputmode="decimal" min="0"'))}</div>
+    <label class="check"><input type="checkbox" name="confirmado" ${e?.confirmado?'checked':''}> Ha confirmado que viene</label>
+    <label class="check"><input type="checkbox" name="pagado" ${e?.pagado?'checked':''}> Ya está pagado</label>`,
+    leer:f=>({ velada_id:S.velada.id, nombre:f.nombre.trim(), rol:f.rol||'Producción', telefono:f.telefono||null, pago:Number(f.pago)||0, confirmado:!!f.confirmado, pagado:!!f.pagado }) },
+  tarea:{ tabla:'f2o_tareas', titulo:'Tarea', fila:id=>S.tareas.find(x=>x.id===id), html:t=>`
+    ${campo('Qué hay que hacer',inp('titulo',t?.titulo,'required'))}
+    <div class="dos">${campo('Quién',inp('quien',t?.quien,'placeholder="Moi, Susi…"'))}${campo('Para cuándo',`<input type="date" name="fecha" value="${t?.fecha||''}">`)}</div>
+    ${campo('Tema',chips('area',[['General','General'],['Pabellón','Pabellón'],['Combates','Combates'],['Viajes','Viajes'],['Marketing','Marketing'],['Dinero','Dinero']],t?.area||'General'))}
+    ${campo('Prioridad',chips('prioridad',[['normal','Normal'],['urgente','Urgente']],t?.prioridad||'normal'))}
+    ${campo('Estado',chips('estado',[['por_hacer','Por hacer'],['en_marcha','En marcha'],['hecha','Hecha ✓']],t?.estado||'por_hacer'))}`,
+    leer:f=>({ velada_id:S.velada.id, titulo:f.titulo.trim(), quien:f.quien||null, fecha:f.fecha||null, area:f.area||'General', prioridad:f.prioridad||'normal', estado:f.estado||'por_hacer' }) },
+  merch:{ tabla:'f2o_merch', titulo:'Producto', fila:id=>S.merch.find(x=>x.id===id), html:m=>`
+    ${campo('Nombre',inp('nombre',m?.nombre,'required placeholder="Camiseta de la edición"'))}
+    <div class="dos">${campo('Precio (€)',inp('precio',m?.precio??0,'type="number" inputmode="decimal" min="0"'))}${campo('Cuántas hay',inp('stock',m?.stock??0,'type="number" inputmode="numeric" min="0"'))}</div>
+    ${campo('Vendidas',inp('vendidas',m?.vendidas??0,'type="number" inputmode="numeric" min="0"'))}
+    ${campo('Color',`<input type="color" name="color" value="${esc(m?.color||'#0b0b0b')}" style="height:52px;padding:6px">`)}`,
+    leer:f=>({ velada_id:S.velada.id, nombre:f.nombre.trim(), precio:Number(f.precio)||0, stock:Number(f.stock)||0, vendidas:Number(f.vendidas)||0, color:f.color||'#0b0b0b' }) },
+};
+function abrirForm(tipo,id,extra){
+  const F=FORMS[tipo], fila=id?F.fila(id):null; if(id&&!fila){ toast('No se encontró',true); return; }
+  const velo=document.createElement('div'); velo.className='velo';
+  velo.innerHTML=`<form class="form" novalidate><div class="fcab"><h3>${fila?'Editar':'Nuevo'}: ${F.titulo}</h3><button type="button" class="x" aria-label="Cerrar">✕</button></div>
+    ${F.html(fila,extra)}<p class="error" role="alert"></p>
+    <div class="pie">${fila&&tipo!=='velada'?'<button type="button" class="btn peligro" data-borrar>Borrar</button>':''}<button class="btn acc" type="submit">Guardar</button></div></form>`;
+  document.body.appendChild(velo); document.body.style.overflow='hidden';
+  const form=velo.querySelector('form'), err=form.querySelector('.error');
+  const cerrar=()=>{ velo.remove(); document.body.style.overflow=''; };
+  velo.addEventListener('click',e=>{ if(e.target===velo) cerrar(); });
+  form.querySelector('.x').onclick=cerrar;
+  form.querySelectorAll('[data-chips]').forEach(g=>g.addEventListener('click',e=>{ const b=e.target.closest('.chip'); if(!b) return; g.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b)); g.nextElementSibling.value=b.dataset.v; }));
+  form.querySelectorAll('select[data-pel]').forEach(s=>s.addEventListener('change',()=>{ const n=form.querySelector(`[name="${s.name}__nuevo"]`); n.classList.toggle('oculto',s.value!=='__nuevo'); if(s.value==='__nuevo') n.focus(); }));
+  const bb=form.querySelector('[data-borrar]'); if(bb) bb.onclick=async()=>{ if(!confirmarDoble(bb,'¿Seguro? Pulsa otra vez')) return; bb.disabled=true;
+    try{ await borrar(F.tabla,id); cerrar(); toast('Borrado'); await cargarTodo(); }catch(e){ bb.disabled=false; err.textContent=textoError(e); } };
+  form.addEventListener('submit',async e=>{ e.preventDefault(); err.textContent='';
+    const f={}; new FormData(form).forEach((v,k)=>f[k]=typeof v==='string'?v:''); form.querySelectorAll('input[type=checkbox]').forEach(c=>f[c.name]=c.checked);
+    const req=[...form.querySelectorAll('[required]')].find(x=>!x.value.trim()); if(req){ err.textContent='Falta: '+req.closest('.campo').querySelector('span').textContent; req.focus(); return; }
+    const msg=F.validar?.(f); if(msg){ err.textContent=msg; return; }
+    const btn=form.querySelector('[type=submit]'); btn.disabled=true; btn.textContent='Guardando…';
+    try{ if(F.antes) await F.antes(f); const r=await guardar(F.tabla,F.leer(f),id); if(F.despues) await F.despues(r,!id,f);
+      cerrar(); toast('✓ Guardado'); if(tipo!=='velada') await cargarTodo(); }
+    catch(e2){ btn.disabled=false; btn.textContent='Guardar'; err.textContent='No se pudo guardar: '+textoError(e2); } });
+  setTimeout(()=>form.querySelector('input:not([type=hidden]),select')?.focus({preventScroll:true}),60);
+}
+window.abrirForm=abrirForm;
+addEventListener('keydown',e=>{ if(e.key==='Escape'){ const v=document.querySelector('.velo'); if(v){ v.remove(); document.body.style.overflow=''; } } });
+
+sb.auth.onAuthStateChange((ev)=>{ if(ev==='SIGNED_OUT'){ $('#app').classList.add('oculto'); $('#entrada').classList.remove('oculto'); } });
+arrancar();
+</script>
+</body>
+</html>
