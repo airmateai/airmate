@@ -125,6 +125,7 @@ main.lleno{max-width:none;padding:0}
 .toast.mal{background:var(--red);color:#fff}
 .marco3d{position:relative;height:calc(100vh - 62px - 72px - env(safe-area-inset-bottom));border:none;width:100%;display:block;background:#000}
 .menu-mas{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media print{ .cab,.lateral,.abajo,.titulo .btn,.toast{display:none!important} main{margin:0!important;padding:0!important} body{background:#fff;color:#000} .tarjeta{border:none;background:#fff;color:#000} .sub,.grupo{color:#444!important} }
 @media (min-width:900px){
   .abajo{display:none}
   .lateral{display:flex;flex-direction:column;gap:4px;position:fixed;top:63px;left:0;bottom:0;width:220px;padding:14px 10px;border-right:1px solid var(--line);background:#050505;overflow-y:auto}
@@ -204,7 +205,7 @@ function skyscanner(origen,velada){ if(!origen||!AEROPUERTOS[origen]) return '';
   return `https://www.skyscanner.es/transporte/vuelos/${origen.toLowerCase()}/tfn/${yymmdd}/?adultsv2=1&cabinclass=economy&rtn=0`; }
 
 /* ───────── Estado ───────── */
-const S={ yo:null, veladas:[], velada:null, peleadores:[], combates:[], papeles:[], viajes:[], entradas:[], patro:[], gastos:[], equipo:[], tareas:[], merch:[], archivos:[] };
+const S={ yo:null, veladas:[], velada:null, peleadores:[], combates:[], papeles:[], viajes:[], entradas:[], patro:[], gastos:[], equipo:[], tareas:[], merch:[], archivos:[], programa:[], pesajes:[], pagos:[] };
 const TIPOS_PAPEL=['Contrato','Licencia','Certificado médico'];
 let SECCION='inicio';
 try{ SECCION=localStorage.getItem('f2o_seccion')||'inicio'; }catch(e){}
@@ -251,8 +252,8 @@ async function cargarTodo(){
   try{
     S.peleadores=await q(sb.from('f2o_peleadores').select('*').order('nombre'));
     S.archivos=await q(sb.from('f2o_archivos').select('*').order('created_at',{ascending:false}));
-    if(!v){ ['combates','papeles','viajes','entradas','patro','gastos','equipo','tareas','merch'].forEach(k=>S[k]=[]); pintar(); return; }
-    const [c,p,vi,en,pa,g,eq,t,m]=await Promise.all([
+    if(!v){ ['combates','papeles','viajes','entradas','patro','gastos','equipo','tareas','merch','programa','pesajes','pagos'].forEach(k=>S[k]=[]); pintar(); return; }
+    const [c,p,vi,en,pa,g,eq,t,m,pr,pe,pg]=await Promise.all([
       q(sb.from('f2o_combates').select('*').eq('velada_id',v).order('orden').order('created_at')),
       q(sb.from('f2o_papeles').select('*').eq('velada_id',v)),
       q(sb.from('f2o_viajes').select('*').eq('velada_id',v).order('llegada',{nullsFirst:true})),
@@ -261,14 +262,17 @@ async function cargarTodo(){
       q(sb.from('f2o_gastos').select('*').eq('velada_id',v).order('vence',{nullsFirst:false})),
       q(sb.from('f2o_equipo').select('*').eq('velada_id',v).order('rol')),
       q(sb.from('f2o_tareas').select('*').eq('velada_id',v).order('fecha',{nullsFirst:false})),
-      q(sb.from('f2o_merch').select('*').eq('velada_id',v).order('nombre')) ]);
-    Object.assign(S,{combates:c,papeles:p,viajes:vi,entradas:en,patro:pa,gastos:g,equipo:eq,tareas:t,merch:m});
+      q(sb.from('f2o_merch').select('*').eq('velada_id',v).order('nombre')),
+      q(sb.from('f2o_programa').select('*').eq('velada_id',v).order('dia').order('hora',{nullsFirst:false})),
+      q(sb.from('f2o_pesajes').select('*').eq('velada_id',v).order('hora',{ascending:false})),
+      q(sb.from('f2o_pagos_peleador').select('*').eq('velada_id',v).order('fecha',{nullsFirst:false})) ]);
+    Object.assign(S,{combates:c,papeles:p,viajes:vi,entradas:en,patro:pa,gastos:g,equipo:eq,tareas:t,merch:m,programa:pr,pesajes:pe,pagos:pg});
   }catch(e){ toast(textoError(e),true); }
   pintar();
 }
 let _rt=null, _rtT=null;
 function suscribir(){ if(_rt) return; _rt=sb.channel('f2o');
-  ['f2o_veladas','f2o_peleadores','f2o_combates','f2o_papeles','f2o_viajes','f2o_entradas','f2o_patrocinadores','f2o_gastos','f2o_equipo','f2o_tareas','f2o_merch','f2o_archivos'].forEach(t=>_rt.on('postgres_changes',{event:'*',schema:'public',table:t},()=>{ clearTimeout(_rtT); _rtT=setTimeout(()=>{ if(!$('.velo')) (t==='f2o_veladas'?cargarVeladas():cargarTodo()); },700); }));
+  ['f2o_veladas','f2o_peleadores','f2o_combates','f2o_papeles','f2o_viajes','f2o_entradas','f2o_patrocinadores','f2o_gastos','f2o_equipo','f2o_tareas','f2o_merch','f2o_archivos','f2o_programa','f2o_pesajes','f2o_pagos_peleador'].forEach(t=>_rt.on('postgres_changes',{event:'*',schema:'public',table:t},()=>{ clearTimeout(_rtT); _rtT=setTimeout(()=>{ if(!$('.velo')) (t==='f2o_veladas'?cargarVeladas():cargarTodo()); },700); }));
   _rt.subscribe(); }
 
 /* ───────── Guardar y borrar (siempre comprobando que se escribió) ───────── */
@@ -287,7 +291,7 @@ const peleadoresVelada=()=>{ const ids=[]; S.combates.filter(c=>c.estado!=='canc
 function dinero(){
   const entradas=S.entradas.reduce((a,e)=>a+e.vendidas*e.precio,0), patro=S.patro.filter(p=>['aceptado','facturado','cobrado'].includes(p.estado)).reduce((a,p)=>a+Number(p.importe),0),
     merch=S.merch.reduce((a,m)=>a+m.vendidas*m.precio,0);
-  const bolsas=S.combates.filter(c=>c.estado!=='cancelado').reduce((a,c)=>a+Number(c.bolsa_a)+Number(c.bolsa_b),0), bolsasPag=S.combates.filter(c=>c.estado!=='cancelado').reduce((a,c)=>a+Number(c.pagado_a)+Number(c.pagado_b),0);
+  const bolsas=S.combates.filter(c=>c.estado!=='cancelado').reduce((a,c)=>a+Number(c.bolsa_a)+Number(c.bolsa_b)+Number(c.ajuste_a||0)+Number(c.ajuste_b||0),0), bolsasPag=S.combates.filter(c=>c.estado!=='cancelado').reduce((a,c)=>a+Number(c.pagado_a)+Number(c.pagado_b),0);
   const gastos=S.gastos.reduce((a,g)=>a+Number(g.importe),0), gastosPag=S.gastos.filter(g=>g.pagado).reduce((a,g)=>a+Number(g.importe),0);
   const equipo=S.equipo.reduce((a,e)=>a+Number(e.pago),0), equipoPag=S.equipo.filter(e=>e.pagado).reduce((a,e)=>a+Number(e.pago),0);
   const viajes=S.viajes.reduce((a,v)=>a+Number(v.precio)+Number(v.hotel_precio),0), viajesPag=S.viajes.filter(v=>v.pagado).reduce((a,v)=>a+Number(v.precio)+Number(v.hotel_precio),0);
@@ -325,20 +329,26 @@ function loQueFalta(){
     if(x.estado!=='confirmado') add(dias!=null&&dias<30,'✈️',`${x.estado==='reservado'?'Confirmar':'Comprar'} billete de ${quien}`,x.origen?`Desde ${AEROPUERTOS[x.origen]||x.origen}`:'Falta el aeropuerto de salida',`abrirForm('viaje','${x.id}')`,x);
     if(x.hotel_estado==='pendiente') add(false,'🛏️',`Hotel de ${quien}`,'Habitación por confirmar',`abrirForm('viaje','${x.id}')`); });
   S.gastos.filter(g=>!g.pagado).forEach(g=>{ const dv=diasHasta(g.vence); add(dv!=null&&dv<=7,'💶',`Pagar: ${g.concepto} · ${eur(g.importe)}`,g.vence?(dv<0?`Venció hace ${-dv} días`:dv===0?'Vence hoy':`Vence en ${dv} días`):'Sin fecha de pago',`abrirForm('gasto','${g.id}')`); });
-  const d=dinero(); if(d.bolsas-d.bolsasPag>0) add(dias!=null&&dias<7,'🥊',`Bolsas por pagar: ${eur(d.bolsas-d.bolsasPag)}`,'Ver lo que se debe a cada peleador',"ir('combates')");
+  const d=dinero(); if(d.bolsas-d.bolsasPag>0) add(dias!=null&&dias<7,'🥊',`Bolsas por pagar: ${eur(d.bolsas-d.bolsasPag)}`,'Ver lo que se debe a cada peleador',"ir('pagos')");
   S.patro.filter(p=>p.estado==='propuesta').forEach(p=>add(false,'🤝',`Respuesta de ${p.nombre}`,`Propuesta de ${eur(p.importe)}`,`abrirForm('patro','${p.id}')`));
   S.equipo.filter(e=>!e.confirmado).forEach(e=>add(dias!=null&&dias<14,'🧑‍⚖️',`Confirmar a ${e.nombre}`,e.rol,`abrirForm('equipo','${e.id}')`));
   S.tareas.filter(t=>t.estado!=='hecha').forEach(t=>add(t.prioridad==='urgente'||(t.fecha&&diasHasta(t.fecha)<=2),'✅',t.titulo,[t.area,t.quien,t.fecha?fechaCorta(t.fecha):''].filter(Boolean).join(' · '),`abrirForm('tarea','${t.id}')`));
+  S.combates.filter(c=>c.estado!=='cancelado').forEach(c=>[c.peleador_a,c.peleador_b].forEach(id=>{ if(!id) return; const w=estadoPeso(c,id); if(w.fuera) add(true,'⚖️',`${nombrePel(id)} se pasa de peso`,`${w.txt} · pactado ${c.peso}`,"ir('pesaje')"); }));
+  if(dias===0||dias===1) S.programa.filter(x=>!x.hecho&&x.dia===-dias).forEach(x=>add(true,'⏱️',`${x.hora?String(x.hora).slice(0,5)+' · ':''}${x.titulo}`,[x.lugar,x.responsable].filter(Boolean).join(' · ')||'Hoy',`abrirForm('programa','${x.id}')`));
+  if(dias!=null&&dias<=7&&!S.programa.length) add(false,'⏱️','Prepara el horario del día de la velada','Carga el horario habitual y ajústalo',"ir('dia')");
+  S.viajes.filter(x=>x.llegada&&!x.recogida_hecha&&diasHasta(x.llegada)!=null&&diasHasta(x.llegada)<=3&&diasHasta(x.llegada)>=0).forEach(x=>{ const quien=x.peleador_id?nombrePel(x.peleador_id):x.persona; add(!x.recogida_quien,'🚐',x.recogida_quien?`Recoger a ${quien}: ${x.recogida_quien}`:`¿Quién recoge a ${quien}?`,`Llega el ${fechaCorta(x.llegada)} a las ${horaCorta(x.llegada)}${x.vuelo?' · '+x.vuelo:''}`,`abrirForm('viaje','${x.id}')`); });
+  S.patro.filter(p=>['aceptado','facturado','cobrado'].includes(p.estado)).forEach(p=>{ const f=(p.entregables||[]).filter(e=>!(p.entregados||[]).includes(e)); if(f.length&&dias!=null&&dias<=10) add(dias<=3,'🤝',`Cumplir con ${p.nombre}`,'Falta: '+f.join(', ').toLowerCase(),`abrirForm('patro','${p.id}')`); });
+  S.pagos.filter(x=>!x.pagado&&x.tipo!=='descuento'&&x.fecha&&diasHasta(x.fecha)<=2).forEach(x=>add(diasHasta(x.fecha)<=0,'💸',`Pagar a ${nombrePel(x.peleador_id)}: ${eur(x.importe)}`,`${x.concepto} · ${diasHasta(x.fecha)<0?'se pasó la fecha':'el '+fechaCorta(x.fecha)}`,`abrirForm('pago','${x.id}')`));
   if(!S.entradas.length) add(false,'🎟️','Añade los tipos de entrada','Anticipada, taquilla, VIP… con su precio y cuántas hay',"abrirForm('entrada')");
   return out.sort((a,b)=>b.urg-a.urg);
 }
 
 /* ───────── Menús ───────── */
-const SECCIONES=[ ['inicio','🏠','Inicio'],['estadio','🏟️','Pabellón 3D'],['combates','🥊','Combates'],['viajes','✈️','Viajes'],['vuelos3d','🌍','Vuelos 3D'],['dinero','💶','Dinero'],['archivos','📁','Documentos'],
-  ['peleadores','👊','Peleadores'],['equipo','🧑‍⚖️','Equipo'],['tareas','✅','Tareas'],['merch','👕','Merch'],['velada','📅','Velada'] ];
+const SECCIONES=[ ['inicio','🏠','Inicio'],['estadio','🏟️','Pabellón 3D'],['combates','🥊','Combates'],['pesaje','⚖️','Pesaje'],['pagos','💸','Pagos a peleadores'],['viajes','✈️','Viajes'],['vuelos3d','🌍','Vuelos 3D'],['dinero','💶','Dinero'],['archivos','📁','Documentos'],
+  ['dia','⏱️','Día de la velada'],['mensajes','💬','Mensajes'],['peleadores','👊','Peleadores'],['equipo','🧑‍⚖️','Equipo'],['tareas','✅','Tareas'],['merch','👕','Merch'],['velada','📅','Velada'],['informe','🖨️','Informe'] ];
 const ABAJO=['inicio','combates','viajes','dinero','mas'];
 function pintarMenus(){
-  $('#lateral').innerHTML=SECCIONES.map(([k,i,t],n)=>(n===2||n===7?'<div class="sep"></div>':'')+`<button data-s="${k}"><span class="i">${i}</span>${t}</button>`).join('');
+  $('#lateral').innerHTML=SECCIONES.map(([k,i,t],n)=>(n===2||n===9?'<div class="sep"></div>':'')+`<button data-s="${k}"><span class="i">${i}</span>${t}</button>`).join('');
   $('#abajo').innerHTML=ABAJO.map(k=>{ const s=SECCIONES.find(x=>x[0]===k)||['mas','☰','Más']; return `<button data-s="${s[0]}"><span class="i">${s[1]}</span>${s[2]}</button>`; }).join('');
   document.querySelectorAll('[data-s]').forEach(b=>b.addEventListener('click',()=>ir(b.dataset.s)));
 }
@@ -411,6 +421,38 @@ const PANTALLAS={
       <p class="sub">Contratos, licencias, certificados médicos, acuerdos, seguros, facturas… Solo los veis vosotros.</p>
       <div class="chip-row" style="margin-bottom:12px">${[['todos','Todo'],['peleadores','Peleadores'],['patro','Patrocinadores'],['velada','Esta velada']].map(([k,t])=>`<button class="chip ${f===k?'on':''}" onclick="filtrarArch('${k}')">${t}</button>`).join('')}</div>
       ${l.length?`<div class="lista">${l.map(filaArchivo).join('')}</div>`:`<div class="vacio"><b>No hay documentos</b>Sube el primero: puedes hacer una foto con el móvil o elegir un PDF.<br><br><button class="btn acc" onclick="abrirSubida()">📎 Subir documento</button></div>`}`; },
+
+  dia(){ const l=S.programa, hechos=l.filter(x=>x.hecho).length;
+    return `<div class="titulo"><h2>DÍA DE LA VELADA</h2><button class="btn acc peq" onclick="abrirForm('programa')">+ Añadir</button></div>
+      <p class="sub">El horario de la víspera y del día, minuto a minuto. ${l.length?`${hechos} de ${l.length} hechos.`:''}</p>
+      ${l.length?DIAS.map(([d,t])=>{ const x=l.filter(i=>i.dia===d); return x.length?`<div class="grupo">${t}${S.velada.fecha?' · '+fechaLarga(new Date(new Date(S.velada.fecha).getTime()+d*864e5)):''}</div><div class="lista">${x.map(i=>`<div class="item"><span class="ic" style="font-family:Anton,Impact;font-size:17px;width:54px">${i.hora?String(i.hora).slice(0,5):'—'}</span><span class="t" onclick="abrirForm('programa','${i.id}')" style="cursor:pointer"><b>${i.hecho?'<s>'+esc(i.titulo)+'</s>':esc(i.titulo)}</b><small>${esc([i.lugar,i.responsable].filter(Boolean).join(' · '))}</small></span>${i.hecho?'<span class="tag ok">Hecho</span>':`<button class="btn acc peq" onclick="marcar('f2o_programa','programa','${i.id}',{hecho:true},'✓ Hecho')">Hecho ✓</button>`}</div>`).join('')}</div>`:''; }).join('')
+      :`<div class="vacio"><b>Sin horario todavía</b>Puedes cargar el horario habitual de una velada y cambiar lo que quieras.<br><br><button class="btn acc" onclick="cargarHorario(this)">Cargar horario habitual</button></div>`}`; },
+
+  pesaje(){ const tol=Number(S.velada.tolerancia_kg??0.5), cs=S.combates.filter(c=>c.estado!=='cancelado');
+    return `<div class="titulo"><h2>PESAJE</h2></div><p class="sub">Peso pactado de cada combate + margen de ${String(tol).replace('.',',')} kg (se cambia en Velada).</p>
+      ${cs.length?`<div class="lista">${cs.map(c=>{ const pac=pesoNum(c.peso);
+        const fila=id=>{ if(!id) return ''; const w=estadoPeso(c,id,tol); return `<div class="item" style="padding:10px 12px"><span class="t"><b>${esc(nombrePel(id))}</b><small>${w.ultimo?`${String(w.ultimo.peso).replace('.',',')} kg · ${w.ultimo.tipo} · ${horaCorta(w.ultimo.hora)}`:'Sin pesar'}</small></span><span class="tag ${w.cls}">${w.txt}</span><button class="btn acc peq" onclick="abrirForm('pesaje',null,{peleador_id:'${id}',combate_id:'${c.id}'})">⚖️ Pesar</button></div>`; };
+        return `<div class="tarjeta"><div class="sub" style="margin:0 0 8px;font-weight:700">${esc([c.modalidad,c.peso?'pactado '+c.peso:'sin peso pactado',c.titulo].filter(Boolean).join(' · '))}${pac?'':` · <a href="#" onclick="abrirForm('combate','${c.id}');return false">poner peso</a>`}</div><div class="lista">${fila(c.peleador_a)}${fila(c.peleador_b)}</div></div>`; }).join('')}</div>`
+      :'<div class="vacio">Primero añade los combates con su peso pactado.</div>'}`; },
+
+  pagos(){ const ids=peleadoresVelada();
+    return `<div class="titulo"><h2>PAGOS A PELEADORES</h2><button class="btn acc peq" onclick="abrirForm('pago')">+ Pago</button></div>
+      <p class="sub">Bolsa + gastos que adelantó − descuentos. Cada pago que apuntes se descuenta solo.</p>
+      ${ids.length?`<div class="lista">${ids.map(id=>{ const b=bolsaDe(id), movs=S.pagos.filter(x=>x.peleador_id===id);
+        return `<div class="tarjeta"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><b style="font-size:16px">${esc(nombrePel(id))}</b>${b.falta>0?`<span class="tag no">Falta ${eur(b.falta)}</span>`:b.total>0?'<span class="tag ok">Pagado</span>':'<span class="tag gris">Sin bolsa</span>'}</div>
+          <div class="sub" style="margin:6px 0 8px">Bolsa ${eur(b.bolsa)}${b.ajuste?` · ${b.ajuste>0?'+':''}${eur(b.ajuste)} de ajustes`:''} · pagado ${eur(b.pagado)}</div>
+          ${movs.map(x=>`<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:14px;cursor:pointer" onclick="abrirForm('pago','${x.id}')"><span style="flex:1">${x.tipo==='descuento'?'➖':x.tipo==='reembolso'?'↩️':'💶'} ${esc(x.concepto)}<small style="display:block;color:var(--mut)">${x.fecha?fechaCorta(x.fecha):''}${x.metodo?' · '+esc(x.metodo):''}</small></span><b>${eur(x.importe)}</b>${x.tipo!=='descuento'?(x.pagado?'<span class="tag ok">Pagado</span>':`<button class="btn acc peq" onclick="event.stopPropagation();marcar('f2o_pagos_peleador','pagos','${x.id}',{pagado:true},'✓ Pagado')">Pagar ✓</button>`):''}</div>`).join('')}
+          <button class="btn peq ancho" style="margin-top:8px" onclick="abrirForm('pago',null,{peleador_id:'${id}'})">+ Apuntar pago a ${esc(nombrePel(id).split(' ')[0])}</button></div>`; }).join('')}</div>`
+      :'<div class="vacio">Añade primero los combates de la velada.</div>'}`; },
+
+  mensajes(){ const pl=PLANTILLAS[PLANTILLA]; const gente=pl.para();
+    return `<div class="titulo"><h2>MENSAJES</h2></div><p class="sub">Elige el mensaje y pulsa en cada persona: se abre WhatsApp con el texto ya escrito. Solo tienes que darle a enviar.</p>
+      <div class="chip-row" style="margin-bottom:14px">${Object.entries(PLANTILLAS).map(([k,x])=>`<button class="chip ${k===PLANTILLA?'on':''}" onclick="elegirPlantilla('${k}')">${x.nom}</button>`).join('')}</div>
+      ${gente.length?`<div class="lista">${gente.map(g=>{ const tel=String(g.tel||'').replace(/[^\d]/g,''); const txt=pl.texto(g);
+        return `<div class="item" style="flex-wrap:wrap"><span class="t"><b>${esc(g.nombre)}</b><small style="white-space:pre-line">${esc(txt)}</small></span>${tel?`<a class="btn acc peq" href="https://wa.me/${tel}?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">💬 Enviar</a>`:`<button class="btn peq" onclick="${g.editar}">Falta su teléfono</button>`}</div>`; }).join('')}</div>`
+      :`<div class="vacio">${pl.vacio}</div>`}`; },
+
+  informe(){ return `<div class="titulo"><h2>INFORME</h2><button class="btn acc peq" onclick="window.print()">🖨️ Imprimir o PDF</button></div><div id="informe">${informeHTML()}</div>`; },
 
   peleadores(){ return `<div class="titulo"><h2>PELEADORES</h2><button class="btn acc peq" onclick="abrirForm('peleador')">+ Peleador</button></div>
       <label class="campo"><input id="buscar-pel" placeholder="Buscar por nombre, país o gimnasio…" oninput="filtrarPel(this.value)"></label>
@@ -507,6 +549,45 @@ function abrirSubida(pre={}){
 }
 window.abrirSubida=abrirSubida;
 
+/* ───────── Pesaje, bolsas, horario, mensajes e informe ───────── */
+function estadoPeso(c,pid,tol){ tol=tol??Number(S.velada?.tolerancia_kg??0.5); const pac=pesoNum(c.peso); const l=S.pesajes.filter(x=>x.peleador_id===pid&&(!x.combate_id||x.combate_id===c.id)).sort((a,b)=>new Date(b.hora)-new Date(a.hora)); const u=l[0];
+  if(!u) return {ultimo:null,txt:'Sin pesar',cls:'gris',fuera:false};
+  if(!pac) return {ultimo:u,txt:'Sin peso pactado',cls:'med',fuera:false};
+  const dif=Math.round((u.peso-pac)*10)/10; if(dif>tol) return {ultimo:u,txt:`Se pasa ${String(dif).replace('.',',')} kg`,cls:'no',fuera:true,dif};
+  return {ultimo:u,txt:'Da el peso ✓',cls:'ok',fuera:false,dif}; }
+function bolsaDe(pid){ let bolsa=0, ajuste=0, pagado=0; S.combates.filter(c=>c.estado!=='cancelado').forEach(c=>{ if(c.peleador_a===pid){ bolsa+=Number(c.bolsa_a); ajuste=Number(c.ajuste_a||0); pagado=Number(c.pagado_a||0); } if(c.peleador_b===pid){ bolsa+=Number(c.bolsa_b); ajuste=Number(c.ajuste_b||0); pagado=Number(c.pagado_b||0); } });
+  const total=bolsa+ajuste; return {bolsa,ajuste,pagado,total,falta:Math.max(0,total-pagado)}; }
+window.marcar=async(tabla,clave,id,cambios,msg)=>{ try{ const r=await guardar(tabla,cambios,id); Object.assign(S[clave].find(x=>x.id===id),r); if(tabla==='f2o_pagos_peleador') await cargarTodo(); else pintar(); toast(msg); }catch(e){ toast(textoError(e),true); } };
+window.cerrarVelos=()=>{ document.querySelectorAll('.velo').forEach(v=>v.remove()); document.body.style.overflow=''; };
+window.cargarHorario=async btn=>{ btn.disabled=true; const base=[[-1,'10:00','Pesaje oficial','Hotel'],[-1,'12:00','Rueda de prensa',''],[0,'14:00','Montaje terminado y prueba de luces y sonido','Pabellón'],[0,'16:30','Revisión médica de los peleadores','Vestuarios'],[0,'17:00','Reunión de reglas con árbitros y jueces','Sala técnica'],[0,'17:30','Apertura de puertas','Entrada'],[0,'18:00','Empieza la velada','Jaula'],[0,'23:30','Desmontaje','Pabellón']];
+  const r=await sb.from('f2o_programa').insert(base.map(([dia,hora,titulo,lugar])=>({velada_id:S.velada.id,dia,hora,titulo,lugar:lugar||null}))).select();
+  if(r.error||r.data?.length!==base.length){ btn.disabled=false; toast('No se pudo cargar: '+textoError(r.error||'sin permiso'),true); return; } S.programa=r.data.concat(S.programa); toast('✓ Horario cargado: cámbialo como quieras'); pintar(); };
+let PLANTILLA='pesaje';
+window.elegirPlantilla=k=>{ PLANTILLA=k; pintar(); };
+const fechaVelada=d=>{ const v=S.velada; if(!v?.fecha) return '(fecha por decidir)'; return fechaLarga(new Date(new Date(v.fecha).getTime()+(d||0)*864e5)); };
+const deVelada=()=>peleadoresVelada().map(id=>({nombre:nombrePel(id),tel:pel(id)?.telefono,id,editar:`abrirForm('peleador','${id}')`}));
+const PLANTILLAS={
+  pesaje:{nom:'⚖️ Pesaje', vacio:'No hay peleadores en la velada.', para:deVelada, texto:g=>{ const p=S.programa.find(x=>/pesaje/i.test(x.titulo)); const c=S.combates.find(k=>k.peleador_a===g.id||k.peleador_b===g.id);
+    return `Hola ${g.nombre.split(' ')[0]} 👊 Te recuerdo el pesaje de ${S.velada.nombre}: ${p?fechaVelada(p.dia)+(p.hora?' a las '+String(p.hora).slice(0,5):''):fechaVelada(-1)}${p?.lugar?' en '+p.lugar:''}.${c?.peso?` Peso pactado: ${c.peso}.`:''} ¡Nos vemos!`; }},
+  recogida:{nom:'🚐 Recogida', vacio:'Nadie tiene vuelo con hora de llegada todavía.', para:()=>S.viajes.filter(x=>x.llegada).map(x=>({nombre:x.peleador_id?nombrePel(x.peleador_id):x.persona,tel:x.peleador_id?pel(x.peleador_id)?.telefono:null,v:x,editar:x.peleador_id?`abrirForm('peleador','${x.peleador_id}')`:`abrirForm('viaje','${x.id}')`})),
+    texto:g=>`Hola ${String(g.nombre).split(' ')[0]} ✈️ Te recogemos en el aeropuerto de Tenerife Norte el ${fechaCorta(g.v.llegada)} a las ${horaCorta(g.v.llegada)}${g.v.vuelo?' (vuelo '+g.v.vuelo+')':''}.${g.v.recogida_quien?' Te recoge '+g.v.recogida_quien+'.':''}${S.velada.hotel?' Te llevamos al '+S.velada.hotel+'.':''} Escríbeme al aterrizar.` },
+  papeles:{nom:'📄 Papeles', vacio:'Nadie tiene papeles pendientes. 💪', para:()=>deVelada().filter(g=>papelPendiente(g.id).length),
+    texto:g=>`Hola ${g.nombre.split(' ')[0]}, para ${S.velada.nombre} me falta: ${papelPendiente(g.id).map(x=>x.tipo.toLowerCase()).join(', ')}. ¿Me lo puedes mandar por aquí? Gracias 🙏` },
+  hotel:{nom:'🛏️ Hotel', vacio:'Nadie tiene hotel reservado todavía.', para:()=>S.viajes.filter(x=>x.hotel_estado==='confirmada').map(x=>({nombre:x.peleador_id?nombrePel(x.peleador_id):x.persona,tel:x.peleador_id?pel(x.peleador_id)?.telefono:null,v:x,editar:x.peleador_id?`abrirForm('peleador','${x.peleador_id}')`:`abrirForm('viaje','${x.id}')`})),
+    texto:g=>`Hola ${String(g.nombre).split(' ')[0]} 🛏️ Tu hotel: ${S.velada.hotel||'(hotel por confirmar)'}${g.v.hotel_habitacion?', habitación '+g.v.hotel_habitacion:''}${g.v.hotel_entrada?', del '+fechaCorta(g.v.hotel_entrada)+' al '+fechaCorta(g.v.hotel_salida):''}.` },
+  equipo:{nom:'🧑‍⚖️ Equipo', vacio:'No hay nadie en el equipo.', para:()=>S.equipo.map(e=>({nombre:e.nombre,tel:e.telefono,e,editar:`abrirForm('equipo','${e.id}')`})),
+    texto:g=>{ const p=S.programa.filter(x=>x.dia===0&&x.hora).sort((a,b)=>String(a.hora).localeCompare(String(b.hora)))[0]; return `Hola ${g.nombre.split(' ')[0]}, te confirmo ${S.velada.nombre}: ${fechaVelada(0)}${S.velada.recinto?' en '+S.velada.recinto:''}.${p?' Te necesitamos a las '+String(p.hora).slice(0,5)+'.':''} ¿Me confirmas que vienes? Gracias 🙌`; } },
+};
+function informeHTML(){ const v=S.velada, d=dinero(), cs=S.combates.filter(c=>c.estado!=='cancelado');
+  const fila=(a,b)=>`<tr><td>${a}</td><td style="text-align:right">${b}</td></tr>`;
+  return `<div class="tarjeta" style="line-height:1.5"><h3 class="anton" style="font-size:24px">${esc(v.nombre)}</h3><p class="sub" style="margin:4px 0 12px">${v.fecha?fechaLarga(v.fecha)+' · '+horaCorta(v.fecha):'Sin fecha'} · ${esc(v.recinto||'')} ${esc(v.ciudad||'')}</p>
+    <div class="grupo">Cartel</div><table style="width:100%;border-collapse:collapse;font-size:14px">${cs.map((c,i)=>`<tr style="border-bottom:1px solid var(--line)"><td>${i===0?'⭐ ':''}${esc(nombrePel(c.peleador_a))}${c.ganador==='a'?' 🏆':''} vs ${esc(nombrePel(c.peleador_b))}${c.ganador==='b'?' 🏆':''}</td><td style="text-align:right;color:var(--mut)">${esc([c.modalidad,c.peso,c.metodo].filter(Boolean).join(' · '))}</td></tr>`).join('')||'<tr><td>Sin combates</td></tr>'}</table>
+    <div class="grupo">Dinero</div><table style="width:100%;font-size:14px">${fila('Entradas',eur(d.entradas))}${fila('Patrocinios',eur(d.patro))}${fila('Merch',eur(d.merch))}${fila('<b>Ingresos</b>','<b>'+eur(d.ingresos)+'</b>')}${fila('Bolsas de los peleadores',eur(d.bolsas))}${fila('Gastos',eur(d.gastos))}${fila('Equipo',eur(d.equipo))}${fila('Viajes y hotel',eur(d.viajes))}${fila('<b>Gastos totales</b>','<b>'+eur(d.total)+'</b>')}${fila('Pendiente de pagar',eur(d.porPagar))}${fila('<b>Resultado</b>','<b>'+eur(d.balance)+'</b>')}</table>
+    <div class="grupo">Entradas</div><table style="width:100%;font-size:14px">${S.entradas.map(e=>fila(esc(e.tipo)+' · '+eur(e.precio),`${num(e.vendidas)} de ${num(e.cupo)}`)).join('')||fila('Sin tipos de entrada','')}</table>
+    <div class="grupo">Patrocinadores</div><table style="width:100%;font-size:14px">${S.patro.map(p=>fila(esc(p.nombre)+` <span style="color:var(--mut)">(${p.estado})</span>`,eur(p.importe))).join('')||fila('Sin patrocinadores','')}</table>
+    <div class="grupo">Equipo</div><table style="width:100%;font-size:14px">${S.equipo.map(e=>fila(esc(e.nombre)+' · '+esc(e.rol),e.confirmado?'Confirmado':'Sin confirmar')).join('')||fila('Sin equipo','')}</table>
+    <p class="sub" style="margin-top:14px">Informe generado el ${new Date().toLocaleString('es-ES',{timeZone:ZONA})} desde el panel de Fight2One.</p></div>`; }
+
 /* Acciones rápidas */
 window.sumarEntradas=async(id,n)=>{ const e=S.entradas.find(x=>x.id===id); const v=Math.max(0,Math.min(e.cupo||1e9,e.vendidas+n)); try{ const r=await guardar('f2o_entradas',{vendidas:v},id); Object.assign(e,r); pintar(); toast(`${e.tipo}: ${v} vendidas`); }catch(err){ toast(textoError(err),true); } };
 window.sumarMerch=async(id,n)=>{ const m=S.merch.find(x=>x.id===id); const v=Math.max(0,m.vendidas+n); try{ const r=await guardar('f2o_merch',{vendidas:v},id); Object.assign(m,r); pintar(); toast(`${m.nombre}: ${v} vendidas`); }catch(err){ toast(textoError(err),true); } };
@@ -522,17 +603,44 @@ const inp=(n,val,extra='')=>`<input name="${n}" value="${esc(val??'')}" ${extra}
 const dtLocal=d=>{ if(!d) return ''; const x=new Date(d); return new Date(x.getTime()-x.getTimezoneOffset()*6e4).toISOString().slice(0,16); };
 const selPel=(n,val)=>`<select name="${n}" data-pel><option value="">— Elegir —</option>${S.peleadores.map(p=>`<option value="${p.id}" ${p.id===val?'selected':''}>${esc(p.nombre)}${p.pais?' · '+esc(p.pais):''}</option>`).join('')}<option value="__nuevo">+ Peleador nuevo…</option></select><input name="${n}__nuevo" placeholder="Nombre y apellidos del peleador nuevo" class="oculto" style="margin-top:8px">`;
 
+const ENTREGABLES=['Logo en la lona','Pantallas de la pista','Banderola','Cartel','Redes sociales','Speaker','Entradas VIP','Stand','Camisetas'];
+const DIAS=[[-2,'Dos días antes'],[-1,'Víspera'],[0,'Día de la velada'],[1,'Día después']];
+const pesoNum=t=>{ const m=String(t||'').replace(',','.').match(/\d+(\.\d+)?/); return m?Number(m[0]):null; };
 const FORMS={
+  programa:{ tabla:'f2o_programa', titulo:'Momento del día', fila:id=>S.programa.find(x=>x.id===id), html:x=>`
+    ${campo('Qué pasa',inp('titulo',x?.titulo,'required placeholder="Pesaje oficial, apertura de puertas…"'))}
+    ${campo('Qué día',chips('dia',DIAS.map(([k,t])=>[String(k),t]),String(x?.dia??0)))}
+    <div class="dos">${campo('Hora',`<input type="time" name="hora" value="${x?.hora?String(x.hora).slice(0,5):''}">`)}${campo('Dónde',inp('lugar',x?.lugar))}</div>
+    ${campo('Quién se encarga',inp('responsable',x?.responsable,'placeholder="Moi, Susi, médico…"'))}
+    <label class="check"><input type="checkbox" name="hecho" ${x?.hecho?'checked':''}> Hecho</label>`,
+    leer:f=>({ velada_id:S.velada.id, titulo:f.titulo.trim(), dia:Number(f.dia)||0, hora:f.hora||null, lugar:f.lugar||null, responsable:f.responsable||null, hecho:!!f.hecho }) },
+  pesaje:{ tabla:'f2o_pesajes', titulo:'Pesaje', fila:id=>S.pesajes.find(x=>x.id===id), html:(x,extra)=>{ const pid=x?.peleador_id||extra?.peleador_id, c=S.combates.find(k=>k.id===(x?.combate_id||extra?.combate_id));
+    return `<div class="sub" style="margin:0 0 12px">${esc(nombrePel(pid))}${c?.peso?' · peso pactado <b>'+esc(c.peso)+'</b>':''}</div>
+    <input type="hidden" name="peleador_id" value="${esc(pid||'')}"><input type="hidden" name="combate_id" value="${esc(c?.id||'')}">
+    ${campo('Peso en la báscula (kg)',inp('peso',x?.peso,'required type="number" inputmode="decimal" step="0.1" min="20" max="200" style="font-size:24px"'))}
+    ${campo('Tipo',chips('tipo',[['Oficial','Oficial'],['Control','Control previo'],['Segundo','Segundo intento']],x?.tipo||'Oficial'))}
+    ${campo('Notas',inp('notas',x?.notas))}`; },
+    leer:f=>({ velada_id:S.velada.id, peleador_id:f.peleador_id, combate_id:f.combate_id||null, peso:Number(String(f.peso).replace(',','.')), tipo:f.tipo||'Oficial', notas:f.notas||null }),
+    validar:f=>!f.peleador_id?'Falta el peleador':!(Number(String(f.peso).replace(',','.'))>0)?'Escribe el peso':'' },
+  pago:{ tabla:'f2o_pagos_peleador', titulo:'Pago a peleador', fila:id=>S.pagos.find(x=>x.id===id), html:(x,extra)=>{ const pid=x?.peleador_id||extra?.peleador_id||'';
+    return `${campo('Peleador',`<select name="peleador_id" required><option value="">— Elegir —</option>${peleadoresVelada().map(id=>`<option value="${id}" ${id===pid?'selected':''}>${esc(nombrePel(id))}</option>`).join('')}</select>`)}
+    ${campo('Qué es',chips('tipo',[['pago','Pago de la bolsa'],['reembolso','Le devolvemos un gasto'],['descuento','Descuento']],x?.tipo||'pago'))}
+    ${campo('Concepto',inp('concepto',x?.concepto||(extra?.concepto||''),'required placeholder="Anticipo, resto de la bolsa, billete que adelantó…"'))}
+    <div class="dos">${campo('Importe (€)',inp('importe',x?.importe??'','required type="number" inputmode="decimal" min="0"'))}${campo('Fecha',`<input type="date" name="fecha" value="${x?.fecha||new Date().toISOString().slice(0,10)}">`)}</div>
+    ${campo('Cómo',chips('metodo',[['Transferencia','Transferencia'],['Efectivo','Efectivo'],['Bizum','Bizum']],x?.metodo||'Transferencia'))}
+    <label class="check"><input type="checkbox" name="pagado" ${x?(x.pagado?'checked':''):'checked'}> Ya está pagado (si no, queda como pendiente para esa fecha)</label>`; },
+    leer:f=>({ velada_id:S.velada.id, peleador_id:f.peleador_id, tipo:f.tipo||'pago', concepto:f.concepto.trim(), importe:Number(f.importe)||0, fecha:f.fecha||null, metodo:f.metodo||null, pagado:!!f.pagado }),
+    validar:f=>!f.peleador_id?'Elige el peleador':!(Number(f.importe)>0)?'Escribe el importe':'' },
   velada:{ tabla:'f2o_veladas', titulo:'Velada', fila:id=>S.veladas.find(x=>x.id===id), html:v=>`
     ${campo('Nombre',inp('nombre',v?.nombre||'Fight2One ','required'))}
     ${campo('Fecha y hora',`<input type="datetime-local" name="fecha" value="${dtLocal(v?.fecha)}">`)}
     <div class="dos">${campo('Pabellón',inp('recinto',v?.recinto))}${campo('Ciudad',inp('ciudad',v?.ciudad))}</div>
     <div class="dos">${campo('Aforo',inp('aforo',v?.aforo,'type="number" inputmode="numeric" min="0"'))}${campo('Combates en el cartel',inp('objetivo_combates',v?.objetivo_combates??8,'type="number" inputmode="numeric" min="1"'))}</div>
-    ${campo('Objetivo de patrocinio (€)',inp('objetivo_patrocinio',v?.objetivo_patrocinio??0,'type="number" inputmode="decimal" min="0"'))}
+    <div class="dos">${campo('Objetivo de patrocinio (€)',inp('objetivo_patrocinio',v?.objetivo_patrocinio??0,'type="number" inputmode="decimal" min="0"'))}${campo('Margen en el pesaje (kg)',inp('tolerancia_kg',v?.tolerancia_kg??0.5,'type="number" inputmode="decimal" min="0" step="0.1"'))}</div>
     ${campo('Hotel de los peleadores',inp('hotel',v?.hotel))}
     ${campo('Estado',chips('estado',[['preparacion','En preparación'],['cerrada','Celebrada']],v?.estado||'preparacion'))}
     ${campo('Notas',`<textarea name="notas">${esc(v?.notas||'')}</textarea>`)}`,
-    leer:f=>({ nombre:f.nombre.trim(), fecha:f.fecha?new Date(f.fecha).toISOString():null, recinto:f.recinto||null, ciudad:f.ciudad||null, aforo:f.aforo?Number(f.aforo):null, objetivo_combates:Number(f.objetivo_combates)||8, objetivo_patrocinio:Number(f.objetivo_patrocinio)||0, hotel:f.hotel||null, estado:f.estado||'preparacion', notas:f.notas||null }),
+    leer:f=>({ nombre:f.nombre.trim(), fecha:f.fecha?new Date(f.fecha).toISOString():null, recinto:f.recinto||null, ciudad:f.ciudad||null, aforo:f.aforo?Number(f.aforo):null, objetivo_combates:Number(f.objetivo_combates)||8, objetivo_patrocinio:Number(f.objetivo_patrocinio)||0, tolerancia_kg:f.tolerancia_kg===''?0.5:Number(f.tolerancia_kg), hotel:f.hotel||null, estado:f.estado||'preparacion', notas:f.notas||null }),
     despues:async(r,nuevo)=>{ if(nuevo){ // preparativos habituales del pabellón
         const base=['Reservar el pabellón','Pagar el pabellón','Seguro del evento','Jaula, luces y sonido','Ambulancia y médico','Permisos del ayuntamiento'];
         const ins=await sb.from('f2o_tareas').insert(base.map(t=>({velada_id:r.id,titulo:t,area:'Pabellón'}))).select('id'); if(ins.error) toast('La velada se creó, pero no los preparativos: '+textoError(ins.error),true);
@@ -558,15 +666,15 @@ const FORMS={
     <div class="dos">${campo('Peso',inp('peso',c?.peso,'placeholder="70 kg"'))}${campo('Asaltos',inp('asaltos',c?.asaltos,'type="number" inputmode="numeric" min="1"'))}</div>
     ${campo('Título en juego',inp('titulo',c?.titulo,'placeholder="Título mundial, europeo…"'))}
     ${campo('Orden en el cartel (1 = estelar)',inp('orden',c?.orden??(S.combates.length+1),'type="number" inputmode="numeric" min="0"'))}
-    <div class="bloque"><b>💶 Bolsas</b><div class="dos">${campo('Bolsa rojo (€)',inp('bolsa_a',c?.bolsa_a??0,'type="number" inputmode="decimal" min="0"'))}${campo('Ya pagado al rojo',inp('pagado_a',c?.pagado_a??0,'type="number" inputmode="decimal" min="0"'))}</div>
-      <div class="dos">${campo('Bolsa azul (€)',inp('bolsa_b',c?.bolsa_b??0,'type="number" inputmode="decimal" min="0"'))}${campo('Ya pagado al azul',inp('pagado_b',c?.pagado_b??0,'type="number" inputmode="decimal" min="0"'))}</div></div>
+    <div class="bloque"><b>💶 Bolsas</b><div class="dos">${campo('Bolsa rojo (€)',inp('bolsa_a',c?.bolsa_a??0,'type="number" inputmode="decimal" min="0"'))}${campo('Bolsa azul (€)',inp('bolsa_b',c?.bolsa_b??0,'type="number" inputmode="decimal" min="0"'))}</div>
+      ${c?`<p class="sub" style="margin:0">Pagado al rojo: <b>${eur(c.pagado_a)}</b> · al azul: <b>${eur(c.pagado_b)}</b>. Los pagos se apuntan en <a href="#" onclick="cerrarVelos();ir('pagos');return false">Pagos a peleadores</a>.</p>`:''}</div>
     <div class="bloque"><b>📄 Papeles</b>${['a','b'].map(lado=>{ const id=c?.[lado==='a'?'peleador_a':'peleador_b']; return `<div style="margin-bottom:10px"><div style="font-size:13px;color:var(--mut);font-weight:700;margin-bottom:6px">${lado==='a'?'🔴 Rojo':'🔵 Azul'}${id?' · '+esc(nombrePel(id)):' (elige primero al peleador)'}</div>
       ${TIPOS_PAPEL.map(t=>{ const f=id?S.papeles.find(x=>x.peleador_id===id&&x.tipo===t):null; const docs=id?S.archivos.filter(a=>a.peleador_id===id&&a.categoria===t):[]; return `<div style="margin-bottom:8px"><div style="font-size:13px;margin-bottom:4px;display:flex;gap:8px;align-items:center">${t}${docs.map(a=>`<button type="button" class="btn peq" onclick="verArchivo('${a.id}')">📄 Ver</button>`).join('')}${id?`<button type="button" class="btn peq" onclick='abrirSubida({peleador_id:"${id}",categoria:"${t}"})'>📎 Subir</button>`:''}</div>${chips(`papel_${lado}_${t}`,[['falta','Falta'],['recibido','Recibido'],['ok','Revisado ✓']],f?.estado||'falta')}</div>`; }).join('')}</div>`; }).join('')}</div>
     ${campo('Ganador',chips('ganador',[['','Sin resultado'],['a','🔴 Rojo'],['b','🔵 Azul'],['empate','Empate']],c?.ganador||''))}
     ${campo('Cómo ganó',inp('metodo',c?.metodo,'placeholder="KO, decisión, sumisión…"'))}
     ${campo('Notas',`<textarea name="notas">${esc(c?.notas||'')}</textarea>`)}`,
     leer:f=>({ velada_id:S.velada.id, peleador_a:f.peleador_a||null, peleador_b:f.peleador_b||null, estado:f.estado||'pendiente', modalidad:f.modalidad||null, peso:f.peso||null, asaltos:f.asaltos?Number(f.asaltos):null, titulo:f.titulo||null, orden:Number(f.orden)||0,
-      bolsa_a:Number(f.bolsa_a)||0, pagado_a:Number(f.pagado_a)||0, bolsa_b:Number(f.bolsa_b)||0, pagado_b:Number(f.pagado_b)||0, ganador:f.ganador||null, metodo:f.metodo||null, notas:f.notas||null }),
+      bolsa_a:Number(f.bolsa_a)||0, bolsa_b:Number(f.bolsa_b)||0, ganador:f.ganador||null, metodo:f.metodo||null, notas:f.notas||null }),
     antes:async f=>{ for(const k of ['peleador_a','peleador_b']){ if(f[k]==='__nuevo'){ const n=(f[k+'__nuevo']||'').trim(); if(!n) throw new Error('Escribe el nombre del peleador nuevo'); const p=await guardar('f2o_peleadores',{nombre:n}); S.peleadores.push(p); f[k]=p.id; } } },
     despues:async(r,_n,f)=>{ const filas=[]; ['a','b'].forEach(l=>{ const pid=r['peleador_'+l]; if(!pid) return; TIPOS_PAPEL.forEach(t=>{ const est=f[`papel_${l}_${t}`]||'falta'; const ya=S.papeles.find(x=>x.peleador_id===pid&&x.tipo===t); if(ya?.estado!==est||!ya) filas.push({velada_id:S.velada.id,peleador_id:pid,tipo:t,estado:est}); }); });
       if(filas.length){ const u=await sb.from('f2o_papeles').upsert(filas,{onConflict:'velada_id,peleador_id,tipo'}).select('id'); if(u.error) throw u.error; if((u.data||[]).length!==filas.length) throw new Error('Los papeles no se guardaron'); } } },
@@ -584,11 +692,14 @@ const FORMS={
       ${campo('Habitación',chips('hotel_estado',[['sin','No necesita'],['pendiente','Por reservar'],['confirmada','Reservada ✓']],x?.hotel_estado||'sin'))}
       <div class="dos">${campo('Número de habitación',inp('hotel_habitacion',x?.hotel_habitacion))}${campo('Precio hotel (€)',inp('hotel_precio',x?.hotel_precio??0,'type="number" inputmode="decimal" min="0"'))}</div>
       <div class="dos">${campo('Entra',`<input type="date" name="hotel_entrada" value="${x?.hotel_entrada||''}">`)}${campo('Sale',`<input type="date" name="hotel_salida" value="${x?.hotel_salida||''}">`)}</div></div>
+    <div class="bloque"><b>🚐 Recogida en el aeropuerto</b>
+      ${campo('Quién le recoge',inp('recogida_quien',x?.recogida_quien,'placeholder="Moi, rent a car, taxi…"'))}
+      <label class="check" style="margin:0"><input type="checkbox" name="recogida_hecha" ${x?.recogida_hecha?'checked':''}> Ya está recogido</label></div>
     <label class="check"><input type="checkbox" name="pagado" ${x?.pagado?'checked':''}> Vuelo y hotel pagados</label>
     ${campo('Notas',`<textarea name="notas">${esc(x?.notas||'')}</textarea>`)}`; },
     leer:f=>({ velada_id:S.velada.id, peleador_id:f.peleador_id||null, persona:f.persona||null, origen:f.origen||null, estado:f.estado||'sin_billete', vuelo:(f.vuelo||'').toUpperCase().trim()||null, localizador:(f.localizador||'').toUpperCase().trim()||null,
       salida:f.salida?new Date(f.salida).toISOString():null, llegada:f.llegada?new Date(f.llegada).toISOString():null, precio:Number(f.precio)||0, hotel_estado:f.hotel_estado||'sin', hotel_habitacion:f.hotel_habitacion||null, hotel_precio:Number(f.hotel_precio)||0,
-      hotel_entrada:f.hotel_entrada||null, hotel_salida:f.hotel_salida||null, pagado:!!f.pagado, notas:f.notas||null }),
+      hotel_entrada:f.hotel_entrada||null, hotel_salida:f.hotel_salida||null, pagado:!!f.pagado, recogida_quien:f.recogida_quien||null, recogida_hecha:!!f.recogida_hecha, notas:f.notas||null }),
     validar:f=>(!f.peleador_id&&!f.persona)?'Elige un peleador o escribe el nombre de la persona':'' },
   entrada:{ tabla:'f2o_entradas', titulo:'Tipo de entrada', fila:id=>S.entradas.find(x=>x.id===id), html:e=>`
     ${campo('Nombre',inp('tipo',e?.tipo,'required placeholder="Anticipada, Taquilla, VIP…"'))}
@@ -601,10 +712,11 @@ const FORMS={
     <div class="dos">${campo('Persona de contacto',inp('contacto',p?.contacto))}${campo('Teléfono',inp('telefono',p?.telefono,'type="tel" inputmode="tel"'))}</div>
     <div class="dos">${campo('Paquete',inp('paquete',p?.paquete,'placeholder="Principal, básico, canje…"'))}${campo('Importe (€)',inp('importe',p?.importe??0,'type="number" inputmode="decimal" min="0"'))}</div>
     ${campo('Estado',chips('estado',[['propuesta','Propuesta'],['aceptado','Aceptado'],['facturado','Facturado'],['cobrado','Cobrado ✓'],['rechazado','No']],p?.estado||'propuesta'))}
-    ${campo('Qué le damos / notas',`<textarea name="notas" placeholder="Logo en la lona, pantallas, redes…">${esc(p?.notas||'')}</textarea>`)}
+    <div class="campo"><span>Qué le damos (toca: gris = no, dorado = sí, verde = ya cumplido)</span><div class="chip-row" data-entregables>${ENTREGABLES.map(e=>{ const st=(p?.entregados||[]).includes(e)?2:(p?.entregables||[]).includes(e)?1:0; return `<button type="button" class="chip ${st===1?'on':''}" data-e="${esc(e)}" data-st="${st}" style="${st===2?'background:var(--ok);border-color:var(--ok);color:#000':''}">${st===2?'✓ ':''}${esc(e)}</button>`; }).join('')}</div><input type="hidden" name="entregables_json" value="${esc(JSON.stringify({ent:p?.entregables||[],hecho:p?.entregados||[]}))}"></div>
+    ${campo('Notas',`<textarea name="notas" placeholder="Condiciones, fechas, contacto de marketing…">${esc(p?.notas||'')}</textarea>`)}
     ${p?bloqueArchivos('patrocinador_id',p.id,{patrocinador_id:p.id,categoria:'Acuerdo'}):''}
     ${p?.telefono?`<a class="btn ancho" href="https://wa.me/${esc(p.telefono.replace(/[^\d]/g,''))}" target="_blank" rel="noopener">💬 Escribir por WhatsApp</a>`:''}`,
-    leer:f=>({ velada_id:S.velada.id, nombre:f.nombre.trim(), contacto:f.contacto||null, telefono:f.telefono||null, paquete:f.paquete||null, importe:Number(f.importe)||0, estado:f.estado||'propuesta', notas:f.notas||null }) },
+    leer:f=>{ const e=JSON.parse(f.entregables_json||'{}'); return { velada_id:S.velada.id, nombre:f.nombre.trim(), contacto:f.contacto||null, telefono:f.telefono||null, paquete:f.paquete||null, importe:Number(f.importe)||0, estado:f.estado||'propuesta', notas:f.notas||null, entregables:e.ent||[], entregados:e.hecho||[] }; } },
   gasto:{ tabla:'f2o_gastos', titulo:'Gasto', fila:id=>S.gastos.find(x=>x.id===id), html:g=>`
     ${campo('Qué es',inp('concepto',g?.concepto,'required placeholder="Alquiler del pabellón, ambulancia…"'))}
     <div class="dos">${campo('Proveedor',inp('proveedor',g?.proveedor))}${campo('Importe (€)',inp('importe',g?.importe??0,'type="number" inputmode="decimal" min="0"'))}</div>
@@ -645,6 +757,10 @@ function abrirForm(tipo,id,extra){
   velo.addEventListener('click',e=>{ if(e.target===velo) cerrar(); });
   form.querySelector('.x').onclick=cerrar;
   form.querySelectorAll('[data-chips]').forEach(g=>g.addEventListener('click',e=>{ const b=e.target.closest('.chip'); if(!b) return; g.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b)); g.nextElementSibling.value=b.dataset.v; }));
+  form.querySelectorAll('[data-entregables]').forEach(g=>g.addEventListener('click',e=>{ const b=e.target.closest('.chip'); if(!b) return; const st=(Number(b.dataset.st)+1)%3; b.dataset.st=st; const n=b.dataset.e;
+    b.classList.toggle('on',st===1); b.style.cssText=st===2?'background:var(--ok);border-color:var(--ok);color:#000':''; b.textContent=(st===2?'✓ ':'')+n;
+    const ent=[...g.querySelectorAll('.chip')].filter(x=>x.dataset.st!=='0').map(x=>x.dataset.e), hecho=[...g.querySelectorAll('.chip')].filter(x=>x.dataset.st==='2').map(x=>x.dataset.e);
+    g.nextElementSibling.value=JSON.stringify({ent,hecho}); }));
   form.querySelectorAll('select[data-pel]').forEach(s=>s.addEventListener('change',()=>{ const n=form.querySelector(`[name="${s.name}__nuevo"]`); n.classList.toggle('oculto',s.value!=='__nuevo'); if(s.value==='__nuevo') n.focus(); }));
   const bb=form.querySelector('[data-borrar]'); if(bb) bb.onclick=async()=>{ if(!confirmarDoble(bb,'¿Seguro? Pulsa otra vez')) return; bb.disabled=true;
     try{ await borrar(F.tabla,id); cerrar(); toast('Borrado'); await cargarTodo(); }catch(e){ bb.disabled=false; err.textContent=textoError(e); } };
