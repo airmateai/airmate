@@ -138,7 +138,7 @@ body.embed .toast{top:60px}
 </head>
 <body>
 <div class="cargando" id="cargando"><div><b>FIGHT2ONE</b>Montando el pabellón…</div></div>
-<div id="sin-sesion" hidden style="position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:#000;color:#a0a0a5;text-align:center;padding:24px">Entra en el panel de Fight2One para ver el pabellón.</div>
+<div id="sin-sesion" style="position:fixed;inset:0;z-index:30;display:none;place-items:center;background:#000;color:#a0a0a5;text-align:center;padding:24px">Entra en el panel de Fight2One para ver el pabellón.</div>
 <canvas id="escena" tabindex="0" aria-label="Pabellón en 3D de la velada. En vista aérea arrastra para girar y pellizca para acercarte; en modo caminar muévete con el joystick o las teclas WASD. Toca cualquier cosa para ver sus datos. Todo está también en la lista."></canvas>
 
 <header class="top">
@@ -225,12 +225,12 @@ const CIUDAD_IATA={TFN:'Tenerife Norte',TFS:'Tenerife Sur',LPA:'Gran Canaria',AC
 const SIN_COMBATE={a:{nom:'Por decidir'},b:{nom:'Por decidir'},mod:'',titulo:'',peso:'',estado:'pendiente'};
 async function cargarDatos(){
   const { data:{ session } }=await sb.auth.getSession();
-  if(!session){ document.getElementById('sin-sesion').hidden=false; document.getElementById('cargando').classList.add('fuera'); throw new Error('sin sesión'); }
+  if(!session){ document.getElementById('sin-sesion').style.display='grid'; document.getElementById('cargando').classList.add('fuera'); throw new Error('sin sesión'); }
   const q=async p=>{ const { data, error }=await p; if(error) throw error; return data||[]; };
   const id=new URLSearchParams(location.search).get('velada');
   const veladas=await q(sb.from('f2o_veladas').select('*').order('fecha',{ascending:false,nullsFirst:true}));
   const v=veladas.find(x=>x.id===id)||veladas.find(x=>x.estado==='preparacion')||veladas[0];
-  if(!v){ const d=document.getElementById('sin-sesion'); d.textContent='Todavía no hay ninguna velada. Créala en el panel.'; d.hidden=false; document.getElementById('cargando').classList.add('fuera'); throw new Error('sin velada'); }
+  if(!v){ const d=document.getElementById('sin-sesion'); d.textContent='Todavía no hay ninguna velada. Créala en el panel.'; d.style.display='grid'; document.getElementById('cargando').classList.add('fuera'); throw new Error('sin velada'); }
   const [pels,com,pap,via,ent,pat,gas,equ,tar,mer]=await Promise.all([
     q(sb.from('f2o_peleadores').select('*')), q(sb.from('f2o_combates').select('*').eq('velada_id',v.id).order('orden').order('created_at')),
     q(sb.from('f2o_papeles').select('*').eq('velada_id',v.id)), q(sb.from('f2o_viajes').select('*').eq('velada_id',v.id)),
