@@ -853,16 +853,16 @@ function pintar(){
     ASIENTOS.forEach((a,i)=>{ const hay=true, ocu=rangoG[i]<nG; ponerInst(sillas,i,a.x,a.y,a.z,a.rot,hay?1:0); ponerInst(cuerpos,i,a.x,a.y,a.z,a.rot,ocu&&!RESALTAR?1:0); ponerInst(cabezas,i,a.x,a.y,a.z,a.rot,ocu&&!RESALTAR?1:0);
       sillas.setColorAt(i,RESALTAR?(ocu?COLOR_SILLA_ORO:COLOR_APAGADO):colorSilla[i]); cuerpos.setColorAt(i,colorRopa[i]); cabezas.setColorAt(i,colorPiel[i]); });
     ESCALONES.forEach((s,i)=>ponerInst(escalones,i,s.x,s.y+0.11,s.z,s.rot,1));
-    [sillas,cuerpos,cabezas,escalones].forEach(m=>{ m.instanceMatrix.needsUpdate=true; if(m.instanceColor) m.instanceColor.needsUpdate=true; });
+    [sillas,cuerpos,cabezas,escalones].forEach(m=>{ m.instanceMatrix.needsUpdate=true; if(m.instanceColor) m.instanceColor.needsUpdate=true; m.computeBoundingSphere(); m.computeBoundingBox(); });
     const nR=Math.round(fR*RING.length), hayPista=v.recinto>0;
     RING.forEach((s,i)=>{ const ocu=hayPista&&rangoR[i]<nR; ponerInst(sillasR,i,s.x,0,s.z,s.rot,hayPista?1:0); ponerInst(cuerposR,i,s.x,0,s.z,s.rot,ocu&&!RESALTAR?1:0); ponerInst(cabezasR,i,s.x,0,s.z,s.rot,ocu&&!RESALTAR?1:0);
       sillasR.setColorAt(i,RESALTAR&&ocu?COLOR_SILLA_ORO:COLOR_SILLA); cuerposR.setColorAt(i,ropaR[i]); cabezasR.setColorAt(i,pielR[i]); });
-    [sillasR,cuerposR,cabezasR].forEach(m=>{ m.instanceMatrix.needsUpdate=true; m.instanceColor.needsUpdate=true; });
+    [sillasR,cuerposR,cabezasR].forEach(m=>{ m.instanceMatrix.needsUpdate=true; m.instanceColor.needsUpdate=true; m.computeBoundingSphere(); m.computeBoundingBox(); });
     const nM=Math.round(fM*MESAS.length); grupoMesas.visible=z.mesas.c>0&&hayPista;
     MESAS.forEach((t,k)=>mantel[k].material.color.set(k<nM?'#ecebe6':'#2e2e32'));
     SM.forEach((s,i)=>{ const ocu=s.mesa<nM; ponerInst(sillasM,i,s.x,0,s.z,s.rot,1); ponerInst(cuerposM,i,s.x,0,s.z,s.rot,ocu&&!RESALTAR?1:0); ponerInst(cabezasM,i,s.x,0,s.z,s.rot,ocu&&!RESALTAR?1:0);
       sillasM.setColorAt(i,RESALTAR&&ocu?COLOR_SILLA_ORO:COLOR_SILLA); cuerposM.setColorAt(i,ropaM[i]); cabezasM.setColorAt(i,pielM[i]); });
-    [sillasM,cuerposM,cabezasM].forEach(m=>{ m.instanceMatrix.needsUpdate=true; m.instanceColor.needsUpdate=true; });
+    [sillasM,cuerposM,cabezasM].forEach(m=>{ m.instanceMatrix.needsUpdate=true; m.instanceColor.needsUpdate=true; m.computeBoundingSphere(); m.computeBoundingBox(); });
   }
   // 2 · Jaula, peleadores y carteles
   const seg=v.combates*8;
@@ -942,7 +942,7 @@ const VISTAS={
   superior:{nom:'Superior',p:[0.1,96,0.1],t:[0,0,0],a:[0,8.6],m:[0,1.5,0],grupo:'vista'},
   jaula:{nom:'Ring',p:[9,6,11],t:[0,1.4,0],a:[8.4,3.2],m:[0,1.6,0],grupo:'vista'},
   exterior:{nom:'Exterior',p:[96,52,118],t:[0,9,0],a:[14,0],m:[0,1.5,0],grupo:'vista'},
-  gradas:{nom:'Gradas',p:[6,7,6],t:[0,5,-26],a:[2,-12],m:[0,5,-26],grupo:'Público'},
+  gradas:{nom:'Gradas',p:[0,13,12],t:[0,6,-27],a:[2,-12],m:[0,5,-26],grupo:'Público'},
   vip:{nom:'Zona VIP',p:[-2,4.5,4],t:[-6,0.5,10.6],a:[-3.8,8.6],m:[-7,0.8,10.6],grupo:'Público'},
   taquilla:{nom:'Taquilla',p:frente(-34,17,8,3.2),t:[-34,2.5,17],a:[-30,15],m:[-34,2.5,17],grupo:'Público'},
   merch:{nom:'Merch',p:frente(-27,27,7,3),t:[-27,2,27],a:[-24.5,24.5],m:[-27,2,27],grupo:'Público'},
@@ -1172,7 +1172,7 @@ function seleccionar(hit){ selCaja.visible=selAsiento.visible=false; SEL=null; i
   const o=hit.object; if(o.isInstancedMesh&&hit.instanceId!=null&&(o===sillas||o===cuerpos||o===cabezas)){ const a=ASIENTOS[hit.instanceId]; selAsiento.position.set(a.x,a.y+0.45,a.z); selAsiento.visible=true; SEL={tipo:'asiento',i:hit.instanceId}; return a; }
   const raiz=o.userData.raiz||o; if(raiz===pista||raiz.isInstancedMesh) return null;
   selCaja.box.setFromObject(raiz); if(!selCaja.box.isEmpty()&&selCaja.box.getSize(new THREE.Vector3()).length()<28){ selCaja.visible=true; SEL={tipo:'objeto',raiz}; } return null; }
-function tocar(hit){ const a=seleccionar(hit); if(a){ abrirAsiento(hit.instanceId); return; } abrirFicha(hit.object.userData.card); }
+function tocar(hit){ const a=seleccionar(hit); if(a){ abrirAsiento(hit.instanceId); if(MODO==='aire'){ const l=Math.hypot(a.x,a.z), t=new THREE.Vector3(a.x,a.y+0.4,a.z), p=new THREE.Vector3(a.x-a.x/l*9,a.y+4.5,a.z-a.z/l*9); vuelo={ p0:camera.position.clone(), t0:controls.target.clone(), p, t, ini:performance.now(), dur:900 }; } return; } abrirFicha(hit.object.userData.card); }
 function abrirAsiento(i){ const a=ASIENTOS[i], ed=ED[ACT], z=ETAPAS.find(x=>x.id==='entradas').zonas, nG=Math.round(cl(z.grada.f)*ASIENTOS.length), vendida=rangoG[i]<nG;
   const enFila=ASIENTOS.filter(x=>x.fila===a.fila&&x.sector===a.sector), nAs=enFila.indexOf(a)+1, tipos=ed.entradas.filter(t=>t.zona==='grada');
   const f=$('#ficha'); f.dataset.k='asiento';
