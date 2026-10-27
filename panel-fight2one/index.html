@@ -203,7 +203,7 @@ function skyscanner(origen,velada){ if(!origen||!AEROPUERTOS[origen]) return '';
   return `https://www.skyscanner.es/transporte/vuelos/${origen.toLowerCase()}/tfn/${yymmdd}/?adultsv2=1&cabinclass=economy&rtn=0`; }
 
 /* ───────── Estado ───────── */
-const S={ yo:null, veladas:[], velada:null, peleadores:[], combates:[], papeles:[], viajes:[], entradas:[], patro:[], gastos:[], equipo:[], tareas:[], merch:[] };
+const S={ yo:null, veladas:[], velada:null, peleadores:[], combates:[], papeles:[], viajes:[], entradas:[], patro:[], gastos:[], equipo:[], tareas:[], merch:[], archivos:[] };
 const TIPOS_PAPEL=['Contrato','Licencia','Certificado médico'];
 let SECCION='inicio';
 try{ SECCION=localStorage.getItem('f2o_seccion')||'inicio'; }catch(e){}
@@ -249,6 +249,7 @@ async function cargarTodo(){
   const v=S.velada?.id;
   try{
     S.peleadores=await q(sb.from('f2o_peleadores').select('*').order('nombre'));
+    S.archivos=await q(sb.from('f2o_archivos').select('*').order('created_at',{ascending:false}));
     if(!v){ ['combates','papeles','viajes','entradas','patro','gastos','equipo','tareas','merch'].forEach(k=>S[k]=[]); pintar(); return; }
     const [c,p,vi,en,pa,g,eq,t,m]=await Promise.all([
       q(sb.from('f2o_combates').select('*').eq('velada_id',v).order('orden').order('created_at')),
@@ -266,7 +267,7 @@ async function cargarTodo(){
 }
 let _rt=null, _rtT=null;
 function suscribir(){ if(_rt) return; _rt=sb.channel('f2o');
-  ['f2o_veladas','f2o_peleadores','f2o_combates','f2o_papeles','f2o_viajes','f2o_entradas','f2o_patrocinadores','f2o_gastos','f2o_equipo','f2o_tareas','f2o_merch'].forEach(t=>_rt.on('postgres_changes',{event:'*',schema:'public',table:t},()=>{ clearTimeout(_rtT); _rtT=setTimeout(()=>{ if(!$('.velo')) (t==='f2o_veladas'?cargarVeladas():cargarTodo()); },700); }));
+  ['f2o_veladas','f2o_peleadores','f2o_combates','f2o_papeles','f2o_viajes','f2o_entradas','f2o_patrocinadores','f2o_gastos','f2o_equipo','f2o_tareas','f2o_merch','f2o_archivos'].forEach(t=>_rt.on('postgres_changes',{event:'*',schema:'public',table:t},()=>{ clearTimeout(_rtT); _rtT=setTimeout(()=>{ if(!$('.velo')) (t==='f2o_veladas'?cargarVeladas():cargarTodo()); },700); }));
   _rt.subscribe(); }
 
 /* ───────── Guardar y borrar (siempre comprobando que se escribió) ───────── */
@@ -332,11 +333,11 @@ function loQueFalta(){
 }
 
 /* ───────── Menús ───────── */
-const SECCIONES=[ ['inicio','🏠','Inicio'],['estadio','🏟️','Pabellón 3D'],['combates','🥊','Combates'],['viajes','✈️','Viajes'],['vuelos3d','🌍','Vuelos 3D'],['dinero','💶','Dinero'],
+const SECCIONES=[ ['inicio','🏠','Inicio'],['estadio','🏟️','Pabellón 3D'],['combates','🥊','Combates'],['viajes','✈️','Viajes'],['vuelos3d','🌍','Vuelos 3D'],['dinero','💶','Dinero'],['archivos','📁','Documentos'],
   ['peleadores','👊','Peleadores'],['equipo','🧑‍⚖️','Equipo'],['tareas','✅','Tareas'],['merch','👕','Merch'],['velada','📅','Velada'] ];
 const ABAJO=['inicio','combates','viajes','dinero','mas'];
 function pintarMenus(){
-  $('#lateral').innerHTML=SECCIONES.map(([k,i,t],n)=>(n===2||n===6?'<div class="sep"></div>':'')+`<button data-s="${k}"><span class="i">${i}</span>${t}</button>`).join('');
+  $('#lateral').innerHTML=SECCIONES.map(([k,i,t],n)=>(n===2||n===7?'<div class="sep"></div>':'')+`<button data-s="${k}"><span class="i">${i}</span>${t}</button>`).join('');
   $('#abajo').innerHTML=ABAJO.map(k=>{ const s=SECCIONES.find(x=>x[0]===k)||['mas','☰','Más']; return `<button data-s="${s[0]}"><span class="i">${s[1]}</span>${s[2]}</button>`; }).join('');
   document.querySelectorAll('[data-s]').forEach(b=>b.addEventListener('click',()=>ir(b.dataset.s)));
 }
@@ -347,7 +348,7 @@ window.ir=ir;
 function pintar(){
   document.querySelectorAll('[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===SECCION||(SECCION!=='inicio'&&!ABAJO.includes(SECCION)&&b.dataset.s==='mas'&&b.closest('.abajo'))));
   const m=$('#main'); m.classList.toggle('lleno',SECCION==='estadio'||SECCION==='vuelos3d');
-  if(!S.velada&&!['peleadores','mas'].includes(SECCION)){ m.innerHTML=`<div class="vacio" style="margin-top:30px"><b>Aún no hay ninguna velada</b>Crea la primera para empezar.<br><br><button class="btn acc" onclick="abrirForm('velada')">+ Nueva velada</button></div>`; return; }
+  if(!S.velada&&!['peleadores','mas','archivos'].includes(SECCION)){ m.innerHTML=`<div class="vacio" style="margin-top:30px"><b>Aún no hay ninguna velada</b>Crea la primera para empezar.<br><br><button class="btn acc" onclick="abrirForm('velada')">+ Nueva velada</button></div>`; return; }
   const f=PANTALLAS[SECCION]||PANTALLAS.inicio; m.innerHTML=f();
 }
 const v_=()=>S.velada;
@@ -404,6 +405,12 @@ const PANTALLAS={
       ${S.gastos.length?`<div class="lista">${S.gastos.map(g=>`<div class="item"><span class="t" onclick="abrirForm('gasto','${g.id}')" style="cursor:pointer"><b>${esc(g.concepto)}</b><small>${esc([g.proveedor,g.vence?'paga antes del '+fechaCorta(g.vence):''].filter(Boolean).join(' · '))}</small></span><span class="d">${eur(g.importe)}<br>${g.pagado?'<span class="tag ok">Pagado</span>':`<button class="btn acc peq" style="margin-top:4px" onclick="marcarPagado('${g.id}')">Pagar ✓</button>`}</span></div>`).join('')}</div>`:'<div class="vacio">Sin gastos apuntados.</div>'}
       <p class="sub" style="margin-top:14px">También cuentan aquí las bolsas (${eur(d.bolsas)}), el equipo (${eur(d.equipo)}) y los viajes y hoteles (${eur(d.viajes)}).</p>`; },
 
+  archivos(){ const f=FILTRO_ARCH, l=S.archivos.filter(a=>f==='todos'||(f==='peleadores'&&a.peleador_id)||(f==='patro'&&a.patrocinador_id)||(f==='velada'&&!a.peleador_id&&!a.patrocinador_id&&a.velada_id===S.velada?.id));
+    return `<div class="titulo"><h2>DOCUMENTOS</h2><button class="btn acc peq" onclick="abrirSubida()">📎 Subir</button></div>
+      <p class="sub">Contratos, licencias, certificados médicos, acuerdos, seguros, facturas… Solo los veis vosotros.</p>
+      <div class="chip-row" style="margin-bottom:12px">${[['todos','Todo'],['peleadores','Peleadores'],['patro','Patrocinadores'],['velada','Esta velada']].map(([k,t])=>`<button class="chip ${f===k?'on':''}" onclick="filtrarArch('${k}')">${t}</button>`).join('')}</div>
+      ${l.length?`<div class="lista">${l.map(filaArchivo).join('')}</div>`:`<div class="vacio"><b>No hay documentos</b>Sube el primero: puedes hacer una foto con el móvil o elegir un PDF.<br><br><button class="btn acc" onclick="abrirSubida()">📎 Subir documento</button></div>`}`; },
+
   peleadores(){ return `<div class="titulo"><h2>PELEADORES</h2><button class="btn acc peq" onclick="abrirForm('peleador')">+ Peleador</button></div>
       <label class="campo"><input id="buscar-pel" placeholder="Buscar por nombre, país o gimnasio…" oninput="filtrarPel(this.value)"></label>
       <div class="lista" id="lista-pel">${listaPel('')}</div>`; },
@@ -438,6 +445,66 @@ const PANTALLAS={
 function listaPel(f){ f=f.toLowerCase(); const l=S.peleadores.filter(p=>!f||[p.nombre,p.apodo,p.pais,p.gimnasio].join(' ').toLowerCase().includes(f));
   return l.length?l.map(p=>`<button class="item" onclick="abrirForm('peleador','${p.id}')"><span class="t"><b>${esc(p.nombre)}${p.apodo?' «'+esc(p.apodo)+'»':''}</b><small>${esc([p.pais,p.gimnasio,p.modalidad,p.peso,p.record].filter(Boolean).join(' · '))}</small></span></button>`).join(''):'<div class="vacio">No hay peleadores.</div>'; }
 window.filtrarPel=f=>{ $('#lista-pel').innerHTML=listaPel(f); };
+
+/* ───────── Documentos (espacio privado f2o-archivos) ───────── */
+let FILTRO_ARCH='todos';
+window.filtrarArch=k=>{ FILTRO_ARCH=k; pintar(); };
+const CATEGORIAS=['Contrato','Licencia','Certificado médico','Acuerdo','Seguro','Factura','Permiso','Pasaporte / DNI','Otro'];
+const tam=b=>b>1048576?(b/1048576).toFixed(1).replace('.',',')+' MB':Math.max(1,Math.round(b/1024))+' KB';
+function dueñoArch(a){ return a.peleador_id?'👊 '+nombrePel(a.peleador_id):a.patrocinador_id?'🤝 '+(S.patro.find(p=>p.id===a.patrocinador_id)?.nombre||'Patrocinador'):'📅 '+(S.veladas.find(v=>v.id===a.velada_id)?.nombre||'General'); }
+function filaArchivo(a){ return `<div class="item"><span class="ic">${/image/.test(a.tipo||'')?'🖼️':/pdf/.test(a.tipo||'')?'📄':'📎'}</span><span class="t"><b>${esc(a.nombre)}</b><small><span class="tag gris">${esc(a.categoria)}</span> ${esc(dueñoArch(a))} · ${fechaCorta(a.created_at)}${a.tamano?' · '+tam(a.tamano):''}${a.subido_por?' · '+esc(a.subido_por):''}</small></span>
+  <span class="d" style="display:flex;gap:6px"><button class="btn peq" onclick="verArchivo('${a.id}')">Ver</button><button class="btn peq peligro" onclick="borrarArchivo('${a.id}',this)" aria-label="Borrar">🗑</button></span></div>`; }
+function archivosDe(campo,id){ return S.archivos.filter(a=>a[campo]===id); }
+function bloqueArchivos(campo,id,pre){ if(!id) return ''; const l=archivosDe(campo,id);
+  return `<div class="bloque"><b>📁 Documentos (${l.length})</b>${l.map(a=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="flex:1;min-width:0;font-size:14px">${esc(a.categoria)} · ${esc(a.nombre)}</span><button type="button" class="btn peq" onclick="verArchivo('${a.id}')">Ver</button></div>`).join('')}
+    <button type="button" class="btn ancho" onclick='abrirSubida(${JSON.stringify(pre).replace(/'/g,"&#39;")})'>📎 Subir documento</button></div>`; }
+window.verArchivo=async id=>{ const a=S.archivos.find(x=>x.id===id); if(!a) return; const w=window.open('','_blank');
+  const { data, error }=await sb.storage.from('f2o-archivos').createSignedUrl(a.ruta,600);
+  if(error||!data?.signedUrl){ w?.close(); toast('No se pudo abrir: '+textoError(error),true); return; } if(w) w.location=data.signedUrl; else location.href=data.signedUrl; };
+window.borrarArchivo=async(id,btn)=>{ if(!confirmarDoble(btn,'¿Seguro?')) return; const a=S.archivos.find(x=>x.id===id); btn.disabled=true;
+  try{ const r=await sb.storage.from('f2o-archivos').remove([a.ruta]); if(r.error) throw r.error; await borrar('f2o_archivos',id); S.archivos=S.archivos.filter(x=>x.id!==id); pintar(); toast('Documento borrado'); }
+  catch(e){ btn.disabled=false; toast('No se pudo borrar: '+textoError(e),true); } };
+function abrirSubida(pre={}){
+  const pels=peleadoresVelada(), otros=S.peleadores.filter(p=>!pels.includes(p.id));
+  const velo=document.createElement('div'); velo.className='velo';
+  velo.innerHTML=`<form class="form" novalidate><div class="fcab"><h3>Subir documento</h3><button type="button" class="x" aria-label="Cerrar">✕</button></div>
+    <label class="campo"><span>Archivo (foto o PDF, hasta 25 MB)</span><input type="file" name="archivo" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" required></label>
+    <label class="campo"><span>Qué es</span>${chips('categoria',CATEGORIAS.map(c=>[c,c]),pre.categoria||'Contrato')}</label>
+    <label class="campo"><span>De quién</span><select name="dueno">
+      <option value="velada:${S.velada?.id||''}">📅 De la velada (${esc(S.velada?.nombre||'general')})</option>
+      ${pels.length?`<optgroup label="Peleadores de esta velada">${pels.map(id=>`<option value="pel:${id}" ${pre.peleador_id===id?'selected':''}>👊 ${esc(nombrePel(id))}</option>`).join('')}</optgroup>`:''}
+      ${S.patro.length?`<optgroup label="Patrocinadores">${S.patro.map(p=>`<option value="pat:${p.id}" ${pre.patrocinador_id===p.id?'selected':''}>🤝 ${esc(p.nombre)}</option>`).join('')}</optgroup>`:''}
+      ${otros.length?`<optgroup label="Otros peleadores">${otros.map(p=>`<option value="pel:${p.id}" ${pre.peleador_id===p.id?'selected':''}>👊 ${esc(p.nombre)}</option>`).join('')}</optgroup>`:''}
+    </select></label>
+    <label class="campo"><span>Nombre (opcional)</span><input name="nombre" placeholder="Si lo dejas vacío, se usa el nombre del archivo"></label>
+    <p class="error" role="alert"></p><div class="pie"><button class="btn acc" type="submit">Subir</button></div></form>`;
+  document.body.appendChild(velo); document.body.style.overflow='hidden';
+  const form=velo.querySelector('form'), err=form.querySelector('.error'), cerrar=()=>{ velo.remove(); if(!document.querySelector('.velo')) document.body.style.overflow=''; };
+  velo.addEventListener('click',e=>{ if(e.target===velo) cerrar(); }); form.querySelector('.x').onclick=cerrar;
+  form.querySelectorAll('[data-chips]').forEach(g=>g.addEventListener('click',e=>{ const b=e.target.closest('.chip'); if(!b) return; g.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b)); g.nextElementSibling.value=b.dataset.v; }));
+  form.addEventListener('submit',async e=>{ e.preventDefault(); err.textContent='';
+    const files=[...form.archivo.files]; if(!files.length){ err.textContent='Elige un archivo'; return; }
+    const grande=files.find(f=>f.size>25*1048576); if(grande){ err.textContent=`«${grande.name}» pesa más de 25 MB`; return; }
+    const cat=form.categoria.value, [tipo,did]=form.dueno.value.split(':'), btn=form.querySelector('[type=submit]'); btn.disabled=true;
+    let hechos=0;
+    try{ for(const f of files){ btn.textContent=`Subiendo ${hechos+1} de ${files.length}…`;
+        const limpio=f.name.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w.\-]+/g,'-').slice(-80);
+        const ruta=`${S.velada?.id||'general'}/${crypto.randomUUID()}-${limpio}`;
+        const up=await sb.storage.from('f2o-archivos').upload(ruta,f,{contentType:f.type||'application/octet-stream',upsert:false}); if(up.error) throw up.error;
+        try{ const fila=await guardar('f2o_archivos',{ velada_id:S.velada?.id||null, peleador_id:tipo==='pel'?did:null, patrocinador_id:tipo==='pat'?did:null, categoria:cat,
+            nombre:(files.length===1&&form.nombre.value.trim())||f.name, ruta, tamano:f.size, tipo:f.type||null, subido_por:S.yo?.nombre||null }); S.archivos.unshift(fila); }
+        catch(e2){ await sb.storage.from('f2o-archivos').remove([ruta]); throw e2; }
+        hechos++; }
+      // un papel subido pasa a «recibido» para revisarlo
+      if(tipo==='pel'&&TIPOS_PAPEL.includes(cat)&&S.velada&&peleadoresVelada().includes(did)){ const ya=S.papeles.find(x=>x.peleador_id===did&&x.tipo===cat);
+        if(!ya||ya.estado==='falta'){ const u=await sb.from('f2o_papeles').upsert({velada_id:S.velada.id,peleador_id:did,tipo:cat,estado:'recibido'},{onConflict:'velada_id,peleador_id,tipo'}).select(); if(!u.error&&u.data?.[0]){ S.papeles=S.papeles.filter(x=>x.id!==u.data[0].id).concat(u.data[0]); } } }
+        // si la ficha del combate sigue abierta, que su selector no lo devuelva a «Falta» al guardar
+        document.querySelectorAll('.velo form').forEach(fm=>['a','b'].forEach(l=>{ const sel=fm.querySelector(`[name="peleador_${l}"]`), h=fm.querySelector(`[name="papel_${l}_${cat}"]`);
+          if(sel&&h&&sel.value===did&&h.value==='falta'){ h.value='recibido'; h.previousElementSibling.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.v==='recibido')); } }));
+      cerrar(); toast(hechos>1?`✓ ${hechos} documentos subidos`:'✓ Documento subido'); pintar();
+    }catch(e3){ btn.disabled=false; btn.textContent='Subir'; err.textContent=(hechos?`Se subieron ${hechos}, pero falló uno: `:'No se pudo subir: ')+textoError(e3); } });
+}
+window.abrirSubida=abrirSubida;
 
 /* Acciones rápidas */
 window.sumarEntradas=async(id,n)=>{ const e=S.entradas.find(x=>x.id===id); const v=Math.max(0,Math.min(e.cupo||1e9,e.vendidas+n)); try{ const r=await guardar('f2o_entradas',{vendidas:v},id); Object.assign(e,r); pintar(); toast(`${e.tipo}: ${v} vendidas`); }catch(err){ toast(textoError(err),true); } };
@@ -479,6 +546,7 @@ const FORMS={
     <div class="dos">${campo('Peso',inp('peso',p?.peso,'placeholder="70 kg"'))}${campo('Récord',inp('record',p?.record,'placeholder="12-3-0"'))}</div>
     ${campo('Foto (enlace)',inp('foto_url',p?.foto_url,'type="url" placeholder="https://…"'))}
     ${campo('Notas',`<textarea name="notas">${esc(p?.notas||'')}</textarea>`)}
+    ${p?bloqueArchivos('peleador_id',p.id,{peleador_id:p.id}):''}
     ${p?.telefono?`<a class="btn ancho" href="https://wa.me/${esc(p.telefono.replace(/[^\d]/g,''))}" target="_blank" rel="noopener">💬 Escribir por WhatsApp</a>`:''}`,
     leer:f=>({ nombre:f.nombre.trim(), apodo:f.apodo||null, pais:f.pais||null, ciudad:f.ciudad||null, gimnasio:f.gimnasio||null, telefono:f.telefono||null, email:f.email||null, modalidad:f.modalidad||null, peso:f.peso||null, record:f.record||null, foto_url:f.foto_url||null, notas:f.notas||null }) },
   combate:{ tabla:'f2o_combates', titulo:'Combate', fila:id=>S.combates.find(x=>x.id===id), html:c=>`
@@ -492,7 +560,7 @@ const FORMS={
     <div class="bloque"><b>💶 Bolsas</b><div class="dos">${campo('Bolsa rojo (€)',inp('bolsa_a',c?.bolsa_a??0,'type="number" inputmode="decimal" min="0"'))}${campo('Ya pagado al rojo',inp('pagado_a',c?.pagado_a??0,'type="number" inputmode="decimal" min="0"'))}</div>
       <div class="dos">${campo('Bolsa azul (€)',inp('bolsa_b',c?.bolsa_b??0,'type="number" inputmode="decimal" min="0"'))}${campo('Ya pagado al azul',inp('pagado_b',c?.pagado_b??0,'type="number" inputmode="decimal" min="0"'))}</div></div>
     <div class="bloque"><b>📄 Papeles</b>${['a','b'].map(lado=>{ const id=c?.[lado==='a'?'peleador_a':'peleador_b']; return `<div style="margin-bottom:10px"><div style="font-size:13px;color:var(--mut);font-weight:700;margin-bottom:6px">${lado==='a'?'🔴 Rojo':'🔵 Azul'}${id?' · '+esc(nombrePel(id)):' (elige primero al peleador)'}</div>
-      ${TIPOS_PAPEL.map(t=>{ const f=id?S.papeles.find(x=>x.peleador_id===id&&x.tipo===t):null; return `<div style="margin-bottom:8px"><div style="font-size:13px;margin-bottom:4px">${t}</div>${chips(`papel_${lado}_${t}`,[['falta','Falta'],['recibido','Recibido'],['ok','Revisado ✓']],f?.estado||'falta')}</div>`; }).join('')}</div>`; }).join('')}</div>
+      ${TIPOS_PAPEL.map(t=>{ const f=id?S.papeles.find(x=>x.peleador_id===id&&x.tipo===t):null; const docs=id?S.archivos.filter(a=>a.peleador_id===id&&a.categoria===t):[]; return `<div style="margin-bottom:8px"><div style="font-size:13px;margin-bottom:4px;display:flex;gap:8px;align-items:center">${t}${docs.map(a=>`<button type="button" class="btn peq" onclick="verArchivo('${a.id}')">📄 Ver</button>`).join('')}${id?`<button type="button" class="btn peq" onclick='abrirSubida({peleador_id:"${id}",categoria:"${t}"})'>📎 Subir</button>`:''}</div>${chips(`papel_${lado}_${t}`,[['falta','Falta'],['recibido','Recibido'],['ok','Revisado ✓']],f?.estado||'falta')}</div>`; }).join('')}</div>`; }).join('')}</div>
     ${campo('Ganador',chips('ganador',[['','Sin resultado'],['a','🔴 Rojo'],['b','🔵 Azul'],['empate','Empate']],c?.ganador||''))}
     ${campo('Cómo ganó',inp('metodo',c?.metodo,'placeholder="KO, decisión, sumisión…"'))}
     ${campo('Notas',`<textarea name="notas">${esc(c?.notas||'')}</textarea>`)}`,
@@ -533,6 +601,7 @@ const FORMS={
     <div class="dos">${campo('Paquete',inp('paquete',p?.paquete,'placeholder="Principal, básico, canje…"'))}${campo('Importe (€)',inp('importe',p?.importe??0,'type="number" inputmode="decimal" min="0"'))}</div>
     ${campo('Estado',chips('estado',[['propuesta','Propuesta'],['aceptado','Aceptado'],['facturado','Facturado'],['cobrado','Cobrado ✓'],['rechazado','No']],p?.estado||'propuesta'))}
     ${campo('Qué le damos / notas',`<textarea name="notas" placeholder="Logo en la lona, pantallas, redes…">${esc(p?.notas||'')}</textarea>`)}
+    ${p?bloqueArchivos('patrocinador_id',p.id,{patrocinador_id:p.id,categoria:'Acuerdo'}):''}
     ${p?.telefono?`<a class="btn ancho" href="https://wa.me/${esc(p.telefono.replace(/[^\d]/g,''))}" target="_blank" rel="noopener">💬 Escribir por WhatsApp</a>`:''}`,
     leer:f=>({ velada_id:S.velada.id, nombre:f.nombre.trim(), contacto:f.contacto||null, telefono:f.telefono||null, paquete:f.paquete||null, importe:Number(f.importe)||0, estado:f.estado||'propuesta', notas:f.notas||null }) },
   gasto:{ tabla:'f2o_gastos', titulo:'Gasto', fila:id=>S.gastos.find(x=>x.id===id), html:g=>`
