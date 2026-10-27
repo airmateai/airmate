@@ -323,7 +323,8 @@ function irA(p){ if(!p||p.length()<0.5) return; const dist=MOVIL?2.5:2.15; const
 let VIVOS=0;
 // La función pide la clave pública del proyecto (anon), la misma que usa cualquier página de Airmate
 const CLAVE_PUBLICA='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
-async function pedirVuelo(num){ const r=await fetch(SERVIDOR+'?vuelo='+encodeURIComponent(num),{headers:{Authorization:'Bearer '+CLAVE_PUBLICA,apikey:CLAVE_PUBLICA},signal:AbortSignal.timeout(10000)}); if(!r.ok) throw new Error('servidor '+r.status); return r.json(); }
+async function pedirVuelo(num,intento=0){ try{ return await pedirVuelo1(num); }catch(e){ if(intento<1){ await new Promise(r=>setTimeout(r,2500)); return pedirVuelo(num,intento+1); } throw e; } }
+async function pedirVuelo1(num){ const r=await fetch(SERVIDOR+'?vuelo='+encodeURIComponent(num),{headers:{Authorization:'Bearer '+CLAVE_PUBLICA,apikey:CLAVE_PUBLICA},signal:AbortSignal.timeout(10000)}); if(!r.ok) throw new Error('servidor '+r.status); return r.json(); }
 $('#buscar').addEventListener('submit',async e=>{ e.preventDefault(); const num=$('#q').value.trim().toUpperCase(); if(!/^[A-Z0-9 ]{3,10}$/.test(num)){ $('#msg').textContent='Escribe un número de vuelo, por ejemplo IB3936.'; return; }
   $('#msg').textContent='Buscando '+num+'…';
   try{ const d=await pedirVuelo(num);
@@ -335,7 +336,7 @@ $('#buscar').addEventListener('submit',async e=>{ e.preventDefault(); const num=
     AEROPUERTOS['@'+v.id]=[d.lat,d.lon,'Posición actual']; v.desde='@'+v.id; crearRuta(v); const r=RUTAS[RUTAS.length-1]; r.punto.visible=false; r.tubo.visible=false; r.avion.visible=true; colocar(r);
     $('#msg').textContent=`✓ ${num} encontrado: ${new Intl.NumberFormat('es-ES').format(d.altitud_m)} m · ${d.velocidad_kmh} km/h`; abrirFicha(v.id);
     setInterval(async()=>{ try{ const n=await pedirVuelo(num); if(n.encontrado){ v.live=n; if(SEL===v.id) abrirFicha(v.id); } }catch(_){} },30000);
-  }catch(err){ $('#msg').innerHTML='El servidor de vuelos aún no está activado. <b>La posición de los peleadores se calcula por horario.</b>'; }
+  }catch(err){ $('#msg').textContent=/servidor 5/.test(err?.message||'')?'El servicio de vuelos está saturado ahora mismo. Prueba otra vez en un minuto.':'No hay conexión con el servicio de vuelos. Revisa internet y prueba otra vez.'; }
 });
 
 /* Vuelos de los peleadores en directo (cada minuto, solo cerca de su hora) */
