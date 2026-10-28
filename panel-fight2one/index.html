@@ -10,6 +10,7 @@
 <title>Fight2One · Panel</title>
 <link rel="icon" href="logo.jpg">
 <link rel="apple-touch-icon" href="logo.jpg">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter+Tight:wght@400;500;600;700;800&display=swap">
@@ -41,6 +42,10 @@ h1,h2,h3{margin:0}
 .btn.peq{min-height:38px;padding:8px 12px;font-size:13.5px;border-radius:11px}
 .btn:disabled{opacity:.5}
 .error{color:var(--red);font-size:13.5px;min-height:18px;margin:6px 0 0}
+.aviso-app{font-size:13px;color:var(--amb);background:var(--ambsoft);border-radius:12px;padding:10px 12px;margin:10px 0 0;text-align:left}
+.instalar{display:flex;gap:12px;align-items:center;background:var(--p1);border:1px solid #d4a72c55;border-radius:var(--r);padding:12px 14px;margin-bottom:14px}
+.instalar p{margin:0;font-size:14px;color:var(--mut)}
+.instalar b{color:var(--ink)}
 /* Estructura */
 #app{min-height:100vh}
 .cab{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:rgba(0,0,0,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
@@ -150,10 +155,11 @@ main.lleno{max-width:none;padding:0}
     <img src="logo.jpg" alt="Fight2One">
     <h1>FIGHT2ONE</h1>
     <p>Panel de las veladas</p>
-    <label class="campo"><span>Usuario</span><input id="e-usuario" autocomplete="username" autocapitalize="none" required></label>
-    <label class="campo"><span>Contraseña</span><input id="e-clave" type="password" autocomplete="current-password" required></label>
+    <label class="campo"><span>Usuario</span><input id="e-usuario" name="username" autocomplete="username" autocapitalize="none" required></label>
+    <label class="campo"><span>Contraseña</span><input id="e-clave" name="password" type="password" autocomplete="current-password" required></label>
     <button class="btn acc ancho" id="e-btn">Entrar</button>
     <p class="error" id="e-error" role="alert"></p>
+    <p class="aviso-app" id="aviso-app" hidden></p>
   </form>
 </div>
 
@@ -211,12 +217,25 @@ let SECCION='inicio';
 try{ SECCION=localStorage.getItem('f2o_seccion')||'inicio'; }catch(e){}
 
 /* ───────── Entrar / salir ───────── */
+// Enlace llave: …/panel-fight2one/#llave=XXXX entra solo (la llave no sale del navegador: lo que va tras «#» no se envía a ningún servidor)
+const aB64=t=>btoa(unescape(encodeURIComponent(t))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const deB64=t=>decodeURIComponent(escape(atob(t.replace(/-/g,'+').replace(/_/g,'/'))));
+async function entrarConLlave(){ const m=location.hash.match(/llave=([\w-]+)/); if(!m) return;
+  history.replaceState(null,'',location.pathname+location.search);
+  try{ const {u,p}=JSON.parse(deB64(m[1])); const { data:{ session } }=await sb.auth.getSession(); if(session&&session.user.email===u) return;
+    const { error }=await sb.auth.signInWithPassword({ email:u, password:p }); if(error) $('#e-error').textContent='El enlace de acceso ya no vale: pide uno nuevo.'; }
+  catch(e){ $('#e-error').textContent='El enlace de acceso no es válido.'; } }
+// Navegadores de WhatsApp, Instagram o Facebook: borran la sesión al cerrarse
+const EN_APP=/Instagram|FBAN|FBAV|WhatsApp|Line\//i.test(navigator.userAgent);
+const INSTALADA=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+if(EN_APP){ $('#aviso-app').hidden=false; $('#aviso-app').innerHTML='Estás dentro de WhatsApp o Instagram, que no guardan la sesión. Toca <b>⋯ → Abrir en el navegador</b> (Safari o Chrome) para que se quede guardada.'; }
 $('#form-entrada').addEventListener('submit',async e=>{ e.preventDefault(); const btn=$('#e-btn'), err=$('#e-error');
   let u=$('#e-usuario').value.trim().toLowerCase(); if(!u.includes('@')) u+=DOMINIO_USUARIO;
   btn.disabled=true; err.textContent='';
   const { error }=await sb.auth.signInWithPassword({ email:u, password:$('#e-clave').value });
   btn.disabled=false;
   if(error){ err.textContent=/Invalid login/i.test(error.message)?'Usuario o contraseña incorrectos.':textoError(error); return; }
+  try{ if(window.PasswordCredential) await navigator.credentials.store(new PasswordCredential({ id:$('#e-usuario').value.trim(), password:$('#e-clave').value, name:$('#e-usuario').value.trim() })); }catch(_){}
   arrancar(); });
 $('#btn-yo').addEventListener('click',async()=>{ if(!confirmarDoble($('#btn-yo'),'¿Salir? Pulsa otra vez')) return; await sb.auth.signOut(); location.reload(); });
 function confirmarDoble(btn,txt){ if(btn.dataset.ok==='1') return true; const prev=btn.textContent; btn.dataset.ok='1'; btn.textContent=txt; setTimeout(()=>{ btn.dataset.ok=''; btn.textContent=prev; },3000); return false; }
@@ -343,9 +362,12 @@ function loQueFalta(){
   return out.sort((a,b)=>b.urg-a.urg);
 }
 
+const MOVIL_PANEL=matchMedia('(max-width: 899px)').matches||matchMedia('(pointer: coarse)').matches;
+function oculto(k){ try{ return localStorage.getItem('f2o_oculto_'+k)==='1'; }catch(e){ return false; } }
+window.ocultar=k=>{ try{ localStorage.setItem('f2o_oculto_'+k,'1'); }catch(e){} pintar(); };
 /* ───────── Menús ───────── */
 const SECCIONES=[ ['inicio','🏠','Inicio'],['estadio','🏟️','Pabellón 3D'],['combates','🥊','Combates'],['pesaje','⚖️','Pesaje'],['pagos','💸','Pagos a peleadores'],['viajes','✈️','Viajes'],['vuelos3d','🌍','Vuelos 3D'],['dinero','💶','Dinero'],['archivos','📁','Documentos'],
-  ['dia','⏱️','Día de la velada'],['mensajes','💬','Mensajes'],['peleadores','👊','Peleadores'],['equipo','🧑‍⚖️','Equipo'],['tareas','✅','Tareas'],['merch','👕','Merch'],['velada','📅','Velada'],['informe','🖨️','Informe'] ];
+  ['dia','⏱️','Día de la velada'],['mensajes','💬','Mensajes'],['peleadores','👊','Peleadores'],['equipo','🧑‍⚖️','Equipo'],['tareas','✅','Tareas'],['merch','👕','Merch'],['velada','📅','Velada'],['informe','🖨️','Informe'],['acceso','🔗','Enlaces de acceso'] ];
 const ABAJO=['inicio','combates','viajes','dinero','mas'];
 function pintarMenus(){
   $('#lateral').innerHTML=SECCIONES.map(([k,i,t],n)=>(n===2||n===9?'<div class="sep"></div>':'')+`<button data-s="${k}"><span class="i">${i}</span>${t}</button>`).join('');
@@ -365,7 +387,7 @@ function pintar(){
 const v_=()=>S.velada;
 const PANTALLAS={
   inicio(){ const v=v_(), p=progreso(), dias=diasHasta(v.fecha), falta=loQueFalta(), d=dinero();
-    return `<div class="portada"><div class="dona"><svg width="86" height="86" viewBox="0 0 86 86"><circle cx="43" cy="43" r="36" fill="none" stroke="#2a2a2d" stroke-width="9"/><circle cx="43" cy="43" r="36" fill="none" stroke="#d4a72c" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(p*226).toFixed(1)} 227"/></svg><b>${Math.round(p*100)}%</b></div>
+    return `${!INSTALADA&&MOVIL_PANEL&&!oculto('instalar')?`<div class="instalar"><span style="font-size:26px">📲</span><p><b>Ponlo como app en tu móvil</b><br>${/iPhone|iPad/.test(navigator.userAgent)?'En Safari: botón Compartir → «Añadir a pantalla de inicio».':'En Chrome: menú ⋮ → «Añadir a pantalla de inicio».'} Así se abre directo y no te pide la contraseña.</p><button class="btn peq" onclick="ocultar('instalar')">✕</button></div>`:''}<div class="portada"><div class="dona"><svg width="86" height="86" viewBox="0 0 86 86"><circle cx="43" cy="43" r="36" fill="none" stroke="#2a2a2d" stroke-width="9"/><circle cx="43" cy="43" r="36" fill="none" stroke="#d4a72c" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(p*226).toFixed(1)} 227"/></svg><b>${Math.round(p*100)}%</b></div>
       <div><h1>${esc(v.nombre)}</h1><p>${v.fecha?`${fechaLarga(v.fecha)} · ${horaCorta(v.fecha)}`:'Sin fecha'}${v.recinto?' · '+esc(v.recinto):''}</p><p style="color:var(--acc);font-weight:800">${v.estado==='cerrada'?'Velada celebrada':dias==null?'':dias>0?`Faltan ${dias} días`:dias===0?'¡Es hoy!':'Ya pasó'}</p></div></div>
     <div class="atajos">
       <button class="atajo" onclick="ir('estadio')"><span class="i">🏟️</span><b>Pabellón 3D</b><small>Se construye con lo que apuntas</small></button>
@@ -377,8 +399,8 @@ const PANTALLAS={
     ${falta.length?`<div class="lista falta">${falta.map(x=>`<button class="item ${x.urg?'urg':''}" onclick="${x.accion}"><span class="ic">${x.ic}</span><span class="t"><b>${esc(x.t)}</b><small>${esc(x.sub)}</small></span>${x.urg?'<span class="tag no">Urgente</span>':''}</button>`).join('')}</div>`
       :'<div class="vacio"><b>Todo en orden 💪</b>No hay nada pendiente ahora mismo.</div>'}`; },
 
-  estadio(){ return `<iframe class="marco3d" src="estadio.html?velada=${v_().id}" title="Pabellón en 3D de la velada" allow="fullscreen"></iframe>`; },
-  vuelos3d(){ return `<iframe class="marco3d" src="vuelos.html?velada=${v_().id}" title="Vuelos de los peleadores en un globo 3D"></iframe>`; },
+  estadio(){ return `<iframe class="marco3d" src="estadio.html?velada=${v_().id}&v=${Math.floor(Date.now()/3e5)}" title="Pabellón en 3D de la velada" allow="fullscreen"></iframe>`; },
+  vuelos3d(){ return `<iframe class="marco3d" src="vuelos.html?velada=${v_().id}&v=${Math.floor(Date.now()/3e5)}" title="Vuelos de los peleadores en un globo 3D"></iframe>`; },
 
   combates(){ const lista=S.combates; const d=dinero();
     return `<div class="titulo"><h2>COMBATES</h2><button class="btn acc peq" onclick="abrirForm('combate')">+ Combate</button></div>
@@ -452,6 +474,14 @@ const PANTALLAS={
         return `<div class="item" style="flex-wrap:wrap"><span class="t"><b>${esc(g.nombre)}</b><small style="white-space:pre-line">${esc(txt)}</small></span>${tel?`<a class="btn acc peq" href="https://wa.me/${tel}?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">💬 Enviar</a>`:`<button class="btn peq" onclick="${g.editar}">Falta su teléfono</button>`}</div>`; }).join('')}</div>`
       :`<div class="vacio">${pl.vacio}</div>`}`; },
 
+  acceso(){ return `<div class="titulo"><h2>ENLACES DE ACCESO</h2></div>
+      <p class="sub">Crea un enlace para que cada persona entre sin escribir nada. Quien tenga el enlace entra con ese usuario: mándalo solo por privado y no lo publiques. Si alguien lo pierde, cambia su contraseña en Supabase y el enlace deja de valer.</p>
+      <form class="tarjeta" id="form-llave" autocomplete="off">
+        <label class="campo"><span>Usuario</span><input id="ll-u" placeholder="moi, susi…" autocapitalize="none" required></label>
+        <label class="campo"><span>Su contraseña</span><input id="ll-p" type="password" autocomplete="new-password" required></label>
+        <button class="btn acc ancho">Crear enlace</button><p class="error" id="ll-err"></p>
+        <div id="ll-res"></div>
+      </form>`; },
   informe(){ return `<div class="titulo"><h2>INFORME</h2><button class="btn acc peq" onclick="window.print()">🖨️ Imprimir o PDF</button></div><div id="informe">${informeHTML()}</div>`; },
 
   peleadores(){ return `<div class="titulo"><h2>PELEADORES</h2><button class="btn acc peq" onclick="abrirForm('peleador')">+ Peleador</button></div>
@@ -587,6 +617,17 @@ function informeHTML(){ const v=S.velada, d=dinero(), cs=S.combates.filter(c=>c.
     <div class="grupo">Patrocinadores</div><table style="width:100%;font-size:14px">${S.patro.map(p=>fila(esc(p.nombre)+` <span style="color:var(--mut)">(${p.estado})</span>`,eur(p.importe))).join('')||fila('Sin patrocinadores','')}</table>
     <div class="grupo">Equipo</div><table style="width:100%;font-size:14px">${S.equipo.map(e=>fila(esc(e.nombre)+' · '+esc(e.rol),e.confirmado?'Confirmado':'Sin confirmar')).join('')||fila('Sin equipo','')}</table>
     <p class="sub" style="margin-top:14px">Informe generado el ${new Date().toLocaleString('es-ES',{timeZone:ZONA})} desde el panel de Fight2One.</p></div>`; }
+
+/* Enlaces llave: se comprueba que la contraseña es buena antes de dar el enlace */
+document.addEventListener('submit',async e=>{ if(e.target.id!=='form-llave') return; e.preventDefault();
+  let u=$('#ll-u').value.trim().toLowerCase(); if(!u.includes('@')) u+=DOMINIO_USUARIO; const p=$('#ll-p').value, err=$('#ll-err'); err.textContent='Comprobando…';
+  const prueba=supabase.createClient(SB_URL,SB_ANON,{auth:{persistSession:false,autoRefreshToken:false,storageKey:'f2o-llave-prueba'}});
+  const { error }=await prueba.auth.signInWithPassword({ email:u, password:p }); await prueba.auth.signOut().catch(()=>{});
+  if(error){ err.textContent='Ese usuario y contraseña no son correctos.'; return; }
+  const enlace=location.origin+location.pathname+'#llave='+aB64(JSON.stringify({u,p}));
+  err.textContent=''; $('#ll-p').value='';
+  $('#ll-res').innerHTML=`<p class="sub" style="margin:12px 0 6px">Enlace de <b>${esc(u.split('@')[0])}</b>:</p><input class="campo" style="width:100%;padding:12px;border-radius:12px;background:var(--p2);border:1px solid var(--line)" readonly value="${esc(enlace)}" onclick="this.select()">
+    <div style="display:flex;gap:8px;margin-top:8px"><button type="button" class="btn ancho" onclick="navigator.clipboard.writeText('${enlace}').then(()=>toast('✓ Enlace copiado'))">Copiar</button><a class="btn acc ancho" href="https://wa.me/?text=${encodeURIComponent('Tu acceso al panel de Fight2One (ábrelo y entra solo; no lo compartas): '+enlace)}" target="_blank" rel="noopener">Enviar por WhatsApp</a></div>`; });
 
 /* Acciones rápidas */
 window.sumarEntradas=async(id,n)=>{ const e=S.entradas.find(x=>x.id===id); const v=Math.max(0,Math.min(e.cupo||1e9,e.vendidas+n)); try{ const r=await guardar('f2o_entradas',{vendidas:v},id); Object.assign(e,r); pintar(); toast(`${e.tipo}: ${v} vendidas`); }catch(err){ toast(textoError(err),true); } };
@@ -778,7 +819,7 @@ window.abrirForm=abrirForm;
 addEventListener('keydown',e=>{ if(e.key==='Escape'){ const v=document.querySelector('.velo'); if(v){ v.remove(); document.body.style.overflow=''; } } });
 
 sb.auth.onAuthStateChange((ev)=>{ if(ev==='SIGNED_OUT'){ $('#app').classList.add('oculto'); $('#entrada').classList.remove('oculto'); } });
-arrancar();
+entrarConLlave().finally(arrancar);
 </script>
 </body>
 </html>

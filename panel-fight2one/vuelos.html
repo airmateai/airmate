@@ -31,7 +31,9 @@ button{cursor:pointer}
 .reloj b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:20px;color:var(--ink);letter-spacing:.03em}
 .volver{border:1px solid var(--line);background:rgba(20,20,22,.9);border-radius:999px;padding:8px 12px;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--ink);white-space:nowrap}
 .panel{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--panel);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:6px 14px calc(12px + env(safe-area-inset-bottom));max-height:56vh;display:flex;flex-direction:column;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.panel.cerrado .cuerpo{display:none}
+.panel.cerrado .cuerpo>*:not(.buscar):not(.msg){display:none}
+.vacio-v{border:1px dashed var(--line);border-radius:14px;padding:16px;text-align:center;color:var(--mut);font-size:13px}
+.vacio-v b{display:block;color:var(--ink);font-size:14.5px;margin-bottom:4px}
 .asa{border:none;background:none;width:100%;padding:6px 0 4px;display:flex;justify-content:center}
 .asa span{width:42px;height:5px;border-radius:9px;background:#444}
 .res{display:flex;align-items:center;gap:10px;padding:2px 0 10px}
@@ -80,7 +82,8 @@ button{cursor:pointer}
 .cargando.fuera{opacity:0;pointer-events:none}
 @media (min-width:900px){
   .panel{left:16px;right:auto;top:calc(66px + env(safe-area-inset-top));bottom:16px;width:380px;max-height:none;border-radius:18px;border:1px solid var(--line)}
-  .panel .asa{display:none}.panel.cerrado .cuerpo{display:flex}
+  .panel .asa{display:none}.panel.cerrado .cuerpo>*{display:revert}
+  .panel{bottom:auto!important;max-height:calc(100vh - 32px)!important}
   .ficha{left:auto;right:16px;top:calc(66px + env(safe-area-inset-top));bottom:auto;width:380px;border-radius:18px;border:1px solid var(--acc);transform:translateX(115%)}
   .ficha.on{transform:none}
 }
@@ -184,7 +187,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,MOVIL?1.75:2)); renderer.output
 const lbl=new CSS2DRenderer(); lbl.domElement.id='etiquetas'; document.body.insertBefore(lbl.domElement,$('.top'));
 const scene=new THREE.Scene(); scene.background=new THREE.Color('#020203');
 const camera=new THREE.PerspectiveCamera(42,1,0.01,100);
-const controls=new OrbitControls(camera,canvas); controls.enablePan=false; controls.enableDamping=true; controls.dampingFactor=0.07; controls.minDistance=1.03; controls.maxDistance=6; controls.rotateSpeed=0.55; controls.zoomSpeed=2.2;
+const controls=new OrbitControls(camera,canvas); controls.enablePan=false; controls.enableDamping=true; controls.dampingFactor=0.07; controls.minDistance=1.03; controls.maxDistance=8; controls.rotateSpeed=0.55; controls.zoomSpeed=2.2;
 controls.autoRotate=!REDUCIDO; controls.autoRotateSpeed=0.25; controls.addEventListener('start',()=>{ controls.autoRotate=false; vuelo=null; });
 scene.add(new THREE.AmbientLight(0xffffff,0.6)); const sol=new THREE.DirectionalLight(0xfff2d8,1.2); sol.position.set(-3,2,4); scene.add(sol);
 
@@ -290,6 +293,7 @@ function pintarLista(){
       <span class="r"><span>${esc(o?o[2]:v.desde)} → Tenerife Norte</span><span>${esc(v.combate||'')}</span></span>
       ${s.k==='sin'?'':`<span class="barra"><i style="width:${Math.round(s.prog*100)}%;${s.k==='tierra'?'background:var(--ok)':''}"></i></span>`}
       <span class="r"><span>${linea}</span>${s.k==='sin'&&o?`<a href="${skyscanner(v.desde)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--acc);font-weight:800;text-decoration:none;white-space:nowrap">Buscar en Skyscanner →</a>`:''}</span></button>`; }).join('');
+  if(!RUTAS.some(r=>!r.v.vivo)) $('#lista').innerHTML=`<div class="vacio-v"><b>Aún no hay vuelos apuntados</b>Añade en Viajes el aeropuerto de salida de cada peleador (y su número de vuelo si lo tiene) y aparecerá aquí.${window.parent!==window&&window.parent.ir?'<br><br><button class="btn acc" onclick="window.parent.ir(\'viajes\')">Ir a Viajes →</button>':''}</div>`;
   $('#n-aire').textContent=cuenta.aire; $('#n-tierra').textContent=cuenta.tierra; $('#n-sin').textContent=cuenta.sin;
   $('#res-sub').textContent=`${RUTAS.filter(r=>!r.v.vivo).length} peleadores · ${cuenta.tierra} ya en la isla`;
 }
@@ -375,7 +379,7 @@ canvas.addEventListener('pointerup',e=>{ if(!abajo) return; const mov=Math.hypot
 
 /* ───────── Arranque ───────── */
 (async()=>{
-  tam(); const ini=aVec(33,-6,MOVIL?3.6:3.0); camera.position.copy(ini);
+  tam(); const ajuste=1.18/Math.tan(camera.fov*Math.PI/360)/Math.min(1,camera.aspect*(innerWidth<900?1:0.75)); const ini=aVec(33,-6,Math.min(7.5,Math.max(2.8,ajuste))); camera.position.copy(ini);
   VUELOS.forEach(crearRuta); RUTAS.forEach(colocar); pintarLista();
   if(innerWidth<900) $('#panel').classList.add('cerrado');
   requestAnimationFrame(bucle);

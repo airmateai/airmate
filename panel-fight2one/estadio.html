@@ -175,7 +175,10 @@ body.andando #mapa{display:block}
 .fila{background:#ffffff06!important;border-color:#ffffff10!important}
 @media (min-width:900px){ .ficha{top:calc(62px + env(safe-area-inset-top))!important;right:12px!important;bottom:12px!important;width:380px!important;border-radius:16px!important} }
 @media (max-width:899px){
-  .barra-sup{flex-wrap:wrap;right:12px}
+  .barra-sup{flex-wrap:wrap;right:12px;gap:6px}
+  .barra-sup .menu .pill,.barra-sup>.pill{padding:8px 10px}
+  .pill.andar .txt,#btn-luces .txt{display:none}
+  .aviso{display:none!important}
   .seg{order:3;width:100%;overflow-x:auto;scrollbar-width:none}
   .seg button{flex:1}
   .pill.andar{margin-left:0}
@@ -233,8 +236,8 @@ body.embed .toast{top:60px}
   <nav class="seg" id="vistas" aria-label="Vista de cámara"></nav>
   <div class="menu"><button class="pill" id="btn-zonas" aria-expanded="false" aria-controls="zonas">Zonas <span aria-hidden="true">▾</span></button><div class="desplegable" id="zonas" hidden></div></div>
   <div class="menu"><button class="pill" id="btn-capas" aria-expanded="false" aria-controls="capas">Capas <span id="n-capas"></span> <span aria-hidden="true">▾</span></button><div class="desplegable" id="capas" hidden></div></div>
-  <button class="pill" id="btn-luces" aria-expanded="false" aria-controls="consola">💡 Luces</button>
-  <button class="pill andar" id="btn-andar">Caminar</button>
+  <button class="pill" id="btn-luces" aria-expanded="false" aria-controls="consola" aria-label="Luces">💡<span class="txt"> Luces</span></button>
+  <button class="pill andar" id="btn-andar" aria-label="Caminar">🚶<span class="txt"> Caminar</span></button>
 </div>
 <div class="aviso" id="aviso"></div>
 <canvas id="mapa" width="300" height="252" aria-label="Mapa del pabellón: tócalo para ir andando a ese punto"></canvas>
@@ -430,7 +433,7 @@ renderer.shadowMap.enabled=!MOVIL; renderer.shadowMap.type=THREE.PCFSoftShadowMa
 const lbl=new CSS2DRenderer(); lbl.domElement.id='etiquetas'; document.body.insertBefore(lbl.domElement, $('.top'));
 const scene=new THREE.Scene(); scene.background=new THREE.Color('#060607'); scene.fog=new THREE.FogExp2('#0a0a0c',0.0042);
 const pmrem=new THREE.PMREMGenerator(renderer); scene.environment=pmrem.fromScene(new RoomEnvironment(renderer),0.04).texture;
-const camera=new THREE.PerspectiveCamera(50,1,0.08,300); camera.rotation.order='YXZ';
+const camera=new THREE.PerspectiveCamera(50,1,0.5,320); camera.rotation.order='YXZ';
 const controls=new OrbitControls(camera, canvas);
 controls.enableDamping=true; controls.dampingFactor=0.08; controls.maxPolarAngle=Math.PI*0.48; controls.minDistance=0.8; controls.maxDistance=170; controls.zoomSpeed=1.8; controls.zoomToCursor=true;
 controls.autoRotate=!REDUCIDO; controls.autoRotateSpeed=0.4; controls.target.set(0,2,0);
@@ -531,12 +534,12 @@ const texCupula=textura(1024,512,(g,w,h)=>{ const gr=g.createLinearGradient(0,0,
 texCupula.wrapS=THREE.RepeatWrapping; texCupula.repeat.set(4,1);
 
 // Suelo: plaza exterior, interior del edificio y pista de parqué con la moqueta negra del evento
-const fuera=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.MeshStandardMaterial({color:'#0b0b0c',roughness:1})); fuera.rotation.x=-Math.PI/2; fuera.position.y=-0.03; scene.add(fuera);
-const plaza=new THREE.Mesh(new THREE.CircleGeometry(1,96),new THREE.MeshStandardMaterial({color:'#4a4946',roughness:.95})); plaza.rotation.x=-Math.PI/2; plaza.scale.set(EXT_A+9,EXT_B+9,1); plaza.position.y=-0.02; scene.add(plaza);
-const suelo=new THREE.Mesh(new THREE.CircleGeometry(1,96),MAT.hormigon); suelo.rotation.x=-Math.PI/2; suelo.scale.set(EXT_A,EXT_B,1); suelo.position.y=-0.01; suelo.receiveShadow=true; scene.add(suelo);
-const pista=new THREE.Mesh(new THREE.CircleGeometry(1,128),new THREE.MeshStandardMaterial({map:texParquet,roughness:.55,metalness:.05,color:'#b9b2a6'})); pista.rotation.x=-Math.PI/2; pista.scale.set(ELA,ELB,1); pista.position.y=0.012; pista.receiveShadow=true; scene.add(pista); clicable(pista,'recinto');
+const fuera=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.MeshStandardMaterial({color:'#0b0b0c',roughness:1})); fuera.rotation.x=-Math.PI/2; fuera.position.y=-0.09; scene.add(fuera);
+const plaza=new THREE.Mesh(new THREE.CircleGeometry(1,96),new THREE.MeshStandardMaterial({color:'#4a4946',roughness:.95})); plaza.rotation.x=-Math.PI/2; plaza.scale.set(EXT_A+9,EXT_B+9,1); plaza.position.y=-0.05; scene.add(plaza);
+const suelo=new THREE.Mesh(new THREE.CircleGeometry(1,96),MAT.hormigon); suelo.rotation.x=-Math.PI/2; suelo.scale.set(EXT_A,EXT_B,1); suelo.position.y=-0.02; suelo.receiveShadow=true; scene.add(suelo);
+const pista=new THREE.Mesh(new THREE.CircleGeometry(1,128),new THREE.MeshStandardMaterial({map:texParquet,roughness:.55,metalness:.05,color:'#b9b2a6'})); pista.rotation.x=-Math.PI/2; pista.scale.set(ELA,ELB,1); pista.position.y=0.025; pista.receiveShadow=true; scene.add(pista); clicable(pista,'recinto');
 texParquet.repeat.set(1.6,1.2);
-const moqueta=new THREE.Mesh(new THREE.PlaneGeometry(26,24),new THREE.MeshStandardMaterial({color:'#0e0e10',roughness:.9})); moqueta.rotation.x=-Math.PI/2; moqueta.position.y=0.02; moqueta.receiveShadow=true; scene.add(moqueta);
+const moqueta=new THREE.Mesh(new THREE.PlaneGeometry(26,24),new THREE.MeshStandardMaterial({color:'#0e0e10',roughness:.9})); moqueta.rotation.x=-Math.PI/2; moqueta.position.y=0.05; moqueta.material.polygonOffset=true; moqueta.material.polygonOffsetFactor=-2; moqueta.material.polygonOffsetUnits=-2; moqueta.receiveShadow=true; scene.add(moqueta);
 
 // Anillo (escalón de grada, barandilla, cinta…) que sigue el óvalo. huecos = [[desde,hasta]] en radianes
 function anillo(dIn,dOut,y0,y1,huecos=[],segs=192){ const pos=[], uv=[];
@@ -902,9 +905,9 @@ function pintar(){
   }
   // 2 · Jaula, peleadores y carteles
   const seg=v.combates*8;
-  plataforma.scale.setScalar(Math.max(0.001,cl(v.combates*6))); faldon.visible=lona.visible=v.combates>0.02; esc1.visible=v.combates>0.1;
-  POSTES.forEach((p,i)=>{ const k=cl(seg-i+0.5); p.visible=k>0.001; p.scale.set(1,Math.max(0.001,k),1); });
-  VALLAS.forEach((w,i)=>{ const k=cl(seg-i); w.visible=k>0.001; w.scale.set(1,Math.max(0.001,k),1); w.position.y=H_PLAT+H_VALLA*k/2; });
+  plataforma.scale.setScalar(1); faldon.visible=lona.visible=true; esc1.visible=true;
+  POSTES.forEach(p=>{ p.visible=true; p.scale.set(1,1,1); });
+  VALLAS.forEach(w=>{ w.visible=true; w.scale.set(1,1,1); w.position.y=H_PLAT+H_VALLA/2; });
   const estelar=ed.combates[0]?.estado==='confirmado'&&v.combates>0.5; pelA.visible=pelB.visible=estelar;
   CARTELES.forEach((c,i)=>{ c.visible=i<Math.round(v.combates*CARTELES.length)&&v.combates>0.05; });
   // 3 · Pasillo
@@ -1062,13 +1065,13 @@ function sueloEn(x,z){
   return 0;                                                                                 // pasillo bajo la grada alta
 }
 function teletransporte(x,z,mirar){ YO.x=x; YO.z=z; YO.y=sueloEn(x,z); if(mirar){ const dx=mirar[0]-x, dz=mirar[2]-z; YO.yaw=Math.atan2(-dx,-dz); YO.pitch=Math.atan2(mirar[1]-(YO.y+ALTURA_OJOS),Math.hypot(dx,dz)); } }
-function entrarAndar(){ MODO='andar'; document.body.classList.add('andando'); $('#btn-andar').classList.add('on'); $('#btn-andar').textContent='🛰️ Vista aérea';
+function entrarAndar(){ MODO='andar'; camera.near=0.08; camera.updateProjectionMatrix(); document.body.classList.add('andando'); $('#btn-andar').classList.add('on'); $('#btn-andar').textContent='🛰️ Vista aérea';
   controls.enabled=false; controls.autoRotate=false; vuelo=null; cerrarFicha();
   interior.visible=true; teletransporte(14,0,[0,1.6,0]);
   let visto=false; try{ visto=localStorage.getItem('f2o_ayuda_andar')==='1'; }catch(e){}
   if(!visto){ $('#ayuda-txt').innerHTML=TACTIL?'Usa el <b>joystick</b> de abajo a la izquierda para andar y <b>arrastra el dedo</b> por la pantalla para mirar.<br>Toca cualquier cosa para ver sus datos. El mapa te lleva a cualquier sitio.':'<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> o las flechas para andar, <kbd>Mayús</kbd> para correr y el <b>ratón</b> para mirar.<br><b>Clic</b> en lo que tengas delante para ver sus datos. <kbd>Esc</kbd> para soltar el ratón.'; $('#ayuda').hidden=false; }
   else if(!TACTIL) canvas.requestPointerLock?.(); }
-function salirAndar(){ MODO='aire'; document.body.classList.remove('andando'); $('#btn-andar').classList.remove('on'); $('#btn-andar').textContent='🎮 Caminar';
+function salirAndar(){ MODO='aire'; camera.near=0.5; camera.updateProjectionMatrix(); document.body.classList.remove('andando'); $('#btn-andar').classList.remove('on'); $('#btn-andar').textContent='🎮 Caminar';
   if(document.pointerLockElement) document.exitPointerLock(); controls.enabled=true; interior.visible=false; $('#ayuda').hidden=true; $('#pista').classList.remove('on'); irA('general'); }
 $('#ayuda-ok').addEventListener('click',()=>{ $('#ayuda').hidden=true; try{ localStorage.setItem('f2o_ayuda_andar','1'); }catch(e){} if(!TACTIL) canvas.requestPointerLock?.(); });
 $('#btn-salir').addEventListener('click',salirAndar);
