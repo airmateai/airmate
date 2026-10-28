@@ -251,7 +251,7 @@ body.embed .toast{top:60px}
 <canvas id="mapa" width="300" height="252" aria-label="Mapa del pabellón: tócalo para ir andando a ese punto"></canvas>
 <div id="leyenda" hidden></div>
 <section id="consola" hidden aria-label="Consola de luces">
-  <div class="c-cab"><b>Consola de luces</b><span class="c-tag">Modo show · solo vista, no cambia ningún dato</span><button class="cerrar" id="consola-cerrar" aria-label="Cerrar y volver al estado real">✕</button></div>
+  <div class="c-cab"><b>Consola de luces</b><span class="c-tag">Modo show · solo vista, no cambia ningún dato</span><button class="cerrar" id="consola-cerrar" aria-label="Cerrar la consola (las luces se quedan)">✕</button></div>
   <div class="c-escenas" id="c-escenas"></div>
   <div class="c-grid">
     <label>Luz de sala<input type="range" id="c-sala" min="0" max="100"></label>
@@ -263,6 +263,7 @@ body.embed .toast{top:60px}
     <label class="c-sw"><input type="checkbox" id="c-humo"> Humo</label>
     <label class="c-sw"><input type="checkbox" id="c-estrobo"> Estrobo <small>(destellos rápidos)</small></label>
   </div>
+  <button class="pill" id="c-normal" style="width:100%;justify-content:center;margin-top:12px">Volver a las luces normales</button>
 </section>
 <div id="tip" aria-hidden="true"></div>
 <button id="btn-ayuda" aria-label="Cómo moverse">?</button>
@@ -1090,7 +1091,7 @@ addEventListener('keyup',e=>{ TECLAS[e.code]=false; });
 addEventListener('blur',()=>{ for(const k in TECLAS) TECLAS[k]=false; });
 document.addEventListener('mousemove',e=>{ if(MODO==='andar'&&bloqueado){ YO.yaw-=e.movementX*0.0022; YO.pitch=Math.max(-1.35,Math.min(1.35,YO.pitch-e.movementY*0.0022)); } });
 canvas.addEventListener('pointerdown',e=>{ abajo={x:e.clientX,y:e.clientY,t:performance.now()}; if(MODO==='andar'&&!bloqueado) arrastre={id:e.pointerId,x:e.clientX,y:e.clientY}; });
-canvas.addEventListener('pointermove',e=>{ if(!arrastre||arrastre.id!==e.pointerId) return; const f=TACTIL?0.005:0.004; YO.yaw+=(e.clientX-arrastre.x)*f; YO.pitch=Math.max(-1.35,Math.min(1.35,YO.pitch+(e.clientY-arrastre.y)*f)); arrastre.x=e.clientX; arrastre.y=e.clientY; });
+canvas.addEventListener('pointermove',e=>{ if(!arrastre||arrastre.id!==e.pointerId) return; const f=TACTIL?0.005:0.004; YO.yaw-=(e.clientX-arrastre.x)*f; YO.pitch=Math.max(-1.35,Math.min(1.35,YO.pitch-(e.clientY-arrastre.y)*f)); arrastre.x=e.clientX; arrastre.y=e.clientY; });
 addEventListener('pointerup',e=>{ if(arrastre&&arrastre.id===e.pointerId) arrastre=null; });
 // Joystick
 const joyEl=$('#joy'), joyK=joyEl.querySelector('i'); let joyId=null;
@@ -1278,7 +1279,7 @@ const ESCENAS_LUZ={
   show:{nom:'Show',sala:4,jaula:35,color:'#a03cff',moviles:true,vel:220,seguidor:false,humo:true,estrobo:false},
   apagon:{nom:'Apagón',sala:0,jaula:0,color:'#fff3dc',moviles:false,vel:60,seguidor:false,humo:false,estrobo:false} };
 const SHOW={ on:false, escena:'sala', ...ESCENAS_LUZ.sala };
-try{ const g=JSON.parse(localStorage.getItem('f2o_luces')||'null'); if(g) Object.assign(SHOW,g,{on:false}); }catch(e){}
+try{ const g=JSON.parse(localStorage.getItem('f2o_luces')||'null'); if(g) Object.assign(SHOW,g,{on:!!g.on}); }catch(e){}
 // Cabezas móviles: luces reales de color + haz visible, colgadas del truss
 const conoGeo=(r,l)=>{ const g=new THREE.ConeGeometry(r,l,28,1,true); g.translate(0,-l/2,0); g.rotateX(-Math.PI/2); return g; };
 const MOVILES=[[-5.5,-5.5],[5.5,-5.5],[5.5,5.5],[-5.5,5.5],[0,-5.5],[0,5.5]].map(([x,z],i)=>{
@@ -1312,12 +1313,15 @@ function pintarConsola(){ $('#c-escenas').innerHTML=Object.entries(ESCENAS_LUZ).
   $('#c-colores').innerHTML=COLORES_LUZ.map(c=>`<button data-color="${c}" class="${SHOW.color===c?'on':''}" style="background:${c}" aria-label="Color ${c}"></button>`).join('');
   $('#c-sala').value=SHOW.sala; $('#c-jaula').value=SHOW.jaula; $('#c-vel').value=SHOW.vel;
   ['moviles','seguidor','humo','estrobo'].forEach(k=>$('#c-'+k).checked=!!SHOW[k]); $('#c-estrobo').disabled=REDUCIDO; }
-function guardarLuces(){ try{ const {on,...r}=SHOW; localStorage.setItem('f2o_luces',JSON.stringify(r)); }catch(e){} }
-function modoShow(on){ SHOW.on=on; $('#consola').hidden=!on; $('#btn-luces').classList.toggle('on',on); $('#btn-luces').setAttribute('aria-expanded',String(on));
-  if(on){ pintarConsola(); abrirHoja(false); toast('Modo show: juega con las luces. No cambia ningún dato.'); }
+function guardarLuces(){ try{ localStorage.setItem('f2o_luces',JSON.stringify(SHOW)); }catch(e){} }
+function consola(abrir){ $('#consola').hidden=!abrir; $('#btn-luces').setAttribute('aria-expanded',String(abrir)); if(abrir){ if(!SHOW.on) modoShow(true); pintarConsola(); abrirHoja(false); } }
+function modoShow(on){ SHOW.on=on; $('#btn-luces').classList.toggle('on',on); guardarLuces();
+  if(on){ if(!$('#consola').hidden) pintarConsola(); }
   else { MOVILES.forEach(M=>{ M.l.intensity=0; M.m.visible=false; }); seguidor.intensity=0; conoSeg.visible=false; foco.color.set('#fff3dc'); matHaz.color.set('#fff0c4'); matHaz.opacity=0.05; cacheEquipo+=''; pintar(); } }
-$('#btn-luces').addEventListener('click',()=>modoShow(!SHOW.on));
-$('#consola-cerrar').addEventListener('click',()=>modoShow(false));
+$('#btn-luces').addEventListener('click',()=>consola($('#consola').hidden));
+$('#consola-cerrar').addEventListener('click',()=>consola(false));
+$('#c-normal').addEventListener('click',()=>{ modoShow(false); consola(false); toast('Luces normales'); });
+if(SHOW.on) $('#btn-luces').classList.add('on');
 $('#c-escenas').addEventListener('click',e=>{ const b=e.target.closest('[data-escena]'); if(!b) return; Object.assign(SHOW,ESCENAS_LUZ[b.dataset.escena],{escena:b.dataset.escena}); pintarConsola(); guardarLuces(); });
 $('#c-colores').addEventListener('click',e=>{ const b=e.target.closest('[data-color]'); if(!b) return; SHOW.color=b.dataset.color; SHOW.escena=''; pintarConsola(); guardarLuces(); });
 ['sala','jaula','vel'].forEach(k=>$('#c-'+k).addEventListener('input',e=>{ SHOW[k]=Number(e.target.value); SHOW.escena=''; document.querySelectorAll('#c-escenas button').forEach(b=>b.classList.remove('on')); guardarLuces(); }));
@@ -1360,6 +1364,7 @@ function bucle(now){
 (async()=>{
   try{ await Promise.race([Promise.all([document.fonts.load('80px Anton'),document.fonts.load('600 40px "Inter Tight"'),document.fonts.load('800 40px "Inter Tight"')]),new Promise(r=>setTimeout(r,2500))]); }catch(e){}
   interior.visible=false;
+  scene.traverse(o=>{ if(o.isInstancedMesh) o.frustumCulled=false; });
   tam(); camera.position.set(...VISTAS.exterior.p); controls.target.set(...VISTAS.exterior.t); if(camera.aspect<0.8) camera.position.multiplyScalar(1.25);
   cambiarEdicion(ACT);
   if(innerWidth<900) $('#hoja').classList.add('cerrada');
