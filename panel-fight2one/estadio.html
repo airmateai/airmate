@@ -1157,7 +1157,7 @@ $('#modo-prueba').addEventListener('change',e=>{ $('#btn-reset').style.display=e
 $('#btn-reset').addEventListener('click',()=>{ Object.keys(PRUEBA).forEach(k=>delete PRUEBA[k]); EXTRA[ACT]=0; ETAPAS=calcular(ED[ACT]); refrescarDatos(); });
 $('#asa').addEventListener('click',()=>{ const h=$('#hoja'); h.classList.toggle('cerrada'); $('#asa').setAttribute('aria-expanded',String(!h.classList.contains('cerrada'))); });
 document.querySelectorAll('.eds button').forEach(b=>b.addEventListener('click',()=>cambiarEdicion(b.dataset.ed)));
-function refrescarDatos(){ textosEtiquetas(); pintarLista(); PIZ.forEach(t=>t.userData.dibujar()); cacheAsientos=''; cachePant=''; cacheMarc=-1; }
+function refrescarDatos(){ textosEtiquetas(); pintarLista(); PIZ.forEach(t=>t.userData.dibujar()); cacheAsientos=''; cachePant=''; cacheMarc=-1; pintar(); }
 function cambiarEdicion(id){ ACT=id; document.querySelectorAll('.eds button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.ed===id)));
   Object.keys(PRUEBA).forEach(k=>delete PRUEBA[k]); ETAPAS=calcular(ED[id]);
   PATRO_NOMBRES=ED[id].patro.filter(p=>CONF_PATRO.includes(p[3])).sort((a,b)=>b[2]-a[2]).map(p=>p[0].replace(/\s*\(.*\)/,''));
@@ -1367,7 +1367,7 @@ function bucle(now){
   scene.traverse(o=>{ if(o.isInstancedMesh) o.frustumCulled=false; });
   window.__dbg={scene,camera,sillas,YO,interior,renderer:typeof renderer!=='undefined'?renderer:null};
   tam(); camera.position.set(...VISTAS.exterior.p); controls.target.set(...VISTAS.exterior.t); if(camera.aspect<0.8) camera.position.multiplyScalar(1.25);
-  cambiarEdicion(ACT);
+  cambiarEdicion(ACT); pintar();   // con una velada a 0 % no hay animación que llame a pintar(): sin esto las butacas se quedaban amontonadas en el centro
   if(innerWidth<900) $('#hoja').classList.add('cerrada');
   $('#cargando').classList.add('fuera');
   requestAnimationFrame(bucle);
