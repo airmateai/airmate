@@ -228,11 +228,32 @@ async function pintarMundo(){
     const v=aVec(lat,lon,1.002); pos.push(v.x,v.y,v.z); const cerca=Math.max(0,1-v.distanceTo(tf)/0.9); const cc=tenue.clone().lerp(oro,cerca*0.85); col.push(cc.r,cc.g,cc.b); } }
   const gp=new THREE.BufferGeometry(); gp.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); gp.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
   scene.add(new THREE.Points(gp,new THREE.PointsMaterial({size:MOVIL?0.0085:0.0072,vertexColors:true,sizeAttenuation:true})));
+  logoEnElMar().catch(()=>{});
   // fronteras finas
   const bordes=mesh(paises,paises.objects.countries,(a,b)=>a!==b), pts=[];
   bordes.coordinates.forEach(l=>{ for(let i=1;i<l.length;i++){ if(Math.abs(l[i][0]-l[i-1][0])>180) continue; const a=aVec(l[i-1][1],l[i-1][0],1.0025), b=aVec(l[i][1],l[i][0],1.0025); pts.push(a.x,a.y,a.z,b.x,b.y,b.z); } });
   const gb=new THREE.BufferGeometry(); gb.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
   scene.add(new THREE.LineSegments(gb,new THREE.LineBasicMaterial({color:'#3a2f12',transparent:true,opacity:.55})));
+}
+
+// Logo de Fight2One camuflado con puntos en el Atlántico, como si fuera una isla más
+async function logoEnElMar(){
+  const im=new Image(); im.src='logo.jpg'; await im.decode();
+  const N=160, c=document.createElement('canvas'); c.width=c.height=N; const g=c.getContext('2d',{willReadFrequently:true}); g.drawImage(im,0,0,N,N);
+  const px=g.getImageData(0,0,N,N).data;
+  const LAT=24, LON=-37, ALTO=17, PASO=0.42, pos=[], col=[];
+  const oro=new THREE.Color('#6b5216'), plata=new THREE.Color('#3d3d40');
+  for(let lat=LAT-ALTO/2; lat<=LAT+ALTO/2; lat+=PASO){ const k=Math.cos(lat*D);
+    for(let lon=LON-ALTO/2/k; lon<=LON+ALTO/2/k; lon+=PASO/k){
+      const u=(lon-LON)*k/ALTO+0.5, v=0.5-(lat-LAT)/ALTO; const i=(Math.floor(v*N)*N+Math.floor(u*N))*4;
+      const r=px[i],gg=px[i+1],b=px[i+2]; if((r+gg+b)/3<70) continue;
+      const pt=aVec(lat,lon,1.002); pos.push(pt.x,pt.y,pt.z);
+      const cc=(r>gg*1.1&&b<gg*0.75)?oro:plata; col.push(cc.r,cc.g,cc.b); } }
+  const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); geo.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  const mat=new THREE.PointsMaterial({size:MOVIL?0.0078:0.0066,vertexColors:true,sizeAttenuation:true,transparent:true,opacity:.8,depthWrite:false});
+  scene.add(new THREE.Points(geo,mat));
+  // Respira muy despacio: casi no se nota hasta que te fijas
+  const t0=performance.now(); (function latir(){ mat.opacity=.55+.4*Math.pow(Math.sin((performance.now()-t0)/2600),2); requestAnimationFrame(latir); })();
 }
 
 // Tenerife Norte
