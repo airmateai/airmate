@@ -155,9 +155,13 @@ main.lleno{max-width:none;padding:0}
     <img src="logo.jpg" alt="Fight2One">
     <h1>FIGHT2ONE</h1>
     <p>Panel de las veladas</p>
-    <label class="campo"><span>Usuario</span><input id="e-usuario" name="username" autocomplete="username" autocapitalize="none" required></label>
-    <label class="campo"><span>Contraseña</span><input id="e-clave" name="password" type="password" autocomplete="current-password" required></label>
+    <div id="sin-clave" style="text-align:left;background:var(--p2);border:1px solid var(--line);border-radius:14px;padding:14px;font-size:14px;color:var(--mut);line-height:1.5"><b style="color:var(--ink);display:block;margin-bottom:4px">Entra con tu enlace de acceso</b>Abre el enlace personal que te mandó Fabio y entrarás directamente, sin usuario ni contraseña.</div>
+    <div id="con-clave" hidden>
+    <label class="campo"><span>Usuario</span><input id="e-usuario" name="username" autocomplete="username" autocapitalize="none"></label>
+    <label class="campo"><span>Contraseña</span><input id="e-clave" name="password" type="password" autocomplete="current-password"></label>
     <button class="btn acc ancho" id="e-btn">Entrar</button>
+    </div>
+    <button type="button" id="ver-clave" style="margin-top:14px;border:none;background:none;color:#5c5c62;font-size:12px;text-decoration:underline">Acceso de Airmate</button>
     <p class="error" id="e-error" role="alert"></p>
     <p class="aviso-app" id="aviso-app" hidden></p>
   </form>
@@ -229,7 +233,8 @@ async function entrarConLlave(){ const m=location.hash.match(/llave=([\w-]+)/); 
 const EN_APP=/Instagram|FBAN|FBAV|WhatsApp|Line\//i.test(navigator.userAgent);
 const INSTALADA=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 if(EN_APP){ $('#aviso-app').hidden=false; $('#aviso-app').innerHTML='Estás dentro de WhatsApp o Instagram, que no guardan la sesión. Toca <b>⋯ → Abrir en el navegador</b> (Safari o Chrome) para que se quede guardada.'; }
-$('#form-entrada').addEventListener('submit',async e=>{ e.preventDefault(); const btn=$('#e-btn'), err=$('#e-error');
+$('#ver-clave').addEventListener('click',()=>{ $('#con-clave').hidden=false; $('#sin-clave').hidden=true; $('#ver-clave').hidden=true; $('#e-usuario').focus(); });
+$('#form-entrada').addEventListener('submit',async e=>{ if($('#con-clave').hidden){ e.preventDefault(); return; } e.preventDefault(); const btn=$('#e-btn'), err=$('#e-error');
   let u=$('#e-usuario').value.trim().toLowerCase(); if(!u.includes('@')) u+=DOMINIO_USUARIO;
   btn.disabled=true; err.textContent='';
   const { error }=await sb.auth.signInWithPassword({ email:u, password:$('#e-clave').value });
