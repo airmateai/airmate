@@ -2761,7 +2761,9 @@ function bsdRenderLiningRow(){
   }));
 }
 
+var _bsdTok=0;
 function bsdUpdate(){
+  _bsdTok++;
   bsdUpdateSpecs();
   const photoEl=document.getElementById('bsd-photo');
   // Always close any detail photo and resume spin video
@@ -2947,15 +2949,56 @@ function bsd3dOpen(src, label) {
   photoEl.style.display = 'block';
   photoEl.style.transition = 'opacity 0.35s';
   photoEl.style.opacity = '0';
+  const tok = ++_bsdTok;
+  const ld = bsdLoader(true);
   const tmp = new Image();
-  tmp.onload = () => {
+  const show = () => {
+    if(tok !== _bsdTok) return; // a newer option was clicked meanwhile
+    ld.style.display = 'none';
     photoEl.src = tmp.src;
     setTimeout(() => { photoEl.style.opacity = '1'; }, 20);
+    bsdMiniPreview(tmp.src, label);
   };
-  tmp.onerror = () => { photoEl.src = tmp.src; photoEl.style.opacity = '1'; };
+  tmp.onload = show;
+  tmp.onerror = show;
   tmp.src = src;
   const specLead = document.getElementById('bsd-spec-color');
   if(specLead && label) specLead.textContent = label;
+}
+// "Loading" label over the preview while the photo downloads
+function bsdLoader(on) {
+  let ld = document.getElementById('bsd-loading');
+  if(!ld) {
+    ld = document.createElement('div');
+    ld.id = 'bsd-loading';
+    ld.textContent = 'Loading…';
+    ld.style.cssText = "position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Cinzel',serif;font-size:11px;letter-spacing:.3em;color:#c4a05c;text-transform:uppercase;pointer-events:none;";
+    document.getElementById('bsd-spin-card').appendChild(ld);
+  }
+  ld.style.display = on ? 'block' : 'none';
+  return ld;
+}
+// Mobile: the preview sits far above the options, so float a thumbnail on screen
+let _bsdMiniT = 0;
+function bsdMiniPreview(src, label) {
+  if(window.innerWidth > 960) return;
+  const card = document.getElementById('bsd-spin-card');
+  const r = card.getBoundingClientRect();
+  if(r.bottom > 80 && r.top < window.innerHeight - 80) return; // preview already visible
+  let m = document.getElementById('bsd-mini');
+  if(!m) {
+    m = document.createElement('div');
+    m.id = 'bsd-mini';
+    m.style.cssText = "position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:9000;width:min(220px,60vw);background:#1a0f12;border:1px solid rgba(201,160,92,.5);border-radius:10px;padding:8px;box-shadow:0 12px 40px rgba(0,0,0,.45);transition:opacity .3s;cursor:pointer;";
+    m.innerHTML = '<img style="width:100%;aspect-ratio:3/4;object-fit:contain;display:block;border-radius:6px;background:#0a0507"><div style="font-family:Cinzel,serif;font-size:10px;letter-spacing:.12em;color:#c4a05c;text-align:center;margin-top:6px"></div>';
+    m.addEventListener('click', () => { m.style.opacity = '0'; m.style.pointerEvents = 'none'; card.scrollIntoView({behavior:'smooth', block:'center'}); });
+    document.body.appendChild(m);
+  }
+  m.querySelector('img').src = src;
+  m.querySelector('div').textContent = label || '';
+  m.style.opacity = '1'; m.style.pointerEvents = 'auto';
+  clearTimeout(_bsdMiniT);
+  _bsdMiniT = setTimeout(() => { m.style.opacity = '0'; m.style.pointerEvents = 'none'; }, 2600);
 }
 function bsd3dClose() {
   const photoEl = document.getElementById('bsd-photo');
