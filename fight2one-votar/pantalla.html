@@ -12,6 +12,7 @@
 <style>
 :root{--bg:#000;--p1:#0f0f10;--p2:#1b1b1f;--line:#2c2c30;--ink:#f5f5f4;--mut:#a3a3a8;--acc:#d4a72c}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:'Inter Tight',system-ui,sans-serif;overflow:hidden}
 body{background:radial-gradient(ellipse at 50% 0%,#2a2208 0%,#000 60%)}
 .p{display:grid;grid-template-columns:minmax(0,1fr) clamp(260px,26vw,420px);gap:3vw;height:100%;padding:3.5vh 3.5vw}
@@ -23,8 +24,8 @@ body{background:radial-gradient(ellipse at 50% 0%,#2a2208 0%,#000 60%)}
 .cats{flex:1;min-height:0;display:grid;gap:2.2vh;grid-auto-rows:minmax(0,1fr)}
 .cat{background:rgba(15,15,16,.85);border:1px solid var(--line);border-radius:18px;padding:2vh 1.6vw;display:flex;flex-direction:column;min-height:0;overflow:hidden}
 .cat h2{font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.06em;margin:0 0 1.2vh;font-size:clamp(18px,1.9vw,34px);text-transform:uppercase;color:var(--acc)}
-.filas{display:flex;flex-direction:column;gap:1vh;min-height:0}
-.fila{display:grid;grid-template-columns:clamp(34px,3vw,56px) minmax(0,1fr) auto;align-items:center;gap:1vw}
+.filas{display:flex;flex-direction:column;gap:1vh;min-height:0;flex:1;justify-content:space-around}
+.fila{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:1vw}
 .fila .ft{width:clamp(34px,3vw,56px);height:clamp(34px,3vw,56px);border-radius:50%;background:var(--p2) center/cover;border:2px solid var(--line)}
 .fila.top .ft{border-color:var(--acc)}
 .fila .nm{font-weight:800;font-size:clamp(14px,1.35vw,24px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.5vh}
@@ -104,9 +105,9 @@ async function tick(){
       cont.innerHTML=cats.map(c=>`<div class="cat" data-c="${c.id}"><h2>${esc(c.nombre)}</h2><div class="filas"></div></div>`).join(''); }
     cont.classList.toggle('oculto-res',ocultarPc);
     cats.forEach(c=>{ const tot=c.opciones.reduce((a,o)=>a+o.votos,0); const max=Math.max(1,...c.opciones.map(o=>o.votos));
-      const filas=[...c.opciones].sort((a,b)=>b.votos-a.votos).slice(0,5);
+      const filas=[...c.opciones].sort((a,b)=>b.votos-a.votos).slice(0,cats.length>=3?3:cats.length===2?4:6);
       const el=cont.querySelector(`[data-c="${c.id}"] .filas`);
-      el.innerHTML=filas.map((o,i)=>`<div class="fila ${i===0&&o.votos?'top':''}"><span class="ft" style="${o.foto?`background-image:url('${esc(foto(o.foto))}')`:''}"></span><div style="min-width:0"><div class="nm">${i===0&&o.votos?'🏆 ':''}${esc(o.etiqueta)}</div><div class="bar"><i data-w="${o.votos*100/max}"></i></div></div><span class="pc">${tot?Math.round(o.votos*100/tot):0}%</span></div>`).join('');
+      el.innerHTML=filas.map((o,i)=>`<div class="fila ${i===0&&o.votos?'top':''}">${o.foto?`<span class="ft" style="background-image:url('${esc(foto(o.foto))}')"></span>`:'<span></span>'}<div style="min-width:0"><div class="nm">${i===0&&o.votos?'🏆 ':''}${esc(o.etiqueta)}</div><div class="bar"><i data-w="${o.votos*100/max}"></i></div></div><span class="pc">${tot?Math.round(o.votos*100/tot):0}%</span></div>`).join('');
       requestAnimationFrame(()=>el.querySelectorAll('.bar i').forEach(b=>b.style.width=b.dataset.w+'%'));
     });
   }catch(e){ if(!_hecho) $('#aviso').textContent='Sin conexión. Reintentando…'; }
