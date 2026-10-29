@@ -1304,6 +1304,22 @@ section{position:relative;padding:120px 5vw;}
 @media(prefers-reduced-motion:reduce){.hv3 *,#vm-load *{animation-duration:.01s!important;animation-delay:0s!important}.hv3-photo{clip-path:none}.vm-img{clip-path:none}.vm-h .w>span{transform:none}}
 [dir=rtl] .hv3-title{direction:ltr;text-align:right}[dir=rtl] .hv3-photo{right:auto;left:0}[dir=rtl] .hv3-shade{transform:scaleX(-1)}[dir=rtl] .hv3-l.it{padding-left:0;padding-right:.42em}
 </style>
+
+<style>
+/* solicitud → WhatsApp + PDF */
+#vm-design-chip{display:flex;align-items:center;gap:16px;max-width:900px;margin:0 auto 22px;padding:14px 18px;border:1px solid rgba(201,160,92,.45);background:rgba(201,160,92,.08);text-align:left}
+#vm-design-chip[hidden]{display:none}
+#vm-design-chip img{width:54px;height:72px;object-fit:cover;background:#fff}
+#vm-design-chip b{display:block;font-family:var(--serif);font-size:20px;font-weight:400;color:var(--cream)}
+#vm-design-chip small{display:block;font-size:12px;color:rgba(245,239,220,.65);margin-top:2px}
+#vm-design-chip em{font-style:normal;font-family:var(--display);font-size:10px;letter-spacing:.24em;color:var(--gold);text-transform:uppercase}
+#vm-design-chip button{margin-left:auto;background:none;border:0;color:rgba(245,239,220,.6);font-size:22px;cursor:pointer}
+.vm-mc-hint{margin-top:14px!important;font-size:14px}
+.vm-mc-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.vm-mc-wa,.vm-mc-pdf{display:inline-flex;align-items:center;justify-content:center;padding:15px 24px;font-family:var(--display);font-size:11px;letter-spacing:.2em;text-transform:uppercase;text-decoration:none;cursor:pointer;border:0}
+.vm-mc-wa{background:#1f8a4c;color:#fff}.vm-mc-pdf{background:transparent;border:1px solid var(--gold);color:var(--gold-dk)}
+.vm-mc-note{margin-top:12px;font-size:12px;color:var(--txt3);min-height:16px}
+</style>
 </head>
 <body>
 <div id="vm-load"><img src="vittorio-crown.png" alt=""><div>VITTORIO MILANO</div><i></i></div>
@@ -1728,7 +1744,7 @@ section{position:relative;padding:120px 5vw;}
       </div>
       <div class="bsd-foot-r">
         <button class="bsd-foot-btn ghost" onclick="window.print()">🖨 Spec Sheet</button>
-        <a href="#book" class="bsd-foot-btn primary">✦ Save to Order</a>
+        <a href="#book" class="bsd-foot-btn primary" onclick="vmSaveDesign()">✦ Save to Order</a>
       </div>
     </div>
   </div>
@@ -2115,6 +2131,7 @@ section{position:relative;padding:120px 5vw;}
       <h2>Reserve a <em>private fitting</em></h2>
       <p>Visit us in Al Jaddaf or invite our team to your residence. Either way, the cloth and the cutting board come to you.</p>
     </div>
+    <div id="vm-design-chip" hidden></div>
     <form class="book-form reveal" id="vm-book-form" onsubmit="vmSubmitForm(event)">
       <div class="book-field"><label>Name</label><input id="vf-name" required placeholder="Your full name"></div>
       <div class="book-field"><label>Phone</label><input id="vf-phone" required placeholder="+971 ..."></div>
@@ -2241,6 +2258,12 @@ section{position:relative;padding:120px 5vw;}
     </div>
     <h3>Your request is <em>with us</em></h3>
     <p>A member of the atelier will be in touch within 12 hours to confirm your fitting. Discretion assured.</p>
+    <p class="vm-mc-hint">Send it to the atelier on WhatsApp now and we will confirm even sooner.</p>
+    <div class="vm-mc-btns">
+      <a id="vm-mc-wa" class="vm-mc-wa" target="_blank" rel="noopener" href="#">Send on WhatsApp</a>
+      <button id="vm-mc-pdf" class="vm-mc-pdf" type="button">Download PDF</button>
+    </div>
+    <div id="vm-mc-note" class="vm-mc-note"></div>
     <div style="margin-top:28px;font-family:var(--display);color:var(--gold-dk);font-size:10px;letter-spacing:.4em;text-transform:uppercase;">Vittorio Milano · Al Jaddaf</div>
   </div>
 </div>
@@ -2869,13 +2892,15 @@ async function vmSubmitForm(e) {
   const date  = document.getElementById('vf-date').value;
   const time  = document.getElementById('vf-time').value;
   const extra = document.getElementById('vf-notes').value.trim();
+  const vmRef = vmNewRef();
+  const datos = {ref:vmRef,name,phone,email,service,location,date,time,extra,design:VM_DESIGN};
 
   const payload = {
     business_name: 'Vittorio Milano',
     business_type: 'bespoke-tailoring',
     phone,
     email,
-    notes: `[FITTING REQUEST]\nName: ${name}\nService: ${service}\nLocation: ${location}\nDate: ${date} ${time}\nNotes: ${extra}`,
+    notes: `[FITTING REQUEST]\nRef: ${vmRef}\nName: ${name}\nService: ${service}\nLocation: ${location}\nDate: ${date} ${time}\nNotes: ${extra}`+(VM_DESIGN?`\nDesign: ${VM_DESIGN.title} · ${VM_DESIGN.sub}`:''),
     status: 'new',
   };
 
@@ -2891,11 +2916,11 @@ async function vmSubmitForm(e) {
       body: JSON.stringify(payload)
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    openConfirm();
+    vmAfterSubmit(datos, true);
     document.getElementById('vm-book-form').reset();
   } catch(err) {
-    alert('Something went wrong. Please try again or WhatsApp us directly.');
     console.error(err);
+    vmAfterSubmit(datos, false);
   } finally {
     btn.textContent = 'Request your Fitting';
     btn.disabled = false;
@@ -3127,6 +3152,82 @@ document.querySelectorAll('.bsd-pill-row [data-tie]').forEach(b => b.addEventLis
     document.addEventListener('mouseover',e=>c.classList.toggle('big',!!e.target.closest('a,button,.col-card,.fab-card,[onclick]')));
     document.querySelectorAll('.mag,.nav-cta').forEach(b=>{b.addEventListener('mousemove',e=>{const r=b.getBoundingClientRect();b.style.transform=`translate(${(e.clientX-r.left-r.width/2)*.25}px,${(e.clientY-r.top-r.height/2)*.35}px)`});b.addEventListener('mouseleave',()=>{b.style.transition='transform .5s cubic-bezier(.16,1,.3,1)';b.style.transform='';setTimeout(()=>b.style.transition='',500)})})}
 })();
+</script>
+
+<script>
+/* ═══ solicitud de prueba → WhatsApp con mensaje escrito + PDF de lo solicitado ═══ */
+const VM_WA='971585514176';
+let VM_DESIGN=null;
+function vmNewRef(){const d=new Date();return 'VM-'+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+Math.random().toString(36).slice(2,6).toUpperCase()}
+function vmSaveDesign(){
+  if(typeof BSD==='undefined')return;
+  const pat=BSD.pattern&&typeof BSD_PATTERNS!=='undefined'?BSD_PATTERNS.find(p=>p.key===BSD.pattern):null;
+  const col=typeof BSD_COLORS!=='undefined'?(BSD_COLORS.find(c=>c.key===BSD.color)||BSD_COLORS[0]):null;
+  VM_DESIGN={title:document.getElementById('bsd-foot-title').textContent.trim(),sub:document.getElementById('bsd-foot-sub').textContent.trim(),
+    house:typeof BSD_HOUSE!=='undefined'?(BSD_HOUSE==='british'?'British · structured':'Neapolitan · soft'):'',
+    lining:typeof BSD_LINING_TYPE!=='undefined'?BSD_LINING_TYPE:'',cloth:pat?pat.name:(col?col.name:''),
+    specs:[...new Map([...document.querySelectorAll('[id^="bsd-spec-"]')].map(e=>e.textContent.trim()).filter(Boolean).map(t=>[t.toLowerCase(),t])).values()]};
+  const chip=document.getElementById('vm-design-chip');
+  chip.innerHTML=`<img src="vittorio-assets/suit-spin-000.jpg" alt=""><div><em>Your design · attached to this request</em><b>${VM_DESIGN.title}</b><small>${VM_DESIGN.sub}</small></div><button type="button" aria-label="Remove" onclick="VM_DESIGN=null;this.parentNode.hidden=true">×</button>`;
+  chip.hidden=false;
+}
+function vmMensaje(d){
+  const L=['Hello Vittorio Milano, I would like to book a private fitting.','','Ref: '+d.ref,'Name: '+d.name,'Phone: '+d.phone,'Email: '+d.email,'Service: '+d.service,'Fitting: '+d.location,'Date: '+(d.date?new Date(d.date+'T12:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'—')+' · '+d.time];
+  if(d.design){L.push('','My design (Suit Designer):',d.design.title,d.design.sub)}
+  if(d.extra){L.push('','Notes: '+d.extra)}
+  L.push('','I am sending my request as a PDF.');
+  return L.join('\n');
+}
+function vmImg(src,png){return new Promise(r=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>{try{const c=document.createElement('canvas');c.width=i.naturalWidth;c.height=i.naturalHeight;c.getContext('2d').drawImage(i,0,0);r({d:png?c.toDataURL('image/png'):c.toDataURL('image/jpeg',.9),w:i.naturalWidth,h:i.naturalHeight})}catch(e){r(null)}};i.onerror=()=>r(null);i.src=src})}
+function vmJsPDF(){return window.jspdf?Promise.resolve():new Promise((ok,ko)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';sc.onload=ok;sc.onerror=ko;document.head.appendChild(sc)})}
+async function vmPDF(d){
+  await vmJsPDF();
+  const {jsPDF}=window.jspdf, doc=new jsPDF({unit:'mm',format:'a4'}), W=210;
+  const BURG=[58,14,18],GOLD=[176,136,70],INK=[26,20,16],MUT=[120,108,96];
+  doc.setFillColor(...BURG);doc.rect(0,0,W,46,'F');
+  const crown=await vmImg('vittorio-crown.png',true);if(crown)doc.addImage(crown.d,'PNG',20,11,14,14*crown.h/crown.w);
+  doc.setTextColor(245,239,220);doc.setFont('times','normal');doc.setFontSize(22);doc.text('VITTORIO MILANO',40,21);
+  doc.setFontSize(8.5);doc.setTextColor(...GOLD);doc.text('THE ARTISANS OF NEAPOLITAN BESPOKE  ·  AL JADDAF  ·  DUBAI',40,28);
+  doc.setTextColor(245,239,220);doc.setFontSize(9);doc.text('Ref. '+d.ref,W-20,21,{align:'right'});doc.text(new Date().toLocaleDateString('en-GB'),W-20,27,{align:'right'});
+  let y=62;
+  doc.setTextColor(...INK);doc.setFont('times','italic');doc.setFontSize(24);doc.text(d.design?'Private Fitting & Commission':'Private Fitting Request',20,y);y+=4;
+  doc.setDrawColor(...GOLD);doc.setLineWidth(.4);doc.line(20,y+2,60,y+2);y+=12;
+  const bloque=(tit,filas,ancho=W-80)=>{doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...GOLD);doc.text(tit.toUpperCase(),20,y);y+=6;
+    filas.forEach(([k,v])=>{if(!v)return;doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUT);doc.text(k,20,y);doc.setTextColor(...INK);doc.setFontSize(10.5);const t=doc.splitTextToSize(String(v),ancho);doc.text(t,62,y);y+=Math.max(7,t.length*5+2)});y+=5};
+  bloque('Client',[['Name',d.name],['Phone',d.phone],['Email',d.email]]);
+  bloque('Fitting',[['Service',d.service],['Where',d.location],['Preferred date',d.date?new Date(d.date+'T12:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):''],['Preferred time',d.time]]);
+  if(d.design){
+    const y0=y,img=await vmImg('vittorio-assets/suit-spin-000.jpg');
+    bloque('Your design · Suit Designer',[['Model',d.design.title],['House style',d.design.house],['Cloth',d.design.cloth],['Lining',d.design.lining?d.design.lining+' lining':''],['Details',d.design.specs.join(' · ')]],W-130);
+    if(img){doc.setFillColor(250,248,242);doc.rect(W-62,y0-4,42,56,'F');doc.addImage(img.d,'JPEG',W-58,y0-2,34,34*img.h/img.w)}
+  }
+  if(d.extra)bloque('Notes',[['Details',d.extra]]);
+  doc.setFillColor(245,239,220);doc.rect(0,262,W,35,'F');
+  doc.setFont('times','italic');doc.setFontSize(12);doc.setTextColor(...INK);doc.text('A member of the atelier will confirm your fitting within 12 hours.',20,275);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUT);doc.text('Sports Club Retail Store · Shop 24 · 60 Al Nouras St, Al Jaddaf, Dubai   ·   WhatsApp +'+VM_WA,20,283);
+  return doc.output('blob');
+}
+async function vmAfterSubmit(d,guardado){
+  const txt=vmMensaje(d), wa=document.getElementById('vm-mc-wa'), pb=document.getElementById('vm-mc-pdf'), note=document.getElementById('vm-mc-note');
+  wa.href='https://wa.me/'+VM_WA+'?text='+encodeURIComponent(txt);
+  note.textContent=guardado?'':'We could not save your request online — please send it on WhatsApp.';
+  openConfirm();
+  let file=null;
+  try{const blob=await vmPDF(d);file=new File([blob],'Vittorio-Milano-'+d.ref+'.pdf',{type:'application/pdf'})}catch(e){console.error(e)}
+  const puedeCompartir=file&&navigator.canShare&&navigator.canShare({files:[file]})&&matchMedia('(hover:none)').matches;
+  const bajar=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.appendChild(a);a.click();a.remove()};
+  if(!file){pb.style.display='none';return}
+  pb.style.display='';
+  if(puedeCompartir){
+    pb.textContent='Send PDF on WhatsApp';
+    pb.onclick=async()=>{try{await navigator.share({files:[file],title:'Vittorio Milano · '+d.ref,text:txt})}catch(e){}};
+    wa.onclick=null;
+    note.textContent=(note.textContent?note.textContent+' ':'')+'Tip: “Send PDF” lets you choose the atelier chat and attach your request.';
+  } else {
+    pb.textContent='Download PDF'; pb.onclick=bajar;
+    wa.onclick=()=>{bajar();note.textContent='Your PDF has been downloaded — attach it in the WhatsApp chat.'};
+  }
+}
 </script>
 </body>
 </html>
