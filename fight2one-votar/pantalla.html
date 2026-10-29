@@ -10,113 +10,287 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter+Tight:wght@600;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-:root{--bg:#000;--p1:#0f0f10;--p2:#1b1b1f;--line:#2c2c30;--ink:#f5f5f4;--mut:#a3a3a8;--acc:#d4a72c}
+:root{--bg:#000;--p1:#0f0f10;--p2:#1b1b1f;--line:#2c2c30;--ink:#f5f5f4;--mut:#a3a3a8;--acc:#d4a72c;--acc2:#ffd863;--cian:#22e1d7;--mag:#ff3d6e}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:'Inter Tight',system-ui,sans-serif;overflow:hidden}
-body{background:radial-gradient(ellipse at 50% 0%,#2a2208 0%,#000 60%)}
-.p{display:grid;grid-template-columns:minmax(0,1fr) clamp(260px,26vw,420px);gap:3vw;height:100%;padding:3.5vh 3.5vw}
-.izq{display:flex;flex-direction:column;min-height:0}
-.cab{display:flex;align-items:center;gap:1.2vw;margin-bottom:2.5vh}
-.cab img{width:clamp(48px,5vw,84px);height:clamp(48px,5vw,84px);border-radius:14px;object-fit:cover}
-.cab small{display:block;color:var(--acc);font-weight:800;letter-spacing:.2em;text-transform:uppercase;font-size:clamp(12px,1.1vw,18px)}
-.cab h1{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:clamp(28px,3.6vw,64px);letter-spacing:.04em;margin:0;line-height:1;text-transform:uppercase}
-.cats{flex:1;min-height:0;display:grid;gap:2.2vh;grid-auto-rows:minmax(0,1fr)}
-.cat{background:rgba(15,15,16,.85);border:1px solid var(--line);border-radius:18px;padding:2vh 1.6vw;display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.cat h2{font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.06em;margin:0 0 1.2vh;font-size:clamp(18px,1.9vw,34px);text-transform:uppercase;color:var(--acc)}
-.filas{display:flex;flex-direction:column;gap:1vh;min-height:0;flex:1;justify-content:space-around}
-.fila{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:1vw}
-.fila .ft{width:clamp(34px,3vw,56px);height:clamp(34px,3vw,56px);border-radius:50%;background:var(--p2) center/cover;border:2px solid var(--line)}
-.fila.top .ft{border-color:var(--acc)}
-.fila .nm{font-weight:800;font-size:clamp(14px,1.35vw,24px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.5vh}
-.fila .bar{height:clamp(8px,1vh,14px);background:var(--p2);border-radius:8px;overflow:hidden}
-.fila .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#8a6a14,var(--acc));border-radius:8px;transition:width 1s cubic-bezier(.2,.8,.2,1)}
-.fila .pc{font-family:Anton,Impact,sans-serif;font-size:clamp(18px,2vw,36px);min-width:3.2em;text-align:right}
-.der{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2vh}
-.qr{background:#fff;padding:clamp(12px,1.2vw,22px);border-radius:22px;box-shadow:0 0 0 6px rgba(212,167,44,.35),0 30px 80px rgba(0,0,0,.6)}
-.qr img,.qr canvas{display:block;width:100%!important;height:auto!important}
-.der h3{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:clamp(28px,3.2vw,58px);margin:0;letter-spacing:.05em;line-height:1;text-transform:uppercase}
-.der h3 em{font-style:normal;color:var(--acc)}
-.der p{margin:0;color:var(--mut);font-size:clamp(14px,1.3vw,22px)}
-.cont{font-family:Anton,Impact,sans-serif;font-size:clamp(40px,5vw,96px);line-height:1;color:var(--ink)}
-.cont small{display:block;font-family:'Inter Tight';font-weight:800;font-size:clamp(12px,1vw,16px);letter-spacing:.2em;color:var(--mut);text-transform:uppercase;margin-top:.6vh}
-.estado{display:inline-block;padding:.6vh 1.2vw;border-radius:999px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:clamp(12px,1vw,16px)}
-.estado.abierta{background:#3ecf8e;color:#000}.estado.cerrada{background:var(--p2);color:var(--mut)}.estado.terminada{background:var(--acc);color:#000}
-.oculto-res .filas{filter:blur(14px);opacity:.5}
-.aviso{position:fixed;inset:0;display:grid;place-items:center;text-align:center;padding:30px;color:var(--mut);font-size:20px}
-.ctl{position:fixed;right:12px;bottom:10px;display:flex;gap:8px;opacity:0;transition:opacity .3s}
+html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:'Inter Tight',system-ui,sans-serif;overflow:hidden}
+.anton{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase}
+
+/* Fondo vivo */
+.fondo{position:fixed;inset:0;overflow:hidden}
+.fondo i{position:absolute;inset:-5%;background:center/cover no-repeat;opacity:0;transition:opacity 2s;animation:kb 18s ease-in-out infinite alternate}
+.fondo i.on{opacity:.38}
+.fondo::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(0,0,0,.1),rgba(0,0,0,.9) 75%),linear-gradient(90deg,rgba(0,0,0,.6),transparent 60%)}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.15) translate(-2%,-2%)}}
+.scan{position:fixed;inset:0;pointer-events:none;z-index:50;background:repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 1px,transparent 1px 3px);mix-blend-mode:overlay}
+.vineta{position:fixed;inset:0;pointer-events:none;z-index:49;box-shadow:inset 0 0 18vw rgba(0,0,0,.85)}
+
+.modo{position:fixed;inset:0;z-index:2;opacity:0;pointer-events:none;transition:opacity .7s}
+.modo.on{opacity:1;pointer-events:auto}
+.marca{position:absolute;top:4vh;left:4vw;display:flex;align-items:center;gap:1vw;z-index:5}
+.marca img{width:4.2vw;min-width:44px;border-radius:12px}
+.marca small{display:block;color:var(--acc);font-weight:800;letter-spacing:.3em;font-size:max(12px,1vw);text-transform:uppercase}
+.marca b{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:max(20px,2vw);letter-spacing:.08em}
+
+.glitch{position:relative;display:inline-block}
+.glitch::before,.glitch::after{content:attr(data-t);position:absolute;left:0;top:0;width:100%;pointer-events:none}
+.glitch::before{color:var(--cian);mix-blend-mode:screen;opacity:.7;transform:translate(-.04em,0);animation:gl1 4s infinite steps(1)}
+.glitch::after{color:var(--mag);mix-blend-mode:screen;opacity:.7;transform:translate(.04em,0);animation:gl2 3.3s infinite steps(1)}
+@keyframes gl1{0%,90%,100%{clip-path:inset(0);transform:translate(-.04em,0)}91%{clip-path:inset(15% 0 60% 0);transform:translate(-.15em,0)}94%{clip-path:inset(65% 0 8% 0);transform:translate(.1em,0)}}
+@keyframes gl2{0%,88%,100%{clip-path:inset(0);transform:translate(.04em,0)}89%{clip-path:inset(40% 0 35% 0);transform:translate(.16em,0)}93%{clip-path:inset(5% 0 80% 0);transform:translate(-.1em,0)}}
+
+/* ── Modo VOTAD ── */
+.v-izq{position:absolute;left:4vw;top:16vh;width:52vw}
+.v-eyebrow{color:var(--acc);font-weight:800;letter-spacing:.35em;font-size:1.3vw;text-transform:uppercase;margin-bottom:1.5vh}
+.v-titulo{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:10.5vw;line-height:.86;margin:0;letter-spacing:.005em}
+.v-titulo em{font-style:normal;color:var(--acc);text-shadow:0 0 60px rgba(212,167,44,.45)}
+.v-sub{font-size:1.7vw;color:#d4d4d8;margin:3vh 0 0;font-weight:600}
+.v-sub b{color:var(--acc)}
+.v-cont{display:flex;align-items:baseline;gap:1.2vw;margin-top:4vh}
+.v-cont b{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:6vw;line-height:1}
+.v-cont span{color:var(--mut);font-weight:800;letter-spacing:.25em;text-transform:uppercase;font-size:1.1vw}
+.v-cont i{width:1.1vw;height:1.1vw;border-radius:50%;background:#3ecf8e;box-shadow:0 0 20px #3ecf8e;animation:lat 1.2s infinite;align-self:center}
+@keyframes lat{50%{transform:scale(.6);opacity:.5}}
+.v-der{position:absolute;right:5vw;top:50%;transform:translateY(-58%);width:29vw;text-align:center}
+.qr-marco{position:relative;padding:1.4vw;background:#fff;border-radius:1.6vw;box-shadow:0 0 0 .5vw rgba(212,167,44,.9),0 0 8vw rgba(212,167,44,.35)}
+.qr-marco::before{content:'';position:absolute;inset:-2.2vw;border-radius:2.6vw;border:2px solid rgba(212,167,44,.6);animation:onda 2.4s ease-out infinite}
+.qr-marco::after{content:'';position:absolute;left:1.4vw;right:1.4vw;height:.35vw;top:1.4vw;background:linear-gradient(90deg,transparent,rgba(212,167,44,.95),transparent);box-shadow:0 0 1.5vw rgba(212,167,44,.9);animation:escaner 2.6s ease-in-out infinite;border-radius:2px}
+@keyframes onda{from{transform:scale(.96);opacity:1}to{transform:scale(1.12);opacity:0}}
+@keyframes escaner{0%,100%{top:1.4vw}50%{top:calc(100% - 1.75vw)}}
+.qr-marco img,.qr-marco canvas{display:block;width:100%!important;height:auto!important}
+.v-der h3{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:3.6vw;letter-spacing:.06em;margin:3.2vh 0 .6vh;text-transform:uppercase}
+.v-der h3 em{font-style:normal;color:var(--acc)}
+.v-der p{color:var(--mut);margin:0;font-size:1.05vw;word-break:break-all}
+.cinta{position:absolute;left:0;right:0;bottom:0;height:17vh;overflow:hidden;border-top:1px solid rgba(212,167,44,.35);background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.85))}
+.cinta-in{display:flex;gap:2.4vw;align-items:center;height:100%;width:max-content;animation:desliza 40s linear infinite;padding-left:2vw}
+@keyframes desliza{to{transform:translateX(-50%)}}
+.pel{display:flex;align-items:center;gap:1vw;flex:none}
+.pel span{width:10vh;height:10vh;border-radius:50%;background:#222 center 20%/cover;border:3px solid rgba(212,167,44,.8);flex:none;display:grid;place-items:center;font-family:Anton,Impact,sans-serif;color:rgba(212,167,44,.6);font-size:3.4vh}
+.pel b{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:3.3vh;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.pel em{font-style:normal;color:var(--acc);font-size:3vh;margin-left:1.2vw}
+
+/* ── Modo DIRECTO ── */
+.d-wrap{position:absolute;inset:14vh 4vw 5vh 4vw;display:grid;grid-template-columns:minmax(0,1fr) 22vw;gap:3vw}
+.d-cats{display:grid;gap:2.5vw;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);min-height:0}
+.d-cat{background:rgba(10,10,12,.78);border:1px solid rgba(212,167,44,.25);border-radius:1.4vw;padding:2.4vh 1.6vw;display:flex;flex-direction:column;min-height:0;backdrop-filter:blur(6px)}
+.d-cat h2{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:2.4vw;letter-spacing:.05em;margin:0 0 2vh;color:var(--acc);text-transform:uppercase;line-height:1}
+.d-filas{display:flex;flex-direction:column;justify-content:space-around;flex:1;gap:1.2vh;min-height:0}
+.d-fila{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:1vw;align-items:center;position:relative}
+.d-fila .ft{width:6.5vh;height:6.5vh;border-radius:50%;background:#222 center 20%/cover;border:2px solid var(--line);display:grid;place-items:center;font-family:Anton,Impact,sans-serif;color:rgba(212,167,44,.5);font-size:2.4vh}
+.d-fila.lider .ft{border-color:var(--acc);box-shadow:0 0 2vw rgba(212,167,44,.6)}
+.d-fila .nm{font-weight:800;font-size:2.4vh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.7vh}
+.d-fila .bar{height:1.4vh;background:rgba(255,255,255,.08);border-radius:1vh;overflow:hidden}
+.d-fila .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#7a5a10,var(--acc),var(--acc2));border-radius:1vh;transition:width 1.2s cubic-bezier(.2,.8,.2,1);position:relative}
+.d-fila.lider .bar i::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);animation:brillo 1.8s infinite}
+@keyframes brillo{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.d-fila .pc{font-family:Anton,Impact,sans-serif;font-size:4vh;min-width:3.3em;text-align:right}
+.oculto-pc .d-fila .pc,.oculto-pc .d-fila .bar{filter:blur(10px);opacity:.5}
+.d-lado{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2vh}
+.d-lado .qr-marco{width:100%;padding:1vw;border-radius:1.2vw}
+.d-lado .qr-marco::after{display:none}
+.d-lado h3{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:2.6vw;margin:0;letter-spacing:.05em}
+.d-lado h3 em{font-style:normal;color:var(--acc)}
+.d-num{font-family:Anton,Impact,sans-serif;font-size:5.5vw;line-height:1}
+.d-num small{display:block;font-family:'Inter Tight';font-weight:800;font-size:.9vw;letter-spacing:.25em;color:var(--mut);text-transform:uppercase;margin-top:.6vh}
+.privado{display:grid;place-items:center;text-align:center;color:var(--mut);font-size:1.6vw}
+
+/* ── Modo GANADOR ── */
+#m-ganador{background:#000}
+.rayos{position:absolute;left:50%;top:46%;width:180vmax;height:180vmax;margin:-90vmax 0 0 -90vmax;background:repeating-conic-gradient(from 0deg,rgba(212,167,44,.16) 0 6deg,transparent 6deg 18deg);animation:gira 40s linear infinite;opacity:0;transition:opacity 1.5s;-webkit-mask:radial-gradient(circle,#000 0,transparent 55%);mask:radial-gradient(circle,#000 0,transparent 55%)}
+@keyframes gira{to{transform:rotate(360deg)}}
+.g-fase{position:absolute;inset:0;display:grid;place-items:center;text-align:center;opacity:0;transition:opacity .5s}
+.g-fase.on{opacity:1}
+.g-intro small{display:block;color:var(--acc);font-weight:800;letter-spacing:.4em;font-size:1.6vw;text-transform:uppercase;margin-bottom:2vh}
+.g-intro h2{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:7vw;line-height:.95;margin:0;text-transform:uppercase;max-width:86vw}
+.g-num{font-family:Anton,Impact,sans-serif;font-size:42vh;line-height:1;color:var(--acc);text-shadow:0 0 8vw rgba(212,167,44,.6),.6vw 0 var(--mag),-.6vw 0 var(--cian)}
+.g-num.pum{animation:pum .95s cubic-bezier(.2,.9,.3,1)}
+@keyframes pum{0%{transform:scale(2.6);opacity:0}25%{opacity:1}100%{transform:scale(.85);opacity:.9}}
+.g-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:9}
+.g-flash.on{animation:gfl .9s ease-out}
+@keyframes gfl{0%{opacity:1}100%{opacity:0}}
+.g-ganador{grid-template-rows:auto;}
+.g-caja{display:flex;align-items:center;gap:4vw;transform:scale(.9);transition:transform 1.2s cubic-bezier(.2,.9,.2,1)}
+.g-fase.on .g-caja{transform:scale(1)}
+.g-foto{position:relative;width:34vh;height:44vh;width:clamp(240px,30vw,560px);height:clamp(300px,62vh,720px);border-radius:2vw;background:#1b1b1f center 18%/cover;border:.5vw solid var(--acc);box-shadow:0 0 10vw rgba(212,167,44,.55);overflow:hidden;display:grid;place-items:center;font-family:Anton,Impact,sans-serif;font-size:14vw;color:rgba(212,167,44,.35)}
+.g-foto.dos{display:flex}
+.g-foto.dos i{flex:1;background:center 18%/cover}
+.g-tx{text-align:left;max-width:52vw}
+.g-tx small{display:block;color:var(--acc);font-weight:800;letter-spacing:.35em;font-size:1.5vw;text-transform:uppercase}
+.g-tx h1{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:9vw;line-height:.88;margin:1.5vh 0 2vh;text-transform:uppercase;letter-spacing:.01em}
+.g-tx p{font-size:2vw;color:#d4d4d8;margin:0}
+.g-tx p b{font-family:Anton,Impact,sans-serif;font-weight:400;color:var(--acc);font-size:3.4vw;margin-right:.6vw}
+.g-corona{display:inline-block;font-size:5vw;animation:flota 2.4s ease-in-out infinite}
+@keyframes flota{50%{transform:translateY(-1.2vh) rotate(-4deg)}}
+canvas#oro{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+
+.aviso{position:fixed;inset:0;z-index:60;display:grid;place-items:center;text-align:center;padding:30px;color:var(--mut);font-size:20px;background:#000}
+.ctl{position:fixed;right:12px;bottom:10px;z-index:70;display:flex;gap:8px;opacity:0;transition:opacity .3s}
 body:hover .ctl{opacity:1}
-.ctl button{background:var(--p2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 12px;font:inherit;font-weight:700;cursor:pointer}
-@media (max-width:820px){html,body{overflow:auto}.p{grid-template-columns:1fr;height:auto}.der{order:-1}.qr{width:min(70vw,320px)}}
+.ctl button{background:rgba(27,27,31,.9);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<div class="p" id="p" hidden>
-  <div class="izq">
-    <div class="cab"><img src="../panel-fight2one/logo.jpg" alt=""><div><small id="velada">Fight2One</small><h1 id="titulo">Vota a los mejores</h1></div></div>
-    <div class="cats" id="cats"></div>
+<div class="fondo" id="fondo" aria-hidden="true"></div>
+
+<section class="modo" id="m-votad" aria-label="Llamada a votar">
+  <div class="marca"><img src="../fight2one/img/logo.webp" alt=""><div><small class="velada">Fight2One</small><b>FIGHT2ONE</b></div></div>
+  <div class="v-izq">
+    <div class="v-eyebrow">Votación oficial del público</div>
+    <h1 class="v-titulo"><span class="glitch" data-t="Vota al">Vota al</span><br><em class="glitch" data-t="mejor">mejor</em><br><span class="glitch" data-t="de la noche">de la noche</span></h1>
+    <p class="v-sub">Escanea el QR con la cámara · <b>20 segundos</b> · sin registrarte</p>
+    <div class="v-cont"><i></i><b class="num-votos">0</b><span>votos ya</span></div>
   </div>
-  <div class="der">
-    <span class="estado" id="estado"></span>
+  <div class="v-der">
+    <div class="qr-marco qr"></div>
     <h3>Escanea y <em>vota</em></h3>
-    <div class="qr" id="qr" style="width:100%"></div>
-    <p id="url"></p>
-    <div class="cont"><span id="votantes">0</span><small>personas han votado</small></div>
+    <p class="url"></p>
   </div>
-</div>
+  <div class="cinta"><div class="cinta-in" id="cinta"></div></div>
+</section>
+
+<section class="modo" id="m-directo" aria-label="Resultados en directo">
+  <div class="marca"><img src="../fight2one/img/logo.webp" alt=""><div><small class="velada">Fight2One</small><b>RESULTADOS EN DIRECTO</b></div></div>
+  <div class="d-wrap">
+    <div class="d-cats" id="cats"></div>
+    <div class="d-lado"><h3>¿Aún no has <em>votado</em>?</h3><div class="qr-marco qr"></div><div class="d-num"><span class="num-votos">0</span><small>personas han votado</small></div></div>
+  </div>
+</section>
+
+<section class="modo" id="m-ganador" aria-label="Ganador">
+  <div class="rayos" id="rayos"></div>
+  <canvas id="oro"></canvas>
+  <div class="g-fase g-intro" id="g-intro"><div><small>Y el ganador de</small><h2 class="glitch" id="g-cat" data-t=""></h2></div></div>
+  <div class="g-fase" id="g-cuenta"><div class="g-num" id="g-num">3</div></div>
+  <div class="g-fase g-ganador" id="g-final"><div class="g-caja"><div class="g-foto" id="g-foto"></div><div class="g-tx"><span class="g-corona">🏆</span><small id="g-cat2"></small><h1 class="glitch" id="g-nombre" data-t=""></h1><p id="g-pc"></p></div></div></div>
+  <div class="g-flash" id="g-flash"></div>
+</section>
+
+<div class="scan" aria-hidden="true"></div><div class="vineta" aria-hidden="true"></div>
 <div class="aviso" id="aviso">Cargando…</div>
 <div class="ctl"><button id="b-ocultar" title="Ocultar los porcentajes (suspense)">Ocultar %</button><button id="b-full">Pantalla completa</button></div>
 <script>
-/* Pantalla grande del pabellón: QR para votar + resultados en directo.
-   Si se abre desde el navegador donde Moi tiene el panel abierto, ve los resultados aunque no sean públicos. */
+/* Pantalla grande del pabellón. Tres modos que Moi cambia desde el panel (Votación → Pantalla):
+   votad (QR gigante), directo (barras en directo) y ganador (cuenta atrás + revelación).
+   Teclas en este ordenador: 1 = ¡Vota ya!, 2 = En directo, 3 = Revelar (va pasando de categoría), F = pantalla completa. */
 const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
 const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
 const ID=new URLSearchParams(location.search).get('v')||'';
-const $=s=>document.querySelector(s);
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const iniciales=t=>String(t||'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
 const foto=u=>!u?'':/^https?:\/\//.test(u)?u:'/'+String(u).replace(/^\/+/,'');
 const VOTAR=new URL('./?v='+ID,location.href).href;
+const QUIETO=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let ocultarPc=false; try{ ocultarPc=localStorage.getItem('f2o_pantalla_ocultar')==='1'; }catch(e){}
+
+/* Fondo */
+(function(){ const f=$('#fondo'); f.innerHTML=['amb-jaula','amb-estelar','amb-golpe','amb-victoria','amb-k1','amb-cara'].map(n=>`<i style="background-image:url('../fight2one/img/${n}.webp')"></i>`).join('');
+  const c=[...f.children]; let n=0; c[0].classList.add('on'); if(!QUIETO) setInterval(()=>{ c[n].classList.remove('on'); n=(n+1)%c.length; c[n].classList.add('on'); },7000); })();
 
 function token(){ try{ const s=JSON.parse(localStorage.getItem('f2o-panel-auth')||'null'); if(s?.access_token&&(!s.expires_at||s.expires_at*1000>Date.now())) return s.access_token; }catch(e){} return SB_ANON; }
 async function resultados(){
   const r=await fetch(`${SB_URL}/rest/v1/rpc/f2o_vot_resultados`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_ANON,Authorization:'Bearer '+token()},body:JSON.stringify({p_votacion:ID})});
   if(!r.ok) throw new Error('HTTP '+r.status); return r.json();
 }
-let _hecho=false;
-function montar(){ if(_hecho) return; _hecho=true;
-  $('#p').hidden=false; $('#aviso').hidden=true;
-  new QRCode($('#qr'),{text:VOTAR,width:600,height:600,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
-  $('#url').textContent=VOTAR.replace(/^https?:\/\//,'');
+
+let R=null, MODO='', CAT_REV=null, LOCAL=null, _montado=false, _cambio='';
+function montar(){ if(_montado) return; _montado=true; $('#aviso').hidden=true;
+  $$('.qr').forEach(el=>new QRCode(el,{text:VOTAR,width:640,height:640,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}));
+  $$('.url').forEach(el=>el.textContent=VOTAR.replace(/^https?:\/\//,'')); }
+
+/* Contador que sube poco a poco */
+let _mostrado=0;
+function contar(fin){ const ini=_mostrado, t0=performance.now(); _mostrado=fin;
+  const paso=t=>{ const k=Math.min(1,(t-t0)/1200), v=Math.round(ini+(fin-ini)*(1-Math.pow(1-k,3))); $$('.num-votos').forEach(e=>e.textContent=v.toLocaleString('es-ES')); if(k<1) requestAnimationFrame(paso); };
+  requestAnimationFrame(paso); }
+
+function cinta(){ const ops=[]; (R.categorias||[]).forEach(c=>c.opciones.forEach(o=>{ if(!/ vs /i.test(o.etiqueta)) ops.push(o); }));
+  const k=ops.map(o=>o.id).join(); const el=$('#cinta'); if(el.dataset.k===k) return; el.dataset.k=k;
+  const item=o=>`<div class="pel"><span style="${o.foto?`background-image:url('${esc(foto(o.foto))}')`:''}">${o.foto?'':esc(iniciales(o.etiqueta))}</span><b>${esc(o.etiqueta)}</b><em>✦</em></div>`;
+  const html=ops.map(item).join(''); el.innerHTML=html+html; el.style.animationDuration=Math.max(25,ops.length*4)+'s'; }
+
+function directo(){
+  const cont=$('#cats');
+  if(R.privado||!R.categorias.length||R.categorias[0].opciones?.[0]?.votos==null){ cont.innerHTML='<div class="d-cat privado">Los resultados se ven al abrir esta pantalla desde el panel de Fight2One<br>(o si se hacen públicos).</div>'; return; }
+  const cats=R.categorias.filter(c=>c.opciones.length).slice(0,3), max=cats.length>=3?4:cats.length===2?5:7;
+  const k=cats.map(c=>c.id+c.opciones.length).join(); if(cont.dataset.k!==k){ cont.dataset.k=k; cont.innerHTML=cats.map(c=>`<div class="d-cat" data-c="${c.id}"><h2>${esc(c.nombre)}</h2><div class="d-filas"></div></div>`).join(''); }
+  cont.classList.toggle('oculto-pc',ocultarPc);
+  cats.forEach(c=>{ const tot=c.opciones.reduce((a,o)=>a+o.votos,0), top=Math.max(1,...c.opciones.map(o=>o.votos));
+    const filas=[...c.opciones].sort((a,b)=>b.votos-a.votos).slice(0,max), el=cont.querySelector(`[data-c="${c.id}"] .d-filas`);
+    el.innerHTML=filas.map((o,i)=>{ const f=o.foto||o.foto_a; return `<div class="d-fila ${i===0&&o.votos?'lider':''}"><span class="ft" style="${f?`background-image:url('${esc(foto(f))}')`:''}">${f?'':esc(iniciales(o.etiqueta))}</span><div style="min-width:0"><div class="nm">${i===0&&o.votos?'👑 ':''}${esc(o.etiqueta)}</div><div class="bar"><i data-w="${o.votos*100/top}"></i></div></div><span class="pc">${tot?Math.round(o.votos*100/tot):0}%</span></div>`; }).join('');
+    requestAnimationFrame(()=>el.querySelectorAll('.bar i').forEach(b=>b.style.width=b.dataset.w+'%')); });
 }
-const ESTADOS={abierta:'● Votación abierta',cerrada:'Votación aún cerrada',terminada:'Votación terminada'};
+
+/* ── Revelación del ganador ── */
+let _rev=0, _oroOn=false;
+function revelar(cat){
+  const id=++_rev; const ops=[...(cat?.opciones||[])].sort((a,b)=>(b.votos||0)-(a.votos||0)); const g=ops[0]; const tot=ops.reduce((a,o)=>a+(o.votos||0),0);
+  const fases=['g-intro','g-cuenta','g-final'], ver=f=>fases.forEach(x=>$('#'+x).classList.toggle('on',x===f));
+  $('#rayos').style.opacity=0; _oroOn=false;
+  $('#g-cat').textContent=$('#g-cat').dataset.t=cat?.nombre||''; $('#g-cat2').textContent=cat?.nombre||'';
+  if(!g||!g.votos){ ver('g-final'); $('#g-foto').innerHTML=''; $('#g-foto').className='g-foto'; $('#g-foto').style.backgroundImage=''; $('#g-nombre').textContent=$('#g-nombre').dataset.t='Sin votos'; $('#g-pc').innerHTML='Todavía no ha votado nadie en esta categoría.'; return; }
+  const empate=ops[1]&&ops[1].votos===g.votos;
+  const fA=g.foto||g.foto_a, fB=g.foto_b;
+  const fotoEl=$('#g-foto'); fotoEl.className='g-foto'+(fB?' dos':''); fotoEl.style.backgroundImage=!fB&&fA?`url('${esc(foto(fA))}')`:'';
+  fotoEl.innerHTML=fB?`<i style="background-image:url('${esc(foto(fA))}')"></i><i style="background-image:url('${esc(foto(fB))}')"></i>`:fA?'':esc(iniciales(g.etiqueta));
+  $('#g-nombre').textContent=$('#g-nombre').dataset.t=empate?ops.filter(o=>o.votos===g.votos).map(o=>o.etiqueta).join(' y '):g.etiqueta;
+  $('#g-pc').innerHTML=`<b>${tot?Math.round(g.votos*100/tot):0}%</b>de los votos${empate?' · ¡empate!':''}`;
+  if(QUIETO){ ver('g-final'); $('#rayos').style.opacity=1; return; }
+  ver('g-intro');
+  const n=$('#g-num'); let k=3;
+  setTimeout(()=>{ if(id!==_rev) return; ver('g-cuenta');
+    const tic=()=>{ if(id!==_rev) return; if(k===0){ final(); return; } n.textContent=k; n.classList.remove('pum'); void n.offsetWidth; n.classList.add('pum'); k--; setTimeout(tic,1000); };
+    tic(); },3200);
+  function final(){ const f=$('#g-flash'); f.classList.remove('on'); void f.offsetWidth; f.classList.add('on'); ver('g-final'); $('#rayos').style.opacity=1; _oroOn=true; lluviaOro(); }
+}
+/* Lluvia de oro continua en la revelación */
+let _oroAnim=0;
+function lluviaOro(){ cancelAnimationFrame(_oroAnim); const c=$('#oro'), d=devicePixelRatio||1; c.width=innerWidth*d; c.height=innerHeight*d; const g=c.getContext('2d'); g.setTransform(d,0,0,d,0,0);
+  const W=innerWidth,H=innerHeight; const P=[];
+  for(let i=0;i<220;i++){ const a=Math.random()*Math.PI*2, v=6+Math.random()*16; P.push({x:W/2,y:H*.45,vx:Math.cos(a)*v,vy:Math.sin(a)*v-6,r:2+Math.random()*4,v:1,rot:Math.random()*6,c:Math.random()<.8?'#ffd863':'#d4a72c'}); }
+  const loop=()=>{ g.clearRect(0,0,W,H);
+    if(_oroOn&&P.length<420) for(let i=0;i<3;i++) P.push({x:Math.random()*W,y:-10,vx:(Math.random()-.5)*1.5,vy:2+Math.random()*3,r:2+Math.random()*4,v:1,rot:Math.random()*6,c:Math.random()<.8?'#ffd863':'#d4a72c',lento:1});
+    for(let i=P.length-1;i>=0;i--){ const p=P[i]; p.x+=p.vx; p.y+=p.vy; if(!p.lento){ p.vy+=.25; p.vx*=.99; p.v-=.008; } p.rot+=.1;
+      if(p.v<=0||p.y>H+20){ P.splice(i,1); continue; }
+      g.globalAlpha=p.v; g.fillStyle=p.c; g.save(); g.translate(p.x,p.y); g.rotate(p.rot); g.fillRect(-p.r,-p.r/2,p.r*2,p.r); g.restore(); }
+    if(_oroOn||P.length) _oroAnim=requestAnimationFrame(loop); else g.clearRect(0,0,W,H); };
+  loop(); }
+
+function ponerModo(m,cat){
+  const cambio=m!==MODO||(m==='ganador'&&cat?.id!==CAT_REV);
+  MODO=m; $$('.modo').forEach(x=>x.classList.toggle('on',x.id==='m-'+m));
+  if(m!=='ganador'){ _oroOn=false; _rev++; }
+  if(m==='ganador'&&cambio){ CAT_REV=cat?.id; revelar(cat); }
+}
+
 async function tick(){
   try{
-    const R=await resultados();
+    R=await resultados();
     if(!R){ $('#aviso').textContent='Esta votación no existe. Ábrela desde el panel de Fight2One.'; return; }
     montar();
-    $('#titulo').textContent=R.titulo; $('#velada').textContent=R.velada||'Fight2One';
-    const e=$('#estado'); e.className='estado '+R.estado; e.textContent=ESTADOS[R.estado]||R.estado;
-    if(R.privado){ $('#cats').innerHTML='<div class="cat" style="justify-content:center;align-items:center;text-align:center"><h2>Resultados al final de la velada</h2><p style="color:var(--mut);margin:0">Abre esta pantalla desde el panel para verlos en directo.</p></div>'; return; }
-    $('#votantes').textContent=Number(R.votantes||0).toLocaleString('es-ES');
-    const cats=R.categorias.filter(c=>c.opciones.length);
-    const cont=$('#cats');
-    if(cont.dataset.k!==cats.map(c=>c.id+c.opciones.length).join()){ cont.dataset.k=cats.map(c=>c.id+c.opciones.length).join();
-      cont.innerHTML=cats.map(c=>`<div class="cat" data-c="${c.id}"><h2>${esc(c.nombre)}</h2><div class="filas"></div></div>`).join(''); }
-    cont.classList.toggle('oculto-res',ocultarPc);
-    cats.forEach(c=>{ const tot=c.opciones.reduce((a,o)=>a+o.votos,0); const max=Math.max(1,...c.opciones.map(o=>o.votos));
-      const filas=[...c.opciones].sort((a,b)=>b.votos-a.votos).slice(0,cats.length>=3?3:cats.length===2?4:6);
-      const el=cont.querySelector(`[data-c="${c.id}"] .filas`);
-      el.innerHTML=filas.map((o,i)=>`<div class="fila ${i===0&&o.votos?'top':''}">${o.foto?`<span class="ft" style="background-image:url('${esc(foto(o.foto))}')"></span>`:'<span></span>'}<div style="min-width:0"><div class="nm">${i===0&&o.votos?'🏆 ':''}${esc(o.etiqueta)}</div><div class="bar"><i data-w="${o.votos*100/max}"></i></div></div><span class="pc">${tot?Math.round(o.votos*100/tot):0}%</span></div>`).join('');
-      requestAnimationFrame(()=>el.querySelectorAll('.bar i').forEach(b=>b.style.width=b.dataset.w+'%'));
-    });
-  }catch(e){ if(!_hecho) $('#aviso').textContent='Sin conexión. Reintentando…'; }
+    $$('.velada').forEach(e=>e.textContent=R.velada||'Fight2One');
+    if(R.votantes!=null&&R.votantes!==_mostrado) contar(R.votantes);
+    cinta(); directo();
+    const p=R.pantalla||{modo:'directo'};
+    // Un cambio hecho desde el panel manda sobre las teclas de este ordenador
+    if(p.cambio&&p.cambio!==_cambio){ _cambio=p.cambio; LOCAL=null; }
+    if(LOCAL) return;
+    const cat=p.modo==='ganador'?(p.revelada||R.categorias.find(c=>c.id===p.categoria)):null;
+    ponerModo(p.modo||'votad',cat);
+  }catch(e){ if(!_montado) $('#aviso').textContent='Sin conexión. Reintentando…'; }
 }
-$('#b-ocultar').onclick=()=>{ ocultarPc=!ocultarPc; try{ localStorage.setItem('f2o_pantalla_ocultar',ocultarPc?'1':'0'); }catch(e){} $('#b-ocultar').textContent=ocultarPc?'Mostrar %':'Ocultar %'; $('#cats').classList.toggle('oculto-res',ocultarPc); };
+
+addEventListener('keydown',e=>{ if(!R) return;
+  if(e.key==='1'){ LOCAL='votad'; ponerModo('votad'); }
+  else if(e.key==='2'){ LOCAL='directo'; ponerModo('directo'); }
+  else if(e.key==='3'){ const cs=(R.categorias||[]).filter(c=>c.opciones.length&&c.opciones[0].votos!=null); if(!cs.length) return; const i=(cs.findIndex(c=>c.id===CAT_REV)+1)%cs.length; LOCAL='ganador'; CAT_REV=null; ponerModo('ganador',cs[i]); }
+  else if(e.key==='f'||e.key==='F') $('#b-full').click(); });
+$('#b-ocultar').onclick=()=>{ ocultarPc=!ocultarPc; try{ localStorage.setItem('f2o_pantalla_ocultar',ocultarPc?'1':'0'); }catch(e){} $('#b-ocultar').textContent=ocultarPc?'Mostrar %':'Ocultar %'; $('#cats').classList.toggle('oculto-pc',ocultarPc); };
 $('#b-ocultar').textContent=ocultarPc?'Mostrar %':'Ocultar %';
 $('#b-full').onclick=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen?.();
 if(!/^[0-9a-f-]{36}$/i.test(ID)) $('#aviso').textContent='Falta la votación. Ábrela desde el panel de Fight2One (Votación → Pantalla grande).';
-else { tick(); setInterval(tick,4000); }
+else { tick(); setInterval(tick,2000); }
 </script>
 </body>
 </html>

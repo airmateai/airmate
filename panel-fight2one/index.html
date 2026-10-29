@@ -121,6 +121,7 @@ main.lleno{max-width:none;padding:0}
 .dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .form .pie{display:flex;gap:10px;margin-top:16px;position:sticky;bottom:-18px;background:#0e0e0f;padding:10px 0 4px}
 .form .pie .btn{flex:1}
+.item.on-pant{border-color:var(--acc);box-shadow:0 0 0 2px rgba(212,167,44,.35)}
 .check{display:flex;align-items:center;gap:12px;background:var(--p2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-weight:700;cursor:pointer}
 .check input{width:24px;height:24px;accent-color:var(--acc)}
 .bloque{border:1px solid var(--line);border-radius:14px;padding:12px;margin:6px 0 12px}
@@ -638,6 +639,13 @@ const PANTALLAS={
         </div>
         <small style="color:var(--mut)">Pon el QR en las pantallas y en la cartelería. La «Pantalla grande» enseña el QR y los resultados en directo (ábrela en el ordenador conectado a la pantalla del pabellón).</small>
       </div>
+      <div class="grupo">Pantalla del pabellón</div>
+      <p class="sub" style="margin:0 0 10px">Lo que sale en la pantalla grande. Cámbialo desde aquí cuando quieras (tarda 2 segundos).</p>
+      <div class="lista" style="margin-bottom:6px">
+        <button class="item ${(V.pantalla_modo||'votad')==='votad'?'on-pant':''}" onclick="modoPantalla('votad',null,this)"><span class="ic">📣</span><span class="t"><b>¡Vota ya!</b><small>QR gigante, fotos de los peleadores y contador de votos</small></span>${(V.pantalla_modo||'votad')==='votad'?'<span class="tag ok">En pantalla</span>':''}</button>
+        <button class="item ${V.pantalla_modo==='directo'?'on-pant':''}" onclick="modoPantalla('directo',null,this)"><span class="ic">📊</span><span class="t"><b>Resultados en directo</b><small>Barras que suben con cada voto</small></span>${V.pantalla_modo==='directo'?'<span class="tag ok">En pantalla</span>':''}</button>
+        ${S.vcats.map(c=>{ const on=V.pantalla_modo==='ganador'&&V.pantalla_categoria===c.id; return `<button class="item ${on?'on-pant':''}" onclick="modoPantalla('ganador','${c.id}',this)"><span class="ic">🏆</span><span class="t"><b>Revelar: ${esc(c.nombre)}</b><small>Cuenta atrás 3-2-1 y aparece el ganador con lluvia de oro</small></span>${on?'<span class="tag ok">En pantalla</span>':''}</button>`; }).join('')}
+      </div>
       <div class="grupo">Ajustes</div>
       <label class="check"><input type="checkbox" ${V.requiere_codigo?'checked':''} onchange="ajusteVotacion('requiere_codigo',this.checked)"> Pedir el código de la entrada (un voto por entrada; recomendado si hay premios importantes)</label>
       <label class="check"><input type="checkbox" ${V.resultados_publicos?'checked':''} onchange="ajusteVotacion('resultados_publicos',this.checked)"> Enseñar los resultados al público (en su móvil y en la pantalla grande aunque no esté abierta desde el panel)</label>
@@ -971,6 +979,9 @@ window.estadoVotacion=async(estado,btn)=>{ if(estado==='terminada'&&!confirmarDo
   if(estado==='abierta'&&!S.vops.length){ toast('Añade candidatos antes de abrir',true); return; }
   if(estado==='abierta'&&S.vot.requiere_codigo&&!S.vcod.total){ toast('Genera los códigos de las entradas antes de abrir',true); return; }
   btn.disabled=true; try{ S.vot=await guardar('f2o_votaciones',{estado},S.vot.id); toast(estado==='abierta'?'✓ Votación abierta: ya se puede votar':'✓ Votación cerrada'); pintar(); }catch(e){ btn.disabled=false; toast(textoError(e),true); } };
+window.modoPantalla=async(modo,cat,btn)=>{ if(modo==='ganador'&&!confirmarDoble(btn.querySelector('b'),'¿Revelar ya? Pulsa otra vez')) return; btn.disabled=true;
+  try{ S.vot=await guardar('f2o_votaciones',{ pantalla_modo:modo, pantalla_categoria:cat, pantalla_cambio:new Date().toISOString() },S.vot.id); toast(modo==='ganador'?'🏆 Revelando en la pantalla…':'✓ Pantalla cambiada'); pintar(); }
+  catch(e){ btn.disabled=false; toast(/pantalla_/i.test(String(e?.message))?'Falta actualizar la base de datos (avisa a Fabio).':textoError(e),true); } };
 window.ajusteVotacion=async(campo,val)=>{ try{ S.vot=await guardar('f2o_votaciones',{[campo]:val},S.vot.id); if(campo==='requiere_codigo') await cargarVotacion(); toast('✓ Guardado'); pintar(); }catch(e){ toast(textoError(e),true); pintar(); } };
 window.reiniciarVotos=async btn=>{ if(!confirmarDoble(btn,'¿Borrar TODOS los votos? Pulsa otra vez')) return; btn.disabled=true;
   try{ const r=await sb.from('f2o_votos').delete().eq('votacion_id',S.vot.id); if(r.error) throw r.error;
