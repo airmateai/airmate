@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#000000">
+<title>Vota · Fight2One</title>
+<link rel="icon" href="../panel-fight2one/logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter+Tight:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--p1:#0f0f10;--p2:#18181b;--line:#2c2c30;--ink:#f5f5f4;--mut:#a3a3a8;--acc:#d4a72c;--acc2:#f0c94a;--ok:#3ecf8e;--red:#ff5a68;--r:16px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter Tight',system-ui,sans-serif;font-size:16px;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:560px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) 16px calc(110px + env(safe-area-inset-bottom))}
+.cab{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.cab img{width:46px;height:46px;border-radius:12px;object-fit:cover;border:1px solid var(--line)}
+.cab small{display:block;color:var(--mut);font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.cab b{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:22px;letter-spacing:.05em}
+h1{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:clamp(34px,10vw,48px);line-height:1;letter-spacing:.03em;margin:6px 0 8px;text-transform:uppercase}
+h1 em{font-style:normal;color:var(--acc)}
+.intro{color:var(--mut);margin:0 0 22px;line-height:1.45}
+.cat{margin:0 0 26px}
+.cat h2{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:22px;letter-spacing:.06em;margin:0 0 10px;display:flex;align-items:center;gap:10px;text-transform:uppercase}
+.cat h2 .n{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--p2);border:1px solid var(--line);font-family:'Inter Tight';font-size:13px;font-weight:800}
+.cat.hecha h2 .n{background:var(--acc);border-color:var(--acc);color:#000}
+.ops{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.op{position:relative;display:flex;flex-direction:column;background:var(--p1);border:2px solid var(--line);border-radius:var(--r);padding:0;overflow:hidden;text-align:left;min-height:64px;transition:border-color .15s,transform .15s}
+.op:active{transform:scale(.98)}
+.op .ft{aspect-ratio:1/1;background:var(--p2) center/cover no-repeat;display:grid;place-items:center;font-family:Anton,Impact,sans-serif;font-size:38px;color:#3a3a40}
+.op .tx{padding:10px 12px 12px}
+.op b{display:block;font-size:15px;line-height:1.2}
+.op small{display:block;color:var(--mut);font-size:12.5px;margin-top:3px}
+.op.sin-foto .tx{padding:16px 14px}
+.op.on{border-color:var(--acc);box-shadow:0 0 0 3px rgba(212,167,44,.25)}
+.op.on::after{content:'✓';position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:var(--acc);color:#000;display:grid;place-items:center;font-weight:800}
+.ops.uno{grid-template-columns:1fr}
+.codigo{background:var(--p1);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:24px}
+.codigo label{display:block;font-weight:800;margin-bottom:8px}
+.codigo input{width:100%;font:inherit;font-size:24px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;background:#000;color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:center}
+.codigo input:focus{outline:2px solid var(--acc);border-color:var(--acc)}
+.codigo small{display:block;color:var(--mut);margin-top:8px;font-size:13px}
+.barra{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(0,0,0,0),#000 30%);z-index:5}
+.enviar{display:block;width:100%;max-width:528px;margin:0 auto;min-height:58px;border:0;border-radius:14px;background:var(--acc);color:#000;font-family:Anton,Impact,sans-serif;font-size:22px;letter-spacing:.06em;text-transform:uppercase}
+.enviar:disabled{background:var(--p2);color:var(--mut)}
+.error{color:var(--red);font-weight:700;text-align:center;margin:0 0 10px;min-height:1px}
+.estado{text-align:center;padding:40px 8px}
+.estado .ic{font-size:64px;margin-bottom:6px}
+.estado p{color:var(--mut);line-height:1.5;max-width:380px;margin:8px auto}
+.btn2{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 18px;border:1px solid var(--line);border-radius:14px;background:var(--p2);font-weight:700;text-decoration:none;color:var(--ink);margin-top:14px}
+.res{margin-top:26px;text-align:left}
+.res .fila{margin:8px 0}
+.res .fila div{display:flex;justify-content:space-between;font-weight:700;font-size:14px;margin-bottom:4px}
+.res .bar{height:10px;border-radius:6px;background:var(--p2);overflow:hidden}
+.res .bar i{display:block;height:100%;background:var(--acc);border-radius:6px}
+.pie{color:#55555b;font-size:12px;text-align:center;margin-top:30px}
+.spin{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--acc);border-radius:50%;margin:60px auto;animation:g .8s linear infinite}
+@keyframes g{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}.op{transition:none}}
+</style>
+</head>
+<body>
+<main class="wrap" id="app"><div class="spin" aria-label="Cargando"></div></main>
+<div class="barra" id="barra" hidden><p class="error" id="err" role="alert"></p><button class="enviar" id="enviar" disabled>Elige en cada categoría</button></div>
+<script>
+/* Fight2One · Votación del público (se abre con el QR de la velada)
+   Solo usa 3 funciones públicas de Supabase: f2o_vot_papeleta, f2o_vot_votar y f2o_vot_resultados. */
+const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+const ID=new URLSearchParams(location.search).get('v')||'';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const foto=u=>!u?'':/^https?:\/\//.test(u)?u:'/'+String(u).replace(/^\/+/,'');
+const guardado=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
+const guardar=(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} };
+
+// Identificador de este móvil (un voto por móvil y categoría)
+function votante(){
+  let id=guardado('f2o_votante')||(document.cookie.match(/f2o_votante=([\w-]+)/)||[])[1];
+  if(!id){ id=(crypto.randomUUID?crypto.randomUUID():Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('')); }
+  guardar('f2o_votante',id); document.cookie=`f2o_votante=${id};max-age=31536000;path=/;SameSite=Lax`;
+  return id;
+}
+async function rpc(fn,body){
+  const r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_ANON,Authorization:'Bearer '+SB_ANON},body:JSON.stringify(body)});
+  if(!r.ok) throw new Error('HTTP '+r.status); return r.json();
+}
+
+let P=null; const ELEC={}; let _espera=null;
+const cabecera=()=>`<div class="cab"><img src="../panel-fight2one/logo.jpg" alt="Fight2One"><div><small>${esc(P?.velada||'Fight2One')}</small><b>FIGHT2ONE</b></div></div>`;
+function pantallaEstado(ic,titulo,texto,extra=''){ $('#barra').hidden=true; $('#app').innerHTML=`${cabecera()}<div class="estado"><div class="ic">${ic}</div><h1>${titulo}</h1><p>${texto}</p>${extra}</div><p class="pie">Votación oficial de Fight2One</p>`; }
+
+async function cargar(){
+  if(!/^[0-9a-f-]{36}$/i.test(ID)){ pantallaEstado('🤔','Enlace no válido','Vuelve a escanear el código QR del pabellón.'); return; }
+  try{ P=await rpc('f2o_vot_papeleta',{p_votacion:ID}); }
+  catch(e){ pantallaEstado('📶','Sin conexión','No hemos podido cargar la votación. Revisa tu conexión y prueba otra vez.',`<button class="btn2" onclick="location.reload()">Reintentar</button>`); return; }
+  if(!P){ pantallaEstado('🤔','Esta votación no existe','Vuelve a escanear el código QR del pabellón.'); return; }
+  clearTimeout(_espera);
+  if(guardado('f2o_votado_'+ID)){ await gracias(); return; }
+  if(P.estado==='cerrada'){
+    pantallaEstado('⏳','Aún no está <em>abierta</em>','La votación se abrirá durante la velada. Deja esta página abierta: se actualiza sola.');
+    _espera=setTimeout(cargar,20000+Math.random()*10000); return; }
+  if(P.estado==='terminada'){ await terminada(); return; }
+  pintarPapeleta();
+}
+
+function pintarPapeleta(){
+  const cats=P.categorias.filter(c=>c.opciones.length);
+  $('#app').innerHTML=`${cabecera()}<h1>${esc(P.titulo)}</h1><p class="intro">Elige uno en cada categoría y pulsa <b>Enviar mi voto</b>. Solo se puede votar una vez.</p>
+    ${P.requiere_codigo?`<div class="codigo"><label for="cod">Código de tu entrada</label><input id="cod" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="ABC123"><small>Lo tienes impreso en tu entrada. Cada código vota una sola vez.</small></div>`:''}
+    ${cats.map((c,i)=>`<section class="cat" data-cat="${c.id}"><h2><span class="n">${i+1}</span>${esc(c.nombre)}</h2>
+      <div class="ops ${c.opciones.every(o=>!o.foto)?'uno':''}">${c.opciones.map(o=>`<button class="op ${o.foto?'':'sin-foto'}" data-op="${o.id}" aria-pressed="false">
+        ${o.foto?`<span class="ft" style="background-image:url('${esc(foto(o.foto))}')"></span>`:''}<span class="tx"><b>${esc(o.etiqueta)}</b>${o.detalle?`<small>${esc(o.detalle)}</small>`:''}</span></button>`).join('')}</div></section>`).join('')}
+    <p class="pie">Votación oficial de Fight2One</p>`;
+  $('#barra').hidden=false;
+  document.querySelectorAll('.cat').forEach(sec=>sec.addEventListener('click',e=>{ const b=e.target.closest('.op'); if(!b) return;
+    ELEC[sec.dataset.cat]=b.dataset.op; sec.classList.add('hecha');
+    sec.querySelectorAll('.op').forEach(x=>{ x.classList.toggle('on',x===b); x.setAttribute('aria-pressed',x===b); });
+    actualizarBoton();
+    const sig=sec.nextElementSibling; if(sig?.classList.contains('cat')&&!ELEC[sig.dataset.cat]) setTimeout(()=>sig.scrollIntoView({behavior:'smooth',block:'start'}),250); }));
+  $('#cod')?.addEventListener('input',actualizarBoton);
+  actualizarBoton();
+}
+function actualizarBoton(){
+  const cats=P.categorias.filter(c=>c.opciones.length), faltan=cats.filter(c=>!ELEC[c.id]).length;
+  const sinCod=P.requiere_codigo&&!($('#cod')?.value.trim());
+  const b=$('#enviar'); b.disabled=faltan>0||sinCod;
+  b.textContent=faltan>0?(faltan===1?'Falta 1 categoría':`Faltan ${faltan} categorías`):sinCod?'Escribe el código de tu entrada':'Enviar mi voto';
+}
+$('#enviar').addEventListener('click',async()=>{
+  const b=$('#enviar'), err=$('#err'); err.textContent=''; b.disabled=true; b.textContent='Enviando…';
+  try{
+    const r=await rpc('f2o_vot_votar',{p_votacion:ID,p_votante:votante(),p_codigo:$('#cod')?.value||null,p_votos:Object.entries(ELEC).map(([categoria,opcion])=>({categoria,opcion}))});
+    if(r.ok||r.error==='ya_votado'){ guardar('f2o_votado_'+ID,'1'); await gracias(r.error==='ya_votado'); return; }
+    if(r.error==='codigo'){ err.textContent='Ese código no es válido. Revísalo en tu entrada.'; }
+    else if(r.error==='cerrada'){ await cargar(); return; }
+    else err.textContent='No se pudo guardar el voto. Prueba otra vez.';
+  }catch(e){ err.textContent='Sin conexión. Prueba otra vez en unos segundos.'; }
+  actualizarBoton();
+});
+
+async function resultadosHTML(){
+  try{ const R=await rpc('f2o_vot_resultados',{p_votacion:ID}); if(!R||R.privado) return '';
+    return `<div class="res">${R.categorias.map(c=>{ const tot=c.opciones.reduce((a,o)=>a+o.votos,0)||1; return `<h2 style="font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.06em;margin:22px 0 8px">${esc(c.nombre)}</h2>`+
+      [...c.opciones].sort((a,b)=>b.votos-a.votos).map((o,i)=>`<div class="fila"><div><span>${i===0&&o.votos?'🏆 ':''}${esc(o.etiqueta)}</span><span>${Math.round(o.votos*100/tot)}%</span></div><div class="bar"><i style="width:${o.votos*100/tot}%"></i></div></div>`).join(''); }).join('')}</div>`; }
+  catch(e){ return ''; }
+}
+async function gracias(repetido){
+  pantallaEstado('🥊',repetido?'Ya habías <em>votado</em>':'¡Voto <em>enviado</em>!',repetido?'Desde este móvil ya se votó. Solo cuenta un voto por persona.':'Gracias por votar. Los ganadores se anuncian al final de la velada.',
+    `<a class="btn2" href="https://www.instagram.com/fight2one/" target="_blank" rel="noopener">Sigue a @fight2one</a>${await resultadosHTML()}`);
+  if(P?.estado==='abierta'){ clearTimeout(_espera); _espera=setTimeout(async()=>{ try{ P=await rpc('f2o_vot_papeleta',{p_votacion:ID}); }catch(e){} if(P?.resultados_publicos) gracias(repetido); },30000+Math.random()*15000); }
+}
+async function terminada(){ pantallaEstado('🏁','Votación <em>cerrada</em>','Gracias a todos los que habéis votado. Los ganadores se anuncian en el pabellón.',await resultadosHTML()); }
+
+cargar();
+</script>
+</body>
+</html>

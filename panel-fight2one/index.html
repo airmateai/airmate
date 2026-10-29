@@ -258,6 +258,7 @@ main.entra.lleno>*{animation:f2o-aparece .5s both}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════
    Fight2One · Panel de veladas
@@ -293,7 +294,7 @@ function skyscanner(origen,velada){ if(!origen||!AEROPUERTOS[origen]) return '';
   return `https://www.skyscanner.es/transporte/vuelos/${origen.toLowerCase()}/tfn/${yymmdd}/?adultsv2=1&cabinclass=economy&rtn=0`; }
 
 /* ───────── Estado ───────── */
-const S={ yo:null, veladas:[], velada:null, peleadores:[], combates:[], papeles:[], viajes:[], entradas:[], patro:[], gastos:[], equipo:[], tareas:[], merch:[], archivos:[], programa:[], pesajes:[], pagos:[] };
+const S={ yo:null, veladas:[], velada:null, peleadores:[], combates:[], papeles:[], viajes:[], entradas:[], patro:[], gastos:[], equipo:[], tareas:[], merch:[], archivos:[], programa:[], pesajes:[], pagos:[], vot:null, vcats:[], vops:[], vres:null, vcod:{total:0,usados:0} };
 const TIPOS_PAPEL=['Contrato','Licencia','Certificado médico'];
 let SECCION='inicio';
 try{ SECCION=localStorage.getItem('f2o_seccion')||'inicio'; }catch(e){}
@@ -371,11 +372,12 @@ async function cargarTodo(){
       q(sb.from('f2o_pagos_peleador').select('*').eq('velada_id',v).order('fecha',{nullsFirst:false})) ]);
     Object.assign(S,{combates:c,papeles:p,viajes:vi,entradas:en,patro:pa,gastos:g,equipo:eq,tareas:t,merch:m,programa:pr,pesajes:pe,pagos:pg});
   }catch(e){ toast(textoError(e),true); }
+  await cargarVotacion();
   pintar();
 }
 let _rt=null, _rtT=null;
 function suscribir(){ if(_rt) return; _rt=sb.channel('f2o');
-  ['f2o_veladas','f2o_peleadores','f2o_combates','f2o_papeles','f2o_viajes','f2o_entradas','f2o_patrocinadores','f2o_gastos','f2o_equipo','f2o_tareas','f2o_merch','f2o_archivos','f2o_programa','f2o_pesajes','f2o_pagos_peleador'].forEach(t=>_rt.on('postgres_changes',{event:'*',schema:'public',table:t},()=>{ clearTimeout(_rtT); _rtT=setTimeout(()=>{ if(!$('.velo')) (t==='f2o_veladas'?cargarVeladas():cargarTodo()); },700); }));
+  ['f2o_veladas','f2o_peleadores','f2o_combates','f2o_papeles','f2o_viajes','f2o_entradas','f2o_patrocinadores','f2o_gastos','f2o_equipo','f2o_tareas','f2o_merch','f2o_archivos','f2o_programa','f2o_pesajes','f2o_pagos_peleador','f2o_votaciones','f2o_vot_categorias','f2o_vot_opciones'].forEach(t=>_rt.on('postgres_changes',{event:'*',schema:'public',table:t},()=>{ clearTimeout(_rtT); _rtT=setTimeout(()=>{ if(!$('.velo')) (t==='f2o_veladas'?cargarVeladas():cargarTodo()); },700); }));
   _rt.subscribe(); }
 
 /* ───────── Guardar y borrar (siempre comprobando que se escribió) ───────── */
@@ -451,7 +453,7 @@ function oculto(k){ try{ return localStorage.getItem('f2o_oculto_'+k)==='1'; }ca
 window.ocultar=k=>{ try{ localStorage.setItem('f2o_oculto_'+k,'1'); }catch(e){} pintar(); };
 /* ───────── Menús ───────── */
 const SECCIONES=[ ['inicio','🏠','Inicio'],['estadio','🏟️','Pabellón 3D'],['combates','🥊','Combates'],['pesaje','⚖️','Pesaje'],['pagos','💸','Pagos a peleadores'],['viajes','✈️','Viajes'],['vuelos3d','🌍','Vuelos 3D'],['dinero','💶','Dinero'],['archivos','📁','Documentos'],
-  ['dia','⏱️','Día de la velada'],['mensajes','💬','Mensajes'],['peleadores','👊','Peleadores'],['equipo','🧑‍⚖️','Equipo'],['tareas','✅','Tareas'],['merch','👕','Merch'],['velada','📅','Velada'],['informe','🖨️','Informe'] ];
+  ['dia','⏱️','Día de la velada'],['mensajes','💬','Mensajes'],['peleadores','👊','Peleadores'],['equipo','🧑‍⚖️','Equipo'],['tareas','✅','Tareas'],['merch','👕','Merch'],['velada','📅','Velada'],['votacion','🗳️','Votación del público'],['informe','🖨️','Informe'] ];
 const ABAJO=['inicio','combates','viajes','dinero','mas'];
 function pintarMenus(){
   $('#lateral').innerHTML=SECCIONES.map(([k,i,t],n)=>(n===2||n===9?'<div class="sep"></div>':'')+`<button data-s="${k}"><span class="i">${i}</span>${t}</button>`).join('')+'<div class="marca"><span class="logo-f2o"><img src="logo.jpg" alt=""></span>FIGHT2ONE</div>';
@@ -611,6 +613,46 @@ const PANTALLAS={
       </div>
       <div class="grupo">Preparativos del pabellón</div>
       <div class="lista">${S.tareas.filter(t=>t.area==='Pabellón').map(t=>`<div class="item"><span class="t"><b>${esc(t.titulo)}</b></span>${t.estado==='hecha'?'<span class="tag ok">Hecho</span>':`<button class="btn acc peq" onclick="tareaHecha('${t.id}')">Hecho ✓</button>`}</div>`).join('')||'<div class="vacio">Sin preparativos.</div>'}</div>`; },
+
+  votacion(){ const V=S.vot;
+    if(!V) return `<div class="titulo"><h2>VOTACIÓN DEL PÚBLICO</h2></div>
+      <div class="vacio" style="text-align:left"><b>Que el público vote a los mejores de la noche</b>
+        La gente escanea un QR con el móvil y vota (sin instalar nada). Tú abres y cierras la votación desde aquí, y los resultados salen en directo en la pantalla grande del pabellón.<br><br>
+        Se crea con dos categorías ya rellenas con los peleadores y combates de esta velada: <b>Mejor peleador de la noche</b> y <b>Mejor combate de la noche</b>. Luego puedes cambiarlas.<br><br>
+        <button class="btn acc" onclick="crearVotacion(this)">🗳️ Crear la votación</button></div>`;
+    const url=urlVotar(), R=S.vres, votos=id=>{ for(const c of R?.categorias||[]) for(const o of c.opciones) if(o.id===id) return o.votos; return 0; };
+    const est={cerrada:['gris','Sin abrir'],abierta:['ok','Abierta: se puede votar'],terminada:['med','Terminada']}[V.estado];
+    return `<div class="titulo"><h2>VOTACIÓN DEL PÚBLICO</h2><span class="tag ${est[0]}">${est[1]}</span></div>
+      <div class="cifras"><div class="cifra"><b>${num(R?.votantes||0)}</b><small>personas han votado</small></div><div class="cifra"><b>${S.vcats.length}</b><small>categorías</small></div></div>
+      <div class="lista" style="margin-bottom:14px">
+        ${V.estado==='abierta'?`<button class="btn peligro" style="width:100%" onclick="estadoVotacion('terminada',this)">⏹ Cerrar la votación</button>`
+          :`<button class="btn acc" style="width:100%" onclick="estadoVotacion('abierta',this)">▶️ ${V.estado==='terminada'?'Volver a abrir':'Abrir la votación'}</button>`}
+      </div>
+      <div class="item" style="flex-direction:column;align-items:center;text-align:center;gap:10px">
+        <div id="vot-qr" style="background:#fff;padding:12px;border-radius:14px;width:min(240px,70vw)"></div>
+        <small style="color:var(--mut);word-break:break-all">${esc(url)}</small>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+          <button class="btn peq" onclick="bajarQR()">⬇️ Descargar QR</button>
+          <button class="btn peq" onclick="navigator.clipboard.writeText('${esc(url)}').then(()=>toast('Enlace copiado'))">🔗 Copiar enlace</button>
+          <a class="btn peq" href="../fight2one-votar/pantalla.html?v=${V.id}" target="_blank" rel="noopener">📺 Pantalla grande</a>
+        </div>
+        <small style="color:var(--mut)">Pon el QR en las pantallas y en la cartelería. La «Pantalla grande» enseña el QR y los resultados en directo (ábrela en el ordenador conectado a la pantalla del pabellón).</small>
+      </div>
+      <div class="grupo">Ajustes</div>
+      <label class="check"><input type="checkbox" ${V.requiere_codigo?'checked':''} onchange="ajusteVotacion('requiere_codigo',this.checked)"> Pedir el código de la entrada (un voto por entrada; recomendado si hay premios importantes)</label>
+      <label class="check"><input type="checkbox" ${V.resultados_publicos?'checked':''} onchange="ajusteVotacion('resultados_publicos',this.checked)"> Enseñar los resultados al público (en su móvil y en la pantalla grande aunque no esté abierta desde el panel)</label>
+      ${V.requiere_codigo?`<div class="item" style="flex-wrap:wrap"><span class="ic">🎟️</span><span class="t"><b>${num(S.vcod.total)} códigos · ${num(S.vcod.usados)} usados</b><small>Imprime un código en cada entrada. Si no lleva código válido, no puede votar.</small></span>
+        <span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn peq acc" onclick="abrirForm('vcodigos')">+ Generar</button>${S.vcod.total?'<button class="btn peq" onclick="bajarCodigos(this)">⬇️ CSV</button>':''}</span></div>`:''}
+      <div class="titulo" style="margin-top:20px"><h2>CATEGORÍAS</h2><button class="btn acc peq" onclick="abrirForm('vcat')">+ Categoría</button></div>
+      ${S.vcats.length?S.vcats.map(c=>{ const ops=S.vops.filter(o=>o.categoria_id===c.id), tot=ops.reduce((a,o)=>a+votos(o.id),0);
+        return `<div class="grupo" style="display:flex;align-items:center;gap:8px">${esc(c.nombre)}<button class="btn peq" style="margin-left:auto;min-height:34px;padding:4px 10px" onclick="abrirForm('vcat','${c.id}')">Editar</button></div>
+        <div class="lista">${[...ops].sort((a,b)=>votos(b.id)-votos(a.id)).map((o,i)=>`<button class="item" onclick="abrirForm('vopc','${o.id}')"><span class="ic">${i===0&&votos(o.id)?'🏆':'👊'}</span><span class="t"><b>${esc(o.etiqueta)}</b><small>${esc(o.detalle||'')}</small>
+          <span style="display:block;height:6px;background:var(--p2);border-radius:4px;margin-top:6px;overflow:hidden"><i style="display:block;height:100%;width:${tot?votos(o.id)*100/tot:0}%;background:var(--acc)"></i></span></span><span class="tag ${votos(o.id)?'ok':'gris'}">${num(votos(o.id))} · ${tot?Math.round(votos(o.id)*100/tot):0}%</span></button>`).join('')}
+          <button class="item" onclick="abrirForm('vopc',null,{categoria_id:'${c.id}'})" style="justify-content:center;color:var(--acc);font-weight:800">+ Añadir candidato</button></div>`; }).join('')
+        :'<div class="vacio">Añade al menos una categoría con sus candidatos.</div>'}
+      <div class="grupo">Pruebas</div>
+      <button class="btn peligro peq" onclick="reiniciarVotos(this)">Borrar todos los votos</button>
+      <p class="sub" style="margin-top:8px">Úsalo después de probar, antes de la velada. No se puede deshacer.</p>`; },
 
   mas(){ return `<div class="titulo"><h2>MÁS</h2></div><div class="menu-mas">${SECCIONES.filter(s=>!ABAJO.includes(s[0])).map(([k,i,t])=>`<button class="atajo" onclick="ir('${k}')"><span class="i">${i}</span><b>${t}</b></button>`).join('')}</div>`; },
 };
@@ -885,6 +927,85 @@ const FORMS={
     ${campo('Color',`<input type="color" name="color" value="${esc(m?.color||'#0b0b0b')}" style="height:52px;padding:6px">`)}`,
     leer:f=>({ velada_id:S.velada.id, nombre:f.nombre.trim(), precio:Number(f.precio)||0, stock:Number(f.stock)||0, vendidas:Number(f.vendidas)||0, color:f.color||'#0b0b0b' }) },
 };
+/* ───────── Votación del público ───────── */
+const urlVotar=()=>new URL('../fight2one-votar/?v='+S.vot.id,location.href).href;
+const fotoAbs=u=>!u?null:/^https?:\/\//.test(u)?u:'/'+String(u).replace(/^\/+/,'');
+async function cargarVotacion(){
+  S.vot=null; S.vcats=[]; S.vops=[]; S.vres=null; S.vcod={total:0,usados:0};
+  if(!S.velada) return;
+  try{
+    const { data:v, error }=await sb.from('f2o_votaciones').select('*').eq('velada_id',S.velada.id).maybeSingle(); if(error) throw error;
+    S.vot=v; if(!v) return;
+    S.vcats=await q(sb.from('f2o_vot_categorias').select('*').eq('votacion_id',v.id).order('orden').order('created_at'));
+    S.vops=S.vcats.length?await q(sb.from('f2o_vot_opciones').select('*').in('categoria_id',S.vcats.map(c=>c.id)).order('orden').order('created_at')):[];
+    await refrescarResultados(false);
+    if(v.requiere_codigo){
+      const t=await sb.from('f2o_vot_codigos').select('codigo',{count:'exact',head:true}).eq('votacion_id',v.id);
+      const u=await sb.from('f2o_vot_codigos').select('codigo',{count:'exact',head:true}).eq('votacion_id',v.id).not('usado_at','is',null);
+      S.vcod={total:t.count||0,usados:u.count||0};
+    }
+  }catch(e){ console.warn('Votación:',e); }
+}
+async function refrescarResultados(repintar=true){
+  if(!S.vot) return; const { data, error }=await sb.rpc('f2o_vot_resultados',{p_votacion:S.vot.id}); if(error) return;
+  const antes=JSON.stringify(S.vres); S.vres=data; if(repintar&&SECCION==='votacion'&&antes!==JSON.stringify(data)&&!$('.velo')) pintar();
+}
+setInterval(()=>{ if(SECCION==='votacion'&&S.vot&&!document.hidden) refrescarResultados(); },5000);
+// El QR se dibuja después de pintar la sección
+new MutationObserver(()=>{ const el=document.getElementById('vot-qr'); if(el&&!el.dataset.ok&&window.QRCode&&S.vot){ el.dataset.ok='1'; new QRCode(el,{text:urlVotar(),width:512,height:512,correctLevel:QRCode.CorrectLevel.M}); el.querySelectorAll('img,canvas').forEach(x=>{ x.style.width='100%'; x.style.height='auto'; }); } }).observe(document.getElementById('main'),{childList:true});
+window.bajarQR=()=>{ const c=document.querySelector('#vot-qr canvas'); if(!c) return; const g=document.createElement('canvas'), m=48; g.width=c.width+m*2; g.height=c.height+m*2;
+  const x=g.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,g.width,g.height); x.drawImage(c,m,m);
+  const a=document.createElement('a'); a.download='QR-votacion-'+(S.velada.nombre||'fight2one').replace(/[^\w]+/g,'-')+'.png'; a.href=g.toDataURL('image/png'); a.click(); };
+window.crearVotacion=async btn=>{ btn.disabled=true; btn.textContent='Creando…';
+  try{
+    const v=await guardar('f2o_votaciones',{ velada_id:S.velada.id, titulo:'Vota a los mejores de la noche' });
+    const cp=await guardar('f2o_vot_categorias',{ votacion_id:v.id, nombre:'Mejor peleador de la noche', orden:0 });
+    const cc=await guardar('f2o_vot_categorias',{ votacion_id:v.id, nombre:'Mejor combate de la noche', orden:1 });
+    const pels=peleadoresVelada().map(pel).filter(Boolean), combs=S.combates.filter(c=>c.estado!=='cancelado'&&c.peleador_a&&c.peleador_b);
+    const ops=[...pels.map((p,i)=>({ categoria_id:cp.id, etiqueta:p.nombre, detalle:[p.apodo?'«'+p.apodo+'»':'',p.pais].filter(Boolean).join(' · ')||null, foto_url:fotoAbs(p.foto_url), peleador_id:p.id, orden:i })),
+      ...combs.map((c,i)=>({ categoria_id:cc.id, etiqueta:nombrePel(c.peleador_a)+' vs '+nombrePel(c.peleador_b), detalle:[c.modalidad,c.peso,c.titulo].filter(Boolean).join(' · ')||null, combate_id:c.id, orden:i }))];
+    if(ops.length){ const r=await sb.from('f2o_vot_opciones').insert(ops).select('id'); if(r.error) throw r.error; }
+    toast('✓ Votación creada'+(ops.length?'':' (añade los candidatos)')); await cargarVotacion(); pintar();
+  }catch(e){ btn.disabled=false; btn.textContent='🗳️ Crear la votación'; toast(/f2o_vot|does not exist|schema cache/i.test(String(e?.message))?'Falta instalar la votación en la base de datos (avisa a Fabio).':textoError(e),true); } };
+window.estadoVotacion=async(estado,btn)=>{ if(estado==='terminada'&&!confirmarDoble(btn,'¿Cerrar? Pulsa otra vez')) return;
+  if(estado==='abierta'&&!S.vops.length){ toast('Añade candidatos antes de abrir',true); return; }
+  if(estado==='abierta'&&S.vot.requiere_codigo&&!S.vcod.total){ toast('Genera los códigos de las entradas antes de abrir',true); return; }
+  btn.disabled=true; try{ S.vot=await guardar('f2o_votaciones',{estado},S.vot.id); toast(estado==='abierta'?'✓ Votación abierta: ya se puede votar':'✓ Votación cerrada'); pintar(); }catch(e){ btn.disabled=false; toast(textoError(e),true); } };
+window.ajusteVotacion=async(campo,val)=>{ try{ S.vot=await guardar('f2o_votaciones',{[campo]:val},S.vot.id); if(campo==='requiere_codigo') await cargarVotacion(); toast('✓ Guardado'); pintar(); }catch(e){ toast(textoError(e),true); pintar(); } };
+window.reiniciarVotos=async btn=>{ if(!confirmarDoble(btn,'¿Borrar TODOS los votos? Pulsa otra vez')) return; btn.disabled=true;
+  try{ const r=await sb.from('f2o_votos').delete().eq('votacion_id',S.vot.id); if(r.error) throw r.error;
+    const c=await sb.from('f2o_vot_codigos').update({usado_at:null}).eq('votacion_id',S.vot.id); if(c.error) throw c.error;
+    toast('✓ Votos borrados'); await cargarVotacion(); pintar(); }catch(e){ btn.disabled=false; toast(textoError(e),true); } };
+window.bajarCodigos=async btn=>{ btn.disabled=true; try{ const filas=[]; for(let i=0;;i+=1000){ const r=await q(sb.from('f2o_vot_codigos').select('codigo,usado_at').eq('votacion_id',S.vot.id).order('created_at').order('codigo').range(i,i+999)); filas.push(...r); if(r.length<1000) break; }
+    const csv='codigo,usado\n'+filas.map(f=>f.codigo+','+(f.usado_at?'si':'no')).join('\n');
+    const a=document.createElement('a'); a.download='codigos-votacion-'+(S.velada.nombre||'fight2one').replace(/[^\w]+/g,'-')+'.csv'; a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.click();
+  }catch(e){ toast(textoError(e),true); } btn.disabled=false; };
+const ALFABETO='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const nuevoCodigo=()=>Array.from(crypto.getRandomValues(new Uint8Array(6)),b=>ALFABETO[b%ALFABETO.length]).join('');
+FORMS.vcat={ tabla:'f2o_vot_categorias', titulo:'Categoría', fila:id=>S.vcats.find(x=>x.id===id), html:c=>`
+    ${campo('Nombre',inp('nombre',c?.nombre,'required placeholder="Mejor peleador de la noche, mejor KO…"'))}
+    ${campo('Orden',inp('orden',c?.orden??S.vcats.length,'type="number" inputmode="numeric" min="0"'))}`,
+  leer:f=>({ votacion_id:S.vot.id, nombre:f.nombre.trim(), orden:Number(f.orden)||0 }) };
+FORMS.vopc={ tabla:'f2o_vot_opciones', titulo:'Candidato', fila:id=>S.vops.find(x=>x.id===id), html:(o,extra)=>`
+    <input type="hidden" name="categoria_id" value="${esc(o?.categoria_id||extra?.categoria_id||'')}">
+    ${campo('Elegir de la velada',`<select name="origen"><option value="">— Escribirlo a mano —</option>
+      <optgroup label="Peleadores">${S.peleadores.map(p=>`<option value="p:${p.id}" ${o?.peleador_id===p.id?'selected':''}>${esc(p.nombre)}${p.pais?' · '+esc(p.pais):''}</option>`).join('')}</optgroup>
+      <optgroup label="Combates">${S.combates.filter(c=>c.peleador_a&&c.peleador_b).map(c=>`<option value="c:${c.id}" ${o?.combate_id===c.id?'selected':''}>${esc(nombrePel(c.peleador_a)+' vs '+nombrePel(c.peleador_b))}</option>`).join('')}</optgroup></select>`)}
+    ${campo('O escribe el nombre',inp('etiqueta',o&&!o.peleador_id&&!o.combate_id?o.etiqueta:'','placeholder="Solo si no está en la lista"'))}
+    ${campo('Debajo del nombre (opcional)',inp('detalle',o?.detalle,'placeholder="País, apodo, modalidad…"'))}`,
+  validar:f=>!f.origen&&!f.etiqueta.trim()?'Elige un peleador o combate, o escribe un nombre':'',
+  leer:f=>{ const [t,id]=(f.origen||':').split(':'); const p=t==='p'?pel(id):null, c=t==='c'?S.combates.find(x=>x.id===id):null;
+    return { categoria_id:f.categoria_id, etiqueta:p?p.nombre:c?nombrePel(c.peleador_a)+' vs '+nombrePel(c.peleador_b):f.etiqueta.trim(),
+      detalle:f.detalle.trim()||(p?[p.apodo?'«'+p.apodo+'»':'',p.pais].filter(Boolean).join(' · ')||null:c?[c.modalidad,c.peso,c.titulo].filter(Boolean).join(' · ')||null:null),
+      foto_url:p?fotoAbs(p.foto_url):null, peleador_id:p?.id||null, combate_id:c?.id||null }; } };
+FORMS.vcodigos={ tabla:'f2o_vot_codigos', titulo:'Códigos de entrada', fila:()=>null, html:()=>`
+    <p class="sub" style="margin:0 0 12px">Se crean códigos de 6 letras y números (sin O/0 ni I/1 para que no se confundan). Descarga el CSV y pásaselo a quien imprime las entradas.</p>
+    ${campo('Cuántos',inp('n',Math.max(100,(S.velada.aforo||2000)-S.vcod.total),'required type="number" inputmode="numeric" min="1" max="10000"'))}`,
+  validar:f=>!(Number(f.n)>=1&&Number(f.n)<=10000)?'Entre 1 y 10.000':'',
+  antes:async f=>{ const n=Number(f.n), set=new Set(); while(set.size<n) set.add(nuevoCodigo());
+    const filas=[...set].map(codigo=>({ votacion_id:S.vot.id, codigo }));
+    for(let i=0;i<filas.length;i+=500){ const r=await sb.from('f2o_vot_codigos').upsert(filas.slice(i,i+500),{onConflict:'votacion_id,codigo',ignoreDuplicates:true}); if(r.error) throw r.error; } },
+  sinGuardar:true, leer:()=>null };
 function abrirForm(tipo,id,extra){
   const F=FORMS[tipo], fila=id?F.fila(id):null; if(id&&!fila){ toast('No se encontró',true); return; }
   const velo=document.createElement('div'); velo.className='velo';
@@ -909,7 +1030,7 @@ function abrirForm(tipo,id,extra){
     const req=[...form.querySelectorAll('[required]')].find(x=>!x.value.trim()); if(req){ err.textContent='Falta: '+req.closest('.campo').querySelector('span').textContent; req.focus(); return; }
     const msg=F.validar?.(f); if(msg){ err.textContent=msg; return; }
     const btn=form.querySelector('[type=submit]'); btn.disabled=true; btn.textContent='Guardando…';
-    try{ if(F.antes) await F.antes(f); const r=await guardar(F.tabla,F.leer(f),id); if(F.despues) await F.despues(r,!id,f);
+    try{ if(F.antes) await F.antes(f); const r=F.sinGuardar?null:await guardar(F.tabla,F.leer(f),id); if(F.despues) await F.despues(r,!id,f);
       cerrar(); toast('✓ Guardado'); if(tipo!=='velada') await cargarTodo(); }
     catch(e2){ btn.disabled=false; btn.textContent='Guardar'; err.textContent='No se pudo guardar: '+textoError(e2); } });
   setTimeout(()=>form.querySelector('input:not([type=hidden]),select')?.focus({preventScroll:true}),60);
