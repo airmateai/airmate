@@ -174,8 +174,9 @@ let P=null, CATS=[], PASO=0, _espera=null; const ELEC={};
 const marca=()=>`<img src="${LOGO}" alt="Fight2One"><div><small>${esc(P?.velada||'Fight2One')}</small><b>FIGHT2ONE</b></div>`;
 const cab=()=>`<div class="cab">${marca()}</div>`;
 function mostrar(html,anim=true){ const a=$('#app');
-  const poner=()=>{ a.innerHTML=html; a.classList.remove('sale'); if(anim&&!QUIETO){ a.classList.remove('llega'); void a.offsetWidth; a.classList.add('llega'); } scrollTo(0,0); };
-  if(anim&&!QUIETO&&a.children.length){ a.classList.add('sale'); setTimeout(poner,260); } else poner(); }
+  return new Promise(listo=>{
+    const poner=()=>{ a.innerHTML=html; a.classList.remove('sale'); if(anim&&!QUIETO){ a.classList.remove('llega'); void a.offsetWidth; a.classList.add('llega'); } scrollTo(0,0); listo(); };
+    if(anim&&!QUIETO&&a.children.length){ a.classList.add('sale'); setTimeout(poner,260); } else poner(); }); }
 function estado(ic,titulo,texto,extra=''){ mostrar(`${cab()}<div class="gracias"><div style="font-size:60px">${ic}</div><h1 class="mega" style="font-size:clamp(40px,12vw,64px)">${titulo}</h1><p class="lead" style="margin:14px auto">${texto}</p>${extra}</div><p class="pie">Votación oficial de Fight2One</p>`); }
 
 async function cargar(){
@@ -280,10 +281,14 @@ function chispas(x,y,n){
 }
 
 /* Imagen para Instagram Stories (1080×1920) */
-const cargarImg=src=>new Promise(r=>{ if(!src) return r(null); const i=new Image(); i.onload=()=>r(i); i.onerror=()=>r(null); i.src=src; });
+const conTiempo=(p,ms,v=null)=>Promise.race([p,new Promise(r=>setTimeout(()=>r(v),ms))]);
+const cargarImg=src=>conTiempo(new Promise(r=>{ if(!src) return r(null); const i=new Image(); i.onload=()=>r(i); i.onerror=()=>r(null); i.src=src; }),6000);
+function redondo(g,x,y,w,h,r){ if(g.roundRect) return g.roundRect(x,y,w,h,r); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+function aBlob(c){ return new Promise(r=>{ const desdeURL=()=>fetch(c.toDataURL('image/jpeg',.9)).then(x=>x.blob()).then(r,()=>r(null));
+  if(!c.toBlob) return desdeURL(); try{ c.toBlob(b=>b?r(b):desdeURL(),'image/jpeg',.9); }catch(e){ desdeURL(); } }); }
 function cubrir(g,img,x,y,w,h,foco=.2){ const k=Math.max(w/img.width,h/img.height), iw=img.width*k, ih=img.height*k; g.drawImage(img,x+(w-iw)/2,y+(h-ih)*foco,iw,ih); }
 async function crearStory(mio){
-  await document.fonts.ready;
+  await conTiempo(document.fonts?.ready||Promise.resolve(),1500);
   const W=1080,H=1920,c=document.createElement('canvas'); c.width=W; c.height=H; const g=c.getContext('2d');
   const principal=mio[0];
   const [bg,logo,f1,f2]=await Promise.all([cargarImg(FONDOS[0]),cargarImg(LOGO),cargarImg(foto(principal.foto)),cargarImg(foto(principal.foto_b))]);
@@ -292,23 +297,23 @@ async function crearStory(mio){
   let gr=g.createLinearGradient(0,0,0,H); gr.addColorStop(0,'rgba(0,0,0,.5)'); gr.addColorStop(.55,'rgba(0,0,0,.2)'); gr.addColorStop(1,'#000'); g.fillStyle=gr; g.fillRect(0,0,W,H);
   // marco de la foto
   const fx=140,fy=430,fw=800,fh=880;
-  g.save(); g.beginPath(); g.roundRect(fx,fy,fw,fh,40); g.clip(); g.fillStyle='#18181b'; g.fillRect(fx,fy,fw,fh);
+  g.save(); g.beginPath(); redondo(g,fx,fy,fw,fh,40); g.clip(); g.fillStyle='#18181b'; g.fillRect(fx,fy,fw,fh);
   if(f1&&f2){ cubrir(g,f1,fx,fy,fw/2,fh); cubrir(g,f2,fx+fw/2,fy,fw/2,fh); }
   else if(f1) cubrir(g,f1,fx,fy,fw,fh);
   else { g.fillStyle='rgba(212,167,44,.25)'; g.font='400 300px Anton'; g.textAlign='center'; g.fillText(iniciales(principal.etiqueta),W/2,fy+fh/2+110); }
   gr=g.createLinearGradient(0,fy+fh*.5,0,fy+fh); gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(1,'rgba(0,0,0,.85)'); g.fillStyle=gr; g.fillRect(fx,fy,fw,fh); g.restore();
-  g.strokeStyle='#d4a72c'; g.lineWidth=6; g.beginPath(); g.roundRect(fx,fy,fw,fh,40); g.stroke();
+  g.strokeStyle='#d4a72c'; g.lineWidth=6; g.beginPath(); redondo(g,fx,fy,fw,fh,40); g.stroke();
   // textos
-  g.textAlign='center'; g.fillStyle='#d4a72c'; g.font='800 34px "Inter Tight"'; g.fillText((P?.velada||'FIGHT2ONE').toUpperCase()+'  ·  VOTACIÓN OFICIAL',W/2,250);
+  g.textAlign='center'; g.fillStyle='#d4a72c'; g.font='800 34px "Inter Tight"'; g.fillText((P?.velada||'FIGHT2ONE').toUpperCase()+'  ·  VOTACIÓN OFICIAL',W/2,190);
   const titulo=(t,y,size,col)=>{ g.font=`400 ${size}px Anton`; g.globalAlpha=.7; g.fillStyle='#22e1d7'; g.fillText(t,W/2-5,y); g.fillStyle='#ff3d6e'; g.fillText(t,W/2+5,y); g.globalAlpha=1; g.fillStyle=col; g.fillText(t,W/2,y); };
   titulo('HE VOTADO',380,150,'#f5f5f4');
-  g.fillStyle='#d4a72c'; g.font='800 32px "Inter Tight"'; g.fillText(principal.cat.toUpperCase(),W/2,fy+fh-140);
+  g.fillStyle='#d4a72c'; g.font='800 32px "Inter Tight"'; g.fillText(principal.cat.toUpperCase(),W/2,fy+fh-185);
   let size=110; g.font=`400 ${size}px Anton`; while(g.measureText(principal.etiqueta.toUpperCase()).width>fw-80&&size>50){ size-=6; g.font=`400 ${size}px Anton`; }
   g.fillStyle='#fff'; g.fillText(principal.etiqueta.toUpperCase(),W/2,fy+fh-50);
   let y=fy+fh+110; mio.slice(1,3).forEach(m=>{ g.fillStyle='#a3a3a8'; g.font='800 28px "Inter Tight"'; g.fillText(m.cat.toUpperCase(),W/2,y); g.fillStyle='#f5f5f4'; g.font='400 56px Anton'; g.fillText(m.etiqueta.toUpperCase(),W/2,y+64); y+=150; });
-  if(logo){ g.save(); g.beginPath(); g.roundRect(W/2-60,H-250,120,120,26); g.clip(); g.drawImage(logo,W/2-60,H-250,120,120); g.restore(); }
+  if(logo){ g.save(); g.beginPath(); redondo(g,W/2-60,H-250,120,120,26); g.clip(); g.drawImage(logo,W/2-60,H-250,120,120); g.restore(); }
   g.fillStyle='#f5f5f4'; g.font='800 36px "Inter Tight"'; g.fillText('@fight2one',W/2,H-80);
-  return new Promise(r=>c.toBlob(r,'image/jpeg',.9));
+  return aBlob(c);
 }
 
 async function resultadosHTML(){
@@ -319,20 +324,26 @@ async function resultadosHTML(){
 }
 async function gracias(mio,repetido){
   clearTimeout(_espera);
-  mostrar(`${cab()}<section class="gracias">
+  await mostrar(`${cab()}<section class="gracias">
     <div><span class="estampa">${repetido?'Ya votaste':'Voto registrado'}</span></div>
     <h1 class="mega" style="font-size:clamp(44px,13vw,72px)">${repetido?'Tu voto<em>ya cuenta</em>':'Ya eres parte<em>de la noche</em>'}</h1>
     <p class="lead" style="margin:14px auto 0">${repetido?'Desde este móvil ya se votó. Solo cuenta un voto por persona.':'Los ganadores se anuncian en la pantalla grande del pabellón. ¡Atento!'}</p>
     ${mio?`<div class="story" id="story"><div class="spin" style="margin-top:60%"></div></div>
-      <button class="cta" id="compartir">Compartir en Stories 📲</button>`:''}
+      <button class="cta" id="compartir" disabled>Preparando tu imagen…</button><p class="nota" id="nota-story"></p>`:''}
     <a class="btn2" href="https://www.instagram.com/fight2one/" target="_blank" rel="noopener">Sigue a @fight2one</a>
     <div id="res"></div></section><p class="pie">Votación oficial de Fight2One</p>`,!repetido);
-  if(mio){ try{ const blob=await crearStory(mio); const url=URL.createObjectURL(blob); $('#story').innerHTML=`<img src="${url}" alt="Tu voto en formato Story">`;
-      const file=new File([blob],'mi-voto-fight2one.jpg',{type:'image/jpeg'});
-      $('#compartir').onclick=async()=>{ vibrar(15);
-        if(navigator.canShare?.({files:[file]})){ try{ await navigator.share({files:[file],text:'He votado en '+(P?.velada||'Fight2One')+' 🥊 @fight2one'}); }catch(e){} }
-        else { const a=document.createElement('a'); a.href=url; a.download=file.name; a.click(); } };
-    }catch(e){ $('#story')?.remove(); $('#compartir')?.remove(); } }
+  if(mio){ const btn=$('#compartir'), nota=$('#nota-story'), caja=$('#story');
+    try{
+      const blob=await conTiempo(crearStory(mio),15000); if(!blob) throw new Error('sin imagen');
+      const url=URL.createObjectURL(blob); caja.innerHTML=`<img src="${url}" alt="Tu voto en formato Story">`;
+      let file=null; try{ file=new File([blob],'mi-voto-fight2one.jpg',{type:'image/jpeg'}); }catch(e){}
+      const puedeCompartir=!!(file&&navigator.canShare?.({files:[file]}));
+      btn.disabled=false; btn.textContent=puedeCompartir?'Compartir en Stories 📲':'Guardar imagen 📲';
+      nota.textContent=puedeCompartir?'Elige Instagram → Historia. Etiqueta a @fight2one.':'Si no se guarda sola, mantén pulsada la imagen y elige «Guardar».';
+      btn.onclick=async()=>{ vibrar(15);
+        if(puedeCompartir){ try{ await navigator.share({files:[file],text:'He votado en '+(P?.velada||'Fight2One')+' 🥊 @fight2one'}); return; }catch(e){ if(e?.name==='AbortError') return; } }
+        const a=document.createElement('a'); a.href=url; a.download='mi-voto-fight2one.jpg'; document.body.appendChild(a); a.click(); a.remove(); };
+    }catch(e){ caja.remove(); btn.remove(); nota.textContent=''; console.warn('Story:',e); } }
   $('#res').innerHTML=await resultadosHTML();
   if(P?.estado==='abierta'&&!P.resultados_publicos) _espera=setTimeout(async()=>{ try{ P=await rpc('f2o_vot_papeleta',{p_votacion:ID}); if(P?.resultados_publicos) $('#res').innerHTML=await resultadosHTML(); }catch(e){} },45000+Math.random()*15000);
 }
