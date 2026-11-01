@@ -122,6 +122,7 @@ main.lleno{max-width:none;padding:0}
 .form .pie{display:flex;gap:10px;margin-top:16px;position:sticky;bottom:-18px;background:#0e0e0f;padding:10px 0 4px}
 .form .pie .btn{flex:1}
 .pant-prev{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;border:1px solid var(--acc);background:#000;margin:0 0 10px;box-shadow:0 0 0 3px rgba(212,167,44,.15)}
+.pant-ver{position:absolute;inset:0;width:100%;border:0;background:radial-gradient(circle,#1b1b1f,#000);color:var(--acc);font:inherit;font-weight:800;font-size:15px;cursor:pointer}
 .pant-prev iframe{position:absolute;left:0;top:0;width:1600px;height:900px;border:0;transform-origin:0 0;pointer-events:none}
 .pant-vivo{position:absolute;left:10px;bottom:8px;background:rgba(0,0,0,.75);color:#3ecf8e;font-size:12px;font-weight:800;padding:4px 9px;border-radius:999px}
 .item.on-pant{border-color:var(--acc);box-shadow:0 0 0 2px rgba(212,167,44,.35)}
@@ -298,6 +299,8 @@ function skyscanner(origen,velada){ if(!origen||!AEROPUERTOS[origen]) return '';
   return `https://www.skyscanner.es/transporte/vuelos/${origen.toLowerCase()}/tfn/${yymmdd}/?adultsv2=1&cabinclass=economy&rtn=0`; }
 
 /* ───────── Estado ───────── */
+// En el móvil la vista previa solo se carga si se pide: la pantalla grande dentro de un iframe agota la memoria de Safari
+const PREV_AUTO=!matchMedia('(pointer:coarse)').matches;
 const S={ yo:null, veladas:[], velada:null, peleadores:[], combates:[], papeles:[], viajes:[], entradas:[], patro:[], gastos:[], equipo:[], tareas:[], merch:[], archivos:[], programa:[], pesajes:[], pagos:[], vot:null, vcats:[], vops:[], vres:null, vcod:{total:0,usados:0} };
 const TIPOS_PAPEL=['Contrato','Licencia','Certificado médico'];
 let SECCION='inicio';
@@ -633,7 +636,7 @@ const PANTALLAS={
           :`<button class="btn acc" style="width:100%" onclick="estadoVotacion('abierta',this)">▶️ ${V.estado==='terminada'?'Volver a abrir':'Abrir la votación'}</button>`}
       </div>
       <div class="grupo">Pantalla del pabellón</div>
-      <div class="pant-prev" id="pant-prev"><iframe src="../fight2one-votar/pantalla.html?v=${V.id}&vista=1" title="Lo que se ve ahora en la pantalla grande" tabindex="-1"></iframe><span class="pant-vivo">● Así se ve ahora la pantalla</span></div>
+      <div class="pant-prev" id="pant-prev">${PREV_AUTO||S.prevOn?`<iframe src="../fight2one-votar/pantalla.html?v=${V.id}&vista=1" title="Lo que se ve ahora en la pantalla grande" tabindex="-1"></iframe><span class="pant-vivo">● Así se ve ahora la pantalla</span>`:`<button class="pant-ver" onclick="S.prevOn=1;pintar()">▶ Ver cómo está la pantalla ahora</button>`}</div>
       <p class="sub" style="margin:0 0 10px">Pulsa un botón para cambiar lo que sale en la pantalla grande (tarda 2 segundos).</p>
       <div class="lista" style="margin-bottom:6px">
         <button class="item ${(V.pantalla_modo||'votad')==='votad'?'on-pant':''}" onclick="modoPantalla('votad',null,this)"><span class="ic">📣</span><span class="t"><b>¡Vota ya!</b><small>QR gigante, fotos de los peleadores y contador de votos</small></span>${(V.pantalla_modo||'votad')==='votad'?'<span class="tag ok">▶ Se ve ahora</span>':''}</button>
@@ -970,7 +973,7 @@ async function refrescarResultados(repintar=true){
 }
 setInterval(()=>{ if(SECCION==='votacion'&&S.vot&&!document.hidden) refrescarResultados(); },5000);
 // El QR se dibuja después de pintar la sección
-function escalarVista(){ const c=document.getElementById('pant-prev'); if(!c) return; const f=c.querySelector('iframe'); f.style.transform=`scale(${c.clientWidth/1600})`; }
+function escalarVista(){ const c=document.getElementById('pant-prev'); if(!c) return; const f=c.querySelector('iframe'); if(f) f.style.transform=`scale(${c.clientWidth/1600})`; }
 addEventListener('resize',escalarVista);
 new MutationObserver(()=>{ escalarVista(); const el=document.getElementById('vot-qr'); if(el&&!el.dataset.ok&&window.QRCode&&S.vot){ el.dataset.ok='1'; new QRCode(el,{text:urlVotar(),width:512,height:512,correctLevel:QRCode.CorrectLevel.M}); el.querySelectorAll('img,canvas').forEach(x=>{ x.style.width='100%'; x.style.height='auto'; }); } }).observe(document.getElementById('main'),{childList:true});
 window.bajarQR=()=>{ const c=document.querySelector('#vot-qr canvas'); if(!c) return; const g=document.createElement('canvas'), m=48; g.width=c.width+m*2; g.height=c.height+m*2;
