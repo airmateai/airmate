@@ -137,6 +137,19 @@ body.real #juego #mapa{bottom:calc(20px + env(safe-area-inset-bottom,0px))}
 .velo small{font-size:18px;letter-spacing:.2em;color:var(--gold-2)}
 body.real .timebar{display:none}
 @media (max-width:700px){#juego #mapa{width:112px;height:112px;bottom:calc(118px + env(safe-area-inset-bottom,0px))}.hudDer{top:calc(70px + env(safe-area-inset-top,0px))}#dinero{font-size:26px}#relojG{font-size:22px}}
+.dialogo.ancho{width:min(760px,calc(100vw - 32px));max-height:min(86vh,820px);overflow:auto}
+.capStats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 10px}.capStats span{background:var(--panel-2);border-radius:10px;padding:8px;font-size:12px;color:var(--muted);display:grid}.capStats b{font-size:20px;color:var(--gold-2)}
+.capTabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.capTabs button{padding:6px 10px;font-size:13px}.capTabs button.on{background:var(--gold);color:#111}
+.pros{display:grid;gap:6px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08)}.pros .pi{display:grid;gap:2px}.pros small{color:var(--muted)}.pros .nota{color:var(--gold-2)}
+.pros .pa{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.dialogo .opc.mini{display:inline-flex;width:auto;padding:6px 10px;font-size:13px;text-decoration:none}.opc.wa{background:#1f7a46;color:#fff}
+.pros select{padding:6px;border-radius:8px;background:var(--panel-2);color:inherit;border:1px solid rgba(255,255,255,.15)}
+@media (max-width:600px){.capStats{grid-template-columns:repeat(2,1fr)}}
+#estatus{font-size:20px;letter-spacing:.06em;color:var(--gold-2)}
+#bMovil{position:relative}#bMovil[data-n]:not([data-n=""])::after{content:attr(data-n);position:absolute;top:-6px;right:-6px;background:#e5484d;color:#fff;border-radius:999px;font-size:11px;min-width:18px;height:18px;display:grid;place-items:center;padding:0 4px}
+.apps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.apps button{padding:6px 10px;font-size:13px}.apps button.on{background:var(--gold);color:#111}
+.pantalla{max-height:46vh;overflow:auto;display:grid;gap:8px}.sms{background:var(--panel-2);border-radius:12px;padding:10px 12px;display:grid;gap:3px}.sms b{color:var(--gold-2);font-size:13px}.sms span{font-size:14px}.sms.hecha{opacity:.5}
+.bloq{color:var(--muted);font-size:13px}.saldo{background:linear-gradient(135deg,#1c2433,#0d1118);border:1px solid rgba(214,178,106,.35);border-radius:14px;padding:14px;display:grid}.saldo small{color:var(--muted)}.saldo b{font-family:"Bebas Neue",Impact,sans-serif;font-size:34px;color:#7ee08a;letter-spacing:.04em}
+.barraRep{height:8px;border-radius:99px;background:var(--panel-2);overflow:hidden}.barraRep i{display:block;height:100%;background:var(--gold)}
 .mision{position:absolute;z-index:4;left:max(12px,env(safe-area-inset-left,0px));top:calc(150px + env(safe-area-inset-top,0px));width:min(300px,calc(100% - 24px));background:rgba(8,10,16,.78);backdrop-filter:blur(10px);border:1px solid rgba(214,178,106,.35);border-left:3px solid var(--gold);border-radius:12px;padding:10px 12px;display:grid;gap:3px;pointer-events:auto}
 .mision small{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .mision b{font-family:var(--f-serif);font-size:19px;line-height:1.1;color:#fff}
@@ -180,7 +193,10 @@ body.cine .hud-arriba,body.cine .ayuda,body.cine .avisos,body.cine .accion,body.
     <div class="derecha">
       <canvas id="mapa" width="300" height="300" aria-label="Minimapa"></canvas>
       <div class="botones">
+        <button id="bMovil" aria-label="Móvil" hidden>📱</button>
         <button id="bSonido" aria-label="Sonido">🔊</button>
+        <button id="bCalidad" aria-label="Calidad gráfica" title="Calidad gráfica">HD</button>
+        <button id="bCaptacion" hidden>Captación</button>
         <button id="bTareas">Tareas</button>
         <button id="bCine">Modo cine</button>
         <button id="bDron">Vista dron</button>
@@ -189,7 +205,7 @@ body.cine .hud-arriba,body.cine .ayuda,body.cine .avisos,body.cine .accion,body.
       </div>
     </div>
   </div>
-  <div class="hudDer" id="hudDer"><div id="relojG">--:--</div><div id="dinero">AED 0</div></div>
+  <div class="hudDer" id="hudDer"><div id="relojG">--:--</div><div id="dinero">AED 0</div><div id="estatus"></div></div>
   <div class="velo" id="velo" hidden></div>
   <div class="ayuda" id="ayuda">WASD andar · Shift correr · Espacio saltar · arrastra para mirar · rueda zoom · E interactuar</div>
   <div class="mision" id="mision"></div>
@@ -325,7 +341,7 @@ const TXTST={work:'Trabajando',wait:'Te espera',idle:'En espera',sleep:'Fuera'};
 // ============ motor ============
 const juego=$('juego');
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+const PR_MAX=Math.min(devicePixelRatio,1.25); let prActual=PR_MAX; renderer.setPixelRatio(prActual);
 renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=0.85;
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.domElement.tabIndex=0;
@@ -336,9 +352,9 @@ const pmrem=new THREE.PMREMGenerator(renderer);
 scene.environment=pmrem.fromScene(new RoomEnvironment(renderer),0.04).texture;
 new RGBELoader().load('tex/cielo.hdr',t=>{t.mapping=THREE.EquirectangularReflectionMapping; scene.environment=pmrem.fromEquirectangular(t).texture; t.dispose();});
 const cam=new THREE.PerspectiveCamera(55,1,0.1,2400);
-const composer=new EffectComposer(renderer,new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,samples:4}));
+const composer=new EffectComposer(renderer,new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,samples:2}));
 composer.addPass(new RenderPass(scene,cam));
-const gtao=new GTAOPass(scene,cam,1,1); gtao.blendIntensity=0.85; gtao.updateGtaoMaterial({radius:0.7,distanceExponent:1.6,thickness:1.2,scale:1.1,samples:12}); gtao.enabled=!matchMedia('(pointer:coarse)').matches; composer.addPass(gtao);
+const gtao=new GTAOPass(scene,cam,1,1); gtao.blendIntensity=0.85; gtao.updateGtaoMaterial({radius:0.7,distanceExponent:1.6,thickness:1.2,scale:1.1,samples:12}); let calidadAlta=false; try{calidadAlta=localStorage.getItem('hq_calidad')==='alta';}catch(e){} gtao.enabled=calidadAlta; composer.addPass(gtao);
 const bloom=new UnrealBloomPass(new THREE.Vector2(512,512),0.25,0.4,1.0); composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
@@ -788,7 +804,7 @@ function montarCabeza(m,k,estilo,colPelo){
 const oroJoya=new THREE.MeshStandardMaterial({color:0xe2bd6a,metalness:1,roughness:0.22});
 function persona({modelo='josh',traje,corbata,camisa,x=0,y=0,z=0,ry=0,escala=1,cara=null,oro=false}={}){
   const src=MX[modelo], m=SkeletonUtils.clone(src.scene);
-  m.traverse(o=>{ if(!o.isMesh) return; o.castShadow=true; o.receiveShadow=false; o.frustumCulled=false;
+  m.traverse(o=>{ if(!o.isMesh) return; o.castShadow=true; o.receiveShadow=false; o.frustumCulled=true;
     o.material=o.material.clone(); o.material.metalness=0; o.material.roughness=/Hair|Eyelash/.test(o.name)?0.6:/Shoes|Heels|Belt/.test(o.name)?0.35:0.72;
     if(traje!=null&&/Suit|Pants/.test(o.name)) o.material.color.set(traje);
     if(corbata!=null&&/Tie/.test(o.name)) o.material.color.set(corbata);
@@ -797,7 +813,7 @@ function persona({modelo='josh',traje,corbata,camisa,x=0,y=0,z=0,ry=0,escala=1,c
   let cab=null;
   if(cara!=null){ const hb=hueso(m,'mixamorigHead'); const g=adjunto(hb,new THREE.Group()); const c=new THREE.Mesh(geosCara[cara],matCara); c.position.set(0,0.085,0.018); c.scale.setScalar(0.93); g.add(c); m.traverse(o=>{if(o.isMesh&&/Eyelash/.test(o.name)) o.visible=false;}); }
   if(oro){const reloj=adjunto(hueso(m,'mixamorigLeftHand'),new THREE.Group()); const r=new THREE.Mesh(new THREE.TorusGeometry(0.03,0.009,8,20),oroJoya); r.rotation.x=Math.PI/2; r.position.y=-0.025; reloj.add(r);}
-  const mixer=new THREE.AnimationMixer(m); mixers.push(mixer);
+  const mixer=new THREE.AnimationMixer(m); mixers.push(mixer); mixer._p=m;
   const acc={idle:mixer.clipAction(src.animations[0])}; for(const c of CLIPS) acc[c.name]=mixer.clipAction(c);
   acc.walk=acc.walking; acc.run=acc.running; acc.idle.play();
   const p={m,mixer,acc,actual:'idle',cab,hasta:0}; personas.push(p); return p;
@@ -862,7 +878,7 @@ const conceptSrc=MX.concept.scene;
 function deportivo(color){const inner=conceptSrc.clone(true); inner.traverse(o=>{ if(!o.isMesh) return; if(/^Interior|Engine|Wipers|Pedal/.test(o.name)){o.visible=false;return;} o.castShadow=true; if(/Paint/.test(o.material?.name||'')){o.material=o.material.clone();o.material.color.set(color);} });
   inner.rotation.y=Math.PI/2; const g=new THREE.Group(); g.add(inner); scene.add(g); return {g,ruedas:[],off:0};}
 const colDep=[0xf4f4f2,0x111214,0xa9adb3,0x1d2a44,0xc9a45a,0x6d0f14,0x0f3d2e,0x2b2d31,0xe9e4da,0x3a0d12];
-for(let i=0;i<36;i++){const calle=CALLES[i%CALLES.length], eje=(i>>1)%2?'x':'z', dir=(i%3===0)?-1:1, carril=dir>0?(i%2?1.5:4.5):-(i%2?1.5:4.5);
+for(let i=0;i<26;i++){const calle=CALLES[i%CALLES.length], eje=(i>>1)%2?'x':'z', dir=(i%3===0)?-1:1, carril=dir>0?(i%2?1.5:4.5):-(i%2?1.5:4.5);
   const v=(i%9===0)?{...ferrari(colFerrari[(i/9)%colFerrari.length]),off:Math.PI}:deportivo(colDep[i%colDep.length]); const s=-LIM+rnd()*LIM*2;
   coches.push({...v,eje,calle,carril,dir,s,v:9+rnd()*7});}
 // el Ferrari del jefe, aparcado en la puerta
@@ -986,6 +1002,7 @@ let accionActual=null;
 function buscarAccion(){
   if(dron||dialogoAbierto) return null; if(conduciendo) return {txt:'Bajar del coche',fn:bajarCoche};
   const p=yo.m.position, f=yo.planta;
+  if(REAL&&miMesa&&f===miMesa.f&&Math.hypot(p.x-miMesa.x,p.z-miMesa.z-0.9)<2) return {txt:'Abrir mi lista de captación',fn:()=>abrirCaptacion()};
   const ascX=f===5?[0]:[-1.8,1.8];
   for(const ex of ascX) if(Math.hypot(p.x-ex,p.z+5.1)<1.5&&(f===5||dentro(p.x,p.z))) return {txt:'Coger el ascensor',fn:abrirAscensor};
   for(const a of AG){ if(a.id==='tu'||a.f!==f) continue; const o=objAg[a.id]; if(!o.m.visible) continue; if(Math.hypot(p.x-o.m.position.x,p.z-o.m.position.z)<2.2) return {txt:`Hablar con ${a.nm}`,fn:()=>abrirAgente(a.id)}; }
@@ -998,8 +1015,8 @@ function buscarAccion(){
 }
 function interactuar(){ if(dialogoAbierto){cerrarDialogo();return;} if(conduciendo){bajarCoche();return;} if(accionActual) accionActual.fn(); }
 $('accion').onclick=()=>interactuar();
-function abrirDialogo(t,rol,html,acciones=''){dialogoAbierto=true;const d=$('dialogo');d.hidden=false;d.dataset.vista='';d.innerHTML=`<h3>${t}</h3><div class="rol">${rol}</div>${html}<div class="acc">${acciones}<button id="bCerrarDlg">Cerrar · Esc</button></div>`;$('bCerrarDlg').onclick=cerrarDialogo;}
-function cerrarDialogo(){dialogoAbierto=false;$('dialogo').hidden=true;renderer.domElement.focus();}
+function abrirDialogo(t,rol,html,acciones=''){dialogoAbierto=true;const d=$('dialogo');d.classList.remove('ancho');d.hidden=false;d.dataset.vista='';d.innerHTML=`<h3>${t}</h3><div class="rol">${rol}</div>${html}<div class="acc">${acciones}<button id="bCerrarDlg">Cerrar · Esc</button></div>`;$('bCerrarDlg').onclick=cerrarDialogo;}
+function cerrarDialogo(){dialogoAbierto=false;$('dialogo').hidden=true;$('dialogo').classList.remove('ancho');renderer.domElement.focus();}
 const horario=id=>S.filter(s=>s.a===id&&!s.hb).map(s=>`${fmt(s.t0)}–${fmt(s.t1)} · ${s.task.replace(/^\S+\s/,'')}`);
 function abrirAgente(id){const a=AGM[id],e=estado(id,ahora),h=horario(id); marcar('agente:'+id);
   abrirDialogo(a.nm,`${a.rol} · ${a.origen}${a.nuevo?' · por montar':''}`,`<p>${a.desc}</p><div class="k">Ahora</div><p>${TXTST[e.st]} · ${e.task}</p>${h.length?`<div class="k">Su día</div><p>${h.join('<br>')}</p>`:''}`);}
@@ -1047,26 +1064,73 @@ function lanzar(an){let p0,p2,c;
 const bez=(a,b,c,t)=>a.clone().multiplyScalar((1-t)**2).add(b.clone().multiplyScalar(2*(1-t)*t)).add(c.clone().multiplyScalar(t*t));
 
 // ============ misiones ============
+// ============ modo historia: «De cero a Dubái» ============
+// Cada capítulo: un mensaje al móvil que lo arranca, pasos en el mapa y un premio (dinero, estatus y un contacto nuevo).
 const MISIONES=[
-  {t:'Primer día en Airmate',pasos:[{txt:'Entra por la puerta principal',f:0,x:0,z:5,chk:()=>yo.planta===0&&dentro(yo.m.position.x,yo.m.position.z)},{txt:'Saluda a Recepción',f:0,x:0,z:-1.2,ev:'hablar:Recepción'}]},
-  {t:'Conoce a tu equipo',pasos:[{txt:'Habla con el Investigador (planta 1)',f:1,x:-8,z:-1,ev:'agente:investigador'},{txt:'Habla con el Cartero (planta 2)',f:2,x:8.4,z:-3.2,ev:'agente:cartero'}]},
-  {t:'Nada sale sin tu OK',pasos:[{txt:'Revisa el Outbox en tu despacho (planta 4)',f:4,x:8.4,z:6.4,ev:'outbox'}]},
-  {t:'Como un socio',pasos:[{txt:'Pide algo en el Sky Bar de la azotea',f:5,x:-8.2,z:0.2,ev:'bebida'}]},
-  {t:'Cierra el trato',pasos:[{txt:'Convence a Khalid Al Mansouri en la azotea',f:5,x:-5.6,z:6.4,ev:'trato'}]},
-  {t:'Vuelo de negocios',pasos:[{txt:'Súbete al helicóptero del helipuerto',f:5,x:4,z:2,ev:'heli'}]},
+  {t:'Cap. 1 · Primer día en AIRMATE', de:'Recepción', msg:'Bienvenido a Dubái, señor Bueno. Su oficina está lista. Le esperamos en el lobby.',
+   pasos:[{txt:'Entra por la puerta principal',f:0,x:0,z:5,chk:()=>yo.planta===0&&dentro(yo.m.position.x,yo.m.position.z)},{txt:'Saluda a Recepción',f:0,x:0,z:-1.2,ev:'hablar:Recepción'},{txt:'Sube a tu despacho y habla con tu asistente (planta 4)',f:4,x:0,z:2.6,ev:'hablar:Asistente'}],
+   premio:{rep:60,din:0,contacto:'Asistente',txt:'Tu asistente te da tu móvil de empresa. Pulsa 📱 o la tecla M.'}},
+  {t:'Cap. 2 · Conoce a la máquina', de:'Asistente', msg:'Le presento al equipo de IA. Trabajan 24 horas para usted. Empiece por el Investigador en la planta 1.',
+   pasos:[{txt:'Habla con el Investigador (planta 1)',f:1,x:-8,z:-1,ev:'agente:investigador'},{txt:'Habla con el Redactor (planta 1)',f:1,x:2,z:-1,ev:'agente:redactor'},{txt:'Habla con el Cartero (planta 2)',f:2,x:8.4,z:-3.2,ev:'agente:cartero'},{txt:'Revisa tu Outbox en el despacho (planta 4)',f:4,x:8.4,z:6.4,ev:'outbox'}],
+   premio:{rep:80,din:10000,contacto:'Harvey',txt:'Harvey, tu agente de ventas, ya te escribe al móvil.'}},
+  {t:'Cap. 3 · El primer pez gordo', de:'Khalid Al Mansouri', msg:'Fabio, soy Khalid. Tengo tres hoteles y poco tiempo. Te espero en el Sky Bar de tu azotea. No me hagas esperar.',
+   pasos:[{txt:'Pide algo en el Sky Bar (azotea)',f:5,x:-8.2,z:0.2,ev:'bebida'},{txt:'Convence a Khalid Al Mansouri',f:5,x:-5.6,z:6.4,ev:'trato'}],
+   premio:{rep:200,din:0,contacto:'Khalid Al Mansouri',txt:'Primer gran cliente. En Dubái ya se habla de ti.'}},
+  {t:'Cap. 4 · Dejarse ver', de:'Khalid Al Mansouri', msg:'En esta ciudad la gente se fija en cómo llegas. Saca ese Ferrari de la puerta y luego date una vuelta en helicóptero.',
+   pasos:[{txt:'Conduce tu Ferrari (puerta principal)',f:0,x:-7.5,z:19.8,ev:'conducir'},{txt:'Recorre 500 m al volante',f:0,x:-7.5,z:19.8,chk:()=>(prog.km||0)>=500},{txt:'Súbete al helicóptero (azotea)',f:5,x:4,z:2,ev:'heli'}],
+   premio:{rep:150,din:0,contacto:'Omar · piloto',txt:'Omar, tu piloto, queda en tu agenda.'}},
+  {t:'Cap. 5 · Monta tu ejército', de:'Harvey', msg:'Yo solo no llego a todos. Necesitas captadores humanos que escriban por WhatsApp. Ve a la planta 1 y abre la Captación.',
+   pasos:[{txt:'Abre la Captación (botón Captación o mesa de la planta 1)',f:1,x:-3,z:5.1,ev:'captacion'},{txt:'Pide una lista o invita a tu primer captador',f:1,x:-3,z:5.1,ev:'equipo'}],
+   premio:{rep:200,din:25000,contacto:'Equipo de captación',txt:'Tu oficina ya tiene gente de verdad trabajando.'}},
+  {t:'Cap. 6 · Negocio de verdad', de:'Harvey', msg:'Esto ya no es un juego: aprueba emails reales en tu Outbox y que salgan hoy.',
+   pasos:[{txt:'Aprueba un email real de Harvey (despacho, planta 4)',f:4,x:8.4,z:6.4,ev:'aprobado'}],
+   premio:{rep:250,din:0,contacto:null,txt:'Cada email aprobado aquí sale de verdad.'}},
+  {t:'Cap. 7 · La cena con el jeque', de:'Oficina del jeque Rashid', msg:'Su Alteza ha oído hablar de AIRMATE. Le propone cenar en NOBŌ. Le confirmaremos fecha.',
+   pasos:[{txt:'Próximamente: vuela al restaurante NOBŌ',f:5,x:4,z:2,ev:'nunca'}], premio:{rep:0,din:0}},
 ];
-let prog={m:0,p:0,cerrados:0,trato:false}; try{const g=JSON.parse(localStorage.getItem('bg_prog')||'null'); if(g&&typeof g.m==='number') prog={...prog,...g};}catch(e){}
-function guardar(){try{localStorage.setItem('bg_prog',JSON.stringify(prog));}catch(e){}}
-function pasoActual(){const u=window.__urgente&&window.__urgente(); if(u) return u; const m=MISIONES[prog.m]; return m?m.pasos[prog.p]:null;}
-function marcar(ev){const p=pasoActual(); if(p&&p.ev===ev) avanzar();}
-function avanzar(){if(pasoActual()?.urgente) return; const m=MISIONES[prog.m]; prog.p++; if(prog.p>=m.pasos.length){prog.m++;prog.p=0;celebrar(m.t);} guardar(); pintarMision();}
+const ESTATUS=[[0,'Recién llegado'],[150,'Emprendedor'],[350,'Empresario'],[700,'Socio de Dubái'],[1200,'Magnate'],[2500,'Leyenda de Dubái']];
+const estatusDe=r=>ESTATUS.filter(e=>r>=e[0]).pop()[1];
+const AGENDA=[{con:'Khalid Al Mansouri',lugar:'Sky Bar · azotea',cap:2},{con:'Jeque Rashid',lugar:'NOBŌ · próximamente',cap:6}];
+let prog={m:0,p:0,cerrados:0,trato:false,rep:0,km:0,contactos:[],msgs:[],noLeidos:0,movil:false};
+try{const g=JSON.parse(localStorage.getItem('hq_historia')||'null'); if(g&&typeof g.m==='number') prog={...prog,...g};}catch(e){}
+function guardar(){try{localStorage.setItem('hq_historia',JSON.stringify(prog));}catch(e){}}
+function pasoHistoria(){const m=MISIONES[prog.m]; return m?m.pasos[prog.p]:null;}
+function pasoActual(){const u=window.__urgente&&window.__urgente(); return u||pasoHistoria();}
+function marcar(ev){const p=pasoHistoria(); if(p&&p.ev===ev) avanzar();}
+function mensaje(de,txt){prog.msgs.unshift({de,txt,t:Date.now()}); prog.msgs=prog.msgs.slice(0,40); prog.noLeidos++; guardar(); pintarMovil(); if(prog.movil){aviso(`📱 <b>${escH(de)}</b>: ${escH(txt.slice(0,70))}${txt.length>70?'…':''}`); try{sonido.ding();}catch(e){}}}
+function avanzar(){const m=MISIONES[prog.m]; prog.p++;
+  if(prog.p>=m.pasos.length){ prog.m++; prog.p=0; const pr=m.premio||{};
+    prog.rep+=pr.rep||0; if(pr.contacto&&!prog.contactos.includes(pr.contacto)) prog.contactos.push(pr.contacto); if(m===MISIONES[0]) prog.movil=true;
+    celebrar(m.t); if(pr.din) setTimeout(()=>moverDinero(pr.din,'Capítulo'),900); if(pr.txt) setTimeout(()=>aviso(`⭐ ${pr.txt}`),1300);
+    const sig=MISIONES[prog.m]; if(sig) setTimeout(()=>mensaje(sig.de,sig.msg),3800); }
+  guardar(); pintarMision(); pintarMovil();}
 let ctxAudio=null;
-function ding(){try{ctxAudio=ctxAudio||new (window.AudioContext||window.webkitAudioContext)();const t=ctxAudio.currentTime;[880,1320,1760].forEach((f,i)=>{const o=ctxAudio.createOscillator(),g=ctxAudio.createGain();o.frequency.value=f;g.gain.setValueAtTime(0,t+i*0.09);g.gain.linearRampToValueAtTime(0.12,t+i*0.09+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+i*0.09+0.6);o.connect(g).connect(ctxAudio.destination);o.start(t+i*0.09);o.stop(t+i*0.09+0.7);});}catch(e){}}
-function celebrar(t){const c=$('completada');c.innerHTML=`<small>Misión completada</small><b>${t}</b>`;c.hidden=false;c.style.animation='none';void c.offsetWidth;c.style.animation='';ding();unaVez(yo,'clapping',2.4);moverDinero(25000,'Misión');setTimeout(()=>c.hidden=true,3600);}
+function ding(){try{sonido.ding();}catch(e){}}
+function celebrar(t){const c=$('completada');c.innerHTML=`<small>Capítulo completado</small><b>${t}</b>`;c.hidden=false;c.style.animation='none';void c.offsetWidth;c.style.animation='';ding();setTimeout(()=>c.hidden=true,3600);}
 function pintarMision(){const el=$('mision'),m=MISIONES[prog.m],p=pasoActual();
-  if(p&&p.urgente){el.innerHTML=`<small>Urgente · datos reales</small><b>Nada sale sin tu OK</b><span>${p.txt}</span><em id="misDist"></em>`;return;}
-  if(!m){el.innerHTML=`<small>Misiones</small><b>Día completado, socio.</b><span>Has hecho todo lo que hace un socio de Airmate. Tratos cerrados: ${prog.cerrados}.</span><button id="bReiniciar">Volver a empezar</button>`;$('bReiniciar').onclick=()=>{prog={m:0,p:0,cerrados:prog.cerrados,trato:false};guardar();pintarMision();};return;}
-  el.innerHTML=`<small>Misión ${prog.m+1} de ${MISIONES.length}</small><b>${m.t}</b><span>${p.txt}</span><em id="misDist"></em>`;}
+  if(!m){el.innerHTML=`<small>Modo historia</small><b>Historia completada.</b><span>Estatus: ${estatusDe(prog.rep)}.</span><button id="bReiniciar">Volver a empezar</button>`;$('bReiniciar').onclick=()=>{prog={...prog,m:0,p:0,trato:false};guardar();pintarMision();};return;}
+  const urg=window.__urgente&&window.__urgente();
+  if(urg){el.innerHTML=`<small>Urgente · oficina real</small><b>${urg.txt}</b><span>Después sigue: ${m.t}</span><em id="misDist"></em>`;return;}
+  el.innerHTML=`<small>${m.t.split(' · ')[0]} de ${MISIONES.length} · ★ ${estatusDe(prog.rep)}</small><b>${m.t.split(' · ')[1]}</b><span>${p.txt}</span><em id="misDist"></em>`;}
+// el móvil
+function pintarMovil(){const b=$('bMovil'); if(!b) return; b.hidden=!prog.movil; b.dataset.n=prog.noLeidos||''; const e=$('estatus'); if(e) e.textContent='★ '+estatusDe(prog.rep);}
+function abrirMovil(app='msgs'){ if(!prog.movil){aviso('Aún no tienes el móvil de empresa. Habla con tu asistente (planta 4).');return;}
+  if(app==='msgs'){prog.noLeidos=0; guardar(); pintarMovil();}
+  const sigE=ESTATUS.find(e=>e[0]>prog.rep);
+  const apps={msgs:'💬 Mensajes',con:'👤 Contactos',agenda:'📅 Agenda',banco:'💳 Banco',est:'⭐ Estatus'};
+  const cuerpo={
+    msgs:prog.msgs.length?prog.msgs.map(m=>`<div class="sms"><b>${escH(m.de)}</b><span>${escH(m.txt)}</span></div>`).join(''):'<p>Sin mensajes.</p>',
+    con:(prog.contactos.length?prog.contactos.map(c=>`<div class="sms"><b>${escH(c)}</b><span>Desbloqueado</span></div>`).join(''):'<p>Aún no tienes contactos.</p>')+`<p class="bloq">🔒 ${Math.max(0,8-prog.contactos.length)} contactos por desbloquear en la historia</p>`,
+    agenda:AGENDA.map(a=>`<div class="sms ${prog.m>a.cap?'hecha':''}"><b>${a.con}</b><span>${a.lugar}${prog.m>a.cap?' · hecho':prog.m===a.cap?' · hoy':''}</span></div>`).join(''),
+    banco:`<div class="saldo"><small>Saldo</small><b>${fmtAED(prog.dinero)}</b></div><p>Tratos cerrados: <b>${prog.cerrados}</b></p><p>Ganas dinero con capítulos, tratos y leads reales que pasan a interesado.</p>`,
+    est:`<div class="saldo"><small>Tu estatus</small><b>★ ${estatusDe(prog.rep)}</b></div><div class="barraRep"><i style="width:${sigE?Math.round((prog.rep-ESTATUS[ESTATUS.indexOf(sigE)-1][0])/(sigE[0]-ESTATUS[ESTATUS.indexOf(sigE)-1][0])*100):100}%"></i></div><p>${sigE?`${sigE[0]-prog.rep} de reputación para <b>${sigE[1]}</b>`:'Has llegado a lo más alto.'}</p><p class="bloq">Créditos 3D: «Car Concept» © Khronos Group (CC BY 4.0) · muebles, texturas y cielo de Poly Haven (CC0) · personajes y animaciones de Mixamo.</p>`};
+  abrirDialogo('📱 Móvil','AIRMATE · '+apps[app].slice(3),`<div class="apps">${Object.entries(apps).map(([k,t])=>`<button data-app="${k}" class="${k===app?'on':''}">${t}</button>`).join('')}</div><div class="pantalla">${cuerpo[app]}</div>`);
+  document.querySelectorAll('[data-app]').forEach(b=>b.onclick=()=>abrirMovil(b.dataset.app));}
+$('bMovil').onclick=()=>abrirMovil();
+addEventListener('keydown',e=>{if(e.code==='KeyM'&&e.target.tagName!=='INPUT'&&!e.repeat){ if(dialogoAbierto&&$('dialogo').querySelector('.apps')) cerrarDialogo(); else abrirMovil(); }});
+if(!prog.msgs.length) setTimeout(()=>{prog.movil=prog.movil||false; mensaje(MISIONES[0].de,MISIONES[0].msg);},2500);
+pintarMovil();
+
 const marcador=new THREE.Mesh(new THREE.OctahedronGeometry(0.35,0),new THREE.MeshBasicMaterial({color:new THREE.Color(1,0.78,0.35).multiplyScalar(2.2),toneMapped:false})); scene.add(marcador);
 const haz=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,60,8,1,true),new THREE.MeshBasicMaterial({color:new THREE.Color(1,0.8,0.4),transparent:true,opacity:0.16,toneMapped:false,depthWrite:false})); scene.add(haz);
 function objetivoVisible(){const p=pasoActual(); if(!p) return null;
@@ -1115,7 +1179,7 @@ contar=function(t){ if(!REAL) return _contarSim(t); const m=DATOS.metricas||{};
 window.__urgente=()=>{ if(!REAL) return null; const n=DATOS.outbox.filter(o=>o.estado==='pendiente').length; return n?{txt:`Aprueba ${n} email${n>1?'s':''} en tu despacho (planta 4)`,f:4,x:8.4,z:6.4,urgente:true}:null; };
 function mostrarLogin(msg){$('login').hidden=false; if(msg) $('loginMsg').textContent=msg;}
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault(); const email=$('loginEmail').value.trim(); if(!email||!sb) return; $('loginBtn').disabled=true; $('loginMsg').textContent='Enviando…';
-  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname,shouldCreateUser:false}});
+  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname,shouldCreateUser:await invitado(email)}});
   $('loginBtn').disabled=false; $('loginMsg').textContent=error?(/signup|not allowed|not found/i.test(error.message)?'Este email no tiene acceso a la oficina.':'No se pudo enviar: '+error.message):'Te he enviado un enlace a tu correo. Ábrelo en este mismo navegador.';});
 async function entrar(s){ yoUser=s.user; const {data}=await sb.from('hq_miembros').select('*');
   miembro=(data||[]).find(m=>m.user_id===yoUser.id);
@@ -1123,7 +1187,7 @@ async function entrar(s){ yoUser=s.user; const {data}=await sb.from('hq_miembros
   DATOS.miembros=data; await cargarTodo(); REAL=true; $('login').hidden=true; document.body.classList.add('real');
   document.querySelector('.placa .yo').innerHTML=`<b>${escH(miembro.nombre)}</b> · ${miembro.rol==='socio'?'Socio director':'Equipo'}`;
   if(location.hash.includes('access_token')) history.replaceState(null,'',location.pathname);
-  suscribir(); ultimoMin=-1; pintarMision(); aviso(`<b>Bienvenido, ${escH(miembro.nombre.split(' ')[0])}.</b> Estás en la oficina real: lo que hagas aquí pasa de verdad.`);}
+  await alEntrar(); suscribir(); ultimoMin=-1; pintarMision(); aviso(`<b>Bienvenido, ${escH(miembro.nombre.split(' ')[0])}.</b> Estás en la oficina real: lo que hagas aquí pasa de verdad.`);}
 async function cargarTodo(){const [m,a,e,o,t]=await Promise.all([sb.from('hq_metricas').select('*').eq('id',1).maybeSingle(),sb.from('hq_agentes').select('*'),
     sb.from('hq_eventos').select('*').order('ts',{ascending:false}).limit(30),sb.from('hq_outbox').select('*').order('creado',{ascending:false}).limit(80),sb.from('hq_tareas').select('*').order('creado',{ascending:false}).limit(80)]);
   DATOS.metricas=m.data; DATOS.agentes=Object.fromEntries((a.data||[]).map(r=>[r.id,r])); DATOS.eventos=e.data||[]; DATOS.outbox=o.data||[]; DATOS.tareas=t.data||[];}
@@ -1143,7 +1207,7 @@ async function decidir(id,ok){ if(miembro.rol!=='socio'){aviso('Solo el socio pu
   const {error}=await sb.from('hq_outbox').update({estado:ok?'aprobado':'rechazado',decidido_por:yoUser.id,decidido_en:new Date().toISOString()}).eq('id',id);
   if(error){aviso('No se pudo guardar: '+escH(error.message));return;}
   const o=DATOS.outbox.find(x=>x.id===id); if(o) o.estado=ok?'aprobado':'rechazado';
-  aviso(ok?'✅ <b>Aprobado.</b> Harvey lo enviará en los próximos minutos.':'Rechazado. Ese email no saldrá.'); if(ok) moverDinero(1000,'Email aprobado'); if(ok) lanzar({k:'doc',from:'tu',to:'cartero'}); abrirOutboxReal(); ultimoMin=-1; pintarMision();}
+  aviso(ok?'✅ <b>Aprobado.</b> Harvey lo enviará en los próximos minutos.':'Rechazado. Ese email no saldrá.'); if(ok){moverDinero(1000,'Email aprobado'); marcar('aprobado');} if(ok) lanzar({k:'doc',from:'tu',to:'cartero'}); abrirOutboxReal(); ultimoMin=-1; pintarMision();}
 // Tablero de tareas del equipo
 const SIG={'pendiente':['en curso','Empezar'],'en curso':['hecha','Terminar'],'hecha':['pendiente','Reabrir']};
 function abrirTareas(){ if(!REAL){abrirDialogo('Tareas','Sala de juntas','<p>Las tareas reales aparecen cuando entras con tu usuario.</p>');return;}
@@ -1185,6 +1249,7 @@ const sonido=(()=>{let ctx=null,master,ruido,ambG,mO,mO2,mF,mG,heliG,musG,activo
     ding(){nota(988,0.7,0.12); nota(1319,0.7,0.1,'sine',0.14);}, caja(){nota(1568,0.12,0.1,'square'); nota(2093,0.25,0.08,'square',0.08);} };
 })();
 addEventListener('pointerdown',()=>sonido.iniciar(),{once:true}); addEventListener('keydown',()=>sonido.iniciar(),{once:true});
+$('bCalidad').classList.toggle('on',calidadAlta); $('bCalidad').onclick=()=>{calidadAlta=!calidadAlta; gtao.enabled=calidadAlta; $('bCalidad').classList.toggle('on',calidadAlta); try{localStorage.setItem('hq_calidad',calidadAlta?'alta':'normal');}catch(e){} aviso(calidadAlta?'✨ <b>Calidad alta</b> activada (sombras suaves). Si va lento, quítala.':'Calidad normal: más fluido.');};
 $('bSonido').onclick=()=>{const on=sonido.alternar(); $('bSonido').textContent=on?'🔊':'🔇';};
 
 // ============ dinero ============
@@ -1195,7 +1260,7 @@ function moverDinero(n,motivo){prog.dinero+=n; guardar(); pintarDinero(); const 
 pintarDinero();
 
 // ============ asistenta ============
-function abrirAsistente(){
+function abrirAsistente(){ marcar('hablar:Asistente');
   abrirDialogo('Asistente de dirección','Planta 4 · a su servicio','<p>¿En qué le ayudo, señor Bueno?</p>',
     [['resumen','📊 Resumen del día'],['pendiente','📋 ¿Qué tengo pendiente?'],['tarea','✍️ Apúntame una tarea'],['cafe','☕ Tráeme un café']].map(([k,t])=>`<button class="opc" data-as="${k}">${t}</button>`).join(''));
   document.querySelectorAll('[data-as]').forEach(b=>b.onclick=()=>{const k=b.dataset.as, c=contar(ahora);
@@ -1210,7 +1275,7 @@ function abrirAsistente(){
 // ============ conducir el Ferrari ============
 let conduciendo=false, camOrb=0; const auto={v:0,yaw:0,steer:0};
 const colMiF=colisiones[0].find(c=>c.x0===-9.8&&c.z0===18.8);
-function subirCoche(){conduciendo=true; yo.m.visible=false; auto.v=0; auto.yaw=miFerrari.g.rotation.y; if(colMiF){colMiF.x0=colMiF.x1=9e4;} primero=true; camOrb=0; $('velo').hidden=false;
+function subirCoche(){conduciendo=true; yo.m.visible=false; auto.v=0; auto.yaw=miFerrari.g.rotation.y; if(colMiF){colMiF.x0=colMiF.x1=9e4;} primero=true; camOrb=0; $('velo').hidden=false; marcar('conducir');
   aviso('🏎️ <b>Al volante.</b> W/S acelerar y frenar · A/D girar · Shift turbo · H claxon · E bajar');}
 function bajarCoche(){conduciendo=false; const g=miFerrari.g, sx=Math.sin(auto.yaw), sz=Math.cos(auto.yaw);
   let [px,pz]=resolver(g.position.x+sx*2,g.position.z+sz*2,0); yo.m.position.set(px,0.12,pz); yo.planta=0; yo.m.visible=true; yo.yaw=auto.yaw-Math.PI/2;
@@ -1226,7 +1291,7 @@ function conducir(dt){
   nx=clamp(nx,-230,230); nz=clamp(nz,-230,230);
   const [rx,rz]=resolver(nx,nz,0,1.7); if(Math.hypot(rx-nx,rz-nz)>0.03){ if(Math.abs(auto.v)>7) sonido.choque(); auto.v*=-0.25; }
   g.position.set(rx,0.12,rz); g.rotation.y=auto.yaw; for(const w of miFerrari.ruedas) w.rotation.x-=auto.v*dt/0.35;
-  yo.m.position.set(rx,0.12,rz);
+  yo.m.position.set(rx,0.12,rz); prog.km=(prog.km||0)+Math.abs(auto.v)*dt;
   if(!mirando&&Math.abs(auto.v)>2) camOrb*=Math.pow(0.25,dt);
   $('velo').innerHTML=`${Math.round(Math.abs(auto.v)*3.6)}<small>km/h</small>`;
   sonido.motor(Math.abs(auto.v),0.05+0.07*Math.max(0,thr)+Math.abs(auto.v)/900);
@@ -1248,6 +1313,85 @@ async function cargarMuebles(){ const ids=[...new Set(slotsMuebles.map(s=>s.id))
 }
 
 let copas=0, pasoAcum=0, claxonT=8;
+// ============ captadores (personas reales con su mesa y su lista de WhatsApp) ============
+const MESAS=[[1,-8],[1,-3],[1,2],[2,-8],[2,-3],[2,2]].map(([f,x])=>({f,x,z:4.2}));
+let miMesa=null, PROS=[], filtroCap='nuevo', equipoNpc=[];
+const ESTADOS_CAP={nuevo:'Por contactar',enviado:'Enviado',respondio:'Respondió',interesado:'Interesado',cita:'Cita con Fabio',cliente:'Cliente',descartado:'No le interesa'};
+const ejemploWeb=s=>/Constructora|Reformas/.test(s)?'reformas':'taller';
+const msg1=p=>`Hola, ¿eres el dueño de ${p.nombre}? Te escribo por una cosa de vuestra ficha de Google 🙂`;
+const msg2=p=>`Te escribo porque he visto que ${p.nombre} no tiene página web y en Google se os escapan clientes que buscan ${p.sector.toLowerCase()} en la zona. Mira cómo quedaría una: airmate.es/web/ejemplos/${ejemploWeb(p.sector)}/ ¿Te cuento cómo funciona?`;
+const waLink=(p,t)=>`https://wa.me/34${p.telefono}?text=${encodeURIComponent(t)}`;
+async function invitado(email){ try{const {data}=await sb.rpc('hq_esta_invitado',{e:email}); return !!data;}catch(e){return false;} }
+async function cargarProspectos(){ const {data,error}=await sb.from('hq_prospectos').select('*').not('asignado','is',null).order('actualizado',{ascending:false}).limit(1000); if(!error) PROS=data||[]; }
+function misPros(){ return PROS.filter(p=>p.asignado===yoUser.id); }
+async function alEntrar(){
+  const m=miembro; if(m.mesa!=null&&MESAS[m.mesa]) miMesa=MESAS[m.mesa];
+  if(m.rol==='captador'){ document.querySelector('.placa .yo').innerHTML=`<b>${escH(m.nombre)}</b> · Captador`;
+    if(miMesa){ yo.planta=miMesa.f; yo.m.position.set(miMesa.x,FY(miMesa.f)+0.39,miMesa.z+2.2); yo.yaw=Math.PI; primero=true; } }
+  $('bCaptacion').hidden=false; await cargarProspectos(); pintarEquipo();
+  sb.channel('hq-cap').on('postgres_changes',{event:'*',schema:'public',table:'hq_prospectos'},p=>{const r=p.new; const i=PROS.findIndex(x=>x.id===r.id); if(i>=0) PROS[i]=r; else if(r.asignado) PROS.unshift(r);
+      if(miembro.rol==='socio'&&r.estado==='interesado'&&(!p.old||p.old.estado!=='interesado')) aviso(`🔥 <b>${escH(r.nombre)}</b> está interesado. Llámale.`);
+      if(dialogoAbierto&&$('dialogo').dataset.vista==='cap') abrirCaptacion(true); })
+    .on('postgres_changes',{event:'*',schema:'public',table:'hq_miembros'},async()=>{const {data}=await sb.from('hq_miembros').select('*'); DATOS.miembros=data||[]; pintarEquipo();}).subscribe();
+}
+// compañeros sentados en su mesa
+function pintarEquipo(){ for(const n of equipoNpc){scene.remove(n.p.m); n.el.remove();} equipoNpc=[];
+  for(const m of DATOS.miembros){ if(m.rol!=='captador'||m.mesa==null||!MESAS[m.mesa]||m.user_id===yoUser?.id) continue; const s=MESAS[m.mesa];
+    const p=persona({...npcAleatorio(m.mesa+2),x:s.x,y:FY(s.f)+0.39,z:s.z+0.92,ry:Math.PI}); cambiar(p,'typing',0);
+    const el=document.createElement('div'); el.className='nombre'; el.textContent=`${m.nombre} · Captador`; $('hud').appendChild(el); equipoNpc.push({p,el,f:s.f}); } }
+const _v3=new THREE.Vector3();
+function capHud(){ for(const n of equipoNpc){ if(n.f!==yo.planta){n.el.style.display='none';continue;} _v3.copy(n.p.m.position); _v3.y+=1.75; proyectar(n.el,_v3,16);} }
+// la lista
+function filaCap(p){ const tel=p.telefono?`<a class="opc mini" href="tel:+34${p.telefono}" data-tel="${p.id}">📞 Llamar</a>`:'';
+  const wa=p.movil?`<a class="opc mini wa" target="_blank" rel="noopener" href="${waLink(p,p.estado==='nuevo'?msg1(p):msg2(p))}" data-wa="${p.id}">💬 ${p.estado==='nuevo'?'WhatsApp':'2º mensaje'}</a>`:'';
+  return `<div class="pros"><div class="pi"><b>${escH(p.nombre)}</b><small>${escH(p.sector)} · ${escH(p.zona)}${p.web?' · tiene web':''}</small>${p.nota?`<small class="nota">📝 ${escH(p.nota)}</small>`:''}</div>
+    <div class="pa">${wa}${tel}<select data-est="${p.id}" aria-label="Estado">${Object.entries(ESTADOS_CAP).map(([k,v])=>`<option value="${k}" ${k===p.estado?'selected':''}>${v}</option>`).join('')}</select><button class="opc mini" data-nota="${p.id}">📝</button></div></div>`; }
+function abrirCaptacion(refresco){
+  marcar('captacion');
+  if(!REAL){abrirDialogo('Captación','Planta 1','<p>Entra con tu usuario para ver tu lista real.</p>');return;}
+  const mios=misPros(), cuenta=k=>mios.filter(p=>p.estado===k).length, socio=miembro.rol==='socio';
+  const tabs=[['nuevo','Por contactar'],['enviado','Enviados'],['respondio','Respondieron'],['interesado','Interesados'],['todos','Todos']];
+  const lista=(filtroCap==='todos'?mios:mios.filter(p=>p.estado===filtroCap)).slice(0,60);
+  abrirDialogo('Mi lista de captación',`${escH(miembro.nombre)} · cada mensaje que envías aquí es real`,
+    `<div class="capStats"><span><b>${cuenta('nuevo')}</b>por contactar</span><span><b>${cuenta('enviado')}</b>enviados</span><span><b>${cuenta('respondio')+cuenta('interesado')}</b>respuestas</span><span><b>${cuenta('cita')+cuenta('cliente')}</b>citas/clientes</span></div>
+     <p style="color:var(--muted);font-size:13px">1º WhatsApp corto y sin enlace. Cuando conteste, «2º mensaje» con el ejemplo. Si quiere precio o web, márcalo <b>Interesado</b> y Fabio le llama.</p>
+     <div class="capTabs">${tabs.map(([k,t])=>`<button data-f="${k}" class="${k===filtroCap?'on':''}">${t}</button>`).join('')}</div>
+     <div class="capLista">${lista.length?lista.map(filaCap).join(''):`<p>${filtroCap==='nuevo'?'No te quedan negocios por contactar. Pide una lista nueva.':'Nada aquí todavía.'}</p>`}</div>`,
+    `<button class="opc" id="bPedir">➕ Pedir 50 negocios</button>${socio?'<button class="opc" id="bEquipo">👥 Equipo</button>':''}`);
+  $('dialogo').dataset.vista='cap'; $('dialogo').classList.add('ancho');
+  document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{filtroCap=b.dataset.f; abrirCaptacion();});
+  document.querySelectorAll('[data-est]').forEach(s=>s.onchange=()=>guardarPros(+s.dataset.est,{estado:s.value}));
+  document.querySelectorAll('[data-wa]').forEach(a=>a.addEventListener('click',()=>{const p=PROS.find(x=>x.id===+a.dataset.wa); if(p&&p.estado==='nuevo') guardarPros(p.id,{estado:'enviado'});}));
+  document.querySelectorAll('[data-nota]').forEach(b=>b.onclick=()=>{const p=PROS.find(x=>x.id===+b.dataset.nota); const pi=b.closest('.pros'); if(pi.querySelector('form')) return;
+    pi.insertAdjacentHTML('beforeend',`<form class="nueva"><input maxlength="200" value="${escH(p.nota||'')}" placeholder="Nota (ej.: llamar el lunes, habla con el hijo…)"><button>Guardar</button></form>`);
+    const fm=pi.querySelector('form'); fm.querySelector('input').focus(); fm.onsubmit=e=>{e.preventDefault(); guardarPros(p.id,{nota:fm.querySelector('input').value.trim()});};});
+  $('bPedir').onclick=pedirLista; if(socio) $('bEquipo').onclick=abrirEquipo;
+}
+async function guardarPros(id,cambios){ const {error}=await sb.from('hq_prospectos').update({...cambios,actualizado:new Date().toISOString()}).eq('id',id);
+  if(error){aviso('No se pudo guardar: '+escH(error.message));return;}
+  const p=PROS.find(x=>x.id===id); if(p) Object.assign(p,cambios);
+  if(cambios.estado==='interesado'){aviso('🔥 <b>Interesado.</b> Fabio recibe el aviso.'); moverDinero(5000,'Lead interesado');}
+  else if(cambios.estado==='cliente') moverDinero(50000,'Cliente cerrado');
+  abrirCaptacion(); }
+async function pedirLista(){ const {data,error}=await sb.rpc('hq_pedir_lista',{n:50});
+  if(error){aviso('No se pudo pedir: '+escH(error.message));return;}
+  if(!data){aviso('Termina primero tu lista: te quedan más de 10 por contactar.');return;}
+  await cargarProspectos(); filtroCap='nuevo'; aviso(`📋 <b>${data} negocios nuevos</b> en tu lista.`); marcar('equipo'); abrirCaptacion(); }
+// equipo (solo socio)
+async function abrirEquipo(){ const caps=DATOS.miembros.filter(m=>m.rol==='captador'); const {data:inv}=await sb.from('hq_invitados').select('*');
+  const st=id=>{const l=PROS.filter(p=>p.asignado===id), c=k=>l.filter(p=>p.estado===k).length; return `${l.length} asignados · ${l.length-c('nuevo')} contactados · ${c('respondio')+c('interesado')} respuestas · ${c('cita')+c('cliente')} citas/clientes`;};
+  abrirDialogo('Equipo de captación','Solo tú ves esto',
+    (caps.length?caps.map(m=>`<div class="tarea"><div><span>${escH(m.nombre)} <small>· mesa ${m.mesa!=null?MESAS[m.mesa].f+'ª planta':'sin mesa'}</small></span><small>${st(m.user_id)}</small></div></div>`).join(''):'<p>Aún no hay captadores. Invita al primero abajo.</p>')
+    +((inv||[]).length?`<p class="k">Invitados pendientes de entrar</p>`+inv.map(i=>`<p>• ${escH(i.nombre)} <small style="color:var(--muted)">${escH(i.email)}</small></p>`).join(''):'')
+    +`<p class="k">Invitar captador</p><form class="nueva" id="invForm"><input id="invNombre" placeholder="Nombre" maxlength="60" required><input id="invEmail" type="email" placeholder="Email" required><button>Invitar</button></form>
+      <p style="color:var(--muted);font-size:13px">Entra en airmate.es/hq con ese email, pide el enlace y queda dentro con su mesa y su lista.</p>`,
+    '<button class="opc" id="volverCap">Volver a mi lista</button>');
+  $('volverCap').onclick=()=>abrirCaptacion();
+  $('invForm').onsubmit=async e=>{e.preventDefault(); const {error}=await sb.from('hq_invitados').upsert({email:$('invEmail').value.trim().toLowerCase(),nombre:$('invNombre').value.trim()});
+    if(error){aviso('No se pudo invitar: '+escH(error.message));return;} aviso('✅ <b>Invitado.</b> Ya puede entrar con su email.'); marcar('equipo'); abrirEquipo();};
+}
+$('bCaptacion').onclick=()=>abrirCaptacion();
+
 // ============ luz ============
 const cAlba=new THREE.Color(0xff9a5c), cDia=new THREE.Color(0xfff1dc), niebDia=new THREE.Color(0xd8c6a8), niebNoche=new THREE.Color(0x0b1226);
 function luz(t){
@@ -1274,7 +1418,7 @@ const matsEnv=new Map(); scene.traverse(o=>{if(o.isMesh){for(const m of [].conca
 function tam(){const w=juego.clientWidth,h=juego.clientHeight;renderer.setSize(w,h,false);composer.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix();}
 addEventListener('resize',tam); tam();
 const reloj=new THREE.Clock(), camPos=new THREE.Vector3(), camMira=new THREE.Vector3(), rayo=new THREE.Raycaster();
-let primero=true, mapaT=0;
+let primero=true, mapaT=0, fpsT=0, fpsN=0;
 function avanzarRuta(p,dt){const [tx,tz]=p.ruta[p.i], dx=tx-p.m.position.x, dz=tz-p.m.position.z, d=Math.hypot(dx,dz);
   if(d<0.3){p.i=(p.i+1)%p.ruta.length;return;} const s=Math.min(d,p.v*dt); p.m.position.x+=dx/d*s; p.m.position.z+=dz/d*s;
   const objetivo=Math.atan2(dx,dz); let dif=objetivo-p.m.rotation.y; dif=Math.atan2(Math.sin(dif),Math.cos(dif)); p.m.rotation.y+=dif*Math.min(1,dt*6);}
@@ -1316,7 +1460,9 @@ function bucle(){
   for(const c of coches){c.s+=c.v*c.dir*dt; if(c.s>LIM)c.s=-LIM; if(c.s<-LIM)c.s=LIM;
     if(c.eje==='x'){c.g.position.set(c.s,0,c.calle+c.carril);c.g.rotation.y=(c.dir>0?0:Math.PI)+(c.off||0);} else {c.g.position.set(c.calle+c.carril,0,c.s);c.g.rotation.y=(c.dir>0?-Math.PI/2:Math.PI/2)+(c.off||0);}}
   for(const a of AG){ if(a.id==='tu') continue; const o=objAg[a.id], e=estado(a.id,ahora); if(!o.m.visible) continue; cambiar(o,o.sentado?(e.st==='work'?'typing':'sitting_idle'):(e.st==='work'?'talking':'idle'),0.5); }
-  mixers.forEach(m=>m.update(dt));
+  for(const mx of mixers){const o=mx._p; if(o){ if(!o.visible||o.position.distanceToSquared(cam.position)>3600){mx._acc=(mx._acc||0)+dt; continue;} mx.update(dt+(mx._acc||0)); mx._acc=0;} else mx.update(dt);}
+  for(const c of coches) c.g.visible=c.g.position.distanceToSquared(cam.position)<170*170;
+  {fpsT+=dt; fpsN++; if(fpsT>2){const fps=fpsN/fpsT; fpsT=0; fpsN=0; const n=fps<32?Math.max(0.7,prActual-0.15):fps>55?Math.min(PR_MAX,prActual+0.1):prActual; if(Math.abs(n-prActual)>0.01){prActual=n; renderer.setPixelRatio(prActual); tam();}}}
   cabezasAlDia();
   {const dr=yo.planta===0?Math.hypot(yo.m.position.x-recep.m.position.x,yo.m.position.z-recep.m.position.z):99; if(dr<5.5&&!recep.saludo){recep.saludo=true;unaVez(recep,'waving',1.6);} if(dr>10) recep.saludo=false;}
   bailarina.m.visible=ahora>=1140||ahora<120;
@@ -1363,7 +1509,7 @@ function bucle(){
    if(fuera&&yo.planta===0){claxonT-=dt; if(claxonT<0){claxonT=15+rnd()*25; sonido.claxon();}}
    if(!conduciendo&&(yo.actual==='walk'||yo.actual==='run')){pasoAcum+=dt*(yo.actual==='run'?3.2:1.9); if(pasoAcum>1){pasoAcum=0;sonido.paso();}}
    if(copas>0){copas=Math.max(0,copas-dt/90); const k=Math.max(0,copas-1); renderer.domElement.style.filter=k>0.05?`blur(${Math.min(2.2,k*0.7)}px) saturate(${1+k*0.15})`:''; if(k>0.05) cam.rotation.z+=Math.sin(T*1.3)*0.02*k;}
-   const rg=$('relojG'); if(rg) rg.textContent=fmt(ahora);}
+   capHud(); const rg=$('relojG'); if(rg) rg.textContent=fmt(ahora);}
   accionActual=buscarAccion(); const ac=$('accion'); if(accionActual){ac.hidden=false;ac.querySelector('span').textContent=accionActual.txt;} else ac.hidden=true;
   composer.render(); moverHud();
   mapaT+=dt; if(mapaT>0.1){mapaT=0;pintarMapa();}
