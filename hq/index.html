@@ -1179,7 +1179,7 @@ function abrirMovil(app='msgs'){ if(!prog.movil){aviso('Aún no tienes el móvil
   const cuerpo={
     msgs:prog.msgs.length?prog.msgs.map(m=>`<div class="sms"><b>${escH(m.de)}</b><span>${escH(m.txt)}</span></div>`).join(''):'<p>Sin mensajes.</p>',
     con:(prog.contactos.length?prog.contactos.map(c=>`<div class="sms"><b>${escH(c)}</b><span>Desbloqueado</span></div>`).join(''):'<p>Aún no tienes contactos.</p>')+`<p class="bloq">🔒 ${Math.max(0,8-prog.contactos.length)} contactos por desbloquear en la historia</p>`,
-    agenda:'<p class="bloq">Reuniones importantes de hoy</p>'+agendaHoy()+'<p class="bloq">Historia</p>'+AGENDA.map(a=>`<div class="sms ${prog.m>a.cap?'hecha':''}"><b>${a.con}</b><span>${a.lugar}${prog.m>a.cap?' · hecho':prog.m===a.cap?' · hoy':''}</span></div>`).join(''),
+    agenda:'<p class="bloq">🕌 Oración en Dubái hoy: '+textoOraciones()+'</p><p class="bloq">Reuniones importantes de hoy</p>'+agendaHoy()+'<p class="bloq">Historia</p>'+AGENDA.map(a=>`<div class="sms ${prog.m>a.cap?'hecha':''}"><b>${a.con}</b><span>${a.lugar}${prog.m>a.cap?' · hecho':prog.m===a.cap?' · hoy':''}</span></div>`).join(''),
     banco:`<div class="saldo"><small>Saldo</small><b>${fmtAED(prog.dinero)}</b></div><p>Tratos cerrados: <b>${prog.cerrados}</b></p>${prog.deuda?`<p>Financiación de coches pendiente: <b>${fmtAED(prog.deuda)}</b></p>`:''}<p>Ganas dinero con capítulos, tratos y leads reales que pasan a interesado.</p>`,
     est:`<div class="saldo"><small>Tu estatus</small><b>★ ${estatusDe(prog.rep)}</b></div><div class="barraRep"><i style="width:${sigE?Math.round((prog.rep-ESTATUS[ESTATUS.indexOf(sigE)-1][0])/(sigE[0]-ESTATUS[ESTATUS.indexOf(sigE)-1][0])*100):100}%"></i></div><p>${sigE?`${sigE[0]-prog.rep} de reputación para <b>${sigE[1]}</b>`:'Has llegado a lo más alto.'}</p><p class="bloq">Créditos 3D: «Car Concept» © Khronos Group (CC BY 4.0) · muebles, texturas y cielo de Poly Haven (CC0) · personajes y animaciones de Mixamo · motor: «racing car engine sound loops» (OpenGameArt, CC0) · ${CREDITOS_COCHES} ${CREDITOS_ARQ}</p>`};
   abrirDialogo('📱 Móvil','AIRMATE · '+apps[app].slice(3),`<div class="apps">${Object.entries(apps).map(([k,t])=>`<button data-app="${k}" class="${k===app?'on':''}">${t}</button>`).join('')}</div><div class="pantalla">${cuerpo[app]}</div>`);
@@ -1317,14 +1317,14 @@ const sonido=(()=>{let ctx=null,master,ruido,ambG,mO,mO2,mF,mG,heliG,musG,activo
         tgt(capas[0].g.gain,on?(1-suave)*0.9:0,0.12); tgt(capas[0].s.playbackRate,0.95+r*0.6,0.1);
         tgt(capas[1].g.gain,on?suave*(0.55+acel*0.45):0,0.1); tgt(capas[1].s.playbackRate,0.72+r*0.62,0.08); return; }
       tgt(mO.frequency,36+rpm*5.2,0.05); tgt(mO2.frequency,(36+rpm*5.2)*0.5,0.05); tgt(mF.frequency,380+rpm*42,0.1); tgt(mG.gain,carga,0.12); },
-    perfil(k){ return usarPerfil(k); },
+    perfil(k){ return usarPerfil(k); }, activoAhora(){ return activo; },
     arranque(){ if(!ctx||!activo||!bufArranque) return; const s=ctx.createBufferSource(); s.buffer=bufArranque; const g=ctx.createGain(); g.gain.value=0.9; s.connect(g).connect(master); s.start(); },
     paso(){golpe(0.1,2600,0.05);}, disparo(){golpe(0.55,1100,0.14); golpe(0.3,300,0.25);}, choque(){golpe(0.7,380,0.45);}, claxon(){nota(415,0.35,0.07,'square'); nota(466,0.35,0.06,'square');},
     ding(){nota(988,0.7,0.12); nota(1319,0.7,0.1,'sine',0.14);}, caja(){nota(1568,0.12,0.1,'square'); nota(2093,0.25,0.08,'square',0.08);} };
 })();
 addEventListener('pointerdown',()=>sonido.iniciar(),{once:true}); addEventListener('keydown',()=>sonido.iniciar(),{once:true});
 $('bCalidad').classList.toggle('on',calidadAlta); $('bCalidad').onclick=()=>{calidadAlta=!calidadAlta; gtao.enabled=calidadAlta; $('bCalidad').classList.toggle('on',calidadAlta); try{localStorage.setItem('hq_calidad2',calidadAlta?'alta':'normal');}catch(e){} aviso(calidadAlta?'✨ <b>Calidad alta</b> activada (sombras suaves). Si va lento, quítala.':'Calidad normal: más fluido.');};
-$('bSonido').onclick=()=>{const on=sonido.alternar(); $('bSonido').textContent=on?'🔊':'🔇';};
+$('bSonido').onclick=()=>{const on=sonido.alternar(); $('bSonido').textContent=on?'🔊':'🔇'; if(!on&&typeof adhanAudio!=='undefined') adhanAudio.pause();};
 
 // ============ dinero ============
 if(typeof prog.dinero!=='number'){prog.dinero=250000; guardar();}
@@ -2093,6 +2093,24 @@ function agendaHoy(){ return reunionesDeHoy().map(r=>{ const est=prog.reu.hechas
 LOCALES.jet={id:'jet',cx:0,cz:-285,w:70,d:40,h:0,nombre:'Terminal privada',grupo:new THREE.Group(),dentro:()=>false,camareros:[],npcs:[],techo:new THREE.Group(),techoPad:new THREE.Group(),pad:new THREE.Vector3(26,0.16,-276),entrada:new THREE.Vector3(-14,0.12,-266)};
 { const pad=new THREE.Mesh(new THREE.CircleGeometry(4.2,40),new THREE.MeshStandardMaterial({map:helipad,roughness:0.7})); pad.rotation.x=-Math.PI/2; pad.position.set(26,0.13,-276); scene.add(pad); }
 DESTINOS.splice(DESTINOS.length-1,0,{id:'jet',txt:'✈️ Terminal privada (tu jet)'});
+
+// ============ adhan a las horas reales de oración en Dubái (grabación CC0: «Call to Prayer at Marina Mall» · 3bagbrew) ============
+// cálculo astronómico estándar (método de los Emiratos: Fajr e Isha a 18,2°, Asr Shafi'i), Dubái 25.2048 N, 55.2708 E, UTC+4
+function horariosDubai(fecha=new Date()){ const lat=25.2048, lon=55.2708, tz=4, rad=Math.PI/180, deg=180/Math.PI;
+  const y=+new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai',year:'numeric'}).format(fecha), mo=+new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai',month:'numeric'}).format(fecha), da=+new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai',day:'numeric'}).format(fecha);
+  const n=Date.UTC(y,mo-1,da,12)/86400000+2440587.5-2451545.0-tz/24;
+  const g=(357.529+0.98560028*n)*rad, q=280.459+0.98564736*n, L=(q+1.915*Math.sin(g)+0.020*Math.sin(2*g))*rad, e=(23.439-0.00000036*n)*rad;
+  const RA=Math.atan2(Math.cos(e)*Math.sin(L),Math.cos(L))*deg/15, D=Math.asin(Math.sin(e)*Math.sin(L)), EqT=q/15-((RA%24)+24)%24, eq=((EqT+12)%24+24)%24-12;
+  const dhuhr=12+tz-lon/15-eq, T=a=>Math.acos((-Math.sin(a*rad)-Math.sin(D)*Math.sin(lat*rad))/(Math.cos(D)*Math.cos(lat*rad)))*deg/15;
+  const altAsr=Math.atan(1/(1+Math.tan(Math.abs(lat*rad-D)))), tAsr=Math.acos((Math.sin(altAsr)-Math.sin(D)*Math.sin(lat*rad))/(Math.cos(D)*Math.cos(lat*rad)))*deg/15;
+  const h=x=>Math.round(x*60);
+  return [['Fajr',h(dhuhr-T(18.2))],['Dhuhr',h(dhuhr)],['Asr',h(dhuhr+tAsr)],['Maghrib',h(dhuhr+T(0.833))],['Isha',h(dhuhr+T(18.2))]]; }
+const minDubai=()=>{ const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Dubai',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date()); return +p.find(x=>x.type==='hour').value*60+ +p.find(x=>x.type==='minute').value; };
+const adhanAudio=new Audio('mod/snd/adhan.mp3'); adhanAudio.preload='none'; adhanAudio.volume=0.45; let adhanHecho='';
+const fmtHM=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+setInterval(()=>{ const ahoraD=minDubai(), dia=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai'}).format(new Date());
+  for(const [nom,m] of horariosDubai()){ const clave=dia+nom; if(ahoraD>=m&&ahoraD<m+2&&adhanHecho!==clave){ adhanHecho=clave; aviso(`🕌 <b>Adhan · ${nom}</b> · ${fmtHM(m)} en Dubái`); if(sonido.activoAhora()){ adhanAudio.currentTime=0; adhanAudio.play().catch(()=>{}); } } } },20000);
+function textoOraciones(){ return horariosDubai().map(([n,m])=>`${n} ${fmtHM(m)}`).join(' · '); }
 
 // ============ luz ============
 const cAlba=new THREE.Color(0xff9a5c), cDia=new THREE.Color(0xfff1dc), niebDia=new THREE.Color(0xd8c6a8), niebNoche=new THREE.Color(0x0b1226);
