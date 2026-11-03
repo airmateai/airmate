@@ -596,11 +596,12 @@ for(let f=0;f<PISOS_VIS;f++) for(const sx of [-1,1]){const y=f*H+(f===0?2.3:2.2)
   const p=plano(1.9,1.3,new THREE.MeshStandardMaterial({map:cuadro(f*2+(sx>0?1:0)+3),roughness:0.7}),x+sx*0.06,y,z,sx*Math.PI/2);}
 
 // ---------- interiores ----------
-function mesaAlta(x,y,z,m=2){ // mesa elevable: el agente se pone en z+0.7 mirando a -z
-  caja(1.7,0.05,0.85,M.nogal,x,y+1.05,z,{col:Math.round(y/H)});
-  caja(0.08,1.0,0.6,M.negro,x-0.7,y+0.52,z);caja(0.08,1.0,0.6,M.negro,x+0.7,y+0.52,z);caja(1.5,0.06,0.06,M.oro,x,y+0.3,z);
-  for(let i=0;i<m;i++){const mx=x+(m===1?0:(i-0.5)*0.68);caja(0.64,0.38,0.03,M.negro,mx,y+1.48,z-0.25,{ry:m===1?0:(i-0.5)*-0.3});const p=plano(0.6,0.34,M.pantalla,mx,y+1.48,z-0.233,m===1?0:(i-0.5)*-0.3);}
-  caja(0.44,0.015,0.14,M.blanco,x,y+1.08,z+0.15,{sombra:false});
+function mesaAlta(x,y,z,m=2){ y+=0.2; // mesa de oficina con silla: el agente se sienta en z+0.9 mirando a -z
+  caja(1.7,0.05,0.85,M.nogal,x,y+0.75,z,{col:Math.round((y-0.2)/H)});
+  caja(0.06,0.72,0.75,M.negro,x-0.78,y+0.36,z);caja(0.06,0.72,0.75,M.negro,x+0.78,y+0.36,z);caja(1.5,0.3,0.03,M.nogal,x,y+0.55,z-0.38);caja(1.52,0.03,0.04,M.oro,x,y+0.73,z+0.41,{sombra:false});
+  for(let i=0;i<m;i++){const mx=x+(m===1?0:(i-0.5)*0.68);caja(0.64,0.38,0.03,M.negro,mx,y+1.08,z-0.22,{ry:m===1?0:(i-0.5)*-0.3});const p=plano(0.6,0.34,M.pantalla,mx,y+1.08,z-0.203,m===1?0:(i-0.5)*-0.3);cil(0.02,0.02,0.2,M.negro,mx,y+0.85,z-0.24,{seg:6});}
+  caja(0.44,0.015,0.14,M.blanco,x,y+0.785,z+0.12,{sombra:false});
+  silla(x,y-0.03,z+0.95,Math.PI);
 }
 function silla(x,y,z,ry=0,m=M.cuero){const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=ry;scene.add(g);
   caja(0.55,0.09,0.52,m,0,0.48,0,{padre:g});caja(0.53,0.7,0.07,m,0,0.9,-0.28,{padre:g});cil(0.03,0.03,0.42,M.acero,0,0.25,0,{padre:g,seg:8});caja(0.62,0.03,0.05,M.acero,0,0.05,0,{padre:g});caja(0.05,0.03,0.62,M.acero,0,0.05,0,{padre:g});return g;}
@@ -703,16 +704,20 @@ Object.assign(sol.shadow.camera,{left:-45,right:45,top:45,bottom:-45,near:1,far:
 scene.add(sol); scene.add(sol.target);
 const lucesInt=[]; for(let f=0;f<PISOS_VIS;f++) for(const x of [-6,6]){const p=new THREE.PointLight(0xffe3b8,0,16,2);p.position.set(x,f*H+3.6,1.5);scene.add(p);lucesInt.push(p);}
 
-// ============ personajes ============
+// ============ personajes (Mixamo: personas reales con traje y animaciones) ============
 const gltf=new GLTFLoader(manager); gltf.setMeshoptDecoder(MeshoptDecoder);
 const modelos={};
 async function cargar(n){const b64=await (await fetch(`mod/${n}.txt`)).text(); const s=atob(b64); const bin=new Uint8Array(s.length); for(let i=0;i<s.length;i++) bin[i]=s.charCodeAt(i);
   return new Promise((r,e)=>gltf.parse(bin.buffer,'',g=>{modelos[n]=g;r();},e));}
 $('cargaTxt').textContent='Llegando el equipo…';
-await Promise.all(['Xbot','ferrari','Stork','Flamingo'].map(cargar));
-const clipX=Object.fromEntries(modelos.Xbot.animations.map(a=>[a.name,a]));
+const MX={};
+await Promise.all([...['ferrari','Stork','Flamingo'].map(cargar), ...['joe','josh','louise','anims'].map(async n=>{MX[n]=await gltf.loadAsync(`mod/${n}.glb`);})]);
+// Mixamo numera los huesos de cada personaje (mixamorig7Hips, mixamorig8Hips…): se unifican para compartir animaciones
+const norm=n=>n.replace(/^mixamorig\d*/,'mixamorig');
+for(const k in MX){ MX[k].scene.traverse(o=>{o.name=norm(o.name);}); for(const c of MX[k].animations) for(const t of c.tracks) t.name=norm(t.name); }
+const CLIPS=MX.anims.animations;
 const mixers=[], personas=[];
-
+const tmpS=new THREE.Vector3();
 // atlas de caras: 0 = Fabio Bueno, 1..9 = equipo y ciudad (generadas con IA)
 const imgCaras=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src='tex/caras.jpg';});
 const texCaras=new THREE.Texture(imgCaras); texCaras.colorSpace=THREE.SRGBColorSpace; texCaras.anisotropy=maxAniso; texCaras.needsUpdate=true;
@@ -744,92 +749,77 @@ function peinado(estilo,color,grupo){
   if(estilo==='rizado'){const r=new THREE.SphereGeometry(0.15,20,16,0,Math.PI*2,0,0.62*Math.PI); add(r,0,0.02,-0.04,-0.62);}
   if(estilo==='mono') add(new THREE.SphereGeometry(0.045,12,10),0,0.055,-0.118);
 }
-function region(n){ if(/Head|Neck/.test(n)) return 'piel'; if(/Hand/.test(n)) return 'piel'; if(/ForeArm/.test(n)) return 'antebrazo';
-  if(/Arm|Shoulder|Spine/.test(n)) return 'camisa'; if(/Foot|Toe/.test(n)) return 'zapato'; if(/Leg|Hips/.test(n)) return 'pantalon'; return 'camisa'; }
-const gets=['getX','getY','getZ','getW'];
-function vestir(m,ropa){
-  m.traverse(o=>{ if(!o.isSkinnedMesh) return; o.castShadow=true; o.receiveShadow=false; o.frustumCulled=false;
-    const g=o.geometry.clone(), si=g.attributes.skinIndex, sw=g.attributes.skinWeight, n=si.count, col=new Float32Array(n*3), bones=o.skeleton.bones;
-    for(let i=0;i<n;i++){let best=0,bw=-1;for(let j=0;j<4;j++){const w=sw[gets[j]](i);if(w>bw){bw=w;best=si[gets[j]](i);}}
-      const c=ropa[region(bones[best].name)]||ropa.camisa; col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b;}
-    g.setAttribute('color',new THREE.BufferAttribute(col,3)); o.geometry=g;
-    o.material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:o.name.includes('Joints')?0.55:0.8,metalness:0.02});
-  });
-}
-const tmpS=new THREE.Vector3();
 function hueso(m,n){let b=null;m.traverse(o=>{if(o.isBone&&o.name===n)b=o;});return b;}
 function adjunto(bone,grupo){bone.add(grupo);bone.getWorldScale(tmpS);grupo.scale.set(1/tmpS.x,1/tmpS.y,1/tmpS.z);return grupo;}
 function montarCabeza(m,k,estilo,colPelo){
   const neck=hueso(m,'mixamorigNeck'), head=hueso(m,'mixamorigHead');
-  const g=new THREE.Group(); adjunto(neck,g); g.scale.multiplyScalar(1.12);
+  const g=new THREE.Group(); adjunto(neck,g); g.scale.multiplyScalar(0.9);
   const piel=new THREE.MeshStandardMaterial({color:tonos[k],roughness:0.66});
-  const cr=new THREE.Mesh(geoCraneo,piel); cr.position.y=0.045; cr.castShadow=true; g.add(cr);
-  const cara=new THREE.Mesh(geosCara[k],matCara); cara.position.y=0.045; g.add(cara);
-  for(const s of [-1,1]){const o=new THREE.Mesh(geoOreja,piel);o.position.set(0.094*s,0.04,-0.008);g.add(o);}
-  const hg=new THREE.Group(); hg.position.y=0.045; g.add(hg); peinado(estilo,colPelo,hg);
+  const cr=new THREE.Mesh(geoCraneo,piel); cr.position.y=0.075; cr.castShadow=true; g.add(cr);
+  const cara=new THREE.Mesh(geosCara[k],matCara); cara.position.y=0.075; g.add(cara);
+  for(const s of [-1,1]){const o=new THREE.Mesh(geoOreja,piel);o.position.set(0.094*s,0.07,-0.008);g.add(o);}
+  const hg=new THREE.Group(); hg.position.y=0.075; g.add(hg); peinado(estilo,colPelo,hg);
   return {g,head};
 }
 const oroJoya=new THREE.MeshStandardMaterial({color:0xe2bd6a,metalness:1,roughness:0.22});
-function corbata(m,colTie){const sp=hueso(m,'mixamorigSpine2'); if(!sp) return; const g=adjunto(sp,new THREE.Group());
-  const sh=new THREE.Shape(); sh.moveTo(-0.055,0.075); sh.lineTo(0.055,0.075); sh.lineTo(0,-0.11); sh.closePath();
-  const v=new THREE.Mesh(new THREE.ShapeGeometry(sh),new THREE.MeshStandardMaterial({color:0xf5f5f2,roughness:0.55})); v.position.set(0,0.13,0.128); g.add(v);
-  if(colTie!=null){const t=new THREE.Mesh(new THREE.BoxGeometry(0.03,0.16,0.012),new THREE.MeshStandardMaterial({color:colTie,roughness:0.35,metalness:0.1})); t.position.set(0,0.11,0.134); t.rotation.x=-0.08; g.add(t);}}
-function persona({cara=1,estilo='corto',colPelo=0x1b1410,camisa=0xf2f2f0,mangas=true,pantalon=0x1e2230,zapato=0x111111,x=0,y=0,z=0,ry=0,escala=1,oro=false,cadena=true,tie}={}){
-  const m=SkeletonUtils.clone(modelos.Xbot.scene), piel=tonos[cara];
-  vestir(m,{piel,camisa:new THREE.Color(camisa),antebrazo:mangas?new THREE.Color(camisa):piel,pantalon:new THREE.Color(pantalon),zapato:new THREE.Color(zapato)});
-  m.position.set(x,y,z); m.rotation.y=ry; m.scale.set(escala*0.94,escala,escala*0.94); scene.add(m); m.updateMatrixWorld(true);
-  const cab=montarCabeza(m,cara,estilo,colPelo);
-  if(tie!==undefined) corbata(m,tie);
-  if(oro){
-    const reloj=adjunto(hueso(m,'mixamorigLeftHand'),new THREE.Group()); const r=new THREE.Mesh(new THREE.TorusGeometry(0.03,0.009,8,20),oroJoya); r.rotation.x=Math.PI/2; r.position.y=-0.025; reloj.add(r);
-    if(cadena){const cad=adjunto(hueso(m,'mixamorigNeck'),new THREE.Group()); const c=new THREE.Mesh(new THREE.TorusGeometry(0.07,0.0035,6,32),oroJoya); c.rotation.x=Math.PI/2+0.55; c.position.set(0,-0.01,0.025); cad.add(c);}
-  }
+function persona({modelo='josh',traje,corbata,camisa,x=0,y=0,z=0,ry=0,escala=1,cara=null,oro=false}={}){
+  const src=MX[modelo], m=SkeletonUtils.clone(src.scene);
+  m.traverse(o=>{ if(!o.isMesh) return; o.castShadow=true; o.receiveShadow=false; o.frustumCulled=false;
+    o.material=o.material.clone(); o.material.metalness=0; o.material.roughness=/Hair|Eyelash/.test(o.name)?0.6:/Shoes|Heels|Belt/.test(o.name)?0.35:0.72;
+    if(traje!=null&&/Suit|Pants/.test(o.name)) o.material.color.set(traje);
+    if(corbata!=null&&/Tie/.test(o.name)) o.material.color.set(corbata);
+    if(camisa!=null&&/Shirt/.test(o.name)) o.material.color.set(camisa); });
+  m.scale.setScalar(0.01*escala); m.position.set(x,y,z); m.rotation.y=ry; scene.add(m); m.updateMatrixWorld(true);
+  let cab=null;
+  if(cara!=null){ cab=montarCabeza(m,cara,'corto',0x15100c); m.traverse(o=>{if(o.isMesh&&/Hair|Eyelash/.test(o.name)) o.visible=false;}); }
+  if(oro){const reloj=adjunto(hueso(m,'mixamorigLeftHand'),new THREE.Group()); const r=new THREE.Mesh(new THREE.TorusGeometry(0.03,0.009,8,20),oroJoya); r.rotation.x=Math.PI/2; r.position.y=-0.025; reloj.add(r);}
   const mixer=new THREE.AnimationMixer(m); mixers.push(mixer);
-  const act=n=>clipX[n]?mixer.clipAction(clipX[n]):null;
-  const acc={idle:act('idle'),walk:act('walk'),run:act('run')}; acc.idle.play();
-  const p={m,mixer,acc,actual:'idle',cab}; personas.push(p); return p;
+  const acc={idle:mixer.clipAction(src.animations[0])}; for(const c of CLIPS) acc[c.name]=mixer.clipAction(c);
+  acc.walk=acc.walking; acc.run=acc.running; acc.idle.play();
+  const p={m,mixer,acc,actual:'idle',cab,hasta:0}; personas.push(p); return p;
 }
-function cambiar(p,n,t=0.25){if(p.actual===n||!p.acc[n])return;const a=p.acc[p.actual],b=p.acc[n];b.reset().setEffectiveWeight(1).play();a.crossFadeTo(b,t,false);p.actual=n;}
-function cabezasAlDia(){for(const p of personas){const c=p.cab; c.head.scale.setScalar(0.001); c.g.position.copy(c.head.position); c.g.quaternion.copy(c.head.quaternion);}}
+function cambiar(p,n,t=0.3){if(p.actual===n||!p.acc[n])return;const a=p.acc[p.actual],b=p.acc[n];b.reset().setEffectiveWeight(1).play();a.crossFadeTo(b,t,false);p.actual=n;}
+function unaVez(p,n,seg,vuelta='idle'){ if(!p.acc[n]) return; cambiar(p,n,0.25); p.hasta=performance.now()+seg*1000; p.vuelta=vuelta; }
+function cabezasAlDia(){const t=performance.now(); for(const p of personas){ if(p.cab){const c=p.cab; c.head.scale.setScalar(0.001); c.g.position.copy(c.head.position); c.g.quaternion.copy(c.head.quaternion);}
+  if(p.hasta&&t>p.hasta){p.hasta=0; cambiar(p,p.vuelta||'idle');}}}
 
-// jugador: Fabio Bueno (cara generada a partir de su foto)
-const yo=persona({cara:0,estilo:'corto',colPelo:0x15100c,camisa:0x0d0e11,mangas:true,pantalon:0x0d0e11,zapato:0x0a0a0a,oro:true,cadena:false,tie:0x0a0a0c,x:0,y:0.12,z:27,ry:Math.PI});
+// jugador: Fabio Bueno, traje negro y su cara
+const yo=persona({modelo:'joe',traje:0x1a1b20,corbata:0x111114,cara:0,oro:true,x:0,y:0.12,z:27,ry:Math.PI});
 yo.planta=0; yo.yaw=Math.PI;
 const vaso=adjunto(hueso(yo.m,'mixamorigRightHand'),new THREE.Group()); vaso.visible=false;
 {const v=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.03,0.09,16),M.cristal.clone()); v.material.opacity=0.35; v.position.set(0,0.07,0.03); vaso.add(v);
  const l=new THREE.Mesh(new THREE.CylinderGeometry(0.031,0.028,0.05,16),new THREE.MeshStandardMaterial({color:0xb5651d,roughness:0.1,transparent:true,opacity:0.85})); l.position.set(0,0.055,0.03); vaso.add(l);}
-// agentes (cara, peinado y ropa propios)
-const ASPECTO={metricas:[8,'corto',0x0d0b0a],investigador:[4,'corto',0x0a0908],clasificador:[5,'largo',0x1a120c],redactor:[9,'largo',0x3b2616],respuestas:[2,'mono',0x0f0b09],demos:[3,'largo',0xcaa36a],seguimiento:[6,'corto',0x15100c],cartero:[7,'rizado',0x0c0a09]};
+// agentes sentados en su mesa, con la corbata de su color
+const MODELO_AG={metricas:'josh',investigador:'joe',clasificador:'louise',redactor:'louise',respuestas:'louise',demos:'louise',seguimiento:'josh',cartero:'joe'};
 const objAg={};
-for(const a of AG){ if(a.id==='tu') continue; const [cara,estilo,colPelo]=ASPECTO[a.id];
-  const traje=[0x1b2436,0x26292f,0x121316,0x1f2a3a][AG.indexOf(a)%4];
-  const p=persona({cara,estilo,colPelo,camisa:traje,pantalon:traje,tie:new THREE.Color(a.c).getHex(),x:a.x,y:FY(a.f)+(a.f>=1&&a.f<=3?0.39:0.18),z:a.z,ry:Math.PI});
-  p.acc.idle.time=rnd()*3; objAg[a.id]=p; colisiones[a.f].push({x0:a.x-0.3,x1:a.x+0.3,z0:a.z-0.3,z1:a.z+0.3}); }
+for(const a of AG){ if(a.id==='tu') continue; const sentado=a.id!=='cartero';
+  const p=persona({modelo:MODELO_AG[a.id],corbata:new THREE.Color(a.c).getHex(),x:a.x,y:FY(a.f)+(a.f>=1&&a.f<=3?0.39:0.18),z:sentado?a.z+0.22:a.z,ry:Math.PI});
+  p.sentado=sentado; cambiar(p,sentado?'sitting_idle':'idle',0); p.acc[p.actual].time=rnd()*3; objAg[a.id]=p; colisiones[a.f].push({x0:a.x-0.3,x1:a.x+0.3,z0:a.z-0.3,z1:a.z+0.5}); }
 // personal fijo
 const NPCS=[];
-function npcFijo(nm,rol,o,f,dialogo,accion){const p=persona({...o,y:FY(f)+(f===5?0.4:0.18)});p.nm=nm;p.rol=rol;p.f=f;p.dialogo=dialogo;p.accion=accion;NPCS.push(p);colisiones[f].push({x0:o.x-0.3,x1:o.x+0.3,z0:o.z-0.3,z1:o.z+0.3});return p;}
-npcFijo('Recepción','Recepcionista',{cara:2,estilo:'mono',colPelo:0x0f0b09,camisa:0x121316,pantalon:0x121316,tie:null,x:0,z:-2.5,ry:0},0,()=>{const e=estado('tu',ahora);return e.st==='wait'?`Buenos días, señor Bueno. Le están esperando arriba: <b>${e.task.replace(/^\S+\s/,'')}</b>. Su despacho está en la planta 4.`:'Bienvenido a Airmate, señor Bueno. El equipo de captación está en las plantas 1 y 2; su despacho, en la 4. Khalid Al Mansouri le espera en el Sky Bar de la azotea.';});
-npcFijo('Seguridad','Jefe de seguridad',{cara:4,camisa:0x0c0d10,pantalon:0x0c0d10,tie:0x0c0d10,x:5.4,z:7.4,ry:-Math.PI/2},0,()=>ahora>=CIERRA?'Buenas noches, jefe. El edificio está cerrado y el equipo ya se fue a casa.':'Jefe. Nadie entra sin pasar por aquí. Su Ferrari está en la puerta, como siempre.');
-npcFijo('Asistente','Asistente de dirección',{cara:3,estilo:'largo',colPelo:0xcaa36a,camisa:0x5a1f2c,pantalon:0x5a1f2c,tie:null,x:0,z:2.6,ry:0},4,()=>{const e=estado('tu',ahora);return e.st==='wait'?`Le he dejado lo pendiente en la mesa: <b>${e.task.replace(/^\S+\s/,'')}</b>. Sin su OK no sale nada.`:'Agenda despejada. Si alguien pregunta por el próximo socio, les digo que se lo está pensando.';});
-npcFijo('Barista','Café de la planta baja',{cara:8,camisa:0x121316,pantalon:0x121316,tie:0x8a6a2a,x:8.5,z:-2.9,ry:0},0,()=>'¿Lo de siempre, señor Bueno? Solo y sin azúcar.');
-npcFijo('Bartender','Sky Bar · azotea',{cara:6,camisa:0x121316,pantalon:0x121316,tie:0x8a6a2a,x:-8.2,z:-0.7,ry:0},5,null,()=>abrirBar());
-npcFijo('Khalid Al Mansouri','Cliente potencial · grupo hotelero',{cara:1,estilo:'ghutra',camisa:0xf6f4ee,pantalon:0xf6f4ee,zapato:0x5a3b22,x:-5.6,z:6.4,ry:-Math.PI/2},5,null,()=>abrirKhalid());
+function npcFijo(nm,rol,o,f,dialogo,accion,anim){const p=persona({...o,y:FY(f)+(f===5?0.4:f>=1&&f<=3?0.39:0.18)});p.nm=nm;p.rol=rol;p.f=f;p.dialogo=dialogo;p.accion=accion;if(anim) cambiar(p,anim,0);NPCS.push(p);colisiones[f].push({x0:o.x-0.35,x1:o.x+0.35,z0:o.z-0.35,z1:o.z+0.35});return p;}
+const recep=npcFijo('Recepción','Recepcionista',{modelo:'louise',x:0,z:-2.5,ry:0},0,()=>{const e=estado('tu',ahora);return e.st==='wait'?`Buenos días, señor Bueno. Le están esperando arriba: <b>${e.task.replace(/^\S+\s/,'')}</b>. Su despacho está en la planta 4.`:'Bienvenido a Airmate, señor Bueno. El equipo de captación está en las plantas 1 y 2; su despacho, en la 4. Khalid Al Mansouri le espera en el Sky Bar de la azotea.';});
+npcFijo('Seguridad','Jefe de seguridad',{modelo:'josh',traje:0x16171b,corbata:0x111111,x:5.4,z:7.4,ry:-Math.PI/2},0,()=>ahora>=CIERRA?'Buenas noches, jefe. El edificio está cerrado y el equipo ya se fue a casa.':'Jefe. Nadie entra sin pasar por aquí. Su Ferrari está en la puerta, como siempre.');
+npcFijo('Asistente','Asistente de dirección',{modelo:'louise',traje:0x5a2a35,x:0,z:2.6,ry:0},4,()=>{const e=estado('tu',ahora);return e.st==='wait'?`Le he dejado lo pendiente en la mesa: <b>${e.task.replace(/^\S+\s/,'')}</b>. Sin su OK no sale nada.`:'Agenda despejada. Si alguien pregunta por el próximo socio, les digo que se lo está pensando.';},null,'talking_on_phone');
+npcFijo('Barista','Café de la planta baja',{modelo:'josh',traje:0x2a2018,x:8.5,z:-2.9,ry:0},0,()=>'¿Lo de siempre, señor Bueno? Solo y sin azúcar.');
+npcFijo('Bartender','Sky Bar · azotea',{modelo:'joe',traje:0x16171b,corbata:0x8a6a2a,x:-8.2,z:-0.7,ry:0},5,null,()=>abrirBar());
+const khalid=npcFijo('Khalid Al Mansouri','Cliente potencial · grupo hotelero',{modelo:'josh',traje:0x2c2a26,corbata:0xc9a45a,x:-8.6,z:7.55,ry:Math.PI},5,null,()=>abrirKhalid(),'sitting_drinking');
 // visitas y empleados
 const andantes=[];
-const OUTFIT=[[0x1b2436,0x1b2436,0x7a1f2b],[0x26292f,0x26292f,0x0f1a33],[0x121316,0x121316,0x8a6a2a],[0xd9cdb6,0xd9cdb6,0x1b2436],[0x2b2f38,0x2b2f38,0x5a1a24],[0x1f2a3a,0x1f2a3a,0xc9a45a]];
-function npcAleatorio(i){const caras=[1,2,3,4,5,6,7,8,9],k=caras[i%9],est={1:'ghutra',2:'mono',3:'largo',5:'largo',7:'rizado',9:'largo'}[k]||'corto',col={3:0xcaa36a,9:0x3b2616}[k]||0x120d0a,o=OUTFIT[i%OUTFIT.length];
-  return k===1?{cara:1,estilo:'ghutra',camisa:0xf6f4ee,pantalon:0xf6f4ee,zapato:0x5a3b22}:{cara:k,estilo:est,colPelo:col,camisa:o[0],pantalon:o[1],tie:o[2]};}
+const VARIANTES=[['joe',null,0x7a1f2b],['josh',null,0x0f1a33],['louise',null,null],['joe',0x26292f,0x8a6a2a],['josh',0x1b2436,0x5a1a24],['louise',0x2b2f38,null]];
+function npcAleatorio(i){const v=VARIANTES[i%VARIANTES.length]; return {modelo:v[0],traje:v[1],corbata:v[2]};}
 function andante(f,ruta,i,vel=1.25){const p=persona({...npcAleatorio(i),x:ruta[0][0],y:FY(f)+(f===0?0.12:f<=3?0.39:0.18),z:ruta[0][1]});p.ruta=ruta;p.i=1;p.v=vel;p.f=f;cambiar(p,'walk',0);andantes.push(p);return p;}
-andante(1,[[-10,2],[4,2],[4,7],[-10,7]],2); andante(1,[[4,7.5],[-10,7.5],[-10,2.5],[4,2.5]],4,1.1); andante(2,[[4,1.5],[-10,1.5],[-10,7],[4,7]],5,1.1); andante(2,[[-10,7.5],[4,7.5],[4,2]],8,1.0);
-andante(3,[[-11,1],[-1,1],[-1,7],[-11,7]],6); andante(0,[[-6,6],[6,6],[6,1],[-6,1]],3,1.0); andante(4,[[-1,-2],[-1,8.5]],7,0.9);
+andante(1,[[-10,2],[4,2],[4,7],[-10,7]],2); andante(2,[[4,1.5],[-10,1.5],[-10,7],[4,7]],5,1.1); andante(3,[[-11,1],[-1,1],[-1,7],[-11,7]],6); andante(0,[[-6,6],[6,6],[6,1],[-6,1]],3,1.0); andante(4,[[-1,-2],[-1,8.5]],7,0.9);
 const quietos=[];
-for(const [f,x,z,ry,i] of [[0,-7.2,3.1,Math.PI/2,1],[0,-6.4,3.1,-Math.PI/2,9],[0,7.6,-0.6,Math.PI,4],[0,9.4,-0.6,Math.PI,5],[1,10.6,-2,-Math.PI/2,6],[3,6,4.3,0,2],[3,8,4.3,Math.PI,7]]){
-  const p=persona({...npcAleatorio(i),x,y:FY(f)+(f>=1&&f<=3?0.39:0.18),z,ry}); p.acc.idle.time=rnd()*3; p.f=f; quietos.push(p); colisiones[f].push({x0:x-0.3,x1:x+0.3,z0:z-0.3,z1:z+0.3});}
+for(const [f,x,z,ry,i,an] of [[0,-8,5.05,Math.PI,1,'sitting_talking'],[0,-10.0,3,Math.PI/2,2,'sitting_talking'],[0,7.6,-0.6,Math.PI,4,'drinking'],[0,9.4,-0.6,Math.PI,0,'talking'],[0,-3.5,6.5,0.6,3,'talking_on_phone'],[3,6,2.75,0,2,'sitting_talking'],[3,7.5,5.85,Math.PI,5,'sitting_idle'],[3,9,2.75,0,0,'sitting_talking']]){
+  const p=persona({...npcAleatorio(i),x,y:FY(f)+(f>=1&&f<=3?0.39:0.18),z,ry}); cambiar(p,an,0); p.acc[an].time=rnd()*5; p.f=f; quietos.push(p); colisiones[f].push({x0:x-0.3,x1:x+0.3,z0:z-0.3,z1:z+0.3});}
+// bailarina del Sky Bar (de noche)
+const bailarina=persona({modelo:'louise',traje:0x5a1a24,x:-5.2,y:TECHO+0.4,z:3.2,ry:-0.6}); cambiar(bailarina,'salsa_dancing',0);
 // peatones
 const peatones=[]; const VUELTA=[[-32,-31],[32,-31],[32,33],[-32,33]];
-for(let i=0;i<10;i++){const sentido=i%2?1:-1, k=i/10*4, idx=Math.floor(k)%4, t=k-Math.floor(k), a=VUELTA[idx], b=VUELTA[(idx+1)%4];
-  const p=persona({...npcAleatorio(i+3),x:a[0]+(b[0]-a[0])*t,y:0.12,z:a[1]+(b[1]-a[1])*t});
-  p.ruta=sentido>0?VUELTA:[...VUELTA].reverse(); p.i=sentido>0?(idx+1)%4:(4-idx)%4; p.v=1.1+rnd()*0.5; p.f=0; p.acc.walk.time=rnd(); cambiar(p,'walk',0); peatones.push(p);}
+for(let i=0;i<8;i++){const sentido=i%2?1:-1, k=i/8*4, idx=Math.floor(k)%4, t=k-Math.floor(k), a=VUELTA[idx], b=VUELTA[(idx+1)%4];
+  const p=persona({...npcAleatorio(i+1),x:a[0]+(b[0]-a[0])*t,y:0.12,z:a[1]+(b[1]-a[1])*t});
+  p.ruta=sentido>0?VUELTA:[...VUELTA].reverse(); p.i=sentido>0?(idx+1)%4:(4-idx)%4; p.v=1.1+rnd()*0.4; p.f=0; cambiar(p,'walk',0); p.acc.walk.time=rnd(); peatones.push(p);}
 
 // ============ vehículos ============
 const coches=[]; const colorCoche=[0xf4f4f2,0x111214,0xa9adb3,0x1d2a44,0xc9a45a,0x6d0f14,0xf4f4f2,0x2b2d31];
@@ -1041,7 +1031,7 @@ function marcar(ev){const p=pasoActual(); if(p&&p.ev===ev) avanzar();}
 function avanzar(){if(pasoActual()?.urgente) return; const m=MISIONES[prog.m]; prog.p++; if(prog.p>=m.pasos.length){prog.m++;prog.p=0;celebrar(m.t);} guardar(); pintarMision();}
 let ctxAudio=null;
 function ding(){try{ctxAudio=ctxAudio||new (window.AudioContext||window.webkitAudioContext)();const t=ctxAudio.currentTime;[880,1320,1760].forEach((f,i)=>{const o=ctxAudio.createOscillator(),g=ctxAudio.createGain();o.frequency.value=f;g.gain.setValueAtTime(0,t+i*0.09);g.gain.linearRampToValueAtTime(0.12,t+i*0.09+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+i*0.09+0.6);o.connect(g).connect(ctxAudio.destination);o.start(t+i*0.09);o.stop(t+i*0.09+0.7);});}catch(e){}}
-function celebrar(t){const c=$('completada');c.innerHTML=`<small>Misión completada</small><b>${t}</b>`;c.hidden=false;c.style.animation='none';void c.offsetWidth;c.style.animation='';ding();setTimeout(()=>c.hidden=true,3600);}
+function celebrar(t){const c=$('completada');c.innerHTML=`<small>Misión completada</small><b>${t}</b>`;c.hidden=false;c.style.animation='none';void c.offsetWidth;c.style.animation='';ding();unaVez(yo,'clapping',2.4);setTimeout(()=>c.hidden=true,3600);}
 function pintarMision(){const el=$('mision'),m=MISIONES[prog.m],p=pasoActual();
   if(p&&p.urgente){el.innerHTML=`<small>Urgente · datos reales</small><b>Nada sale sin tu OK</b><span>${p.txt}</span><em id="misDist"></em>`;return;}
   if(!m){el.innerHTML=`<small>Misiones</small><b>Día completado, socio.</b><span>Has hecho todo lo que hace un socio de Airmate. Tratos cerrados: ${prog.cerrados}.</span><button id="bReiniciar">Volver a empezar</button>`;$('bReiniciar').onclick=()=>{prog={m:0,p:0,cerrados:prog.cerrados,trato:false};guardar();pintarMision();};return;}
@@ -1055,13 +1045,13 @@ function objetivoVisible(){const p=pasoActual(); if(!p) return null;
   return {x:f===5?0:1.8,z:-5.1,y:FY(f)+(f===5?0.4:0.2),txt:`Ascensor → ${NOMBRES_PLANTA[p.f].split(' · ')[0]}`};}
 // bar y cliente
 function abrirBar(){abrirDialogo('Bartender','Sky Bar · azotea','<p>Buenas, señor Bueno. ¿Qué le pongo?</p>',['Café solo','Mocktail de dátil y menta','Whisky solo, como siempre'].map((d,i)=>`<button class="opc" data-b="${i}">${d}</button>`).join(''));
-  document.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{const d=b.textContent;cerrarDialogo();vaso.visible=true;setTimeout(()=>vaso.visible=false,25000);aviso(`🥃 <b>${d}</b>. A su salud, socio.`);marcar('bebida');});}
+  document.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{const d=b.textContent;cerrarDialogo();vaso.visible=true;setTimeout(()=>vaso.visible=false,25000);aviso(`🥃 <b>${d}</b>. A su salud, socio.`);unaVez(yo,'drinking',8.5);marcar('bebida');});}
 function abrirKhalid(){
   if(prog.trato){abrirDialogo('Khalid Al Mansouri','Cliente · grupo hotelero','<p>Ya está hablado, Fabio. Mi equipo te llama el lunes para empezar con los tres hoteles.</p>');return;}
   abrirDialogo('Khalid Al Mansouri','Cliente potencial · grupo hotelero','<p>Me han hablado de vosotros. Tengo tres hoteles y cada uno trabaja con un programa distinto. ¿Por qué debería confiar en Airmate?</p>',
     [['a','Porque somos los más baratos del mercado.'],['b','No trabajamos con todos. Primero vemos si encajas; si no, te lo digo yo.'],['c','Si firmas hoy, te hago un 30 % de descuento.']].map(([k,t])=>`<button class="opc" data-k="${k}">${t}</button>`).join(''));
   document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{
-    if(b.dataset.k==='b'){prog.trato=true;prog.cerrados++;guardar();abrirDialogo('Khalid Al Mansouri','Cliente · grupo hotelero','<p>Eso es lo que quería oír: alguien que elige con quién trabaja. Hablemos el lunes de los tres hoteles.</p><p><b>✅ Trato cerrado.</b></p>');marcar('trato');return;}
+    if(b.dataset.k==='b'){prog.trato=true;prog.cerrados++;guardar();abrirDialogo('Khalid Al Mansouri','Cliente · grupo hotelero','<p>Eso es lo que quería oír: alguien que elige con quién trabaja. Hablemos el lunes de los tres hoteles.</p><p><b>✅ Trato cerrado.</b></p>');unaVez(yo,'shaking_hands',4.4);unaVez(khalid,'shaking_hands',4.4,'sitting_drinking');marcar('trato');return;}
     abrirDialogo('Khalid Al Mansouri','Cliente potencial',b.dataset.k==='a'?'<p>Lo barato sale caro, amigo. Busco a alguien que sepa lo que vale.</p>':'<p>¿Descuentos el primer día? Eso huele a desesperación.</p>','<button class="opc" id="reintentar">Volver a intentarlo</button>');
     $('reintentar').onclick=abrirKhalid;});
 }
@@ -1192,9 +1182,9 @@ function bucle(){
       if(yo.planta>0&&yo.planta<5){nx=clamp(nx,X0,X1);nz=clamp(nz,Z0,Z1);}
       yo.m.position.x=nx; yo.m.position.z=nz;
       const obj=Math.atan2(mx,mz); let dif=obj-yo.m.rotation.y; dif=Math.atan2(Math.sin(dif),Math.cos(dif)); yo.m.rotation.y+=dif*Math.min(1,dt*10);
-      cambiar(yo,corre?'run':'walk');
-    } else cambiar(yo,'idle');
-  } else if(!dron) cambiar(yo,'idle');
+      yo.hasta=0; cambiar(yo,corre?'run':'walk');
+    } else if(!yo.hasta) cambiar(yo,'idle');
+  } else if(!dron&&!yo.hasta) cambiar(yo,'idle');
   // puertas
   const cerca=(Math.hypot(yo.m.position.x,yo.m.position.z-D/2)<4&&yo.planta===0)||andantes.some(p=>p.f===0&&Math.hypot(p.m.position.x,p.m.position.z-D/2)<3);
   puertaAbierta=clamp(puertaAbierta+(cerca?dt*2.2:-dt*1.6)); puertas[0].position.x=-1.15-puertaAbierta*2.2; puertas[1].position.x=1.15+puertaAbierta*2.2;
@@ -1205,9 +1195,11 @@ function bucle(){
   for(const p of peatones) avanzarRuta(p,dt);
   for(const c of coches){c.s+=c.v*c.dir*dt; if(c.s>LIM)c.s=-LIM; if(c.s<-LIM)c.s=LIM;
     if(c.eje==='x'){c.g.position.set(c.s,0,c.calle+c.carril);c.g.rotation.y=c.dir>0?0:Math.PI;} else {c.g.position.set(c.calle+c.carril,0,c.s);c.g.rotation.y=c.dir>0?-Math.PI/2:Math.PI/2;}}
-  for(const a of AG){ if(a.id==='tu') continue; const o=objAg[a.id], e=estado(a.id,ahora); o.mixer.timeScale=e.st==='work'?1.35:0.8; }
+  for(const a of AG){ if(a.id==='tu') continue; const o=objAg[a.id], e=estado(a.id,ahora); if(!o.m.visible) continue; cambiar(o,o.sentado?(e.st==='work'?'typing':'sitting_idle'):(e.st==='work'?'talking':'idle'),0.5); }
   mixers.forEach(m=>m.update(dt));
   cabezasAlDia();
+  {const dr=yo.planta===0?Math.hypot(yo.m.position.x-recep.m.position.x,yo.m.position.z-recep.m.position.z):99; if(dr<5.5&&!recep.saludo){recep.saludo=true;unaVez(recep,'waving',1.6);} if(dr>10) recep.saludo=false;}
+  bailarina.m.visible=ahora>=1140||ahora<120;
   for(const c of coches) for(const w of c.ruedas) w.rotation.x+=c.v*dt/0.35;
   for(const b of pajaros){b.ang+=b.vel*dt/b.r; b.o.position.set(b.cx+Math.cos(b.ang)*b.r,b.alt+Math.sin(T*0.6+b.f)*2.5,b.cz+Math.sin(b.ang)*b.r); b.o.rotation.y=-b.ang;}
   {heli.t+=dt; if(heli.t>=CICLO_HELI) heli.t=0; const [hp,rot]=heliPos(heli.t); heli.g.position.copy(hp);
