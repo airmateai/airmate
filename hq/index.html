@@ -161,6 +161,9 @@ body.real .timebar{display:none}
 #chatIn:focus{outline:2px solid var(--gold);outline-offset:1px}
 .nombre.bocadillo{background:#f2efe6;color:#111;max-width:220px;white-space:normal;text-align:center;font-weight:500}
 @media (max-width:700px){.chatBox{bottom:calc(240px + env(safe-area-inset-bottom,0px));width:min(260px,calc(100vw - 32px))}#chatLog{max-height:90px}}
+.mira{position:absolute;z-index:5;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #000;pointer-events:none}.mira::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px;background:#ff3b3b;border-radius:50%}
+.mira[hidden],.tiroHud[hidden]{display:none}
+.tiroHud{position:absolute;z-index:5;left:50%;top:calc(80px + env(safe-area-inset-top,0px));transform:translateX(-50%);font-family:"Bebas Neue",Impact,sans-serif;font-size:40px;color:#fff;text-shadow:0 3px 0 #000;pointer-events:none}
 .mision{position:absolute;z-index:4;left:max(12px,env(safe-area-inset-left,0px));top:calc(150px + env(safe-area-inset-top,0px));width:min(300px,calc(100% - 24px));background:rgba(8,10,16,.78);backdrop-filter:blur(10px);border:1px solid rgba(214,178,106,.35);border-left:3px solid var(--gold);border-radius:12px;padding:10px 12px;display:grid;gap:3px;pointer-events:auto}
 .mision small{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .mision b{font-family:var(--f-serif);font-size:19px;line-height:1.1;color:#fff}
@@ -220,7 +223,8 @@ body.cine .hud-arriba,body.cine .ayuda,body.cine .avisos,body.cine .accion,body.
   <div class="chatBox" id="chatBox" hidden><div id="chatLog" aria-live="polite"></div><form id="chatForm"><input id="chatIn" maxlength="400" autocomplete="off" placeholder="Enter para escribir al equipo…" aria-label="Chat del equipo"></form></div>
   <div class="hudDer" id="hudDer"><div id="relojG">--:--</div><div id="dinero">AED 0</div><div id="estatus"></div></div>
   <div class="velo" id="velo" hidden></div>
-  <div class="ayuda" id="ayuda">WASD andar · Shift correr · Espacio saltar · arrastra para mirar · rueda zoom · E interactuar</div>
+  <div class="mira" id="mira" hidden></div><div class="tiroHud" id="tiroHud" hidden></div>
+  <div class="ayuda" id="ayuda">WASD andar · Shift correr · Espacio saltar · F pegar · M móvil · arrastra para mirar · rueda zoom · E interactuar</div>
   <div class="mision" id="mision"></div>
   <div class="completada" id="completada" hidden></div>
   <button class="salirCine" id="salirCine" hidden>Salir del modo cine · Esc</button>
@@ -472,7 +476,7 @@ const FACH=[{map:tex('tex/fachada.jpg'),tile:12,tint:[0xffffff,0xd8e4ee,0xc8d4e0
 const texTiendas=tex('tex/tiendas.jpg');
 const matTiendas=new THREE.MeshStandardMaterial({map:texTiendas,roughness:0.45,emissive:0xffffff,emissiveMap:texTiendas,emissiveIntensity:0.15}); const tiendasMats=[matTiendas];
 function matF(t){const f=FACH[t];const m=new THREE.MeshStandardMaterial({map:f.map,color:f.tint[Math.floor(rnd()*f.tint.length)],roughness:f.rough,metalness:f.metal,emissive:0xffffff,emissiveMap:facadeNoche,emissiveIntensity:0});fachadas.push(m);return m;}
-const RESERVADO=[[140,-100],[-100,140]]; const libre=(x,z)=>!RESERVADO.some(r=>Math.abs(x-r[0])<20&&Math.abs(z-r[1])<20);
+const RESERVADO=[[140,-100],[-100,140],[60,60],[-60,-60],[140,60]]; const libre=(x,z)=>!RESERVADO.some(r=>Math.abs(x-r[0])<20&&Math.abs(z-r[1])<20);
 function edificio(x,z,w,d,h,t){const m=matF(t), tile=FACH[t].tile;
   if(t!==1&&rnd()<0.28){const r=Math.min(w,d)/2,g=new THREE.CylinderGeometry(r,r,h,40,1,true),uv=g.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*2*Math.PI*r/tile,uv.getY(i)*h/tile);
     const c=new THREE.Mesh(g,m);c.position.set(x,h/2,z);c.castShadow=true;c.receiveShadow=true;scene.add(c);cil(r,r,0.8,M.cristalOsc,x,h+0.4,z,{seg:40});colisiones[0].push({x0:x-r,x1:x+r,z0:z-r,z1:z+r});
@@ -491,11 +495,6 @@ for(let bx=-2;bx<=2;bx++) for(let bz=-2;bz<=2;bz++){
   const slots=[[-20,-20],[20,20],[-20,20],[20,-20]].sort(()=>rnd()-0.5).slice(0,Math.max(2,n+1));
   for(const [ox,oz] of slots){const w=13+rnd()*9, d=13+rnd()*9, h=30+rnd()*(lejos?110:170), t=Math.floor(rnd()*3); if(!libre(cx+ox,cz+oz)) continue; edificio(cx+ox,cz+oz,w,d,h,t);}
 }
-// Burj Khalifa a lo lejos
-{const m=matF(0); m.color.set(0xdfe6ee); let y=0; const x=-330,z=-540;
- for(const [r,h] of [[34,95],[29,85],[24,75],[19,65],[15,55],[11,45],[8,35],[5,28]]){const g=new THREE.CylinderGeometry(r*0.82,r,h,6,1),uv=g.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*2*Math.PI*r/14,uv.getY(i)*h/14);
-   const c=new THREE.Mesh(g,m);c.position.set(x,y+h/2,z);c.rotation.y=y*0.004;scene.add(c);y+=h;}
- cil(0.5,2.2,90,M.acero,x,y+45,z,{seg:8});}
 // horizonte real de Dubái
 function skyline(url,r,op){const t=tex(url,4,1,MIR);t.wrapT=THREE.ClampToEdgeWrapping;const arco=2*Math.PI*r/4,alto=arco*768/1376;
   const m=new THREE.MeshBasicMaterial({map:t,side:THREE.BackSide,transparent:true,opacity:op,fog:false,depthWrite:false});
@@ -763,12 +762,12 @@ async function cargar(n){const b64=await (await fetch(`mod/${n}.txt`)).text(); c
   return new Promise((r,e)=>gltf.parse(bin.buffer,'',g=>{modelos[n]=g;r();},e));}
 $('cargaTxt').textContent='Llegando el equipo…';
 const MX={};
-await Promise.all([...['ferrari','Stork','Flamingo'].map(cargar), ...['joe','josh','louise','anims','concept'].map(async n=>{MX[n]=await gltf.loadAsync(`mod/${n}.glb`);})]);
+await Promise.all([...['ferrari','Stork','Flamingo'].map(cargar), ...['joe','josh','louise','anims','anims2','concept'].map(async n=>{MX[n]=await gltf.loadAsync(`mod/${n}.glb`);})]);
 // Mixamo numera los huesos de cada personaje (mixamorig7Hips, mixamorig8Hips…): se unifican para compartir animaciones
 const norm=n=>n.replace(/^mixamorig\d*/,'mixamorig');
 for(const k in MX){ MX[k].scene.traverse(o=>{o.name=norm(o.name);}); for(const c of MX[k].animations) for(const t of c.tracks) t.name=norm(t.name); }
 for(const k in MX) for(const c of MX[k].animations) for(const t of c.tracks) if(t.name==='mixamorigHips.position'&&!/walking|running/.test(c.name)){const v=t.values; for(let i=0;i<v.length;i+=3){v[i]=0;v[i+2]=0;}}
-const CLIPS=MX.anims.animations;
+const CLIPS=[...MX.anims.animations,...MX.anims2.animations];
 const mixers=[], personas=[];
 const tmpS=new THREE.Vector3();
 // atlas de caras: 0 = Fabio Bueno, 1..9 = equipo y ciudad (generadas con IA)
@@ -1015,6 +1014,7 @@ let accionActual=null;
 function buscarAccion(){
   if(dron||dialogoAbierto) return null; if(conduciendo) return {txt:'Bajar del coche',fn:bajarCoche};
   const p=yo.m.position, f=yo.planta;
+  {const a=accionGaraje()||accionesFase3(); if(a) return a;}
   if(REAL&&miMesa&&f===miMesa.f&&Math.hypot(p.x-miMesa.x,p.z-miMesa.z-0.9)<2) return {txt:'Abrir mi lista de captación',fn:()=>abrirCaptacion()};
   const ascX=f===5?[0]:[-1.8,1.8];
   for(const ex of ascX) if(Math.hypot(p.x-ex,p.z+5.1)<1.5&&(f===5||dentro(p.x,p.z))) return {txt:'Coger el ascensor',fn:abrirAscensor};
@@ -1107,12 +1107,27 @@ const MISIONES=[
   {t:'Cap. 8 · La noche de LE PALAIS', de:'Max Volkov', msg:'Bro, soy Max. Todo Dubái habla de ti. Esta noche en LE PALAIS, te reservo mesa VIP. No faltes 🔥',
    pasos:[{txt:'Entra en LE PALAIS (vuela o conduce hasta allí)',f:0,x:-97.2,z:151.6,ev:'club'},{txt:'Pide una botella con bengalas en la barra',f:0,x:-90,z:142,ev:'botella'},{txt:'Habla con Max Volkov en la zona VIP',f:0,x:-107.8,z:148.2,ev:'influencer'}],
    premio:{rep:250,din:0,contacto:'Max Volkov',txt:'Ya eres alguien en Dubái.'}},
-  {t:'Cap. 9 · Tu villa en Palm Jumeirah', de:'Asistente', msg:'He encontrado la villa perfecta en la Palm. Le aviso en cuanto esté lista para visitarla.',
-   pasos:[{txt:'Próximamente: tu villa con piscina',f:5,x:4,z:2,ev:'nunca'}], premio:{rep:0,din:0}},
+  {t:'Cap. 9 · Tu villa en Palm Jumeirah', de:'Asistente', msg:'La villa de la Palm ya es suya. Omar le lleva en helicóptero, o vaya en su Ferrari por la carretera del oeste.',
+   pasos:[{txt:'Llega a tu villa (helicóptero o Ferrari, al oeste)',f:0,x:-321.5,z:40,chk:()=>yo.planta===0&&Math.hypot(yo.m.position.x+318,yo.m.position.z-40)<22},{txt:'Mira el embudo de ventas en la tele',f:0,x:-313,z:43.2,ev:'tele'},{txt:'Túmbate al sol junto a la piscina',f:0,x:-332,z:34.8,ev:'tumbona'},{txt:'Duerme hasta mañana (dormitorio)',f:0,x:-305.6,z:42.6,ev:'dormir'}],
+   premio:{rep:150,din:0,contacto:'Mayordomo de la villa',txt:'Ya tienes casa en la Palm.'}},
+  {t:'Cap. 10 · Imagen de magnate', de:'Max Volkov', msg:'Bro, con ese traje no sales en mi canal 😂 Pásate por MAISON AIRMATE, cerca de tu torre.',
+   pasos:[{txt:'Cómprate un traje a medida en MAISON AIRMATE',f:0,x:60,z:67,ev:'ropa'},{txt:'Hazte con el Chronos AIRMATE de oro',f:0,x:60,z:57,ev:'reloj'}],
+   premio:{rep:120,din:0,contacto:'Sastre de MAISON AIRMATE',txt:'Ahora sí pareces el dueño de Dubái.'}},
+  {t:'Cap. 11 · Cuerpo y puntería', de:'Omar · piloto', msg:'En esta ciudad hay que estar preparado, jefe. Entrene en el saco de su villa y pásese por el Shooting Club.',
+   pasos:[{txt:'Dale 20 golpes al saco de la villa (tecla F)',f:0,x:-306,z:36,ev:'saco'},{txt:'Haz 10 aciertos en el Shooting Club',f:0,x:-54,z:-57.6,ev:'tiro'}],
+   premio:{rep:150,din:20000,contacto:'Instructor de tiro',txt:'Disciplina de campeón.'}},
+  {t:'Cap. 12 · Fiesta en la Palm', de:'Max Volkov', msg:'Todo Dubái quiere ir a tu villa. Monta la fiesta del año y yo lo grabo 🎉',
+   pasos:[{txt:'Monta una fiesta en la piscina de tu villa',f:0,x:-319,z:48,ev:'fiesta'}],
+   premio:{rep:300,din:0,contacto:null,txt:'La fiesta de la que habla todo Dubái.'}},
+  {t:'Cap. 13 · El imperio de verdad', de:'Harvey', msg:'Fiestas aparte: lo que paga la villa son los clientes. Que tu equipo consiga un lead interesado de verdad.',
+   pasos:[{txt:'Consigue un lead real marcado como Interesado (Captación)',f:1,x:-3,z:5.1,ev:'interesado'}],
+   premio:{rep:400,din:100000,contacto:null,txt:'Esto ya no es un juego: es tu empresa.'}},
+  {t:'Cap. 14 · Continuará', de:'Asistente', msg:'Se rumorea que un yate de 80 metros busca dueño en la Marina…',
+   pasos:[{txt:'Próximamente: el yate',f:5,x:4,z:2,ev:'nunca'}], premio:{rep:0,din:0}},
 ];
 const ESTATUS=[[0,'Recién llegado'],[150,'Emprendedor'],[350,'Empresario'],[700,'Socio de Dubái'],[1200,'Magnate'],[2500,'Leyenda de Dubái']];
 const estatusDe=r=>ESTATUS.filter(e=>r>=e[0]).pop()[1];
-const AGENDA=[{con:'Khalid Al Mansouri',lugar:'Sky Bar · azotea',cap:2},{con:'Jeque Rashid',lugar:'NOBŌ',cap:6},{con:'Max Volkov',lugar:'LE PALAIS · mesa VIP',cap:7}];
+const AGENDA=[{con:'Khalid Al Mansouri',lugar:'Sky Bar · azotea',cap:2},{con:'Jeque Rashid',lugar:'NOBŌ',cap:6},{con:'Max Volkov',lugar:'LE PALAIS · mesa VIP',cap:7},{con:'Visita a tu villa',lugar:'Palm Jumeirah',cap:8},{con:'Fiesta en la Palm',lugar:'Tu villa',cap:11}];
 let prog={m:0,p:0,cerrados:0,trato:false,rep:0,km:0,contactos:[],msgs:[],noLeidos:0,movil:false};
 try{const g=JSON.parse(localStorage.getItem('hq_historia')||'null'); if(g&&typeof g.m==='number') prog={...prog,...g};}catch(e){}
 function guardar(){try{localStorage.setItem('hq_historia',JSON.stringify(prog));}catch(e){}}
@@ -1268,7 +1283,7 @@ const sonido=(()=>{let ctx=null,master,ruido,ambG,mO,mO2,mF,mG,heliG,musG,activo
   return {iniciar, alternar(){activo=!activo; if(master) master.gain.value=activo?0.7:0; return activo;},
     ambiente(v){tgt(ambG&&ambG.gain,v,0.6);}, heli(v){tgt(heliG&&heliG.gain,v,0.3);}, musica(v){tgt(musG&&musG.gain,v,0.8);},
     motor(rpm,carga){ if(!mG) return; tgt(mO.frequency,36+rpm*5.2,0.05); tgt(mO2.frequency,(36+rpm*5.2)*0.5,0.05); tgt(mF.frequency,380+rpm*42,0.1); tgt(mG.gain,carga,0.12); },
-    paso(){golpe(0.1,2600,0.05);}, choque(){golpe(0.7,380,0.45);}, claxon(){nota(415,0.35,0.07,'square'); nota(466,0.35,0.06,'square');},
+    paso(){golpe(0.1,2600,0.05);}, disparo(){golpe(0.55,1100,0.14); golpe(0.3,300,0.25);}, choque(){golpe(0.7,380,0.45);}, claxon(){nota(415,0.35,0.07,'square'); nota(466,0.35,0.06,'square');},
     ding(){nota(988,0.7,0.12); nota(1319,0.7,0.1,'sine',0.14);}, caja(){nota(1568,0.12,0.1,'square'); nota(2093,0.25,0.08,'square',0.08);} };
 })();
 addEventListener('pointerdown',()=>sonido.iniciar(),{once:true}); addEventListener('keydown',()=>sonido.iniciar(),{once:true});
@@ -1298,11 +1313,12 @@ function abrirAsistente(){ marcar('hablar:Asistente');
 // ============ conducir el Ferrari ============
 let conduciendo=false, camOrb=0; const auto={v:0,yaw:0,steer:0};
 const colMiF=colisiones[0].find(c=>c.x0===-9.8&&c.z0===18.8);
-function subirCoche(){conduciendo=true; yo.m.visible=false; auto.v=0; auto.yaw=miFerrari.g.rotation.y; if(colMiF){colMiF.x0=colMiF.x1=9e4;} primero=true; camOrb=0; $('velo').hidden=false; marcar('conducir');
+let cocheJ=miFerrari; cocheJ.col=colMiF;
+function subirCoche(c=miFerrari){cocheJ=c; conduciendo=true; yo.m.visible=false; auto.v=0; auto.yaw=cocheJ.g.rotation.y; if(cocheJ.col){cocheJ.col.x0=cocheJ.col.x1=9e4;} primero=true; camOrb=0; $('velo').hidden=false; marcar('conducir');
   aviso('🏎️ <b>Al volante.</b> W/S acelerar y frenar · A/D girar · Shift turbo · H claxon · E bajar');}
-function bajarCoche(){conduciendo=false; const g=miFerrari.g, sx=Math.sin(auto.yaw), sz=Math.cos(auto.yaw);
+function bajarCoche(){conduciendo=false; const g=cocheJ.g, sx=Math.sin(auto.yaw), sz=Math.cos(auto.yaw);
   let [px,pz]=resolver(g.position.x+sx*2,g.position.z+sz*2,0); yo.m.position.set(px,0.12,pz); yo.planta=0; yo.m.visible=true; yo.yaw=auto.yaw-Math.PI/2;
-  if(colMiF){colMiF.x0=g.position.x-1.6;colMiF.x1=g.position.x+1.6;colMiF.z0=g.position.z-1.6;colMiF.z1=g.position.z+1.6;} $('velo').hidden=true; sonido.motor(0,0); primero=true;}
+  if(cocheJ.col){const c=cocheJ.col;c.x0=g.position.x-1.6;c.x1=g.position.x+1.6;c.z0=g.position.z-1.6;c.z1=g.position.z+1.6;} $('velo').hidden=true; sonido.motor(0,0); primero=true;}
 function conducir(dt){
   const up=teclas.KeyW||teclas.ArrowUp, dn=teclas.KeyS||teclas.ArrowDown, lf=teclas.KeyA||teclas.ArrowLeft, rt=teclas.KeyD||teclas.ArrowRight, turbo=teclas.ShiftLeft||teclas.ShiftRight;
   const thr=clamp((up?1:0)-(dn?1:0)-joy.y,-1,1), st=clamp((lf?1:0)-(rt?1:0)-joy.x,-1,1), vmax=turbo?62:44;
@@ -1310,10 +1326,10 @@ function conducir(dt){
   auto.v-=auto.v*0.22*dt; auto.v=clamp(auto.v,-10,vmax);
   auto.steer+=(st*0.55-auto.steer)*Math.min(1,dt*6);
   auto.yaw+=auto.v*Math.tan(auto.steer*(1-Math.min(0.6,Math.abs(auto.v)/90)))/2.6*dt;
-  const g=miFerrari.g; let nx=g.position.x-Math.cos(auto.yaw)*auto.v*dt, nz=g.position.z+Math.sin(auto.yaw)*auto.v*dt;
-  nx=clamp(nx,-230,230); nz=clamp(nz,-230,230);
+  const g=cocheJ.g; let nx=g.position.x-Math.cos(auto.yaw)*auto.v*dt, nz=g.position.z+Math.sin(auto.yaw)*auto.v*dt;
+  nx=clamp(nx,-345,230); nz=clamp(nz,-230,230);
   const [rx,rz]=resolver(nx,nz,0,1.7); if(Math.hypot(rx-nx,rz-nz)>0.03){ if(Math.abs(auto.v)>7) sonido.choque(); auto.v*=-0.25; }
-  g.position.set(rx,0.12,rz); g.rotation.y=auto.yaw; for(const w of miFerrari.ruedas) w.rotation.x-=auto.v*dt/0.35;
+  g.position.set(rx,0.12,rz); g.rotation.y=auto.yaw; for(const w of cocheJ.ruedas) w.rotation.x-=auto.v*dt/0.35;
   yo.m.position.set(rx,0.12,rz); prog.km=(prog.km||0)+Math.abs(auto.v)*dt;
   if(!mirando&&Math.abs(auto.v)>2) camOrb*=Math.pow(0.25,dt);
   $('velo').innerHTML=`${Math.round(Math.abs(auto.v)*3.6)}<small>km/h</small>`;
@@ -1342,7 +1358,7 @@ let miMesa=null, PROS=[], filtroCap='nuevo', equipoNpc=[];
 const ESTADOS_CAP={nuevo:'Por contactar',enviado:'Enviado',respondio:'Respondió',interesado:'Interesado',cita:'Cita con Fabio',cliente:'Cliente',descartado:'No le interesa'};
 const ejemploWeb=s=>/Constructora|Reformas/.test(s)?'reformas':'taller';
 const msg1=p=>`Hola, ¿eres el dueño de ${p.nombre}? Te escribo por una cosa de vuestra ficha de Google 🙂`;
-const msg2=p=>`Te escribo porque he visto que ${p.nombre} no tiene página web y en Google se os escapan clientes que buscan ${p.sector.toLowerCase()} en la zona. Mira cómo quedaría una: airmate.es/web/ejemplos/${ejemploWeb(p.sector)}/ ¿Te cuento cómo funciona?`;
+const msg2=p=>`Te escribo porque he visto que ${p.nombre} no tiene página web y en Google se os escapan clientes que buscan ${p.sector.toLowerCase()} en la zona. Mira cómo quedaría una: airmate.es/web/ejemplos/${ejemploWeb(p.sector)}/ Os la dejamos lista en una semana por 250 €. ¿Te cuento cómo funciona?`;
 const waLink=(p,t)=>`https://wa.me/34${p.telefono}?text=${encodeURIComponent(t)}`;
 async function invitado(email){ try{const {data}=await sb.rpc('hq_esta_invitado',{e:email}); return !!data;}catch(e){return false;} }
 async function cargarProspectos(){ const {data,error}=await sb.from('hq_prospectos').select('*').not('asignado','is',null).order('actualizado',{ascending:false}).limit(1000); if(!error) PROS=data||[]; }
@@ -1377,7 +1393,7 @@ function abrirCaptacion(refresco){
   const lista=(filtroCap==='todos'?mios:mios.filter(p=>p.estado===filtroCap)).slice(0,60);
   abrirDialogo('Mi lista de captación',`${escH(miembro.nombre)} · cada mensaje que envías aquí es real`,
     `<div class="capStats"><span><b>${cuenta('nuevo')}</b>por contactar</span><span><b>${cuenta('enviado')}</b>enviados</span><span><b>${cuenta('respondio')+cuenta('interesado')}</b>respuestas</span><span><b>${cuenta('cita')+cuenta('cliente')}</b>citas/clientes</span></div>
-     <p style="color:var(--muted);font-size:13px">1º WhatsApp corto y sin enlace. Cuando conteste, «2º mensaje» con el ejemplo. Si quiere precio o web, márcalo <b>Interesado</b> y Fabio le llama.</p>
+     <p style="color:var(--muted);font-size:13px">1º WhatsApp corto y sin enlace. Cuando conteste, «2º mensaje» con el ejemplo. Precio: web lista en una semana por 250 €. Si la quiere, márcalo <b>Interesado</b> y Fabio le llama.</p>
      <div class="capTabs">${tabs.map(([k,t])=>`<button data-f="${k}" class="${k===filtroCap?'on':''}">${t}</button>`).join('')}</div>
      <div class="capLista">${lista.length?lista.map(filaCap).join(''):`<p>${filtroCap==='nuevo'?'No te quedan negocios por contactar. Pide una lista nueva.':'Nada aquí todavía.'}</p>`}</div>`,
     `<button class="opc" id="bPedir">➕ Pedir 50 negocios</button>${socio?'<button class="opc" id="bEquipo">👥 Equipo</button>':''}`);
@@ -1393,7 +1409,7 @@ function abrirCaptacion(refresco){
 async function guardarPros(id,cambios){ const {error}=await sb.from('hq_prospectos').update({...cambios,actualizado:new Date().toISOString()}).eq('id',id);
   if(error){aviso('No se pudo guardar: '+escH(error.message));return;}
   const p=PROS.find(x=>x.id===id); if(p) Object.assign(p,cambios);
-  if(cambios.estado==='interesado'){aviso('🔥 <b>Interesado.</b> Fabio recibe el aviso.'); moverDinero(5000,'Lead interesado');}
+  if(cambios.estado==='interesado'){marcar('interesado'); aviso('🔥 <b>Interesado.</b> Fabio recibe el aviso.'); moverDinero(5000,'Lead interesado');}
   else if(cambios.estado==='cliente') moverDinero(50000,'Cliente cerrado');
   abrirCaptacion(); }
 async function pedirLista(){ const {data,error}=await sb.rpc('hq_pedir_lista',{n:50});
@@ -1553,7 +1569,7 @@ function npcLocal(v,nm,rol,o,anim,accion,dialogo){ const p=gente(v,{...o,y:o.y??
   caja(5,1.1,1.6,M.negro,cx,y+0.55,cz-9.6,{col:0}); caja(5.2,0.06,1.8,M.oro,cx,y+1.12,cz-9.6,{sombra:false});
   const dj=gente(C,{modelo:'joe',traje:0x0d0d10,corbata:0x0d0d10,x:cx,y,z:cz-10.4,ry:0},'clapping');
   const vestidos=[0x8a1020,0x0f0f12,0xd8c39a,0x1d2f6b,0xb3123c,0xe8e4dc];
-  for(let i=0;i<14;i++){ const a=i/14*Math.PI*2+rnd()*0.4, r=1+rnd()*3.2; const p=gente(C,{...(i%2?{modelo:'louise',traje:vestidos[i%6]}:npcAleatorio(i)),x:cx+Math.cos(a)*r*1.2,y:y+0.02,z:cz+Math.sin(a)*r,ry:rnd()*6.28},'salsa_dancing'); p.acc.salsa_dancing.timeScale=0.85+rnd()*0.35; }
+  for(let i=0;i<14;i++){ const a=i/14*Math.PI*2+rnd()*0.4, r=1+rnd()*3.2; const p=gente(C,{...(i%2?{modelo:'louise',traje:vestidos[i%6]}:npcAleatorio(i)),x:cx+Math.cos(a)*r*1.2,y:y+0.02,z:cz+Math.sin(a)*r,ry:rnd()*6.28},'salsa_dancing'); p.acc.salsa_dancing.timeScale=0.85+rnd()*0.35; if(i%3&&p.acc.hiphop_dancing){cambiar(p,i%3===1?'hiphop_dancing':'shuffling',0);} }
   caja(8,0.3,5,M.marmolNegro,cx-7,y+0.15,cz+6.5,{sombra:false}); C.vip=[cx-7,cz+6.5];
   sofa(cx-7,y+0.3,cz+8.6,Math.PI,0,3); sofa(cx-10.2,y+0.3,cz+6.3,Math.PI/2,0,2.4);
   caja(1.8,0.45,0.9,M.marmolNegro,cx-7,y+0.52,cz+6.6,{col:0});
@@ -1601,7 +1617,7 @@ function abrirClubBar(){ abrirDialogo('Bar LE PALAIS','Servicio VIP','<p>¿Qué 
   [['bot','🍾 Botella con bengalas a tu mesa VIP · AED 25.000'],['puro','🚬 Puro cubano · AED 3.000'],['copa','🥃 Whisky 18 años · AED 600'],['agua','💧 Agua con gas · AED 40']].map(([k,t])=>`<button class="opc" data-c="${k}">${t}</button>`).join(''));
   document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{const k=b.dataset.c, pr={bot:25000,puro:3000,copa:600,agua:40}[k]; if(prog.dinero<pr){aviso('No te llega el saldo.');return;} cerrarDialogo(); moverDinero(-pr,{bot:'Botella VIP',puro:'Puro',copa:'Whisky',agua:'Agua'}[k]);
     if(k==='bot'){const [x,z]=LOCALES.palais.vip; bengalas(x,1.3,z+0.1); prog.rep+=40; copas+=1.5; aviso('🍾 <b>Botella con bengalas</b> camino de tu mesa. Todo el club mira.'); marcar('botella');}
-    else if(k==='puro'){puro.visible=true; humo.hasta=performance.now()+40000; humo.m.visible=true; unaVez(yo,'drinking',8.5); aviso('🚬 Puro encendido.'); setTimeout(()=>{puro.visible=false;},40000);}
+    else if(k==='puro'){puro.visible=true; humo.hasta=performance.now()+40000; humo.m.visible=true; unaVez(yo,'smoking',9); aviso('🚬 Puro encendido.'); setTimeout(()=>{puro.visible=false;},40000);}
     else if(k==='copa'){copas++; vaso.visible=true; setTimeout(()=>vaso.visible=false,9000); unaVez(yo,'drinking',8.5);}
     else {copas=Math.max(0,copas-1); aviso('💧 Te despejas un poco.');}
     guardar(); pintarMovil();});}
@@ -1611,7 +1627,7 @@ function abrirInfluencer(){ if(prog.viral){abrirDialogo('Max Volkov','Influencer
   $('vSi').onclick=()=>{prog.viral=true; prog.rep+=200; guardar(); cerrarDialogo(); unaVez(yo,'talking',6); aviso('🎥 <b>Max te graba.</b> «El hombre que eligió al jeque, y no al revés».'); setTimeout(()=>mensaje('Max Volkov','Bro, el vídeo lleva 1,2 M de visitas en una hora 🔥'),6000); marcar('influencer');};
   $('vNo').onclick=cerrarDialogo;}
 // ---- helicóptero con destino ----
-const DESTINOS=[{id:'tour',txt:'🌆 Vuelta por Dubái'},{id:'nobo',txt:'🍣 NOBŌ · cena de negocios'},{id:'palais',txt:'🎶 LE PALAIS · club'},{id:'hq',txt:'🏢 Volver a la torre AIRMATE'}];
+const DESTINOS=[{id:'tour',txt:'🌆 Vuelta por Dubái'},{id:'nobo',txt:'🍣 NOBŌ · cena de negocios'},{id:'palais',txt:'🎶 LE PALAIS · club'},{id:'villa',txt:'🏝️ Tu villa · Palm Jumeirah'},{id:'hq',txt:'🏢 Volver a la torre AIRMATE'}];
 function abrirDestinos(desde){ abrirDialogo('Helicóptero','Omar · piloto','<p>¿A dónde le llevo, señor Bueno?</p>',DESTINOS.filter(d=>d.id!==desde&&!(desde==='hq'&&d.id==='hq')&&!(desde!=='hq'&&d.id==='tour')).map(d=>`<button class="opc" data-d="${d.id}">${d.txt}</button>`).join(''));
   document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{cerrarDialogo(); volar(b.dataset.d);});}
 function volar(dest){ if(dest==='tour'){heli.aparcado=null; heli.ride=true; heli.t=7; yo.m.visible=false; primero=true; aviso('🚁 <b>Despegando.</b> Dubái desde el aire. Arrastra para mirar.'); return;}
@@ -1642,8 +1658,181 @@ function fase2Tick(dt){ const ahoraMs=performance.now(); f2T+=dt;
     C.focos.forEach((f,i)=>{f.rotation.z=Math.sin(f2T*0.9+i*2)*0.5; f.rotation.x=Math.cos(f2T*0.7+i)*0.4;}); }
   if(chispas.m.visible){ const a=chispas.m.geometry.attributes.position.array; for(let i=0;i<chispas.vel.length;i++){const v=chispas.vel[i]; v.y-=4*dt; a[i*3]+=v.x*dt; a[i*3+1]+=v.y*dt; a[i*3+2]+=v.z*dt; if(a[i*3+1]<chispas.o.y-0.6){a[i*3]=chispas.o.x;a[i*3+1]=chispas.o.y;a[i*3+2]=chispas.o.z;v.set((rnd()-0.5)*1.2,1.5+rnd()*2.5,(rnd()-0.5)*1.2);}} chispas.m.geometry.attributes.position.needsUpdate=true; if(ahoraMs>chispas.hasta) chispas.m.visible=false; }
   if(humo.m.visible){ puro.children[1].getWorldPosition(_hp); const a=humo.m.geometry.attributes.position.array; for(let i=0;i<humo.t.length;i++){humo.t[i]+=dt; if(humo.t[i]>2.5||a[i*3+1]===0){humo.t[i]=Math.random()*0.3; a[i*3]=_hp.x; a[i*3+1]=_hp.y; a[i*3+2]=_hp.z;} a[i*3]+=Math.sin(f2T+i)*0.05*dt; a[i*3+1]+=0.35*dt; a[i*3+2]+=Math.cos(f2T+i)*0.05*dt;} humo.m.geometry.attributes.position.needsUpdate=true; if(ahoraMs>humo.hasta) humo.m.visible=false; }
-  if(yo.sentado&&(teclas.KeyW||teclas.KeyA||teclas.KeyS||teclas.KeyD||joy.x||joy.y)){yo.sentado=false; cambiar(yo,'idle');}
+  if(yo.sentado&&(teclas.KeyW||teclas.KeyA||teclas.KeyS||teclas.KeyD||joy.x||joy.y)){yo.sentado=false; cambiar(yo,'idle'); if(yo.yAntes!=null){yo.m.position.y=yo.yAntes; yo.yAntes=null;}}
 }
+
+// ============ Fase 3: villa, boutique, galería de tiro, puñetazos y Burj Khalifa ============
+// ---- ropa: vestir a cualquier persona y guardar tu estilo ----
+function vestir(p,r){ if(!r) return; p.m.traverse(o=>{ if(!o.isMesh) return; if(/Suit|Pants/.test(o.name)) o.material.color.set(r.traje); if(/Tie/.test(o.name)) o.material.color.set(r.corbata); if(/Shirt/.test(o.name)) o.material.color.set(r.camisa); }); }
+if(prog.ropa) vestir(yo,prog.ropa);
+// ---- MAISON AIRMATE · sastrería y relojes ----
+{ const B=local('boutique',{x:60,z:60,nombre:'MAISON AIRMATE',sub:'SASTRERÍA · ALTA RELOJERÍA',suelo:M.marmol,pared:M.marmolPared,luz:0xfff0d6}); const {cx,cz}=B, y=0.32;
+  const TRAJES=[[0x1d2a44,0xc9a45a,0xf4f4f2],[0x4a4d52,0x111114,0xf4f4f2],[0xefeee8,0xc9a45a,0xefeee8],[0x5a1a24,0x111114,0xf4f4f2],[0xd9cdb4,0x3a2a1a,0xf4f4f2],[0x0f1a33,0x6d0f14,0xdfe6ee]];
+  TRAJES.forEach(([t,c,s],i)=>{ const x=cx-9+i*3.6; cil(0.45,0.5,0.3,M.marmolNegro,x,y+0.15,cz-7.5,{seg:24}); const p=gente(B,{modelo:i%3===2?'louise':'joe',traje:t,corbata:c,camisa:s,x,y:y+0.3,z:cz-7.5,ry:0},'idle'); p.acc.idle.timeScale=0; colisiones[0].push({x0:x-0.5,x1:x+0.5,z0:cz-8,z1:cz-7}); });
+  for(const x of [-8,8]){ caja(0.06,1.9,3.2,M.oro,cx+x,y+0.95,cz+1,{sombra:false}); for(let k=0;k<7;k++) caja(0.5,1.05,0.12,new THREE.MeshStandardMaterial({color:[0x1a1b20,0x1d2a44,0x4a4d52,0x5a1a24,0xd9cdb4,0x0f1a33,0xefeee8][k],roughness:0.8}),cx+x,y+1.3,cz-0.4+k*0.45,{sombra:false}); colisiones[0].push({x0:cx+x-0.4,x1:cx+x+0.4,z0:cz-0.8,z1:cz+2.8}); }
+  caja(4,1,1,M.marmolNegro,cx,y+0.5,cz-3,{col:0}); const vit=new THREE.Mesh(new THREE.BoxGeometry(3.6,0.4,0.7),M.cristal); vit.position.set(cx,y+1.2,cz-3); B.grupo.add(vit);
+  for(let k=0;k<6;k++){ const r=new THREE.Mesh(new THREE.TorusGeometry(0.06,0.015,8,20),oroJoya); r.position.set(cx-1.4+k*0.56,y+1.06,cz-3); r.rotation.x=Math.PI/2; B.grupo.add(r); }
+  npcLocal(B,'Sastre de MAISON AIRMATE','Sastrería a medida',{modelo:'josh',traje:0x26292f,corbata:0xc9a45a,x:cx,z:cz-4,ry:0},'idle',()=>abrirSastre(TRAJES));
+}
+function abrirSastre(TRAJES){ const nom=['Azul medianoche','Gris marengo','Blanco Dubái','Burdeos','Lino crema','Marino con corbata granate'], pre=[18000,15000,22000,20000,16000,19000];
+  abrirDialogo('MAISON AIRMATE','Sastre · trajes a medida en el acto','<p>Señor Bueno, ¿qué le apetece llevar hoy?</p>',
+    TRAJES.map((t,i)=>`<button class="opc" data-tr="${i}">👔 ${nom[i]} · AED ${pre[i].toLocaleString('es-ES')}</button>`).join('')+`<button class="opc" data-tr="negro">🖤 Volver al negro de siempre · gratis</button><button class="opc" data-tr="reloj">⌚ Chronos AIRMATE en oro · AED 120.000${prog.reloj?' (ya es suyo)':''}</button>`);
+  document.querySelectorAll('[data-tr]').forEach(b=>b.onclick=()=>{ const k=b.dataset.tr;
+    if(k==='reloj'){ if(prog.reloj){aviso('Ya lo lleva puesto.');return;} if(prog.dinero<120000){aviso('No te llega el saldo.');return;} moverDinero(-120000,'Chronos AIRMATE'); prog.reloj=true; prog.rep+=60; ponerReloj(); guardar(); cerrarDialogo(); aviso('⌚ <b>Chronos AIRMATE</b> en la muñeca.'); marcar('reloj'); return; }
+    if(k==='negro'){ prog.ropa={traje:0x1a1b20,corbata:0x111114,camisa:0xf4f4f2}; vestir(yo,prog.ropa); guardar(); cerrarDialogo(); return; }
+    const i=+k; if(prog.dinero<pre[i]){aviso('No te llega el saldo.');return;} moverDinero(-pre[i],nom[i]); const [t,c,s]=TRAJES[i]; prog.ropa={traje:t,corbata:c,camisa:s}; vestir(yo,prog.ropa); prog.rep+=25; guardar(); cerrarDialogo(); aviso(`👔 <b>${nom[i]}</b>. Le sienta como un guante.`); marcar('ropa'); }); }
+function ponerReloj(){ const g=adjunto(hueso(yo.m,'mixamorigLeftHand'),new THREE.Group()); const r=new THREE.Mesh(new THREE.CylinderGeometry(0.024,0.024,0.012,20),oroJoya); r.position.set(0,-0.02,0.02); r.rotation.x=Math.PI/2; g.add(r);
+  const esf=new THREE.Mesh(new THREE.CircleGeometry(0.019,20),new THREE.MeshStandardMaterial({color:0x0d2547,metalness:0.6,roughness:0.2})); esf.position.set(0,-0.02,0.027); g.add(esf); }
+if(prog.reloj) ponerReloj();
+// ---- AIRMATE SHOOTING CLUB · galería de tiro ----
+const tiro={activo:false,t:0,puntos:0,dianas:[],pistola:null};
+{ const G=local('tiro',{x:-60,z:-60,nombre:'SHOOTING CLUB',sub:'AIRMATE · GALERÍA DE TIRO',suelo:M.marmolNegro,pared:M.negro,luz:0xffe2b8}); const {cx,cz}=G, y=0.32;
+  caja(20,1.1,0.6,M.nogal,cx,y+0.55,cz+1,{col:0});
+  for(let i=-3;i<=3;i++){ caja(0.08,2.6,10,M.acero,cx+i*2.9,y+1.3,cz-4,{sombra:false}); }
+  const dMat=canvasTex(256,256,(g,w)=>{for(const [r,c] of [[128,'#f4f1ea'],[100,'#111'],[72,'#f4f1ea'],[46,'#c0001a'],[18,'#ffd05a']]){g.fillStyle=c;g.beginPath();g.arc(w/2,w/2,r,0,7);g.fill();}});
+  for(let i=0;i<6;i++){ const d=new THREE.Mesh(new THREE.CircleGeometry(0.45,32),new THREE.MeshStandardMaterial({map:dMat,roughness:0.7})); d.position.set(cx-7.2+i*2.9,y+1.6,cz-9.2); G.grupo.add(d); d.userData={x0:d.position.x,fase:i*1.3,vel:0.6+i*0.15}; tiro.dianas.push(d); }
+  npcLocal(G,'Instructor de tiro','AIRMATE Shooting Club',{modelo:'josh',traje:0x2b2f38,corbata:0x111111,x:cx+6,z:cz+2.4,ry:Math.PI},'idle',()=>abrirTiro());
+  G.linea=[cx,cz+2.6]; mueble('service_pistol',cx+3,y+1.13,cz+1,0.4,1);
+}
+function abrirTiro(){ abrirDialogo('Instructor de tiro','AIRMATE Shooting Club',`<p>Treinta segundos, seis dianas en movimiento. Haz clic sobre ellas para disparar. Cada acierto, AED 1.000.${prog.mejorTiro?` Tu récord: <b>${prog.mejorTiro}</b>.`:''}</p>`,'<button class="opc" id="tEmp">🎯 Empezar · AED 500</button>');
+  $('tEmp').onclick=()=>{ if(prog.dinero<500){aviso('No te llega el saldo.');return;} moverDinero(-500,'Galería'); cerrarDialogo(); empezarTiro(); }; }
+function empezarTiro(){ const [x,z]=LOCALES.tiro.linea; yo.m.position.set(x,0.37,z); yo.m.rotation.y=Math.PI; yo.yaw=0; tiro.activo=true; tiro.t=30; tiro.puntos=0;
+  if(!tiro.pistola){ tiro.pistola=adjunto(hueso(yo.m,'mixamorigRightHand'),new THREE.Group()); const src=PH.service_pistol; if(src){const o=src.scene.clone(true); o.scale.setScalar(1); o.rotation.set(0,Math.PI/2,Math.PI/2); o.position.set(0.02,0.09,0.03); tiro.pistola.add(o);} }
+  tiro.pistola.visible=true; cambiar(yo,'pistol_idle'); $('mira').hidden=false; $('tiroHud').hidden=false; aviso('🎯 <b>¡Dispara!</b> Haz clic en las dianas.'); }
+function acabarTiro(){ tiro.activo=false; $('mira').hidden=true; $('tiroHud').hidden=true; if(tiro.pistola) tiro.pistola.visible=false; cambiar(yo,'idle'); primero=true;
+  if(tiro.puntos) moverDinero(tiro.puntos*1000,`${tiro.puntos} aciertos`); prog.mejorTiro=Math.max(prog.mejorTiro||0,tiro.puntos); prog.rep+=tiro.puntos; guardar();
+  aviso(`🎯 <b>${tiro.puntos} aciertos.</b>${tiro.puntos>=10?' Puntería de agente secreto.':' Vuelve a intentarlo: con 10 completas el reto.'}`); if(tiro.puntos>=10) marcar('tiro'); }
+const rayoTiro=new THREE.Raycaster(), ndc=new THREE.Vector2();
+renderer.domElement.addEventListener('click',e=>{ if(!tiro.activo) return; const r=renderer.domElement.getBoundingClientRect(); ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
+  rayoTiro.setFromCamera(ndc,cam); unaVez(yo,'shooting',0.45,'pistol_idle'); try{sonido.disparo();}catch(err){}
+  const hit=rayoTiro.intersectObjects(tiro.dianas,false)[0]; if(hit){ tiro.puntos++; hit.object.material.emissive=new THREE.Color(0xffd05a); hit.object.material.emissiveIntensity=1.5; setTimeout(()=>{hit.object.material.emissiveIntensity=0;},180); hit.object.userData.fase+=1.7; } });
+function camTiro(){ const [x,z]=LOCALES.tiro.linea; cam.position.set(x+0.55,1.95,z+1.6); cam.lookAt(x,1.75,z-11.8); }
+// ---- puñetazos ----
+let golpeLado=0, golpeT=0;
+function pegar(){ if(conduciendo||heli.ride||dialogoAbierto||tiro.activo||performance.now()<golpeT) return; golpeT=performance.now()+650;
+  const n=golpeLado++%2?'hook_punch':'punching'; unaVez(yo,n,0.9); setTimeout(()=>{try{sonido.choque();}catch(e){}},260);
+  const r=yo.m.rotation.y, fx=Math.sin(r), fz=Math.cos(r), p0=yo.m.position;
+  if(saco&&yo.planta===0&&Math.hypot(p0.x-saco.position.x,p0.z-saco.position.z)<1.6){ saco.userData.v=(saco.userData.v||0)+2.2; prog.golpesSaco=(prog.golpesSaco||0)+1; if(prog.golpesSaco%10===0){prog.rep+=3; aviso(`🥊 ${prog.golpesSaco} golpes al saco.`);} if(prog.golpesSaco>=20) marcar('saco'); guardar(); return; }
+  let mejor=null, md=1.5; for(const p of personas){ if(p===yo||!p.m.visible||!p.m.parent) continue; const dx=p.m.position.x-p0.x, dz=p.m.position.z-p0.z, dy=Math.abs(p.m.position.y-p0.y), d=Math.hypot(dx,dz); if(d<md&&dy<0.8&&(dx*fx+dz*fz)/Math.max(d,0.01)>0.5){md=d;mejor=p;} }
+  if(!mejor) return; const vuelta=mejor.vuelta&&mejor.hasta?mejor.vuelta:mejor.actual; mejor.golpes=(mejor.golpes||0)+1;
+  setTimeout(()=>{ if(mejor.golpes>=3){ unaVez(mejor,'knocked_out',6,vuelta==='knocked_out'?'idle':vuelta); mejor.golpes=0; } else unaVez(mejor,'head_hit',1.3,vuelta); },280);
+  const seg=NPCS.find(n=>n===mejor&&/Seguridad|Portero/.test(n.nm));
+  if(seg){ aviso('🚨 <b>Mala idea.</b> Seguridad te saca a la calle.'); prog.rep=Math.max(0,prog.rep-30); setTimeout(()=>{const fd=$('fundido');fd.style.opacity=1;setTimeout(()=>{yo.planta=0;yo.m.position.set(0,0.12,30);primero=true;fd.style.opacity=0;},500);},900); }
+  else if(Math.random()<0.4) aviso(['Eso no es de socio, Fabio.','Las cámaras lo han grabado todo…','Ese tío no tenía la culpa.'][Math.floor(Math.random()*3)]);
+  guardar(); }
+addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT') return; if(e.code==='KeyF') pegar(); });
+// ---- villa en Palm Jumeirah ----
+let saco=null;
+{ const cx=-318, cz=40, y=0.32;
+  const v={id:'villa',cx,cz,w:16,d:12,h:4.2,nombre:'Villa Palm Jumeirah',grupo:new THREE.Group(),camareros:[],npcs:[],fiesta:[]}; v.dentro=(x,z)=>Math.abs(x-(cx+6))<8&&Math.abs(z-cz)<6; scene.add(v.grupo); LOCALES.villa=v;
+  const agua=new THREE.MeshPhysicalMaterial({color:0x1f9fb8,roughness:0.06,metalness:0.1,transparent:true,opacity:0.92,clearcoat:1});
+  const mar=new THREE.Mesh(new THREE.PlaneGeometry(600,900),agua.clone()); mar.material.color.set(0x16708a); mar.rotation.x=-Math.PI/2; mar.position.set(-650,0.06,40); scene.add(mar);
+  const arena=new THREE.MeshStandardMaterial({color:0xe8d8b5,roughness:1}); caja(14,0.1,120,arena,-351,0.08,40,{sombra:false});
+  const asfV=matCarretera.clone(); plano(56,ANCHO,asfV,-272,0.02,40,0,-Math.PI/2);
+  caja(34,0.24,30,M.marmolPared,cx,0.12,cz,{sombra:false});
+  const yeso=new THREE.MeshStandardMaterial({...texPBR('yeso',2,2),color:0xf7f5f0,roughness:0.9}); const sueloV=new THREE.MeshStandardMaterial({...texPBR('madera_suelo',4,3),roughness:0.7});
+  caja(16,0.1,12,sueloV,cx+6,y,cz,{sombra:false});
+  const cam_={cam:true,col:0};
+  caja(16,4.2,0.3,yeso,cx+6,y+2.1,cz-6,cam_); caja(16,4.2,0.3,yeso,cx+6,y+2.1,cz+6,cam_); caja(0.3,4.2,12,yeso,cx+14,y+2.1,cz,cam_);
+  caja(0.1,4.2,5,M.cristal,cx-2,y+2.1,cz-3.5,{col:0,sombra:false}); caja(0.1,4.2,5,M.cristal,cx-2,y+2.1,cz+3.5,{col:0,sombra:false});
+  caja(4,3.2,0.15,yeso,cx+10,y+1.6,cz+1.5,{col:0});
+  const arriba=new THREE.Group(); scene.add(arriba);
+  caja(18,0.5,13,yeso,cx+6,y+4.45,cz,{padre:arriba}); caja(13,3,10,yeso,cx+8,y+6.2,cz-0.5,{padre:arriba}); caja(13.4,0.12,0.12,M.oro,cx+8,y+7.75,cz+4.55,{padre:arriba,sombra:false}); caja(0.1,2.6,9,M.cristalOsc,cx+1.45,y+6.1,cz-0.5,{padre:arriba,sombra:false});
+  const pad=new THREE.Mesh(new THREE.CircleGeometry(4.2,40),new THREE.MeshStandardMaterial({map:helipad,roughness:0.7})); pad.rotation.x=-Math.PI/2; pad.position.set(cx+8,y+7.76,cz-0.5); arriba.add(pad);
+  v.techo=arriba; v.techoPad=pad; v.pad=new THREE.Vector3(cx+8,y+7.78,cz-0.5); v.entrada=new THREE.Vector3(cx-3.5,0.32,cz);
+  mueble('sofa_03',cx+5,y+0.05,cz+4.6,Math.PI,1); colisiones[0].push({x0:cx+3.6,x1:cx+6.4,z0:cz+4.1,z1:cz+5.1});
+  mueble('modern_coffee_table_01',cx+5,y+0.05,cz+3.2,0); mueble('television_02',cx+5,y+0.95,cz+0.15,Math.PI,1.6); caja(2.6,0.8,0.5,M.nogal,cx+5,y+0.45,cz,{col:0});
+  mueble('potted_plant_01',cx+1,y+0.05,cz+5,0,1.2); mueble('potted_plant_04',cx+13,y+0.05,cz-5,0,1.2); mueble('modern_ceiling_lamp_01',cx+5,y+3.6,cz+3,0);
+  caja(3.6,0.95,0.7,M.marmolNegro,cx+5,y+0.48,cz-4.6,{col:0}); caja(0.4,0.45,0.35,M.acero,cx+4,y+1.18,cz-4.6,{sombra:false});
+  const cama=new THREE.MeshStandardMaterial({color:0xf2efe8,roughness:0.95}); caja(2.2,0.45,2.4,M.nogal,cx+12.4,y+0.25,cz+4,{col:0}); caja(2.1,0.25,2.3,cama,cx+12.4,y+0.6,cz+4,{sombra:false}); caja(2.2,1.1,0.15,M.nogal,cx+12.4,y+0.8,cz+5.2,{sombra:false});
+  const pis=new THREE.Mesh(new THREE.BoxGeometry(12,0.1,6),agua); pis.position.set(cx-12,y-0.05,cz); scene.add(pis); caja(12.6,0.3,0.3,M.marmol,cx-12,y+0.02,cz-3.15,{sombra:false}); caja(12.6,0.3,0.3,M.marmol,cx-12,y+0.02,cz+3.15,{sombra:false});
+  v.piscina=[cx-12,cz,6,3];
+  const tumbonaM=new THREE.MeshStandardMaterial({color:0xf4f1ea,roughness:0.9}); v.tumbonas=[];
+  for(let i=0;i<4;i++){ const x=cx-14+i*3.4, z=cz-5.2; caja(0.8,0.3,2,M.nogal,x,y+0.15,z,{col:0}); caja(0.7,0.12,1.9,tumbonaM,x,y+0.36,z,{sombra:false}); const r=caja(0.7,0.1,0.8,tumbonaM,x,y+0.6,z+0.75,{sombra:false}); r.rotation.x=-0.6; v.tumbonas.push([x,z]); }
+  for(const [x,z] of [[-14,8],[-6,9],[-16,-9],[10,-10],[12,10]]) palmera(cx+x,y,cz+z,8,1.6);
+  mueble('outdoor_table_chair_set_01',cx-1,y,cz+9,0.3); mueble('boombox',cx-1,y+0.75,cz+9,0.3,1);
+  saco=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.28,1.2,16),new THREE.MeshStandardMaterial({color:0x7a1f1f,roughness:0.6})); saco.position.set(cx+12,y+1.3,cz-4); scene.add(saco); cil(0.03,0.03,1.2,M.acero,cx+12,y+2.5,cz-4,{seg:6});
+  v.puntos={tele:[cx+5,cz+3.2],cama:[cx+12.4,cz+2.6],cafe:[cx+5,cz-3.8],fiesta:[cx-1,cz+8]};
+}
+function accionesFase3(){ const p=yo.m.position; if(yo.planta!==0||conduciendo) return null; const v=LOCALES.villa, d=(a)=>Math.hypot(p.x-a[0],p.z-a[1]);
+  if(Math.abs(p.x-v.cx)>30||Math.abs(p.z-v.cz)>25) return null;
+  if(d(v.puntos.tele)<1.8) return {txt:'Ver la tele (embudo de ventas)',fn:verTele};
+  if(d(v.puntos.cama)<1.8) return {txt:'Dormir hasta mañana',fn:dormir};
+  if(d(v.puntos.cafe)<1.6) return {txt:'Hacerte un café',fn:()=>{vaso.visible=true;setTimeout(()=>vaso.visible=false,9000);unaVez(yo,'drinking',8.5);aviso('☕ Espresso doble.');}};
+  if(saco&&Math.hypot(p.x-saco.position.x,p.z-saco.position.z)<1.6) return {txt:'Pegar al saco (tecla F)',fn:pegar};
+  for(const t of v.tumbonas) if(d(t)<1.4) return {txt:'Tumbarte al sol',fn:()=>{yo.yAntes=yo.m.position.y; yo.m.position.set(t[0],0.72,t[1]+0.2); yo.m.rotation.y=Math.PI; cambiar(yo,'laying'); yo.sentado=true; aviso('☀️ A tomar el sol. (Muévete para levantarte)'); marcar('tumbona');}};
+  const [px,pz,hx,hz]=v.piscina; if(Math.abs(p.x-px)<hx+1.2&&Math.abs(p.z-pz)<hz+1.2) return {txt:'Darte un baño',fn:()=>{yo.yAntes=yo.m.position.y; yo.m.position.set(px+(Math.random()-0.5)*8,-0.55,pz); cambiar(yo,'swimming'); yo.sentado=true; aviso('🏊 Agua a 28 grados. (Muévete para salir)'); prog.rep+=2;}};
+  if(d(v.puntos.fiesta)<2.2) return {txt:v.fiesta.length?'Terminar la fiesta':'Montar fiesta en la piscina · AED 50.000',fn:fiestaPiscina};
+  return null; }
+function verTele(){ const c=contar(ahora); abrirDialogo('Tele de la villa','Embudo de ventas en directo',`<div class="capStats"><span><b>${c.encontrados}</b>negocios</span><span><b>${c.escritos}</b>emails escritos</span><span><b>${c.enviados}</b>enviados</span><span><b>${c.respuestas}</b>respuestas</span></div><p>${REAL?'Datos reales de Harvey.':'Simulación: entra con tu usuario para ver los datos reales.'} Llamadas agendadas: <b>${c.llamadas}</b>.</p>`); cambiar(yo,'sitting_idle'); marcar('tele'); }
+function dormir(){ const fd=$('fundido'); fd.style.opacity=1; cambiar(yo,'sleeping'); setTimeout(()=>{ if(!REAL) ahora=ABRE-30; copas=0; renderer.domElement.style.filter=''; yo.m.position.set(LOCALES.villa.puntos.cama[0],0.37,LOCALES.villa.puntos.cama[1]-0.4); cambiar(yo,'idle'); fd.style.opacity=0; aviso('🌅 <b>Buenos días, Fabio.</b> Nuevo día en Dubái.'); marcar('dormir'); },1600); }
+function fiestaPiscina(){ const v=LOCALES.villa;
+  if(v.fiesta.length){ for(const p of v.fiesta){ v.grupo.remove(p.m); const i=mixers.indexOf(p.mixer); if(i>=0) mixers.splice(i,1); const j=personas.indexOf(p); if(j>=0) personas.splice(j,1);} v.fiesta=[]; sonido.musica(0); aviso('La fiesta ha terminado.'); return; }
+  if(prog.dinero<50000){aviso('No te llega el saldo.');return;} moverDinero(-50000,'Fiesta en la villa'); prog.rep+=100; guardar();
+  const [px,pz]=v.piscina, bailes=['salsa_dancing','hiphop_dancing','shuffling'], vest=[0x8a1020,0x0f0f12,0xd8c39a,0x1d2f6b,0xe8e4dc,0xb3123c];
+  for(let i=0;i<12;i++){ const a=i/12*Math.PI*2, x=px+Math.cos(a)*(8+rnd()*2), z=pz+Math.sin(a)*(4.5+rnd()*1.5); const p=gente(v,{...(i%2?{modelo:'louise',traje:vest[i%6]}:npcAleatorio(i)),x,y:0.32,z,ry:rnd()*6.28},bailes[i%3]); v.fiesta.push(p); }
+  aviso('🎉 <b>Fiesta en la piscina.</b> Media Dubái en tu villa.'); marcar('fiesta'); }
+function fase3Tick(dt){ if(tiro.activo){ tiro.t-=dt; $('tiroHud').textContent=`🎯 ${tiro.puntos} · ${Math.ceil(tiro.t)} s`; for(const d of tiro.dianas){ d.position.x=d.userData.x0+Math.sin(f3T*d.userData.vel+d.userData.fase)*1.1; } if(tiro.t<=0) acabarTiro(); }
+  f3T+=dt; if(saco){ const s=saco.userData; s.v=(s.v||0)*Math.pow(0.05,dt); s.a=(s.a||0)+s.v*dt; s.a*=Math.pow(0.2,dt); saco.rotation.x=Math.sin(f3T*6)*s.a*0.3; }
+  if(LOCALES.villa.fiesta.length){ const d=Math.hypot(yo.m.position.x-LOCALES.villa.cx,yo.m.position.z-LOCALES.villa.cz); sonido.musica(clamp(1-d/45)*0.8); } }
+let f3T=0;
+// ---- Burj Khalifa (planta en Y con retranqueos en espiral) ----
+{ const bx=-250, bz=-430, m=matF(0); m.color.set(0xe6edf4); const g=new THREE.Group(); g.position.set(bx,0,bz); scene.add(g);
+  const tiers=[[30,120],[27,95],[24,80],[21,70],[18,62],[15,55],[12,48],[9,42],[7,36],[5,30]]; let y=0;
+  tiers.forEach(([r,h],i)=>{ for(let k=0;k<3;k++){ const a=k*Math.PI*2/3+i*0.35, len=r*(1-(k===i%3?0.18:0)); const ala=new THREE.Mesh(new THREE.BoxGeometry(len,h,r*0.42),m); ala.position.set(Math.cos(a)*len/2,y+h/2,Math.sin(a)*len/2); ala.rotation.y=-a; g.add(ala);
+      const pun=new THREE.Mesh(new THREE.CylinderGeometry(r*0.21,r*0.21,h,16),m); pun.position.set(Math.cos(a)*len,y+h/2,Math.sin(a)*len); g.add(pun); }
+    const nuc=new THREE.Mesh(new THREE.CylinderGeometry(r*0.36,r*0.4,h,24),m); nuc.position.y=y+h/2; g.add(nuc); y+=h; });
+  const ag=new THREE.Mesh(new THREE.CylinderGeometry(0.6,3.2,170,12),M.acero); ag.position.y=y+85; g.add(ag);
+  const luzTop=new THREE.Mesh(new THREE.SphereGeometry(1.4,12,8),new THREE.MeshBasicMaterial({color:new THREE.Color(1,0.2,0.15).multiplyScalar(3),toneMapped:false})); luzTop.position.y=y+171; g.add(luzTop);
+  g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}}); RESERVADO.push([bx,bz]); }
+
+// ============ PRESTIGE MOTORS · concesionario y garaje de la villa ============
+// modelo: 'ferrari' o 'deportivo' mientras llegan los modelos 3D reales de cada marca (mod/coches/<id>.glb)
+const CATALOGO=[
+  {id:'g63',nombre:'Mercedes-AMG G 63',precio:980000,modelo:'deportivo',color:0x111214},
+  {id:'mclaren720',nombre:'McLaren 720S',precio:1250000,modelo:'deportivo',color:0xf47a1f},
+  {id:'porsche911',nombre:'Porsche 911 Turbo S',precio:1050000,modelo:'deportivo',color:0xa9adb3},
+  {id:'rs7',nombre:'Audi RS7 Performance',precio:560000,modelo:'deportivo',color:0x2b2d31},
+  {id:'defender',nombre:'Land Rover Defender 130 V8',precio:520000,modelo:'deportivo',color:0x3b4a3a},
+  {id:'discovery',nombre:'Land Rover Discovery (último modelo)',precio:390000,modelo:'deportivo',color:0xe9e4da},
+  {id:'rrsport',nombre:'Range Rover Sport',precio:640000,modelo:'deportivo',color:0x1b1c20},
+  {id:'evoque',nombre:'Range Rover Evoque',precio:260000,modelo:'deportivo',color:0x1d2a44},
+  {id:'landcruiser',nombre:'Toyota Land Cruiser 300 GR',precio:380000,modelo:'deportivo',color:0xf4f4f2},
+  {id:'patrol',nombre:'Nissan Patrol Nismo',precio:420000,modelo:'deportivo',color:0x0b0b0d},
+  {id:'zafira',nombre:'Opel Zafira',precio:95000,modelo:'deportivo',color:0x8a8f96},
+  {id:'ferrari458',nombre:'Ferrari 458 Spider',precio:1100000,modelo:'ferrari',color:0xc0001a},
+];
+if(!Array.isArray(prog.garaje)) prog.garaje=[];
+const MODELOS_REALES={};
+function cocheDe(item){ // devuelve {g,ruedas} con el frontal hacia -x (como tu Ferrari) para poder conducirlo
+  if(MODELOS_REALES[item.id]){ const o=MODELOS_REALES[item.id].scene.clone(true); o.traverse(c=>{if(c.isMesh)c.castShadow=true;}); const g=new THREE.Group(); g.add(o); scene.add(g); return {g,ruedas:[]}; }
+  if(item.modelo==='ferrari') return ferrari(item.color);
+  const d=deportivo(item.color); const g=new THREE.Group(); scene.remove(d.g); d.g.rotation.y=Math.PI; g.add(d.g); scene.add(g); return {g,ruedas:[]}; }
+// concesionario
+{ const P=local('motors',{x:140,z:60,w:26,d:22,nombre:'PRESTIGE MOTORS',sub:'DUBAI · LUXURY & PERFORMANCE',suelo:M.marmol,pared:M.marmolPared,luz:0xffffff}); const {cx,cz}=P, y=0.32;
+  P.plataformas=[];
+  CATALOGO.slice(0,6).forEach((it,i)=>{ const x=cx-8+(i%3)*8, z=cz+(i<3?-4.5:3.5);
+    cil(2.6,2.7,0.18,M.marmolNegro,x,y+0.09,z,{seg:40,col:0}); const c=cocheDe(it); c.g.position.set(x,y+0.2,z); c.g.rotation.y=i*0.9; P.plataformas.push(c.g);
+    const cartel=plano(2.4,0.6,matLetras(letrero(it.nombre.toUpperCase(),{w:1024,h:256,fs:76,esp:0.06,fondo:'rgba(8,10,16,0.85)'}),false),x,y+0.55,z+2.95); cartel.material.emissiveIntensity=0; });
+  npcLocal(P,'Asesora de PRESTIGE MOTORS','Ventas · coches de lujo',{modelo:'louise',traje:0x1d2a44,x:cx+10,z:cz+7,ry:Math.PI},'idle',()=>abrirConcesionario());
+  caja(3,1,1,M.marmolNegro,cx+10,y+0.5,cz+5.8,{col:0});
+}
+function abrirConcesionario(){ const tengo=id=>prog.garaje.includes(id);
+  abrirDialogo('PRESTIGE MOTORS','Asesora de ventas',`<p>Bienvenido, señor Bueno. Lo que compre hoy se lo dejamos esta tarde en el garaje de su villa.</p><p style="color:var(--muted);font-size:13px">Saldo: <b>${fmtAED(prog.dinero)}</b></p>`,
+    CATALOGO.map(it=>`<button class="opc" data-car="${it.id}" ${tengo(it.id)?'disabled':''}>🚗 ${it.nombre} · ${tengo(it.id)?'en tu garaje':fmtAED(it.precio)}</button>`).join(''));
+  $('dialogo').classList.add('ancho');
+  document.querySelectorAll('[data-car]').forEach(b=>b.onclick=()=>{ const it=CATALOGO.find(x=>x.id===b.dataset.car); if(prog.dinero<it.precio){aviso(`No te llega: te faltan ${fmtAED(it.precio-prog.dinero)}.`);return;}
+    moverDinero(-it.precio,it.nombre); prog.garaje.push(it.id); prog.rep+=Math.round(it.precio/20000); guardar(); aparcar(it); cerrarDialogo();
+    aviso(`🔑 <b>${it.nombre}</b> es tuyo. Te espera en el garaje de la villa.`); marcar('coche'); }); }
+// garaje de la villa
+const GARAJE=[];
+function aparcar(it){ const v=LOCALES.villa, i=GARAJE.length, x=v.cx-14+i*4.2, z=v.cz+12.5; const c=cocheDe(it); c.g.position.set(x,0.12,z); c.g.rotation.y=-Math.PI/2;
+  c.col={x0:x-1.1,x1:x+1.1,z0:z-2.3,z1:z+2.3}; colisiones[0].push(c.col); c.item=it; GARAJE.push(c); }
+for(const id of prog.garaje){ const it=CATALOGO.find(x=>x.id===id); if(it) aparcar(it); }
+{ const v=LOCALES.villa; caja(50,0.06,7,M.marmolNegro,v.cx+7,0.27,v.cz+12.5,{sombra:false}); }
+function accionGaraje(){ if(yo.planta!==0||conduciendo) return null; const p=yo.m.position;
+  for(const c of GARAJE){ if(cocheJ===c&&conduciendo) continue; if(Math.hypot(p.x-c.g.position.x,p.z-c.g.position.z)<3) return {txt:`Conducir ${c.item.nombre}`,fn:()=>subirCoche(c)}; } return null; }
+function motorsTick(dt){ const P=LOCALES.motors; if(P.grupo.parent) for(const g of P.plataformas) g.rotation.y+=dt*0.25; }
 
 // ============ luz ============
 const cAlba=new THREE.Color(0xff9a5c), cDia=new THREE.Color(0xfff1dc), niebDia=new THREE.Color(0xd8c6a8), niebNoche=new THREE.Color(0x0b1226);
@@ -1687,7 +1876,7 @@ function bucle(){
   // jugador
   if(conduciendo) conducir(dt);
   if(yo.vy!==undefined&&yo.saltando){yo.vy-=14*dt; yo.m.position.y+=yo.vy*dt; if(yo.m.position.y<=yo.y0){yo.m.position.y=yo.y0;yo.saltando=false;sonido.paso();}}
-  if(!dron&&!dialogoAbierto&&!heli.ride&&!cine&&!conduciendo){
+  if(!dron&&!dialogoAbierto&&!heli.ride&&!cine&&!conduciendo&&!tiro.activo){
     let fx=0,fz=0; if(teclas.KeyW||teclas.ArrowUp)fz+=1; if(teclas.KeyS||teclas.ArrowDown)fz-=1; if(teclas.KeyA||teclas.ArrowLeft)fx+=1; if(teclas.KeyD||teclas.ArrowRight)fx-=1;
     fx-=joy.x; fz-=joy.y;
     const l=Math.hypot(fx,fz);
@@ -1740,7 +1929,8 @@ function bucle(){
   // cámara
   if(cine){tCine+=dt/50; const u=tCine%1; cam.position.copy(rutaCine.getPointAt(u)); cam.lookAt(mirasCine.getPointAt(u));}
   else if(heli.ride){const fw=new THREE.Vector3(Math.cos(heli.yaw+camOrb),0,-Math.sin(heli.yaw+camOrb)); const des=heli.g.position.clone().addScaledVector(fw,-17).add(new THREE.Vector3(0,6.5,0)); camPos.lerp(des,1-Math.pow(0.003,dt)); cam.position.copy(camPos); cam.lookAt(heli.g.position.clone().addScaledVector(fw,10));}
-  else if(conduciendo){const g=miFerrari.g, h=auto.yaw+Math.PI+camOrb, fw=new THREE.Vector3(Math.cos(h),0,-Math.sin(h)); const des=g.position.clone().addScaledVector(fw,-7.5*zoomCam).add(new THREE.Vector3(0,(1.6+pitch*5)*zoomCam,0)); if(primero){camPos.copy(des);primero=false;} camPos.lerp(des,1-Math.pow(0.002,dt)); cam.position.copy(camPos); cam.lookAt(g.position.clone().addScaledVector(fw,3).add(new THREE.Vector3(0,1,0)));}
+  else if(tiro.activo){camTiro();}
+  else if(conduciendo){const g=cocheJ.g, h=auto.yaw+Math.PI+camOrb, fw=new THREE.Vector3(Math.cos(h),0,-Math.sin(h)); const des=g.position.clone().addScaledVector(fw,-7.5*zoomCam).add(new THREE.Vector3(0,(1.6+pitch*5)*zoomCam,0)); if(primero){camPos.copy(des);primero=false;} camPos.lerp(des,1-Math.pow(0.002,dt)); cam.position.copy(camPos); cam.lookAt(g.position.clone().addScaledVector(fw,3).add(new THREE.Vector3(0,1,0)));}
   else if(dron){orbit.update();}
   else{
     const interior=yo.planta<5&&dentro(yo.m.position.x,yo.m.position.z);
@@ -1762,7 +1952,7 @@ function bucle(){
    if(fuera&&yo.planta===0){claxonT-=dt; if(claxonT<0){claxonT=15+rnd()*25; sonido.claxon();}}
    if(!conduciendo&&(yo.actual==='walk'||yo.actual==='run')){pasoAcum+=dt*(yo.actual==='run'?3.2:1.9); if(pasoAcum>1){pasoAcum=0;sonido.paso();}}
    if(copas>0){copas=Math.max(0,copas-dt/90); const k=Math.max(0,copas-1); renderer.domElement.style.filter=k>0.05?`blur(${Math.min(2.2,k*0.7)}px) saturate(${1+k*0.15})`:''; if(k>0.05) cam.rotation.z+=Math.sin(T*1.3)*0.02*k;}
-   capHud(); salaTick(dt); fase2Tick(dt); const rg=$('relojG'); if(rg) rg.textContent=fmt(ahora);}
+   capHud(); salaTick(dt); fase2Tick(dt); fase3Tick(dt); motorsTick(dt); const rg=$('relojG'); if(rg) rg.textContent=fmt(ahora);}
   accionActual=buscarAccion(); const ac=$('accion'); if(accionActual){ac.hidden=false;ac.querySelector('span').textContent=accionActual.txt;} else ac.hidden=true;
   composer.render(); moverHud();
   mapaT+=dt; if(mapaT>0.1){mapaT=0;pintarMapa();}
