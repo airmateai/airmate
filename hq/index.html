@@ -2,6 +2,9 @@
 <title>Airmate · Oficina privada</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#07090e">
+<link rel="apple-touch-icon" href="icono-192.png">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -150,6 +153,14 @@ body.real .timebar{display:none}
 .pantalla{max-height:46vh;overflow:auto;display:grid;gap:8px}.sms{background:var(--panel-2);border-radius:12px;padding:10px 12px;display:grid;gap:3px}.sms b{color:var(--gold-2);font-size:13px}.sms span{font-size:14px}.sms.hecha{opacity:.5}
 .bloq{color:var(--muted);font-size:13px}.saldo{background:linear-gradient(135deg,#1c2433,#0d1118);border:1px solid rgba(214,178,106,.35);border-radius:14px;padding:14px;display:grid}.saldo small{color:var(--muted)}.saldo b{font-family:"Bebas Neue",Impact,sans-serif;font-size:34px;color:#7ee08a;letter-spacing:.04em}
 .barraRep{height:8px;border-radius:99px;background:var(--panel-2);overflow:hidden}.barraRep i{display:block;height:100%;background:var(--gold)}
+.chatBox{position:absolute;z-index:4;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(190px + env(safe-area-inset-bottom,0px));width:min(340px,calc(100vw - 32px));display:grid;gap:6px}
+#chatLog{max-height:170px;overflow:auto;display:grid;gap:3px;font-size:13px;opacity:.5;transition:opacity .3s}
+.chatBox.vivo #chatLog,.chatBox:focus-within #chatLog,.chatBox:hover #chatLog{opacity:1}
+#chatLog div{background:rgba(8,10,16,.72);border-radius:8px;padding:4px 8px;line-height:1.35}#chatLog b{color:var(--gold-2)}#chatLog small{color:var(--muted);font-size:11px}
+#chatIn{width:100%;box-sizing:border-box;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(8,10,16,.8);color:inherit;font:inherit;font-size:14px}
+#chatIn:focus{outline:2px solid var(--gold);outline-offset:1px}
+.nombre.bocadillo{background:#f2efe6;color:#111;max-width:220px;white-space:normal;text-align:center;font-weight:500}
+@media (max-width:700px){.chatBox{bottom:calc(240px + env(safe-area-inset-bottom,0px));width:min(260px,calc(100vw - 32px))}#chatLog{max-height:90px}}
 .mision{position:absolute;z-index:4;left:max(12px,env(safe-area-inset-left,0px));top:calc(150px + env(safe-area-inset-top,0px));width:min(300px,calc(100% - 24px));background:rgba(8,10,16,.78);backdrop-filter:blur(10px);border:1px solid rgba(214,178,106,.35);border-left:3px solid var(--gold);border-radius:12px;padding:10px 12px;display:grid;gap:3px;pointer-events:auto}
 .mision small{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .mision b{font-family:var(--f-serif);font-size:19px;line-height:1.1;color:#fff}
@@ -194,6 +205,7 @@ body.cine .hud-arriba,body.cine .ayuda,body.cine .avisos,body.cine .accion,body.
       <canvas id="mapa" width="300" height="300" aria-label="Minimapa"></canvas>
       <div class="botones">
         <button id="bMovil" aria-label="Móvil" hidden>📱</button>
+        <button id="bVoz" hidden>🔇 Voz</button>
         <button id="bSonido" aria-label="Sonido">🔊</button>
         <button id="bCalidad" aria-label="Calidad gráfica" title="Calidad gráfica">HD</button>
         <button id="bCaptacion" hidden>Captación</button>
@@ -205,6 +217,7 @@ body.cine .hud-arriba,body.cine .ayuda,body.cine .avisos,body.cine .accion,body.
       </div>
     </div>
   </div>
+  <div class="chatBox" id="chatBox" hidden><div id="chatLog" aria-live="polite"></div><form id="chatForm"><input id="chatIn" maxlength="400" autocomplete="off" placeholder="Enter para escribir al equipo…" aria-label="Chat del equipo"></form></div>
   <div class="hudDer" id="hudDer"><div id="relojG">--:--</div><div id="dinero">AED 0</div><div id="estatus"></div></div>
   <div class="velo" id="velo" hidden></div>
   <div class="ayuda" id="ayuda">WASD andar · Shift correr · Espacio saltar · arrastra para mirar · rueda zoom · E interactuar</div>
@@ -1187,7 +1200,7 @@ async function entrar(s){ yoUser=s.user; const {data}=await sb.from('hq_miembros
   DATOS.miembros=data; await cargarTodo(); REAL=true; $('login').hidden=true; document.body.classList.add('real');
   document.querySelector('.placa .yo').innerHTML=`<b>${escH(miembro.nombre)}</b> · ${miembro.rol==='socio'?'Socio director':'Equipo'}`;
   if(location.hash.includes('access_token')) history.replaceState(null,'',location.pathname);
-  await alEntrar(); suscribir(); ultimoMin=-1; pintarMision(); aviso(`<b>Bienvenido, ${escH(miembro.nombre.split(' ')[0])}.</b> Estás en la oficina real: lo que hagas aquí pasa de verdad.`);}
+  await alEntrar(); iniciarSala(); suscribir(); ultimoMin=-1; pintarMision(); aviso(`<b>Bienvenido, ${escH(miembro.nombre.split(' ')[0])}.</b> Estás en la oficina real: lo que hagas aquí pasa de verdad.`);}
 async function cargarTodo(){const [m,a,e,o,t]=await Promise.all([sb.from('hq_metricas').select('*').eq('id',1).maybeSingle(),sb.from('hq_agentes').select('*'),
     sb.from('hq_eventos').select('*').order('ts',{ascending:false}).limit(30),sb.from('hq_outbox').select('*').order('creado',{ascending:false}).limit(80),sb.from('hq_tareas').select('*').order('creado',{ascending:false}).limit(80)]);
   DATOS.metricas=m.data; DATOS.agentes=Object.fromEntries((a.data||[]).map(r=>[r.id,r])); DATOS.eventos=e.data||[]; DATOS.outbox=o.data||[]; DATOS.tareas=t.data||[];}
@@ -1338,9 +1351,9 @@ async function alEntrar(){
 function pintarEquipo(){ for(const n of equipoNpc){scene.remove(n.p.m); n.el.remove();} equipoNpc=[];
   for(const m of DATOS.miembros){ if(m.rol!=='captador'||m.mesa==null||!MESAS[m.mesa]||m.user_id===yoUser?.id) continue; const s=MESAS[m.mesa];
     const p=persona({...npcAleatorio(m.mesa+2),x:s.x,y:FY(s.f)+0.39,z:s.z+0.92,ry:Math.PI}); cambiar(p,'typing',0);
-    const el=document.createElement('div'); el.className='nombre'; el.textContent=`${m.nombre} · Captador`; $('hud').appendChild(el); equipoNpc.push({p,el,f:s.f}); } }
+    const el=document.createElement('div'); el.className='nombre'; el.textContent=`${m.nombre} · Captador`; $('hud').appendChild(el); equipoNpc.push({p,el,f:s.f,id:m.user_id}); } }
 const _v3=new THREE.Vector3();
-function capHud(){ for(const n of equipoNpc){ if(n.f!==yo.planta){n.el.style.display='none';continue;} _v3.copy(n.p.m.position); _v3.y+=1.75; proyectar(n.el,_v3,16);} }
+function capHud(){ for(const n of equipoNpc){ const fuera=typeof OTROS!=='undefined'&&OTROS.has(n.id); n.p.m.visible=!fuera; if(n.f!==yo.planta||fuera){n.el.style.display='none';continue;} _v3.copy(n.p.m.position); _v3.y+=1.75; proyectar(n.el,_v3,16);} }
 // la lista
 function filaCap(p){ const tel=p.telefono?`<a class="opc mini" href="tel:+34${p.telefono}" data-tel="${p.id}">📞 Llamar</a>`:'';
   const wa=p.movil?`<a class="opc mini wa" target="_blank" rel="noopener" href="${waLink(p,p.estado==='nuevo'?msg1(p):msg2(p))}" data-wa="${p.id}">💬 ${p.estado==='nuevo'?'WhatsApp':'2º mensaje'}</a>`:'';
@@ -1391,6 +1404,81 @@ async function abrirEquipo(){ const caps=DATOS.miembros.filter(m=>m.rol==='capta
     if(error){aviso('No se pudo invitar: '+escH(error.message));return;} aviso('✅ <b>Invitado.</b> Ya puede entrar con su email.'); marcar('equipo'); abrirEquipo();};
 }
 $('bCaptacion').onclick=()=>abrirCaptacion();
+
+// ============ oficina compartida: verse en directo, chat escrito y voz por cercanía ============
+const OTROS=new Map(), PCS=new Map(); let sala=null, posT=0, vozOn=false, miStream=null, yoBur=null, yoBurHasta=0;
+const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
+const VOZ_RADIO=14;
+const hashN=s=>[...s].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
+function avatarDe(id,nombre,rol){
+  const p=rol==='socio'?persona({modelo:'joe',traje:0x1a1b20,corbata:0x111114,cara:0,oro:true}):persona(npcAleatorio(hashN(id)%6));
+  const el=document.createElement('div'); el.className='nombre'+(rol==='socio'?' jefe':''); $('hud').appendChild(el);
+  const bur=document.createElement('div'); bur.className='nombre bocadillo'; bur.style.display='none'; $('hud').appendChild(bur);
+  return {p,el,bur,burHasta:0,obj:new THREE.Vector3(),yaw:0,planta:0,anim:'idle',vis:true,visto:performance.now(),nombre,rol,voz:false};}
+function quitarOtro(id){const o=OTROS.get(id); if(!o) return; scene.remove(o.p.m); o.el.remove(); o.bur.remove();
+  const i=mixers.indexOf(o.p.mixer); if(i>=0) mixers.splice(i,1); const j=personas.indexOf(o.p); if(j>=0) personas.splice(j,1); OTROS.delete(id); cerrarVoz(id);}
+async function iniciarSala(){
+  sala=sb.channel('hq-sala',{config:{presence:{key:yoUser.id},broadcast:{self:false}}});
+  sala.on('broadcast',{event:'pos'},({payload:d})=>{ if(!d||d.id===yoUser.id) return; let o=OTROS.get(d.id);
+      if(!o){o=avatarDe(d.id,d.n,d.r); OTROS.set(d.id,o); o.p.m.position.set(d.x,d.y,d.z); aviso(`👋 <b>${escH(d.n)}</b> ha entrado en la oficina.`);}
+      o.obj.set(d.x,d.y,d.z); o.yaw=d.w; o.planta=d.f; o.anim=d.a; o.vis=d.v; o.visto=performance.now();
+      const antes=o.voz; o.voz=!!d.voz; o.el.textContent=o.nombre+(o.voz?' 🎙️':''); if(o.voz&&!antes&&vozOn) conectarVoz(d.id); if(!o.voz&&antes) cerrarVoz(d.id); })
+    .on('broadcast',{event:'rtc'},({payload:d})=>{ if(d&&d.to===yoUser.id) senal(d); })
+    .on('presence',{event:'leave'},({key})=>{ const o=OTROS.get(key); if(o) aviso(`<b>${escH(o.nombre)}</b> ha salido.`); quitarOtro(key); })
+    .subscribe(async st=>{ if(st==='SUBSCRIBED') await sala.track({n:miembro.nombre}); });
+  yoBur=document.createElement('div'); yoBur.className='nombre bocadillo'; yoBur.style.display='none'; $('hud').appendChild(yoBur);
+  await cargarChat(); sb.channel('hq-chat').on('postgres_changes',{event:'INSERT',schema:'public',table:'hq_chat'},p=>nuevoChat(p.new,true)).subscribe();
+  $('chatBox').hidden=false; $('bVoz').hidden=false;
+}
+const _vp=new THREE.Vector3();
+function salaTick(dt){ if(!sala) return; posT+=dt;
+  if(posT>0.12){posT=0; const m=yo.m.position;
+    sala.send({type:'broadcast',event:'pos',payload:{id:yoUser.id,n:miembro.nombre,r:miembro.rol,x:+m.x.toFixed(2),y:+m.y.toFixed(2),z:+m.z.toFixed(2),w:+yo.m.rotation.y.toFixed(2),f:yo.planta,a:yo.actual,v:yo.m.visible,voz:vozOn}});}
+  const ahoraMs=performance.now();
+  for(const [id,o] of OTROS){
+    if(ahoraMs-o.visto>10000){quitarOtro(id); continue;}
+    const p=o.p; p.m.position.lerp(o.obj,Math.min(1,dt*10)); let d=o.yaw-p.m.rotation.y; d=Math.atan2(Math.sin(d),Math.cos(d)); p.m.rotation.y+=d*Math.min(1,dt*10);
+    p.m.visible=o.vis!==false; cambiar(p,['walk','run','idle','drinking','sitting_idle','typing','waving','clapping','shaking_hands'].includes(o.anim)?o.anim:'idle',0.25);
+    const dist=p.m.position.distanceTo(yo.m.position), misma=o.planta===yo.planta;
+    _vp.copy(p.m.position); _vp.y+=1.95; if(misma&&p.m.visible) proyectar(o.el,_vp,30); else o.el.style.display='none';
+    if(o.burHasta>ahoraMs&&misma){_vp.y+=0.35; proyectar(o.bur,_vp,30);} else o.bur.style.display='none';
+    const r=PCS.get(id); if(r) r.audio.volume=misma?clamp(1-(dist-2)/(VOZ_RADIO-2)):0;
+  }
+  if(yoBurHasta>ahoraMs){_vp.copy(yo.m.position); _vp.y+=2.3; proyectar(yoBur,_vp,40);} else if(yoBur) yoBur.style.display='none';
+}
+// chat escrito
+async function cargarChat(){const {data}=await sb.from('hq_chat').select('*').order('creado',{ascending:false}).limit(30); (data||[]).reverse().forEach(m=>nuevoChat(m,false));}
+function nuevoChat(m,vivo){const l=$('chatLog'); const d=document.createElement('div');
+  const h=new Date(m.creado).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Atlantic/Canary'});
+  d.innerHTML=`<small>${h}</small> <b>${escH(m.nombre)}</b> ${escH(m.texto)}`; l.appendChild(d); while(l.children.length>60) l.firstChild.remove(); l.scrollTop=l.scrollHeight;
+  if(!vivo) return; const box=$('chatBox'); box.classList.add('vivo'); clearTimeout(nuevoChat.t); nuevoChat.t=setTimeout(()=>box.classList.remove('vivo'),7000);
+  if(m.user_id===yoUser.id){yoBur.textContent=m.texto; yoBurHasta=performance.now()+6000;}
+  else {const o=OTROS.get(m.user_id); if(o){o.bur.textContent=m.texto; o.burHasta=performance.now()+6000;} try{sonido.ding();}catch(e){}}}
+$('chatForm').onsubmit=async e=>{e.preventDefault(); const i=$('chatIn'), t=i.value.trim(); if(!t||!REAL) return; i.value=''; i.blur();
+  const {error}=await sb.from('hq_chat').insert({nombre:miembro.nombre,texto:t.slice(0,400)}); if(error) aviso('No se pudo enviar: '+escH(error.message));};
+addEventListener('keydown',e=>{ if(!REAL||$('chatBox').hidden) return;
+  if(e.code==='Enter'&&e.target.tagName!=='INPUT'&&!dialogoAbierto){e.preventDefault(); for(const k in teclas) teclas[k]=false; $('chatIn').focus();}
+  else if(e.code==='Escape'&&e.target.id==='chatIn') e.target.blur(); });
+// voz por cercanía (WebRTC entre navegadores; la señal va por el canal de Realtime)
+$('bVoz').onclick=async()=>{
+  if(!vozOn){ try{miStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});}catch(e){aviso('Necesito permiso de micrófono para la voz.');return;}
+    vozOn=true; aviso(`🎙️ <b>Voz activada.</b> Te oyen los que estén a menos de ${VOZ_RADIO} m y en tu misma planta.`); for(const [id,o] of OTROS) if(o.voz) conectarVoz(id); }
+  else { vozOn=false; for(const id of [...PCS.keys()]) cerrarVoz(id); miStream.getTracks().forEach(t=>t.stop()); miStream=null; aviso('Voz desactivada.'); }
+  $('bVoz').classList.toggle('on',vozOn); $('bVoz').textContent=vozOn?'🎙️ Voz':'🔇 Voz'; };
+function nuevaPC(id){const pc=new RTCPeerConnection(ICE), audio=new Audio(); audio.autoplay=true; audio.volume=0; const r={pc,audio,cola:[]}; PCS.set(id,r);
+  miStream.getTracks().forEach(t=>pc.addTrack(t,miStream));
+  pc.ontrack=e=>{audio.srcObject=e.streams[0]; audio.play().catch(()=>{});};
+  pc.onicecandidate=e=>{if(e.candidate) enviarRtc(id,{c:e.candidate.toJSON()});};
+  pc.onconnectionstatechange=()=>{if(['failed','closed'].includes(pc.connectionState)) cerrarVoz(id);};
+  return r;}
+async function conectarVoz(id){ if(!vozOn||PCS.has(id)) return; const r=nuevaPC(id);
+  if(yoUser.id<id){ await r.pc.setLocalDescription(await r.pc.createOffer()); enviarRtc(id,{sdp:r.pc.localDescription.toJSON()}); } }
+async function senal(d){ if(!vozOn) return; const r=PCS.get(d.from)||nuevaPC(d.from), pc=r.pc;
+  try{ if(d.sdp){ await pc.setRemoteDescription(d.sdp); for(const c of r.cola.splice(0)) await pc.addIceCandidate(c);
+         if(d.sdp.type==='offer'){ await pc.setLocalDescription(await pc.createAnswer()); enviarRtc(d.from,{sdp:pc.localDescription.toJSON()}); } }
+       else if(d.c){ if(pc.remoteDescription) await pc.addIceCandidate(d.c); else r.cola.push(d.c); } }catch(e){} }
+function enviarRtc(to,d){sala.send({type:'broadcast',event:'rtc',payload:{...d,from:yoUser.id,to}});}
+function cerrarVoz(id){const r=PCS.get(id); if(!r) return; try{r.pc.close();}catch(e){} r.audio.srcObject=null; PCS.delete(id);}
 
 // ============ luz ============
 const cAlba=new THREE.Color(0xff9a5c), cDia=new THREE.Color(0xfff1dc), niebDia=new THREE.Color(0xd8c6a8), niebNoche=new THREE.Color(0x0b1226);
@@ -1509,7 +1597,7 @@ function bucle(){
    if(fuera&&yo.planta===0){claxonT-=dt; if(claxonT<0){claxonT=15+rnd()*25; sonido.claxon();}}
    if(!conduciendo&&(yo.actual==='walk'||yo.actual==='run')){pasoAcum+=dt*(yo.actual==='run'?3.2:1.9); if(pasoAcum>1){pasoAcum=0;sonido.paso();}}
    if(copas>0){copas=Math.max(0,copas-dt/90); const k=Math.max(0,copas-1); renderer.domElement.style.filter=k>0.05?`blur(${Math.min(2.2,k*0.7)}px) saturate(${1+k*0.15})`:''; if(k>0.05) cam.rotation.z+=Math.sin(T*1.3)*0.02*k;}
-   capHud(); const rg=$('relojG'); if(rg) rg.textContent=fmt(ahora);}
+   capHud(); salaTick(dt); const rg=$('relojG'); if(rg) rg.textContent=fmt(ahora);}
   accionActual=buscarAccion(); const ac=$('accion'); if(accionActual){ac.hidden=false;ac.querySelector('span').textContent=accionActual.txt;} else ac.hidden=true;
   composer.render(); moverHud();
   mapaT+=dt; if(mapaT>0.1){mapaT=0;pintarMapa();}
@@ -1520,6 +1608,7 @@ setTimeout(()=>{$('carga').style.opacity=0;setTimeout(()=>$('carga').remove(),10
 pintarMision();
 cargarMuebles();
 iniciarReal();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 renderer.domElement.focus();
 bucle();
 </script>
