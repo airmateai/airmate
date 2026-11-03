@@ -351,7 +351,7 @@ function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;
 
 function texPBR(n,rx=1,ry=1){const mk=(t,c)=>{const x=loader.load(`tex/pbr/${n}_${t}.jpg`);x.colorSpace=c;x.wrapS=x.wrapT=THREE.RepeatWrapping;x.repeat.set(rx,ry);x.anisotropy=maxAniso;return x;};return {map:mk('diff',THREE.SRGBColorSpace),normalMap:mk('nor',THREE.NoColorSpace),roughnessMap:mk('rough',THREE.NoColorSpace)};}
 const PH={}, slotsMuebles=[];
-function mueble(id,x,y,z,ry=0,s=1){slotsMuebles.push({id,x,y,z,ry,s});}
+function mueble(id,x,y,z,ry=0,s=1,sx=1){slotsMuebles.push({id,x,y,z,ry,s,sx});}
 // ---- materiales ----
 const MIR=THREE.MirroredRepeatWrapping;
 const M={
@@ -426,7 +426,7 @@ imgAsfalto.src='tex/pbr/asfalto_diff.jpg';
 texCarretera.wrapS=texCarretera.wrapT=THREE.RepeatWrapping;
 const matCarretera=new THREE.MeshStandardMaterial({map:texCarretera,roughness:0.9});
 const matCruce=new THREE.MeshStandardMaterial({...texPBR('asfalto',2,2),roughness:1});
-const LIM=240, ANCHO=12, CALLES=[-120,-40,40,120];
+const LIM=240, ANCHO=12, CALLES=[-200,-160,-120,-80,-40,40,80,120,160,200];
 for(const c of CALLES){
   const a=plano(ANCHO,LIM*2,matCarretera.clone(),c,0.02,0,0,-Math.PI/2); a.material.map=texCarretera.clone(); a.material.map.repeat.set(1,LIM*2/12); a.material.map.needsUpdate=true;
   const b=plano(ANCHO,LIM*2,matCarretera.clone(),0,0.021,c,Math.PI/2,-Math.PI/2); b.rotation.set(-Math.PI/2,0,Math.PI/2); b.material.map=texCarretera.clone(); b.material.map.repeat.set(1,LIM*2/12); b.material.map.needsUpdate=true;
@@ -443,6 +443,7 @@ const FACH=[{map:tex('tex/fachada.jpg'),tile:12,tint:[0xffffff,0xd8e4ee,0xc8d4e0
 const texTiendas=tex('tex/tiendas.jpg');
 const matTiendas=new THREE.MeshStandardMaterial({map:texTiendas,roughness:0.45,emissive:0xffffff,emissiveMap:texTiendas,emissiveIntensity:0.15}); const tiendasMats=[matTiendas];
 function matF(t){const f=FACH[t];const m=new THREE.MeshStandardMaterial({map:f.map,color:f.tint[Math.floor(rnd()*f.tint.length)],roughness:f.rough,metalness:f.metal,emissive:0xffffff,emissiveMap:facadeNoche,emissiveIntensity:0});fachadas.push(m);return m;}
+const RESERVADO=[]; const libre=(x,z)=>!RESERVADO.some(r=>Math.abs(x-r[0])<20&&Math.abs(z-r[1])<20);
 function edificio(x,z,w,d,h,t){const m=matF(t), tile=FACH[t].tile;
   if(t!==1&&rnd()<0.28){const r=Math.min(w,d)/2,g=new THREE.CylinderGeometry(r,r,h,40,1,true),uv=g.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*2*Math.PI*r/tile,uv.getY(i)*h/tile);
     const c=new THREE.Mesh(g,m);c.position.set(x,h/2,z);c.castShadow=true;c.receiveShadow=true;scene.add(c);cil(r,r,0.8,M.cristalOsc,x,h+0.4,z,{seg:40});colisiones[0].push({x0:x-r,x1:x+r,z0:z-r,z1:z+r});
@@ -458,8 +459,8 @@ function edificio(x,z,w,d,h,t){const m=matF(t), tile=FACH[t].tile;
 for(let bx=-2;bx<=2;bx++) for(let bz=-2;bz<=2;bz++){
   if(bx===0&&bz===0) continue;
   const cx=bx*80, cz=bz*80, n=1+Math.floor(rnd()*3), lejos=Math.abs(bx)+Math.abs(bz)>2;
-  const slots=[[-14,-14],[14,14],[-14,14],[14,-14]].sort(()=>rnd()-0.5).slice(0,n);
-  for(const [ox,oz] of slots){const w=16+rnd()*12, d=16+rnd()*12, h=30+rnd()*(lejos?110:170), t=Math.floor(rnd()*3); edificio(cx+(n===1?0:ox),cz+(n===1?0:oz),w,d,h,t);}
+  const slots=[[-20,-20],[20,20],[-20,20],[20,-20]].sort(()=>rnd()-0.5).slice(0,Math.max(2,n+1));
+  for(const [ox,oz] of slots){const w=13+rnd()*9, d=13+rnd()*9, h=30+rnd()*(lejos?110:170), t=Math.floor(rnd()*3); if(!libre(cx+ox,cz+oz)) continue; edificio(cx+ox,cz+oz,w,d,h,t);}
 }
 // Burj Khalifa a lo lejos
 {const m=matF(0); m.color.set(0xdfe6ee); let y=0; const x=-330,z=-540;
@@ -627,7 +628,7 @@ function mesaAlta(x,y,z,m=2){ y+=0.2; // mesa de oficina con silla: el agente se
 }
 function silla(x,y,z,ry=0,m=M.cuero){const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=ry;scene.add(g);
   caja(0.55,0.09,0.52,m,0,0.48,0,{padre:g});caja(0.53,0.7,0.07,m,0,0.9,-0.28,{padre:g});cil(0.03,0.03,0.42,M.acero,0,0.25,0,{padre:g,seg:8});caja(0.62,0.03,0.05,M.acero,0,0.05,0,{padre:g});caja(0.05,0.03,0.62,M.acero,0,0.05,0,{padre:g});return g;}
-function sofa(x,y,z,ry,f,largo=2.6){mueble(largo>2.7?'sofa_03':'sofa_02',x,y,z,ry,1);
+function sofa(x,y,z,ry,f,largo=2.6){const grande=largo>2.7, dz=grande?0.015:0.175; mueble(grande?'sofa_03':'sofa_02',x+Math.sin(ry)*dz,y,z+Math.cos(ry)*dz,ry,1,grande?largo/2.72:largo/1.79);
   const c=Math.abs(Math.sin(ry))>0.5; colisiones[f].push(c?{x0:x-0.5,x1:x+0.5,z0:z-largo/2,z1:z+largo/2}:{x0:x-largo/2,x1:x+largo/2,z0:z-0.5,z1:z+0.5});}
 function salaCristal(f,x0,z0,x1,z1,puertaLado){const y=f*H;
   const segs=[['n',x0,z0,x1,z0],['s',x0,z1,x1,z1],['o',x0,z0,x0,z1],['e',x1,z0,x1,z1]];
@@ -733,7 +734,7 @@ async function cargar(n){const b64=await (await fetch(`mod/${n}.txt`)).text(); c
   return new Promise((r,e)=>gltf.parse(bin.buffer,'',g=>{modelos[n]=g;r();},e));}
 $('cargaTxt').textContent='Llegando el equipo…';
 const MX={};
-await Promise.all([...['ferrari','Stork','Flamingo'].map(cargar), ...['joe','josh','louise','anims'].map(async n=>{MX[n]=await gltf.loadAsync(`mod/${n}.glb`);})]);
+await Promise.all([...['ferrari','Stork','Flamingo'].map(cargar), ...['joe','josh','louise','anims','concept'].map(async n=>{MX[n]=await gltf.loadAsync(`mod/${n}.glb`);})]);
 // Mixamo numera los huesos de cada personaje (mixamorig7Hips, mixamorig8Hips…): se unifican para compartir animaciones
 const norm=n=>n.replace(/^mixamorig\d*/,'mixamorig');
 for(const k in MX){ MX[k].scene.traverse(o=>{o.name=norm(o.name);}); for(const c of MX[k].animations) for(const t of c.tracks) t.name=norm(t.name); }
@@ -857,8 +858,12 @@ function ferrari(color){const inner=ferrariSrc.clone(true); const ruedas=[];
   inner.traverse(o=>{ if(/interior|leather|carpet|brakes|wipers|carbon|yellow_trim/i.test(o.name)) o.visible=false; if(o.isMesh){o.castShadow=true; if(o.name==='body'||/body/i.test(o.material?.name||'')){o.material=o.material.clone();o.material.color.set(color);}} if(/^wheel_/.test(o.name)) ruedas.push(o); });
   inner.rotation.y=Math.PI/2; const g=new THREE.Group(); g.add(inner); scene.add(g); return {g,ruedas};}
 const colFerrari=[0xc0001a,0xf4f4f2,0x111214,0xf2b705,0x1d3b8a,0xc0001a,0x8a8f96,0x111214];
-for(let i=0;i<24;i++){const calle=CALLES[i%4], eje=i%8<4?'x':'z', dir=(i%3===0)?-1:1, carril=dir>0?(i%2?1.5:4.5):-(i%2?1.5:4.5);
-  const v=(i%6===0&&i<18)?ferrari(colFerrari[i%colFerrari.length]):coche(colorCoche[i%colorCoche.length]); const s=-LIM+rnd()*LIM*2;
+const conceptSrc=MX.concept.scene;
+function deportivo(color){const inner=conceptSrc.clone(true); inner.traverse(o=>{ if(!o.isMesh) return; if(/^Interior|Engine|Wipers|Pedal/.test(o.name)){o.visible=false;return;} o.castShadow=true; if(/Paint/.test(o.material?.name||'')){o.material=o.material.clone();o.material.color.set(color);} });
+  inner.rotation.y=Math.PI/2; const g=new THREE.Group(); g.add(inner); scene.add(g); return {g,ruedas:[],off:0};}
+const colDep=[0xf4f4f2,0x111214,0xa9adb3,0x1d2a44,0xc9a45a,0x6d0f14,0x0f3d2e,0x2b2d31,0xe9e4da,0x3a0d12];
+for(let i=0;i<36;i++){const calle=CALLES[i%CALLES.length], eje=(i>>1)%2?'x':'z', dir=(i%3===0)?-1:1, carril=dir>0?(i%2?1.5:4.5):-(i%2?1.5:4.5);
+  const v=(i%9===0)?{...ferrari(colFerrari[(i/9)%colFerrari.length]),off:Math.PI}:deportivo(colDep[i%colDep.length]); const s=-LIM+rnd()*LIM*2;
   coches.push({...v,eje,calle,carril,dir,s,v:9+rnd()*7});}
 // el Ferrari del jefe, aparcado en la puerta
 const miFerrari=ferrari(0x0b0b0d); miFerrari.g.position.set(-7.5,0.12,19.8); colisiones[0].push({x0:-9.8,x1:-5.2,z0:18.8,z1:20.8});
@@ -1231,10 +1236,10 @@ function conducir(dt){
 // ============ muebles de diseño (Poly Haven) ============
 async function cargarMuebles(){ const ids=[...new Set(slotsMuebles.map(s=>s.id))];
   await Promise.all(ids.map(async id=>{try{PH[id]=await gltf.loadAsync(`mod/ph/${id}.glb`);}catch(e){}}));
-  for(const sl of slotsMuebles){const src=PH[sl.id]; if(!src) continue; const o=src.scene.clone(true); o.position.set(sl.x,sl.y,sl.z); o.rotation.y=sl.ry; o.scale.setScalar(sl.s);
+  for(const sl of slotsMuebles){const src=PH[sl.id]; if(!src) continue; const o=src.scene.clone(true); o.position.set(sl.x,sl.y,sl.z); o.rotation.y=sl.ry; o.scale.set(sl.s*(sl.sx||1),sl.s,sl.s);
     o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true; if(c.material) c.material.envMapIntensity=0.6;}}); scene.add(o);} }
 {const y0=0.18,y4=4*H+0.18,yr=TECHO+0.4;
- mueble('modern_arm_chair_01',-5.7,y0,2.4,-Math.PI/2); mueble('modern_arm_chair_01',-5.7,y0,3.8,-Math.PI/2); mueble('modern_coffee_table_02',-8,y0+0.02,3,0);
+ mueble('modern_arm_chair_01',-5.7,y0,2.4,-Math.PI/2); mueble('modern_arm_chair_01',-5.7,y0,3.8,-Math.PI/2);
  mueble('brass_vase_01',2.5,y0+1.15,-1.2,0,1.2); mueble('ceramic_vase_02',-2.5,y0+1.15,-1.2,0,1.3); mueble('standing_picture_frame_01',-1.8,y0+1.15,-1.3,0.3);
  mueble('desk_lamp_arm_01',7.3,y4+0.82,5.3,0.6); mueble('standing_picture_frame_01',9.4,y4+0.82,5.5,-0.4); mueble('television_02',8.6,y4+0.62,1.25,0,1.4);
  mueble('mid_century_lounge_chair',5.2,y4,5.6,Math.PI*0.75); mueble('side_table_01',4.4,y4,4.6,0); mueble('modern_wooden_cabinet',-11.4,y4,4,Math.PI/2);
@@ -1309,7 +1314,7 @@ function bucle(){
   for(const p of andantes) if(p.m.visible) avanzarRuta(p,dt);
   for(const p of peatones) avanzarRuta(p,dt);
   for(const c of coches){c.s+=c.v*c.dir*dt; if(c.s>LIM)c.s=-LIM; if(c.s<-LIM)c.s=LIM;
-    if(c.eje==='x'){c.g.position.set(c.s,0,c.calle+c.carril);c.g.rotation.y=c.dir>0?0:Math.PI;} else {c.g.position.set(c.calle+c.carril,0,c.s);c.g.rotation.y=c.dir>0?-Math.PI/2:Math.PI/2;}}
+    if(c.eje==='x'){c.g.position.set(c.s,0,c.calle+c.carril);c.g.rotation.y=(c.dir>0?0:Math.PI)+(c.off||0);} else {c.g.position.set(c.calle+c.carril,0,c.s);c.g.rotation.y=(c.dir>0?-Math.PI/2:Math.PI/2)+(c.off||0);}}
   for(const a of AG){ if(a.id==='tu') continue; const o=objAg[a.id], e=estado(a.id,ahora); if(!o.m.visible) continue; cambiar(o,o.sentado?(e.st==='work'?'typing':'sitting_idle'):(e.st==='work'?'talking':'idle'),0.5); }
   mixers.forEach(m=>m.update(dt));
   cabezasAlDia();
