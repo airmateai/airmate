@@ -140,7 +140,7 @@ body.real #juego #mapa{bottom:calc(20px + env(safe-area-inset-bottom,0px))}
 .velo small{font-size:18px;letter-spacing:.2em;color:var(--gold-2)}
 body.real .timebar{display:none}
 @media (max-width:700px){#juego #mapa{width:112px;height:112px;bottom:calc(118px + env(safe-area-inset-bottom,0px))}.hudDer{top:calc(70px + env(safe-area-inset-top,0px))}#dinero{font-size:26px}#relojG{font-size:22px}}
-.dialogo.ancho{width:min(760px,calc(100vw - 32px));max-height:min(86vh,820px);overflow:auto}
+.dialogo.ancho{width:min(760px,calc(100vw - 32px));top:max(12px,env(safe-area-inset-top,0px));bottom:auto;max-height:calc(100dvh - 120px);overflow:auto}
 .capStats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 10px}.capStats span{background:var(--panel-2);border-radius:10px;padding:8px;font-size:12px;color:var(--muted);display:grid}.capStats b{font-size:20px;color:var(--gold-2)}
 .capTabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.capTabs button{padding:6px 10px;font-size:13px}.capTabs button.on{background:var(--gold);color:#111}
 .pros{display:grid;gap:6px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08)}.pros .pi{display:grid;gap:2px}.pros small{color:var(--muted)}.pros .nota{color:var(--gold-2)}
@@ -164,6 +164,9 @@ body.real .timebar{display:none}
 .mira{position:absolute;z-index:5;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #000;pointer-events:none}.mira::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px;background:#ff3b3b;border-radius:50%}
 .mira[hidden],.tiroHud[hidden]{display:none}
 .tiroHud{position:absolute;z-index:5;left:50%;top:calc(80px + env(safe-area-inset-top,0px));transform:translateX(-50%);font-family:"Bebas Neue",Impact,sans-serif;font-size:40px;color:#fff;text-shadow:0 3px 0 #000;pointer-events:none}
+.lugares{display:grid;gap:6px;margin-top:10px}.lug{display:grid;grid-template-columns:22px 1fr auto auto auto;gap:8px;align-items:center;background:var(--panel-2);border-radius:10px;padding:6px 8px}.lug small{color:var(--muted)}
+#mapaGrande{width:100%;height:auto;border-radius:12px;display:block}
+@media (max-width:600px){.lug{grid-template-columns:22px 1fr auto}.lug .opc{grid-column:span 1}}
 .mision{position:absolute;z-index:4;left:max(12px,env(safe-area-inset-left,0px));top:calc(150px + env(safe-area-inset-top,0px));width:min(300px,calc(100% - 24px));background:rgba(8,10,16,.78);backdrop-filter:blur(10px);border:1px solid rgba(214,178,106,.35);border-left:3px solid var(--gold);border-radius:12px;padding:10px 12px;display:grid;gap:3px;pointer-events:auto}
 .mision small{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .mision b{font-family:var(--f-serif);font-size:19px;line-height:1.1;color:#fff}
@@ -207,6 +210,7 @@ body.cine .hud-arriba,body.cine .ayuda,body.cine .avisos,body.cine .accion,body.
     <div class="derecha">
       <canvas id="mapa" width="300" height="300" aria-label="Minimapa"></canvas>
       <div class="botones">
+        <button id="bMapa" aria-label="Mapa">🗺️ Mapa</button>
         <button id="bMovil" aria-label="Móvil" hidden>📱</button>
         <button id="bVoz" hidden>🔇 Voz</button>
         <button id="bSonido" aria-label="Sonido">🔊</button>
@@ -224,7 +228,7 @@ body.cine .hud-arriba,body.cine .ayuda,body.cine .avisos,body.cine .accion,body.
   <div class="hudDer" id="hudDer"><div id="relojG">--:--</div><div id="dinero">AED 0</div><div id="estatus"></div></div>
   <div class="velo" id="velo" hidden></div>
   <div class="mira" id="mira" hidden></div><div class="tiroHud" id="tiroHud" hidden></div>
-  <div class="ayuda" id="ayuda">WASD andar · Shift correr · Espacio saltar · F pegar · M móvil · arrastra para mirar · rueda zoom · E interactuar</div>
+  <div class="ayuda" id="ayuda">WASD andar · Shift correr · Espacio saltar · F pegar · M móvil · N mapa · arrastra para mirar · rueda zoom · E interactuar</div>
   <div class="mision" id="mision"></div>
   <div class="completada" id="completada" hidden></div>
   <button class="salirCine" id="salirCine" hidden>Salir del modo cine · Esc</button>
@@ -887,10 +891,10 @@ function ferrari(color){const inner=ferrariSrc.clone(true); const ruedas=[];
   inner.rotation.y=Math.PI/2; const g=new THREE.Group(); g.add(inner); scene.add(g); return {g,ruedas};}
 const colFerrari=[0xc0001a,0xf4f4f2,0x111214,0xf2b705,0x1d3b8a,0xc0001a,0x8a8f96,0x111214];
 const conceptSrc=MX.concept.scene;
-function deportivo(color){const inner=conceptSrc.clone(true); inner.traverse(o=>{ if(!o.isMesh) return; if(/^Interior|Engine|Wipers|Pedal/.test(o.name)){o.visible=false;return;} o.castShadow=true; if(/Paint/.test(o.material?.name||'')){o.material=o.material.clone();o.material.color.set(color);} });
+function deportivo(color){const inner=conceptSrc.clone(true); inner.traverse(o=>{ if(!o.isMesh) return; if(/^Interior|Engine|Wipers|Pedal/.test(o.name)){o.visible=false;return;} o.castShadow=false; if(/Paint/.test(o.material?.name||'')){o.material=o.material.clone();o.material.color.set(color);} });
   inner.rotation.y=Math.PI/2; const g=new THREE.Group(); g.add(inner); scene.add(g); return {g,ruedas:[],off:0};}
 const colDep=[0xf4f4f2,0x111214,0xa9adb3,0x1d2a44,0xc9a45a,0x6d0f14,0x0f3d2e,0x2b2d31,0xe9e4da,0x3a0d12];
-for(let i=0;i<26;i++){const calle=CALLES[i%CALLES.length], eje=(i>>1)%2?'x':'z', dir=(i%3===0)?-1:1, carril=dir>0?(i%2?1.5:4.5):-(i%2?1.5:4.5);
+for(let i=0;i<18;i++){const calle=CALLES[i%CALLES.length], eje=(i>>1)%2?'x':'z', dir=(i%3===0)?-1:1, carril=dir>0?(i%2?1.5:4.5):-(i%2?1.5:4.5);
   const v=(i%9===0)?{...ferrari(colFerrari[(i/9)%colFerrari.length]),off:Math.PI}:deportivo(colDep[i%colDep.length]); const s=-LIM+rnd()*LIM*2;
   coches.push({...v,eje,calle,carril,dir,s,v:9+rnd()*7});}
 // el Ferrari del jefe, aparcado en la puerta
@@ -967,16 +971,18 @@ function pintarLobby(c,t){const tx=tPantallaLobby,g=tx.userData.g,w=1024,h=576;
 
 // minimapa
 const mapa=$('mapa'), mg=mapa.getContext('2d');
-function pintarMapa(){const S=mapa.width, k=S/130; mg.clearRect(0,0,S,S); mg.save(); mg.beginPath(); mg.arc(S/2,S/2,S/2-2,0,7); mg.clip();
+function pintarMapa(){const S=mapa.width, fuera=yo.planta===0&&!dentro(yo.m.position.x,yo.m.position.z), k=S/(fuera?240:110); mg.clearRect(0,0,S,S); mg.save(); mg.beginPath(); mg.arc(S/2,S/2,S/2-2,0,7); mg.clip();
   mg.fillStyle='#0f141d'; mg.fillRect(0,0,S,S); const yawv=conduciendo?auto.yaw-Math.PI/2:yo.yaw;
   mg.translate(S/2,S/2); mg.rotate(yawv-Math.PI); mg.scale(k,k); mg.translate(-yo.m.position.x,-yo.m.position.z);
-  mg.fillStyle='#1b2230'; mg.fillRect(-300,-300,600,600);
-  mg.fillStyle='#3a4256'; for(const c of CALLES){mg.fillRect(c-6,-LIM,12,LIM*2);mg.fillRect(-LIM,c-6,LIM*2,12);}
+  mg.fillStyle='#1b2230'; mg.fillRect(-400,-300,800,600); mg.fillStyle='#16708a'; mg.fillRect(-900,-450,550,900);
+  mg.fillStyle='#3a4256'; for(const c of CALLES){mg.fillRect(c-6,-LIM,12,LIM*2);mg.fillRect(-LIM,c-6,LIM*2,12);} mg.fillRect(-300,34,60,12);
   mg.fillStyle='#d6b26a'; mg.fillRect(-W/2,-D/2,W,D);
   mg.fillStyle='rgba(255,255,255,.35)'; for(const p of peatones) mg.fillRect(p.m.position.x-1,p.m.position.z-1,2,2);
   mg.fillStyle='#8fb4ff'; for(const c of coches) mg.fillRect(c.g.position.x-1.5,c.g.position.z-1.5,3,3);
   const o=objetivoVisible&&objetivoVisible(); if(o){mg.fillStyle='#ffd05a'; mg.beginPath(); mg.arc(o.x,o.z,3.2,0,7); mg.fill(); mg.strokeStyle='#000'; mg.lineWidth=0.8; mg.stroke();}
+  for(const l of LUGARES()){mg.fillStyle=l.col; mg.beginPath(); mg.arc(l.x,l.z,5/k*2.2,0,7); mg.fill();}
   mg.restore();
+  if(o){const dx=o.x-yo.m.position.x, dz=o.z-yo.m.position.z, a=yawv-Math.PI, rx=(dx*Math.cos(a)-dz*Math.sin(a))*k, rz=(dx*Math.sin(a)+dz*Math.cos(a))*k, dd=Math.hypot(rx,rz), R=S/2-12; if(dd>R){mg.save(); mg.translate(S/2+rx/dd*R,S/2+rz/dd*R); mg.rotate(Math.atan2(rz,rx)+Math.PI/2); mg.fillStyle='#ffd05a'; mg.strokeStyle='#000'; mg.lineWidth=1.5; mg.beginPath(); mg.moveTo(0,-9); mg.lineTo(7,6); mg.lineTo(-7,6); mg.closePath(); mg.fill(); mg.stroke(); mg.restore();}}
   mg.save(); mg.translate(S/2,S/2); mg.fillStyle='#f0d898'; mg.strokeStyle='#000'; mg.lineWidth=1.5; mg.beginPath(); mg.moveTo(0,-10); mg.lineTo(7,8); mg.lineTo(0,4); mg.lineTo(-7,8); mg.closePath(); mg.fill(); mg.stroke(); mg.restore();
   mg.strokeStyle='rgba(0,0,0,.55)'; mg.lineWidth=5; mg.beginPath(); mg.arc(S/2,S/2,S/2-3,0,7); mg.stroke();
 }
@@ -1170,7 +1176,7 @@ pintarMovil();
 
 const marcador=new THREE.Mesh(new THREE.OctahedronGeometry(0.35,0),new THREE.MeshBasicMaterial({color:new THREE.Color(1,0.78,0.35).multiplyScalar(2.2),toneMapped:false})); scene.add(marcador);
 const haz=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,60,8,1,true),new THREE.MeshBasicMaterial({color:new THREE.Color(1,0.8,0.4),transparent:true,opacity:0.16,toneMapped:false,depthWrite:false})); scene.add(haz);
-function objetivoVisible(){const p=pasoActual(); if(!p) return null;
+function objetivoVisible(){ if(gps){ if(yo.planta===0) return {x:gps.x,z:gps.z,y:0.2,txt:gps.nombre}; return {x:yo.planta===5?0:1.8,z:-5.1,y:FY(yo.planta)+(yo.planta===5?0.4:0.2),txt:'Ascensor → Planta baja'}; } const p=pasoActual(); if(!p) return null;
   const f=yo.planta, fuera=f===0&&!dentro(yo.m.position.x,yo.m.position.z);
   if(p.f===f) return {x:p.x,z:p.z,y:FY(f)+(f===5?0.4:0.2),txt:''};
   if(fuera) return {x:0,z:D/2+1,y:0.2,txt:'Entra en el edificio'};
@@ -1538,7 +1544,7 @@ function local(id,cfg){ const {x:cx,z:cz,w=24,d=22,h=7,nombre,sub,suelo,pared,lu
   const ml=matLetras(letrero(nombre,{w:1024,h:256,fs:150,sub,esp:0.22})); ml.emissiveIntensity=1.4; plano(11,2.75,ml,cx,h-1.2,cz+d/2+0.25);
   const alfombra=new THREE.MeshStandardMaterial({color:0x5a0f16,roughness:0.9}); caja(3.2,0.04,6,alfombra,cx,0.22,cz+d/2+3,{sombra:false});
   for(const s of [-1,1]){ cil(0.05,0.05,1,M.oro,cx+s*2,0.7,cz+d/2+1.2,{seg:8}); cil(0.05,0.05,1,M.oro,cx+s*2,0.7,cz+d/2+5,{seg:8}); }
-  for(const [lx,lz] of [[-w/4,-d/4],[w/4,-d/4],[0,d/4]]){ const l=new THREE.PointLight(luz,18,16,1.6); l.position.set(cx+lx,h-1,cz+lz); v.grupo.add(l); }
+  { const pm=new THREE.MeshStandardMaterial({color:0x111111,emissive:luz,emissiveIntensity:1.6}); for(const lz of [-d/4,d/4]){ const p=new THREE.Mesh(new THREE.PlaneGeometry(w*0.7,1.2),pm); p.rotation.x=Math.PI/2; p.position.set(cx,h-0.05,cz+lz); v.grupo.add(p);} }
   v.entrada=new THREE.Vector3(cx,0.12,cz+d/2+2.4);
   return v; }
 function rutaCamarero(v,pts,o){ const p=gente(v,{...o,x:pts[0][0],y:0.32,z:pts[0][1]},'walk'); p.ruta=pts.map(([x,z])=>[x,z]); p.i=1; p.v=1.05; v.camareros.push(p); return p; }
@@ -1836,7 +1842,7 @@ function cocheDe(it){ const g=new THREE.Group(); scene.add(g); const c={g,ruedas
 { const P=local('motors',{x:140,z:60,w:26,d:22,nombre:'PRESTIGE MOTORS',sub:'DUBAI · LUXURY & PERFORMANCE',suelo:M.marmol,pared:M.marmolPared,luz:0xffffff}); const {cx,cz}=P, y=0.32;
   P.plataformas=[];
   CATALOGO.slice(0,9).forEach((it,i)=>{ const x=cx-9+(i%3)*7, z=cz-6+Math.floor(i/3)*6;
-    cil(2.7,2.8,0.18,M.marmolNegro,x,y+0.09,z,{seg:40,col:0}); const c=cocheDe(it); c.g.position.set(x,y+0.18,z); c.g.rotation.y=i*0.9; P.plataformas.push(c.g);
+    cil(2.7,2.8,0.18,M.marmolNegro,x,y+0.09,z,{seg:40,col:0}); const c=cocheDe(it); scene.remove(c.g); P.grupo.add(c.g); c.g.position.set(x,y+0.18,z); c.g.rotation.y=i*0.9; P.plataformas.push(c.g);
     const cartel=plano(2.4,0.6,matLetras(letrero(it.nombre.toUpperCase(),{w:1024,h:256,fs:76,esp:0.06,fondo:'rgba(8,10,16,0.85)'}),false),x,y+0.55,z+2.85); cartel.material.emissiveIntensity=0; });
   npcLocal(P,'Asesora de PRESTIGE MOTORS','Ventas · coches de lujo',{modelo:'louise',traje:0x1d2a44,x:cx+10,z:cz+7,ry:Math.PI},'idle',()=>abrirConcesionario());
   caja(3,1,1,M.marmolNegro,cx+10,y+0.5,cz+5.8,{col:0});
@@ -1857,6 +1863,30 @@ for(const id of prog.garaje){ const it=CATALOGO.find(x=>x.id===id); if(it) aparc
 function accionGaraje(){ if(yo.planta!==0||conduciendo) return null; const p=yo.m.position;
   for(const c of GARAJE){ if(cocheJ===c&&conduciendo) continue; if(Math.hypot(p.x-c.g.position.x,p.z-c.g.position.z)<3) return {txt:`Conducir ${c.item.nombre}`,fn:()=>subirCoche(c)}; } return null; }
 function motorsTick(dt){ const P=LOCALES.motors; if(P.grupo.parent) for(const g of P.plataformas) g.rotation.y+=dt*0.25; }
+
+// ============ mapa de la ciudad, GPS y chófer ============
+const LUGARES=()=>[
+  {id:'hq',nombre:'Torre AIRMATE',ico:'🏢',x:0,z:24,col:'#d6b26a'},
+  ...['nobo','palais','boutique','tiro','motors','villa'].filter(k=>LOCALES[k]).map(k=>{const v=LOCALES[k]; return {id:k,nombre:v.nombre==='Villa Palm Jumeirah'?'Tu villa · Palm Jumeirah':v.nombre,ico:{nobo:'🍣',palais:'🎶',boutique:'👔',tiro:'🎯',motors:'🚗',villa:'🏝️'}[k],x:v.entrada.x,z:v.entrada.z,col:{nobo:'#ff9a5a',palais:'#b04dff',boutique:'#e9cf8e',tiro:'#ff5a5a',motors:'#5ab0ff',villa:'#3fd0c0'}[k]};})];
+let gps=null;
+function marcarRuta(l){ gps={x:l.x,z:l.z,nombre:l.nombre}; cerrarDialogo(); aviso(`📍 <b>Ruta a ${escH(l.nombre)}.</b> Sigue el haz dorado y la flecha del minimapa.`); }
+function chofer(l){ if(prog.dinero<200){aviso('No te llega el saldo.');return;} moverDinero(-200,'Chófer'); cerrarDialogo(); const fd=$('fundido'); fd.style.opacity=1;
+  setTimeout(()=>{ if(conduciendo) bajarCoche(); yo.planta=0; yo.m.visible=true; yo.m.position.set(l.x,l.id==='villa'?0.32:0.12,l.z+(l.id==='hq'?2:1.5)); yo.yaw=Math.PI; primero=true; gps=null; fd.style.opacity=0; aviso(`🚘 Llegaste a <b>${escH(l.nombre)}</b>.`); },700); }
+function abrirMapa(){ const L=LUGARES();
+  abrirDialogo('🗺️ Mapa de Dubái','Toca un sitio para ir',`<canvas id="mapaGrande" width="640" height="440" aria-label="Mapa de la ciudad"></canvas><div class="lugares">${L.map((l,i)=>`<div class="lug"><span style="color:${l.col}">${l.ico}</span><b>${escH(l.nombre)}</b><small>${Math.round(Math.hypot(l.x-yo.m.position.x,l.z-yo.m.position.z))} m</small><button class="opc mini" data-ruta="${i}">📍 Ruta</button><button class="opc mini" data-chofer="${i}">🚘 Chófer · AED 200</button></div>`).join('')}</div>`);
+  $('dialogo').classList.add('ancho');
+  const cv=$('mapaGrande'), g=cv.getContext('2d'), W=cv.width, H=cv.height, mx=x=>(x+360)/620*W, mz=z=>(z+260)/500*H;
+  g.fillStyle='#0f141d'; g.fillRect(0,0,W,H); g.fillStyle='#16708a'; g.fillRect(0,0,mx(-350),H);
+  g.fillStyle='#2b3345'; for(const c of CALLES){ g.fillRect(mx(c)-2,mz(-LIM),4,mz(LIM)-mz(-LIM)); g.fillRect(mx(-LIM),mz(c)-2,mx(LIM)-mx(-LIM),4);} g.fillRect(mx(-300),mz(40)-2,mx(-240)-mx(-300),4);
+  g.fillStyle='rgba(255,255,255,.06)'; for(const c of colisiones[0]) if(c.x1-c.x0>8&&c.x1-c.x0<40) g.fillRect(mx(c.x0),mz(c.z0),mx(c.x1)-mx(c.x0),mz(c.z1)-mz(c.z0));
+  g.font='600 13px IBM Plex Sans, sans-serif'; g.textAlign='center';
+  L.forEach((l,i)=>{ g.fillStyle=l.col; g.beginPath(); g.arc(mx(l.x),mz(l.z),7,0,7); g.fill(); g.fillStyle='#fff'; g.fillText(l.nombre.split(' · ')[0],mx(l.x),mz(l.z)+(i%2?24:-12)); });
+  g.save(); g.translate(mx(yo.m.position.x),mz(yo.m.position.z)); g.rotate(Math.PI-(conduciendo?auto.yaw-Math.PI/2:yo.yaw)); g.fillStyle='#f0d898'; g.strokeStyle='#000'; g.lineWidth=2; g.beginPath(); g.moveTo(0,-11); g.lineTo(8,9); g.lineTo(0,4); g.lineTo(-8,9); g.closePath(); g.fill(); g.stroke(); g.restore();
+  document.querySelectorAll('[data-ruta]').forEach(b=>b.onclick=()=>marcarRuta(L[+b.dataset.ruta]));
+  document.querySelectorAll('[data-chofer]').forEach(b=>b.onclick=()=>chofer(L[+b.dataset.chofer])); }
+$('bMapa').onclick=abrirMapa;
+addEventListener('keydown',e=>{ if(e.code==='KeyN'&&e.target.tagName!=='INPUT'&&!e.repeat){ if(dialogoAbierto&&$('mapaGrande')) cerrarDialogo(); else if(!dialogoAbierto) abrirMapa(); } });
+function gpsTick(){ if(gps&&yo.planta===0&&Math.hypot(yo.m.position.x-gps.x,yo.m.position.z-gps.z)<7){ aviso(`📍 Has llegado a <b>${escH(gps.nombre)}</b>.`); gps=null; } }
 
 // ============ luz ============
 const cAlba=new THREE.Color(0xff9a5c), cDia=new THREE.Color(0xfff1dc), niebDia=new THREE.Color(0xd8c6a8), niebNoche=new THREE.Color(0x0b1226);
@@ -1884,7 +1914,8 @@ const matsEnv=new Map(); scene.traverse(o=>{if(o.isMesh){for(const m of [].conca
 function tam(){const w=juego.clientWidth,h=juego.clientHeight;renderer.setSize(w,h,false);composer.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix();}
 addEventListener('resize',tam); tam();
 const reloj=new THREE.Clock(), camPos=new THREE.Vector3(), camMira=new THREE.Vector3(), rayo=new THREE.Raycaster();
-let primero=true, mapaT=0, fpsT=0, fpsN=0;
+let primero=true, mapaT=0, fpsT=0, fpsN=0, sombraN=0, bajadaAuto=false;
+renderer.shadowMap.autoUpdate=false;
 function avanzarRuta(p,dt){const [tx,tz]=p.ruta[p.i], dx=tx-p.m.position.x, dz=tz-p.m.position.z, d=Math.hypot(dx,dz);
   if(d<0.3){p.i=(p.i+1)%p.ruta.length;return;} const s=Math.min(d,p.v*dt); p.m.position.x+=dx/d*s; p.m.position.z+=dz/d*s;
   const objetivo=Math.atan2(dx,dz); let dif=objetivo-p.m.rotation.y; dif=Math.atan2(Math.sin(dif),Math.cos(dif)); p.m.rotation.y+=dif*Math.min(1,dt*6);}
@@ -1927,8 +1958,9 @@ function bucle(){
     if(c.eje==='x'){c.g.position.set(c.s,0,c.calle+c.carril);c.g.rotation.y=(c.dir>0?0:Math.PI)+(c.off||0);} else {c.g.position.set(c.calle+c.carril,0,c.s);c.g.rotation.y=(c.dir>0?-Math.PI/2:Math.PI/2)+(c.off||0);}}
   for(const a of AG){ if(a.id==='tu') continue; const o=objAg[a.id], e=estado(a.id,ahora); if(!o.m.visible) continue; cambiar(o,o.sentado?(e.st==='work'?'typing':'sitting_idle'):(e.st==='work'?'talking':'idle'),0.5); }
   for(const mx of mixers){const o=mx._p; if(o){ if(!o.visible||o.position.distanceToSquared(cam.position)>3600){mx._acc=(mx._acc||0)+dt; continue;} mx.update(dt+(mx._acc||0)); mx._acc=0;} else mx.update(dt);}
-  for(const c of coches) c.g.visible=c.g.position.distanceToSquared(cam.position)<170*170;
-  {fpsT+=dt; fpsN++; if(fpsT>2){const fps=fpsN/fpsT; fpsT=0; fpsN=0; const n=fps<24?Math.max(1,prActual-0.1):fps>55?Math.min(PR_MAX,prActual+0.1):prActual; if(Math.abs(n-prActual)>0.01){prActual=n; renderer.setPixelRatio(prActual); tam();}}}
+  for(const c of coches) c.g.visible=c.g.position.distanceToSquared(cam.position)<120*120;
+  sombraN=(sombraN+1)%2; if(sombraN===0) renderer.shadowMap.needsUpdate=true;
+  {fpsT+=dt; fpsN++; if(fpsT>2){const fps=fpsN/fpsT; fpsT=0; fpsN=0; if(fps<26&&calidadAlta&&!bajadaAuto){bajadaAuto=true; calidadAlta=false; gtao.enabled=false; $('bCalidad').classList.remove('on'); aviso('⚡ He bajado las sombras suaves para que vaya fluido. Pulsa <b>HD</b> si quieres volver.');} const n=fps<24?Math.max(0.85,prActual-0.1):fps>55?Math.min(PR_MAX,prActual+0.1):prActual; if(Math.abs(n-prActual)>0.01){prActual=n; renderer.setPixelRatio(prActual); tam();}}}
   cabezasAlDia();
   {const dr=yo.planta===0?Math.hypot(yo.m.position.x-recep.m.position.x,yo.m.position.z-recep.m.position.z):99; if(dr<5.5&&!recep.saludo){recep.saludo=true;unaVez(recep,'waving',1.6);} if(dr>10) recep.saludo=false;}
   bailarina.m.visible=ahora>=1140||ahora<120;
@@ -1976,7 +2008,7 @@ function bucle(){
    if(fuera&&yo.planta===0){claxonT-=dt; if(claxonT<0){claxonT=15+rnd()*25; sonido.claxon();}}
    if(!conduciendo&&(yo.actual==='walk'||yo.actual==='run')){pasoAcum+=dt*(yo.actual==='run'?3.2:1.9); if(pasoAcum>1){pasoAcum=0;sonido.paso();}}
    if(copas>0){copas=Math.max(0,copas-dt/90); const k=Math.max(0,copas-1); renderer.domElement.style.filter=k>0.05?`blur(${Math.min(2.2,k*0.7)}px) saturate(${1+k*0.15})`:''; if(k>0.05) cam.rotation.z+=Math.sin(T*1.3)*0.02*k;}
-   capHud(); salaTick(dt); fase2Tick(dt); fase3Tick(dt); motorsTick(dt); const rg=$('relojG'); if(rg) rg.textContent=fmt(ahora);}
+   capHud(); salaTick(dt); fase2Tick(dt); fase3Tick(dt); motorsTick(dt); gpsTick(); const rg=$('relojG'); if(rg) rg.textContent=fmt(ahora);}
   accionActual=buscarAccion(); const ac=$('accion'); if(accionActual){ac.hidden=false;ac.querySelector('span').textContent=accionActual.txt;} else ac.hidden=true;
   composer.render(); moverHud();
   mapaT+=dt; if(mapaT>0.1){mapaT=0;pintarMapa();}
