@@ -2,6 +2,7 @@
 <title>Airmate · Oficina privada</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -860,9 +861,9 @@ for(let i=0;i<24;i++){const calle=CALLES[i%4], eje=i%8<4?'x':'z', dir=(i%3===0)?
   const v=(i%6===0&&i<18)?ferrari(colFerrari[i%colFerrari.length]):coche(colorCoche[i%colorCoche.length]); const s=-LIM+rnd()*LIM*2;
   coches.push({...v,eje,calle,carril,dir,s,v:9+rnd()*7});}
 // el Ferrari del jefe, aparcado en la puerta
-const miFerrari=ferrari(0x0b0b0d); miFerrari.g.position.set(-7.5,0.12,19.8); miFerrari.g.rotation.y=0; colisiones[0].push({x0:-9.8,x1:-5.2,z0:18.8,z1:20.8});
+const miFerrari=ferrari(0x0b0b0d); miFerrari.g.position.set(-7.5,0.12,19.8); colisiones[0].push({x0:-9.8,x1:-5.2,z0:18.8,z1:20.8});
 const placaMat=new THREE.MeshStandardMaterial({map:letrero('BUENO 1',{w:512,h:128,fs:90,col:'#111',fondo:'#f2efe6',esp:0.08}),roughness:0.5});
-{const p=plano(0.52,0.12,placaMat,-5.27,0.5,19.8,Math.PI/2); p.userData.placa=true; miFerrari.g.attach(p);}
+{const p=plano(0.52,0.12,placaMat,-5.27,0.5,19.8,Math.PI/2); p.userData.placa=true; miFerrari.g.attach(p);} miFerrari.g.rotation.y=Math.PI;
 
 
 // ============ pájaros ============
@@ -934,7 +935,7 @@ function pintarLobby(c,t){const tx=tPantallaLobby,g=tx.userData.g,w=1024,h=576;
 // minimapa
 const mapa=$('mapa'), mg=mapa.getContext('2d');
 function pintarMapa(){const S=mapa.width, k=S/130; mg.clearRect(0,0,S,S); mg.save(); mg.beginPath(); mg.arc(S/2,S/2,S/2-2,0,7); mg.clip();
-  mg.fillStyle='#0f141d'; mg.fillRect(0,0,S,S); const yawv=conduciendo?Math.PI/2+auto.yaw:yo.yaw;
+  mg.fillStyle='#0f141d'; mg.fillRect(0,0,S,S); const yawv=conduciendo?auto.yaw-Math.PI/2:yo.yaw;
   mg.translate(S/2,S/2); mg.rotate(yawv-Math.PI); mg.scale(k,k); mg.translate(-yo.m.position.x,-yo.m.position.z);
   mg.fillStyle='#1b2230'; mg.fillRect(-300,-300,600,600);
   mg.fillStyle='#3a4256'; for(const c of CALLES){mg.fillRect(c-6,-LIM,12,LIM*2);mg.fillRect(-LIM,c-6,LIM*2,12);}
@@ -953,7 +954,7 @@ addEventListener('keyup',e=>{teclas[e.code]=false;});
 let mirando=null, pitch=0.06, zoomCam=1;
 renderer.domElement.addEventListener('wheel',e=>{if(dron) return; e.preventDefault(); zoomCam=clamp(zoomCam*(e.deltaY>0?1.1:0.9),0.45,2.6);},{passive:false});
 renderer.domElement.addEventListener('pointerdown',e=>{renderer.domElement.focus(); if(dron) return; mirando={x:e.clientX,y:e.clientY,id:e.pointerId}; $('ayuda').style.opacity=0.4;});
-addEventListener('pointermove',e=>{if(!mirando||e.pointerId!==mirando.id)return; yo.yaw-=(e.clientX-mirando.x)*0.005; pitch=clamp(pitch+(e.clientY-mirando.y)*0.003,-0.35,0.9); mirando.x=e.clientX; mirando.y=e.clientY;});
+addEventListener('pointermove',e=>{if(!mirando||e.pointerId!==mirando.id)return; if(conduciendo) camOrb-=(e.clientX-mirando.x)*0.005; else yo.yaw-=(e.clientX-mirando.x)*0.005; pitch=clamp(pitch+(e.clientY-mirando.y)*0.003,-0.35,0.9); mirando.x=e.clientX; mirando.y=e.clientY;});
 addEventListener('pointerup',e=>{if(mirando&&e.pointerId===mirando.id) mirando=null;});
 // joystick táctil
 addEventListener('touchstart',()=>document.body.classList.add('tactil'),{once:true,passive:true});
@@ -1202,12 +1203,12 @@ function abrirAsistente(){
 }
 
 // ============ conducir el Ferrari ============
-let conduciendo=false; const auto={v:0,yaw:0,steer:0};
+let conduciendo=false, camOrb=0; const auto={v:0,yaw:0,steer:0};
 const colMiF=colisiones[0].find(c=>c.x0===-9.8&&c.z0===18.8);
-function subirCoche(){conduciendo=true; yo.m.visible=false; auto.v=0; auto.yaw=miFerrari.g.rotation.y; if(colMiF){colMiF.x0=colMiF.x1=9e4;} primero=true; $('velo').hidden=false;
+function subirCoche(){conduciendo=true; yo.m.visible=false; auto.v=0; auto.yaw=miFerrari.g.rotation.y; if(colMiF){colMiF.x0=colMiF.x1=9e4;} primero=true; camOrb=0; $('velo').hidden=false;
   aviso('🏎️ <b>Al volante.</b> W/S acelerar y frenar · A/D girar · Shift turbo · H claxon · E bajar');}
 function bajarCoche(){conduciendo=false; const g=miFerrari.g, sx=Math.sin(auto.yaw), sz=Math.cos(auto.yaw);
-  let [px,pz]=resolver(g.position.x+sx*2,g.position.z+sz*2,0); yo.m.position.set(px,0.12,pz); yo.planta=0; yo.m.visible=true; yo.yaw=Math.PI/2+auto.yaw+Math.PI;
+  let [px,pz]=resolver(g.position.x+sx*2,g.position.z+sz*2,0); yo.m.position.set(px,0.12,pz); yo.planta=0; yo.m.visible=true; yo.yaw=auto.yaw-Math.PI/2;
   if(colMiF){colMiF.x0=g.position.x-1.6;colMiF.x1=g.position.x+1.6;colMiF.z0=g.position.z-1.6;colMiF.z1=g.position.z+1.6;} $('velo').hidden=true; sonido.motor(0,0); primero=true;}
 function conducir(dt){
   const up=teclas.KeyW||teclas.ArrowUp, dn=teclas.KeyS||teclas.ArrowDown, lf=teclas.KeyA||teclas.ArrowLeft, rt=teclas.KeyD||teclas.ArrowRight, turbo=teclas.ShiftLeft||teclas.ShiftRight;
@@ -1216,11 +1217,12 @@ function conducir(dt){
   auto.v-=auto.v*0.22*dt; auto.v=clamp(auto.v,-10,vmax);
   auto.steer+=(st*0.55-auto.steer)*Math.min(1,dt*6);
   auto.yaw+=auto.v*Math.tan(auto.steer*(1-Math.min(0.6,Math.abs(auto.v)/90)))/2.6*dt;
-  const g=miFerrari.g; let nx=g.position.x+Math.cos(auto.yaw)*auto.v*dt, nz=g.position.z-Math.sin(auto.yaw)*auto.v*dt;
+  const g=miFerrari.g; let nx=g.position.x-Math.cos(auto.yaw)*auto.v*dt, nz=g.position.z+Math.sin(auto.yaw)*auto.v*dt;
   nx=clamp(nx,-230,230); nz=clamp(nz,-230,230);
   const [rx,rz]=resolver(nx,nz,0,1.7); if(Math.hypot(rx-nx,rz-nz)>0.03){ if(Math.abs(auto.v)>7) sonido.choque(); auto.v*=-0.25; }
-  g.position.set(rx,0.12,rz); g.rotation.y=auto.yaw; for(const w of miFerrari.ruedas) w.rotation.x+=auto.v*dt/0.35;
+  g.position.set(rx,0.12,rz); g.rotation.y=auto.yaw; for(const w of miFerrari.ruedas) w.rotation.x-=auto.v*dt/0.35;
   yo.m.position.set(rx,0.12,rz);
+  if(!mirando&&Math.abs(auto.v)>2) camOrb*=Math.pow(0.25,dt);
   $('velo').innerHTML=`${Math.round(Math.abs(auto.v)*3.6)}<small>km/h</small>`;
   sonido.motor(Math.abs(auto.v),0.05+0.07*Math.max(0,thr)+Math.abs(auto.v)/900);
   if(teclas.KeyH){teclas.KeyH=false; sonido.claxon();}
@@ -1334,7 +1336,7 @@ function bucle(){
   // cámara
   if(cine){tCine+=dt/50; const u=tCine%1; cam.position.copy(rutaCine.getPointAt(u)); cam.lookAt(mirasCine.getPointAt(u));}
   else if(heli.ride){const fw=new THREE.Vector3(Math.cos(heli.yaw),0,-Math.sin(heli.yaw)); const des=heli.g.position.clone().addScaledVector(fw,-17).add(new THREE.Vector3(0,6.5,0)); camPos.lerp(des,1-Math.pow(0.003,dt)); cam.position.copy(camPos); cam.lookAt(heli.g.position.clone().addScaledVector(fw,10));}
-  else if(conduciendo){const g=miFerrari.g, fw=new THREE.Vector3(Math.cos(auto.yaw),0,-Math.sin(auto.yaw)); const des=g.position.clone().addScaledVector(fw,-7.5*zoomCam).add(new THREE.Vector3(0,2.6*zoomCam,0)); if(primero){camPos.copy(des);primero=false;} camPos.lerp(des,1-Math.pow(0.004,dt)); cam.position.copy(camPos); cam.lookAt(g.position.clone().addScaledVector(fw,6).add(new THREE.Vector3(0,1,0)));}
+  else if(conduciendo){const g=miFerrari.g, h=auto.yaw+Math.PI+camOrb, fw=new THREE.Vector3(Math.cos(h),0,-Math.sin(h)); const des=g.position.clone().addScaledVector(fw,-7.5*zoomCam).add(new THREE.Vector3(0,(1.6+pitch*5)*zoomCam,0)); if(primero){camPos.copy(des);primero=false;} camPos.lerp(des,1-Math.pow(0.002,dt)); cam.position.copy(camPos); cam.lookAt(g.position.clone().addScaledVector(fw,3).add(new THREE.Vector3(0,1,0)));}
   else if(dron){orbit.update();}
   else{
     const interior=yo.planta<5&&dentro(yo.m.position.x,yo.m.position.z);
