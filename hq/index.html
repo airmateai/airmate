@@ -1188,7 +1188,7 @@ function abrirMovil(app='msgs'){ if(!prog.movil){aviso('Aún no tienes el móvil
     banco:`<div class="saldo"><small>Saldo</small><b>${fmtAED(prog.dinero)}</b></div><p>Tratos cerrados: <b>${prog.cerrados}</b></p>${prog.deuda?`<p>Financiación de coches pendiente: <b>${fmtAED(prog.deuda)}</b></p>`:''}<p>Ganas dinero con capítulos, tratos y leads reales que pasan a interesado.</p>`,
     est:`<div class="saldo"><small>Tu estatus</small><b>★ ${estatusDe(prog.rep)}</b></div><div class="barraRep"><i style="width:${sigE?Math.round((prog.rep-ESTATUS[ESTATUS.indexOf(sigE)-1][0])/(sigE[0]-ESTATUS[ESTATUS.indexOf(sigE)-1][0])*100):100}%"></i></div><p>${sigE?`${sigE[0]-prog.rep} de reputación para <b>${sigE[1]}</b>`:'Has llegado a lo más alto.'}</p><p class="bloq">Créditos 3D: «Car Concept» © Khronos Group (CC BY 4.0) · muebles, texturas y cielo de Poly Haven (CC0) · personajes y animaciones de Mixamo · motor: «racing car engine sound loops» (OpenGameArt, CC0) · ${CREDITOS_COCHES} ${CREDITOS_ARQ}</p>`};
   abrirDialogo('📱 Móvil','AIRMATE · '+apps[app].slice(3),`<div class="apps">${Object.entries(apps).map(([k,t])=>`<button data-app="${k}" class="${k===app?'on':''}">${t}</button>`).join('')}</div><div class="pantalla">${cuerpo[app]}</div>`);
-  document.querySelectorAll('[data-app]').forEach(b=>b.onclick=()=>abrirMovil(b.dataset.app)); document.querySelectorAll('[data-ir]').forEach(b=>b.onclick=()=>{ const v=LOCALES[b.dataset.ir]; marcarRuta({x:v.entrada.x,z:v.entrada.z,nombre:v.nombre}); });}
+  $('dialogo').querySelectorAll('[data-app]').forEach(b=>b.onclick=()=>abrirMovil(b.dataset.app)); $('dialogo').querySelectorAll('[data-ir]').forEach(b=>b.onclick=()=>{ const v=LOCALES[b.dataset.ir]; marcarRuta({x:v.entrada.x,z:v.entrada.z,nombre:v.nombre}); });}
 $('bMovil').onclick=()=>abrirMovil();
 addEventListener('keydown',e=>{if(e.code==='KeyM'&&e.target.tagName!=='INPUT'&&!e.repeat){ if(dialogoAbierto&&$('dialogo').querySelector('.apps')) cerrarDialogo(); else abrirMovil(); }});
 if(!prog.msgs.length) setTimeout(()=>{prog.movil=prog.movil||false; mensaje(MISIONES[0].de,MISIONES[0].msg);},2500);
@@ -1203,12 +1203,12 @@ function objetivoVisible(){ if(gps){ if(yo.planta===0) return {x:gps.x,z:gps.z,y
   return {x:f===5?0:1.8,z:-5.1,y:FY(f)+(f===5?0.4:0.2),txt:`Ascensor → ${NOMBRES_PLANTA[p.f].split(' · ')[0]}`};}
 // bar y cliente
 function abrirBar(){abrirDialogo('Bartender','Sky Bar · azotea','<p>Buenas, señor Bueno. ¿Qué le pongo?</p>',['Café solo','Mocktail de dátil y menta','Whisky solo, como siempre'].map((d,i)=>`<button class="opc" data-b="${i}">${d}</button>`).join(''));
-  document.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{const d=b.textContent;cerrarDialogo();vaso.visible=true;setTimeout(()=>vaso.visible=false,25000);const precio=[35,90,450][+b.dataset.b]; moverDinero(-precio,d); if(+b.dataset.b===2){copas++; if(copas>=3) aviso('🥴 <b>Vas un poco contento.</b> Quizá mejor no conduzcas.');} aviso(`🥃 <b>${d}</b>. A su salud, socio.`);unaVez(yo,'drinking',8.5);marcar('bebida');});}
+  $('dialogo').querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{const d=b.textContent;cerrarDialogo();vaso.visible=true;setTimeout(()=>vaso.visible=false,25000);const precio=[35,90,450][+b.dataset.b]; moverDinero(-precio,d); if(+b.dataset.b===2){copas++; if(copas>=3) aviso('🥴 <b>Vas un poco contento.</b> Quizá mejor no conduzcas.');} aviso(`🥃 <b>${d}</b>. A su salud, socio.`);unaVez(yo,'drinking',8.5);marcar('bebida');});}
 function abrirKhalid(){
   if(prog.trato){abrirDialogo('Khalid Al Mansouri','Cliente · grupo hotelero','<p>Ya está hablado, Fabio. Mi equipo te llama el lunes para empezar con los tres hoteles.</p>');return;}
   abrirDialogo('Khalid Al Mansouri','Cliente potencial · grupo hotelero','<p>Me han hablado de vosotros. Tengo tres hoteles y cada uno trabaja con un programa distinto. ¿Por qué debería confiar en Airmate?</p>',
     [['a','Porque somos los más baratos del mercado.'],['b','No trabajamos con todos. Primero vemos si encajas; si no, te lo digo yo.'],['c','Si firmas hoy, te hago un 30 % de descuento.']].map(([k,t])=>`<button class="opc" data-k="${k}">${t}</button>`).join(''));
-  document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{
+  $('dialogo').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{
     if(b.dataset.k==='b'){prog.trato=true;prog.cerrados++;guardar();abrirDialogo('Khalid Al Mansouri','Cliente · grupo hotelero','<p>Eso es lo que quería oír: alguien que elige con quién trabaja. Hablemos el lunes de los tres hoteles.</p><p><b>✅ Trato cerrado.</b></p>');moverDinero(150000,'Trato con Khalid');unaVez(yo,'shaking_hands',4.4);unaVez(khalid,'shaking_hands',4.4,'sitting_drinking');marcar('trato');return;}
     abrirDialogo('Khalid Al Mansouri','Cliente potencial',b.dataset.k==='a'?'<p>Lo barato sale caro, amigo. Busco a alguien que sepa lo que vale.</p>':'<p>¿Descuentos el primer día? Eso huele a desesperación.</p>','<button class="opc" id="reintentar">Volver a intentarlo</button>');
     $('reintentar').onclick=abrirKhalid;});
@@ -1266,7 +1266,7 @@ function suscribir(){ sb.channel('hq').on('postgres_changes',{event:'*',schema:'
 function abrirOutboxReal(){const pend=DATOS.outbox.filter(o=>o.estado==='pendiente');
   abrirDialogo('Outbox','Despacho de dirección · emails reales escritos por Harvey', pend.length?`<p class="k">${pend.length} pendiente${pend.length>1?'s':''} · nada sale sin tu OK</p>`+pend.slice(0,5).map(o=>`<div class="mail"><div class="cab"><b>${escH(o.empresa||o.para)}</b><small>${escH(o.para)}</small></div><i>${escH(o.asunto)}</i><p>${escH(o.cuerpo).slice(0,600).replace(/\n/g,'<br>')}</p><div class="bts"><button class="ok" data-ok="${escH(o.id)}">Aprobar y enviar</button><button data-no="${escH(o.id)}">Rechazar</button></div></div>`).join('')
     :'<p>No hay emails pendientes. Cuando Harvey escriba los siguientes, aparecerán aquí y te aviso.</p>');
-  document.querySelectorAll('[data-ok],[data-no]').forEach(b=>b.onclick=()=>decidir(b.dataset.ok||b.dataset.no,!!b.dataset.ok));}
+  $('dialogo').querySelectorAll('[data-ok],[data-no]').forEach(b=>b.onclick=()=>decidir(b.dataset.ok||b.dataset.no,!!b.dataset.ok));}
 async function decidir(id,ok){ if(miembro.rol!=='socio'){aviso('Solo el socio puede aprobar emails.');return;}
   const {error}=await sb.from('hq_outbox').update({estado:ok?'aprobado':'rechazado',decidido_por:yoUser.id,decidido_en:new Date().toISOString()}).eq('id',id);
   if(error){aviso('No se pudo guardar: '+escH(error.message));return;}
@@ -1280,7 +1280,7 @@ function abrirTareas(){ if(!REAL){abrirDialogo('Tareas','Sala de juntas','<p>Las
     (lista.length?lista.slice(0,12).map(x=>`<div class="tarea ${x.estado.replace(' ','-')}"><div><span>${escH(x.titulo)}</span><small>${nom(x.asignado)} · ${x.estado}</small></div><button data-t="${x.id}" data-e="${SIG[x.estado][0]}">${SIG[x.estado][1]}</button></div>`).join(''):'<p>No hay tareas todavía. Apunta la primera.</p>'));
   $('dialogo').dataset.vista='tareas';
   $('tForm').onsubmit=async e=>{e.preventDefault(); const t=$('tNueva').value.trim(); if(!t) return; const {error}=await sb.from('hq_tareas').insert({titulo:t,asignado:yoUser.id}); if(error) aviso('No se pudo crear: '+escH(error.message));};
-  document.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{const {error}=await sb.from('hq_tareas').update({estado:b.dataset.e,actualizado:new Date().toISOString()}).eq('id',b.dataset.t); if(error) aviso('No se pudo guardar: '+escH(error.message));});
+  $('dialogo').querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{const {error}=await sb.from('hq_tareas').update({estado:b.dataset.e,actualizado:new Date().toISOString()}).eq('id',b.dataset.t); if(error) aviso('No se pudo guardar: '+escH(error.message));});
   setTimeout(()=>$('tNueva')&&$('tNueva').focus(),50);}
 $('bTareas').onclick=abrirTareas;
 async function iniciarReal(){ try{ const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm');
@@ -1332,17 +1332,17 @@ $('bCalidad').classList.toggle('on',calidadAlta); $('bCalidad').onclick=()=>{cal
 $('bSonido').onclick=()=>{const on=sonido.alternar(); $('bSonido').textContent=on?'🔊':'🔇'; if(!on&&typeof adhanAudio!=='undefined') adhanAudio.pause();};
 
 // ============ dinero ============
-if(typeof prog.dinero!=='number'){prog.dinero=250000; guardar();}
+if(typeof prog.dinero!=='number'||!Number.isFinite(prog.dinero)){prog.dinero=250000; guardar();}
 const fmtAED=n=>'AED '+Math.round(n).toLocaleString('es-ES');
 function pintarDinero(){$('dinero').textContent=fmtAED(prog.dinero);}
-function moverDinero(n,motivo){ if(n>0&&prog.deuda>0){ const pago=Math.min(prog.deuda,Math.round(n*0.5)); prog.deuda-=pago; n-=pago; if(pago) setTimeout(()=>aviso(`💳 ${fmtAED(pago)} a la financiación del coche.${prog.deuda?'':' ¡Pagado del todo!'}`),600); }prog.dinero+=n; guardar(); pintarDinero(); const d=document.createElement('div'); d.className='dinMov '+(n<0?'menos':''); d.textContent=(n<0?'−':'+')+fmtAED(Math.abs(n)).replace('AED ','AED ')+(motivo?' · '+motivo:''); $('hudDer').appendChild(d); setTimeout(()=>d.remove(),2600); if(n>0) sonido.caja();}
+function moverDinero(n,motivo){ if(!Number.isFinite(n)) return; if(n>0&&prog.deuda>0){ const pago=Math.min(prog.deuda,Math.round(n*0.5)); prog.deuda-=pago; n-=pago; if(pago) setTimeout(()=>aviso(`💳 ${fmtAED(pago)} a la financiación del coche.${prog.deuda?'':' ¡Pagado del todo!'}`),600); }prog.dinero+=n; guardar(); pintarDinero(); const d=document.createElement('div'); d.className='dinMov '+(n<0?'menos':''); d.textContent=(n<0?'−':'+')+fmtAED(Math.abs(n)).replace('AED ','AED ')+(motivo?' · '+motivo:''); $('hudDer').appendChild(d); setTimeout(()=>d.remove(),2600); if(n>0) sonido.caja();}
 pintarDinero();
 
 // ============ asistenta ============
 function abrirAsistente(){ marcar('hablar:Asistente');
   abrirDialogo('Asistente de dirección','Planta 4 · a su servicio','<p>¿En qué le ayudo, señor Bueno?</p>',
     [['resumen','📊 Resumen del día'],['pendiente','📋 ¿Qué tengo pendiente?'],['tarea','✍️ Apúntame una tarea'],['cafe','☕ Tráeme un café']].map(([k,t])=>`<button class="opc" data-as="${k}">${t}</button>`).join(''));
-  document.querySelectorAll('[data-as]').forEach(b=>b.onclick=()=>{const k=b.dataset.as, c=contar(ahora);
+  $('dialogo').querySelectorAll('[data-as]').forEach(b=>b.onclick=()=>{const k=b.dataset.as, c=contar(ahora);
     if(k==='resumen') abrirDialogo('Resumen del día',REAL?'Datos reales de Harvey':'Simulación',`<p>Harvey tiene <b>${c.encontrados}</b> negocios encontrados, <b>${c.leidas}</b> webs leídas y <b>${c.encajan}</b> que encajan.</p><p>Emails escritos: <b>${c.escritos}</b> · enviados: <b>${c.enviados}</b> · respuestas: <b>${c.respuestas}</b> · llamadas: <b>${c.llamadas}</b>.</p>`,'<button class="opc" id="volverAs">Volver</button>');
     else if(k==='pendiente'){const pend=REAL?DATOS.outbox.filter(o=>o.estado==='pendiente').length:0, ts=REAL?DATOS.tareas.filter(t=>t.estado!=='hecha'):[];
       abrirDialogo('Lo pendiente','Asistente de dirección',`<p>${pend?`Tiene <b>${pend} email${pend>1?'s':''}</b> esperando su OK en el despacho.`:'No hay emails esperando su aprobación.'}</p>${ts.length?'<p class="k">Tareas abiertas</p>'+ts.slice(0,6).map(t=>`<p>• ${escH(t.titulo)} <small style="color:var(--muted)">(${t.estado})</small></p>`).join(''):'<p>No hay tareas abiertas.</p>'}`,'<button class="opc" id="volverAs">Volver</button>');}
@@ -1456,10 +1456,10 @@ function abrirCaptacion(refresco){
      <div class="capLista">${lista.length?lista.map(filaCap).join(''):`<p>${filtroCap==='nuevo'?'No te quedan negocios por contactar. Pide una lista nueva.':'Nada aquí todavía.'}</p>`}</div>`,
     `<button class="opc" id="bPedir">➕ Pedir 50 negocios</button>${socio?'<button class="opc" id="bEquipo">👥 Equipo</button>':''}`);
   $('dialogo').dataset.vista='cap'; $('dialogo').classList.add('ancho');
-  document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{filtroCap=b.dataset.f; abrirCaptacion();});
-  document.querySelectorAll('[data-est]').forEach(s=>s.onchange=()=>guardarPros(+s.dataset.est,{estado:s.value}));
-  document.querySelectorAll('[data-wa]').forEach(a=>a.addEventListener('click',()=>{const p=PROS.find(x=>x.id===+a.dataset.wa); if(p&&p.estado==='nuevo') guardarPros(p.id,{estado:'enviado'});}));
-  document.querySelectorAll('[data-nota]').forEach(b=>b.onclick=()=>{const p=PROS.find(x=>x.id===+b.dataset.nota); const pi=b.closest('.pros'); if(pi.querySelector('form')) return;
+  $('dialogo').querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{filtroCap=b.dataset.f; abrirCaptacion();});
+  $('dialogo').querySelectorAll('[data-est]').forEach(s=>s.onchange=()=>guardarPros(+s.dataset.est,{estado:s.value}));
+  $('dialogo').querySelectorAll('[data-wa]').forEach(a=>a.addEventListener('click',()=>{const p=PROS.find(x=>x.id===+a.dataset.wa); if(p&&p.estado==='nuevo') guardarPros(p.id,{estado:'enviado'});}));
+  $('dialogo').querySelectorAll('[data-nota]').forEach(b=>b.onclick=()=>{const p=PROS.find(x=>x.id===+b.dataset.nota); const pi=b.closest('.pros'); if(pi.querySelector('form')) return;
     pi.insertAdjacentHTML('beforeend',`<form class="nueva"><input maxlength="200" value="${escH(p.nota||'')}" placeholder="Nota (ej.: llamar el lunes, habla con el hijo…)"><button>Guardar</button></form>`);
     const fm=pi.querySelector('form'); fm.querySelector('input').focus(); fm.onsubmit=e=>{e.preventDefault(); guardarPros(p.id,{nota:fm.querySelector('input').value.trim()});};});
   $('bPedir').onclick=pedirLista; if(socio) $('bEquipo').onclick=abrirEquipo;
@@ -1653,8 +1653,8 @@ const humo=(()=>{const n=40,g=new THREE.BufferGeometry(),p=new Float32Array(n*3)
 const _hp=new THREE.Vector3();
 // ---- diálogos ----
 function abrirNobo(){ abrirDialogo('NOBŌ','Maître · cocina japonesa de autor','<p>Bienvenido a NOBŌ, señor Bueno. Su mesa junto a la ventana está lista.</p>',
-  [['oma','🍣 Menú omakase del chef · AED 1.800'],['sake','🍶 Sake Junmai Daiginjo · AED 450'],['te','🍵 Té matcha ceremonial · AED 120']].map(([k,t])=>`<button class="opc" data-n="${k}">${t}</button>`).join(''));
-  document.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{const k=b.dataset.n, pr={oma:1800,sake:450,te:120}[k]; if(prog.dinero<pr){aviso('No te llega el saldo.');return;} cerrarDialogo(); moverDinero(-pr,{oma:'Omakase',sake:'Sake',te:'Matcha'}[k]);
+  [['oma','🍣 Menú omakase del chef · AED 1.800'],['sake','🍶 Sake Junmai Daiginjo · AED 450'],['te','🍵 Té matcha ceremonial · AED 120']].map(([k,t])=>`<button class="opc" data-nobo="${k}">${t}</button>`).join(''));
+  $('dialogo').querySelectorAll('[data-nobo]').forEach(b=>b.onclick=()=>{const k=b.dataset.nobo, pr={oma:1800,sake:450,te:120}[k]; if(prog.dinero<pr){aviso('No te llega el saldo.');return;} cerrarDialogo(); moverDinero(-pr,{oma:'Omakase',sake:'Sake',te:'Matcha'}[k]);
     if(k==='oma'){ const [x,z]=LOCALES.nobo.mesaLibre; yo.m.position.set(x,0.37,z-0.85); yo.m.rotation.y=0; yo.yaw=Math.PI; cambiar(yo,'sitting_idle'); yo.sentado=true; aviso('🍣 <b>Omakase servido.</b> 14 piezas del chef. (Muévete para levantarte)'); marcar('cenar'); prog.rep+=10; }
     else { if(k==='sake'){copas++;} unaVez(yo,'drinking',8.5); vaso.visible=true; setTimeout(()=>vaso.visible=false,9000); aviso(k==='sake'?'🍶 <b>Kanpai.</b>':'🍵 Matcha ceremonial.'); }
     guardar(); pintarMovil();});}
@@ -1662,7 +1662,7 @@ function abrirJeque(){
   if(prog.jeque){abrirDialogo('Jeque Rashid Al Nahyar','Inversor · socio de AIRMATE','<p>Mis hoteles ya trabajan con tu sistema, Fabio. La semana que viene te presento a la familia.</p>');return;}
   abrirDialogo('Jeque Rashid Al Nahyar','Inversor · fondo soberano','<p>Khalid habla muy bien de ti. Tengo doce propiedades y todos me prometen inteligencia artificial. ¿Qué te hace diferente?</p>',
     [['a','Tenemos la mejor tecnología del mundo, Alteza.'],['b','No le vendo nada hoy. Le enseño lo que ya hacemos en los hoteles de Khalid y elegimos juntos una propiedad para un piloto de 90 días.'],['c','Le hago precio de amigo si firma esta noche.']].map(([k,t])=>`<button class="opc" data-j="${k}">${t}</button>`).join(''));
-  document.querySelectorAll('[data-j]').forEach(b=>b.onclick=()=>{
+  $('dialogo').querySelectorAll('[data-j]').forEach(b=>b.onclick=()=>{
     if(b.dataset.j==='b'){prog.jeque=true; prog.cerrados++; prog.rep+=300; guardar(); abrirDialogo('Jeque Rashid Al Nahyar','Socio de AIRMATE','<p>Prudente. Me gusta. Empezamos por el hotel de la Marina. Mi oficina te transfiere el anticipo mañana.</p><p><b>✅ Acuerdo con el fondo del jeque.</b></p>'); setTimeout(()=>moverDinero(1500000,'Anticipo del jeque'),700); unaVez(yo,'shaking_hands',4.4); marcar('jeque'); return;}
     abrirDialogo('Jeque Rashid Al Nahyar','Inversor',b.dataset.j==='a'?'<p>Todos dicen eso. Pruebas, no adjetivos.</p>':'<p>Un hombre que regala su trabajo no lo valora. Ni yo tampoco.</p>','<button class="opc" id="rej">Volver a intentarlo</button>'); $('rej').onclick=abrirJeque;});}
 function abrirPortero(){ const C=LOCALES.palais; if(C.abierto){abrirDialogo('Portero','LE PALAIS','<p>Adelante, señor. Su mesa VIP está arriba a la izquierda.</p>');return;}
@@ -1673,7 +1673,7 @@ function abrirPortero(){ const C=LOCALES.palais; if(C.abierto){abrirDialogo('Por
   if(ok) $('pEntra').onclick=abrir; else $('pPaga').onclick=()=>{if(prog.dinero<5000){aviso('No te llega.');return;} moverDinero(-5000,'Portero'); abrir();};}
 function abrirClubBar(){ abrirDialogo('Bar LE PALAIS','Servicio VIP','<p>¿Qué le preparo, señor?</p>',
   [['bot','🍾 Botella con bengalas a tu mesa VIP · AED 25.000'],['puro','🚬 Puro cubano · AED 3.000'],['copa','🥃 Whisky 18 años · AED 600'],['agua','💧 Agua con gas · AED 40']].map(([k,t])=>`<button class="opc" data-c="${k}">${t}</button>`).join(''));
-  document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{const k=b.dataset.c, pr={bot:25000,puro:3000,copa:600,agua:40}[k]; if(prog.dinero<pr){aviso('No te llega el saldo.');return;} cerrarDialogo(); moverDinero(-pr,{bot:'Botella VIP',puro:'Puro',copa:'Whisky',agua:'Agua'}[k]);
+  $('dialogo').querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{const k=b.dataset.c, pr={bot:25000,puro:3000,copa:600,agua:40}[k]; if(prog.dinero<pr){aviso('No te llega el saldo.');return;} cerrarDialogo(); moverDinero(-pr,{bot:'Botella VIP',puro:'Puro',copa:'Whisky',agua:'Agua'}[k]);
     if(k==='bot'){const [x,z]=LOCALES.palais.vip; bengalas(x,1.3,z+0.1); prog.rep+=40; copas+=1.5; aviso('🍾 <b>Botella con bengalas</b> camino de tu mesa. Todo el club mira.'); marcar('botella');}
     else if(k==='puro'){puro.visible=true; humo.hasta=performance.now()+40000; humo.m.visible=true; unaVez(yo,'smoking',9); aviso('🚬 Puro encendido.'); setTimeout(()=>{puro.visible=false;},40000);}
     else if(k==='copa'){copas++; vaso.visible=true; setTimeout(()=>vaso.visible=false,9000); unaVez(yo,'drinking',8.5);}
@@ -1687,7 +1687,7 @@ function abrirInfluencer(){ if(prog.viral){abrirDialogo('Max Volkov','Influencer
 // ---- helicóptero con destino ----
 const DESTINOS=[{id:'tour',txt:'🌆 Vuelta por Dubái'},{id:'nobo',txt:'🍣 NOBŌ · cena de negocios'},{id:'palais',txt:'🎶 LE PALAIS · club'},{id:'villa',txt:'🏝️ Tu villa · Palm Jumeirah'},{id:'hq',txt:'🏢 Volver a la torre AIRMATE'}];
 function abrirDestinos(desde){ abrirDialogo('Helicóptero','Omar · piloto','<p>¿A dónde le llevo, señor Bueno?</p>',DESTINOS.filter(d=>d.id!==desde&&!(desde==='hq'&&d.id==='hq')&&!(desde!=='hq'&&d.id==='tour')).map(d=>`<button class="opc" data-d="${d.id}">${d.txt}</button>`).join(''));
-  document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{cerrarDialogo(); volar(b.dataset.d);});}
+  $('dialogo').querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{cerrarDialogo(); volar(b.dataset.d);});}
 function volar(dest){ if(dest==='tour'){heli.aparcado=null; heli.ride=true; heli.t=7; yo.m.visible=false; primero=true; aviso('🚁 <b>Despegando.</b> Dubái desde el aire. Arrastra para mirar.'); return;}
   const a=heli.g.position.clone(), b=dest==='hq'?PAD.clone():LOCALES[dest].pad.clone();
   heli.vuelo={a,b,t:0,dur:Math.max(16,a.distanceTo(b)/14),dest}; heli.aparcado=null; heli.ride=true; yo.m.visible=false; primero=true; camOrb=0;
@@ -1736,7 +1736,7 @@ if(prog.ropa) vestir(yo,prog.ropa);
 function abrirSastre(TRAJES){ const nom=['Azul medianoche','Gris marengo','Blanco Dubái','Burdeos','Lino crema','Marino con corbata granate'], pre=[18000,15000,22000,20000,16000,19000];
   abrirDialogo('MAISON AIRMATE','Sastre · trajes a medida en el acto','<p>Señor Bueno, ¿qué le apetece llevar hoy?</p>',
     TRAJES.map((t,i)=>`<button class="opc" data-tr="${i}">👔 ${nom[i]} · AED ${pre[i].toLocaleString('es-ES')}</button>`).join('')+`<button class="opc" data-tr="negro">🖤 Volver al negro de siempre · gratis</button><button class="opc" data-tr="reloj">⌚ Chronos AIRMATE en oro · AED 120.000${prog.reloj?' (ya es suyo)':''}</button>`);
-  document.querySelectorAll('[data-tr]').forEach(b=>b.onclick=()=>{ const k=b.dataset.tr;
+  $('dialogo').querySelectorAll('[data-tr]').forEach(b=>b.onclick=()=>{ const k=b.dataset.tr;
     if(k==='reloj'){ if(prog.reloj){aviso('Ya lo lleva puesto.');return;} if(prog.dinero<120000){aviso('No te llega el saldo.');return;} moverDinero(-120000,'Chronos AIRMATE'); prog.reloj=true; prog.rep+=60; ponerReloj(); guardar(); cerrarDialogo(); aviso('⌚ <b>Chronos AIRMATE</b> en la muñeca.'); marcar('reloj'); return; }
     if(k==='negro'){ prog.ropa={traje:0x1a1b20,corbata:0x111114,camisa:0xf4f4f2}; vestir(yo,prog.ropa); guardar(); cerrarDialogo(); return; }
     const i=+k; if(prog.dinero<pre[i]){aviso('No te llega el saldo.');return;} moverDinero(-pre[i],nom[i]); const [t,c,s]=TRAJES[i]; prog.ropa={traje:t,corbata:c,camisa:s}; vestir(yo,prog.ropa); prog.rep+=25; guardar(); cerrarDialogo(); aviso(`👔 <b>${nom[i]}</b>. Le sienta como un guante.`); marcar('ropa'); }); }
@@ -1891,9 +1891,10 @@ const PERFIL_SONIDO={rrange:'lr',rrsvr:'lr',velar:'lr',urus:'super',escalade:'am
 const CREDITOS_COCHES='Coches 3D (Sketchfab, CC BY 4.0): Range Rover 2022, Evoque 2022 y Range Rover Sport 2023 · tonielpro520; Range Rover Sport SVR · abodevleri; Velar · Mona x Supercars; Urus · Kai Xiang; Escalade · rexrain studio; Defender 110 · David_Holiday; X6 M 2022 · KINGSLEY_king; Discovery 5 · Ciiplix; XM · Mona x Supercars; G 63 · ay321; Defender 90 · kekomag; RS7 · supercarmodels; 911 Turbo S y X3 M40i · tangwang920; 720S · ddiaz-design; Land Cruiser 300 · akamujoshua; Patrol Extreme · CursedCrown; Zafira y X4 · tonielpro520; Range Rover Sport · David_Holiday; M4 G82 · vecarz; RS 6 Avant · Galaxy Car Showroom; X6 M · SharkyStudios. Sonidos de motor (Freesound): Porsche 911 y Land Rover · jerry.berumen (CC BY 4.0); Audi R8 · Jonas_Jocys (CC BY 4.0); el resto CC0 (marcelweiss, holderall, Walking.With.Microphones, Andreabarata, FFKoenigsegg20012017, craigsmith, Alex_hears_things, AlexanderChe, jtvdb, EwanPenman11, florianreichelt).';
 if(!Array.isArray(prog.garaje)) prog.garaje=[];
 const MODELOS_REALES={}, CARGANDO={}, TODOS_COCHES=[];
-function normalizar(o,it){ const tris=new Map(); o.traverse(c=>{ if(!c.isMesh) return; c.castShadow=true; c.receiveShadow=true; const ms=Array.isArray(c.material)?c.material:[c.material];
+function normalizar(o,it){ const tris=new Map(); let totalTris=0; o.traverse(c=>{ if(c.isMesh) totalTris+=(c.geometry.index?c.geometry.index.count:c.geometry.attributes.position.count)/3; }); o.traverse(c=>{ if(!c.isMesh) return; c.castShadow=true; c.receiveShadow=true; const ms=Array.isArray(c.material)?c.material:[c.material];
     for(const m of ms){ if(!m) continue; m.envMapIntensity=0.55; if('clearcoat' in m) m.clearcoat=Math.min(m.clearcoat||0,0.5); if(m.roughness!==undefined) m.roughness=Math.max(m.roughness,0.2); const n=(c.geometry.index?c.geometry.index.count:c.geometry.attributes.position.count)/3; const lum=m.color?(m.color.r+m.color.g+m.color.b)/3:0; if(!m.transparent&&(m.opacity??1)>0.95&&lum>0.06&&!(m.metalness>0.9&&m.roughness<0.25)&&!Array.isArray(c.material)) tris.set(m,(tris.get(m)||0)+n); }
-    ms.forEach((m,k)=>{ if(m&&m.emissive){ const luz=/light|lamp|led|tail|head|brake|signal|indicator|faro|piloto/i.test((m.name||'')+' '+(c.name||'')); if(!luz||(m.emissiveMap&&m.emissiveMap===m.map)){ m.emissive.set(0x000000); m.emissiveMap=null; m.emissiveIntensity=0; } else m.emissiveIntensity=Math.min(m.emissiveIntensity||1,1.2); }
+    const triC=(c.geometry.index?c.geometry.index.count:c.geometry.attributes.position.count)/3;
+    ms.forEach((m,k)=>{ if(m&&m.emissive){ const luz=/light|lamp|led|tail|head|brake|signal|indicator|faro|piloto|lens/i.test((m.name||'')+' '+(c.name||'')); if(!luz||triC>totalTris*0.02||(m.emissiveMap&&m.emissiveMap===m.map)){ m.emissive.set(0x000000); m.emissiveMap=null; m.emissiveIntensity=0; } else m.emissiveIntensity=Math.min(m.emissiveIntensity||1,1); }
       if(m&&m.isMeshBasicMaterial){ const n=new THREE.MeshStandardMaterial({color:m.color,map:m.map,transparent:m.transparent,opacity:m.opacity,roughness:0.35,metalness:0.4}); if(Array.isArray(c.material)) c.material[k]=n; else c.material=n; } }); });
   const b=new THREE.Box3().setFromObject(o), sz=b.getSize(new THREE.Vector3()), ce=b.getCenter(new THREE.Vector3()), largoZ=sz.z>sz.x, s=it.len/Math.max(sz.x,sz.z);
   o.updateMatrixWorld(true); const ruedas=[]; o.traverse(c=>{ if(c.isMesh&&/wheel|rim|tire|tyre|rueda|llanta|disc|brake|caliper/i.test((c.name||'')+' '+(c.parent?.name||''))&&!/steer|volante/i.test(c.name)) ruedas.push(c); });
@@ -1932,7 +1933,7 @@ function configurar(it){ const c=TODOS_COCHES.find(x=>x.item.id===it.id&&x.g.par
   if(c){ const p=new THREE.Vector3(); c.g.getWorldPosition(p); camVista={c:p,a:0}; }
   abrirDialogo(it.nombre,'Configura el color · gira solo para que lo veas',`<div class="colores">${COLORES.map(([n,h],i)=>`<button data-col="${i}" title="${n}" style="background:#${h.toString(16).padStart(6,'0')}"></button>`).join('')}</div><p id="colSel" style="color:var(--muted)">Color original</p>`,
     `<button class="opc" id="cfgComprar">Comprar · ${fmtAED(it.precio)}</button><button class="opc" id="cfgPlazos">A plazos · ${fmtAED(Math.round(it.precio*0.2))}</button><button class="opc" id="cfgVolver">Volver al catálogo</button>`);
-  document.querySelectorAll('[data-col]').forEach(b=>b.onclick=()=>{ const [n,h]=COLORES[+b.dataset.col]; sel=h; $('colSel').textContent=n; if(c) pintarCoche(c,h); });
+  $('dialogo').querySelectorAll('[data-col]').forEach(b=>b.onclick=()=>{ const [n,h]=COLORES[+b.dataset.col]; sel=h; $('colSel').textContent=n; if(c) pintarCoche(c,h); });
   const fin=()=>{ camVista=null; if(c&&sel!=null) pintarCoche(c,(prog.colores||{})[it.id]??c.colorOrig??sel); };
   $('cfgVolver').onclick=()=>{ camVista=null; abrirConcesionario(); };
   const comprar=plazos=>{ const pago=plazos?Math.round(it.precio*0.2):it.precio; if(prog.dinero<pago) return aviso(`No te llega: te faltan ${fmtAED(pago-prog.dinero)}.`); prog.colores=prog.colores||{}; if(sel!=null) prog.colores[it.id]=sel;
@@ -1942,13 +1943,13 @@ function abrirConcesionario(){ const tengo=id=>prog.garaje.includes(id);
   abrirDialogo('PRESTIGE MOTORS','Asesora de ventas',`<p>Bienvenido, señor Bueno. Lo que compre hoy se lo dejamos esta tarde en el garaje de su villa.</p><p style="color:var(--muted);font-size:13px">Saldo: <b>${fmtAED(prog.dinero)}</b></p>`,
     CATALOGO.map(it=>tengo(it.id)?`<div class="lug"><span>🔑</span><b>${it.nombre}</b><small>en tu garaje</small><button class="opc mini" data-vender="${it.id}">Vender · ${fmtAED(Math.round(it.precio*0.7))}</button></div>`:`<div class="lug"><span>🚗</span><b>${it.nombre}</b><small>${fmtAED(it.precio)}</small><button class="opc mini" data-cfg="${it.id}">🎨 Configurar</button><button class="opc mini" data-car="${it.id}">Comprar</button><button class="opc mini" data-plazos="${it.id}">A plazos · ${fmtAED(Math.round(it.precio*0.2))}</button></div>`).join('')+(prog.deuda?`<p style="color:var(--muted);font-size:13px">Financiación pendiente: <b>${fmtAED(prog.deuda)}</b>. Se paga sola con la mitad de lo que ganes.</p>`:''));
   $('dialogo').classList.add('ancho');
-  document.querySelectorAll('[data-vender]').forEach(b=>b.onclick=()=>{ const it=CATALOGO.find(x=>x.id===b.dataset.vender), i=GARAJE.findIndex(c=>c.item.id===it.id); if(cocheJ===GARAJE[i]&&conduciendo) return aviso('Bájate del coche antes de venderlo.');
+  $('dialogo').querySelectorAll('[data-vender]').forEach(b=>b.onclick=()=>{ const it=CATALOGO.find(x=>x.id===b.dataset.vender), i=GARAJE.findIndex(c=>c.item.id===it.id); if(cocheJ===GARAJE[i]&&conduciendo) return aviso('Bájate del coche antes de venderlo.');
     if(i>=0){ const c=GARAJE[i]; scene.remove(c.g); const k=colisiones[0].indexOf(c.col); if(k>=0) colisiones[0].splice(k,1); GARAJE.splice(i,1); GARAJE.forEach((c2,j)=>{ const v=LOCALES.villa, x=v.cx+21.5+(j%4)*3.3, z=v.cz+13+Math.floor(j/4)*7; c2.g.position.set(x,0.12,z); Object.assign(c2.col,{x0:x-1.05,x1:x+1.05,z0:z-2.4,z1:z+2.4}); }); }
     prog.garaje=prog.garaje.filter(id=>id!==it.id); moverDinero(Math.round(it.precio*0.7),'Venta '+it.nombre); guardar(); abrirConcesionario(); });
-  document.querySelectorAll('[data-cfg]').forEach(b=>b.onclick=()=>configurar(CATALOGO.find(x=>x.id===b.dataset.cfg)));
+  $('dialogo').querySelectorAll('[data-cfg]').forEach(b=>b.onclick=()=>configurar(CATALOGO.find(x=>x.id===b.dataset.cfg)));
   const entregar=it=>{ prog.garaje.push(it.id); prog.rep+=Math.round(it.precio/20000); guardar(); aparcar(it); cerrarDialogo(); aviso(`🔑 <b>${it.nombre}</b> es tuyo. Te espera en el garaje de la villa.`); marcar('coche'); };
-  document.querySelectorAll('[data-plazos]').forEach(b=>b.onclick=()=>{ const it=CATALOGO.find(x=>x.id===b.dataset.plazos), e=Math.round(it.precio*0.2); if(prog.dinero<e){aviso(`Para la entrada te faltan ${fmtAED(e-prog.dinero)}.`);return;} moverDinero(-e,'Entrada '+it.nombre); prog.deuda=(prog.deuda||0)+it.precio-e; entregar(it); });
-  document.querySelectorAll('[data-car]').forEach(b=>b.onclick=()=>{ const it=CATALOGO.find(x=>x.id===b.dataset.car); if(prog.dinero<it.precio){aviso(`No te llega: te faltan ${fmtAED(it.precio-prog.dinero)}. Prueba «A plazos».`);return;}
+  $('dialogo').querySelectorAll('[data-plazos]').forEach(b=>b.onclick=()=>{ const it=CATALOGO.find(x=>x.id===b.dataset.plazos), e=Math.round(it.precio*0.2); if(prog.dinero<e){aviso(`Para la entrada te faltan ${fmtAED(e-prog.dinero)}.`);return;} moverDinero(-e,'Entrada '+it.nombre); prog.deuda=(prog.deuda||0)+it.precio-e; entregar(it); });
+  $('dialogo').querySelectorAll('[data-car]').forEach(b=>b.onclick=()=>{ const it=CATALOGO.find(x=>x.id===b.dataset.car); if(prog.dinero<it.precio){aviso(`No te llega: te faltan ${fmtAED(it.precio-prog.dinero)}. Prueba «A plazos».`);return;}
     moverDinero(-it.precio,it.nombre); entregar(it); return; prog.garaje.push(it.id); prog.rep+=Math.round(it.precio/20000); guardar(); aparcar(it); cerrarDialogo();
     aviso(`🔑 <b>${it.nombre}</b> es tuyo. Te espera en el garaje de la villa.`); marcar('coche'); }); }
 // garaje de la villa
@@ -1980,8 +1981,8 @@ function abrirMapa(){ const L=LUGARES();
   g.font='600 13px IBM Plex Sans, sans-serif'; g.textAlign='center';
   L.forEach((l,i)=>{ g.fillStyle=l.col; g.beginPath(); g.arc(mx(l.x),mz(l.z),7,0,7); g.fill(); g.fillStyle='#fff'; g.fillText(l.nombre.split(' · ')[0],mx(l.x),mz(l.z)+(i%2?24:-12)); });
   g.save(); g.translate(mx(yo.m.position.x),mz(yo.m.position.z)); g.rotate(Math.PI-(conduciendo?auto.yaw-Math.PI/2:yo.yaw)); g.fillStyle='#f0d898'; g.strokeStyle='#000'; g.lineWidth=2; g.beginPath(); g.moveTo(0,-11); g.lineTo(8,9); g.lineTo(0,4); g.lineTo(-8,9); g.closePath(); g.fill(); g.stroke(); g.restore();
-  document.querySelectorAll('[data-ruta]').forEach(b=>b.onclick=()=>marcarRuta(L[+b.dataset.ruta]));
-  document.querySelectorAll('[data-chofer]').forEach(b=>b.onclick=()=>chofer(L[+b.dataset.chofer])); $('bLlamarHeli').onclick=llamarHeli; }
+  $('dialogo').querySelectorAll('[data-ruta]').forEach(b=>b.onclick=()=>marcarRuta(L[+b.dataset.ruta]));
+  $('dialogo').querySelectorAll('[data-chofer]').forEach(b=>b.onclick=()=>chofer(L[+b.dataset.chofer])); $('bLlamarHeli').onclick=llamarHeli; }
 $('bMapa').onclick=abrirMapa;
 addEventListener('keydown',e=>{ if(e.code==='KeyN'&&e.target.tagName!=='INPUT'&&!e.repeat){ if(dialogoAbierto&&$('mapaGrande')) cerrarDialogo(); else if(!dialogoAbierto) abrirMapa(); } });
 function gpsTick(){ if(gps&&yo.planta===0&&Math.hypot(yo.m.position.x-gps.x,yo.m.position.z-gps.z)<7){ aviso(`📍 Has llegado a <b>${escH(gps.nombre)}</b>.`); gps=null; } }
@@ -2087,7 +2088,7 @@ const OBJETOS={whisky:['🥃','Whisky 18 años'],champan:['🍾','Copa de champ�
 function abrirInventario(){ const I=prog.inv, filas=Object.entries(OBJETOS).filter(([k])=>typeof I[k]==='boolean'?I[k]:I[k]>0);
   abrirDialogo('🎒 Inventario','Lo que llevas encima',filas.length?filas.map(([k,[ico,nom]])=>`<div class="lug"><span>${ico}</span><b>${nom}</b><small>${typeof I[k]==='boolean'?(armaEq===k?'en la mano':'guardada'):'× '+I[k]}</small><button class="opc mini" data-usar="${k}">${typeof I[k]==='boolean'?(armaEq===k?'Guardar':'Sacar'):'Usar'}</button></div>`).join(''):'<p>Vacío. Compra bebidas y puros en los bares, y armas en el Shooting Club.</p>');
   $('dialogo').dataset.vista='inv';
-  document.querySelectorAll('[data-usar]').forEach(b=>b.onclick=()=>{ const k=b.dataset.usar; cerrarDialogo();
+  $('dialogo').querySelectorAll('[data-usar]').forEach(b=>b.onclick=()=>{ const k=b.dataset.usar; cerrarDialogo();
     if(k==='pistola'||k==='deagle'){ equipar(k); return; }
     prog.inv[k]--; guardar();
     if(k==='puro'){ puro.visible=true; humo.hasta=performance.now()+40000; humo.m.visible=true; unaVez(yo,'smoking',9); setTimeout(()=>puro.visible=false,40000); }
@@ -2106,7 +2107,7 @@ const _abrirTiro=abrirTiro; abrirTiro=function(){ _abrirTiro(); extraBotones(`<b
 // ---- menú de acciones y animaciones ----
 const ACCIONES=[['💃','Bailar salsa','salsa_dancing',0],['🕺','Hip hop','hiphop_dancing',0],['🔥','Shuffle','shuffling',0],['👋','Saludar','waving',2],['👏','Aplaudir','clapping',3],['🥊','Guardia','fight_idle',0],['👊','Puñetazo','punching',1],['📞','Al teléfono','talking_on_phone',0],['🗣️','Hablar','talking',0],['🤝','Dar la mano','shaking_hands',4],['🪑','Sentarse','sitting_idle',0],['😴','Tumbarse','laying',0]];
 function abrirAcciones(){ abrirDialogo('🎭 Acciones','Elige qué hacer',`<div class="accs">${ACCIONES.map(([i,t],k)=>`<button data-ac="${k}"><span>${i}</span>${t}</button>`).join('')}</div>`); $('dialogo').dataset.vista='acc';
-  document.querySelectorAll('[data-ac]').forEach(b=>b.onclick=()=>{ const [,,an,seg]=ACCIONES[+b.dataset.ac]; cerrarDialogo(); if(armaEq) equipar(null);
+  $('dialogo').querySelectorAll('[data-ac]').forEach(b=>b.onclick=()=>{ const [,,an,seg]=ACCIONES[+b.dataset.ac]; cerrarDialogo(); if(armaEq) equipar(null);
     if(seg) unaVez(yo,an,seg); else { cambiar(yo,an); yo.sentado=true; aviso('Muévete para parar.'); } }); }
 $('bCtrl').onclick=()=>abrirDialogo('❔ Controles','Teclado y ratón','<p><b>WASD</b> andar · <b>Shift</b> correr · <b>Espacio</b> saltar · <b>arrastrar</b> mirar · <b>rueda</b> zoom</p><p><b>E</b> interactuar · <b>F</b> pegar · <b>G</b> acciones · <b>I</b> inventario · <b>M</b> móvil · <b>N</b> mapa · <b>H</b> helicóptero · <b>U</b> modo grabación sin HUD · <b>P</b> rendimiento · <b>Enter</b> chat</p><p>Conduciendo: <b>W</b> acelerar · <b>S</b> frenar y marcha atrás · <b>A/D</b> girar · <b>Shift</b> turbo · <b>Espacio</b> freno de mano · <b>H</b> claxon · <b>E</b> bajar</p><p>Con arma: <b>clic</b> disparar · <b>R</b> recargar</p>');
 function modoSinHud(){ cerrarDialogo(); document.body.classList.toggle('sinHud'); if(document.body.classList.contains('sinHud')) setTimeout(()=>aviso('🎬 Modo grabación. Pulsa U para volver.'),0); }
@@ -2133,7 +2134,7 @@ function montarReuniones(){ for(const r of reunionesDeHoy()){ if(npcReu[r.id]||p
 function abrirReunion(r){ if(prog.reu.hechas.includes(r.id)) return abrirDialogo(r.quien,r.rol,'<p>Un placer, Fabio. Seguimos hablando la semana que viene.</p>');
   if(prog.reu.fallidas.includes(r.id)) return abrirDialogo(r.quien,r.rol,'<p>Ya hemos hablado hoy. Quizá en otra ocasión.</p>');
   abrirDialogo(r.quien,`${r.rol} · reunión importante`,`<p>${r.p}</p>`,r.o.map((t,i)=>`<button class="opc" data-reu="${i}">${t}</button>`).join(''));
-  document.querySelectorAll('[data-reu]').forEach(b=>b.onclick=()=>{ if(+b.dataset.reu===r.c){ prog.reu.hechas.push(r.id); prog.rep+=r.rep; prog.cerrados++; guardar(); abrirDialogo(r.quien,r.rol,`<p>Exactamente lo que buscaba. Cerramos.</p><p><b>✅ +${fmtAED(r.din)} · +${r.rep} de reputación</b></p>`); setTimeout(()=>moverDinero(r.din,'Reunión: '+r.quien),600); unaVez(yo,'shaking_hands',4.4); pintarMovil(); }
+  $('dialogo').querySelectorAll('[data-reu]').forEach(b=>b.onclick=()=>{ if(+b.dataset.reu===r.c){ prog.reu.hechas.push(r.id); prog.rep+=r.rep; prog.cerrados++; guardar(); abrirDialogo(r.quien,r.rol,`<p>Exactamente lo que buscaba. Cerramos.</p><p><b>✅ +${fmtAED(r.din)} · +${r.rep} de reputación</b></p>`); setTimeout(()=>moverDinero(r.din,'Reunión: '+r.quien),600); unaVez(yo,'shaking_hands',4.4); pintarMovil(); }
     else { prog.reu.fallidas.push(r.id); guardar(); abrirDialogo(r.quien,r.rol,'<p>No es lo que necesito. Gracias por tu tiempo.</p><p style="color:var(--muted)">Mañana tendrás reuniones nuevas.</p>'); } }); }
 function agendaHoy(){ return reunionesDeHoy().map(r=>{ const est=prog.reu.hechas.includes(r.id)?'✅ cerrada':prog.reu.fallidas.includes(r.id)?'❌ sin acuerdo':'⏳ pendiente'; const lug={palais:'LE PALAIS',nobo:'NOBŌ',hq4:'Tu despacho (planta 4)',skybar:'Sky Bar (azotea)',villa:'Tu villa',motors:'PRESTIGE MOTORS',boutique:'MAISON AIRMATE'}[r.lugar];
   return `<div class="sms"><b>⭐ ${r.quien} · ${est}</b><span>${r.rol} · ${lug} · hasta ${fmtAED(r.din)}</span>${est==='⏳ pendiente'&&!['hq4','skybar'].includes(r.lugar)?`<button class="opc mini" data-ir="${r.lugar}">📍 Ruta</button>`:''}</div>`; }).join(''); }
