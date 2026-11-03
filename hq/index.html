@@ -1907,10 +1907,10 @@ function normalizar(o,it){ const tris=new Map(); o.traverse(c=>{ if(!c.isMesh) r
 function cargarCoche(it){ if(MODELOS_REALES[it.id]||CARGANDO[it.id]||it.modelo==='ferrari') return; CARGANDO[it.id]=true;
   gltf.loadAsync(`mod/coches/${it.id}.glb`).then(g=>{ MODELOS_REALES[it.id]=normalizar(g.scene,it); TODOS_COCHES.filter(c=>c.item.id===it.id).forEach(rellenar); }).catch(()=>{}); }
 function rellenar(c){ while(c.g.children.length) c.g.remove(c.g.children[0]); const it=c.item, real=MODELOS_REALES[it.id];
-  if(real){ const cl=real.clone(true); c.g.add(cl); c.ruedas=[]; cl.traverse(o=>{if(o.userData.rueda) c.ruedas.push(o);}); const col=c.color??(prog.colores||{})[it.id]; if(col!=null) pintar(c,col); return; }
+  if(real){ const cl=real.clone(true); c.g.add(cl); c.ruedas=[]; cl.traverse(o=>{if(o.userData.rueda) c.ruedas.push(o);}); const col=c.color??(prog.colores||{})[it.id]; if(col!=null) pintarCoche(c,col); return; }
   if(it.modelo==='ferrari'){ const f=ferrari(it.color); scene.remove(f.g); c.g.add(f.g); c.ruedas=f.ruedas; return; }
   const d=deportivo(0x8a8f96); scene.remove(d.g); d.g.rotation.y=Math.PI; c.g.add(d.g); c.ruedas=[]; setTimeout(()=>cargarCoche(it),5000); }
-function pintar(c,col){ const u=MODELOS_REALES[c.item.id]?.userData.pintura; c.color=col; if(!u){ return; } c.g.traverse(o=>{ if(o.isMesh&&!Array.isArray(o.material)&&(o.material.uuid===u||o.material.userData.orig===u)){ if(o.material.uuid===u){ o.material=o.material.clone(); o.material.userData.orig=u; } o.material.color.set(col); } }); }
+function pintarCoche(c,col){ const u=MODELOS_REALES[c.item.id]?.userData.pintura; c.color=col; if(!u){ return; } c.g.traverse(o=>{ if(o.isMesh&&!Array.isArray(o.material)&&(o.material.uuid===u||o.material.userData.orig===u)){ if(o.material.uuid===u){ o.material=o.material.clone(); o.material.userData.orig=u; } o.material.color.set(col); } }); }
 function cocheDe(it){ const g=new THREE.Group(); scene.add(g); const c={g,ruedas:[],item:it}; TODOS_COCHES.push(c); rellenar(c); return c; }
 // concesionario
 { const P=local('motors',{x:140,z:60,w:26,d:22,nombre:'PRESTIGE MOTORS',sub:'DUBAI · LUXURY & PERFORMANCE',suelo:M.marmol,pared:M.marmolPared,luz:0xffffff}); const {cx,cz}=P, y=0.32;
@@ -1932,8 +1932,8 @@ function configurar(it){ const c=TODOS_COCHES.find(x=>x.item.id===it.id&&x.g.par
   if(c){ const p=new THREE.Vector3(); c.g.getWorldPosition(p); camVista={c:p,a:0}; }
   abrirDialogo(it.nombre,'Configura el color · gira solo para que lo veas',`<div class="colores">${COLORES.map(([n,h],i)=>`<button data-col="${i}" title="${n}" style="background:#${h.toString(16).padStart(6,'0')}"></button>`).join('')}</div><p id="colSel" style="color:var(--muted)">Color original</p>`,
     `<button class="opc" id="cfgComprar">Comprar · ${fmtAED(it.precio)}</button><button class="opc" id="cfgPlazos">A plazos · ${fmtAED(Math.round(it.precio*0.2))}</button><button class="opc" id="cfgVolver">Volver al catálogo</button>`);
-  document.querySelectorAll('[data-col]').forEach(b=>b.onclick=()=>{ const [n,h]=COLORES[+b.dataset.col]; sel=h; $('colSel').textContent=n; if(c) pintar(c,h); });
-  const fin=()=>{ camVista=null; if(c&&sel!=null) pintar(c,(prog.colores||{})[it.id]??c.colorOrig??sel); };
+  document.querySelectorAll('[data-col]').forEach(b=>b.onclick=()=>{ const [n,h]=COLORES[+b.dataset.col]; sel=h; $('colSel').textContent=n; if(c) pintarCoche(c,h); });
+  const fin=()=>{ camVista=null; if(c&&sel!=null) pintarCoche(c,(prog.colores||{})[it.id]??c.colorOrig??sel); };
   $('cfgVolver').onclick=()=>{ camVista=null; abrirConcesionario(); };
   const comprar=plazos=>{ const pago=plazos?Math.round(it.precio*0.2):it.precio; if(prog.dinero<pago) return aviso(`No te llega: te faltan ${fmtAED(pago-prog.dinero)}.`); prog.colores=prog.colores||{}; if(sel!=null) prog.colores[it.id]=sel;
     moverDinero(-pago,plazos?'Entrada '+it.nombre:it.nombre); if(plazos) prog.deuda=(prog.deuda||0)+it.precio-pago; prog.garaje.push(it.id); prog.rep+=Math.round(it.precio/20000); guardar(); aparcar(it); camVista=null; cerrarDialogo(); aviso(`🔑 <b>${it.nombre}</b> es tuyo. Te espera en el garaje de la villa.`); marcar('coche'); };
