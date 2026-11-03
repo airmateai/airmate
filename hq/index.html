@@ -168,6 +168,7 @@ body.real .timebar{display:none}
 #mapaGrande{width:100%;height:auto;border-radius:12px;display:block}
 @media (max-width:600px){.lug{grid-template-columns:22px 1fr auto}.lug .opc{grid-column:span 1}}
 .stats{position:absolute;z-index:6;left:50%;transform:translateX(-50%);top:calc(56px + env(safe-area-inset-top,0px));background:rgba(0,0,0,.7);color:#7ee08a;font:12px "IBM Plex Mono",monospace;padding:4px 10px;border-radius:8px;pointer-events:none}
+.accs{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}.accs button{display:grid;gap:4px;justify-items:center;padding:10px 6px;font-size:13px}.accs span{font-size:24px}
 .mision{position:absolute;z-index:4;left:max(12px,env(safe-area-inset-left,0px));top:calc(150px + env(safe-area-inset-top,0px));width:min(300px,calc(100% - 24px));background:rgba(8,10,16,.78);backdrop-filter:blur(10px);border:1px solid rgba(214,178,106,.35);border-left:3px solid var(--gold);border-radius:12px;padding:10px 12px;display:grid;gap:3px;pointer-events:auto}
 .mision small{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .mision b{font-family:var(--f-serif);font-size:19px;line-height:1.1;color:#fff}
@@ -212,6 +213,8 @@ body.cine .hud-arriba,body.cine .ayuda,body.cine .avisos,body.cine .accion,body.
       <canvas id="mapa" width="300" height="300" aria-label="Minimapa"></canvas>
       <div class="botones">
         <button id="bMapa" aria-label="Mapa">🗺️ Mapa</button>
+        <button id="bInv" aria-label="Inventario">🎒</button>
+        <button id="bAcc" aria-label="Acciones">🎭</button>
         <button id="bMovil" aria-label="Móvil" hidden>📱</button>
         <button id="bVoz" hidden>🔇 Voz</button>
         <button id="bSonido" aria-label="Sonido">🔊</button>
@@ -229,7 +232,7 @@ body.cine .hud-arriba,body.cine .ayuda,body.cine .avisos,body.cine .accion,body.
   <div class="hudDer" id="hudDer"><div id="relojG">--:--</div><div id="dinero">AED 0</div><div id="estatus"></div></div>
   <div class="velo" id="velo" hidden></div>
   <div class="stats" id="stats" hidden></div><div class="mira" id="mira" hidden></div><div class="tiroHud" id="tiroHud" hidden></div>
-  <div class="ayuda" id="ayuda">WASD andar · Shift correr · Espacio saltar · F pegar · M móvil · N mapa · P rendimiento · arrastra para mirar · rueda zoom · E interactuar</div>
+  <div class="ayuda" id="ayuda">WASD andar · Shift correr · Espacio saltar · F pegar · G acciones · I inventario · H helicóptero · M móvil · N mapa · P rendimiento · arrastra para mirar · rueda zoom · E interactuar</div>
   <div class="mision" id="mision"></div>
   <div class="completada" id="completada" hidden></div>
   <button class="salirCine" id="salirCine" hidden>Salir del modo cine · Esc</button>
@@ -1031,7 +1034,7 @@ let accionActual=null;
 function buscarAccion(){
   if(dron||dialogoAbierto) return null; if(conduciendo) return {txt:'Bajar del coche',fn:bajarCoche};
   const p=yo.m.position, f=yo.planta;
-  {const a=accionGaraje()||accionesFase3(); if(a) return a;}
+  {const a=accionHeli()||accionGaraje()||accionesFase3(); if(a) return a;}
   if(REAL&&miMesa&&f===miMesa.f&&Math.hypot(p.x-miMesa.x,p.z-miMesa.z-0.9)<2) return {txt:'Abrir mi lista de captación',fn:()=>abrirCaptacion()};
   const ascX=f===5?[0]:[-1.8,1.8];
   for(const ex of ascX) if(Math.hypot(p.x-ex,p.z+5.1)<1.5&&(f===5||dentro(p.x,p.z))) return {txt:'Coger el ascensor',fn:abrirAscensor};
@@ -1075,7 +1078,7 @@ function pintar(){
   for(const a of AG){const e=estado(a.id,t),m=MK[a.id];
     $('d-'+a.id).className='dot '+e.st; $('t-'+a.id).textContent=e.task;
     m.className=`tag3d ${e.st}${(e.st==='work'||e.st==='wait')?' on':''}`; m.style.setProperty('--st',COLST[e.st]); m.querySelector('.bub span').textContent=e.task;
-    if(a.id!=='tu') objAg[a.id].m.visible=e.st!=='sleep';}
+    if(a.id!=='tu') objAg[a.id].m.visible=true;}
   const trab=t>=ABRE-5&&t<CIERRA; andantes.forEach(p=>p.m.visible=trab);  quietos.forEach(p=>p.m.visible=trab);
   const evs=REAL?DATOS.eventos.slice(0,14).map(e=>({t:minCanarias(new Date(e.ts)),a:AGM[e.agente]?e.agente:null,text:escH(e.texto)})):L.filter(e=>e.t<=t).slice(-14).reverse();
   $('feed').innerHTML=evs.length?evs.map(e=>{const a=e.a&&AGM[e.a];return `<div class="ev"><time>${fmt(e.t)}</time><span>${a?`<span class="who" style="color:${a.c}">${a.nm}</span> · `:''}${e.text}</span></div>`;}).join(''):'<div class="ev"><time>—</time><span style="color:var(--muted)">El equipo llega a las 08:00.</span></div>';
@@ -1175,11 +1178,11 @@ function abrirMovil(app='msgs'){ if(!prog.movil){aviso('Aún no tienes el móvil
   const cuerpo={
     msgs:prog.msgs.length?prog.msgs.map(m=>`<div class="sms"><b>${escH(m.de)}</b><span>${escH(m.txt)}</span></div>`).join(''):'<p>Sin mensajes.</p>',
     con:(prog.contactos.length?prog.contactos.map(c=>`<div class="sms"><b>${escH(c)}</b><span>Desbloqueado</span></div>`).join(''):'<p>Aún no tienes contactos.</p>')+`<p class="bloq">🔒 ${Math.max(0,8-prog.contactos.length)} contactos por desbloquear en la historia</p>`,
-    agenda:AGENDA.map(a=>`<div class="sms ${prog.m>a.cap?'hecha':''}"><b>${a.con}</b><span>${a.lugar}${prog.m>a.cap?' · hecho':prog.m===a.cap?' · hoy':''}</span></div>`).join(''),
+    agenda:'<p class="bloq">Reuniones importantes de hoy</p>'+agendaHoy()+'<p class="bloq">Historia</p>'+AGENDA.map(a=>`<div class="sms ${prog.m>a.cap?'hecha':''}"><b>${a.con}</b><span>${a.lugar}${prog.m>a.cap?' · hecho':prog.m===a.cap?' · hoy':''}</span></div>`).join(''),
     banco:`<div class="saldo"><small>Saldo</small><b>${fmtAED(prog.dinero)}</b></div><p>Tratos cerrados: <b>${prog.cerrados}</b></p>${prog.deuda?`<p>Financiación de coches pendiente: <b>${fmtAED(prog.deuda)}</b></p>`:''}<p>Ganas dinero con capítulos, tratos y leads reales que pasan a interesado.</p>`,
     est:`<div class="saldo"><small>Tu estatus</small><b>★ ${estatusDe(prog.rep)}</b></div><div class="barraRep"><i style="width:${sigE?Math.round((prog.rep-ESTATUS[ESTATUS.indexOf(sigE)-1][0])/(sigE[0]-ESTATUS[ESTATUS.indexOf(sigE)-1][0])*100):100}%"></i></div><p>${sigE?`${sigE[0]-prog.rep} de reputación para <b>${sigE[1]}</b>`:'Has llegado a lo más alto.'}</p><p class="bloq">Créditos 3D: «Car Concept» © Khronos Group (CC BY 4.0) · muebles, texturas y cielo de Poly Haven (CC0) · personajes y animaciones de Mixamo · motor: «racing car engine sound loops» (OpenGameArt, CC0) · ${CREDITOS_COCHES} ${CREDITOS_ARQ}</p>`};
   abrirDialogo('📱 Móvil','AIRMATE · '+apps[app].slice(3),`<div class="apps">${Object.entries(apps).map(([k,t])=>`<button data-app="${k}" class="${k===app?'on':''}">${t}</button>`).join('')}</div><div class="pantalla">${cuerpo[app]}</div>`);
-  document.querySelectorAll('[data-app]').forEach(b=>b.onclick=()=>abrirMovil(b.dataset.app));}
+  document.querySelectorAll('[data-app]').forEach(b=>b.onclick=()=>abrirMovil(b.dataset.app)); document.querySelectorAll('[data-ir]').forEach(b=>b.onclick=()=>{ const v=LOCALES[b.dataset.ir]; marcarRuta({x:v.entrada.x,z:v.entrada.z,nombre:v.nombre}); });}
 $('bMovil').onclick=()=>abrirMovil();
 addEventListener('keydown',e=>{if(e.code==='KeyM'&&e.target.tagName!=='INPUT'&&!e.repeat){ if(dialogoAbierto&&$('dialogo').querySelector('.apps')) cerrarDialogo(); else abrirMovil(); }});
 if(!prog.msgs.length) setTimeout(()=>{prog.movil=prog.movil||false; mensaje(MISIONES[0].de,MISIONES[0].msg);},2500);
@@ -1296,10 +1299,13 @@ const sonido=(()=>{let ctx=null,master,ruido,ambG,mO,mO2,mF,mG,heliG,musG,activo
     setInterval(()=>{const now=ctx.currentTime; for(const fr of AC[i%4]){const o=ctx.createOscillator(),g=ctx.createGain(); o.type='triangle'; o.frequency.value=fr/2; g.gain.setValueAtTime(0,now); g.gain.linearRampToValueAtTime(0.055,now+0.8); g.gain.linearRampToValueAtTime(0,now+3.9); o.connect(g).connect(musG); o.start(now); o.stop(now+4);} i++;},4000);
   }
   // motor real del Ferrari: grabaciones CC0 de Freesound (ralentí de Ferrari · jtvdb, arranque de Ferrari · EwanPenman11, aceleración · florianreichelt)
-  let capas=null, bufArranque=null;
-  async function cargarMotor(){ try{ const dec=async n=>ctx.decodeAudioData(await (await fetch(`mod/snd/${n}.wav`)).arrayBuffer());
-      const [ral,alto,arr]=await Promise.all([dec('f_ralenti'),dec('f_alto'),dec('f_arranque')]); bufArranque=arr;
-      capas=[ral,alto].map(b=>{const s=ctx.createBufferSource(); s.buffer=b; s.loop=true; s.loopStart=0.05; s.loopEnd=b.duration-0.05; const g=ctx.createGain(); g.gain.value=0; s.connect(g).connect(master); s.start(); return {s,g};}); }catch(e){ capas=null; } }
+  let capas=null, bufArranque=null; const PERFILES={}, perfilAct={k:null};
+  const decod=async n=>ctx.decodeAudioData(await (await fetch(`mod/snd/${n}.wav`)).arrayBuffer());
+  async function cargarPerfil(k){ if(!PERFILES[k]) PERFILES[k]=Promise.all(['ralenti','alto','arranque'].map(n=>decod(`${k}_${n}`))); return PERFILES[k]; }
+  async function usarPerfil(k){ if(!ctx||perfilAct.k===k) return; perfilAct.k=k; try{ const [ral,alto,arr]=await cargarPerfil(k); if(perfilAct.k!==k) return; bufArranque=arr;
+      if(capas) capas.forEach(c=>{try{c.s.stop();}catch(e){}});
+      capas=[ral,alto].map(b=>{const s=ctx.createBufferSource(); s.buffer=b; s.loop=true; s.loopStart=0.05; s.loopEnd=b.duration-0.05; const g=ctx.createGain(); g.gain.value=0; s.connect(g).connect(master); s.start(); return {s,g};}); }catch(e){} }
+  function cargarMotor(){ usarPerfil('f'); }
   function nota(f,dur=0.25,vol=0.15,tipo='sine',cu=0){ if(!ctx||!activo) return; const t=ctx.currentTime+cu,o=ctx.createOscillator(),g=ctx.createGain(); o.type=tipo; o.frequency.value=f; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+0.01); g.gain.exponentialRampToValueAtTime(0.001,t+dur); o.connect(g).connect(master); o.start(t); o.stop(t+dur+0.05);}
   function golpe(vol=0.2,frec=1800,dur=0.06){ if(!ctx||!activo) return; const t=ctx.currentTime,s=ctx.createBufferSource(); s.buffer=ruido; const f=ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=frec; f.Q.value=1.4; const g=ctx.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+dur); s.connect(f).connect(g).connect(master); s.start(t,Math.random()*1.5,dur+0.05);}
   const tgt=(p,v,tc=0.2)=>{ if(p&&ctx) p.setTargetAtTime(v,ctx.currentTime,tc); };
@@ -1310,6 +1316,7 @@ const sonido=(()=>{let ctx=null,master,ruido,ambG,mO,mO2,mF,mG,heliG,musG,activo
         tgt(capas[0].g.gain,on?(1-suave)*0.9:0,0.12); tgt(capas[0].s.playbackRate,0.95+r*0.6,0.1);
         tgt(capas[1].g.gain,on?suave*(0.55+acel*0.45):0,0.1); tgt(capas[1].s.playbackRate,0.72+r*0.62,0.08); return; }
       tgt(mO.frequency,36+rpm*5.2,0.05); tgt(mO2.frequency,(36+rpm*5.2)*0.5,0.05); tgt(mF.frequency,380+rpm*42,0.1); tgt(mG.gain,carga,0.12); },
+    perfil(k){ return usarPerfil(k); },
     arranque(){ if(!ctx||!activo||!bufArranque) return; const s=ctx.createBufferSource(); s.buffer=bufArranque; const g=ctx.createGain(); g.gain.value=0.9; s.connect(g).connect(master); s.start(); },
     paso(){golpe(0.1,2600,0.05);}, disparo(){golpe(0.55,1100,0.14); golpe(0.3,300,0.25);}, choque(){golpe(0.7,380,0.45);}, claxon(){nota(415,0.35,0.07,'square'); nota(466,0.35,0.06,'square');},
     ding(){nota(988,0.7,0.12); nota(1319,0.7,0.1,'sine',0.14);}, caja(){nota(1568,0.12,0.1,'square'); nota(2093,0.25,0.08,'square',0.08);} };
@@ -1342,7 +1349,7 @@ function abrirAsistente(){ marcar('hablar:Asistente');
 let conduciendo=false, camOrb=0; const auto={v:0,yaw:0,steer:0};
 const colMiF=colisiones[0].find(c=>c.x0===-9.8&&c.z0===18.8);
 let cocheJ=miFerrari; cocheJ.col=colMiF;
-function subirCoche(c=miFerrari){cocheJ=c; conduciendo=true; yo.m.visible=false; auto.v=0; auto.yaw=cocheJ.g.rotation.y; if(cocheJ.col){cocheJ.col.x0=cocheJ.col.x1=9e4;} primero=true; camOrb=0; $('velo').hidden=false; marcar('conducir'); sonido.arranque();
+async function subirCoche(c=miFerrari){cocheJ=c; conduciendo=true; await sonido.perfil(c.item?(PERFIL_SONIDO[c.item.id]||'f'):'f'); yo.m.visible=false; auto.v=0; auto.yaw=cocheJ.g.rotation.y; if(cocheJ.col){cocheJ.col.x0=cocheJ.col.x1=9e4;} primero=true; camOrb=0; $('velo').hidden=false; marcar('conducir'); sonido.arranque();
   aviso('🏎️ <b>Al volante.</b> W/S acelerar y frenar · A/D girar · Shift turbo · H claxon · E bajar');}
 function bajarCoche(){conduciendo=false; const g=cocheJ.g, sx=Math.sin(auto.yaw), sz=Math.cos(auto.yaw);
   let [px,pz]=resolver(g.position.x+sx*2,g.position.z+sz*2,0); yo.m.position.set(px,0.12,pz); yo.planta=0; yo.m.visible=true; yo.yaw=auto.yaw-Math.PI/2;
@@ -1357,7 +1364,7 @@ function conducir(dt){
   const g=cocheJ.g; let nx=g.position.x-Math.cos(auto.yaw)*auto.v*dt, nz=g.position.z+Math.sin(auto.yaw)*auto.v*dt;
   nx=clamp(nx,-345,230); nz=clamp(nz,-230,230);
   const [rx,rz]=resolver(nx,nz,0,1.7); if(Math.hypot(rx-nx,rz-nz)>0.03){ if(Math.abs(auto.v)>7) sonido.choque(); auto.v*=-0.25; }
-  g.position.set(rx,0.12,rz); g.rotation.y=auto.yaw; for(const w of cocheJ.ruedas) w.rotation.x-=auto.v*dt/0.35;
+  g.position.set(rx,0.12,rz); g.rotation.y=auto.yaw; for(const w of cocheJ.ruedas){ const e=w.userData.eje||'x', sg=w.userData.sg||1; w.rotation[e]-=sg*auto.v*dt/0.35; }
   yo.m.position.set(rx,0.12,rz); prog.km=(prog.km||0)+Math.abs(auto.v)*dt;
   if(!mirando&&Math.abs(auto.v)>2) camOrb*=Math.pow(0.25,dt);
   $('velo').innerHTML=`${Math.round(Math.abs(auto.v)*3.6)}<small>km/h</small>`;
@@ -1668,13 +1675,13 @@ function vueloPos(dt){ const v=heli.vuelo; v.t+=dt; const k=clamp(v.t/v.dur), al
   else {const s=ss((k-0.85)/0.15); p=v.b.clone(); p.y=alt+(v.b.y-alt)*s;}
   if(k>=1){ heli.vuelo=null; heli.aparcado=v.b.clone(); aterrizar(v.dest); }
   return [p,1]; }
-function aterrizar(dest){ const fd=$('fundido'); fd.style.opacity=1; setTimeout(()=>{ heli.ride=false; yo.m.visible=true; primero=true;
+function aterrizar(dest){ if(dest==='recoger'){ aviso('🚁 <b>Omar ha aterrizado junto a ti.</b> Acércate y pulsa E para subir.'); return; } const fd=$('fundido'); fd.style.opacity=1; setTimeout(()=>{ heli.ride=false; yo.m.visible=true; primero=true;
     if(dest==='hq'){ heli.aparcado=null; heli.t=0; yo.planta=5; yo.m.position.set(PAD.x-6.5,TECHO+0.4,PAD.z+1); }
     else { const v=LOCALES[dest]; yo.planta=0; yo.m.position.copy(v.entrada); yo.yaw=Math.PI; yo.m.rotation.y=0; marcar('llegar:'+dest); aviso(`📍 <b>${v.nombre}</b>. Omar te espera en la azotea del local.`); }
     fd.style.opacity=0; },500); }
 function localCerca(){ if(yo.planta!==0) return null; for(const v of Object.values(LOCALES)){ const p=yo.m.position; if(Math.abs(p.x-v.cx)<v.w/2+6&&Math.abs(p.z-v.cz)<v.d/2+7) return v; } return null; }
 // ---- cada fotograma ----
-let ledT=0, f2T=0, statsOn=false, statsT=0;
+let ledT=0, f2T=0, statsOn=false, statsT=0, reuT=4;
 addEventListener('keydown',e=>{ if(e.code==='KeyP'&&e.target.tagName!=='INPUT'){ statsOn=!statsOn; $('stats').hidden=!statsOn; } });
 function fase2Tick(dt){ const ahoraMs=performance.now(); f2T+=dt;
   for(const v of Object.values(LOCALES)){ const cerca=cam.position.distanceToSquared(new THREE.Vector3(v.cx,0,v.cz))<130*130;
@@ -1692,11 +1699,11 @@ function fase2Tick(dt){ const ahoraMs=performance.now(); f2T+=dt;
 
 // ============ Fase 3: villa, boutique, galería de tiro, puñetazos y Burj Khalifa ============
 // ---- ropa: vestir a cualquier persona y guardar tu estilo ----
-function vestir(p,r){ if(!r) return; p.m.traverse(o=>{ if(!o.isMesh) return; if(/Suit|Pants/.test(o.name)) o.material.color.set(r.traje); if(/Tie/.test(o.name)) o.material.color.set(r.corbata); if(/Shirt/.test(o.name)) o.material.color.set(r.camisa); }); }
+function vestir(p,r){ if(!r) return; p.m.traverse(o=>{ if(!o.isMesh) return; if(/Suit|Pants|Jacket|Body_?Suit/i.test(o.name)){ o.material.color.set(r.traje); if(o.material.map){ o.material.color.multiplyScalar(1.6); } } if(/Tie/.test(o.name)) o.material.color.set(r.corbata); if(/Shirt/.test(o.name)) o.material.color.set(r.camisa); }); }
 if(prog.ropa) vestir(yo,prog.ropa);
 // ---- MAISON AIRMATE · sastrería y relojes ----
 { const B=local('boutique',{x:60,z:60,nombre:'MAISON AIRMATE',sub:'SASTRERÍA · ALTA RELOJERÍA',suelo:M.marmol,pared:M.marmolPared,luz:0xfff0d6}); const {cx,cz}=B, y=0.32;
-  const TRAJES=[[0x1d2a44,0xc9a45a,0xf4f4f2],[0x4a4d52,0x111114,0xf4f4f2],[0xefeee8,0xc9a45a,0xefeee8],[0x5a1a24,0x111114,0xf4f4f2],[0xd9cdb4,0x3a2a1a,0xf4f4f2],[0x0f1a33,0x6d0f14,0xdfe6ee]];
+  const TRAJES=[[0x2f55a8,0xc9a45a,0xf4f4f2],[0x8a8f99,0x111114,0xf4f4f2],[0xf2f0ea,0xc9a45a,0xf2f0ea],[0x8a1f30,0x111114,0xf4f4f2],[0xe6d6b2,0x3a2a1a,0xf4f4f2],[0x24407a,0x9a1b2a,0xdfe6ee]];
   TRAJES.forEach(([t,c,s],i)=>{ const x=cx-9+i*3.6; cil(0.45,0.5,0.3,M.marmolNegro,x,y+0.15,cz-7.5,{seg:24}); const p=gente(B,{modelo:i%3===2?'louise':'joe',traje:t,corbata:c,camisa:s,x,y:y+0.3,z:cz-7.5,ry:0},'idle'); p.acc.idle.timeScale=0; colisiones[0].push({x0:x-0.5,x1:x+0.5,z0:cz-8,z1:cz-7}); });
   for(const x of [-8,8]){ caja(0.06,1.9,3.2,M.oro,cx+x,y+0.95,cz+1,{sombra:false}); for(let k=0;k<7;k++) caja(0.5,1.05,0.12,new THREE.MeshStandardMaterial({color:[0x1a1b20,0x1d2a44,0x4a4d52,0x5a1a24,0xd9cdb4,0x0f1a33,0xefeee8][k],roughness:0.8}),cx+x,y+1.3,cz-0.4+k*0.45,{sombra:false}); colisiones[0].push({x0:cx+x-0.4,x1:cx+x+0.4,z0:cz-0.8,z1:cz+2.8}); }
   caja(4,1,1,M.marmolNegro,cx,y+0.5,cz-3,{col:0}); const vit=new THREE.Mesh(new THREE.BoxGeometry(3.6,0.4,0.7),M.cristal); vit.position.set(cx,y+1.2,cz-3); B.grupo.add(vit);
@@ -1721,14 +1728,13 @@ const tiro={activo:false,t:0,puntos:0,dianas:[],pistola:null};
   const dMat=canvasTex(256,256,(g,w)=>{for(const [r,c] of [[128,'#f4f1ea'],[100,'#111'],[72,'#f4f1ea'],[46,'#c0001a'],[18,'#ffd05a']]){g.fillStyle=c;g.beginPath();g.arc(w/2,w/2,r,0,7);g.fill();}});
   for(let i=0;i<6;i++){ const d=new THREE.Mesh(new THREE.CircleGeometry(0.45,32),new THREE.MeshStandardMaterial({map:dMat,roughness:0.7})); d.position.set(cx-7.2+i*2.9,y+1.6,cz-9.2); G.grupo.add(d); d.userData={x0:d.position.x,fase:i*1.3,vel:0.6+i*0.15}; tiro.dianas.push(d); }
   npcLocal(G,'Instructor de tiro','AIRMATE Shooting Club',{modelo:'josh',traje:0x2b2f38,corbata:0x111111,x:cx+6,z:cz+2.4,ry:Math.PI},'idle',()=>abrirTiro());
-  G.linea=[cx,cz+2.6]; mueble('service_pistol',cx+3,y+1.13,cz+1,0.4,1);
+  G.linea=[cx,cz+2.6]; 
 }
 function abrirTiro(){ abrirDialogo('Instructor de tiro','AIRMATE Shooting Club',`<p>Treinta segundos, seis dianas en movimiento. Haz clic sobre ellas para disparar. Cada acierto, AED 1.000.${prog.mejorTiro?` Tu récord: <b>${prog.mejorTiro}</b>.`:''}</p>`,'<button class="opc" id="tEmp">🎯 Empezar · AED 500</button>');
   $('tEmp').onclick=()=>{ if(prog.dinero<500){aviso('No te llega el saldo.');return;} moverDinero(-500,'Galería'); cerrarDialogo(); empezarTiro(); }; }
 function empezarTiro(){ const [x,z]=LOCALES.tiro.linea; yo.m.position.set(x,0.37,z); yo.m.rotation.y=Math.PI; yo.yaw=0; tiro.activo=true; tiro.t=30; tiro.puntos=0;
-  if(!tiro.pistola){ tiro.pistola=adjunto(hueso(yo.m,'mixamorigRightHand'),new THREE.Group()); const src=PH.service_pistol; if(src){const o=src.scene.clone(true); o.scale.setScalar(1); o.rotation.set(0,Math.PI/2,Math.PI/2); o.position.set(0.02,0.09,0.03); tiro.pistola.add(o);} }
-  tiro.pistola.visible=true; cambiar(yo,'pistol_idle'); $('mira').hidden=false; $('tiroHud').hidden=false; aviso('🎯 <b>¡Dispara!</b> Haz clic en las dianas.'); }
-function acabarTiro(){ tiro.activo=false; $('mira').hidden=true; $('tiroHud').hidden=true; if(tiro.pistola) tiro.pistola.visible=false; cambiar(yo,'idle'); primero=true;
+  cambiar(yo,'pistol_idle'); $('mira').hidden=false; $('tiroHud').hidden=false; aviso('🎯 <b>¡Dispara!</b> Haz clic en las dianas.'); }
+function acabarTiro(){ tiro.activo=false; $('mira').hidden=true; $('tiroHud').hidden=true; cambiar(yo,armaEq?'pistol_idle':'idle'); primero=true;
   if(tiro.puntos) moverDinero(tiro.puntos*1000,`${tiro.puntos} aciertos`); prog.mejorTiro=Math.max(prog.mejorTiro||0,tiro.puntos); prog.rep+=tiro.puntos; guardar();
   aviso(`🎯 <b>${tiro.puntos} aciertos.</b>${tiro.puntos>=10?' Puntería de agente secreto.':' Vuelve a intentarlo: con 10 completas el reto.'}`); if(tiro.puntos>=10) marcar('tiro'); }
 const rayoTiro=new THREE.Raycaster(), ndc=new THREE.Vector2();
@@ -1750,6 +1756,14 @@ function pegar(){ if(conduciendo||heli.ride||dialogoAbierto||tiro.activo||perfor
   else if(Math.random()<0.4) aviso(['Eso no es de socio, Fabio.','Las cámaras lo han grabado todo…','Ese tío no tenía la culpa.'][Math.floor(Math.random()*3)]);
   guardar(); }
 addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT') return; if(e.code==='KeyF') pegar(); });
+// ---- suelo y paredes reales de los modelos pisables (la villa): rayos hacia abajo y hacia delante ----
+const PISABLES=[], rayoSuelo=new THREE.Raycaster(), _o=new THREE.Vector3(), _d=new THREE.Vector3();
+function sueloModelo(ox,oz,nx,nz){ if(!PISABLES.length||yo.planta!==0) return [nx,nz]; const v=LOCALES.villa, y=yo.m.position.y;
+  if(Math.abs(nx-v.cx)>19||Math.abs(nz-v.cz)>15){ if(y>0.3&&Math.abs(ox-v.cx)<=19&&Math.abs(oz-v.cz)<=15) yo.m.position.y=0.12; return [nx,nz]; }
+  const dx=nx-ox, dz=nz-oz, dist=Math.hypot(dx,dz);
+  if(dist>1e-4){ _d.set(dx/dist,0,dz/dist); let muro=true; for(const hh of [1.5,2.4]){ _o.set(ox,y+hh,oz); rayoSuelo.set(_o,_d); rayoSuelo.far=dist+0.35; if(!rayoSuelo.intersectObjects(PISABLES,false).length){muro=false;break;} } if(muro) return [ox,oz]; }
+  _o.set(nx,y+1.3,nz); _d.set(0,-1,0); rayoSuelo.set(_o,_d); rayoSuelo.far=6; const h=rayoSuelo.intersectObjects(PISABLES,false)[0];
+  const ny=h?h.point.y:0.12; if(ny-y>1.2) return [ox,oz]; yo.m.position.y=ny; return [nx,nz]; }
 // ---- villa en Palm Jumeirah (arquitectura: «Modern luxury villa house building» · ziguratarchitecturestudio, CC BY 4.0) ----
 let saco=null;
 { const cx=-318, cz=40, y=0.32;
@@ -1759,11 +1773,11 @@ let saco=null;
   const mar=new THREE.Mesh(new THREE.PlaneGeometry(600,900),new THREE.MeshPhysicalMaterial({color:0x16708a,roughness:0.08,metalness:0.1,clearcoat:1})); mar.rotation.x=-Math.PI/2; mar.position.set(-660,0.06,40); scene.add(mar);
   const arena=new THREE.MeshStandardMaterial({color:0xe8d8b5,roughness:1}); caja(16,0.1,140,arena,-352,0.08,40,{sombra:false});
   // carretera de acceso bien orientada (como las demás calles) y su cruce
-  { const len=70, r=plano(ANCHO,len,matCarretera.clone(),-246-len/2+6,0.021,40); r.rotation.set(-Math.PI/2,0,Math.PI/2); r.material.map=texCarretera.clone(); r.material.map.repeat.set(1,len/12); r.material.map.needsUpdate=true;
+  { const len=56, r=plano(ANCHO,len,matCarretera.clone(),-246-len/2+6,0.021,40); r.rotation.set(-Math.PI/2,0,Math.PI/2); r.material.map=texCarretera.clone(); r.material.map.repeat.set(1,len/12); r.material.map.needsUpdate=true;
     caja(len,0.16,0.3,bord,-246-len/2+6,0.08,40-ANCHO/2-0.15,{sombra:false}); caja(len,0.16,0.3,bord,-246-len/2+6,0.08,40+ANCHO/2+0.15,{sombra:false}); }
   // la villa (modelo real)
   gltf.loadAsync('mod/arq/villa.glb').then(g=>{ const o=g.scene; o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true; if(c.material&&c.material.isMeshBasicMaterial) c.material=new THREE.MeshStandardMaterial({color:c.material.color,map:c.material.map,roughness:0.6});}});
-    const b=new THREE.Box3().setFromObject(o), ce=b.getCenter(new THREE.Vector3()); o.position.set(-ce.x,-b.min.y,-ce.z); const piv=new THREE.Group(); piv.add(o); piv.rotation.y=Math.PI*1.5; piv.position.set(cx,0.12,cz); scene.add(piv); v.modelo=piv; }).catch(()=>{});
+    const b=new THREE.Box3().setFromObject(o), ce=b.getCenter(new THREE.Vector3()); o.position.set(-ce.x,-b.min.y,-ce.z); const piv=new THREE.Group(); piv.add(o); piv.rotation.y=Math.PI*1.5; piv.position.set(cx,0.12,cz); scene.add(piv); v.modelo=piv; piv.updateMatrixWorld(true); piv.traverse(c=>{if(c.isMesh) PISABLES.push(c);}); }).catch(()=>{});
   // valla perimetral con puertas este (calle) y oeste (playa)
   for(const s of [-1,1]) colisiones[0].push({x0:cx-17.6,x1:cx+17.6,z0:cz+s*13.5-0.15,z1:cz+s*13.5+0.15});
   for(const s of [-1,1]) for(const t of [-1,1]) colisiones[0].push({x0:cx+s*17.5-0.15,x1:cx+s*17.5+0.15,z0:t>0?cz+2.2:cz-13.6,z1:t>0?cz+13.6:cz-2.2});
@@ -1826,18 +1840,23 @@ let f3T=0;
 // ============ PRESTIGE MOTORS · concesionario y garaje de la villa ============
 // modelo: 'ferrari' o 'deportivo' mientras llegan los modelos 3D reales de cada marca (mod/coches/<id>.glb)
 const CATALOGO=[
+  {id:'rrange',nombre:'Range Rover (2022)',precio:1200000,len:5.05,frente:1},
+  {id:'urus',nombre:'Lamborghini Urus',precio:1150000,len:5.11,frente:-1},
+  {id:'rrsvr',nombre:'Range Rover Sport SVR',precio:680000,len:4.88,frente:1},
+  {id:'velar',nombre:'Range Rover Velar',precio:420000,len:4.8,frente:1},
+  {id:'escalade',nombre:'Cadillac Escalade (2021)',precio:420000,len:5.38,frente:1},
   {id:'mclaren720',nombre:'McLaren 720S',precio:1250000,len:4.54,frente:1},
   {id:'g63',nombre:'Mercedes-AMG G 63 (2020)',precio:980000,len:4.87,frente:1},
   {id:'porsche911',nombre:'Porsche 911 Turbo S (992)',precio:1050000,len:4.54,frente:1},
   {id:'xm',nombre:'BMW XM',precio:780000,len:5.11,frente:1},
   {id:'m4',nombre:'BMW M4 G82',precio:420000,len:4.8,frente:1},
   {id:'rs6',nombre:'Audi RS 6 Avant',precio:520000,len:4.99,frente:-1},
-  {id:'rrsport',nombre:'Range Rover Sport',precio:640000,len:4.85,frente:1},
-  {id:'defender',nombre:'Land Rover Defender 90',precio:420000,len:3.9,frente:1},
-  {id:'evoque',nombre:'Range Rover Evoque',precio:260000,len:4.37,frente:1},
+  {id:'rrsport',nombre:'Range Rover Sport (2023)',precio:640000,len:4.95,frente:1},
+  {id:'defender',nombre:'Land Rover Defender 110 (2021)',precio:420000,len:5.0,frente:1},
+  {id:'evoque',nombre:'Range Rover Evoque (2022)',precio:260000,len:4.37,frente:1},
   {id:'discovery',nombre:'Land Rover Discovery 5',precio:390000,len:4.95,frente:1},
   {id:'rs7',nombre:'Audi RS7 Sportback (2020)',precio:560000,len:5.01,frente:1},
-  {id:'x6',nombre:'BMW X6 M Competition',precio:430000,len:4.94,frente:-1},
+  {id:'x6',nombre:'BMW X6 M Competition (2022)',precio:430000,len:4.94,frente:1},
   {id:'x4',nombre:'BMW X4',precio:290000,len:4.75,frente:1},
   {id:'x3',nombre:'BMW X3 M40i (2024)',precio:330000,len:4.76,frente:1},
   {id:'landcruiser',nombre:'Toyota Land Cruiser 300 (2022)',precio:380000,len:4.98,frente:1},
@@ -1845,18 +1864,23 @@ const CATALOGO=[
   {id:'zafira',nombre:'Opel Zafira',precio:95000,len:4.32,frente:1},
   {id:'ferrari458',nombre:'Ferrari 458 Spider',precio:1100000,modelo:'ferrari',color:0xc0001a},
 ];
-const CREDITOS_COCHES='Coches 3D (Sketchfab, CC BY 4.0): Range Rover Evoque · minghauLoh; Discovery 5 · Ciiplix; XM · Mona x Supercars; G 63 · ay321; Defender 90 · kekomag; RS7 · supercarmodels; 911 Turbo S y X3 M40i · tangwang920; 720S · ddiaz-design; Land Cruiser 300 · akamujoshua; Patrol Extreme · CursedCrown; Zafira y X4 · tonielpro520; Range Rover Sport · David_Holiday; M4 G82 · vecarz; RS 6 Avant · Galaxy Car Showroom; X6 M · SharkyStudios.';
+const PERFIL_SONIDO={rrange:'lr',rrsvr:'lr',velar:'lr',urus:'super',escalade:'amg',g63:'amg',mclaren720:'super',porsche911:'porsche',m4:'bmw',x3:'bmw',x4:'bmw',x6:'bmw',xm:'bmw',rs6:'audi',rs7:'audi',defender:'lr',discovery:'lr',evoque:'lr',rrsport:'lr',landcruiser:'x4',patrol:'x4',zafira:'zafira',ferrari458:'f'};
+const CREDITOS_COCHES='Coches 3D (Sketchfab, CC BY 4.0): Range Rover 2022, Evoque 2022 y Range Rover Sport 2023 · tonielpro520; Range Rover Sport SVR · abodevleri; Velar · Mona x Supercars; Urus · Kai Xiang; Escalade · rexrain studio; Defender 110 · David_Holiday; X6 M 2022 · KINGSLEY_king; Discovery 5 · Ciiplix; XM · Mona x Supercars; G 63 · ay321; Defender 90 · kekomag; RS7 · supercarmodels; 911 Turbo S y X3 M40i · tangwang920; 720S · ddiaz-design; Land Cruiser 300 · akamujoshua; Patrol Extreme · CursedCrown; Zafira y X4 · tonielpro520; Range Rover Sport · David_Holiday; M4 G82 · vecarz; RS 6 Avant · Galaxy Car Showroom; X6 M · SharkyStudios. Sonidos de motor (Freesound): Porsche 911 y Land Rover · jerry.berumen (CC BY 4.0); Audi R8 · Jonas_Jocys (CC BY 4.0); el resto CC0 (marcelweiss, holderall, Walking.With.Microphones, Andreabarata, FFKoenigsegg20012017, craigsmith, Alex_hears_things, AlexanderChe, jtvdb, EwanPenman11, florianreichelt).';
 if(!Array.isArray(prog.garaje)) prog.garaje=[];
 const MODELOS_REALES={}, CARGANDO={}, TODOS_COCHES=[];
 function normalizar(o,it){ o.traverse(c=>{ if(!c.isMesh) return; c.castShadow=true; c.receiveShadow=true; const ms=Array.isArray(c.material)?c.material:[c.material];
-    ms.forEach((m,k)=>{ if(m&&m.isMeshBasicMaterial){ const n=new THREE.MeshStandardMaterial({color:m.color,map:m.map,transparent:m.transparent,opacity:m.opacity,roughness:0.35,metalness:0.4}); if(Array.isArray(c.material)) c.material[k]=n; else c.material=n; } }); });
+    ms.forEach((m,k)=>{ if(m&&m.emissive){ const luz=/light|lamp|led|tail|head|brake|signal|indicator|faro|piloto/i.test((m.name||'')+' '+(c.name||'')); if(!luz||(m.emissiveMap&&m.emissiveMap===m.map)){ m.emissive.set(0x000000); m.emissiveMap=null; m.emissiveIntensity=0; } else m.emissiveIntensity=Math.min(m.emissiveIntensity||1,1.2); }
+      if(m&&m.isMeshBasicMaterial){ const n=new THREE.MeshStandardMaterial({color:m.color,map:m.map,transparent:m.transparent,opacity:m.opacity,roughness:0.35,metalness:0.4}); if(Array.isArray(c.material)) c.material[k]=n; else c.material=n; } }); });
   const b=new THREE.Box3().setFromObject(o), sz=b.getSize(new THREE.Vector3()), ce=b.getCenter(new THREE.Vector3()), largoZ=sz.z>sz.x, s=it.len/Math.max(sz.x,sz.z);
+  o.updateMatrixWorld(true); const ruedas=[]; o.traverse(c=>{ if(c.isMesh&&/wheel|rim|tire|tyre|rueda|llanta|disc|brake|caliper/i.test((c.name||'')+' '+(c.parent?.name||''))&&!/steer|volante/i.test(c.name)) ruedas.push(c); });
+  for(const m of ruedas){ if(/caliper|pinza/i.test(m.name)) continue; const bb=new THREE.Box3().setFromObject(m), cw=bb.getCenter(new THREE.Vector3()); if(bb.getSize(new THREE.Vector3()).y>sz.y*0.6) continue;
+    const g=new THREE.Group(); g.position.copy(o.worldToLocal(cw.clone())); const par=m.parent; par.add(g); g.position.copy(par.worldToLocal(cw.clone())); g.attach(m); g.userData.rueda=true; g.userData.eje=largoZ?'x':'z'; g.userData.sg=(it.frente>0?1:-1)*(largoZ?1:-1); }
   const p=new THREE.Group(); o.position.sub(ce); p.add(o); p.rotation.y=(largoZ?Math.PI/2:0)+(it.frente>0?Math.PI:0); p.scale.setScalar(s); p.position.y=sz.y/2*s;
   const w=new THREE.Group(); w.add(p); return w; }
 function cargarCoche(it){ if(MODELOS_REALES[it.id]||CARGANDO[it.id]||it.modelo==='ferrari') return; CARGANDO[it.id]=true;
   gltf.loadAsync(`mod/coches/${it.id}.glb`).then(g=>{ MODELOS_REALES[it.id]=normalizar(g.scene,it); TODOS_COCHES.filter(c=>c.item.id===it.id).forEach(rellenar); }).catch(()=>{}); }
 function rellenar(c){ while(c.g.children.length) c.g.remove(c.g.children[0]); const it=c.item, real=MODELOS_REALES[it.id];
-  if(real){ c.g.add(real.clone(true)); c.ruedas=[]; return; }
+  if(real){ const cl=real.clone(true); c.g.add(cl); c.ruedas=[]; cl.traverse(o=>{if(o.userData.rueda) c.ruedas.push(o);}); return; }
   if(it.modelo==='ferrari'){ const f=ferrari(it.color); scene.remove(f.g); c.g.add(f.g); c.ruedas=f.ruedas; return; }
   const d=deportivo(0x8a8f96); scene.remove(d.g); d.g.rotation.y=Math.PI; c.g.add(d.g); c.ruedas=[]; setTimeout(()=>cargarCoche(it),5000); }
 function cocheDe(it){ const g=new THREE.Group(); scene.add(g); const c={g,ruedas:[],item:it}; TODOS_COCHES.push(c); rellenar(c); return c; }
@@ -1876,8 +1900,11 @@ function cocheDe(it){ const g=new THREE.Group(); scene.add(g); const c={g,ruedas
   npcLocal(P2,'Asesor de PRESTIGE MOTORS','Ventas · SUV y todoterreno',{modelo:'josh',traje:0x1d2a44,corbata:0xc9a45a,x:cx+10,z:cz+7,ry:Math.PI},'idle',()=>abrirConcesionario()); }
 function abrirConcesionario(){ const tengo=id=>prog.garaje.includes(id);
   abrirDialogo('PRESTIGE MOTORS','Asesora de ventas',`<p>Bienvenido, señor Bueno. Lo que compre hoy se lo dejamos esta tarde en el garaje de su villa.</p><p style="color:var(--muted);font-size:13px">Saldo: <b>${fmtAED(prog.dinero)}</b></p>`,
-    CATALOGO.map(it=>tengo(it.id)?`<div class="lug"><span>🔑</span><b>${it.nombre}</b><small>en tu garaje</small></div>`:`<div class="lug"><span>🚗</span><b>${it.nombre}</b><small>${fmtAED(it.precio)}</small><button class="opc mini" data-car="${it.id}">Comprar</button><button class="opc mini" data-plazos="${it.id}">A plazos · ${fmtAED(Math.round(it.precio*0.2))}</button></div>`).join('')+(prog.deuda?`<p style="color:var(--muted);font-size:13px">Financiación pendiente: <b>${fmtAED(prog.deuda)}</b>. Se paga sola con la mitad de lo que ganes.</p>`:''));
+    CATALOGO.map(it=>tengo(it.id)?`<div class="lug"><span>🔑</span><b>${it.nombre}</b><small>en tu garaje</small><button class="opc mini" data-vender="${it.id}">Vender · ${fmtAED(Math.round(it.precio*0.7))}</button></div>`:`<div class="lug"><span>🚗</span><b>${it.nombre}</b><small>${fmtAED(it.precio)}</small><button class="opc mini" data-car="${it.id}">Comprar</button><button class="opc mini" data-plazos="${it.id}">A plazos · ${fmtAED(Math.round(it.precio*0.2))}</button></div>`).join('')+(prog.deuda?`<p style="color:var(--muted);font-size:13px">Financiación pendiente: <b>${fmtAED(prog.deuda)}</b>. Se paga sola con la mitad de lo que ganes.</p>`:''));
   $('dialogo').classList.add('ancho');
+  document.querySelectorAll('[data-vender]').forEach(b=>b.onclick=()=>{ const it=CATALOGO.find(x=>x.id===b.dataset.vender), i=GARAJE.findIndex(c=>c.item.id===it.id); if(cocheJ===GARAJE[i]&&conduciendo) return aviso('Bájate del coche antes de venderlo.');
+    if(i>=0){ const c=GARAJE[i]; scene.remove(c.g); const k=colisiones[0].indexOf(c.col); if(k>=0) colisiones[0].splice(k,1); GARAJE.splice(i,1); GARAJE.forEach((c2,j)=>{ const v=LOCALES.villa, x=v.cx+21.5+(j%4)*3.3, z=v.cz+13+Math.floor(j/4)*7; c2.g.position.set(x,0.12,z); Object.assign(c2.col,{x0:x-1.05,x1:x+1.05,z0:z-2.4,z1:z+2.4}); }); }
+    prog.garaje=prog.garaje.filter(id=>id!==it.id); moverDinero(Math.round(it.precio*0.7),'Venta '+it.nombre); guardar(); abrirConcesionario(); });
   const entregar=it=>{ prog.garaje.push(it.id); prog.rep+=Math.round(it.precio/20000); guardar(); aparcar(it); cerrarDialogo(); aviso(`🔑 <b>${it.nombre}</b> es tuyo. Te espera en el garaje de la villa.`); marcar('coche'); };
   document.querySelectorAll('[data-plazos]').forEach(b=>b.onclick=()=>{ const it=CATALOGO.find(x=>x.id===b.dataset.plazos), e=Math.round(it.precio*0.2); if(prog.dinero<e){aviso(`Para la entrada te faltan ${fmtAED(e-prog.dinero)}.`);return;} moverDinero(-e,'Entrada '+it.nombre); prog.deuda=(prog.deuda||0)+it.precio-e; entregar(it); });
   document.querySelectorAll('[data-car]').forEach(b=>b.onclick=()=>{ const it=CATALOGO.find(x=>x.id===b.dataset.car); if(prog.dinero<it.precio){aviso(`No te llega: te faltan ${fmtAED(it.precio-prog.dinero)}. Prueba «A plazos».`);return;}
@@ -1885,10 +1912,10 @@ function abrirConcesionario(){ const tengo=id=>prog.garaje.includes(id);
     aviso(`🔑 <b>${it.nombre}</b> es tuyo. Te espera en el garaje de la villa.`); marcar('coche'); }); }
 // garaje de la villa
 const GARAJE=[];
-function aparcar(it){ const v=LOCALES.villa, i=GARAJE.length, x=v.cx+22+(i%3)*4.6, z=v.cz+12+Math.floor(i/3)*5.5; const c=cocheDe(it); c.g.position.set(x,0.12,z); c.g.rotation.y=0;
-  c.col={x0:x-1.1,x1:x+1.1,z0:z-2.3,z1:z+2.3}; colisiones[0].push(c.col); c.item=it; GARAJE.push(c); }
+function aparcar(it){ const v=LOCALES.villa, i=GARAJE.length, x=v.cx+21.5+(i%4)*3.3, z=v.cz+13+Math.floor(i/4)*7; const c=cocheDe(it); c.g.position.set(x,0.12,z); c.g.rotation.y=Math.PI/2;
+  c.col={x0:x-1.05,x1:x+1.05,z0:z-2.4,z1:z+2.4}; colisiones[0].push(c.col); c.item=it; GARAJE.push(c); }
 for(const id of prog.garaje){ const it=CATALOGO.find(x=>x.id===id); if(it) aparcar(it); }
-{ const v=LOCALES.villa; caja(15,0.06,30,M.marmolNegro,v.cx+26.6,0.1,v.cz+24.5,{sombra:false}); }
+{ const v=LOCALES.villa; caja(15,0.06,34,M.marmolNegro,v.cx+26.5,0.1,v.cz+26,{sombra:false}); for(let k=0;k<=4;k++) caja(0.12,0.02,30,new THREE.MeshStandardMaterial({color:0xf2f2ee}),v.cx+19.85+k*3.3,0.14,v.cz+26,{sombra:false}); }
 function accionGaraje(){ if(yo.planta!==0||conduciendo) return null; const p=yo.m.position;
   for(const k of ['motors','motors2']){ const v=LOCALES[k]; if(v&&v.dentro(p.x,p.z)) return {txt:'Ver catálogo y comprar coches',fn:abrirConcesionario}; }
   for(const c of GARAJE){ if(cocheJ===c&&conduciendo) continue; if(Math.hypot(p.x-c.g.position.x,p.z-c.g.position.z)<3) return {txt:`Conducir ${c.item.nombre}`,fn:()=>subirCoche(c)}; } return null; }
@@ -1897,13 +1924,13 @@ function motorsTick(dt){ for(const k of ['motors','motors2']){ const P=LOCALES[k
 // ============ mapa de la ciudad, GPS y chófer ============
 const LUGARES=()=>[
   {id:'hq',nombre:'Torre AIRMATE',ico:'🏢',x:0,z:24,col:'#d6b26a'},
-  ...['nobo','palais','boutique','tiro','motors','motors2','villa'].filter(k=>LOCALES[k]).map(k=>{const v=LOCALES[k]; return {id:k,nombre:v.nombre==='Villa Palm Jumeirah'?'Tu villa · Palm Jumeirah':v.nombre,ico:{nobo:'🍣',palais:'🎶',boutique:'👔',tiro:'🎯',motors:'🚗',motors2:'🚙',villa:'🏝️'}[k],x:v.entrada.x,z:v.entrada.z,col:{nobo:'#ff9a5a',palais:'#b04dff',boutique:'#e9cf8e',tiro:'#ff5a5a',motors:'#5ab0ff',motors2:'#7fc8ff',villa:'#3fd0c0'}[k]};})];
+  ...['nobo','palais','boutique','tiro','motors','motors2','villa','jet'].filter(k=>LOCALES[k]).map(k=>{const v=LOCALES[k]; return {id:k,nombre:v.nombre==='Villa Palm Jumeirah'?'Tu villa · Palm Jumeirah':v.nombre,ico:{nobo:'🍣',palais:'🎶',boutique:'👔',tiro:'🎯',motors:'🚗',motors2:'🚙',villa:'🏝️',jet:'✈️'}[k],x:v.entrada.x,z:v.entrada.z,col:{nobo:'#ff9a5a',palais:'#b04dff',boutique:'#e9cf8e',tiro:'#ff5a5a',motors:'#5ab0ff',motors2:'#7fc8ff',villa:'#3fd0c0',jet:'#ffffff'}[k]};})];
 let gps=null;
 function marcarRuta(l){ gps={x:l.x,z:l.z,nombre:l.nombre}; cerrarDialogo(); aviso(`📍 <b>Ruta a ${escH(l.nombre)}.</b> Sigue el haz dorado y la flecha del minimapa.`); }
 function chofer(l){ if(prog.dinero<200){aviso('No te llega el saldo.');return;} moverDinero(-200,'Chófer'); cerrarDialogo(); const fd=$('fundido'); fd.style.opacity=1;
   setTimeout(()=>{ if(conduciendo) bajarCoche(); yo.planta=0; yo.m.visible=true; yo.m.position.set(l.x,l.id==='villa'?0.32:0.12,l.z+(l.id==='hq'?2:1.5)); yo.yaw=Math.PI; primero=true; gps=null; fd.style.opacity=0; aviso(`🚘 Llegaste a <b>${escH(l.nombre)}</b>.`); },700); }
 function abrirMapa(){ const L=LUGARES();
-  abrirDialogo('🗺️ Mapa de Dubái','Toca un sitio para ir',`<canvas id="mapaGrande" width="640" height="440" aria-label="Mapa de la ciudad"></canvas><div class="lugares">${L.map((l,i)=>`<div class="lug"><span style="color:${l.col}">${l.ico}</span><b>${escH(l.nombre)}</b><small>${Math.round(Math.hypot(l.x-yo.m.position.x,l.z-yo.m.position.z))} m</small><button class="opc mini" data-ruta="${i}">📍 Ruta</button><button class="opc mini" data-chofer="${i}">🚘 Chófer · AED 200</button></div>`).join('')}</div>`);
+  abrirDialogo('🗺️ Mapa de Dubái','Toca un sitio para ir',`<button class="opc" id="bLlamarHeli">🚁 Llamar al helicóptero aquí · AED 2.000 (tecla H)</button><canvas id="mapaGrande" width="640" height="440" aria-label="Mapa de la ciudad"></canvas><div class="lugares">${L.map((l,i)=>`<div class="lug"><span style="color:${l.col}">${l.ico}</span><b>${escH(l.nombre)}</b><small>${Math.round(Math.hypot(l.x-yo.m.position.x,l.z-yo.m.position.z))} m</small><button class="opc mini" data-ruta="${i}">📍 Ruta</button><button class="opc mini" data-chofer="${i}">🚘 Chófer · AED 200</button></div>`).join('')}</div>`);
   $('dialogo').classList.add('ancho');
   const cv=$('mapaGrande'), g=cv.getContext('2d'), W=cv.width, H=cv.height, mx=x=>(x+360)/620*W, mz=z=>(z+260)/500*H;
   g.fillStyle='#0f141d'; g.fillRect(0,0,W,H); g.fillStyle='#16708a'; g.fillRect(0,0,mx(-350),H);
@@ -1913,7 +1940,7 @@ function abrirMapa(){ const L=LUGARES();
   L.forEach((l,i)=>{ g.fillStyle=l.col; g.beginPath(); g.arc(mx(l.x),mz(l.z),7,0,7); g.fill(); g.fillStyle='#fff'; g.fillText(l.nombre.split(' · ')[0],mx(l.x),mz(l.z)+(i%2?24:-12)); });
   g.save(); g.translate(mx(yo.m.position.x),mz(yo.m.position.z)); g.rotate(Math.PI-(conduciendo?auto.yaw-Math.PI/2:yo.yaw)); g.fillStyle='#f0d898'; g.strokeStyle='#000'; g.lineWidth=2; g.beginPath(); g.moveTo(0,-11); g.lineTo(8,9); g.lineTo(0,4); g.lineTo(-8,9); g.closePath(); g.fill(); g.stroke(); g.restore();
   document.querySelectorAll('[data-ruta]').forEach(b=>b.onclick=()=>marcarRuta(L[+b.dataset.ruta]));
-  document.querySelectorAll('[data-chofer]').forEach(b=>b.onclick=()=>chofer(L[+b.dataset.chofer])); }
+  document.querySelectorAll('[data-chofer]').forEach(b=>b.onclick=()=>chofer(L[+b.dataset.chofer])); $('bLlamarHeli').onclick=llamarHeli; }
 $('bMapa').onclick=abrirMapa;
 addEventListener('keydown',e=>{ if(e.code==='KeyN'&&e.target.tagName!=='INPUT'&&!e.repeat){ if(dialogoAbierto&&$('mapaGrande')) cerrarDialogo(); else if(!dialogoAbierto) abrirMapa(); } });
 function gpsTick(){ if(gps&&yo.planta===0&&Math.hypot(yo.m.position.x-gps.x,yo.m.position.z-gps.z)<7){ aviso(`📍 Has llegado a <b>${escH(gps.nombre)}</b>.`); gps=null; } }
@@ -1925,7 +1952,7 @@ async function sincronizarProgreso(){ try{ const {data}=await sb.from('hq_progre
     REAL=true; subirProg(true); }catch(e){} }
 
 // ============ arquitectura y decoración reales (Sketchfab, CC BY 4.0) ============
-const CREDITOS_ARQ='Arquitectura (Sketchfab, CC BY 4.0): villa · ziguratarchitecturestudio; Burj Al Arab · Success isaac; yate · cornea; jet · Marco Fischer; rascacielos · 99.Miles; fuente de Artemisa · Rigsters; estatua · 3dhdscan; restaurante japonés · annzep; esquina Inakaya · Jellepostma; barra de bar · anDDDres.';
+const CREDITOS_ARQ='Arquitectura (Sketchfab, CC BY 4.0): villa · ziguratarchitecturestudio; Burj Al Arab · Success isaac; yate · cornea; jet · Marco Fischer; rascacielos · 99.Miles; fuente de Artemisa · Rigsters; estatua · 3dhdscan; restaurante japonés · annzep; esquina Inakaya · Jellepostma; barra de bar · anDDDres; helicóptero Bell 429 · davidre.';
 function colocar(archivo,{x,y=0,z,ry=0,alto,largo,sombra=true,padre=null,despues}){ gltf.loadAsync(`mod/arq/${archivo}.glb`).then(g=>{ const o=g.scene;
     o.traverse(c=>{ if(!c.isMesh) return; c.castShadow=sombra; c.receiveShadow=true; if(c.material&&c.material.isMeshBasicMaterial) c.material=new THREE.MeshStandardMaterial({color:c.material.color,map:c.material.map,roughness:0.6}); });
     const b=new THREE.Box3().setFromObject(o), sz=b.getSize(new THREE.Vector3()), ce=b.getCenter(new THREE.Vector3());
@@ -1949,6 +1976,122 @@ colocar('int_japo',{x:140,y:0.12,z:-140,largo:22,ry:0});
 colocar('int_inakaya',{x:180,y:0.12,z:-100,largo:16,ry:-Math.PI/2});
 // barra de bar real en LE PALAIS
 { const C=LOCALES.palais; colocar('int_barbar',{x:C.cx+9.6,y:0.32,z:C.cz+2,largo:7,ry:-Math.PI/2,padre:C.grupo}); }
+
+// ============ helicóptero: llamarlo desde cualquier sitio y modelo real (Bell 429 · davidre, CC BY 4.0) ============
+function sitioLibre(x,z,r=5){ for(const c of colisiones[0]) if(x+r>c.x0&&x-r<c.x1&&z+r>c.z0&&z-r<c.z1) return false; return Math.abs(x)<330&&Math.abs(z)<240; }
+function llamarHeli(){ if(heli.vuelo||heli.ride){ aviso('🚁 Omar ya está en camino.'); return; }
+  if(yo.planta!==0||conduciendo||dentro(yo.m.position.x,yo.m.position.z)||Object.values(LOCALES).some(v=>v.dentro(yo.m.position.x,yo.m.position.z))){ aviso('Sal a la calle para que Omar pueda aterrizar (o usa el helipuerto de la azotea).'); return; }
+  if(heli.aparcado&&heli.aparcado.distanceTo(yo.m.position)<12){ abrirDestinos('aqui'); return; }
+  if(prog.dinero<2000){ aviso('Llamar al helicóptero cuesta AED 2.000.'); return; }
+  const p=yo.m.position, r=yo.m.rotation.y; let sitio=null;
+  for(const [d,a] of [[10,0],[10,Math.PI/2],[10,-Math.PI/2],[10,Math.PI],[16,0],[16,Math.PI/2],[16,-Math.PI/2],[16,Math.PI]]){ const x=p.x+Math.sin(r+a)*d, z=p.z+Math.cos(r+a)*d; if(sitioLibre(x,z)){ sitio=new THREE.Vector3(x,0.14,z); break; } }
+  if(!sitio){ aviso('Aquí no hay sitio para aterrizar. Busca una calle o una plaza más abierta.'); return; }
+  moverDinero(-2000,'Helicóptero'); const a=heli.g.position.clone(); heli.vuelo={a,b:sitio,t:0,dur:Math.max(14,a.distanceTo(sitio)/20),dest:'recoger'}; heli.aparcado=null; heli.ride=false;
+  aviso(`🚁 <b>Omar despega hacia ti.</b> Llega en unos ${Math.round(heli.vuelo.dur)} s.`); if(dialogoAbierto) cerrarDialogo(); }
+function accionHeli(){ if(!heli.aparcado||heli.vuelo||heli.ride||yo.planta!==0||conduciendo) return null; if(heli.aparcado.y>2) return null;
+  return yo.m.position.distanceTo(heli.aparcado)<9?{txt:'Subir al helicóptero (Omar)',fn:()=>abrirDestinos('aqui')}:null; }
+addEventListener('keydown',e=>{ if(e.code==='KeyH'&&!conduciendo&&!dialogoAbierto&&e.target.tagName!=='INPUT'&&!e.repeat) llamarHeli(); });
+// modelo real del helicóptero (sustituye al de piezas)
+gltf.loadAsync('mod/arq/heli_bell429.glb').then(g=>{ const o=g.scene;
+  o.traverse(c=>{ if(c.isMesh){ c.castShadow=true; c.receiveShadow=true; if(c.material&&c.material.isMeshBasicMaterial) c.material=new THREE.MeshStandardMaterial({color:c.material.color,map:c.material.map,roughness:0.4}); } });
+  const b=new THREE.Box3().setFromObject(o), sz=b.getSize(new THREE.Vector3()), ce=b.getCenter(new THREE.Vector3()), largoZ=sz.z>sz.x, s=12.7/Math.max(sz.x,sz.z);
+  o.position.set(-ce.x,-b.min.y,-ce.z); const piv=new THREE.Group(); piv.add(o); piv.scale.setScalar(s); piv.rotation.y=(largoZ?Math.PI/2:0)+HELI_FRENTE;
+  // rotores: cada pieza con nombre de rotor/pala gira sobre su propio centro
+  o.updateMatrixWorld(true); const principal=new THREE.Group(), cola=new THREE.Group(); let hayP=false, hayC=false;
+  const piezas=[]; o.traverse(c=>{ if(c.isMesh&&/rotor|blade|prop|pala|hub/i.test((c.name||'')+' '+(c.parent?.name||''))) piezas.push(c); });
+  for(const m of piezas){ const bb=new THREE.Box3().setFromObject(m), t=bb.getSize(new THREE.Vector3()), cw=bb.getCenter(new THREE.Vector3()); const plano=t.y<Math.max(t.x,t.z)*0.25;
+    const grp=new THREE.Group(); m.parent.add(grp); grp.position.copy(m.parent.worldToLocal(cw.clone())); grp.attach(m); grp.userData.eje=plano?'y':(largoZ?'x':'z'); if(plano){hayP=true;} else {hayC=true;} (plano?principal:cola).userData.lista=((plano?principal:cola).userData.lista||[]).concat(grp); }
+  heli.g.children.forEach(c=>c.visible=false); heli.g.add(piv); heli.real=true;
+  heli.rotorReal=[...(principal.userData.lista||[])]; heli.colaReal=[...(cola.userData.lista||[])]; }).catch(()=>{});
+const HELI_FRENTE=0;
+function heliTick(dt,rot){ if(!heli.real) return; for(const r of heli.rotorReal) r.rotation[r.userData.eje]+=dt*30*rot; for(const r of heli.colaReal) r.rotation[r.userData.eje]+=dt*45*rot; }
+
+// ============ armas, inventario, acciones y reuniones del día ============
+if(!prog.inv) prog.inv={whisky:0,puro:0,champan:0,pistola:false,deagle:false};
+// ---- pistola (una sola, bien sujeta: sigue a la mano y apunta hacia donde miras) ----
+function crearPistola(oro){ const g=new THREE.Group(), neg=new THREE.MeshStandardMaterial({color:oro?0xd9b25a:0x15161a,metalness:oro?1:0.5,roughness:oro?0.25:0.45}), grip=new THREE.MeshStandardMaterial({color:0x0c0c0e,roughness:0.8});
+  const corr=new THREE.Mesh(new THREE.BoxGeometry(0.035,0.035,0.2),neg); corr.position.set(0,0.035,0.06); g.add(corr);
+  const arm=new THREE.Mesh(new THREE.BoxGeometry(0.03,0.025,0.17),neg); arm.position.set(0,0.008,0.05); g.add(arm);
+  const cul=new THREE.Mesh(new THREE.BoxGeometry(0.03,0.11,0.045),grip); cul.position.set(0,-0.045,-0.015); cul.rotation.x=-0.25; g.add(cul);
+  const gat=new THREE.Mesh(new THREE.TorusGeometry(0.018,0.004,6,12,Math.PI),neg); gat.position.set(0,-0.008,0.03); gat.rotation.set(0,Math.PI/2,Math.PI); g.add(gat);
+  const fog=new THREE.Mesh(new THREE.SphereGeometry(0.03,8,6),new THREE.MeshBasicMaterial({color:new THREE.Color(1,0.75,0.3).multiplyScalar(4),toneMapped:false})); fog.position.set(0,0.035,0.18); fog.visible=false; g.add(fog); g.userData.fog=fog;
+  g.visible=false; scene.add(g); return g; }
+const armas={pistola:crearPistola(false),deagle:crearPistola(true)}; armas.deagle.scale.setScalar(1.25);
+let armaEq=null, balas=15, recargando=false; const manoD=hueso(yo.m,'mixamorigRightHand'), _pm=new THREE.Vector3();
+function equipar(n){ for(const k in armas) armas[k].visible=false; if(armaEq===n||!n){ armaEq=null; cambiar(yo,'idle'); $('tiroHud').hidden=!tiro.activo; aviso('Arma guardada.'); return; }
+  armaEq=n; balas=n==='deagle'?7:15; cambiar(yo,'pistol_idle'); $('tiroHud').hidden=false; aviso(`🔫 <b>${n==='deagle'?'Desert Eagle dorada':'Pistola 9 mm'}</b> en mano. Clic para disparar · R recargar · I para guardarla.`); }
+function armaTick(){ const n=tiro.activo?(armaEq||'pistola'):armaEq; for(const k in armas) armas[k].visible=(k===n)&&yo.m.visible; const a=n&&armas[n]; if(!a) return;
+  manoD.getWorldPosition(_pm); a.position.copy(_pm); a.rotation.set(0,yo.m.rotation.y,0); a.translateZ(0.05); a.translateY(-0.02);
+  if(armaEq&&!tiro.activo) $('tiroHud').textContent=recargando?'🔄 Recargando…':`🔫 ${balas}`; }
+const impactos=[]; for(let i=0;i<30;i++){ const m=new THREE.Mesh(new THREE.CircleGeometry(0.035,10),new THREE.MeshBasicMaterial({color:0x111111,side:THREE.DoubleSide})); m.visible=false; scene.add(m); impactos.push(m); } let impI=0;
+const rayoArma=new THREE.Raycaster(), _ndc=new THREE.Vector2(); let pulsado=null;
+renderer.domElement.addEventListener('pointerdown',e=>{pulsado={x:e.clientX,y:e.clientY};});
+renderer.domElement.addEventListener('pointerup',e=>{ if(!pulsado) return; const mov=Math.hypot(e.clientX-pulsado.x,e.clientY-pulsado.y); pulsado=null; if(mov>6||!armaEq||tiro.activo||conduciendo||dialogoAbierto) return; disparar(e); });
+function disparar(e){ if(recargando) return; if(balas<=0){ aviso('Sin balas. Pulsa R para recargar.'); return; } balas--;
+  const a=armas[armaEq]; a.userData.fog.visible=true; setTimeout(()=>a.userData.fog.visible=false,60); unaVez(yo,'shooting',0.45,'pistol_idle'); try{sonido.disparo();}catch(x){}
+  const r=renderer.domElement.getBoundingClientRect(); _ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1); rayoArma.setFromCamera(_ndc,cam); rayoArma.far=120;
+  const hit=rayoArma.intersectObjects(scene.children,true).find(h=>h.object.visible&&!h.object.isSkinnedMesh&&!h.object.isSprite&&!(h.object.isPoints)&&h.object!==a&&!a.children.includes(h.object)&&h.distance>1);
+  if(hit){ const d=impactos[impI++%impactos.length]; d.position.copy(hit.point); if(hit.face){ const nrm=hit.face.normal.clone().transformDirection(hit.object.matrixWorld); d.lookAt(hit.point.clone().add(nrm)); d.position.addScaledVector(nrm,0.01);} d.visible=true; }
+  if(balas===0) setTimeout(()=>aviso('Cargador vacío · R para recargar'),200); }
+addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT') return; if(e.code==='KeyR'&&armaEq&&!recargando){ recargando=true; try{sonido.caja();}catch(x){} setTimeout(()=>{balas=armaEq==='deagle'?7:15; recargando=false;},1400); }
+  if(e.code==='KeyI'&&!e.repeat){ if(dialogoAbierto&&$('dialogo').dataset.vista==='inv') cerrarDialogo(); else if(!dialogoAbierto) abrirInventario(); }
+  if(e.code==='KeyG'&&!e.repeat){ if(dialogoAbierto&&$('dialogo').dataset.vista==='acc') cerrarDialogo(); else if(!dialogoAbierto) abrirAcciones(); } });
+// ---- inventario ----
+const OBJETOS={whisky:['🥃','Whisky 18 años'],champan:['🍾','Copa de champán'],puro:['🚬','Puro cubano'],pistola:['🔫','Pistola 9 mm'],deagle:['🔫','Desert Eagle dorada']};
+function abrirInventario(){ const I=prog.inv, filas=Object.entries(OBJETOS).filter(([k])=>typeof I[k]==='boolean'?I[k]:I[k]>0);
+  abrirDialogo('🎒 Inventario','Lo que llevas encima',filas.length?filas.map(([k,[ico,nom]])=>`<div class="lug"><span>${ico}</span><b>${nom}</b><small>${typeof I[k]==='boolean'?(armaEq===k?'en la mano':'guardada'):'× '+I[k]}</small><button class="opc mini" data-usar="${k}">${typeof I[k]==='boolean'?(armaEq===k?'Guardar':'Sacar'):'Usar'}</button></div>`).join(''):'<p>Vacío. Compra bebidas y puros en los bares, y armas en el Shooting Club.</p>');
+  $('dialogo').dataset.vista='inv';
+  document.querySelectorAll('[data-usar]').forEach(b=>b.onclick=()=>{ const k=b.dataset.usar; cerrarDialogo();
+    if(k==='pistola'||k==='deagle'){ equipar(k); return; }
+    prog.inv[k]--; guardar();
+    if(k==='puro'){ puro.visible=true; humo.hasta=performance.now()+40000; humo.m.visible=true; unaVez(yo,'smoking',9); setTimeout(()=>puro.visible=false,40000); }
+    else { vaso.visible=true; setTimeout(()=>vaso.visible=false,9000); unaVez(yo,'drinking',8.5); copas+=k==='whisky'?1:0.6; } }); }
+function invAdd(k,n=1){ if(typeof prog.inv[k]==='boolean') prog.inv[k]=true; else prog.inv[k]=(prog.inv[k]||0)+n; guardar(); aviso(`🎒 ${OBJETOS[k][0]} <b>${OBJETOS[k][1]}</b> al inventario (tecla I).`); }
+// tiendas: añadir «para llevar» y armas a los diálogos que ya existen
+function extraBotones(html,fn){ const acc=$('dialogo').querySelector('.acc'); acc.insertAdjacentHTML('afterbegin',html); fn(); }
+const _abrirClubBar=abrirClubBar; abrirClubBar=function(){ _abrirClubBar(); extraBotones('<button class="opc" id="llevPuros">🧳 3 puros para llevar · AED 9.000</button><button class="opc" id="llevWh">🧳 2 whiskys para llevar · AED 1.200</button><button class="opc" id="llevCh">🧳 Botella de champán (4 copas) · AED 3.500</button>',()=>{
+  $('llevPuros').onclick=()=>{ if(prog.dinero<9000) return aviso('No te llega.'); moverDinero(-9000,'Puros'); invAdd('puro',3); };
+  $('llevWh').onclick=()=>{ if(prog.dinero<1200) return aviso('No te llega.'); moverDinero(-1200,'Whiskys'); invAdd('whisky',2); };
+  $('llevCh').onclick=()=>{ if(prog.dinero<3500) return aviso('No te llega.'); moverDinero(-3500,'Champán'); invAdd('champan',4); }; }); };
+const _abrirBar=abrirBar; abrirBar=function(){ _abrirBar(); extraBotones('<button class="opc" id="llevWh2">🧳 Whisky para llevar · AED 600</button>',()=>{ $('llevWh2').onclick=()=>{ if(prog.dinero<600) return aviso('No te llega.'); moverDinero(-600,'Whisky'); invAdd('whisky'); }; }); };
+const _abrirTiro=abrirTiro; abrirTiro=function(){ _abrirTiro(); extraBotones(`<button class="opc" id="cPis">🔫 Comprar pistola 9 mm · AED 15.000${prog.inv.pistola?' (ya la tienes)':''}</button><button class="opc" id="cDe">🔫 Desert Eagle dorada · AED 40.000${prog.inv.deagle?' (ya la tienes)':''}</button>`,()=>{
+  $('cPis').onclick=()=>{ if(prog.inv.pistola) return aviso('Ya la tienes.'); if(prog.dinero<15000) return aviso('No te llega.'); moverDinero(-15000,'Pistola'); invAdd('pistola'); };
+  $('cDe').onclick=()=>{ if(prog.inv.deagle) return aviso('Ya la tienes.'); if(prog.dinero<40000) return aviso('No te llega.'); moverDinero(-40000,'Desert Eagle'); invAdd('deagle'); }; }); };
+// ---- menú de acciones y animaciones ----
+const ACCIONES=[['💃','Bailar salsa','salsa_dancing',10],['🕺','Hip hop','hiphop_dancing',8],['🔥','Shuffle','shuffling',8],['👋','Saludar','waving',2],['👏','Aplaudir','clapping',3],['🥊','Guardia','fight_idle',4],['👊','Puñetazo','punching',1],['📞','Al teléfono','talking_on_phone',8],['🗣️','Hablar','talking',6],['🤝','Dar la mano','shaking_hands',4],['🪑','Sentarse','sitting_idle',0],['😴','Tumbarse','laying',0]];
+function abrirAcciones(){ abrirDialogo('🎭 Acciones','Elige qué hacer',`<div class="accs">${ACCIONES.map(([i,t],k)=>`<button data-ac="${k}"><span>${i}</span>${t}</button>`).join('')}</div>`); $('dialogo').dataset.vista='acc';
+  document.querySelectorAll('[data-ac]').forEach(b=>b.onclick=()=>{ const [,,an,seg]=ACCIONES[+b.dataset.ac]; cerrarDialogo(); if(armaEq) equipar(null);
+    if(seg) unaVez(yo,an,seg); else { cambiar(yo,an); yo.sentado=true; aviso('Muévete para levantarte.'); } }); }
+$('bInv').onclick=abrirInventario; $('bAcc').onclick=abrirAcciones;
+// ---- reuniones importantes del día ----
+const REUNIONES=[
+ {id:'r1',quien:'Sheikh Hamdan Al Faris',rol:'Fondo de inversión familiar',lugar:'palais',dx:-5,dz:5,ghutra:true,p:'Quiero automatizar mis 40 concesionarios. ¿Por dónde empezarías?',o:['Por todo a la vez: cuanto antes, mejor.','Por el concesionario que más leads pierde: medimos, y luego escalamos a los 40.','Por bajar el precio para que no te lo pienses.'],c:1,din:2500000,rep:220},
+ {id:'r2',quien:'Victoria Lang',rol:'CEO · cadena de clínicas',lugar:'nobo',dx:-4,dz:6,p:'Mis recepcionistas no dan abasto con WhatsApp. ¿Qué harías?',o:['Despedirlas y poner un bot.','Un agente que responde y agenda 24 h, y ellas se quedan con los casos que importan.','Contratar más recepcionistas.'],c:1,din:850000,rep:140},
+ {id:'r3',quien:'Omar Al Suwaidi',rol:'Promotor inmobiliario',lugar:'hq4',x:6,z:4,p:'Tengo 1.200 leads al mes y vendo 10 villas. ¿Me ayudas?',o:['Un CRM que puntúa cada lead y te dice a quién llamar hoy.','Más anuncios.','Mandar el mismo email a todos.'],c:0,din:1200000,rep:180},
+ {id:'r4',quien:'Laura Benedetti',rol:'Dueña de grupo de restaurantes',lugar:'skybar',x:-3,z:6,p:'Las reservas por teléfono se me escapan por la noche.',o:['Cerrar antes.','Reservas automáticas por WhatsApp y web, con confirmación y recordatorio.','Contestar tú desde casa.'],c:1,din:400000,rep:90},
+ {id:'r5',quien:'Kenji Watanabe',rol:'Inversor tecnológico',lugar:'nobo',dx:4,dz:-4,p:'¿Por qué invertiría en AIRMATE y no en otra agencia?',o:['Porque somos más baratos.','Porque tenemos clientes reales con resultados medibles y un sistema que se repite.','Porque tengo un Ferrari.'],c:1,din:3000000,rep:260},
+ {id:'r6',quien:'Mariam Al Mansoori',rol:'Directora de hotel 5 estrellas',lugar:'villa',dx:-24,dz:7,p:'Mis huéspedes preguntan lo mismo 300 veces al día.',o:['Un conserje de IA en 6 idiomas conectado a su sistema de reservas.','Un folleto.','Más personal de noche.'],c:0,din:950000,rep:150},
+ {id:'r7',quien:'Dmitri Volkov',rol:'Importador de coches de lujo',lugar:'motors',dx:-6,dz:8,p:'Vendo coches de un millón. ¿Para qué quiero IA?',o:['Para que ningún cliente de un millón espere una respuesta más de 5 minutos.','Para despedir comerciales.','No la necesitas.'],c:0,din:1800000,rep:200},
+ {id:'r8',quien:'Sofía Herrera',rol:'Cadena de gimnasios premium',lugar:'boutique',dx:5,dz:3,p:'Pierdo socios cada mes y no sé por qué.',o:['Regalar camisetas.','Un panel que avisa cuando un socio deja de venir y le escribe antes de que se dé de baja.','Bajar la cuota.'],c:1,din:600000,rep:110},
+];
+const hoyStr=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Atlantic/Canary'}).format(new Date());
+function reunionesDeHoy(){ const h=hoyStr(); if(!prog.reu||prog.reu.fecha!==h){ let s=[...h].reduce((a,c)=>a*31+c.charCodeAt(0)>>>0,7); const i=s%REUNIONES.length, j=(i+1+(s>>3)%(REUNIONES.length-1))%REUNIONES.length; prog.reu={fecha:h,ids:[REUNIONES[i].id,REUNIONES[j].id],hechas:[],fallidas:[]}; guardar(); } return prog.reu.ids.map(id=>REUNIONES.find(r=>r.id===id)); }
+function sitioReunion(r){ if(r.lugar==='hq4') return {f:4,x:r.x,z:r.z,y:FY(4)+0.39}; if(r.lugar==='skybar') return {f:5,x:r.x,z:r.z,y:TECHO+0.4}; const v=LOCALES[r.lugar]; return {f:0,x:v.cx+r.dx,z:v.cz+r.dz,y:v.id==='villa'?0.32:0.32}; }
+const npcReu={};
+function montarReuniones(){ for(const r of reunionesDeHoy()){ if(npcReu[r.id]||prog.reu.hechas.includes(r.id)||prog.reu.fallidas.includes(r.id)) continue; const s=sitioReunion(r);
+    const p=persona({...(r.ghutra?{modelo:'josh',traje:0xf3f1ea,corbata:0xf3f1ea,camisa:0xf3f1ea}:/a$|ia$|Laura|Victoria|Sofía|Mariam/.test(r.quien)?{modelo:'louise',traje:0x1b1c20}:{modelo:'josh',traje:0x22252b,corbata:0xc9a45a}),x:s.x,y:s.y,z:s.z,ry:Math.PI}); if(r.ghutra) ghutra(p);
+    p.nm=r.quien; p.rol=r.rol; p.f=s.f; p.accion=()=>abrirReunion(r); NPCS.push(p); const el=document.createElement('div'); el.className='nombre jefe'; el.id='n-npc'+(NPCS.length-1); el.textContent='⭐ '+r.quien; $('hud').appendChild(el); npcReu[r.id]=p; } }
+function abrirReunion(r){ if(prog.reu.hechas.includes(r.id)) return abrirDialogo(r.quien,r.rol,'<p>Un placer, Fabio. Seguimos hablando la semana que viene.</p>');
+  if(prog.reu.fallidas.includes(r.id)) return abrirDialogo(r.quien,r.rol,'<p>Ya hemos hablado hoy. Quizá en otra ocasión.</p>');
+  abrirDialogo(r.quien,`${r.rol} · reunión importante`,`<p>${r.p}</p>`,r.o.map((t,i)=>`<button class="opc" data-reu="${i}">${t}</button>`).join(''));
+  document.querySelectorAll('[data-reu]').forEach(b=>b.onclick=()=>{ if(+b.dataset.reu===r.c){ prog.reu.hechas.push(r.id); prog.rep+=r.rep; prog.cerrados++; guardar(); abrirDialogo(r.quien,r.rol,`<p>Exactamente lo que buscaba. Cerramos.</p><p><b>✅ +${fmtAED(r.din)} · +${r.rep} de reputación</b></p>`); setTimeout(()=>moverDinero(r.din,'Reunión: '+r.quien),600); unaVez(yo,'shaking_hands',4.4); pintarMovil(); }
+    else { prog.reu.fallidas.push(r.id); guardar(); abrirDialogo(r.quien,r.rol,'<p>No es lo que necesito. Gracias por tu tiempo.</p><p style="color:var(--muted)">Mañana tendrás reuniones nuevas.</p>'); } }); }
+function agendaHoy(){ return reunionesDeHoy().map(r=>{ const est=prog.reu.hechas.includes(r.id)?'✅ cerrada':prog.reu.fallidas.includes(r.id)?'❌ sin acuerdo':'⏳ pendiente'; const lug={palais:'LE PALAIS',nobo:'NOBŌ',hq4:'Tu despacho (planta 4)',skybar:'Sky Bar (azotea)',villa:'Tu villa',motors:'PRESTIGE MOTORS',boutique:'MAISON AIRMATE'}[r.lugar];
+  return `<div class="sms"><b>⭐ ${r.quien} · ${est}</b><span>${r.rol} · ${lug} · hasta ${fmtAED(r.din)}</span>${est==='⏳ pendiente'&&!['hq4','skybar'].includes(r.lugar)?`<button class="opc mini" data-ir="${r.lugar}">📍 Ruta</button>`:''}</div>`; }).join(''); }
+// ---- terminal privada con el jet: en el mapa y como destino del helicóptero ----
+LOCALES.jet={id:'jet',cx:0,cz:-285,w:70,d:40,h:0,nombre:'Terminal privada',grupo:new THREE.Group(),dentro:()=>false,camareros:[],npcs:[],techo:new THREE.Group(),techoPad:new THREE.Group(),pad:new THREE.Vector3(26,0.16,-276),entrada:new THREE.Vector3(-14,0.12,-266)};
+{ const pad=new THREE.Mesh(new THREE.CircleGeometry(4.2,40),new THREE.MeshStandardMaterial({map:helipad,roughness:0.7})); pad.rotation.x=-Math.PI/2; pad.position.set(26,0.13,-276); scene.add(pad); }
+DESTINOS.splice(DESTINOS.length-1,0,{id:'jet',txt:'✈️ Terminal privada (tu jet)'});
 
 // ============ luz ============
 const cAlba=new THREE.Color(0xff9a5c), cDia=new THREE.Color(0xfff1dc), niebDia=new THREE.Color(0xd8c6a8), niebNoche=new THREE.Color(0x0b1226);
@@ -2002,6 +2145,7 @@ function bucle(){
       const mx=(fz*sx+fx*cz)/l, mz=(fz*cz-fx*sx)/l;
       let nx=yo.m.position.x+mx*v*dt, nz=yo.m.position.z+mz*v*dt;
       if(yo.planta===0&&puertaAbierta<0.6){colisiones[0].push({x0:-2.3,x1:2.3,z0:D/2-0.15,z1:D/2+0.15});[nx,nz]=resolver(nx,nz,0);colisiones[0].pop();} else [nx,nz]=resolver(nx,nz,yo.planta);
+      [nx,nz]=sueloModelo(yo.m.position.x,yo.m.position.z,nx,nz);
       if(yo.planta>0&&yo.planta<5){nx=clamp(nx,X0,X1);nz=clamp(nz,Z0,Z1);}
       yo.m.position.x=nx; yo.m.position.z=nz;
       const obj=Math.atan2(mx,mz); let dif=obj-yo.m.rotation.y; dif=Math.atan2(Math.sin(dif),Math.cos(dif)); yo.m.rotation.y+=dif*Math.min(1,dt*10);
@@ -2032,7 +2176,7 @@ function bucle(){
    const ddx=hp.x-heli.prev.x, ddz=hp.z-heli.prev.z, vel=Math.hypot(ddx,ddz)/Math.max(dt,1e-3);
    if(vel>0.5){const y2=Math.atan2(-ddz,ddx); let d=y2-heli.yaw; d=Math.atan2(Math.sin(d),Math.cos(d)); heli.yaw+=d*Math.min(1,dt*2.5); heli.giro=heli.giro*0.9+d*0.1;} else heli.giro*=0.9;
    heli.g.rotation.order='YXZ'; heli.g.rotation.y=heli.yaw; heli.g.rotation.x=-clamp(heli.giro*4,-0.35,0.35); heli.g.rotation.z=-clamp(vel*0.004,0,0.14);
-   heli.prev.copy(hp); heli.rotor.rotation.y+=dt*30*rot; heli.cr.rotation.z+=dt*45*rot; heli.baliza.visible=Math.sin(T*6)>0; heli.estrobo.visible=(T%1.3)<0.08;
+   heli.prev.copy(hp); heli.rotor.rotation.y+=dt*30*rot; heliTick(dt,rot); heli.cr.rotation.z+=dt*45*rot; heli.baliza.visible=Math.sin(T*6)>0; heli.estrobo.visible=(T%1.3)<0.08;
    if(heli.ride&&!heli.vuelo&&!heli.aparcado&&heli.t>=106.5) bajarHeli(true);}
   {const fase=T%22; semaforos.forEach((s,i)=>{const verde=(i%2===0)?fase<9:(fase>=11&&fase<20), ambar=(i%2===0)?(fase>=9&&fase<11):fase>=20; s[0].m.color.copy(s[0].c).multiplyScalar(!verde&&!ambar?3:0.12); s[1].m.color.copy(s[1].c).multiplyScalar(ambar?3:0.12); s[2].m.color.copy(s[2].c).multiplyScalar(verde?3:0.12);});}
   if(window.fuegoBar) fuegoBar.scale.set(1,1+0.3*Math.sin(T*17)*Math.sin(T*5),1);
@@ -2070,7 +2214,7 @@ function bucle(){
    if(fuera&&yo.planta===0){claxonT-=dt; if(claxonT<0){claxonT=15+rnd()*25; sonido.claxon();}}
    if(!conduciendo&&(yo.actual==='walk'||yo.actual==='run')){pasoAcum+=dt*(yo.actual==='run'?3.2:1.9); if(pasoAcum>1){pasoAcum=0;sonido.paso();}}
    if(copas>0){copas=Math.max(0,copas-dt/90); const k=Math.max(0,copas-1); renderer.domElement.style.filter=k>0.05?`blur(${Math.min(2.2,k*0.7)}px) saturate(${1+k*0.15})`:''; if(k>0.05) cam.rotation.z+=Math.sin(T*1.3)*0.02*k;}
-   capHud(); salaTick(dt); if(statsOn&&(statsT+=dt)>0.5){statsT=0; const ri=renderer.info.render; $('stats').textContent=`${Math.round(fpsUlt)} fps · ${ri.calls} dibujos · ${(ri.triangles/1000).toFixed(0)}k triángulos · res ${prActual.toFixed(2)} · HD ${calidadAlta?'sí':'no'}`;} fase2Tick(dt); fase3Tick(dt); motorsTick(dt); gpsTick(); const rg=$('relojG'); if(rg) rg.textContent=fmt(ahora);}
+   capHud(); salaTick(dt); if(statsOn&&(statsT+=dt)>0.5){statsT=0; const ri=renderer.info.render; $('stats').textContent=`${Math.round(fpsUlt)} fps · ${ri.calls} dibujos · ${(ri.triangles/1000).toFixed(0)}k triángulos · res ${prActual.toFixed(2)} · HD ${calidadAlta?'sí':'no'}`;} fase2Tick(dt); fase3Tick(dt); motorsTick(dt); armaTick(); if((reuT+=dt)>5){reuT=0; montarReuniones();} gpsTick(); const rg=$('relojG'); if(rg) rg.textContent=fmt(ahora);}
   accionActual=buscarAccion(); const ac=$('accion'); if(accionActual){ac.hidden=false;ac.querySelector('span').textContent=accionActual.txt;} else ac.hidden=true;
   composer.render(); moverHud();
   mapaT+=dt; if(mapaT>0.1){mapaT=0;pintarMapa();}
