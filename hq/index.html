@@ -1160,7 +1160,7 @@ function abrirMovil(app='msgs'){ if(!prog.movil){aviso('Aún no tienes el móvil
     con:(prog.contactos.length?prog.contactos.map(c=>`<div class="sms"><b>${escH(c)}</b><span>Desbloqueado</span></div>`).join(''):'<p>Aún no tienes contactos.</p>')+`<p class="bloq">🔒 ${Math.max(0,8-prog.contactos.length)} contactos por desbloquear en la historia</p>`,
     agenda:AGENDA.map(a=>`<div class="sms ${prog.m>a.cap?'hecha':''}"><b>${a.con}</b><span>${a.lugar}${prog.m>a.cap?' · hecho':prog.m===a.cap?' · hoy':''}</span></div>`).join(''),
     banco:`<div class="saldo"><small>Saldo</small><b>${fmtAED(prog.dinero)}</b></div><p>Tratos cerrados: <b>${prog.cerrados}</b></p><p>Ganas dinero con capítulos, tratos y leads reales que pasan a interesado.</p>`,
-    est:`<div class="saldo"><small>Tu estatus</small><b>★ ${estatusDe(prog.rep)}</b></div><div class="barraRep"><i style="width:${sigE?Math.round((prog.rep-ESTATUS[ESTATUS.indexOf(sigE)-1][0])/(sigE[0]-ESTATUS[ESTATUS.indexOf(sigE)-1][0])*100):100}%"></i></div><p>${sigE?`${sigE[0]-prog.rep} de reputación para <b>${sigE[1]}</b>`:'Has llegado a lo más alto.'}</p><p class="bloq">Créditos 3D: «Car Concept» © Khronos Group (CC BY 4.0) · muebles, texturas y cielo de Poly Haven (CC0) · personajes y animaciones de Mixamo.</p>`};
+    est:`<div class="saldo"><small>Tu estatus</small><b>★ ${estatusDe(prog.rep)}</b></div><div class="barraRep"><i style="width:${sigE?Math.round((prog.rep-ESTATUS[ESTATUS.indexOf(sigE)-1][0])/(sigE[0]-ESTATUS[ESTATUS.indexOf(sigE)-1][0])*100):100}%"></i></div><p>${sigE?`${sigE[0]-prog.rep} de reputación para <b>${sigE[1]}</b>`:'Has llegado a lo más alto.'}</p><p class="bloq">Créditos 3D: «Car Concept» © Khronos Group (CC BY 4.0) · muebles, texturas y cielo de Poly Haven (CC0) · personajes y animaciones de Mixamo · motor: «racing car engine sound loops» (OpenGameArt, CC0) · ${CREDITOS_COCHES}</p>`};
   abrirDialogo('📱 Móvil','AIRMATE · '+apps[app].slice(3),`<div class="apps">${Object.entries(apps).map(([k,t])=>`<button data-app="${k}" class="${k===app?'on':''}">${t}</button>`).join('')}</div><div class="pantalla">${cuerpo[app]}</div>`);
   document.querySelectorAll('[data-app]').forEach(b=>b.onclick=()=>abrirMovil(b.dataset.app));}
 $('bMovil').onclick=()=>abrirMovil();
@@ -1274,15 +1274,24 @@ const sonido=(()=>{let ctx=null,master,ruido,ambG,mO,mO2,mF,mG,heliG,musG,activo
     const h=ctx.createBufferSource(); h.buffer=ruido; h.loop=true; const hf=ctx.createBiquadFilter(); hf.type='lowpass'; hf.frequency.value=280; const am=ctx.createGain(); am.gain.value=0.5;
     const lfo=ctx.createOscillator(); lfo.frequency.value=11; const lg=ctx.createGain(); lg.gain.value=0.5; lfo.connect(lg).connect(am.gain); heliG=ctx.createGain(); heliG.gain.value=0; h.connect(hf).connect(am).connect(heliG).connect(master); h.start(); lfo.start();
     musG=ctx.createGain(); musG.gain.value=0; musG.connect(master);
+    cargarMotor();
     const AC=[[261.6,329.6,392,493.9],[220,261.6,329.6,392],[293.7,349.2,440,523.3],[196,246.9,293.7,349.2]]; let i=0;
     setInterval(()=>{const now=ctx.currentTime; for(const fr of AC[i%4]){const o=ctx.createOscillator(),g=ctx.createGain(); o.type='triangle'; o.frequency.value=fr/2; g.gain.setValueAtTime(0,now); g.gain.linearRampToValueAtTime(0.055,now+0.8); g.gain.linearRampToValueAtTime(0,now+3.9); o.connect(g).connect(musG); o.start(now); o.stop(now+4);} i++;},4000);
   }
+  // motor real: 6 grabaciones (CC0, «racing car engine sound loops» de OpenGameArt) que se mezclan según las revoluciones
+  let capas=null;
+  async function cargarMotor(){ try{ const nom=['loop_0','loop_1_0','loop_2_0','loop_3_0','loop_4_0','loop_5_0'];
+      const bufs=await Promise.all(nom.map(async n=>ctx.decodeAudioData(await (await fetch(`mod/snd/${n}.wav`)).arrayBuffer())));
+      capas=bufs.map(b=>{const s=ctx.createBufferSource(); s.buffer=b; s.loop=true; const g=ctx.createGain(); g.gain.value=0; s.connect(g).connect(master); s.start(); return {s,g};}); }catch(e){ capas=null; } }
   function nota(f,dur=0.25,vol=0.15,tipo='sine',cu=0){ if(!ctx||!activo) return; const t=ctx.currentTime+cu,o=ctx.createOscillator(),g=ctx.createGain(); o.type=tipo; o.frequency.value=f; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+0.01); g.gain.exponentialRampToValueAtTime(0.001,t+dur); o.connect(g).connect(master); o.start(t); o.stop(t+dur+0.05);}
   function golpe(vol=0.2,frec=1800,dur=0.06){ if(!ctx||!activo) return; const t=ctx.currentTime,s=ctx.createBufferSource(); s.buffer=ruido; const f=ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=frec; f.Q.value=1.4; const g=ctx.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+dur); s.connect(f).connect(g).connect(master); s.start(t,Math.random()*1.5,dur+0.05);}
   const tgt=(p,v,tc=0.2)=>{ if(p&&ctx) p.setTargetAtTime(v,ctx.currentTime,tc); };
   return {iniciar, alternar(){activo=!activo; if(master) master.gain.value=activo?0.7:0; return activo;},
     ambiente(v){tgt(ambG&&ambG.gain,v,0.6);}, heli(v){tgt(heliG&&heliG.gain,v,0.3);}, musica(v){tgt(musG&&musG.gain,v,0.8);},
-    motor(rpm,carga){ if(!mG) return; tgt(mO.frequency,36+rpm*5.2,0.05); tgt(mO2.frequency,(36+rpm*5.2)*0.5,0.05); tgt(mF.frequency,380+rpm*42,0.1); tgt(mG.gain,carga,0.12); },
+    motor(rpm,carga){ if(!mG) return;
+      if(capas){ tgt(mG.gain,0,0.1); const nivel=Math.min(4.999,Math.max(0,rpm/62*5)), i=Math.floor(nivel), f=nivel-i, vol=carga>0?Math.min(1,0.35+carga*4):0;
+        capas.forEach((c,k)=>{ const w=k===i?1-f:k===i+1?f:0; tgt(c.g.gain,w*vol*0.55,0.08); tgt(c.s.playbackRate,0.9+f*0.22,0.08); }); return; }
+      tgt(mO.frequency,36+rpm*5.2,0.05); tgt(mO2.frequency,(36+rpm*5.2)*0.5,0.05); tgt(mF.frequency,380+rpm*42,0.1); tgt(mG.gain,carga,0.12); },
     paso(){golpe(0.1,2600,0.05);}, disparo(){golpe(0.55,1100,0.14); golpe(0.3,300,0.25);}, choque(){golpe(0.7,380,0.45);}, claxon(){nota(415,0.35,0.07,'square'); nota(466,0.35,0.06,'square');},
     ding(){nota(988,0.7,0.12); nota(1319,0.7,0.1,'sine',0.14);}, caja(){nota(1568,0.12,0.1,'square'); nota(2093,0.25,0.08,'square',0.08);} };
 })();
@@ -1789,31 +1798,46 @@ let f3T=0;
 // ============ PRESTIGE MOTORS · concesionario y garaje de la villa ============
 // modelo: 'ferrari' o 'deportivo' mientras llegan los modelos 3D reales de cada marca (mod/coches/<id>.glb)
 const CATALOGO=[
-  {id:'g63',nombre:'Mercedes-AMG G 63',precio:980000,modelo:'deportivo',color:0x111214},
-  {id:'mclaren720',nombre:'McLaren 720S',precio:1250000,modelo:'deportivo',color:0xf47a1f},
-  {id:'porsche911',nombre:'Porsche 911 Turbo S',precio:1050000,modelo:'deportivo',color:0xa9adb3},
-  {id:'rs7',nombre:'Audi RS7 Performance',precio:560000,modelo:'deportivo',color:0x2b2d31},
-  {id:'defender',nombre:'Land Rover Defender 130 V8',precio:520000,modelo:'deportivo',color:0x3b4a3a},
-  {id:'discovery',nombre:'Land Rover Discovery (último modelo)',precio:390000,modelo:'deportivo',color:0xe9e4da},
-  {id:'rrsport',nombre:'Range Rover Sport',precio:640000,modelo:'deportivo',color:0x1b1c20},
-  {id:'evoque',nombre:'Range Rover Evoque',precio:260000,modelo:'deportivo',color:0x1d2a44},
-  {id:'landcruiser',nombre:'Toyota Land Cruiser 300 GR',precio:380000,modelo:'deportivo',color:0xf4f4f2},
-  {id:'patrol',nombre:'Nissan Patrol Nismo',precio:420000,modelo:'deportivo',color:0x0b0b0d},
-  {id:'zafira',nombre:'Opel Zafira',precio:95000,modelo:'deportivo',color:0x8a8f96},
+  {id:'mclaren720',nombre:'McLaren 720S',precio:1250000,len:4.54,frente:1},
+  {id:'g63',nombre:'Mercedes-AMG G 65',precio:980000,len:4.87,frente:-1},
+  {id:'porsche911',nombre:'Porsche 911 Carrera S',precio:650000,len:4.5,frente:1},
+  {id:'xm',nombre:'BMW XM',precio:780000,len:5.11,frente:1},
+  {id:'m4',nombre:'BMW M4 G82',precio:420000,len:4.8,frente:1},
+  {id:'rs6',nombre:'Audi RS 6 Avant',precio:520000,len:4.99,frente:-1},
+  {id:'rrsport',nombre:'Range Rover Sport',precio:640000,len:4.85,frente:1},
+  {id:'defender',nombre:'Land Rover Defender 90',precio:420000,len:3.9,frente:1},
+  {id:'evoque',nombre:'Range Rover Evoque',precio:260000,len:4.37,frente:1},
+  {id:'discovery',nombre:'Land Rover Discovery 5',precio:390000,len:4.95,frente:1},
+  {id:'rs7',nombre:'Audi RS7 Sportback',precio:560000,len:5.0,frente:-1},
+  {id:'x6',nombre:'BMW X6 M Competition',precio:430000,len:4.94,frente:-1},
+  {id:'x4',nombre:'BMW X4',precio:290000,len:4.75,frente:1},
+  {id:'x3',nombre:'BMW X3',precio:260000,len:4.71,frente:1},
+  {id:'landcruiser',nombre:'Toyota Land Cruiser clásico (FJ40)',precio:300000,len:3.9,frente:1},
+  {id:'patrol',nombre:'Nissan Patrol Extreme (rally)',precio:420000,len:4.9,frente:-1},
+  {id:'zafira',nombre:'Opel Zafira',precio:95000,len:4.32,frente:1},
   {id:'ferrari458',nombre:'Ferrari 458 Spider',precio:1100000,modelo:'ferrari',color:0xc0001a},
 ];
+const CREDITOS_COCHES='Coches 3D (Sketchfab, CC BY 4.0): Range Rover Evoque · minghauLoh; Discovery 5 · Ciiplix; G 65 y XM · Mona x Supercars; Defender 90 · kekomag; RS7 · Black Snow; 911 Carrera S · chiwei; 720S · _shobh19; Land Cruiser · Game Garage; Patrol Extreme · CursedCrown; Zafira, X3 y X4 · tonielpro520; Range Rover Sport · David_Holiday; M4 G82 · vecarz; RS 6 Avant · Galaxy Car Showroom; X6 M · SharkyStudios.';
 if(!Array.isArray(prog.garaje)) prog.garaje=[];
-const MODELOS_REALES={};
-function cocheDe(item){ // devuelve {g,ruedas} con el frontal hacia -x (como tu Ferrari) para poder conducirlo
-  if(MODELOS_REALES[item.id]){ const o=MODELOS_REALES[item.id].scene.clone(true); o.traverse(c=>{if(c.isMesh)c.castShadow=true;}); const g=new THREE.Group(); g.add(o); scene.add(g); return {g,ruedas:[]}; }
-  if(item.modelo==='ferrari') return ferrari(item.color);
-  const d=deportivo(item.color); const g=new THREE.Group(); scene.remove(d.g); d.g.rotation.y=Math.PI; g.add(d.g); scene.add(g); return {g,ruedas:[]}; }
+const MODELOS_REALES={}, CARGANDO={}, TODOS_COCHES=[];
+function normalizar(o,it){ o.traverse(c=>{ if(!c.isMesh) return; c.castShadow=true; c.receiveShadow=true; const ms=Array.isArray(c.material)?c.material:[c.material];
+    ms.forEach((m,k)=>{ if(m&&m.isMeshBasicMaterial){ const n=new THREE.MeshStandardMaterial({color:m.color,map:m.map,transparent:m.transparent,opacity:m.opacity,roughness:0.35,metalness:0.4}); if(Array.isArray(c.material)) c.material[k]=n; else c.material=n; } }); });
+  const b=new THREE.Box3().setFromObject(o), sz=b.getSize(new THREE.Vector3()), ce=b.getCenter(new THREE.Vector3()), largoZ=sz.z>sz.x, s=it.len/Math.max(sz.x,sz.z);
+  const p=new THREE.Group(); o.position.sub(ce); p.add(o); p.rotation.y=(largoZ?Math.PI/2:0)+(it.frente>0?Math.PI:0); p.scale.setScalar(s); p.position.y=sz.y/2*s;
+  const w=new THREE.Group(); w.add(p); return w; }
+function cargarCoche(it){ if(MODELOS_REALES[it.id]||CARGANDO[it.id]||it.modelo==='ferrari') return; CARGANDO[it.id]=true;
+  gltf.loadAsync(`mod/coches/${it.id}.glb`).then(g=>{ MODELOS_REALES[it.id]=normalizar(g.scene,it); TODOS_COCHES.filter(c=>c.item.id===it.id).forEach(rellenar); }).catch(()=>{}); }
+function rellenar(c){ while(c.g.children.length) c.g.remove(c.g.children[0]); const it=c.item, real=MODELOS_REALES[it.id];
+  if(real){ c.g.add(real.clone(true)); c.ruedas=[]; return; }
+  if(it.modelo==='ferrari'){ const f=ferrari(it.color); scene.remove(f.g); c.g.add(f.g); c.ruedas=f.ruedas; return; }
+  const d=deportivo(0x8a8f96); scene.remove(d.g); d.g.rotation.y=Math.PI; c.g.add(d.g); c.ruedas=[]; setTimeout(()=>cargarCoche(it),5000); }
+function cocheDe(it){ const g=new THREE.Group(); scene.add(g); const c={g,ruedas:[],item:it}; TODOS_COCHES.push(c); rellenar(c); return c; }
 // concesionario
 { const P=local('motors',{x:140,z:60,w:26,d:22,nombre:'PRESTIGE MOTORS',sub:'DUBAI · LUXURY & PERFORMANCE',suelo:M.marmol,pared:M.marmolPared,luz:0xffffff}); const {cx,cz}=P, y=0.32;
   P.plataformas=[];
-  CATALOGO.slice(0,6).forEach((it,i)=>{ const x=cx-8+(i%3)*8, z=cz+(i<3?-4.5:3.5);
-    cil(2.6,2.7,0.18,M.marmolNegro,x,y+0.09,z,{seg:40,col:0}); const c=cocheDe(it); c.g.position.set(x,y+0.2,z); c.g.rotation.y=i*0.9; P.plataformas.push(c.g);
-    const cartel=plano(2.4,0.6,matLetras(letrero(it.nombre.toUpperCase(),{w:1024,h:256,fs:76,esp:0.06,fondo:'rgba(8,10,16,0.85)'}),false),x,y+0.55,z+2.95); cartel.material.emissiveIntensity=0; });
+  CATALOGO.slice(0,9).forEach((it,i)=>{ const x=cx-9+(i%3)*7, z=cz-6+Math.floor(i/3)*6;
+    cil(2.7,2.8,0.18,M.marmolNegro,x,y+0.09,z,{seg:40,col:0}); const c=cocheDe(it); c.g.position.set(x,y+0.18,z); c.g.rotation.y=i*0.9; P.plataformas.push(c.g);
+    const cartel=plano(2.4,0.6,matLetras(letrero(it.nombre.toUpperCase(),{w:1024,h:256,fs:76,esp:0.06,fondo:'rgba(8,10,16,0.85)'}),false),x,y+0.55,z+2.85); cartel.material.emissiveIntensity=0; });
   npcLocal(P,'Asesora de PRESTIGE MOTORS','Ventas · coches de lujo',{modelo:'louise',traje:0x1d2a44,x:cx+10,z:cz+7,ry:Math.PI},'idle',()=>abrirConcesionario());
   caja(3,1,1,M.marmolNegro,cx+10,y+0.5,cz+5.8,{col:0});
 }
