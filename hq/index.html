@@ -2071,13 +2071,13 @@ gltf.loadAsync('mod/arq/heli_bell429.glb').then(g=>{ const o=g.scene;
     const L=Math.max(sz.x,sz.z), top=b.max.y, rotorP=[], rotorC=[], v=new THREE.Vector3();
     const corte=top-sz.y*0.06, a=new THREE.Vector3(), b2=new THREE.Vector3(), c3=new THREE.Vector3();
     // eje del rotor: centro horizontal de lo que queda por encima del corte; solo palas = lejos del mástil
-    let hx=0, hz=0, hn=0; o.traverse(c=>{ if(!c.isMesh) return; const pos=c.geometry.attributes.position; for(let i=0;i<pos.count;i+=3){ a.fromBufferAttribute(pos,i).applyMatrix4(c.matrixWorld); if(a.y>corte){ hx+=a.x; hz+=a.z; hn++; } } }); hx/=hn||1; hz/=hn||1; const rMin=L*0.09;
+    let hx=0, hz=0, hn=0; o.traverse(c=>{ if(!c.isMesh) return; const pos=c.geometry.attributes.position; for(let i=0;i<pos.count;i+=3){ a.fromBufferAttribute(pos,i).applyMatrix4(c.matrixWorld); if(a.y>corte){ hx+=a.x; hz+=a.z; hn++; } } }); hx/=hn||1; hz/=hn||1; const rMin=L*0.022;
     o.traverse(c=>{ if(!c.isMesh) return; const g=c.geometry, pos=g.attributes.position, idx=g.index?Array.from(g.index.array):Array.from({length:pos.count},(_,k)=>k);
       const quedan=[], arriba=[]; for(let t=0;t<idx.length;t+=3){ a.fromBufferAttribute(pos,idx[t]).applyMatrix4(c.matrixWorld); b2.fromBufferAttribute(pos,idx[t+1]).applyMatrix4(c.matrixWorld); c3.fromBufferAttribute(pos,idx[t+2]).applyMatrix4(c.matrixWorld);
-        if(Math.min(a.y,b2.y,c3.y)>corte&&Math.hypot((a.x+b2.x+c3.x)/3-hx,(a.z+b2.z+c3.z)/3-hz)>rMin) arriba.push(idx[t],idx[t+1],idx[t+2]); else quedan.push(idx[t],idx[t+1],idx[t+2]); }
+        if(Math.min(a.y,b2.y,c3.y)>corte&&Math.max(a.y,b2.y,c3.y)-Math.min(a.y,b2.y,c3.y)<sz.y*0.025&&Math.hypot((a.x+b2.x+c3.x)/3-hx,(a.z+b2.z+c3.z)/3-hz)>rMin) arriba.push(idx[t],idx[t+1],idx[t+2]); else quedan.push(idx[t],idx[t+1],idx[t+2]); }
       if(!arriba.length) return; g.setIndex(quedan); const ng=g.clone(); ng.setIndex(arriba); const m=new THREE.Mesh(ng,c.material); c.parent.add(m); m.position.copy(c.position); m.quaternion.copy(c.quaternion); m.scale.copy(c.scale); rotorP.push(m); });
     o.updateMatrixWorld(true);
-    const montar=(lista,eje)=>{ if(!lista.length) return null; const bx=new THREE.Box3(); lista.forEach(m=>bx.expandByObject(m)); const cw=bx.getCenter(new THREE.Vector3()); const grp=new THREE.Group(); o.add(grp); grp.position.copy(o.worldToLocal(cw.clone())); grp.updateMatrixWorld(true); lista.forEach(m=>grp.attach(m)); grp.userData.eje=eje; return grp; };
+    const montar=(lista,eje,eje2)=>{ if(!lista.length) return null; const bx=new THREE.Box3(); lista.forEach(m=>bx.expandByObject(m)); const cw=bx.getCenter(new THREE.Vector3()); if(eje2){ cw.x=eje2.x; cw.z=eje2.z; } const grp=new THREE.Group(); o.add(grp); grp.position.copy(o.worldToLocal(cw.clone())); grp.updateMatrixWorld(true); lista.forEach(m=>grp.attach(m)); grp.userData.eje=eje; return grp; };
     const gp=montar(rotorP,'y'), gc=montar(rotorC,largoZ?'x':'z'); heli.rotorReal=gp?[gp]:[]; heli.colaReal=gc?[gc]:[];
     heli.g.children.forEach(c=>c.visible=false); heli.g.add(piv); heli.real=true; return; }
   for(const m of piezas){ const bb=new THREE.Box3().setFromObject(m), t=bb.getSize(new THREE.Vector3()), cw=bb.getCenter(new THREE.Vector3()); const plano=t.y<Math.max(t.x,t.z)*0.25;
