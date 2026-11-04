@@ -1970,7 +1970,7 @@ function abrirConcesionario(){ const tengo=id=>prog.garaje.includes(id);
     CATALOGO.map(it=>tengo(it.id)?`<div class="lug"><span>🔑</span><b>${it.nombre}</b><small>en tu garaje</small><button class="opc mini" data-vender="${it.id}">Vender · ${fmtAED(Math.round(it.precio*0.7))}</button></div>`:`<div class="lug"><span>🚗</span><b>${it.nombre}</b><small>${fmtAED(it.precio)}</small><button class="opc mini" data-cfg="${it.id}">🎨 Configurar</button><button class="opc mini" data-car="${it.id}">Comprar</button><button class="opc mini" data-plazos="${it.id}">A plazos · ${fmtAED(Math.round(it.precio*0.2))}</button></div>`).join('')+(prog.deuda?`<p style="color:var(--muted);font-size:13px">Financiación pendiente: <b>${fmtAED(prog.deuda)}</b>. Se paga sola con la mitad de lo que ganes.</p>`:''));
   $('dialogo').classList.add('ancho');
   $('dialogo').querySelectorAll('[data-vender]').forEach(b=>b.onclick=()=>{ const it=CATALOGO.find(x=>x.id===b.dataset.vender), i=GARAJE.findIndex(c=>c.item.id===it.id); if(cocheJ===GARAJE[i]&&conduciendo) return aviso('Bájate del coche antes de venderlo.');
-    if(i>=0){ const c=GARAJE[i]; scene.remove(c.g); const k=colisiones[0].indexOf(c.col); if(k>=0) colisiones[0].splice(k,1); GARAJE.splice(i,1); GARAJE.forEach((c2,j)=>{ const v=LOCALES.villa, x=v.cx+21.5+(j%4)*3.3, z=v.cz+13+Math.floor(j/4)*7; c2.g.position.set(x,0.12,z); Object.assign(c2.col,{x0:x-1.05,x1:x+1.05,z0:z-2.4,z1:z+2.4}); }); }
+    if(i>=0){ const c=GARAJE[i]; scene.remove(c.g); const k=colisiones[0].indexOf(c.col); if(k>=0) colisiones[0].splice(k,1); GARAJE.splice(i,1); GARAJE.forEach((c2,j)=>{ const [x,z]=posGaraje(j); c2.g.position.set(x,0.12,z); Object.assign(c2.col,{x0:x-1.05,x1:x+1.05,z0:z-2.4,z1:z+2.4}); }); }
     prog.garaje=prog.garaje.filter(id=>id!==it.id); moverDinero(Math.round(it.precio*0.7),'Venta '+it.nombre); guardar(); abrirConcesionario(); });
   $('dialogo').querySelectorAll('[data-cfg]').forEach(b=>b.onclick=()=>configurar(CATALOGO.find(x=>x.id===b.dataset.cfg)));
   const entregar=it=>{ prog.garaje.push(it.id); prog.rep+=Math.round(it.precio/20000); guardar(); aparcar(it); cerrarDialogo(); aviso(`🔑 <b>${it.nombre}</b> es tuyo. Te espera en el garaje de la villa.`); marcar('coche'); };
@@ -1980,10 +1980,13 @@ function abrirConcesionario(){ const tengo=id=>prog.garaje.includes(id);
     aviso(`🔑 <b>${it.nombre}</b> es tuyo. Te espera en el garaje de la villa.`); marcar('coche'); }); }
 // garaje de la villa
 const GARAJE=[];
-function aparcar(it){ const v=LOCALES.villa, i=GARAJE.length, x=v.cx+21.5+(i%4)*3.3, z=v.cz+13+Math.floor(i/4)*7; const c=cocheDe(it); c.g.position.set(x,0.12,z); c.g.rotation.y=Math.PI/2;
+const posGaraje=i=>{ const v=LOCALES.villa; return [v.cx+21.5+(i%4)*3.3, v.cz+13+Math.floor(i/4)*7]; };
+function aparcar(it){ const [x,z]=posGaraje(GARAJE.length); const c=cocheDe(it); c.g.position.set(x,0.12,z); c.g.rotation.y=Math.PI/2;
   c.col={x0:x-1.05,x1:x+1.05,z0:z-2.4,z1:z+2.4}; colisiones[0].push(c.col); c.item=it; GARAJE.push(c); }
+// regalo: toda la colección del concesionario en el garaje de la villa (una vez)
+if(!prog.regaloGaraje){ for(const it of CATALOGO) if(!prog.garaje.includes(it.id)) prog.garaje.push(it.id); prog.regaloGaraje=true; guardar(); }
 for(const id of prog.garaje){ const it=CATALOGO.find(x=>x.id===id); if(it) aparcar(it); }
-{ const v=LOCALES.villa; caja(15,0.06,34,M.marmolNegro,v.cx+26.5,0.1,v.cz+26,{sombra:false}); for(let k=0;k<=4;k++) caja(0.12,0.02,30,new THREE.MeshStandardMaterial({color:0xf2f2ee}),v.cx+19.85+k*3.3,0.14,v.cz+26,{sombra:false}); }
+{ const v=LOCALES.villa; const filas=Math.ceil(CATALOGO.length/4), d=filas*7+3, zc=v.cz+9.5+d/2; caja(15,0.06,d,M.marmolNegro,v.cx+26.5,0.1,zc,{sombra:false}); for(let k=0;k<=4;k++) caja(0.12,0.02,d-4,new THREE.MeshStandardMaterial({color:0xf2f2ee}),v.cx+19.85+k*3.3,0.14,zc,{sombra:false}); }
 function accionGaraje(){ if(yo.planta!==0||conduciendo) return null; const p=yo.m.position;
   for(const k of ['motors','motors2']){ const v=LOCALES[k]; if(v&&v.dentro(p.x,p.z)) return {txt:'Ver catálogo y comprar coches',fn:abrirConcesionario}; }
   for(const c of GARAJE){ if(cocheJ===c&&conduciendo) continue; if(Math.hypot(p.x-c.g.position.x,p.z-c.g.position.z)<3) return {txt:`Conducir ${c.item.nombre}`,fn:()=>subirCoche(c)}; } return null; }
