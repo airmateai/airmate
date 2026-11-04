@@ -1930,7 +1930,7 @@ function islas(o,filtro,zona){ o.updateMatrixWorld(true); const res=[], v=new TH
 function cargarCoche(it){ if(MODELOS_REALES[it.id]||CARGANDO[it.id]||it.modelo==='ferrari') return; CARGANDO[it.id]=true;
   gltf.loadAsync(`mod/coches/${it.id}.glb`).then(g=>{ MODELOS_REALES[it.id]=normalizar(g.scene,it); TODOS_COCHES.filter(c=>c.item.id===it.id).forEach(c=>{ try{ rellenar(c); }catch(e){ console.warn('coche',it.id,e); } }); }).catch(e=>console.warn('carga',it.id,e)); }
 function rellenar(c){ while(c.g.children.length) c.g.remove(c.g.children[0]); const it=c.item, real=MODELOS_REALES[it.id];
-  if(real){ const cl=real.clone(true); c.g.add(cl); c.ruedas=[]; cl.traverse(o=>{if(o.userData.rueda) c.ruedas.push(o);}); const col=c.color??(prog.colores||{})[it.id]; if(col!=null) pintarCoche(c,col); return; }
+  if(real){ const cl=real.clone(true); c.g.add(cl); c.ruedas=[]; /* ruedas quietas en los modelos descargados: la detección confunde pasos de rueda con ruedas y al girar salen pinchos */ const col=c.color??(prog.colores||{})[it.id]; if(col!=null) pintarCoche(c,col); return; }
   if(it.modelo==='ferrari'){ const f=ferrari(it.color); scene.remove(f.g); c.g.add(f.g); c.ruedas=f.ruedas; return; }
   const d=deportivo(0x8a8f96); scene.remove(d.g); d.g.rotation.y=Math.PI; c.g.add(d.g); c.ruedas=[]; setTimeout(()=>cargarCoche(it),800); }
 function pintarCoche(c,col){ const u=MODELOS_REALES[c.item.id]?.userData.pintura; c.color=col; if(!u){ return; } c.g.traverse(o=>{ if(o.isMesh&&!Array.isArray(o.material)&&(o.material.uuid===u||o.material.userData.orig===u)){ if(o.material.uuid===u){ o.material=o.material.clone(); o.material.userData.orig=u; } o.material.color.set(col); } }); }
@@ -2304,17 +2304,17 @@ function rooftopTick(){ const f=window.__focosRoof; if(!f) return; const t=perfo
 const CASA={x:400,z:-1000}; const CASA_MS=[]; let casaY=0.12;
 { const ag=new THREE.Mesh(new THREE.PlaneGeometry(400,400),new THREE.MeshPhysicalMaterial({color:0x16708a,roughness:0.08,clearcoat:1})); ag.rotation.x=-Math.PI/2; ag.position.set(CASA.x,-3,CASA.z); scene.add(ag);
   const listo=()=>{ if(CASA_MS.length>=3&&!ZONAS.some(Z=>Z.casa)) ZONAS.push({casa:true,x0:CASA.x-19.7,x1:CASA.x+15.7,z0:CASA.z-8.7,z1:CASA.z+8.7,meshes:CASA_MS.flat(),libre:true,ySal:0}); };
-  colocar('sala_estar',{x:CASA.x,y:0,z:CASA.z,alto:6.73,despues:p=>{CASA_MS.push(pisable(p)); listo();}});
-  colocar('sala_comedor',{x:CASA.x+10.5,y:0,z:CASA.z+0.8,alto:4.68,despues:p=>{CASA_MS.push(pisable(p)); listo();}});
-  colocar('sala_dorm',{x:CASA.x-11.6,y:0,z:CASA.z+0.6,alto:6.19,despues:p=>{CASA_MS.push(pisable(p)); listo();}});
+  colocar('sala_estar',{x:CASA.x,y:-1.835,z:CASA.z,alto:6.73,despues:p=>{CASA_MS.push(pisable(p)); listo();}});
+  colocar('sala_comedor',{x:CASA.x+10.5,y:-0.871,z:CASA.z+0.8,alto:4.68,despues:p=>{CASA_MS.push(pisable(p)); listo();}});
+  colocar('sala_dorm',{x:CASA.x-11.6,y:-1.381,z:CASA.z+0.6,alto:6.19,despues:p=>{CASA_MS.push(pisable(p)); listo();}});
   // la casa cerrada: suelo, paredes, techo y ventanales al mar
   { const blanco=new THREE.MeshStandardMaterial({color:0xf3f1ec,roughness:0.6}), suelo=new THREE.MeshPhysicalMaterial({...texPBR('marmol',8,4),color:0xffffff,roughness:0.25,clearcoat:0.5});
-    caja(36,0.2,18,suelo,CASA.x-2,-0.12,CASA.z,{sombra:false}); caja(36,0.2,18,blanco,CASA.x-2,4.2,CASA.z,{sombra:false});
-    caja(36,4.4,0.3,blanco,CASA.x-2,2,CASA.z-9,{cam:true,col:0}); caja(0.3,4.4,18,blanco,CASA.x-20,2,CASA.z,{cam:true,col:0}); caja(0.3,4.4,18,blanco,CASA.x+16,2,CASA.z,{cam:true,col:0});
-    for(const x of [-14,-4,6]) caja(0.25,4.4,0.35,new THREE.MeshStandardMaterial({color:0x222222,metalness:0.6,roughness:0.3}),CASA.x+x,2,CASA.z+9,{sombra:false});
-    caja(36,4.4,0.06,M.cristal,CASA.x-2,2,CASA.z+9,{sombra:false,col:0});
+    caja(36,0.2,18,suelo,CASA.x-2,-0.12,CASA.z,{sombra:false}); caja(36,0.2,18,blanco,CASA.x-2,5.1,CASA.z,{sombra:false});
+    caja(36,5.2,0.3,blanco,CASA.x-2,2.5,CASA.z-9,{cam:true,col:0}); caja(0.3,5.2,18,blanco,CASA.x-20,2.5,CASA.z,{cam:true,col:0}); caja(0.3,5.2,18,blanco,CASA.x+16,2.5,CASA.z,{cam:true,col:0});
+    for(const x of [-14,-4,6]) caja(0.25,5.2,0.35,new THREE.MeshStandardMaterial({color:0x222222,metalness:0.6,roughness:0.3}),CASA.x+x,2.5,CASA.z+9,{sombra:false});
+    caja(36,5.2,0.06,M.cristal,CASA.x-2,2.5,CASA.z+9,{sombra:false,col:0});
     const terraza=new THREE.MeshStandardMaterial({...texPBR('madera_suelo',6,2),roughness:0.7}); caja(36,0.2,6,terraza,CASA.x-2,-0.12,CASA.z+12,{sombra:false}); }
-  for(const [x,c] of [[0,0xfff1d8],[-11,0xffe6c8],[10,0xfff1d8]]){ const l=new THREE.PointLight(c,22,16,1.6); l.position.set(CASA.x+x,3.2,CASA.z); scene.add(l); }
+  for(const [x,c] of [[0,0xfff1d8],[-11,0xffe6c8],[10,0xfff1d8]]){ const l=new THREE.PointLight(c,10,16,1.6); l.position.set(CASA.x+x,3.6,CASA.z); scene.add(l); }
 }
 function entrarCasa(){ const fd=$('fundido'); fd.style.opacity=1; setTimeout(()=>{ let y=0.12; const ms=CASA_MS.flat(); if(ms.length){ rayoSuelo.set(new THREE.Vector3(CASA.x,6,CASA.z+1),new THREE.Vector3(0,-1,0)); rayoSuelo.far=12; const h=rayoSuelo.intersectObjects(ms,false).find(x=>x.point.y<2); if(h) y=h.point.y; }
     yo.planta=0; yo.m.position.set(CASA.x,y,CASA.z+1); yo.yaw=Math.PI; primero=true; fd.style.opacity=0; aviso('🏠 <b>Tu villa.</b> Salón, comedor a la derecha y dormitorio a la izquierda.'); },450); }
