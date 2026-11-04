@@ -511,7 +511,7 @@ for(let bx=-2;bx<=2;bx++) for(let bz=-2;bz<=2;bz++){
   if(bx===0&&bz===0) continue;
   const cx=bx*80, cz=bz*80, n=1+Math.floor(rnd()*3), lejos=Math.abs(bx)+Math.abs(bz)>2;
   const slots=[[-20,-20],[20,20],[-20,20],[20,-20]].sort(()=>rnd()-0.5).slice(0,Math.max(2,n+1));
-  for(const [ox,oz] of slots){const w=13+rnd()*9, d=13+rnd()*9, h=30+rnd()*(lejos?110:170), t=Math.floor(rnd()*3); if(!libre(cx+ox,cz+oz)) continue; if(rnd()<0.85){ TORRE_SLOTS.push({x:cx+ox,z:cz+oz,w,d,h}); colisiones[0].push({x0:cx+ox-w/2,x1:cx+ox+w/2,z0:cz+oz-d/2,z1:cz+oz+d/2}); caja(w+5,0.2,d+5,M.marmolPared,cx+ox,0.1,cz+oz,{sombra:false}); continue; } edificio(cx+ox,cz+oz,w,d,h,t);}
+  for(const [ox,oz] of slots){const w=13+rnd()*9, d=13+rnd()*9, h=30+rnd()*(lejos?110:170), t=Math.floor(rnd()*3); if(!libre(cx+ox,cz+oz)) continue; if(rnd()<2){ TORRE_SLOTS.push({x:cx+ox,z:cz+oz,w,d,h}); colisiones[0].push({x0:cx+ox-w/2,x1:cx+ox+w/2,z0:cz+oz-d/2,z1:cz+oz+d/2}); caja(w+5,0.2,d+5,M.marmolPared,cx+ox,0.1,cz+oz,{sombra:false}); continue; } edificio(cx+ox,cz+oz,w,d,h,t);}
 }
 // horizonte real de Dubái
 function skyline(url,r,op){const t=tex(url,4,1,MIR);t.wrapT=THREE.ClampToEdgeWrapping;const arco=2*Math.PI*r/4,alto=arco*768/1376;
@@ -1162,7 +1162,8 @@ try{const g=JSON.parse(localStorage.getItem('hq_historia')||'null'); if(g&&typeo
 function guardar(){prog.t=Date.now(); try{localStorage.setItem('hq_historia',JSON.stringify(prog));}catch(e){} if(typeof subirProg==='function') subirProg();}
 function pasoHistoria(){const m=MISIONES[prog.m]; return m?m.pasos[prog.p]:null;}
 function pasoActual(){const u=window.__urgente&&window.__urgente(); return u||pasoHistoria();}
-function marcar(ev){const p=pasoHistoria(); if(p&&p.ev===ev) avanzar();}
+// cuenta aunque lo hagas antes de un paso previo del mismo capítulo (p. ej. cerrar con el jeque sin haber volado)
+function marcar(ev){const m=MISIONES[prog.m]; if(!m) return; const i=m.pasos.findIndex((p,k)=>k>=prog.p&&p.ev===ev); if(i<0) return; prog.p=i; avanzar();}
 function mensaje(de,txt){prog.msgs.unshift({de,txt,t:Date.now()}); prog.msgs=prog.msgs.slice(0,40); prog.noLeidos++; guardar(); pintarMovil(); if(prog.movil){aviso(`📱 <b>${escH(de)}</b>: ${escH(txt.slice(0,70))}${txt.length>70?'…':''}`); try{sonido.ding();}catch(e){}}}
 function avanzar(){const m=MISIONES[prog.m]; prog.p++;
   if(prog.p>=m.pasos.length){ prog.m++; prog.p=0; const pr=m.premio||{};
@@ -1667,7 +1668,7 @@ function abrirNobo(){ abrirDialogo('NOBŌ','Maître · cocina japonesa de autor'
     else { if(k==='sake'){copas++;} unaVez(yo,'drinking',8.5); vaso.visible=true; setTimeout(()=>vaso.visible=false,9000); aviso(k==='sake'?'🍶 <b>Kanpai.</b>':'🍵 Matcha ceremonial.'); }
     guardar(); pintarMovil();});}
 function abrirJeque(){
-  if(prog.jeque){abrirDialogo('Jeque Rashid Al Nahyar','Inversor · socio de AIRMATE','<p>Mis hoteles ya trabajan con tu sistema, Fabio. La semana que viene te presento a la familia.</p>');return;}
+  if(prog.jeque){abrirDialogo('Jeque Rashid Al Nahyar','Inversor · socio de AIRMATE','<p>Mis hoteles ya trabajan con tu sistema, Fabio. La semana que viene te presento a la familia.</p>');marcar('jeque');return;}
   abrirDialogo('Jeque Rashid Al Nahyar','Inversor · fondo soberano','<p>Khalid habla muy bien de ti. Tengo doce propiedades y todos me prometen inteligencia artificial. ¿Qué te hace diferente?</p>',
     [['a','Tenemos la mejor tecnología del mundo, Alteza.'],['b','No le vendo nada hoy. Le enseño lo que ya hacemos en los hoteles de Khalid y elegimos juntos una propiedad para un piloto de 90 días.'],['c','Le hago precio de amigo si firma esta noche.']].map(([k,t])=>`<button class="opc" data-j="${k}">${t}</button>`).join(''));
   $('dialogo').querySelectorAll('[data-j]').forEach(b=>b.onclick=()=>{
@@ -1687,7 +1688,7 @@ function abrirClubBar(){ abrirDialogo('Bar LE PALAIS','Servicio VIP','<p>¿Qué 
     else if(k==='copa'){copas++; vaso.visible=true; setTimeout(()=>vaso.visible=false,9000); unaVez(yo,'drinking',8.5);}
     else {copas=Math.max(0,copas-1); aviso('💧 Te despejas un poco.');}
     guardar(); pintarMovil();});}
-function abrirInfluencer(){ if(prog.viral){abrirDialogo('Max Volkov','Influencer','<p>¡El vídeo va por 2,4 millones! Mis seguidores preguntan por AIRMATE todo el día.</p>');return;}
+function abrirInfluencer(){ if(prog.viral){abrirDialogo('Max Volkov','Influencer','<p>¡El vídeo va por 2,4 millones! Mis seguidores preguntan por AIRMATE todo el día.</p>');marcar('influencer');return;}
   abrirDialogo('Max Volkov','Influencer · 9,4 M de seguidores','<p>Bro, todo Dubái habla de ti y del jeque. ¿Me dejas grabar un vídeo contigo para mis redes?</p>',
     '<button class="opc" id="vSi">«Grábalo. Pero se habla de resultados, no de coches.»</button><button class="opc" id="vNo">«Hoy no, otro día.»</button>');
   $('vSi').onclick=()=>{prog.viral=true; prog.rep+=200; guardar(); cerrarDialogo(); unaVez(yo,'talking',6); aviso('🎥 <b>Max te graba.</b> «El hombre que eligió al jeque, y no al revés».'); setTimeout(()=>mensaje('Max Volkov','Bro, el vídeo lleva 1,2 M de visitas en una hora 🔥'),6000); marcar('influencer');};
