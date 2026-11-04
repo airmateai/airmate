@@ -1694,7 +1694,7 @@ function abrirInfluencer(){ if(prog.viral){abrirDialogo('Max Volkov','Influencer
   $('vNo').onclick=cerrarDialogo;}
 // ---- helicóptero con destino ----
 const DESTINOS=[{id:'tour',txt:'🌆 Vuelta por Dubái'},{id:'nobo',txt:'🍣 NOBŌ · cena de negocios'},{id:'palais',txt:'🎶 LE PALAIS · club'},{id:'villa',txt:'🏝️ Tu villa · Palm Jumeirah'},{id:'hq',txt:'🏢 Volver a la torre AIRMATE'}];
-function abrirDestinos(desde){ abrirDialogo('Helicóptero','Omar · piloto','<p>¿A dónde le llevo, señor Bueno?</p>',DESTINOS.filter(d=>d.id!==desde&&!(desde==='hq'&&d.id==='hq')&&!(desde!=='hq'&&d.id==='tour')).map(d=>`<button class="opc" data-d="${d.id}">${d.txt}</button>`).join(''));
+function abrirDestinos(desde){ marcar('heli'); abrirDialogo('Helicóptero','Omar · piloto','<p>¿A dónde le llevo, señor Bueno?</p>',DESTINOS.filter(d=>d.id!==desde&&!(desde==='hq'&&d.id==='hq')&&!(desde!=='hq'&&d.id==='tour')).map(d=>`<button class="opc" data-d="${d.id}">${d.txt}</button>`).join(''));
   $('dialogo').querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{cerrarDialogo(); volar(b.dataset.d);});}
 function volar(dest){ marcar('heli'); if(dest==='tour'){heli.aparcado=null; heli.ride=true; heli.t=7; yo.m.visible=false; primero=true; aviso('🚁 <b>Despegando.</b> Dubái desde el aire. Arrastra para mirar.'); return;}
   const a=heli.g.position.clone(), b=dest==='hq'?PAD.clone():LOCALES[dest].pad.clone();
@@ -1706,7 +1706,7 @@ function vueloPos(dt){ const v=heli.vuelo; v.t+=dt; const k=clamp(v.t/v.dur), al
   else {const s=ss((k-0.85)/0.15); p=v.b.clone(); p.y=alt+(v.b.y-alt)*s;}
   if(k>=1){ heli.vuelo=null; heli.aparcado=v.b.clone(); aterrizar(v.dest); }
   return [p,1]; }
-function aterrizar(dest){ if(dest==='recoger'){ aviso('🚁 <b>Omar ha aterrizado junto a ti.</b> Acércate y pulsa E para subir.'); return; } const fd=$('fundido'); fd.style.opacity=1; setTimeout(()=>{ heli.ride=false; yo.m.visible=true; primero=true;
+function aterrizar(dest){ if(dest==='recoger'){ aviso(yo.planta>=1&&yo.planta<5?'🚁 <b>Omar ha aterrizado en tu azotea.</b> Sube en el ascensor y pulsa E junto al helicóptero.':'🚁 <b>Omar ha aterrizado junto a ti.</b> Acércate y pulsa E para subir.'); return; } const fd=$('fundido'); fd.style.opacity=1; setTimeout(()=>{ heli.ride=false; yo.m.visible=true; primero=true;
     if(dest==='hq'){ heli.aparcado=null; heli.t=0; yo.planta=5; yo.m.position.set(PAD.x-6.5,TECHO+0.4,PAD.z+1); }
     else { const v=LOCALES[dest]; yo.planta=0; yo.m.position.copy(v.entrada); yo.yaw=Math.PI; yo.m.rotation.y=0; marcar('llegar:'+dest); aviso(`📍 <b>${v.nombre}</b>. Omar te espera en la azotea del local.`); }
     fd.style.opacity=0; },500); }
@@ -2047,12 +2047,17 @@ colocar('int_inakaya',{x:180,y:0.12,z:-100,largo:16,ry:-Math.PI/2});
 // ============ helicóptero: llamarlo desde cualquier sitio y modelo real (Bell 429 · davidre, CC BY 4.0) ============
 function sitioLibre(x,z,r=5){ for(const c of colisiones[0]) if(x+r>c.x0&&x-r<c.x1&&z+r>c.z0&&z-r<c.z1) return false; return Math.abs(x)<330&&Math.abs(z)<240; }
 function llamarHeli(){ if(heli.vuelo||heli.ride){ aviso('🚁 Omar ya está en camino.'); return; }
+  if(yo.planta>=1&&yo.planta<=5&&!conduciendo){ // dentro de la torre AIRMATE: aterriza en su helipuerto
+    if(heli.aparcado&&heli.aparcado.distanceTo(PAD)<2){ if(yo.planta===5) abrirDestinos('hq'); else aviso('🚁 Omar ya te espera en el helipuerto de la azotea. Sube en el ascensor.'); return; }
+    if(prog.dinero<2000){ aviso('Llamar al helicóptero cuesta AED 2.000.'); return; }
+    moverDinero(-2000,'Helicóptero'); const a=heli.g.position.clone(); heli.vuelo={a,b:PAD.clone(),t:0,dur:Math.max(14,a.distanceTo(PAD)/20),dest:'recoger'}; heli.aparcado=null; heli.ride=false;
+    aviso(yo.planta===5?`🚁 <b>Omar viene a tu helipuerto.</b> Llega en unos ${Math.round(heli.vuelo.dur)} s.`:`🚁 <b>Omar aterriza en el helipuerto de la azotea.</b> Sube en el ascensor (llega en unos ${Math.round(heli.vuelo.dur)} s).`); if(dialogoAbierto) cerrarDialogo(); return; }
   if(yo.m.position.y<100&&(yo.planta!==0||conduciendo||dentro(yo.m.position.x,yo.m.position.z)||Object.values(LOCALES).some(v=>v.dentro(yo.m.position.x,yo.m.position.z)))){ aviso('Sal a la calle para que Omar pueda aterrizar (o usa el helipuerto de la azotea).'); return; }
   if(heli.aparcado&&heli.aparcado.distanceTo(yo.m.position)<12){ abrirDestinos('aqui'); return; }
   if(prog.dinero<2000){ aviso('Llamar al helicóptero cuesta AED 2.000.'); return; }
   const p=yo.m.position, r=yo.m.rotation.y; let sitio=null;
   for(const [d,a] of [[10,0],[10,Math.PI/2],[10,-Math.PI/2],[10,Math.PI],[16,0],[16,Math.PI/2],[16,-Math.PI/2],[16,Math.PI]]){ const x=p.x+Math.sin(r+a)*d, z=p.z+Math.cos(r+a)*d; if(sitioLibre(x,z)){ sitio=new THREE.Vector3(x,0.14,z); break; } }
-  if(yo.m.position.y>100&&LOCALES.rooftop) sitio=LOCALES.rooftop.pad.clone();
+  if(yo.m.position.y>100&&LOCALES.rooftop&&yo.m.position.distanceTo(LOCALES.rooftop.pad)<60) sitio=LOCALES.rooftop.pad.clone();
   if(!sitio){ aviso('Aquí no hay sitio para aterrizar. Busca una calle o una plaza más abierta.'); return; }
   moverDinero(-2000,'Helicóptero'); const a=heli.g.position.clone(); heli.vuelo={a,b:sitio,t:0,dur:Math.max(14,a.distanceTo(sitio)/20),dest:'recoger'}; heli.aparcado=null; heli.ride=false;
   aviso(`🚁 <b>Omar despega hacia ti.</b> Llega en unos ${Math.round(heli.vuelo.dur)} s.`); if(dialogoAbierto) cerrarDialogo(); }
