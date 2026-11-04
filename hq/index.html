@@ -511,7 +511,7 @@ for(let bx=-2;bx<=2;bx++) for(let bz=-2;bz<=2;bz++){
   if(bx===0&&bz===0) continue;
   const cx=bx*80, cz=bz*80, n=1+Math.floor(rnd()*3), lejos=Math.abs(bx)+Math.abs(bz)>2;
   const slots=[[-20,-20],[20,20],[-20,20],[20,-20]].sort(()=>rnd()-0.5).slice(0,Math.max(2,n+1));
-  for(const [ox,oz] of slots){const w=13+rnd()*9, d=13+rnd()*9, h=30+rnd()*(lejos?110:170), t=Math.floor(rnd()*3); if(!libre(cx+ox,cz+oz)) continue; if(rnd()<0.62){ TORRE_SLOTS.push({x:cx+ox,z:cz+oz,w,d,h}); colisiones[0].push({x0:cx+ox-w/2,x1:cx+ox+w/2,z0:cz+oz-d/2,z1:cz+oz+d/2}); caja(w+5,0.2,d+5,M.marmolPared,cx+ox,0.1,cz+oz,{sombra:false}); continue; } edificio(cx+ox,cz+oz,w,d,h,t);}
+  for(const [ox,oz] of slots){const w=13+rnd()*9, d=13+rnd()*9, h=30+rnd()*(lejos?110:170), t=Math.floor(rnd()*3); if(!libre(cx+ox,cz+oz)) continue; if(rnd()<0.85){ TORRE_SLOTS.push({x:cx+ox,z:cz+oz,w,d,h}); colisiones[0].push({x0:cx+ox-w/2,x1:cx+ox+w/2,z0:cz+oz-d/2,z1:cz+oz+d/2}); caja(w+5,0.2,d+5,M.marmolPared,cx+ox,0.1,cz+oz,{sombra:false}); continue; } edificio(cx+ox,cz+oz,w,d,h,t);}
 }
 // horizonte real de Dubái
 function skyline(url,r,op){const t=tex(url,4,1,MIR);t.wrapT=THREE.ClampToEdgeWrapping;const arco=2*Math.PI*r/4,alto=arco*768/1376;
@@ -1909,10 +1909,26 @@ function normalizar(o,it){ const tris=new Map(); let totalTris=0; o.traverse(c=>
   if(!ruedas.length) o.traverse(c=>{ if(!c.isMesh) return; const bb=new THREE.Box3().setFromObject(c), t=bb.getSize(new THREE.Vector3()), cw=bb.getCenter(new THREE.Vector3()); // sin nombres: piezas redondas, abajo y en las esquinas
     const lon=largoZ?t.z:t.x, lat=largoZ?t.x:t.z, redonda=Math.abs(t.y-lon)<t.y*0.3, tam=t.y>sz.y*0.22&&t.y<sz.y*0.55, abajo=cw.y<b.min.y+sz.y*0.4, fina=lat<t.y*0.7, esquina=Math.abs((largoZ?cw.z-ce.z:cw.x-ce.x))>Math.max(sz.x,sz.z)*0.2;
     if(redonda&&tam&&abajo&&fina&&esquina) ruedas.push(c); });
+  let hechas=0; const porEsq=new Map();
   for(const m of ruedas){ if(/caliper|pinza/i.test(m.name)) continue; const bb=new THREE.Box3().setFromObject(m), cw=bb.getCenter(new THREE.Vector3()), tt=bb.getSize(new THREE.Vector3()), lonW=largoZ?tt.z:tt.x, latW=largoZ?tt.x:tt.z; if(tt.y>sz.y*0.6||tt.y<sz.y*0.15||Math.abs(tt.y-lonW)>tt.y*0.25||latW>tt.y*0.75||cw.y>b.min.y+sz.y*0.45) continue;
-    const g=new THREE.Group(), par=m.parent; par.add(g); g.position.copy(par.worldToLocal(cw.clone())); g.updateMatrixWorld(true); g.attach(m); g.userData.rueda=true; g.userData.eje=largoZ?'x':'z'; g.userData.sg=(it.frente>0?1:-1)*(largoZ?1:-1); }
+    const k=Math.sign(largoZ?cw.z-ce.z:cw.x-ce.x)+'_'+Math.sign(largoZ?cw.x-ce.x:cw.z-ce.z); let e=porEsq.get(k); if(!e){ e={ms:[],bb:new THREE.Box3()}; porEsq.set(k,e); } e.ms.push(m); e.bb.union(bb); hechas++; }
+  for(const e of porEsq.values()){ const cw=e.bb.getCenter(new THREE.Vector3()); const g=new THREE.Group(); o.add(g); g.position.copy(o.worldToLocal(cw.clone())); g.updateMatrixWorld(true); e.ms.forEach(m=>g.attach(m)); g.userData.rueda=true; g.userData.eje=largoZ?'x':'z'; g.userData.sg=(it.frente>0?1:-1)*(largoZ?1:-1); }
+  if(!hechas){ const ok=bb=>{ const t=bb.getSize(new THREE.Vector3()), cw=bb.getCenter(new THREE.Vector3()), lon=largoZ?t.z:t.x, lat=largoZ?t.x:t.z; return t.y>sz.y*0.12&&t.y<sz.y*0.55&&Math.abs(t.y-lon)<t.y*0.3&&lat<t.y*0.8&&cw.y<b.min.y+sz.y*0.42&&Math.abs(largoZ?cw.z-ce.z:cw.x-ce.x)>Math.max(sz.x,sz.z)*0.2&&Math.abs(largoZ?cw.x-ce.x:cw.z-ce.z)>Math.min(sz.x,sz.z)*0.2; };
+    const esq=new Map(); for(const {m,bb} of islas(o,ok,new THREE.Box3(b.min.clone(),new THREE.Vector3(b.max.x,b.min.y+sz.y*0.45,b.max.z)))){ const cw=bb.getCenter(new THREE.Vector3()), k=Math.sign(largoZ?cw.z-ce.z:cw.x-ce.x)+'_'+Math.sign(largoZ?cw.x-ce.x:cw.z-ce.z); let e=esq.get(k); if(!e){ e={ms:[],bb:new THREE.Box3()}; esq.set(k,e); } e.ms.push(m); e.bb.union(bb); }
+    for(const e of esq.values()){ const cw=e.bb.getCenter(new THREE.Vector3()), g=new THREE.Group(); o.add(g); g.position.copy(o.worldToLocal(cw.clone())); g.updateMatrixWorld(true); e.ms.forEach(m=>g.attach(m)); g.userData.rueda=true; g.userData.eje=largoZ?'x':'z'; g.userData.sg=(it.frente>0?1:-1)*(largoZ?1:-1); } }
   const p=new THREE.Group(); o.position.sub(ce); p.add(o); p.rotation.y=(largoZ?Math.PI/2:0)+(it.frente>0?Math.PI:0); p.scale.setScalar(s); p.position.y=sz.y/2*s;
   const w=new THREE.Group(); w.add(p); let best=null, bn=0; for(const [m,n] of tris) if(n>bn){bn=n;best=m;} w.userData.pintura=best?best.uuid:null; return w; }
+// separa cada malla en islas conectadas (vértices fundidos por posición) y devuelve las que cumplen el filtro como mallas nuevas
+function islas(o,filtro,zona){ o.updateMatrixWorld(true); const res=[], v=new THREE.Vector3(); const mallas=[]; o.traverse(c=>{ if(c.isMesh&&c.geometry.attributes.position&&(!zona||new THREE.Box3().setFromObject(c).intersectsBox(zona))) mallas.push(c); });
+  for(const c of mallas){ const g=c.geometry, pos=g.attributes.position, n=pos.count, idx=g.index?g.index.array:null, nt=(idx?idx.length:n)/3; if(nt>120000) continue;
+    const pa=new Int32Array(n); for(let i=0;i<n;i++) pa[i]=i; const raiz=i=>{ while(pa[i]!==i){ pa[i]=pa[pa[i]]; i=pa[i]; } return i; };
+    const I=t=>idx?idx[t]:t; for(let t=0;t<nt;t++){ let a=raiz(I(t*3)), b=raiz(I(t*3+1)), d=raiz(I(t*3+2)); if(a!==b) pa[a]=b; b=raiz(b); d=raiz(d); if(b!==d) pa[b]=d; }
+    const mn=new Map(); for(let i=0;i<n;i++){ const r=raiz(i); let q=mn.get(r); if(!q){ q=[1e9,1e9,1e9,-1e9,-1e9,-1e9]; mn.set(r,q); } const x=pos.getX(i), y=pos.getY(i), z=pos.getZ(i); if(x<q[0])q[0]=x; if(y<q[1])q[1]=y; if(z<q[2])q[2]=z; if(x>q[3])q[3]=x; if(y>q[4])q[4]=y; if(z>q[5])q[5]=z; }
+    const elegidas=new Map(); for(const [r,q] of mn){ const bb=new THREE.Box3(new THREE.Vector3(q[0],q[1],q[2]),new THREE.Vector3(q[3],q[4],q[5])).applyMatrix4(c.matrixWorld); if(filtro(bb)) elegidas.set(r,{tris:[],bb}); }
+    if(!elegidas.size) continue; const quedan=[]; for(let t=0;t<nt;t++){ const a=I(t*3), e=elegidas.get(raiz(a)); const dst=e?e.tris:quedan; dst.push(a,I(t*3+1),I(t*3+2)); }
+    const base=g.clone(); g.setIndex(quedan); g.clearGroups();
+    for(const e of elegidas.values()){ const ng=base.clone(); ng.setIndex(e.tris); ng.clearGroups(); const m=new THREE.Mesh(ng,Array.isArray(c.material)?c.material[0]:c.material); c.parent.add(m); m.position.copy(c.position); m.quaternion.copy(c.quaternion); m.scale.copy(c.scale); m.updateMatrixWorld(true); res.push({m,bb:e.bb}); } }
+  return res; }
 function cargarCoche(it){ if(MODELOS_REALES[it.id]||CARGANDO[it.id]||it.modelo==='ferrari') return; CARGANDO[it.id]=true;
   gltf.loadAsync(`mod/coches/${it.id}.glb`).then(g=>{ MODELOS_REALES[it.id]=normalizar(g.scene,it); TODOS_COCHES.filter(c=>c.item.id===it.id).forEach(c=>{ try{ rellenar(c); }catch(e){ console.warn('coche',it.id,e); } }); }).catch(e=>console.warn('carga',it.id,e)); }
 function rellenar(c){ while(c.g.children.length) c.g.remove(c.g.children[0]); const it=c.item, real=MODELOS_REALES[it.id];
@@ -2065,7 +2081,7 @@ gltf.loadAsync('mod/arq/heli_bell429.glb').then(g=>{ const o=g.scene;
   for(const m of piezas){ const bb=new THREE.Box3().setFromObject(m), t=bb.getSize(new THREE.Vector3()), cw=bb.getCenter(new THREE.Vector3()); const plano=t.y<Math.max(t.x,t.z)*0.25;
     const grp=new THREE.Group(); m.parent.add(grp); grp.position.copy(m.parent.worldToLocal(cw.clone())); grp.attach(m); grp.userData.eje=plano?'y':(largoZ?'x':'z'); if(plano){hayP=true;} else {hayC=true;} (plano?principal:cola).userData.lista=((plano?principal:cola).userData.lista||[]).concat(grp); }
   heli.g.children.forEach(c=>c.visible=false); heli.g.add(piv); heli.real=true;
-  heli.rotorReal=[...(principal.userData.lista||[])]; heli.colaReal=[...(cola.userData.lista||[])]; }).catch(()=>{});
+  heli.rotorReal=[...(principal.userData.lista||[])]; heli.colaReal=[...(cola.userData.lista||[])]; }).catch(e=>{ window.__errHeli=String(e&&e.stack||e); console.warn('heli',e); });
 const HELI_FRENTE=0;
 function heliTick(dt,rot){ if(!heli.real) return; for(const r of heli.rotorReal) r.rotation[r.userData.eje]+=dt*30*rot; for(const r of heli.colaReal) r.rotation[r.userData.eje]+=dt*45*rot; }
 
@@ -2226,6 +2242,12 @@ colocar('yate_full',{x:YATE.x,y:YATE.y,z:YATE.z,largo:25,ry:0,despues:(piv)=>{
   const tabla=new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(len,sube),0.12,1.8),new THREE.MeshStandardMaterial({color:0xb08a5a,roughness:0.7})); tabla.position.set((x0+x1)/2,0.3+sube/2,YATE.z); tabla.rotation.z=-inc; scene.add(tabla);
   for(const s of [-1,1]){ const b=new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(len,sube),0.05,0.05),M.acero); b.position.set((x0+x1)/2,1.2+sube/2,YATE.z+s*0.9); b.rotation.z=-inc; scene.add(b); }
   ZONAS.push({x0:YATE.x-4,x1:-353.2,z0:YATE.z-14,z1:YATE.z+14,meshes:[...ms,...pisable(tabla)]});
+  // decoración náutica sobre la cubierta real: cada pieza cae por rayo sobre el suelo más cercano a la cubierta principal
+  const poner=(id,dx,dz,ry=0,sc=1,dy=0)=>gltf.loadAsync(`mod/ph/${id}.glb`).then(g=>{ rayoSuelo.set(new THREE.Vector3(YATE.x+dx,yc+2.2,YATE.z+dz),new THREE.Vector3(0,-1,0)); rayoSuelo.far=5; const hh=rayoSuelo.intersectObjects(ms,false).find(x=>Math.abs(x.point.y-yc)<1.2); if(!hh) return;
+    const o=g.scene; o.position.set(YATE.x+dx,hh.point.y+dy,YATE.z+dz); o.rotation.y=ry; o.scale.setScalar(sc); o.traverse(c=>{ if(c.isMesh){ c.castShadow=true; c.material.envMapIntensity=0.7; } }); scene.add(o); }).catch(()=>{});
+  for(const [id,dx,dz,ry,sc] of [['coffee_table_round_01',0,-7.5,0,0.8],['Ottoman_01',-1.1,-6.6,0.3,0.9],['Ottoman_01',1.1,-8.4,2.6,0.9],['anthurium_botany_01',1.6,-9.6,0,1.1],['anthurium_botany_01',-1.6,-9.6,0,1.1],
+    ['bronze_shark_statue',0,9,Math.PI,1.6],['calathea_orbifolia_01',1.4,6.5,0,1.2],['calathea_orbifolia_01',-1.4,6.5,0,1.2],['side_table_tall_01',1.5,1,0,1],['side_table_tall_01',-1.5,-1,0,1]]) poner(id,dx,dz,ry,sc);
+  setTimeout(()=>{ for(const [id,dx,dz,sc,dy] of [['wine_bottles_01',0.1,-7.5,1.2,0.39],['brass_goblets',-0.2,-7.3,1,0.39],['brass_goblets',0.25,-7.7,1,0.39],['ceramic_vase_01',1.5,1,1,0.76],['brass_vase_04',-1.5,-1,2,0.76]]) poner(id,dx,dz,0,sc,dy); },300);
   // capitán y amigos en cubierta
   const cub=new THREE.Vector3(YATE.x,yc,YATE.z-4);
   const cap=persona({modelo:'josh',traje:0xf4f4f2,corbata:0x0d2547,x:cub.x,y:cub.y,z:cub.z,ry:Math.PI/2}); cap.nm='Capitán Marco'; cap.rol='Capitán del yate'; cap.f=0; cap.accion=()=>abrirDialogo('Capitán Marco','Capitán del yate','<p>Bienvenido a bordo, señor Bueno. El salón y los camarotes están abajo, el solárium arriba. ¿Le preparo algo?</p>','<button class="opc" id="capBar">🍾 Que me traigan algo del bar</button>')||setTimeout(()=>{const b=$('capBar'); if(b) b.onclick=()=>abrirClubBar();},0);
