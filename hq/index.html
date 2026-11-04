@@ -494,7 +494,7 @@ const FACH=[{map:tex('tex/fachada.jpg'),tile:12,tint:[0xffffff,0xd8e4ee,0xc8d4e0
 const texTiendas=tex('tex/tiendas.jpg');
 const matTiendas=new THREE.MeshStandardMaterial({map:texTiendas,roughness:0.45,emissive:0xffffff,emissiveMap:texTiendas,emissiveIntensity:0.15}); const tiendasMats=[matTiendas];
 function matF(t){const f=FACH[t];const m=new THREE.MeshStandardMaterial({map:f.map,color:f.tint[Math.floor(rnd()*f.tint.length)],roughness:f.rough,metalness:f.metal,emissive:0xffffff,emissiveMap:facadeNoche,emissiveIntensity:0});fachadas.push(m);return m;}
-const RESERVADO=[[140,-100],[-100,140],[60,60],[-60,-60],[140,60],[100,60],[140,-140],[180,-100],[-60,60],[60,-60]]; const libre=(x,z)=>!RESERVADO.some(r=>Math.abs(x-r[0])<20&&Math.abs(z-r[1])<20);
+const TORRE_SLOTS=[]; const RESERVADO=[[140,-100],[-100,140],[60,60],[-60,-60],[140,60],[100,60],[140,-140],[180,-100],[-60,60],[60,-60]]; const libre=(x,z)=>!RESERVADO.some(r=>Math.abs(x-r[0])<20&&Math.abs(z-r[1])<20);
 function edificio(x,z,w,d,h,t){const m=matF(t), tile=FACH[t].tile;
   if(t!==1&&rnd()<0.28){const r=Math.min(w,d)/2,g=new THREE.CylinderGeometry(r,r,h,40,1,true),uv=g.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*2*Math.PI*r/tile,uv.getY(i)*h/tile);
     const c=new THREE.Mesh(g,m);c.position.set(x,h/2,z);c.castShadow=true;c.receiveShadow=true;scene.add(c);cil(r,r,0.8,M.cristalOsc,x,h+0.4,z,{seg:40});colisiones[0].push({x0:x-r,x1:x+r,z0:z-r,z1:z+r});
@@ -511,7 +511,7 @@ for(let bx=-2;bx<=2;bx++) for(let bz=-2;bz<=2;bz++){
   if(bx===0&&bz===0) continue;
   const cx=bx*80, cz=bz*80, n=1+Math.floor(rnd()*3), lejos=Math.abs(bx)+Math.abs(bz)>2;
   const slots=[[-20,-20],[20,20],[-20,20],[20,-20]].sort(()=>rnd()-0.5).slice(0,Math.max(2,n+1));
-  for(const [ox,oz] of slots){const w=13+rnd()*9, d=13+rnd()*9, h=30+rnd()*(lejos?110:170), t=Math.floor(rnd()*3); if(!libre(cx+ox,cz+oz)) continue; edificio(cx+ox,cz+oz,w,d,h,t);}
+  for(const [ox,oz] of slots){const w=13+rnd()*9, d=13+rnd()*9, h=30+rnd()*(lejos?110:170), t=Math.floor(rnd()*3); if(!libre(cx+ox,cz+oz)) continue; if(rnd()<0.62){ TORRE_SLOTS.push({x:cx+ox,z:cz+oz,w,d,h}); colisiones[0].push({x0:cx+ox-w/2,x1:cx+ox+w/2,z0:cz+oz-d/2,z1:cz+oz+d/2}); caja(w+5,0.2,d+5,M.marmolPared,cx+ox,0.1,cz+oz,{sombra:false}); continue; } edificio(cx+ox,cz+oz,w,d,h,t);}
 }
 // horizonte real de Dubái
 function skyline(url,r,op){const t=tex(url,4,1,MIR);t.wrapT=THREE.ClampToEdgeWrapping;const arco=2*Math.PI*r/4,alto=arco*768/1376;
@@ -1189,7 +1189,7 @@ function abrirMovil(app='msgs'){ if(!prog.movil){aviso('Aún no tienes el móvil
     con:(prog.contactos.length?prog.contactos.map(c=>`<div class="sms"><b>${escH(c)}</b><span>Desbloqueado</span></div>`).join(''):'<p>Aún no tienes contactos.</p>')+`<p class="bloq">🔒 ${Math.max(0,8-prog.contactos.length)} contactos por desbloquear en la historia</p>`,
     agenda:'<p class="bloq">🕌 Oración en Dubái hoy: '+textoOraciones()+'</p><p class="bloq">Reuniones importantes de hoy</p>'+agendaHoy()+'<p class="bloq">Historia</p>'+AGENDA.map(a=>`<div class="sms ${prog.m>a.cap?'hecha':''}"><b>${a.con}</b><span>${a.lugar}${prog.m>a.cap?' · hecho':prog.m===a.cap?' · hoy':''}</span></div>`).join(''),
     banco:`<div class="saldo"><small>Saldo</small><b>${fmtAED(prog.dinero)}</b></div><p>Tratos cerrados: <b>${prog.cerrados}</b></p>${prog.deuda?`<p>Financiación de coches pendiente: <b>${fmtAED(prog.deuda)}</b></p>`:''}<p>Ganas dinero con capítulos, tratos y leads reales que pasan a interesado.</p>`,
-    est:`<div class="saldo"><small>Tu estatus</small><b>★ ${estatusDe(prog.rep)}</b></div><div class="barraRep"><i style="width:${sigE?Math.round((prog.rep-ESTATUS[ESTATUS.indexOf(sigE)-1][0])/(sigE[0]-ESTATUS[ESTATUS.indexOf(sigE)-1][0])*100):100}%"></i></div><p>${sigE?`${sigE[0]-prog.rep} de reputación para <b>${sigE[1]}</b>`:'Has llegado a lo más alto.'}</p><p class="bloq">Créditos 3D: «Car Concept» © Khronos Group (CC BY 4.0) · muebles, texturas y cielo de Poly Haven (CC0) · personajes y animaciones de Mixamo · motor: «racing car engine sound loops» (OpenGameArt, CC0) · ${CREDITOS_COCHES} ${CREDITOS_ARQ}</p>`};
+    est:`<div class="saldo"><small>Tu estatus</small><b>★ ${estatusDe(prog.rep)}</b></div><div class="barraRep"><i style="width:${sigE?Math.round((prog.rep-ESTATUS[ESTATUS.indexOf(sigE)-1][0])/(sigE[0]-ESTATUS[ESTATUS.indexOf(sigE)-1][0])*100):100}%"></i></div><p>${sigE?`${sigE[0]-prog.rep} de reputación para <b>${sigE[1]}</b>`:'Has llegado a lo más alto.'}</p><p class="bloq">Créditos 3D: «Car Concept» © Khronos Group (CC BY 4.0) · muebles, texturas y cielo de Poly Haven (CC0) · personajes y animaciones de Mixamo · motor: «racing car engine sound loops» (OpenGameArt, CC0) · ${CREDITOS_COCHES} ${CREDITOS_ARQ} ${CREDITOS_CIUDAD} Decoración: Poly Haven (CC0).</p>`};
   abrirDialogo('📱 Móvil','AIRMATE · '+apps[app].slice(3),`<div class="apps">${Object.entries(apps).map(([k,t])=>`<button data-app="${k}" class="${k===app?'on':''}">${t}</button>`).join('')}</div><div class="pantalla">${cuerpo[app]}</div>`);
   $('dialogo').querySelectorAll('[data-app]').forEach(b=>b.onclick=()=>abrirMovil(b.dataset.app)); $('dialogo').querySelectorAll('[data-ir]').forEach(b=>b.onclick=()=>{ const v=LOCALES[b.dataset.ir]; marcarRuta({x:v.entrada.x,z:v.entrada.z,nombre:v.nombre}); });}
 $('bMovil').onclick=()=>abrirMovil();
@@ -2294,6 +2294,57 @@ function accionCasa(){ if(yo.planta!==0||conduciendo) return null; const p=yo.m.
     if(Math.hypot(p.x-CASA.x,p.z-CASA.z+1.5)<2) return {txt:'Ver la tele (embudo de ventas)',fn:verTele}; return null; }
   const v=LOCALES.villa; if(v&&Math.abs(p.x-v.cx)<22&&Math.abs(p.z-v.cz)<17&&p.y<0.6&&(Math.abs(p.x-(v.cx+20))<3&&Math.abs(p.z-v.cz)<3)) return {txt:'Entrar en casa',fn:entrarCasa};
   return null; }
+
+// ============ decoración por estilos (Poly Haven, CC0): oriental en NOBŌ, club en LE PALAIS, lujo clásico en el Burj y en la torre ============
+const peana=(x,y,z,h=1.05)=>{ caja(0.6,h,0.6,M.marmolNegro,x,y+h/2,z,{col:0}); caja(0.66,0.04,0.66,M.oro,x,y+h,z,{sombra:false}); return y+h+0.02; };
+// --- NOBŌ ---
+{ const cx=140, cz=-100, y=0.32, h=7;
+  for(const [x,z] of [[-7,-2],[-2.5,-2],[2.5,-2],[7,-2],[-7,4],[7,4],[-2.5,4],[2.5,4]]){ mueble('chinese_chandelier',cx+x,y+4.9,cz+z,0,1.2); mueble('brass_diya_lantern',cx+x+0.2,y+0.78,cz+z,0,1.3); }
+  for(const z of [-6,-1.5,3]){ mueble('chinese_screen_panels',cx-11.6,y,cz+z,Math.PI/2,1.3); mueble('chinese_screen_panels',cx+11.6,y,cz+z,-Math.PI/2,1.3); }
+  for(const s of [-1,1]){ mueble('chinese_cabinet',cx+s*10.6,y+0.8*0.9,cz-10.4,0,0.9); colisiones[0].push({x0:cx+s*10.6-0.6,x1:cx+s*10.6+0.6,z0:cz-10.8,z1:cz-10}); mueble('pachira_aquatica_01',cx+s*10.8,y,cz+9.8,s,1.1); mueble('wooden_lantern_01',cx+s*3.1,y+0.16*1.6,cz+9.6,0,1.6); }
+  mueble('chinese_console_table',cx-7.5,y,cz+10.4,Math.PI,1.1); mueble('katana_stand_01',cx-7.5,y+0.73,cz+10.4,Math.PI,1.4); mueble('ceramic_vase_03',cx-6.6,y+0.73,cz+10.4,0,1.3); mueble('ceramic_vase_04',cx-8.4,y+0.73,cz+10.4,0,1.2);
+  mueble('chinese_sofa',cx+7.6,y,cz+9.9,Math.PI,1); mueble('chinese_tea_table',cx+7.6,y,cz+8.4,0,1); mueble('tea_set_01',cx+7.6,y+0.5,cz+8.4,0.5,1.4); mueble('chinese_armchair',cx+5.6,y,cz+8.2,Math.PI/2,0.95); mueble('chinese_stool',cx+9.4,y,cz+8.2,-Math.PI/2,1);
+  colisiones[0].push({x0:cx+6.4,x1:cx+8.8,z0:cz+9.4,z1:cz+10.5});
+  for(const x of [-5,0,5]) mueble('ceramic_vase_01',cx+x,y+1.13,cz-8.4,0,0.9); }
+// --- LE PALAIS ---
+{ const cx=-100, cz=140, y=0.32, h=7;
+  for(const [x,z,t] of [[-7,6.5,'Chandelier_03'],[10,2,'Chandelier_03'],[-3,-1,'Chandelier_02'],[3,-1,'Chandelier_02'],[0,3,'Chandelier_02']]) mueble(t,cx+x,t==='Chandelier_03'?y+4.6:y+3.9,cz+z,0,1.6);
+  mueble('Sofa_01',cx-9.5,y,cz-8.6,0,1.3); mueble('Sofa_01',cx-6.6,y,cz-8.6,0,1.3); mueble('CoffeeTable_01',cx-8,y,cz-7,0,1); mueble('ArmChair_01',cx-10.4,y,cz-6.2,Math.PI/2,1.1); mueble('Ottoman_01',cx-5.8,y,cz-6.6,0.4,1);
+  mueble('chess_set',cx-8,y+0.52,cz-7,0.3,1); colisiones[0].push({x0:cx-11,x1:cx-5.2,z0:cz-9.2,z1:cz-8});
+  for(let i=0;i<6;i++){ mueble('wine_bottles_01',cx+9.75,y+1.15,cz-0.6+i*0.9,0,1.2); mueble('brass_goblets',cx+9.75,y+1.15,cz-0.2+i*0.9,0,1); }
+  for(const [x,z,t,s] of [[-4,9.6,'marble_bust_01',1.5],[4,9.6,'bronze_shark_statue',1.3],[-11,9.2,'horse_head',1.6]]){ const yt=peana(cx+x,y,cz+z); mueble(t,cx+x,yt,cz+z,Math.PI,s); }
+  mueble('lion_head',cx,y+4.6,cz-10.7,0,2.4); for(const z of [-5,0,5]) mueble('fancy_picture_frame_02',cx-11.75,y+2.6,cz+z,Math.PI/2,1.6);
+  for(const [x,z] of [[-11,-10],[11,-10],[11,10]]) mueble('anthurium_botany_01',cx+x,y,cz+z,0,1.4); }
+// --- Burj Al Arab (interior) ---
+{ const X=0, Z=-1000, y=0.12;
+  mueble('Chandelier_01',X,13.4,Z+3,0,0.035); mueble('Chandelier_01',X,13.4,Z-8,0,0.03);
+  for(const s of [-1,1]){ mueble('GothicCabinet_01',X+s*16.2,y+0.45,Z-6,s>0?-Math.PI/2:Math.PI/2,1); mueble('vintage_grandfather_clock_01',X+s*16.4,y+0.12,Z+4,s>0?-Math.PI/2:Math.PI/2,1); mueble('ornate_mirror_01',X+s*16.75,y+2.4,Z,s>0?-Math.PI/2:Math.PI/2,2.2);
+    mueble('brass_vase_02',X+10+s*3.4,y,Z+6,0,2); const yt=peana(X+s*6,y,Z+11); mueble(s>0?'marble_bust_01':'bronze_whale_statue',X+s*6,yt,Z+11,Math.PI,s>0?1.6:0.6); }
+  mueble('horse_statue_01',X+10,y+1.15,Z+6,0,3); mueble('mantel_clock_01',X+12,y+1.15,Z+6,Math.PI,1.6);
+  for(const [x,z] of [[-8,-8],[8,-8],[-6,6],[6,6]]) mueble('coffee_table_round_01',X+x,y+0.1,Z+z+(z>0?-1.4:1.4),0,0.9);
+  mueble('chess_set',X-8,y+0.55,Z-6.6,0.4,1); mueble('tea_set_01',X+6,y+0.55,Z+4.6,0,1.6);
+  for(const x of [-12,-4,4,12]) mueble('hanging_picture_frame_01',X+x,y+5.5,Z-13.6,0,2.4); }
+// --- torre AIRMATE: lobby, plantas de trabajo y despacho ---
+{ const y0=0.18;
+  for(const s of [-1,1]){ const yt=peana(s*4.2,y0,7.2); mueble(s>0?'marble_bust_01':'horse_statue_01',s*4.2,yt,7.2,Math.PI,s>0?1.4:3.2); mueble('pachira_aquatica_01',s*12,y0,8.8,s,1.15); mueble('ornate_mirror_01',s*5.2,y0+2.1,-5.75,0,2); }
+  mueble('bronze_whale_statue',-6.2,y0,-3.6,0.6,0.8); colisiones[0].push({x0:-6.9,x1:-5.5,z0:-4.4,z1:-2.8});
+  mueble('brass_candleholders',2.6,y0+1.15,-1.3,0,0.8); mueble('Chandelier_03',-8,y0+4.15,3,0,1.4);
+  for(let f=1;f<=3;f++){ const y=f*H+0.39; mueble('calathea_orbifolia_01',-12,y,8.5,0,1.4); mueble('anthurium_botany_01',12,y,8.5,0,1.3); mueble('hanging_picture_frame_02',-12.8,y+2,0,Math.PI/2,1.8); mueble('hanging_picture_frame_03',12.8,y+2,2,-Math.PI/2,2);
+    for(const x of [-8,-3,2]) mueble('classic_laptop',x,y+0.95,4.2,Math.PI,0.6); }
+  { const y=4*H+0.18; mueble('vintage_cabinet_01',10.6,y+0.34,9.3,Math.PI,1); colisiones[4].push({x0:9.5,x1:11.7,z0:8.9,z1:9.7}); mueble('book_encyclopedia_set_01',9.9,y+1.45,9.2,Math.PI/2,1.4); mueble('mantel_clock_01',11.2,y+1.5,9.15,Math.PI,1.3);
+    mueble('chess_set',4.4,y+0.62,4.6,0.6,0.9); const yt=peana(12.2,y,5.4); mueble('marble_bust_01',12.2,yt,5.4,-Math.PI/2,1.3); mueble('hanging_picture_frame_01',12.85,y+2.2,1.5,-Math.PI/2,2.2); mueble('pachira_aquatica_01',-12,y,8.6,0,1.1); mueble('Chandelier_02',6,y+3.2,4,0,1.4); } }
+
+// ============ skyline real: rascacielos de verdad (Sketchfab, CC BY 4.0) en los solares reservados de la ciudad ============
+const TORRES_ARCH=['t_burjcrown','t_paramount','t_trump','t_landmark81','t_petronas','t_centralpark','t_bankchina','t_3wtc','t_sky1','t_isosceles','t_millennium'];
+const CREDITOS_CIUDAD='Rascacielos (Sketchfab, CC BY 4.0): Burj Crown · 1Quad; Paramount Dubai · kewin_3d_models; Dubai Creek Tower y Trump International · Void; Landmark 81 · Dave Love; Petronas · Nurfaamk; Central Park Tower y 3 WTC · NanoRay; Bank of China · Raise3D; Skyscraper · Mitya Petrov; Isosceles Highrise · VertaScan; AMS S2 · AL3K; Building Modern Glass · overfota1988; Grand Millennium Sulaimani · Miran Osman; High Rise Office · Arsen Ismailov.';
+{ const plantillas=[]; let pendientes=TORRES_ARCH.length;
+  const repartir=()=>{ if(!plantillas.length) return; TORRE_SLOTS.forEach((s,i)=>{ const t=plantillas[(i*7+3)%plantillas.length]; const o=t.o.clone(true);
+      const sAlto=s.h*1.15/t.sz.y, sPie=Math.min(s.w,s.d)*1.05/Math.max(t.sz.x,t.sz.z), sc=Math.min(sAlto,sPie);
+      const g=new THREE.Group(); g.add(o); g.scale.setScalar(sc); g.position.set(s.x,0.2,s.z); g.rotation.y=(i%4)*Math.PI/2; g.matrixAutoUpdate=false; g.updateMatrix(); scene.add(g); }); };
+  TORRES_ARCH.forEach(n=>gltf.loadAsync(`mod/arq/${n}.glb`).then(gl=>{ const o=gl.scene; o.traverse(c=>{ if(!c.isMesh) return; c.castShadow=false; c.receiveShadow=false; for(const m of [].concat(c.material)) if(m){ if(m.isMeshBasicMaterial){ c.material=new THREE.MeshStandardMaterial({color:m.color,map:m.map}); } const mm=[].concat(c.material)[0]; if(mm.map&&'emissive' in mm){ mm.emissive=new THREE.Color(0xfff0d0); mm.emissiveMap=mm.map; mm.emissiveIntensity=0; fachadas.push(mm); } mm.envMapIntensity=0.5; } });
+      const b=new THREE.Box3().setFromObject(o), sz=b.getSize(new THREE.Vector3()), ce=b.getCenter(new THREE.Vector3()); o.position.set(-ce.x,-b.min.y,-ce.z); if(sz.y>sz.x*0.9&&sz.y>sz.z*0.9) plantillas.push({o,sz}); })
+    .catch(()=>{}).finally(()=>{ if(--pendientes===0) repartir(); }));
+}
 
 // ============ luz ============
 const cAlba=new THREE.Color(0xff9a5c), cDia=new THREE.Color(0xfff1dc), niebDia=new THREE.Color(0xd8c6a8), niebNoche=new THREE.Color(0x0b1226);
