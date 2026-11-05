@@ -380,6 +380,7 @@ async function cargarTodo(){
     Object.assign(S,{combates:c,papeles:p,viajes:vi,entradas:en,patro:pa,gastos:g,equipo:eq,tareas:t,merch:m,programa:pr,pesajes:pe,pagos:pg});
   }catch(e){ toast(textoError(e),true); }
   await cargarVotacion();
+  await cargarPublico();
   pintar();
 }
 let _rt=null, _rtT=null;
@@ -460,7 +461,7 @@ function oculto(k){ try{ return localStorage.getItem('f2o_oculto_'+k)==='1'; }ca
 window.ocultar=k=>{ try{ localStorage.setItem('f2o_oculto_'+k,'1'); }catch(e){} pintar(); };
 /* ───────── Menús ───────── */
 const SECCIONES=[ ['inicio','🏠','Inicio'],['estadio','🏟️','Pabellón 3D'],['combates','🥊','Combates'],['pesaje','⚖️','Pesaje'],['pagos','💸','Pagos a peleadores'],['viajes','✈️','Viajes'],['vuelos3d','🌍','Vuelos 3D'],['dinero','💶','Dinero'],['archivos','📁','Documentos'],
-  ['dia','⏱️','Día de la velada'],['mensajes','💬','Mensajes'],['peleadores','👊','Peleadores'],['equipo','🧑‍⚖️','Equipo'],['tareas','✅','Tareas'],['merch','👕','Merch'],['velada','📅','Velada'],['votacion','🗳️','Votación del público'],['informe','🖨️','Informe'] ];
+  ['dia','⏱️','Día de la velada'],['mensajes','💬','Mensajes'],['peleadores','👊','Peleadores'],['equipo','🧑‍⚖️','Equipo'],['tareas','✅','Tareas'],['merch','👕','Merch'],['velada','📅','Velada'],['votacion','🗳️','Votación del público'],['publico','📣','Público y emails'],['informe','🖨️','Informe'] ];
 const ABAJO=['inicio','combates','viajes','dinero','mas'];
 function pintarMenus(){
   $('#lateral').innerHTML=SECCIONES.map(([k,i,t],n)=>(n===2||n===9?'<div class="sep"></div>':'')+`<button data-s="${k}"><span class="i">${i}</span>${t}</button>`).join('')+'<div class="marca"><span class="logo-f2o"><img src="logo.jpg" alt=""></span>FIGHT2ONE</div>';
@@ -590,6 +591,26 @@ const PANTALLAS={
         <button class="btn acc ancho">Crear enlace</button><p class="error" id="ll-err"></p>
         <div id="ll-res"></div>
       </form>`; },
+  publico(){ const P=S.pub;
+      if(P.error) return `<div class="titulo"><h2>PÚBLICO</h2></div><div class="vacio"><b>La lista de emails aún no está activada</b>Falta crear sus tablas en la base de datos.</div>`;
+      const activos=P.lista.filter(x=>!x.baja_at), bajas=P.lista.length-activos.length;
+      const semana=activos.filter(x=>Date.now()-new Date(x.created_at)<7*864e5).length;
+      const origen={}; activos.forEach(x=>{ const o=(x.origen||'web').split('-')[0]||'web'; origen[o]=(origen[o]||0)+1; });
+      const ESTADO={borrador:['no','Borrador'],programado:['med','Programado'],enviando:['med','Enviando…'],enviado:['ok','Enviado'],error:['no','Error']};
+      const bienv=P.emails.find(e=>e.tipo==='bienvenida'), prog=P.emails.filter(e=>e.tipo==='programado');
+      const fila=e=>{ const [c,t]=ESTADO[e.estado]||['no',e.estado]; const cuando=e.tipo==='bienvenida'?'Al apuntarse':e.enviar_at?fechaLarga(e.enviar_at)+' · '+horaCorta(e.enviar_at):'Sin fecha';
+        return `<div class="item" style="flex-wrap:wrap"><span class="t" onclick="abrirForm('email','${e.id}')" style="cursor:pointer"><b>${esc(e.asunto)}</b><small>${cuando}${e.enviados?' · '+num(e.enviados)+' enviados':''}${e.fallos?' · '+num(e.fallos)+' fallos':''}</small></span><span class="tag ${c}">${t}</span>
+          <button class="btn peq" onclick="pruebaEmail('${e.id}',this)">Probar</button></div>`; };
+      return `<div class="titulo"><h2>PÚBLICO</h2><button class="btn peq" onclick="exportarLista()">⬇️ Exportar CSV</button></div>
+      <div class="cifras"><div class="cifra acc"><small>En La Grada</small><b>${num(activos.length)}</b></div><div class="cifra"><small>Nuevos esta semana</small><b>${num(semana)}</b></div><div class="cifra"><small>Bajas</small><b>${num(bajas)}</b></div></div>
+      ${Object.keys(origen).length?`<p class="sub">De dónde vienen: ${Object.entries(origen).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<b>${esc(k)}</b> ${n}`).join(' · ')}</p>`:''}
+      <div class="grupo">Emails que salen solos</div>
+      <p class="sub">Los <b>programados</b> salen solos en su fecha a toda la lista. Los <b>borradores</b> no salen hasta que los completes y les pongas fecha. «Probar» te lo manda solo a ti.</p>
+      <div class="lista">${bienv?fila(bienv):''}${prog.map(fila).join('')}
+        <button class="item" onclick="abrirForm('email',null,{})" style="justify-content:center;color:var(--acc);font-weight:800">+ Nuevo email</button></div>
+      <div class="grupo">Últimos apuntados</div>
+      ${P.lista.length?`<div class="lista">${P.lista.slice(0,40).map(x=>`<div class="item"><span class="t"><b>${esc(x.email)}</b><small>${fechaLarga(x.created_at)} · ${esc(x.origen||'web')}${x.baja_at?' · dado de baja':''}</small></span>${x.baja_at?'':`<button class="btn peq" onclick="bajaManual('${x.id}',this)">Dar de baja</button>`}</div>`).join('')}</div>`
+        :'<div class="vacio">Todavía no se ha apuntado nadie. La gente entra desde la web y la bio de Instagram.</div>'}`; },
   informe(){ return `<div class="titulo"><h2>INFORME</h2><button class="btn acc peq" onclick="window.print()">🖨️ Imprimir o PDF</button></div><div id="informe">${informeHTML()}</div>`; },
 
   peleadores(){ return `<div class="titulo"><h2>PELEADORES</h2><button class="btn acc peq" onclick="abrirForm('peleador')">+ Peleador</button></div>
@@ -805,6 +826,15 @@ const ENTREGABLES=['Logo en la lona','Pantallas de la pista','Banderola','Cartel
 const DIAS=[[-2,'Dos días antes'],[-1,'Víspera'],[0,'Día de la velada'],[1,'Día después']];
 const pesoNum=t=>{ const m=String(t||'').replace(',','.').match(/\d+(\.\d+)?/); return m?Number(m[0]):null; };
 const FORMS={
+  email:{ tabla:'f2o_emails', titulo:'Email', fila:id=>S.pub.emails.find(x=>x.id===id), html:e=>`
+    ${campo('Asunto',inp('asunto',e?.asunto,'required maxlength="120"'))}
+    ${campo('Frase de vista previa (opcional)',inp('preheader',e?.preheader,'maxlength="140"'))}
+    ${campo('Texto · deja una línea en blanco entre párrafos · **negrita** · [Botón](https://enlace)',`<textarea name="cuerpo" rows="10" required>${esc(e?.cuerpo||'')}</textarea>`)}
+    ${e?.tipo==='bienvenida'?'<p class="sub">Se manda solo a cada persona nueva al apuntarse.</p>':campo('Cuándo sale',`<input type="datetime-local" name="enviar_at" value="${dtLocal(e?.enviar_at)}">`)}
+    ${e?.estado==='enviado'||e?.estado==='enviando'?`<input type="hidden" name="estado" value="${e.estado}">`:campo('Estado',chips('estado',[['borrador','Borrador (no sale)'],['programado','Programado (sale solo)']],e?.estado||'borrador'))}`,
+    validar:f=>{ if(f.estado==='programado'){ if(/PENDIENTE/i.test(f.cuerpo)) return 'Aún tiene textos «PENDIENTE»: complétalo antes de programarlo';
+        if(f.enviar_at===undefined) return null; if(!f.enviar_at) return 'Pon cuándo sale'; } return null; },
+    leer:f=>({ asunto:f.asunto.trim(), preheader:f.preheader||null, cuerpo:f.cuerpo.trim(), estado:f.estado||'borrador', ...(f.enviar_at!==undefined?{enviar_at:f.enviar_at?new Date(f.enviar_at).toISOString():null}:{}) }) },
   programa:{ tabla:'f2o_programa', titulo:'Momento del día', fila:id=>S.programa.find(x=>x.id===id), html:x=>`
     ${campo('Qué pasa',inp('titulo',x?.titulo,'required placeholder="Pesaje oficial, apertura de puertas…"'))}
     ${campo('Qué día',chips('dia',DIAS.map(([k,t])=>[String(k),t]),String(x?.dia??0)))}
@@ -943,6 +973,27 @@ const FORMS={
     ${campo('Color',`<input type="color" name="color" value="${esc(m?.color||'#0b0b0b')}" style="height:52px;padding:6px">`)}`,
     leer:f=>({ velada_id:S.velada.id, nombre:f.nombre.trim(), precio:Number(f.precio)||0, stock:Number(f.stock)||0, vendidas:Number(f.vendidas)||0, color:f.color||'#0b0b0b' }) },
 };
+/* ───────── Público y emails (La Grada) ───────── */
+async function cargarPublico(){
+  S.pub={lista:[],emails:[],error:null};
+  try{ const [l,e]=await Promise.all([ q(sb.from('f2o_lista').select('id,email,origen,baja_at,created_at').order('created_at',{ascending:false}).limit(5000)),
+      q(sb.from('f2o_emails').select('*').order('tipo').order('enviar_at',{nullsFirst:false})) ]);
+    S.pub.lista=l; S.pub.emails=e; }
+  catch(e){ S.pub.error=textoError(e); }
+}
+window.exportarLista=()=>{ const filas=[['email','origen','alta','baja']].concat(S.pub.lista.map(x=>[x.email,x.origen||'',x.created_at,x.baja_at||'']));
+  const csv=filas.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'})); a.download='la-grada-fight2one.csv'; a.click(); };
+window.bajaManual=async(id,btn)=>{ if(!confirmarDoble(btn,'¿Seguro?')) return; btn.disabled=true;
+  try{ await guardar('f2o_lista',{baja_at:new Date().toISOString()},id); toast('Dado de baja'); await cargarPublico(); pintar(); }catch(e){ btn.disabled=false; toast(textoError(e),true); } };
+window.pruebaEmail=async(id,btn)=>{ const { data:{ session } }=await sb.auth.getSession(); const a=prompt('¿A qué email te mando la prueba?',localStorage.getItem('f2o_prueba_a')||'');
+  if(!a) return; try{ localStorage.setItem('f2o_prueba_a',a); }catch(e){}
+  btn.disabled=true; btn.textContent='Enviando…';
+  try{ const r=await fetch(SB_URL+'/functions/v1/f2o-envios',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_ANON,Authorization:'Bearer '+(session?.access_token||SB_ANON)},body:JSON.stringify({prueba:id,a})});
+    const j=await r.json().catch(()=>({})); if(!r.ok||!j.ok) throw new Error(j.error||('error '+r.status)); toast('✓ Prueba enviada a '+a); }
+  catch(e){ toast('No se pudo enviar: '+(e.message||e),true); }
+  btn.disabled=false; btn.textContent='Probar'; };
+
 /* ───────── Votación del público ───────── */
 const urlVotar=()=>new URL('../fight2one-votar/?v='+S.vot.id,location.href).href;
 const fotoAbs=u=>!u?null:/^https?:\/\//.test(u)?u:'/'+String(u).replace(/^\/+/,'');
