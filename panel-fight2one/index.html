@@ -600,7 +600,7 @@ const PANTALLAS={
       const bienv=P.emails.find(e=>e.tipo==='bienvenida'), prog=P.emails.filter(e=>e.tipo==='programado');
       const fila=e=>{ const [c,t]=ESTADO[e.estado]||['no',e.estado]; const cuando=e.tipo==='bienvenida'?'Al apuntarse':e.enviar_at?fechaLarga(e.enviar_at)+' · '+horaCorta(e.enviar_at):'Sin fecha';
         return `<div class="item" style="flex-wrap:wrap"><span class="t" onclick="abrirForm('email','${e.id}')" style="cursor:pointer"><b>${esc(e.asunto)}</b><small>${cuando}${e.enviados?' · '+num(e.enviados)+' enviados':''}${e.fallos?' · '+num(e.fallos)+' fallos':''}</small></span><span class="tag ${c}">${t}</span>
-          <button class="btn peq" onclick="pruebaEmail('${e.id}',this)">Probar</button></div>`; };
+          <button class="btn peq" onclick="pruebaEmail('${e.id}',this)">Probar</button>${e.tipo==='bienvenida'?`<button class="btn peq acc" onclick="enviarATodos('${e.id}',this,true)">📣 A los que no la tienen</button>`:e.estado==='enviado'?'':`<button class="btn peq acc" onclick="enviarATodos('${e.id}',this,false)">📣 Enviar a todos</button>`}</div>`; };
       return `<div class="titulo"><h2>PÚBLICO</h2><button class="btn peq" onclick="exportarLista()">⬇️ Exportar CSV</button></div>
       <div class="cifras"><div class="cifra acc"><small>En La Grada</small><b>${num(activos.length)}</b></div><div class="cifra"><small>Nuevos esta semana</small><b>${num(semana)}</b></div><div class="cifra"><small>Bajas</small><b>${num(bajas)}</b></div></div>
       ${Object.keys(origen).length?`<p class="sub">De dónde vienen: ${Object.entries(origen).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<b>${esc(k)}</b> ${n}`).join(' · ')}</p>`:''}
@@ -976,7 +976,7 @@ const FORMS={
 /* ───────── Público y emails (La Grada) ───────── */
 async function cargarPublico(){
   S.pub={lista:[],emails:[],error:null};
-  try{ const [l,e]=await Promise.all([ q(sb.from('f2o_lista').select('id,email,origen,baja_at,created_at').order('created_at',{ascending:false}).limit(5000)),
+  try{ const [l,e]=await Promise.all([ q(sb.from('f2o_lista').select('id,email,origen,baja_at,created_at,bienvenida_at').order('created_at',{ascending:false}).limit(5000)),
       q(sb.from('f2o_emails').select('*').order('tipo').order('enviar_at',{nullsFirst:false})) ]);
     S.pub.lista=l; S.pub.emails=e; }
   catch(e){ S.pub.error=textoError(e); }
@@ -986,6 +986,16 @@ window.exportarLista=()=>{ const filas=[['email','origen','alta','baja']].concat
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'})); a.download='la-grada-fight2one.csv'; a.click(); };
 window.bajaManual=async(id,btn)=>{ if(!confirmarDoble(btn,'¿Seguro?')) return; btn.disabled=true;
   try{ await guardar('f2o_lista',{baja_at:new Date().toISOString()},id); toast('Dado de baja'); await cargarPublico(); pintar(); }catch(e){ btn.disabled=false; toast(textoError(e),true); } };
+/* Mandar ya a toda la lista (o la bienvenida a quien no la tenga). Sale a los primeros 50 al momento y el resto en las siguientes tandas automáticas */
+window.enviarATodos=async(id,btn,bienv)=>{ const e=S.pub.emails.find(x=>x.id===id); const activos=S.pub.lista.filter(x=>!x.baja_at);
+  const n=bienv?activos.filter(x=>!x.bienvenida_at).length:activos.length;
+  if(!n){ toast(bienv?'Todos los apuntados ya tienen la bienvenida':'No hay nadie apuntado todavía',true); return; }
+  if(!confirm(`¿Mandar «${e.asunto}» ahora a ${n} ${n===1?'persona':'personas'}?\n\nNo se puede deshacer.${n>50?'\nSalen 50 ahora y el resto en las siguientes tandas (cada 15 min, máximo 300 al día).':''}`)) return;
+  const { data:{ session } }=await sb.auth.getSession(); const txt=btn.textContent; btn.disabled=true; btn.textContent='Enviando…';
+  try{ const r=await fetch(SB_URL+'/functions/v1/f2o-envios',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_ANON,Authorization:'Bearer '+(session?.access_token||SB_ANON)},body:JSON.stringify(bienv?{bienvenidaATodos:true}:{enviarYa:id})});
+    const j=await r.json().catch(()=>({})); if(!r.ok||!j.ok) throw new Error(j.error||('error '+r.status)); toast(`✓ Enviado a ${num(j.enviados||0)}${n>(j.enviados||0)?' · el resto sale en las próximas tandas':''}`); await cargarPublico(); pintar(); }
+  catch(err){ toast('No se pudo enviar: '+(err.message||err),true); }
+  btn.disabled=false; btn.textContent=txt; };
 window.pruebaEmail=async(id,btn)=>{ const { data:{ session } }=await sb.auth.getSession(); const a=prompt('¿A qué email te mando la prueba?',localStorage.getItem('f2o_prueba_a')||'');
   if(!a) return; try{ localStorage.setItem('f2o_prueba_a',a); }catch(e){}
   btn.disabled=true; btn.textContent='Enviando…';
