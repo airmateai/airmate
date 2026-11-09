@@ -622,6 +622,7 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
     <div class="page" id="page-reuniones">
       <div class="page-hd">
         <div><h1>Reuniones y <em>llamadas</em></h1><div class="page-sub">Agenda de reuniones, demos y llamadas para el jefe</div></div>
+        <button class="btn btn-primary" onclick="abrirNuevaReunion()">+ Nueva reunión</button>
       </div>
       <div class="card" style="padding:18px 20px;margin-bottom:18px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -891,6 +892,26 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
       <div class="f-group"><label>Dónde</label><select id="demo-donde"><option>En su negocio</option><option>Videollamada</option><option>Por teléfono</option></select></div>
     </div>
     <div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal('modal-demo')">Cancelar</button><button class="btn btn-primary" onclick="llGuardarDemo()">Guardar demo</button></div>
+  </div>
+</div>
+<div class="modal-backdrop" id="modal-reunion">
+  <div class="modal">
+    <div class="modal-hd"><h3>+ Nueva reunión</h3><button class="modal-close" onclick="closeModal('modal-reunion')">✕</button></div>
+    <div class="modal-body">
+      <div class="f-group"><label>Negocio *</label><input id="nr-empresa" list="nr-lista" placeholder="Escribe para buscar o pon uno nuevo" autocomplete="off" oninput="nrAutocompletar()"><datalist id="nr-lista"></datalist></div>
+      <div class="f-row">
+        <div class="f-group"><label>Teléfono</label><input id="nr-tel" placeholder="600 000 000"></div>
+        <div class="f-group"><label>Con quién</label><input id="nr-quien" placeholder="Ej. Laura, la dueña"></div>
+      </div>
+      <div class="f-row">
+        <div class="f-group"><label>Día *</label><input type="date" id="nr-dia"></div>
+        <div class="f-group"><label>Hora *</label><input type="time" id="nr-hora" step="900"></div>
+      </div>
+      <div class="f-group"><label>Dónde</label><select id="nr-donde"><option>En su negocio</option><option>Videollamada</option><option>Por teléfono</option><option>En la oficina</option></select></div>
+      <div class="f-group"><label>Notas</label><textarea id="nr-notas" rows="2" placeholder="Qué le interesa, qué enseñarle…"></textarea></div>
+      <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--txt2)"><input type="checkbox" id="nr-cal" checked> Añadir también a Google Calendar</label>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal('modal-reunion')">Cancelar</button><button class="btn btn-primary" id="nr-guardar" onclick="guardarNuevaReunion()">Guardar reunión</button></div>
   </div>
 </div>
 <div class="ctx" id="ctx"></div>
@@ -1400,7 +1421,7 @@ function renderReuniones(){
     return;
   }
   tbody.innerHTML=lista.map(c=>`
-    <tr>
+    <tr oncontextmenu="ctxAbrir(event,'${c.id}')">
       <td class="empresa-cell"><strong>${esc(c.empresa)}</strong></td>
       <td>${esc(c.captador)}</td>
       <td>${esc(c.telefono||'—')}</td>
@@ -2190,6 +2211,48 @@ async function ctxBorrar(id,btn){
 document.addEventListener('click',e=>{const m=document.getElementById('ctx');if(m&&m.classList.contains('open')&&!m.contains(e.target))ctxCerrar();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')ctxCerrar();});
 addEventListener('scroll',ctxCerrar,{passive:true});
+
+// ═══════════ NUEVA REUNIÓN (con un negocio existente o nuevo) ═══════════
+function abrirNuevaReunion(){
+  const nombres=[...new Set(LISTA.map(c=>c.empresa).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  document.getElementById('nr-lista').innerHTML=nombres.map(n=>`<option value="${esc(n)}">`).join('');
+  ['nr-empresa','nr-tel','nr-quien','nr-notas'].forEach(i=>document.getElementById(i).value='');
+  const d=new Date();d.setDate(d.getDate()+1);if(d.getDay()===0)d.setDate(d.getDate()+1);
+  document.getElementById('nr-dia').value=d.toISOString().slice(0,10);
+  document.getElementById('nr-hora').value='11:00';
+  openModal('modal-reunion');setTimeout(()=>document.getElementById('nr-empresa').focus(),50);
+}
+function nrBuscar(){const v=nn(document.getElementById('nr-empresa').value);return v?LISTA.find(c=>nn(c.empresa)===v):null;}
+function nrAutocompletar(){const c=nrBuscar();if(c&&c.telefono&&!document.getElementById('nr-tel').value)document.getElementById('nr-tel').value=telBonito(c.telefono);}
+async function guardarNuevaReunion(){
+  const empresa=document.getElementById('nr-empresa').value.trim();
+  const dia=document.getElementById('nr-dia').value,hora=document.getElementById('nr-hora').value;
+  if(!empresa||!dia||!hora){toast('Pon el negocio, el día y la hora','error');return;}
+  const tel=document.getElementById('nr-tel').value.trim(),quien=document.getElementById('nr-quien').value.trim();
+  const donde=document.getElementById('nr-donde').value,notas=document.getElementById('nr-notas').value.trim();
+  const nota=[quien&&('Con '+quien),donde,notas].filter(Boolean).join(' · ');
+  const btn=document.getElementById('nr-guardar');btn.disabled=true;
+  const existente=nrBuscar();
+  let res;
+  if(existente){
+    res=await SB.from('am_crm_contactos').update({etapa:'reunion',temperatura:'caliente',fecha_reunion:dia,hora_reunion:hora,notas_secretaria:nota||existente.notas_secretaria||null,proxima_llamada:null,telefono:existente.telefono||tel||null,updated_at:new Date().toISOString()}).eq('id',existente.id).select().single();
+  }else{
+    res=await sbWriteResiliente(p=>SB.from('am_crm_contactos').insert(p).select().single(),{captador:SESSION.nombre,empresa,telefono:tel||null,etapa:'reunion',temperatura:'caliente',canal:'llamada',fecha_alta:todayStr(),fecha_reunion:dia,hora_reunion:hora,notas_secretaria:nota||null,comision_pct:20});
+  }
+  btn.disabled=false;
+  if(res.error||!res.data){toast('No se ha guardado: '+((res.error&&res.error.message)||'sin permiso'),'error');return;}
+  closeModal('modal-reunion');
+  if(existente)Object.assign(existente,res.data);else LISTA.unshift(res.data);
+  ALL_CONTACTOS=LISTA.filter(x=>!(x.origen&&x.origen.startsWith('lista')&&!(x.llamadas||[]).length&&x.etapa==='nuevo'));
+  renderReuniones();
+  toast('📅 Reunión guardada');
+  if(document.getElementById('nr-cal').checked){
+    const ini=new Date(dia+'T'+hora),fin=new Date(ini.getTime()+30*60000);
+    const g=x=>x.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+    const det=`${empresa}${tel?'\nTel: '+tel:''}${nota?'\n'+nota:''}`;
+    window.open('https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('Reunión Airmate · '+empresa)+'&dates='+g(ini)+'/'+g(fin)+'&details='+encodeURIComponent(det)+'&location='+encodeURIComponent(donde==='En su negocio'?((existente&&existente.direccion)||empresa):donde),'_blank');
+  }
+}
 
 // ═══════════ MANDAR INFO (email automático o WhatsApp) ═══════════
 const FN_EMAIL=SB_URL+'/functions/v1/am-captacion-email';
