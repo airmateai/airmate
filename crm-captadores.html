@@ -290,6 +290,18 @@ tr:hover td{background:var(--blue-light);}
 .pl-card .a button:hover{border-color:var(--blue);color:var(--blue);}
 .pl-more{font-size:12px;color:var(--txt3);text-align:center;padding:6px;}
 
+/* menú de clic derecho */
+.ctx{position:fixed;z-index:1000;min-width:230px;background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 18px 50px rgba(20,18,12,.18);padding:6px;display:none;font-size:13.5px;}
+.ctx.open{display:block;}
+.ctx .t{padding:8px 12px 6px;font-family:var(--display);font-size:18px;line-height:1.15;border-bottom:1px solid var(--border2);margin-bottom:4px;}
+.ctx button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 12px;border-radius:9px;background:none;border:none;color:var(--ink);font-size:13.5px;}
+.ctx button:hover{background:var(--bg);}
+.ctx button.del{color:var(--uae-red);}
+.ctx button.del.sure{background:var(--uae-red);color:#fff;}
+.ctx hr{border:none;border-top:1px solid var(--border2);margin:4px 0;}
+.ctx .sub{font-size:10.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;padding:6px 12px 2px;}
+.ctx button.cur{color:var(--gold);font-weight:600;}
+
 @media(max-width:880px){
   .sidebar{width:72px;padding:20px 10px;}
   .sb-brand-txt,.sb-item span,.sb-user-name,.sb-user-role,.sb-logout span{display:none;}
@@ -844,6 +856,7 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
     <div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal('modal-demo')">Cancelar</button><button class="btn btn-primary" onclick="llGuardarDemo()">Guardar demo</button></div>
   </div>
 </div>
+<div class="ctx" id="ctx"></div>
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
@@ -1135,7 +1148,7 @@ function renderMio(){
     return;
   }
   tbody.innerHTML=lista.map(c=>`
-    <tr>
+    <tr oncontextmenu="ctxAbrir(event,'${c.id}')">
       <td class="empresa-cell"><strong>${esc(c.empresa)}</strong>${c.notas?`<small>${esc(c.notas).slice(0,60)}${c.notas.length>60?'…':''}</small>`:''}</td>
       <td>${esc(c.telefono||'—')}</td>
       <td>${esc(c.sector||'—')}</td>
@@ -1764,7 +1777,7 @@ function llRenderCola(){
   let items=llCola().filter(c=>c.id!==LL_ACTUAL).map(c=>({c,info:c.proxima_llamada?'⏰ ahora':(c.sector||'').split(' ')[0]}));
   if(q){items=LISTA.filter(c=>esMio(c)&&String(c.empresa).toLowerCase().includes(q)).map(c=>({c,info:c.etapa==='descartado'?'descartado':c.etapa==='reunion'?'demo':c.proxima_llamada&&new Date(c.proxima_llamada)>new Date()?fmtCuando(c.proxima_llamada):(c.sector||'')}));}
   const prog=q?[]:llProgramados().slice(0,5).map(c=>({c,info:'⏰ '+fmtCuando(c.proxima_llamada)}));
-  const fila=({c,info})=>`<button onclick="llElegir(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">${esc(c.empresa)}<span>${esc(info)}</span></button>`;
+  const fila=({c,info})=>`<button oncontextmenu="ctxAbrir(event,${JSON.stringify(c.id).replace(/"/g,'&quot;')})" onclick="llElegir(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">${esc(c.empresa)}<span>${esc(info)}</span></button>`;
   el.innerHTML=(items.slice(0,25).map(fila).join('')||'<div style="padding:8px;font-size:13px;color:var(--txt3)">Nada por aquí.</div>')
     +(prog.length?`<div class="ll-lbl" style="margin:12px 8px 4px">Programadas</div>`+prog.map(fila).join(''):'');
 }
@@ -1932,7 +1945,7 @@ function plCard(c){
   if(c.valor_cierre)chips.push(`<i class="ok">${Math.round(c.valor_cierre)} €</i>`);
   if(ult&&ult.n)chips.push(`<i>${esc(String(ult.n).slice(0,40))}</i>`);
   const id=JSON.stringify(c.id).replace(/"/g,'&quot;');
-  return `<div class="pl-card" draggable="true" ondragstart="plDrag(event,${id})" ondragend="this.classList.remove('drag')" ondblclick="abrirGestion(${id})">
+  return `<div class="pl-card" draggable="true" oncontextmenu="ctxAbrir(event,${id})" ondragstart="plDrag(event,${id})" ondragend="this.classList.remove('drag')" ondblclick="abrirGestion(${id})">
     <b>${esc(c.empresa)}</b>
     <div class="s">${esc(c.sector||'')}${c.zona?' · '+esc(c.zona):''}${esJefe()&&c.captador?' · '+esc(c.captador):''}</div>
     ${chips.length?`<div class="m">${chips.join('')}</div>`:''}
@@ -1989,6 +2002,66 @@ async function plDrop(e,etapa,col){
 }
 function plLlamar(id){LL_ACTUAL=id;goPage('llamar',null);window.scrollTo({top:0,behavior:'smooth'});}
 function plEmail(id){LL_ACTUAL=id;goPage('llamar',null);setTimeout(()=>{document.getElementById('info-email').value=(LISTA.find(x=>x.id===id)||{}).email||'';openModal('modal-info');},150);}
+
+// ═══════════ MENÚ DE CLIC DERECHO (tarjetas del pipeline y cola) ═══════════
+let CTX_ID=null;
+function ctxCerrar(){const m=document.getElementById('ctx');m.classList.remove('open');CTX_ID=null;}
+function ctxAbrir(e,id){
+  e.preventDefault();e.stopPropagation();
+  const c=LISTA.find(x=>x.id===id)||ALL_CONTACTOS.find(x=>x.id===id);if(!c)return;
+  CTX_ID=id;
+  const q=JSON.stringify(id).replace(/"/g,'&quot;');
+  const puedeBorrar=esJefe()||esMio(c);
+  const tel=telLimpio(c.telefono);
+  const m=document.getElementById('ctx');
+  m.innerHTML=`<div class="t">${esc(c.empresa)}</div>
+    ${tel?`<button onclick="ctxCerrar();plLlamar(${q})">📞 Llamar</button>`:''}
+    ${tel?`<button onclick="ctxCerrar();window.open('https://wa.me/${tel.replace('+','')}','_blank')">💬 Abrir WhatsApp</button>`:''}
+    <button onclick="ctxCerrar();plEmail(${q})">📧 Mandar info por email</button>
+    <button onclick="ctxCerrar();abrirGestion(${q})">✎ Editar ficha</button>
+    ${tel?`<button onclick="navigator.clipboard.writeText('${tel}');toast('Teléfono copiado');ctxCerrar()">⧉ Copiar teléfono</button>`:''}
+    <hr><div class="sub">Mover a</div>
+    ${PL_COLS.map(col=>`<button class="${c.etapa===col.id?'cur':''}" onclick="ctxMover(${q},'${col.id}')">${c.etapa===col.id?'● ':''}${col.t}</button>`).join('')}
+    <button class="${c.etapa==='nuevo'?'cur':''}" onclick="ctxMover(${q},'nuevo')">Volver a la cola de llamadas</button>
+    ${puedeBorrar?`<hr><button class="del" id="ctx-del" onclick="ctxBorrar(${q},this)">🗑 Borrar</button>`:''}`;
+  m.classList.add('open');
+  const w=m.offsetWidth,h=m.offsetHeight;
+  m.style.left=Math.min(e.clientX,innerWidth-w-8)+'px';
+  m.style.top=Math.min(e.clientY,innerHeight-h-8)+'px';
+}
+async function ctxMover(id,etapa){
+  ctxCerrar();
+  const c=LISTA.find(x=>x.id===id);if(!c||c.etapa===etapa)return;
+  const cambios={etapa,updated_at:new Date().toISOString()};
+  if(['reunion','cerrado','descartado'].includes(etapa))cambios.proxima_llamada=null;
+  if(etapa==='contactado'&&!c.proxima_llamada)cambios.proxima_llamada=proxHora(1,10,30).toISOString();
+  if(etapa==='nuevo')cambios.proxima_llamada=null;
+  const {data,error}=await SB.from('am_crm_contactos').update(cambios).eq('id',id).select('id');
+  if(error||!(data||[]).length){toast('No se ha guardado'+(error?': '+error.message:''),'error');return;}
+  Object.assign(c,cambios);
+  ALL_CONTACTOS=LISTA.filter(x=>!(x.origen&&x.origen.startsWith('lista')&&!(x.llamadas||[]).length&&x.etapa==='nuevo'));
+  toast(`${c.empresa} → ${etapa==='nuevo'?'cola de llamadas':PL_COLS.find(x=>x.id===etapa).t}`);
+  if(document.getElementById('page-pipeline').classList.contains('active'))renderPipeline();
+  if(document.getElementById('page-llamar').classList.contains('active'))llRender();
+  if((etapa==='reunion'&&!c.fecha_reunion)||(etapa==='cerrado'&&!c.valor_cierre))setTimeout(()=>abrirGestion(c.id),150);
+}
+async function ctxBorrar(id,btn){
+  // primer clic: pide confirmación en el propio menú; segundo clic: borra
+  if(!btn.classList.contains('sure')){btn.classList.add('sure');btn.textContent='¿Seguro? Pulsa otra vez para borrar';return;}
+  ctxCerrar();
+  const c=LISTA.find(x=>x.id===id)||ALL_CONTACTOS.find(x=>x.id===id);
+  const {data,error}=await SB.from('am_crm_contactos').delete().eq('id',id).select('id');
+  if(error||!(data||[]).length){toast('No se ha borrado'+(error?': '+error.message:''),'error');return;}
+  LISTA=LISTA.filter(x=>x.id!==id);ALL_CONTACTOS=ALL_CONTACTOS.filter(x=>x.id!==id);
+  if(LL_ACTUAL===id)LL_ACTUAL=null;
+  toast('🗑 '+(c?c.empresa:'Contacto')+' borrado');
+  if(document.getElementById('page-pipeline').classList.contains('active'))renderPipeline();
+  if(document.getElementById('page-llamar').classList.contains('active'))llRender();
+  if(document.getElementById('page-contactos').classList.contains('active'))renderContactos();
+}
+document.addEventListener('click',e=>{const m=document.getElementById('ctx');if(m&&m.classList.contains('open')&&!m.contains(e.target))ctxCerrar();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')ctxCerrar();});
+addEventListener('scroll',ctxCerrar,{passive:true});
 
 // ═══════════ MANDAR INFO (email automático o WhatsApp) ═══════════
 const FN_EMAIL=SB_URL+'/functions/v1/am-captacion-email';
