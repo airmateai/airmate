@@ -1673,7 +1673,7 @@ function esMio(c){return nn(c.captador)===nn(SESSION.nombre)||(esJefe()&&nn(c.ca
 function mismoDia(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
 function llLlamadasHoy(nombre){
   const hoy=new Date(),out=[];
-  LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(nn(l.por)===nn(nombre)&&mismoDia(new Date(l.t),hoy))out.push({...l,c});}));
+  LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(l.r!=='wa_frio'&&nn(l.por)===nn(nombre)&&mismoDia(new Date(l.t),hoy))out.push({...l,c});}));
   return out;
 }
 function telLimpio(t){
@@ -1765,7 +1765,7 @@ function llFicha(c){
       ${Object.entries(RES).map(([k,v],i)=>`<button class="${k==='demo'?'demo':''}" onclick="llResultado('${k}')"><span class="e">${v.e}</span>${v.t}<kbd>${i+1}</kbd></button>`).join('')}
     </div>
     <div class="ll-foot">
-      <div class="ll-hist">${hist.length?hist.slice(0,4).map(l=>`<div><time>${fmtCuando(l.t)}</time><span>${RES[l.r]?RES[l.r].e+' '+RES[l.r].t:esc(l.r)}${l.n?' — '+esc(l.n):''}</span></div>`).join(''):'<div><span>Primera llamada a este negocio.</span></div>'}</div>
+      <div class="ll-hist">${hist.length?hist.slice(0,4).map(l=>`<div><time>${fmtCuando(l.t)}</time><span>${RES[l.r]?RES[l.r].e+' '+RES[l.r].t:l.r==='wa_frio'?'💬 WhatsApp en frío':esc(l.r)}${l.n?' — '+esc(l.n):''}</span></div>`).join(''):'<div><span>Primera llamada a este negocio.</span></div>'}</div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">${(c.emails||[]).length?`<span class="chip">📧 ${(c.emails||[]).filter(e=>e.ok).length} email${(c.emails||[]).filter(e=>e.ok).length===1?'':'s'}${c.email_seg_at&&!['reunion','descartado','cerrado'].includes(c.etapa)?' · próximo '+fmtCuando(c.email_seg_at):''}</span>`:''}<div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="waFrio(LL_ACTUAL)" title="Mensaje para cuando no contestan">💬 WhatsApp en frío</button><button class="btn btn-ghost btn-sm" onclick="llSaltar()">Saltar →</button></div></div>
     </div>
   </div>`;
@@ -1804,7 +1804,7 @@ function llRenderEquipo(){
   const nombres=[...new Set(LISTA.map(c=>c.captador).filter(Boolean))];
   const hoy=new Date(),lunes=new Date();lunes.setHours(0,0,0,0);lunes.setDate(lunes.getDate()-((lunes.getDay()+6)%7));
   const filas=nombres.map(n=>{
-    const ls=[];LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(l.por===n||(n==='Fabio'&&l.por===SESSION.nombre&&c.captador==='Fabio'))ls.push(l);}));
+    const ls=[];LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(l.r!=='wa_frio'&&(l.por===n||(n==='Fabio'&&l.por===SESSION.nombre&&c.captador==='Fabio')))ls.push(l);}));
     const d=ls.filter(l=>mismoDia(new Date(l.t),hoy)),w=ls.filter(l=>new Date(l.t)>=lunes);
     const pend=LISTA.filter(c=>c.captador===n&&!['descartado','cerrado','reunion'].includes(c.etapa)).length;
     return `<tr><td><b>${esc(n)}</b></td><td>${d.length}</td><td>${d.filter(l=>l.r==='demo').length}</td><td>${w.length}</td><td>${w.filter(l=>l.r==='demo').length}</td><td>${pend}</td></tr>`;
@@ -2025,6 +2025,20 @@ function waFrio(id){
   const yo=SESSION.nombre.split(' ')[0];
   const txt=`Hola, soy ${yo}, de Airmate 👋\n\nSomos una empresa de inteligencia artificial aquí en Tenerife y ayudamos a negocios como el vuestro a ganar tiempo y vender más:\n\n• Webs con reservas y pagos online\n• Sistemas de gestión a medida: agenda, clientes, cobros, stock y facturas\n• Plataformas para eventos\n• Contenido con IA para vuestras redes\n\nAquí lo tenéis todo: https://airmate.es/?ia\n\nOs he intentado llamar y no he podido hablar con vosotros. ¿Os viene bien que os lo enseñe en 15 minutos esta semana? ¿Martes o jueves?`;
   window.open('https://wa.me/'+telLimpio(c.telefono).replace('+','')+'?text='+encodeURIComponent(txt),'_blank');
+  // queda guardado: pasa a «Info enviada» en el pipeline, con nota en el historial y rellamada en 2 días
+  const t=new Date().toISOString(), prox=proxHora(2,10,30).toISOString();
+  const cambios={etapa:['reunion','cerrado'].includes(c.etapa)?c.etapa:'interesado',proxima_llamada:prox,ultima_llamada:t,updated_at:t,
+    llamadas:[...(c.llamadas||[]),{t,r:'wa_frio',por:SESSION.nombre,n:'WhatsApp en frío'}]};
+  if(!(c.llamadas||[]).length)cambios.fecha_alta=todayStr();
+  SB.from('am_crm_contactos').update(cambios).eq('id',c.id).select('id').then(({data,error})=>{
+    if(error||!(data||[]).length){toast('El WhatsApp se ha abierto, pero no se ha guardado en el panel','error');return;}
+    Object.assign(c,cambios);
+    ALL_CONTACTOS=LISTA.filter(x=>!(x.origen&&x.origen.startsWith('lista')&&!(x.llamadas||[]).length&&x.etapa==='nuevo'));
+    if(LL_ACTUAL===c.id)LL_ACTUAL=null;
+    toast('💬 Guardado en «Info enviada» · le vuelves a llamar '+fmtCuando(prox));
+    if(document.getElementById('page-llamar').classList.contains('active'))llRender();
+    if(document.getElementById('page-pipeline').classList.contains('active'))renderPipeline();
+  });
 }
 // ═══════════ MENÚ DE CLIC DERECHO (tarjetas del pipeline y cola) ═══════════
 let CTX_ID=null;
