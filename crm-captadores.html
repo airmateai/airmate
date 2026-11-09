@@ -303,6 +303,26 @@ tr:hover td{background:var(--blue-light);}
 .ctx .sub{font-size:10.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;padding:6px 12px 2px;}
 .ctx button.cur{color:var(--gold);font-weight:600;}
 
+/* ═══ ENCARGOS: kanban con arrastre y movimiento fluido ═══ */
+.enc-col{min-width:250px;width:280px;flex-shrink:0;background:var(--bg);border-radius:14px;border:1px solid var(--border);overflow:hidden;transition:border-color .25s,box-shadow .25s,background .25s;}
+.enc-col.over{border-color:var(--gold);box-shadow:0 0 0 4px rgba(184,149,90,.18);background:#fbf8f1;}
+.enc-hd{padding:12px 14px;font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+.enc-hd span{background:rgba(0,0,0,.08);padding:1px 9px;border-radius:10px;font-size:11px;transition:transform .3s cubic-bezier(.2,.8,.2,1);}
+.enc-hd span.pop{transform:scale(1.35);}
+.enc-body{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:120px;}
+.enc-card{background:#fff;border-radius:12px;padding:12px 14px;border:1px solid var(--border);cursor:grab;user-select:none;transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s,opacity .2s;will-change:transform;}
+.enc-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(20,18,12,.10);}
+.enc-card:active{cursor:grabbing;}
+.enc-card.drag{opacity:.35;transform:scale(.97);}
+.enc-card .t{font-size:13.5px;font-weight:600;margin-bottom:2px;}
+.enc-card .c{font-size:11.5px;color:var(--txt2);}
+.enc-card .p{font-size:13px;font-weight:700;margin-top:6px;}
+.enc-card .d{font-size:11px;color:var(--txt3);margin-top:2px;}
+.enc-ph{border:1.5px dashed var(--gold);border-radius:12px;height:56px;background:rgba(184,149,90,.06);animation:encPh .25s ease-out;}
+.enc-empty{font-size:12px;color:var(--txt3);text-align:center;padding:16px 6px;}
+@keyframes encPh{from{height:0;opacity:0}to{height:56px;opacity:1}}
+@keyframes encIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+
 @media(max-width:880px){
   .sidebar{width:72px;padding:20px 10px;}
   .sb-brand-txt,.sb-item span,.sb-user-name,.sb-user-role,.sb-logout span{display:none;}
@@ -990,9 +1010,9 @@ const NAV_BY_ROLE={
 // de los datos de captacion (am_crm_contactos), sin mezclarlos con ningun cliente real.
 const AIRMATE_SLUG='airmate-interno';
 const ENC_STAGES=[
-  {id:'presupuesto',label:'Presupuesto',color:'#fef9c3',text:'#92400e'},
-  {id:'desarrollo', label:'En desarrollo',color:'#dbeafe',text:'#1e40af'},
-  {id:'entregado',  label:'Entregado',    color:'#dcfce7',text:'#14532d'},
+  {id:'presupuesto',label:'Presupuesto',color:'#f6efe1',text:'#7a5a24'},
+  {id:'desarrollo', label:'En desarrollo',color:'#0e0e0f',text:'#ffffff'},
+  {id:'entregado',  label:'Entregado',    color:'#e7f1ea',text:'#1f6f45'},
 ];
 
 let ALL_CONTACTOS=[];
@@ -1469,20 +1489,89 @@ function renderEncargos(){
   const kanban=document.getElementById('enc-kanban');
   kanban.innerHTML=ENC_STAGES.map(stage=>{
     const items=ALL_ENCARGOS.filter(e=>e.status===stage.id);
-    return `<div style="min-width:230px;width:250px;flex-shrink:0;background:var(--bg);border-radius:12px;border:1px solid var(--border);overflow:hidden;">
-      <div style="padding:12px 14px;background:${stage.color};color:${stage.text};font-size:12.5px;font-weight:700;display:flex;justify-content:space-between;">
-        ${stage.label}<span style="background:rgba(0,0,0,.08);padding:1px 8px;border-radius:10px;font-size:11px;">${items.length}</span>
-      </div>
-      <div style="padding:10px;display:flex;flex-direction:column;gap:8px;min-height:100px;">
-        ${items.map(e=>`<div style="background:#fff;border-radius:10px;padding:12px 14px;border:1px solid var(--border);cursor:pointer;" onclick="abrirEncargo('${e.id}')">
-          <div style="font-size:13px;font-weight:700;margin-bottom:2px;">${esc(e.title||'')}</div>
-          <div style="font-size:11.5px;color:var(--txt2);">${esc(e.client_name||'')}</div>
-          ${e.price?`<div style="font-size:13px;font-weight:800;color:var(--blue);margin-top:6px;">${crmFmt(e.price)}</div>`:''}
-          ${(e.due_date||e.delivery_date)?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">Entrega: ${fmtFecha(e.due_date||e.delivery_date)}</div>`:''}
-        </div>`).join('')}
+    return `<div class="enc-col" data-st="${stage.id}" ondragover="encOver(event,this)" ondragleave="encLeave(event,this)" ondrop="encDrop(event,'${stage.id}',this)">
+      <div class="enc-hd" style="background:${stage.color};color:${stage.text}">${stage.label}<span>${items.length}</span></div>
+      <div class="enc-body">
+        ${items.map(e=>`<div class="enc-card" data-id="${e.id}" draggable="true" ondragstart="encDrag(event,'${e.id}')" ondragend="encEnd(this)" oncontextmenu="encCtx(event,'${e.id}')" onclick="abrirEncargo('${e.id}')">
+          <div class="t">${esc(e.title||'')}</div>
+          <div class="c">${esc(e.client_name||'')}</div>
+          ${e.price?`<div class="p">${crmFmt(e.price)}</div>`:''}
+          ${(e.due_date||e.delivery_date)?`<div class="d">Entrega: ${fmtFecha(e.due_date||e.delivery_date)}</div>`:''}
+        </div>`).join('')||'<div class="enc-empty">Arrastra aquí</div>'}
       </div>
     </div>`;
   }).join('');
+}
+// FLIP: las tarjetas se deslizan desde su sitio anterior al nuevo
+function encFlip(cambio,nuevoId){
+  const antes={};document.querySelectorAll('.enc-card').forEach(el=>antes[el.dataset.id]=el.getBoundingClientRect());
+  const cuentas={};document.querySelectorAll('.enc-col').forEach(c=>cuentas[c.dataset.st]=c.querySelector('.enc-hd span').textContent);
+  cambio();renderEncargos();
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  document.querySelectorAll('.enc-card').forEach(el=>{
+    const a=antes[el.dataset.id],b=el.getBoundingClientRect();
+    if(!a){el.style.animation='encIn .4s cubic-bezier(.2,.8,.2,1)';return;}
+    const dx=a.left-b.left,dy=a.top-b.top;
+    if(dx||dy)el.animate([{transform:`translate(${dx}px,${dy}px)`,boxShadow:'0 18px 40px rgba(20,18,12,.18)'},{transform:'none',boxShadow:'0 0 0 rgba(0,0,0,0)'}],{duration:480,easing:'cubic-bezier(.2,.8,.2,1)'});
+  });
+  document.querySelectorAll('.enc-col').forEach(c=>{const sp=c.querySelector('.enc-hd span');if(cuentas[c.dataset.st]!==sp.textContent){sp.classList.add('pop');setTimeout(()=>sp.classList.remove('pop'),280);}});
+}
+let ENC_DRAG=null;
+function encDrag(e,id){ENC_DRAG=id;e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',id);}catch(_){}requestAnimationFrame(()=>e.target.classList.add('drag'));}
+function encEnd(el){el.classList.remove('drag');document.querySelectorAll('.enc-col').forEach(c=>{c.classList.remove('over');c.querySelectorAll('.enc-ph').forEach(p=>p.remove());});}
+function encOver(e,col){
+  e.preventDefault();if(!ENC_DRAG)return;
+  col.classList.add('over');
+  const body=col.querySelector('.enc-body');
+  if(!body.querySelector('.enc-ph')){const ph=document.createElement('div');ph.className='enc-ph';body.appendChild(ph);}
+}
+function encLeave(e,col){if(col.contains(e.relatedTarget))return;col.classList.remove('over');col.querySelectorAll('.enc-ph').forEach(p=>p.remove());}
+async function encDrop(e,status,col){
+  e.preventDefault();
+  const id=ENC_DRAG;ENC_DRAG=null;
+  col.classList.remove('over');col.querySelectorAll('.enc-ph').forEach(p=>p.remove());
+  await encMover(id,status);
+}
+async function encMover(id,status){
+  const enc=ALL_ENCARGOS.find(x=>String(x.id)===String(id));if(!enc||enc.status===status)return;
+  const prev=enc.status;
+  // primero se mueve en pantalla (fluido) y luego se guarda; si falla, vuelve a su sitio
+  encFlip(()=>{enc.status=status;ALL_ENCARGOS=[enc,...ALL_ENCARGOS.filter(x=>x!==enc)];});
+  const {error}=await SB.from('crm_orders').update({status}).eq('id',enc.id);
+  if(error){toast('No se ha guardado: '+error.message,'error');encFlip(()=>{enc.status=prev;});return;}
+  toast(`${enc.title||'Encargo'} → ${ENC_STAGES.find(x=>x.id===status).label}`);
+}
+function encCtx(e,id){
+  e.preventDefault();e.stopPropagation();
+  const enc=ALL_ENCARGOS.find(x=>String(x.id)===String(id));if(!enc)return;
+  const m=document.getElementById('ctx');
+  m.innerHTML=`<div class="t">${esc(enc.title||'Encargo')}</div>
+    <button onclick="ctxCerrar();abrirEncargo('${enc.id}')">✎ Editar</button>
+    <button onclick="ctxCerrar();encDuplicar('${enc.id}')">⧉ Duplicar</button>
+    <hr><div class="sub">Mover a</div>
+    ${ENC_STAGES.map(st=>`<button class="${enc.status===st.id?'cur':''}" onclick="ctxCerrar();encMover('${enc.id}','${st.id}')">${enc.status===st.id?'● ':''}${st.label}</button>`).join('')}
+    <hr><button class="del" onclick="encBorrar('${enc.id}',this)">🗑 Borrar</button>`;
+  m.classList.add('open');
+  const w=m.offsetWidth,h=m.offsetHeight;
+  m.style.left=Math.min(e.clientX,innerWidth-w-8)+'px';m.style.top=Math.min(e.clientY,innerHeight-h-8)+'px';
+}
+async function encDuplicar(id){
+  const enc=ALL_ENCARGOS.find(x=>String(x.id)===String(id));if(!enc)return;
+  const copia={business_slug:AIRMATE_SLUG,title:(enc.title||'Encargo')+' (copia)',client_name:enc.client_name||null,price:enc.price||null,status:enc.status,due_date:enc.due_date||null,notes:enc.notes||null};
+  const {data,error}=await sbWriteResiliente(p=>SB.from('crm_orders').insert(p).select().single(),copia);
+  if(error){toast('No se ha duplicado: '+error.message,'error');return;}
+  encFlip(()=>{ALL_ENCARGOS=[data,...ALL_ENCARGOS];});toast('⧉ Duplicado');
+}
+async function encBorrar(id,btn){
+  if(!btn.classList.contains('sure')){btn.classList.add('sure');btn.textContent='¿Seguro? Pulsa otra vez para borrar';return;}
+  ctxCerrar();
+  const enc=ALL_ENCARGOS.find(x=>String(x.id)===String(id));
+  const {data,error}=await SB.from('crm_orders').delete().eq('id',id).select('id');
+  if(error||!(data||[]).length){toast('No se ha borrado'+(error?': '+error.message:''),'error');return;}
+  const el=document.querySelector(`.enc-card[data-id="${id}"]`);
+  const quitar=()=>encFlip(()=>{ALL_ENCARGOS=ALL_ENCARGOS.filter(x=>String(x.id)!==String(id));});
+  if(el&&el.animate){el.animate([{opacity:1,transform:'none'},{opacity:0,transform:'scale(.92)'}],{duration:220,easing:'ease-in'}).onfinish=quitar;}else quitar();
+  toast('🗑 '+((enc&&enc.title)||'Encargo')+' borrado');
 }
 let ENC_EDIT_ID=null;
 function abrirEncargo(id){
