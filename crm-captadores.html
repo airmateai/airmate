@@ -1766,7 +1766,7 @@ function llFicha(c){
     </div>
     <div class="ll-foot">
       <div class="ll-hist">${hist.length?hist.slice(0,4).map(l=>`<div><time>${fmtCuando(l.t)}</time><span>${RES[l.r]?RES[l.r].e+' '+RES[l.r].t:esc(l.r)}${l.n?' — '+esc(l.n):''}</span></div>`).join(''):'<div><span>Primera llamada a este negocio.</span></div>'}</div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">${(c.emails||[]).length?`<span class="chip">📧 ${(c.emails||[]).filter(e=>e.ok).length} email${(c.emails||[]).filter(e=>e.ok).length===1?'':'s'}${c.email_seg_at&&!['reunion','descartado','cerrado'].includes(c.etapa)?' · próximo '+fmtCuando(c.email_seg_at):''}</span>`:''}<button class="btn btn-ghost btn-sm" onclick="llSaltar()">Saltar →</button></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">${(c.emails||[]).length?`<span class="chip">📧 ${(c.emails||[]).filter(e=>e.ok).length} email${(c.emails||[]).filter(e=>e.ok).length===1?'':'s'}${c.email_seg_at&&!['reunion','descartado','cerrado'].includes(c.etapa)?' · próximo '+fmtCuando(c.email_seg_at):''}</span>`:''}<div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="waFrio(LL_ACTUAL)" title="Mensaje para cuando no contestan">💬 WhatsApp en frío</button><button class="btn btn-ghost btn-sm" onclick="llSaltar()">Saltar →</button></div></div>
     </div>
   </div>`;
 }
@@ -2020,6 +2020,12 @@ async function plDrop(e,etapa,col){
 function plLlamar(id){LL_ACTUAL=id;goPage('llamar',null);window.scrollTo({top:0,behavior:'smooth'});}
 function plEmail(id){LL_ACTUAL=id;goPage('llamar',null);setTimeout(()=>{document.getElementById('info-email').value=(LISTA.find(x=>x.id===id)||{}).email||'';openModal('modal-info');},150);}
 
+function waFrio(id){
+  const c=LISTA.find(x=>x.id===id)||ALL_CONTACTOS.find(x=>x.id===id);if(!c)return;
+  const yo=SESSION.nombre.split(' ')[0];
+  const txt=`Hola, soy ${yo}, de Airmate 👋\n\nSomos una empresa de inteligencia artificial aquí en Tenerife y ayudamos a negocios como el vuestro a ganar tiempo y vender más:\n\n• Webs con reservas y pagos online\n• Sistemas de gestión a medida: agenda, clientes, cobros, stock y facturas\n• Plataformas para eventos\n• Contenido con IA para vuestras redes\n\nAquí lo tenéis todo: https://airmate.es/?ia\n\nOs he intentado llamar y no he podido hablar con vosotros. ¿Os viene bien que os lo enseñe en 15 minutos esta semana? ¿Martes o jueves?`;
+  window.open('https://wa.me/'+telLimpio(c.telefono).replace('+','')+'?text='+encodeURIComponent(txt),'_blank');
+}
 // ═══════════ MENÚ DE CLIC DERECHO (tarjetas del pipeline y cola) ═══════════
 let CTX_ID=null;
 function ctxCerrar(){const m=document.getElementById('ctx');m.classList.remove('open');CTX_ID=null;}
@@ -2033,7 +2039,8 @@ function ctxAbrir(e,id){
   const m=document.getElementById('ctx');
   m.innerHTML=`<div class="t">${esc(c.empresa)}</div>
     ${tel?`<button onclick="ctxCerrar();plLlamar(${q})">📞 Llamar</button>`:''}
-    ${tel?`<button onclick="ctxCerrar();window.open('https://wa.me/${tel.replace('+','')}','_blank')">💬 Abrir WhatsApp</button>`:''}
+    ${tel?`<button onclick="ctxCerrar();waFrio(${q})">💬 WhatsApp en frío (no contesta)</button>`:''}
+    ${tel?`<button onclick="ctxCerrar();window.open('https://wa.me/${tel.replace('+','')}','_blank')">💬 Abrir WhatsApp vacío</button>`:''}
     <button onclick="ctxCerrar();plEmail(${q})">📧 Mandar info por email</button>
     <button onclick="ctxCerrar();abrirGestion(${q})">✎ Editar ficha</button>
     ${tel?`<button onclick="navigator.clipboard.writeText('${tel}');toast('Teléfono copiado');ctxCerrar()">⧉ Copiar teléfono</button>`:''}
