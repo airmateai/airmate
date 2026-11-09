@@ -693,6 +693,16 @@ tr:hover td{background:var(--blue-light);}
     <div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal('modal-luego')">Cancelar</button><button class="btn btn-primary" onclick="llGuardarLuego()">Guardar y siguiente</button></div>
   </div>
 </div>
+<div class="modal-backdrop" id="modal-info">
+  <div class="modal">
+    <div class="modal-hd"><h3>💬 Mandar info</h3><button class="modal-close" onclick="closeModal('modal-info')">✕</button></div>
+    <div class="modal-body">
+      <div class="f-group"><label>Email del negocio</label><input type="email" id="info-email" placeholder="info@negocio.com" autocomplete="off"></div>
+      <p style="font-size:12.5px;color:var(--txt2);line-height:1.5">Sale al momento desde Airmate con la info, tu firma y la imagen de la web. Si no contesta, el sistema le manda solo un recordatorio a los 3 días y otro a los 7. Se para en cuanto lo pases a demo o a «no interesa».</p>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="llInfoWhatsApp()">Por WhatsApp</button><button class="btn btn-primary" id="info-enviar" onclick="llInfoEmail()">📧 Enviar email</button></div>
+  </div>
+</div>
 <div class="modal-backdrop" id="modal-nointeresa">
   <div class="modal">
     <div class="modal-hd"><h3>¿Por qué no?</h3><button class="modal-close" onclick="closeModal('modal-nointeresa')">✕</button></div>
@@ -1602,7 +1612,7 @@ function llFicha(c){
     </div>
     <div class="ll-foot">
       <div class="ll-hist">${hist.length?hist.slice(0,4).map(l=>`<div><time>${fmtCuando(l.t)}</time><span>${RES[l.r]?RES[l.r].e+' '+RES[l.r].t:esc(l.r)}${l.n?' — '+esc(l.n):''}</span></div>`).join(''):'<div><span>Primera llamada a este negocio.</span></div>'}</div>
-      <button class="btn btn-ghost btn-sm" onclick="llSaltar()">Saltar →</button>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">${(c.emails||[]).length?`<span class="chip">📧 ${(c.emails||[]).filter(e=>e.ok).length} email${(c.emails||[]).filter(e=>e.ok).length===1?'':'s'}${c.email_seg_at&&!['reunion','descartado','cerrado'].includes(c.etapa)?' · próximo '+fmtCuando(c.email_seg_at):''}</span>`:''}<button class="btn btn-ghost btn-sm" onclick="llSaltar()">Saltar →</button></div>
     </div>
   </div>`;
 }
@@ -1705,15 +1715,9 @@ function llResultado(r){
     openModal('modal-nointeresa');return;
   }
   if(r==='info'){
-    const prox=proxHora(2,10,30);
-    const yo=SESSION.nombre.split(' ')[0];
-    const txt=`Hola, soy ${yo}, de Airmate. Te escribo por la llamada de antes.\n\nSomos una empresa de inteligencia artificial aquí en Tenerife y ayudamos a negocios como el tuyo a ganar tiempo y vender más:\n\n• Webs con reservas y pagos online\n• Sistemas de gestión a medida: agenda, clientes, cobros, stock y facturas\n• Plataformas para eventos\n• Contenido con IA para tus redes\n\nAquí lo tienes todo: https://airmate.es\n\n¿Lo vemos 15 minutos esta semana y te enseño cómo quedaría en tu negocio? ¿Te va mejor el martes o el jueves?`;
-    const tel=telLimpio(c.telefono).replace('+','');
-    llGuardar(c,{etapa:'interesado',temperatura:'templado',proxima_llamada:prox.toISOString()},r,'').then(ok=>{
-      if(!ok)return;
-      window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(txt),'_blank');
-      toast('💬 Info enviada · vuelve a llamarle '+fmtCuando(prox.toISOString()));
-    });
+    document.getElementById('info-email').value=c.email||'';
+    openModal('modal-info');
+    setTimeout(()=>document.getElementById('info-email').focus(),50);
     return;
   }
   if(r==='demo'){
@@ -1770,6 +1774,39 @@ document.addEventListener('keydown',e=>{
 });
 // refrescar cada minuto (las llamadas programadas vuelven a la cola a su hora)
 setInterval(()=>{const pg=document.getElementById('page-llamar');if(pg&&pg.classList.contains('active')&&!document.querySelector('.modal-backdrop.open')&&document.activeElement.id!=='ll-nota')llRender();},60000);
+// ═══════════ MANDAR INFO (email automático o WhatsApp) ═══════════
+const FN_EMAIL=SB_URL+'/functions/v1/am-captacion-email';
+async function llInfoEmail(){
+  const c=LISTA.find(x=>x.id===LL_ACTUAL);if(!c)return;
+  const email=document.getElementById('info-email').value.trim().toLowerCase();
+  if(!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)){toast('Ese email no parece válido','error');return;}
+  const btn=document.getElementById('info-enviar');btn.disabled=true;btn.textContent='Enviando…';
+  try{
+    const {data:{session}}=await SB.auth.getSession();
+    const r=await fetch(FN_EMAIL,{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+(session?session.access_token:SB_KEY)},body:JSON.stringify({contacto_id:c.id,email})});
+    const out=await r.json().catch(()=>({}));
+    if(!r.ok||!out.ok)throw new Error(out.error||('Error '+r.status));
+    closeModal('modal-info');
+    const prox=proxHora(2,10,30);
+    const ok=await llGuardar(c,{etapa:'interesado',temperatura:'templado',proxima_llamada:prox.toISOString(),email},'info','Email a '+email);
+    if(ok)toast('📧 Email enviado · seguimientos automáticos activados');
+  }catch(e){toast('No se ha enviado: '+e.message,'error');}
+  btn.disabled=false;btn.textContent='📧 Enviar email';
+}
+function llInfoWhatsApp(){
+  const c=LISTA.find(x=>x.id===LL_ACTUAL);if(!c)return;
+  closeModal('modal-info');
+  const prox=proxHora(2,10,30);
+  const yo=SESSION.nombre.split(' ')[0];
+  const txt=`Hola, soy ${yo}, de Airmate. Te escribo por la llamada de antes.\n\nSomos una empresa de inteligencia artificial aquí en Tenerife y ayudamos a negocios como el tuyo a ganar tiempo y vender más:\n\n• Webs con reservas y pagos online\n• Sistemas de gestión a medida: agenda, clientes, cobros, stock y facturas\n• Plataformas para eventos\n• Contenido con IA para tus redes\n\nAquí lo tienes todo: https://airmate.es/?ia\n\n¿Lo vemos 15 minutos esta semana y te enseño cómo quedaría en tu negocio? ¿Te va mejor el martes o el jueves?`;
+  const tel=telLimpio(c.telefono).replace('+','');
+  llGuardar(c,{etapa:'interesado',temperatura:'templado',proxima_llamada:prox.toISOString()},'info','WhatsApp').then(ok=>{
+    if(!ok)return;
+    window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(txt),'_blank');
+    toast('💬 Vuelve a llamarle '+fmtCuando(prox.toISOString()));
+  });
+}
+
 loadSession();
 if(SESSION&&SESSION.token&&SESSION.refresh){startAuthSession(SESSION.token,SESSION.refresh);initApp();}else{SESSION=null;document.getElementById('login').style.display='flex';}
 </script>
