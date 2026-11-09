@@ -1494,11 +1494,12 @@ const RES={
 let LL_ACTUAL=null, LL_SALTADOS=new Set(), LL_UNDO=null;
 const esJefe=()=>SESSION&&SESSION.rol==='jefe';
 // Los leads de Fabio vienen importados como «Fabio»; el jefe los ve aunque su nombre de usuario sea otro
-function esMio(c){return c.captador===SESSION.nombre||(esJefe()&&c.captador==='Fabio');}
+const nn=x=>String(x||'').trim().toLowerCase();
+function esMio(c){return nn(c.captador)===nn(SESSION.nombre)||(esJefe()&&nn(c.captador)==='fabio');}
 function mismoDia(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
 function llLlamadasHoy(nombre){
   const hoy=new Date(),out=[];
-  LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(l.por===nombre&&mismoDia(new Date(l.t),hoy))out.push({...l,c});}));
+  LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(nn(l.por)===nn(nombre)&&mismoDia(new Date(l.t),hoy))out.push({...l,c});}));
   return out;
 }
 function telLimpio(t){
