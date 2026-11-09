@@ -739,7 +739,8 @@ async function fetchInternalToken(){
   return body.token?body:null;
 }
 async function startAuthSession(access_token,refresh_token){
-  await SB.auth.setSession({access_token,refresh_token});
+  const r=await SB.auth.setSession({access_token,refresh_token});
+  if(r.error)throw r.error;
   SB.auth.onAuthStateChange((event,session)=>{
     if(session){
       SESSION.token=session.access_token;SESSION.refresh=session.refresh_token;
@@ -792,7 +793,7 @@ function loadSession(){
   try{SESSION=JSON.parse(localStorage.getItem('am_crm_session')||'null');}catch{SESSION=null;}
 }
 function saveSession(){localStorage.setItem('am_crm_session',JSON.stringify(SESSION));}
-function doLogout(){localStorage.removeItem('am_crm_session');location.reload();}
+async function doLogout(){localStorage.removeItem('am_crm_session');try{await SB.auth.signOut({scope:'local'});}catch(e){}location.reload();}
 
 async function doLogin(){
   const usuario=document.getElementById('lg-user').value.trim().toLowerCase();
@@ -1808,7 +1809,25 @@ function llInfoWhatsApp(){
 }
 
 loadSession();
-if(SESSION&&SESSION.token&&SESSION.refresh){startAuthSession(SESSION.token,SESSION.refresh);initApp();}else{SESSION=null;document.getElementById('login').style.display='flex';}
+// Arranque: primero asegurar la sesión real con la base de datos y DESPUÉS cargar el panel.
+// supabase-js guarda y renueva su propia sesión; los tokens copiados en am_crm_session pueden estar
+// caducados o ya rotados por otra pestaña, así que solo se usan si no hay sesión propia.
+(async()=>{
+  if(!SESSION){document.getElementById('login').style.display='flex';return;}
+  let {data:{session}}=await SB.auth.getSession();
+  if(!session&&SESSION.token&&SESSION.refresh){
+    const r=await SB.auth.setSession({access_token:SESSION.token,refresh_token:SESSION.refresh});
+    session=r.data&&r.data.session;
+  }
+  if(!session){
+    localStorage.removeItem('am_crm_session');SESSION=null;
+    document.getElementById('login').style.display='flex';
+    const e=document.getElementById('login-err');if(e){e.textContent='Tu sesión ha caducado. Vuelve a entrar.';e.style.display='block';}
+    return;
+  }
+  SB.auth.onAuthStateChange((ev,ses)=>{if(ses&&SESSION){SESSION.token=ses.access_token;SESSION.refresh=ses.refresh_token;saveSession();}});
+  initApp();
+})();
 </script>
 </body>
 </html>
