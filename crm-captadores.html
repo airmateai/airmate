@@ -835,6 +835,7 @@ const ENC_STAGES=[
 
 let ALL_CONTACTOS=[];
 let LISTA=[];
+let LL_ERROR='';
 let CAPTADORES_LIST=[];
 
 async function initApp(){
@@ -885,6 +886,15 @@ async function cargarContactos(){
     const {data,error}=await q;
     if(error)throw error;
     LISTA=data||[];
+    // La lista de llamadas se pide aparte (la consulta general puede venir cortada a 1.000 filas)
+    try{
+      let q2=SB.from('am_crm_contactos').select('*').like('origen','lista%').limit(5000);
+      const r2=await q2;
+      if(r2.error)throw r2.error;
+      const ids=new Set(LISTA.map(c=>c.id));
+      (r2.data||[]).forEach(c=>{if(!ids.has(c.id))LISTA.push(c);});
+      LL_ERROR='';
+    }catch(e2){LL_ERROR=(e2&&e2.message)||String(e2);}
     // Los leads importados que aún no se han llamado no cuentan como «contactos» en el resto del panel
     ALL_CONTACTOS=LISTA.filter(c=>!(c.origen&&c.origen.startsWith('lista')&&!(c.llamadas||[]).length&&c.etapa==='nuevo'));
   }catch(e){LISTA=[];ALL_CONTACTOS=[];toast('Error cargando contactos','error');}
@@ -1558,6 +1568,11 @@ function llRender(){
 function llVacio(){
   const prog=llProgramados();
   const total=LISTA.filter(esMio).length;
+  if(LL_ERROR||!total){
+    const caps=[...new Set(LISTA.map(c=>c.captador).filter(Boolean))].map(n=>`${esc(n)} (${LISTA.filter(c=>c.captador===n).length})`).join(', ');
+    const diag=`<p style="margin-top:14px;font-size:12px;color:var(--txt3)">Diagnóstico · usuario: «${esc(SESSION.nombre)}» · filas leídas: ${LISTA.length} · de lista: ${LISTA.filter(c=>c.origen&&c.origen.startsWith('lista')).length} · captadores: ${caps||'ninguno'}${LL_ERROR?' · <b style="color:var(--uae-red)">error: '+esc(LL_ERROR)+'</b>':''}</p>`;
+    if(!total)return `<div class="ll-card ll-empty"><h2>Todavía no tienes leads</h2><p>Fabio te asigna una lista y aparecerá aquí.</p>${diag}</div>`;
+  }
   return `<div class="ll-card ll-empty"><h2>${total?'Cola vacía por ahora 🙌':'Todavía no tienes leads'}</h2>
     <p>${total?(prog.length?`La próxima llamada programada es <b>${esc(prog[0].empresa)}</b>, ${fmtCuando(prog[0].proxima_llamada)}.`:'Has llamado a todos. Pide a Fabio más leads.'):'Fabio te asigna una lista y aparecerá aquí.'}</p></div>`;
 }
