@@ -266,6 +266,30 @@ tr:hover td{background:var(--blue-light);}
 @media(max-width:1100px){.ll-grid{grid-template-columns:minmax(0,1fr);}.ll-top{grid-template-columns:1fr 1fr;}}
 @media(max-width:560px){.ll-res{grid-template-columns:repeat(2,1fr);}.ll-res button.demo{grid-column:span 2;}.ll-card{padding:20px 18px;}.ll-name{font-size:24px;}.ll-res kbd,.ll-hint{display:none;}}
 
+/* ═══ PIPELINE ═══ */
+.pl-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+.pl-bar input,.pl-bar select{border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13.5px;background:#fff;}
+.pl-bar input{min-width:240px;}
+.pl-board{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;align-items:flex-start;}
+.pl-col{min-width:250px;width:270px;flex-shrink:0;background:var(--bg);border-radius:12px;border:1px solid var(--border);overflow:hidden;transition:box-shadow .15s,border-color .15s;}
+.pl-col.over{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-light);}
+.pl-hd{padding:12px 14px;font-size:12.5px;font-weight:700;display:flex;justify-content:space-between;align-items:center;}
+.pl-hd span{background:rgba(0,0,0,.08);padding:1px 8px;border-radius:10px;font-size:11px;}
+.pl-body{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:120px;max-height:calc(100vh - 260px);overflow-y:auto;}
+.pl-card{background:#fff;border-radius:10px;padding:11px 13px;border:1px solid var(--border);cursor:grab;transition:box-shadow .12s;}
+.pl-card:hover{box-shadow:var(--shadow-md);}
+.pl-card.drag{opacity:.45;}
+.pl-card b{display:block;font-size:13px;line-height:1.25;}
+.pl-card .s{font-size:11.5px;color:var(--txt2);margin-top:2px;}
+.pl-card .m{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;}
+.pl-card .m i{font-style:normal;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:12px;background:var(--bg);color:var(--txt2);border:1px solid var(--border2);}
+.pl-card .m i.hot{background:#fff4e5;color:#9a5b00;border-color:#f5d48a;}
+.pl-card .m i.ok{background:#e8f6ee;color:var(--uae-green);border-color:#bfe5cc;}
+.pl-card .a{display:flex;gap:6px;margin-top:9px;}
+.pl-card .a button{flex:1;border:1px solid var(--border);background:#fff;border-radius:7px;padding:5px 4px;font-size:11.5px;font-weight:700;color:var(--ink);}
+.pl-card .a button:hover{border-color:var(--blue);color:var(--blue);}
+.pl-more{font-size:12px;color:var(--txt3);text-align:center;padding:6px;}
+
 @media(max-width:880px){
   .sidebar{width:72px;padding:20px 10px;}
   .sb-brand-txt,.sb-item span,.sb-user-name,.sb-user-role,.sb-logout span{display:none;}
@@ -345,6 +369,18 @@ tr:hover td{background:var(--blue-light);}
           <div class="mac-tip"><b>Llamar desde el Mac con tu número:</b> en el iPhone, Ajustes → Teléfono → Llamadas en otros dispositivos → activa tu Mac. En el Mac, FaceTime → Ajustes → «Llamadas desde el iPhone». Mac e iPhone con el mismo Apple ID y wifi. La primera vez Chrome te pregunta si abrir FaceTime: marca «Permitir siempre».</div>
         </div>
       </div>
+    </div>
+
+    <div class="page" id="page-pipeline">
+      <div class="page-hd">
+        <div><h1>Pipeline de <em>interesados</em></h1><div class="page-sub">Todo lo que se mueve: arrastra una tarjeta para cambiarla de estado.</div></div>
+      </div>
+      <div class="pl-bar">
+        <input id="pl-q" placeholder="Buscar negocio…" oninput="renderPipeline()">
+        <select id="pl-cap" onchange="renderPipeline()"></select>
+        <select id="pl-desc" onchange="renderPipeline()"><option value="">Sin descartados</option><option value="1">Con descartados</option></select>
+      </div>
+      <div class="pl-board" id="pl-board"></div>
     </div>
 
     <div class="page" id="page-mio">
@@ -820,6 +856,7 @@ async function doLogin(){
 
 // ═══════════ NAV POR ROL ═══════════
 const NAV_ICONS={
+  pipeline:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg>',
   llamar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
   mio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>',
   resumen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-2.8-2.8L7 14"/></svg>',
@@ -831,9 +868,9 @@ const NAV_ICONS={
   finanzas:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-2.8-2.8L7 14"/></svg>'
 };
 const NAV_BY_ROLE={
-  captador:[{id:'llamar',label:'Llamar'},{id:'mio',label:'Mi día'}],
-  secretaria:[{id:'resumen',label:'Resumen'},{id:'contactos',label:'Contactos'},{id:'reuniones',label:'Reuniones'},{id:'comisiones',label:'Comisiones'}],
-  jefe:[{id:'llamar',label:'Llamar'},{id:'resumen',label:'Resumen'},{id:'contactos',label:'Contactos'},{id:'reuniones',label:'Reuniones'},{id:'comisiones',label:'Comisiones'},{id:'encargos',label:'Encargos'},{id:'facturacion',label:'Facturación'},{id:'finanzas',label:'Finanzas'}]
+  captador:[{id:'llamar',label:'Llamar'},{id:'pipeline',label:'Pipeline'},{id:'mio',label:'Mi día'}],
+  secretaria:[{id:'pipeline',label:'Pipeline'},{id:'resumen',label:'Resumen'},{id:'contactos',label:'Contactos'},{id:'reuniones',label:'Reuniones'},{id:'comisiones',label:'Comisiones'}],
+  jefe:[{id:'llamar',label:'Llamar'},{id:'pipeline',label:'Pipeline'},{id:'resumen',label:'Resumen'},{id:'contactos',label:'Contactos'},{id:'reuniones',label:'Reuniones'},{id:'comisiones',label:'Comisiones'},{id:'encargos',label:'Encargos'},{id:'facturacion',label:'Facturación'},{id:'finanzas',label:'Finanzas'}]
 };
 // Slug fijo para separar los datos internos de Airmate (encargos/facturas propios)
 // de los datos de captacion (am_crm_contactos), sin mezclarlos con ningun cliente real.
@@ -871,6 +908,7 @@ function goPage(id,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   if(id==='llamar')llRender();
+  if(id==='pipeline')renderPipeline();
   if(id==='mio')renderMio();
   if(id==='resumen')renderResumen();
   if(id==='contactos')renderContactos();
@@ -910,6 +948,7 @@ async function cargarContactos(){
     ALL_CONTACTOS=LISTA.filter(c=>!(c.origen&&c.origen.startsWith('lista')&&!(c.llamadas||[]).length&&c.etapa==='nuevo'));
   }catch(e){LISTA=[];ALL_CONTACTOS=[];toast('Error cargando contactos','error');}
   if(document.getElementById('page-llamar').classList.contains('active'))llRender();
+  if(document.getElementById('page-pipeline').classList.contains('active'))renderPipeline();
   if(document.getElementById('page-mio').classList.contains('active'))renderMio();
   if(document.getElementById('page-resumen').classList.contains('active'))renderResumen();
   if(document.getElementById('page-contactos').classList.contains('active'))renderContactos();
@@ -1566,7 +1605,7 @@ function llRender(){
   document.getElementById('ll-cola').textContent=cola.length;
   document.getElementById('ll-undo').style.display=LL_UNDO?'':'none';
   // elegir el actual
-  if(!LL_ACTUAL||!cola.find(c=>c.id===LL_ACTUAL)){
+  if(!LL_ACTUAL||!LISTA.find(c=>c.id===LL_ACTUAL)){
     const sig=cola.find(c=>!LL_SALTADOS.has(c.id))||cola[0];
     LL_ACTUAL=sig?sig.id:null;
   }
@@ -1775,6 +1814,98 @@ document.addEventListener('keydown',e=>{
 });
 // refrescar cada minuto (las llamadas programadas vuelven a la cola a su hora)
 setInterval(()=>{const pg=document.getElementById('page-llamar');if(pg&&pg.classList.contains('active')&&!document.querySelector('.modal-backdrop.open')&&document.activeElement.id!=='ll-nota')llRender();},60000);
+// ═══════════ PIPELINE (kanban de interesados) ═══════════
+const PL_COLS=[
+  {id:'contactado',t:'⏰ Llamar luego',bg:'#eaf1fd',fg:'#1e40af'},
+  {id:'interesado',t:'💬 Info enviada',bg:'#fef9c3',fg:'#92400e'},
+  {id:'reunion',t:'🎯 Demo agendada',bg:'#081b3a',fg:'#ffffff'},
+  {id:'cerrado',t:'✅ Cliente',bg:'#dcfce7',fg:'#14532d'},
+  {id:'descartado',t:'✋ Descartado',bg:'#f1f1f1',fg:'#555'}
+];
+let PL_DRAG=null;
+function plItems(){
+  const q=nn((document.getElementById('pl-q')||{}).value);
+  const cap=(document.getElementById('pl-cap')||{}).value||'';
+  return LISTA.filter(c=>{
+    if(SESSION.rol==='captador'&&!esMio(c))return false;
+    if(cap&&nn(c.captador)!==nn(cap))return false;
+    if(q&&!nn(c.empresa).includes(q))return false;
+    // los de lista sin tocar no son pipeline
+    if(c.etapa==='nuevo')return false;
+    if(c.etapa==='descartado'&&(c.origen||'').startsWith('lista')&&!(c.llamadas||[]).length)return false;
+    return true;
+  });
+}
+function plCard(c){
+  const ok=(c.emails||[]).filter(e=>e.ok).length;
+  const vivo=!['reunion','cerrado','descartado'].includes(c.etapa);
+  const ult=(c.llamadas||[]).slice(-1)[0];
+  const chips=[];
+  if(c.etapa==='reunion'&&c.fecha_reunion)chips.push(`<i class="hot">🎯 ${fmtFecha(c.fecha_reunion)}${c.hora_reunion?' '+String(c.hora_reunion).slice(0,5):''}</i>`);
+  if(ok)chips.push(`<i class="ok">📧 ${ok} email${ok>1?'s':''}</i>`);
+  if(ok&&vivo&&c.email_seg_at)chips.push(`<i>↻ ${fmtCuando(c.email_seg_at)}</i>`);
+  if(vivo&&c.proxima_llamada)chips.push(`<i class="${new Date(c.proxima_llamada)<=new Date()?'hot':''}">📞 ${fmtCuando(c.proxima_llamada)}</i>`);
+  if(c.valor_cierre)chips.push(`<i class="ok">${Math.round(c.valor_cierre)} €</i>`);
+  if(ult&&ult.n)chips.push(`<i>${esc(String(ult.n).slice(0,40))}</i>`);
+  const id=JSON.stringify(c.id).replace(/"/g,'&quot;');
+  return `<div class="pl-card" draggable="true" ondragstart="plDrag(event,${id})" ondragend="this.classList.remove('drag')" ondblclick="abrirGestion(${id})">
+    <b>${esc(c.empresa)}</b>
+    <div class="s">${esc(c.sector||'')}${c.zona?' · '+esc(c.zona):''}${esJefe()&&c.captador?' · '+esc(c.captador):''}</div>
+    ${chips.length?`<div class="m">${chips.join('')}</div>`:''}
+    <div class="a">
+      ${c.telefono?`<button onclick="plLlamar(${id})">📞 Llamar</button>`:''}
+      ${vivo?`<button onclick="plEmail(${id})">📧 ${ok?'Reenviar':'Email'}</button>`:''}
+      <button onclick="abrirGestion(${id})">✎</button>
+    </div>
+  </div>`;
+}
+function renderPipeline(){
+  const sel=document.getElementById('pl-cap');
+  if(sel){
+    if(SESSION.rol==='captador'){sel.style.display='none';}
+    else if(!sel.options.length){
+      const caps=[...new Set(LISTA.filter(c=>c.etapa!=='nuevo').map(c=>c.captador).filter(Boolean))].sort();
+      sel.innerHTML='<option value="">Todo el equipo</option>'+caps.map(n=>`<option>${esc(n)}</option>`).join('');
+    }
+  }
+  const conDesc=(document.getElementById('pl-desc')||{}).value==='1';
+  const items=plItems();
+  const cols=PL_COLS.filter(c=>conDesc||c.id!=='descartado');
+  document.getElementById('pl-board').innerHTML=cols.map(col=>{
+    let its=items.filter(c=>c.etapa===col.id);
+    its.sort((a,b)=>{
+      if(col.id==='reunion')return String(a.fecha_reunion||'9').localeCompare(String(b.fecha_reunion||'9'));
+      if(col.id==='contactado')return new Date(a.proxima_llamada||8.64e15)-new Date(b.proxima_llamada||8.64e15);
+      return new Date(b.updated_at||b.ultima_llamada||0)-new Date(a.updated_at||a.ultima_llamada||0);
+    });
+    const max=60, extra=its.length-max;
+    return `<div class="pl-col" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="plDrop(event,'${col.id}',this)">
+      <div class="pl-hd" style="background:${col.bg};color:${col.fg}">${col.t}<span>${its.length}</span></div>
+      <div class="pl-body">${its.slice(0,max).map(plCard).join('')||'<div class="pl-more">Arrastra aquí</div>'}${extra>0?`<div class="pl-more">y ${extra} más (usa el buscador)</div>`:''}</div>
+    </div>`;
+  }).join('');
+}
+function plDrag(e,id){PL_DRAG=id;e.dataTransfer.effectAllowed='move';e.target.classList.add('drag');}
+async function plDrop(e,etapa,col){
+  e.preventDefault();col.classList.remove('over');
+  const c=LISTA.find(x=>x.id===PL_DRAG);PL_DRAG=null;
+  if(!c||c.etapa===etapa)return;
+  const prev=c.etapa;
+  const cambios={etapa,updated_at:new Date().toISOString()};
+  if(['reunion','cerrado','descartado'].includes(etapa))cambios.proxima_llamada=null;
+  if(etapa==='contactado'&&!c.proxima_llamada)cambios.proxima_llamada=proxHora(1,10,30).toISOString();
+  const {error}=await SB.from('am_crm_contactos').update(cambios).eq('id',c.id);
+  if(error){toast('No se ha guardado: '+error.message,'error');return;}
+  Object.assign(c,cambios);
+  ALL_CONTACTOS=LISTA.filter(x=>!(x.origen&&x.origen.startsWith('lista')&&!(x.llamadas||[]).length&&x.etapa==='nuevo'));
+  renderPipeline();
+  toast(`${c.empresa} → ${PL_COLS.find(x=>x.id===etapa).t}`);
+  // demo y cliente necesitan datos: abrir la ficha para poner fecha o importe
+  if((etapa==='reunion'&&!c.fecha_reunion)||(etapa==='cerrado'&&!c.valor_cierre))setTimeout(()=>abrirGestion(c.id),150);
+}
+function plLlamar(id){LL_ACTUAL=id;goPage('llamar',null);window.scrollTo({top:0,behavior:'smooth'});}
+function plEmail(id){LL_ACTUAL=id;goPage('llamar',null);setTimeout(()=>{document.getElementById('info-email').value=(LISTA.find(x=>x.id===id)||{}).email||'';openModal('modal-info');},150);}
+
 // ═══════════ MANDAR INFO (email automático o WhatsApp) ═══════════
 const FN_EMAIL=SB_URL+'/functions/v1/am-captacion-email';
 async function llInfoEmail(){
