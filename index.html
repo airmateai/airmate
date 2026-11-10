@@ -117,7 +117,7 @@ header nav a:hover{color:var(--ink)}
 .cap li.abierto .mo-in{display:block}
 .mo-in{display:none;margin-top:14px}
 @media(hover:hover) and (pointer:fine){.mo-in{display:none!important}}
-.srv li .med-in{display:none;margin-top:14px}.srv li.abierto .med-in{display:block}
+.srv li .med-in{display:none;margin-top:16px}.srv li.abierto .med-in{display:block;animation:medIn .9s cubic-bezier(.16,1,.3,1) both}@keyframes medIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .srv li .med-in img,.srv li .med-in video{display:block;width:100%;max-width:420px;border-radius:10px;border:1px solid var(--line)}
 .srv li .med-in video{max-width:220px}.srv li .med-in video.ancho{max-width:420px}
 @media(hover:hover) and (pointer:fine){.srv li .med-in{display:none!important}}
@@ -227,9 +227,9 @@ footer .w{border-top:1px solid var(--line);padding-top:30px;padding-bottom:40px;
   <div class="k r">Qué hacemos</div>
   <ol>
     <li class="r"><b>Webs</b><span>Rápidas, con tu marca y pensadas para que te llamen, te escriban o reserven.</span></li>
-    <li class="r" data-ej="assets/web/trabajo-sistema.jpg" data-n="Panel de gestión" data-t="Ejemplo"><b>Sistemas a medida</b><span>Tu CRM o panel de gestión: agenda, clientes, cobros, stock y facturas en un solo sitio.</span><button class="ej u" type="button">Ver ejemplo <span class="ar">→</span></button></li>
-    <li class="r" data-ej="assets/web/trabajo-eventos.mp4" data-ancho data-poster="assets/web/trabajo-eventos.jpg" data-n="Estadio 3D del evento" data-t="Ejemplo"><b>Eventos</b><span>Web del evento, lista de asistentes con emails automáticos, votación del público por QR y panel para organizarlo todo.</span><button class="ej u" type="button">Ver ejemplo <span class="ar">→</span></button></li>
-    <li class="r" data-ej="assets/web/trabajo-contenido.mp4" data-poster="assets/web/trabajo-contenido.jpg" data-n="Reel con IA" data-t="Vídeo"><b>Contenido con IA</b><span>Reels y vídeos para tus redes: guion, voz y montaje, listos para publicar.</span><button class="ej u" type="button">Ver ejemplo <span class="ar">→</span></button></li>
+    <li class="r" data-ej="assets/web/trabajo-sistema.jpg" data-n="Panel de gestión" data-t="Ejemplo"><b>Sistemas a medida</b><span>Tu CRM o panel de gestión: agenda, clientes, cobros, stock y facturas en un solo sitio.</span></li>
+    <li class="r" data-ej="assets/web/trabajo-eventos.mp4" data-ancho data-poster="assets/web/trabajo-eventos.jpg" data-n="Estadio 3D del evento" data-t="Ejemplo"><b>Eventos</b><span>Web del evento, lista de asistentes con emails automáticos, votación del público por QR y panel para organizarlo todo.</span></li>
+    <li class="r" data-ej="assets/web/trabajo-contenido.mp4" data-poster="assets/web/trabajo-contenido.jpg" data-n="Reel con IA" data-t="Vídeo"><b>Contenido con IA</b><span>Reels y vídeos para tus redes: guion, voz y montaje, listos para publicar.</span></li>
   </ol>
 </section>
 
@@ -343,8 +343,11 @@ gestoria:`<div class="cd a" style="left:26px;top:46px;width:70px;height:84px;pad
   const titulo=li=>li.querySelector('b').textContent;
   if(!fino){
     // móvil: el ejemplo se abre debajo al tocar
-    document.querySelectorAll('.srv li[data-ej]').forEach(li=>{const box=document.createElement('div');box.className='med-in';li.appendChild(box);
-      li.querySelector('.ej').addEventListener('click',()=>{const on=li.classList.toggle('abierto');if(on&&!box.firstChild){const m=media(li).cloneNode();m.muted=true;box.appendChild(m)}const v=box.querySelector('video');if(v){on?v.play().catch(()=>{}):v.pause()}})});
+    // móvil: el ejemplo aparece solo debajo del servicio al llegar a la pantalla; el vídeo suena en silencio solo mientras se ve
+    const vio=new IntersectionObserver(es=>es.forEach(e=>{const li=e.target,box=li.querySelector('.med-in');
+      if(e.isIntersecting){if(!box.firstChild){const m=media(li);m.muted=true;m.autoplay=true;box.appendChild(m)}li.classList.add('abierto');const v=box.querySelector('video');if(v)v.play().catch(()=>{})}
+      else{const v=box.querySelector('video');if(v)v.pause()}}),{rootMargin:'0px 0px -15% 0px',threshold:.15});
+    document.querySelectorAll('.srv li[data-ej]').forEach(li=>{const box=document.createElement('div');box.className='med-in';li.appendChild(box);vio.observe(li)});
     document.querySelectorAll('.cap li[data-mo]').forEach(li=>{const box=document.createElement('div');box.className='mo-in';li.querySelector('div').appendChild(box);
       li.addEventListener('click',()=>{const on=li.classList.toggle('abierto');box.replaceChildren(on?anim(li):'')})});
     return}
