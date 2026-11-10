@@ -781,8 +781,10 @@ render();
 /* Altura automática cuando va incrustado en joseacosta.com (iframe) */
 (function(){
   if(window.parent===window) return;
+  document.body.style.minHeight='0';
+  document.documentElement.style.overflowY='hidden';
   var ultimo=0;
-  function avisar(){var h=Math.ceil(document.documentElement.scrollHeight); if(Math.abs(h-ultimo)>4){ultimo=h; window.parent.postMessage({tipo:'airmate-reservas-altura',altura:h},'*');}}
+  function avisar(){var cs=getComputedStyle(document.body); var h=Math.ceil(document.body.getBoundingClientRect().height+parseFloat(cs.marginTop)+parseFloat(cs.marginBottom))+2; if(Math.abs(h-ultimo)>2){ultimo=h; window.parent.postMessage({tipo:'airmate-reservas-altura',altura:h},'*');}}
   new ResizeObserver(avisar).observe(document.body);
   window.addEventListener('load',avisar); setInterval(avisar,800);
 })();
