@@ -978,7 +978,9 @@ async function cargarPublico(){
   S.pub={lista:[],emails:[],error:null};
   try{ const [l,e]=await Promise.all([ q(sb.from('f2o_lista').select('id,email,origen,baja_at,created_at,bienvenida_at').order('created_at',{ascending:false}).limit(5000)),
       q(sb.from('f2o_emails').select('*').order('tipo').order('enviar_at',{nullsFirst:false})) ]);
-    S.pub.lista=l; S.pub.emails=e; }
+    // Emails de prueba de Airmate: siguen en la BD pero no se enseñan ni cuentan en el panel
+    const PRUEBA=/^airmateai\+.*@gmail\.com$|^fabiobgalarza@gmail\.com$|^thefocusworldd@gmail\.com$/i;
+    S.pub.lista=l.filter(x=>!PRUEBA.test(x.email||'')); S.pub.emails=e; }
   catch(e){ S.pub.error=textoError(e); }
 }
 window.exportarLista=()=>{ const filas=[['email','origen','alta','baja']].concat(S.pub.lista.map(x=>[x.email,x.origen||'',x.created_at,x.baja_at||'']));
