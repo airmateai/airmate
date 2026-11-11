@@ -534,6 +534,8 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
   .tk-add{padding:12px 14px;} .tk-add input[type=text]{flex-basis:100%;}
 }
 
+.pc-det.pc-cargando{background:#f5f4ef;border-color:var(--border);color:var(--txt2);animation:pcPulse 1.2s ease-in-out infinite;}
+@keyframes pcPulse{50%{opacity:.6}}
 .pc-det{margin-top:12px;background:#fbf6ec;border:1px solid #ecdfc4;border-radius:12px;padding:11px 14px;font-size:13px;line-height:1.5;color:#5d4a22;}
 .pc-det a{color:#0e0e0f;font-weight:600;} .pc-det span{color:#9a8a66;}
 /* ═══════════ PRESUPUESTAR ═══════════ */
@@ -876,9 +878,9 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
             <div class="pc-lbl">Cliente y petición</div>
             <div class="f-row">
               <div class="f-group"><label>Cliente</label><input id="pc-cli" list="pc-cli-list" placeholder="Ej. Divas Skin Care" oninput="pcCalc()"><datalist id="pc-cli-list"></datalist></div>
-              <div class="f-group"><label>Título corto</label><input id="pc-tit" placeholder="Ej. Clientas por tratamiento" oninput="pcCalc()"></div>
+              <div class="f-group"><label>Título corto</label><input id="pc-tit" placeholder="Ej. Clientas por tratamiento" oninput="delete this.dataset.auto;pcCalc()"></div>
             </div>
-            <div class="f-group" style="margin-bottom:0;"><label>Qué piden exactamente</label><textarea id="pc-desc" rows="4" placeholder="Pega o escribe lo que te ha pedido el cliente. Ej.: «en la zona de regalar que los bonos tengan un apartado para poner nombre a nombre, compra 3 sesiones y cada una la regala a una persona»" oninput="pcAuto()"></textarea></div>
+            <div class="f-group" style="margin-bottom:0;"><label>Qué piden exactamente</label><textarea id="pc-desc" rows="4" placeholder="Pega o escribe lo que te ha pedido el cliente. Ej.: «en la zona de regalar que los bonos tengan un apartado para poner nombre a nombre, compra 3 sesiones y cada una la regala a una persona»" oninput="pcAuto()" onpaste="setTimeout(pcAuto,0)"></textarea></div>
             <div id="pc-det" class="pc-det" style="display:none;"></div>
           </div></div>
           <div class="pc-sec"><span>2</span><div style="flex:1;">
@@ -913,6 +915,7 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
             <div class="pc-desg" id="pc-desg"></div>
             <div class="pc-acts">
               <button class="pc-cta" onclick="pcCopiar()">Copiar presupuesto para WhatsApp</button>
+              <button class="pc-sec-btn" onclick="pcPDF()">Descargar presupuesto en PDF</button>
               <button class="pc-sec-btn" onclick="pcGuardar()">Guardar en Encargos (Presupuesto)</button>
             </div>
           </div>
@@ -1975,8 +1978,10 @@ function pcDatos(){
   let precio=conTodos*restoPct;
   const cubierto=plan&&precio<1;
   precio=cubierto?0:Math.max(30,Math.round(precio/5)*5);
+  if(PC_IA&&PC_IA.es_fallo&&!PC_MANUAL) precio=0;
   const dias=Math.max(1,Math.ceil(hEf/3))+(urg?0:1);
   return {h,tarifa,fx,pctFx,urg,todos,plan,hPlan,cubiertas,base,conFx,conUrg,conTodos,precio,cubierto,dias,hEf,
+    fallo:!!(PC_IA&&PC_IA.es_fallo&&!PC_MANUAL), descCli:(PC_IA&&PC_IA.descripcion)||'',
     cli:document.getElementById('pc-cli').value.trim(),tit:document.getElementById('pc-tit').value.trim(),desc:document.getElementById('pc-desc').value.trim()};
 }
 
@@ -1990,8 +1995,31 @@ const PC_REGLAS={
   diseno:/dise[nñ]o|bonit|pantalla|vista|secci[oó]n|pesta[nñ]a|m[oó]vil|nuevo apartado|panel nuevo|que se vea/,
 };
 const PC_PEQ=/cambi(ar|a|e) (el |la |los |las )?(texto|precio|foto|imagen|color|nombre|horario|tel[eé]fono)|quitar|poner (un|una) (bot[oó]n|enlace|texto)|mover|corregir|errata|subir (la |una )?foto/;
-let PC_AUTO_TM=null;
-function pcAuto(){ clearTimeout(PC_AUTO_TM); PC_AUTO_TM=setTimeout(pcAnaliza,250); }
+let PC_AUTO_TM=null, PC_IA_TM=null, PC_IA=null, PC_IA_REQ=0, PC_IA_TXT='';
+function pcAuto(){ clearTimeout(PC_AUTO_TM); PC_AUTO_TM=setTimeout(pcAnaliza,250); clearTimeout(PC_IA_TM); PC_IA_TM=setTimeout(pcIA,1300); }
+// IA: lee la petición de verdad (función am-presupuesto). El precio lo calcula el panel con las reglas de las condiciones.
+async function pcIA(){
+  const txt=document.getElementById('pc-desc').value.trim(); if(txt.length<15||txt===PC_IA_TXT) return;
+  PC_IA_TXT=txt; const n=++PC_IA_REQ, box=document.getElementById('pc-det');
+  box.style.display=''; box.classList.add('pc-cargando'); box.innerHTML='<b>La IA está leyendo la petición…</b>';
+  try{
+    const {data,error}=await SB.functions.invoke('am-presupuesto',{body:{peticion:txt,cliente:document.getElementById('pc-cli').value.trim()}});
+    if(n!==PC_IA_REQ) return;
+    if(error||!data||data.error){ let m=data&&data.error; try{ const j=await error?.context?.json?.(); if(j?.error) m=j.error; }catch(e){} throw new Error(m||'sin respuesta'); }
+    PC_IA=data; PC_MANUAL=false;
+    PC_T=data.tamano; document.querySelectorAll('#pc-tam button').forEach(b=>b.classList.toggle('on',b.dataset.t===PC_T));
+    document.getElementById('pc-horas').value=data.horas;
+    PC_FX.forEach(f=>{const i=document.querySelector(`[data-fx="${f.id}"]`); if(i) i.checked=(data.factores||[]).includes(f.id);});
+    document.getElementById('pc-urg').checked=!!data.urgente; document.getElementById('pc-todos').checked=!!data.sirve_para_otros;
+    const tit=document.getElementById('pc-tit'); if(!tit.value.trim()||tit.dataset.auto){ tit.value=data.titulo; tit.dataset.auto=1; }
+    box.classList.remove('pc-cargando');
+    box.innerHTML=`<b>${data.es_fallo?'Parece un FALLO, no algo nuevo: se arregla gratis.':'La IA lo ha leído:'}</b> ${esc(data.razon||'')}${data.dudas?`<div style="margin-top:6px;"><b>Duda:</b> ${esc(data.dudas)}</div>`:''}<div style="margin-top:6px;color:#9a8a66;">Para el cliente: «${esc(data.descripcion||'')}» · Si algo no cuadra, cámbialo abajo.</div>`;
+    pcCalc();
+  }catch(e){
+    if(n!==PC_IA_REQ) return; box.classList.remove('pc-cargando'); PC_IA=null; PC_IA_TXT='';
+    pcAnaliza(); box.insertAdjacentHTML('beforeend',`<div style="margin-top:6px;color:#b3402e;">IA no disponible (${esc(e.message||'error')}): uso la estimación rápida.</div>`);
+  }
+}
 function pcAnaliza(){
   const raw=document.getElementById('pc-desc').value, t=nn(raw).normalize('NFD').replace(/[̀-ͯ]/g,''), box=document.getElementById('pc-det');
   if(!t.trim()){box.style.display='none';pcCalc();return;}
@@ -2015,8 +2043,8 @@ function pcAnaliza(){
 const pcE=n=>Math.round(n).toLocaleString('es-ES')+' €';
 function pcCalc(){
   if(!PC_OK)return; const d=pcDatos();
-  document.getElementById('pc-precio').textContent=d.cubierto?'Incluido':pcE(d.precio);
-  document.getElementById('pc-meta').textContent=d.cubierto?`Entra en las ${d.hPlan} h del mantenimiento ampliado`:`Petición ${PC_TAM[PC_T].n} · entrega en ${d.dias} día${d.dias>1?'s':''} laborable${d.dias>1?'s':''}${d.precio>300?' · 50 % al empezar y 50 % al entregar':''}`;
+  document.getElementById('pc-precio').textContent=d.fallo?'Gratis':d.cubierto?'Incluido':pcE(d.precio);
+  document.getElementById('pc-meta').textContent=d.fallo?'Es un fallo de algo ya entregado: entra en la cuota':d.cubierto?`Entra en las ${d.hPlan} h del mantenimiento ampliado`:`Petición ${PC_TAM[PC_T].n} · entrega en ${d.dias} día${d.dias>1?'s':''} laborable${d.dias>1?'s':''}${d.precio>300?' · 50 % al empezar y 50 % al entregar':''}`;
   const filas=[[`${d.h} h × ${d.tarifa} €/h`,pcE(d.base)]];
   if(d.pctFx) filas.push([d.fx.map(f=>f.n).join(', ')+` (+${d.pctFx} %)`,'+'+pcE(d.conFx-d.base)]);
   if(d.urg) filas.push(['Urgente (+50 %)','+'+pcE(d.conUrg-d.conFx)]);
@@ -2027,10 +2055,11 @@ function pcCalc(){
 }
 function pcTexto(d){
   const nom=(d.cli||'').split(/[ ·]/)[0];
+  if(d.fallo) return `Hola${nom?' '+nom:''} 😊 Lo que me comentas${d.tit?` (${d.tit})`:''} es un fallo de algo que ya tenéis, así que lo arreglo sin coste. Te aviso en cuanto esté.`;
   if(d.cubierto) return `Hola${nom?' '+nom:''} 😊 Lo que nos pides${d.tit?` (${d.tit})`:''} entra en las horas de tu mantenimiento ampliado de este mes, así que no tiene coste extra. Te lo tengo listo en ${d.dias} día${d.dias>1?'s':''} laborable${d.dias>1?'s':''}.`;
   return `Hola${nom?' '+nom:''} 😊 Te paso el presupuesto de lo que nos pediste${d.tit?`: ${d.tit}`:''}.
 
-${d.desc?d.desc+'\n\n':''}Precio cerrado: ${pcE(d.precio)}
+${(d.descCli||d.desc)?(d.descCli||d.desc)+'\n\n':''}Precio cerrado: ${pcE(d.precio)}
 Plazo: ${d.dias} día${d.dias>1?'s':''} laborable${d.dias>1?'s':''} desde que me confirmes${d.urg?' (urgente)':''}
 Pago: ${d.precio>300?'50 % al empezar y 50 % al entregar':'al confirmar'}
 
@@ -2039,6 +2068,55 @@ Como es algo nuevo, queda fuera de la cuota mensual (lo tienes explicado en airm
 function pcCopiar(){
   const d=pcDatos(); if(!d.tit&&!d.desc){toast('Escribe qué piden antes de copiar','error');return;}
   navigator.clipboard.writeText(pcTexto(d)).then(()=>toast('✓ Presupuesto copiado: pégalo en WhatsApp')).catch(()=>toast('No se pudo copiar','error'));
+}
+
+// PDF del presupuesto con el estilo de airmate.es (se abre listo para «Guardar como PDF»)
+function pcPDF(){
+  const d=pcDatos(); if(!d.tit){toast('Pon un título a la petición','error');return;}
+  const hoy=new Date(), val=new Date(); val.setDate(val.getDate()+15);
+  const f=x=>x.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+  const num='P-'+hoy.toISOString().slice(2,10).replace(/-/g,'')+'-'+String(hoy.getHours()).padStart(2,'0')+String(hoy.getMinutes()).padStart(2,'0');
+  const precio=d.fallo?'Sin coste':d.cubierto?'Incluido en tu plan':pcE(d.precio);
+  const pago=d.fallo||d.cubierto?'—':d.precio>300?'50 % al aceptar y 50 % a la entrega':'Al aceptar el presupuesto';
+  const e=t=>esc(t||'');
+  const html=`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Presupuesto ${num} · ${e(d.cli||'Airmate')}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>@page{size:A4;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Inter Tight",system-ui,sans-serif;color:#0a0a0a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pg{width:210mm;min-height:297mm;padding:22mm 20mm 18mm;display:flex;flex-direction:column}
+.hd{display:flex;justify-content:space-between;align-items:center;padding-bottom:10mm;border-bottom:1px solid #0a0a0a}
+.logo{display:flex;align-items:center;gap:10px;font-weight:600;font-size:21px;letter-spacing:-.02em}.logo img{height:26px}
+.k{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#8a8a8a}
+.meta{text-align:right;font-size:11.5px;line-height:1.6;color:#444}
+h1{font-size:44px;font-weight:500;letter-spacing:-.03em;line-height:1.02;margin:16mm 0 4mm}h1 em{font-family:"Instrument Serif",serif;font-weight:400;font-style:italic}
+.para{font-size:14px;color:#444;margin-bottom:12mm}
+.blk{display:grid;grid-template-columns:38mm 1fr;gap:6mm;padding:6mm 0;border-top:1px solid #ececec;font-size:13.5px;line-height:1.6}
+.blk .k{padding-top:2px}
+.tot{margin-top:8mm;border-top:1px solid #0a0a0a;border-bottom:1px solid #0a0a0a;display:grid;grid-template-columns:1fr 1fr 1fr}
+.tot div{padding:6mm 0}.tot div+div{padding-left:6mm;border-left:1px solid #ececec}
+.tot b{display:block;font-weight:500;font-size:13.5px;margin-top:2mm}
+.big{font-size:40px!important;letter-spacing:-.03em;font-weight:500!important}
+.nota{font-size:11.5px;color:#555;line-height:1.6;margin-top:10mm}
+.ok{margin-top:auto;padding-top:12mm;display:grid;grid-template-columns:1fr 1fr;gap:14mm;font-size:11px;color:#8a8a8a}
+.ok div{border-top:1px solid #0a0a0a;padding-top:3mm}
+.ft{margin-top:10mm;font-size:9.5px;color:#8a8a8a;line-height:1.5;display:flex;justify-content:space-between;gap:10mm}
+@media screen{body{background:#eee}.pg{background:#fff;margin:20px auto;box-shadow:0 10px 40px rgba(0,0,0,.12)}}</style></head><body><div class="pg">
+<div class="hd"><div class="logo"><img src="https://airmate.es/assets/web/logo-negro.png" onerror="this.remove()">Airmate</div>
+<div class="meta"><div class="k">Presupuesto</div>${num}<br>${f(hoy)}<br>Válido hasta el ${f(val)}</div></div>
+<div class="k" style="margin-top:14mm">Para ${e(d.cli||'—')}</div>
+<h1>${e(d.tit)}<em>.</em></h1>
+<p class="para">${e(d.descCli||d.desc)}</p>
+${d.desc&&d.descCli?`<div class="blk"><div class="k">Lo que nos pediste</div><div>${e(d.desc)}</div></div>`:''}
+<div class="blk"><div class="k">Incluye</div><div>Desarrollo, pruebas y puesta en marcha en tu sistema${d.fx.some(x=>x.id==='web')?' y en tu web':''}. Una ronda de ajustes sobre lo entregado.</div></div>
+<div class="blk"><div class="k">No incluye</div><div>Cambios distintos a lo descrito aquí: se presupuestan aparte.</div></div>
+<div class="tot"><div><span class="k">Precio cerrado</span><b class="big">${precio}</b></div>
+<div><span class="k">Plazo</span><b>${d.dias} día${d.dias>1?'s':''} laborable${d.dias>1?'s':''}${d.urg?' (urgente)':''}</b><span style="font-size:11px;color:#8a8a8a">desde la aceptación</span></div>
+<div><span class="k">Pago</span><b>${pago}</b></div></div>
+<p class="nota">Precio final, sin sorpresas: no se cobra nada más por este trabajo. ${d.fallo?'Al tratarse de un fallo de algo ya entregado, entra en tu cuota mensual.':'Al ser una función nueva, queda fuera de la cuota mensual.'} Condiciones completas en airmate.es/condiciones.html.</p>
+<div class="ok"><div>Aceptado por ${e(d.cli||'el cliente')} · fecha y firma</div><div>Airmate</div></div>
+<div class="ft"><span>Airmate · Fernando de Andres Media Services – FZCO · Building A1, Dubai Digital Park, Dubai Silicon Oasis (EAU) · Licencia 79249</span><span>airmate.es · airmateai@gmail.com · +34 646 427 613</span></div>
+</div><script>document.fonts.ready.then(()=>setTimeout(()=>print(),300))<\/script></body></html>`;
+  const w=window.open('','_blank'); if(!w){toast('Permite las ventanas emergentes para descargar el PDF','error');return;}
+  w.document.open(); w.document.write(html); w.document.close();
 }
 async function pcGuardar(){
   const d=pcDatos(); if(!d.tit){toast('Pon un título corto a la petición','error');return;}
