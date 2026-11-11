@@ -530,6 +530,50 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
   .tk-search{flex:0 0 160px;min-width:160px;}
   .tk-add{padding:12px 14px;} .tk-add input[type=text]{flex-basis:100%;}
 }
+
+/* ═══════════ PRESUPUESTAR ═══════════ */
+.pc-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:20px;align-items:start;}
+.pc-form{padding:6px 24px;}
+.pc-sec{display:flex;gap:16px;padding:20px 0;border-top:1px solid var(--border2);}
+.pc-sec:first-child{border-top:none;}
+.pc-sec>span{font-family:var(--display);font-style:italic;color:var(--gold);font-size:20px;min-width:16px;}
+.pc-lbl{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--txt3);margin-bottom:12px;}
+.pc-tam{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.pc-tam button{border:1.5px solid var(--border);background:#fff;border-radius:12px;padding:12px;text-align:left;cursor:pointer;transition:.15s;}
+.pc-tam button b{display:block;font-size:14px;}
+.pc-tam button small{font-size:11.5px;color:var(--txt3);line-height:1.35;display:block;margin-top:3px;}
+.pc-tam button.on{border-color:#0e0e0f;background:#0e0e0f;color:#fff;}
+.pc-tam button.on small{color:rgba(255,255,255,.6);}
+.pc-horas{margin-top:14px;}
+.pc-horas label{font-size:13px;font-weight:600;display:block;margin-bottom:8px;}
+.pc-horas label small{font-weight:400;color:var(--txt3);}
+.pc-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--txt2);}
+.pc-h input{width:70px;padding:9px 10px;border:1.5px solid var(--border);border-radius:9px;font-size:15px;font-weight:600;text-align:center;background:var(--bg);}
+.pc-h button{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:#fff;font-size:18px;cursor:pointer;}
+.pc-h button:hover{border-color:#0e0e0f;}
+.pc-fx{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.pc-chk{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border:1.5px solid var(--border);border-radius:11px;cursor:pointer;font-size:13px;line-height:1.4;background:#fff;margin-bottom:8px;}
+.pc-fx .pc-chk{margin-bottom:0;}
+.pc-chk:has(input:checked){border-color:var(--gold);background:#fbf6ec;}
+.pc-chk input{margin-top:2px;accent-color:#0e0e0f;flex:0 0 auto;}
+.pc-chk small{display:block;color:var(--txt3);font-size:11.5px;}
+.pc-side{position:sticky;top:20px;}
+.pc-res{background:#0e0e0f;color:#fff;border-radius:22px;padding:28px;box-shadow:var(--shadow-md);position:relative;overflow:hidden;}
+.pc-res::after{content:'';position:absolute;right:-100px;top:-100px;width:300px;height:300px;background:radial-gradient(circle,rgba(184,149,90,.25),transparent 68%);pointer-events:none;}
+.pc-eyebrow{font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);font-weight:600;}
+.pc-big{font-family:var(--display);font-weight:400;font-size:64px;letter-spacing:-.03em;line-height:1;margin:10px 0 6px;}
+.pc-meta{font-size:13px;color:rgba(255,255,255,.65);margin-bottom:16px;}
+.pc-desg{border-top:1px solid rgba(255,255,255,.12);padding-top:12px;font-size:12.5px;}
+.pc-desg div{display:flex;justify-content:space-between;padding:4px 0;color:rgba(255,255,255,.7);}
+.pc-desg div b{color:#fff;font-weight:600;}
+.pc-acts{display:flex;flex-direction:column;gap:8px;margin-top:18px;position:relative;z-index:1;}
+.pc-cta{background:var(--gold);color:#0e0e0f;border:none;border-radius:999px;padding:13px;font-weight:700;font-size:13.5px;cursor:pointer;}
+.pc-cta:hover{background:#fff;}
+.pc-sec-btn{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:12px;font-weight:600;font-size:13px;cursor:pointer;}
+.pc-sec-btn:hover{border-color:#fff;}
+.pc-hi{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--border2);}
+.pc-hi:first-child{border-top:none;}
+@media(max-width:900px){.pc-grid{grid-template-columns:1fr;}.pc-side{position:static;}.pc-fx,.pc-tam{grid-template-columns:1fr;}.pc-big{font-size:52px;}}
 </style>
 </head>
 <body>
@@ -683,6 +727,64 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
       </form>
       <div class="tk-bar" id="tk-bar"></div>
       <div id="tk-lista"></div>
+    </div>
+
+    <!-- ═══ PÁGINA PRESUPUESTAR PETICIONES (jefe) ═══ -->
+    <div class="page" id="page-calcular">
+      <div class="page-hd">
+        <div><h1>Presupuestar una <em>petición</em></h1><div class="page-sub">Precio cerrado para lo que te pide un cliente fuera de su cuota · según las <a href="/condiciones.html" target="_blank" style="color:var(--gold);">condiciones del servicio</a></div></div>
+      </div>
+      <div class="pc-grid">
+        <div class="card pc-form">
+          <div class="pc-sec"><span>1</span><div style="flex:1;">
+            <div class="pc-lbl">Cliente y petición</div>
+            <div class="f-row">
+              <div class="f-group"><label>Cliente</label><input id="pc-cli" list="pc-cli-list" placeholder="Ej. Divas Skin Care" oninput="pcCalc()"><datalist id="pc-cli-list"></datalist></div>
+              <div class="f-group"><label>Título corto</label><input id="pc-tit" placeholder="Ej. Clientas por tratamiento" oninput="pcCalc()"></div>
+            </div>
+            <div class="f-group" style="margin-bottom:0;"><label>Qué piden exactamente</label><textarea id="pc-desc" rows="3" placeholder="Lo que pide el cliente, con sus palabras. Esto va en el presupuesto." oninput="pcCalc()"></textarea></div>
+          </div></div>
+          <div class="pc-sec"><span>2</span><div style="flex:1;">
+            <div class="pc-lbl">Tamaño</div>
+            <div class="pc-tam" id="pc-tam">
+              <button type="button" data-t="peq" onclick="pcTam('peq')"><b>Pequeña</b><small>Textos, un campo, un botón</small></button>
+              <button type="button" data-t="med" onclick="pcTam('med')"><b>Mediana</b><small>Una vista, un informe, un aviso</small></button>
+              <button type="button" data-t="gra" onclick="pcTam('gra')"><b>Grande</b><small>Pagos, reservas, varios módulos</small></button>
+            </div>
+            <div class="pc-horas">
+              <label>Horas que te va a llevar <small>(incluye probarlo)</small></label>
+              <div class="pc-h"><button type="button" onclick="pcH(-0.5)">−</button><input id="pc-horas" type="number" min="0.5" step="0.5" value="2" oninput="pcCalc()"><button type="button" onclick="pcH(0.5)">+</button><span>h × <input id="pc-tarifa" type="number" min="10" step="5" value="45" oninput="pcCalc()"> €/h</span></div>
+            </div>
+          </div></div>
+          <div class="pc-sec"><span>3</span><div style="flex:1;">
+            <div class="pc-lbl">Qué toca</div>
+            <div class="pc-fx" id="pc-fx"></div>
+          </div></div>
+          <div class="pc-sec"><span>4</span><div style="flex:1;">
+            <div class="pc-lbl">Ajustes</div>
+            <label class="pc-chk"><input type="checkbox" id="pc-urg" onchange="pcCalc()"><span><b>Urgente</b> · para menos de 48 h (+50 %)</span></label>
+            <label class="pc-chk"><input type="checkbox" id="pc-plan" onchange="pcCalc()"><span><b>Tiene mantenimiento ampliado</b> · descuenta horas del plan</span></label>
+            <div id="pc-plan-h" class="pc-h" style="display:none;margin:6px 0 0 30px;"><span>Horas del plan disponibles este mes</span><input id="pc-plan-horas" type="number" min="0" step="0.5" value="2" oninput="pcCalc()"></div>
+            <label class="pc-chk"><input type="checkbox" id="pc-todos" onchange="pcCalc()"><span><b>Sirve para otros clientes</b> · lo meterás en el producto (−20 %)</span></label>
+          </div></div>
+        </div>
+        <div class="pc-side">
+          <div class="pc-res">
+            <div class="pc-eyebrow">Precio cerrado</div>
+            <div class="pc-big" id="pc-precio">90 €</div>
+            <div class="pc-meta" id="pc-meta"></div>
+            <div class="pc-desg" id="pc-desg"></div>
+            <div class="pc-acts">
+              <button class="pc-cta" onclick="pcCopiar()">Copiar presupuesto para WhatsApp</button>
+              <button class="pc-sec-btn" onclick="pcGuardar()">Guardar en Encargos (Presupuesto)</button>
+            </div>
+          </div>
+          <div class="card" style="padding:18px 20px;margin-top:16px;">
+            <div style="font-weight:700;font-size:14px;margin-bottom:8px;">Últimos presupuestos</div>
+            <div id="pc-hist" style="font-size:13px;"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ═══ PÁGINA ESCALAR (jefe) ═══ -->
@@ -1178,6 +1280,7 @@ async function doLogin(){
 
 // ═══════════ NAV POR ROL ═══════════
 const NAV_ICONS={
+  calcular:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 11h2M14 11h2M8 15h2M14 15h2M8 19h2M14 19h2"/></svg>',
   tareas:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
   escalar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>',
   pipeline:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg>',
@@ -1194,7 +1297,7 @@ const NAV_ICONS={
 const NAV_BY_ROLE={
   captador:[{id:'llamar',label:'Llamar'},{id:'tareas',label:'Tareas'},{id:'pipeline',label:'Pipeline'},{id:'mio',label:'Mi día'}],
   secretaria:[{id:'pipeline',label:'Pipeline'},{id:'tareas',label:'Tareas'},{id:'resumen',label:'Resumen'},{id:'contactos',label:'Contactos'},{id:'reuniones',label:'Reuniones'},{id:'comisiones',label:'Comisiones'}],
-  jefe:[{id:'escalar',label:'Escalar'},{id:'tareas',label:'Tareas'},{id:'llamar',label:'Llamar'},{id:'pipeline',label:'Pipeline'},{id:'resumen',label:'Resumen'},{id:'contactos',label:'Contactos'},{id:'reuniones',label:'Reuniones'},{id:'comisiones',label:'Comisiones'},{id:'encargos',label:'Encargos'},{id:'facturacion',label:'Facturación'},{id:'finanzas',label:'Finanzas'}]
+  jefe:[{id:'escalar',label:'Escalar'},{id:'tareas',label:'Tareas'},{id:'calcular',label:'Presupuestar'},{id:'llamar',label:'Llamar'},{id:'pipeline',label:'Pipeline'},{id:'resumen',label:'Resumen'},{id:'contactos',label:'Contactos'},{id:'reuniones',label:'Reuniones'},{id:'comisiones',label:'Comisiones'},{id:'encargos',label:'Encargos'},{id:'facturacion',label:'Facturación'},{id:'finanzas',label:'Finanzas'}]
 };
 // Slug fijo para separar los datos internos de Airmate (encargos/facturas propios)
 // de los datos de captacion (am_crm_contactos), sin mezclarlos con ningun cliente real.
@@ -1237,6 +1340,7 @@ function goPage(id,btn){
   if(id==='mio')renderMio();
   if(id==='resumen')renderResumen();
   if(id==='escalar')renderEscalar();
+  if(id==='calcular'){pcInit();if(!ENCARGOS_LOADED)cargarEncargos().then(pcHist);else pcHist();}
   if(id==='tareas')renderTareas();
   if(id==='contactos')renderContactos();
   if(id==='reuniones')renderReuniones();
@@ -1690,6 +1794,92 @@ function tkResumenHTML(){
   if(!l.length)return '<div style="font-size:13px;color:var(--txt3);padding:10px 0;">Nada urgente ahora mismo.</div>';
   return `<div class="tk-list" style="border:none;">${l.map(tkFila).join('')}</div>
     <button class="btn btn-ghost" style="margin-top:12px;" onclick="tkAbrir(null,{prioridad:'alta',categoria:'Escalar'})">+ Nueva tarea</button>`;
+}
+
+// ═══════════ PRESUPUESTAR PETICIONES ═══════════
+// Tamaños: horas por defecto. Factores: % sobre las horas. Redondeo a 5 €, mínimo 30 €.
+const PC_TAM={peq:{h:0.5,n:'pequeña'},med:{h:2,n:'mediana'},gra:{h:6,n:'grande'}};
+const PC_FX=[
+  {id:'bd',n:'Base de datos',d:'Tablas o columnas nuevas, SQL',p:20},
+  {id:'pagos',n:'Pagos / Stripe',d:'Cobros, webhooks, tarjetas regalo',p:35},
+  {id:'diseno',n:'Diseño a medida',d:'Pantalla nueva cuidada, móvil',p:15},
+  {id:'web',n:'También en la web pública',d:'Además del panel',p:15},
+  {id:'integ',n:'Integración externa',d:'WhatsApp, Holded, Verifactu, APIs',p:40},
+  {id:'desp',n:'Despliegue / funciones',d:'Edge functions, cron, servidor',p:15},
+];
+let PC_T='med', PC_OK=false;
+function pcInit(){
+  if(!PC_OK){
+    PC_OK=true;
+    document.getElementById('pc-fx').innerHTML=PC_FX.map(f=>`<label class="pc-chk"><input type="checkbox" data-fx="${f.id}" onchange="pcCalc()"><span><b>${f.n}</b> +${f.p} %<small>${f.d}</small></span></label>`).join('');
+    document.getElementById('pc-plan').addEventListener('change',()=>{document.getElementById('pc-plan-h').style.display=document.getElementById('pc-plan').checked?'flex':'none';});
+    pcTam('med');
+  }
+  const clientes=[...new Set([...ALL_CONTACTOS.filter(c=>c.etapa==='cerrado').map(c=>c.empresa),'Divas Skin Care','Jose Acosta','Costa Norte','Fight Club · Fight2One','Entrena con Flow'])];
+  document.getElementById('pc-cli-list').innerHTML=clientes.map(c=>`<option value="${esc(c)}">`).join('');
+  pcCalc();
+}
+function pcTam(t){PC_T=t;document.querySelectorAll('#pc-tam button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));document.getElementById('pc-horas').value=PC_TAM[t].h;pcCalc();}
+function pcH(d){const i=document.getElementById('pc-horas');i.value=Math.max(0.5,(parseFloat(i.value)||0)+d);pcCalc();}
+function pcDatos(){
+  const h=Math.max(0.5,parseFloat(document.getElementById('pc-horas').value)||0.5);
+  const tarifa=Math.max(10,parseFloat(document.getElementById('pc-tarifa').value)||45);
+  const fx=PC_FX.filter(f=>document.querySelector(`[data-fx="${f.id}"]`)?.checked);
+  const pctFx=fx.reduce((a,f)=>a+f.p,0);
+  const urg=document.getElementById('pc-urg').checked, todos=document.getElementById('pc-todos').checked, plan=document.getElementById('pc-plan').checked;
+  const hPlan=plan?Math.max(0,parseFloat(document.getElementById('pc-plan-horas').value)||0):0;
+  const base=h*tarifa, conFx=base*(1+pctFx/100), conUrg=conFx*(urg?1.5:1), conTodos=conUrg*(todos?0.8:1);
+  const hEf=h*(1+pctFx/100), cubiertas=Math.min(hEf,hPlan), restoPct=hEf?1-cubiertas/hEf:1;
+  let precio=conTodos*restoPct;
+  const cubierto=plan&&precio<1;
+  precio=cubierto?0:Math.max(30,Math.round(precio/5)*5);
+  const dias=Math.max(1,Math.ceil(hEf/3))+(urg?0:1);
+  return {h,tarifa,fx,pctFx,urg,todos,plan,hPlan,cubiertas,base,conFx,conUrg,conTodos,precio,cubierto,dias,hEf,
+    cli:document.getElementById('pc-cli').value.trim(),tit:document.getElementById('pc-tit').value.trim(),desc:document.getElementById('pc-desc').value.trim()};
+}
+const pcE=n=>Math.round(n).toLocaleString('es-ES')+' €';
+function pcCalc(){
+  if(!PC_OK)return; const d=pcDatos();
+  document.getElementById('pc-precio').textContent=d.cubierto?'Incluido':pcE(d.precio);
+  document.getElementById('pc-meta').textContent=d.cubierto?`Entra en las ${d.hPlan} h del mantenimiento ampliado`:`Petición ${PC_TAM[PC_T].n} · entrega en ${d.dias} día${d.dias>1?'s':''} laborable${d.dias>1?'s':''}${d.precio>300?' · 50 % al empezar y 50 % al entregar':''}`;
+  const filas=[[`${d.h} h × ${d.tarifa} €/h`,pcE(d.base)]];
+  if(d.pctFx) filas.push([d.fx.map(f=>f.n).join(', ')+` (+${d.pctFx} %)`,'+'+pcE(d.conFx-d.base)]);
+  if(d.urg) filas.push(['Urgente (+50 %)','+'+pcE(d.conUrg-d.conFx)]);
+  if(d.todos) filas.push(['Sirve para otros clientes (−20 %)','−'+pcE(d.conUrg-d.conTodos)]);
+  if(d.plan&&d.cubiertas) filas.push([`Horas del plan (${d.cubiertas.toFixed(1).replace('.0','')} h)`,'−'+pcE(d.conTodos*(d.cubiertas/d.hEf))]);
+  filas.push(['Redondeo y mínimo de 30 €','']);
+  document.getElementById('pc-desg').innerHTML=filas.map(([a,b])=>`<div><span>${esc(a)}</span><b>${b}</b></div>`).join('');
+}
+function pcTexto(d){
+  const nom=(d.cli||'').split(/[ ·]/)[0];
+  if(d.cubierto) return `Hola${nom?' '+nom:''} 😊 Lo que nos pides${d.tit?` (${d.tit})`:''} entra en las horas de tu mantenimiento ampliado de este mes, así que no tiene coste extra. Te lo tengo listo en ${d.dias} día${d.dias>1?'s':''} laborable${d.dias>1?'s':''}.`;
+  return `Hola${nom?' '+nom:''} 😊 Te paso el presupuesto de lo que nos pediste${d.tit?`: ${d.tit}`:''}.
+
+${d.desc?d.desc+'\n\n':''}Precio cerrado: ${pcE(d.precio)}
+Plazo: ${d.dias} día${d.dias>1?'s':''} laborable${d.dias>1?'s':''} desde que me confirmes${d.urg?' (urgente)':''}
+Pago: ${d.precio>300?'50 % al empezar y 50 % al entregar':'al confirmar'}
+
+Como es algo nuevo, queda fuera de la cuota mensual (lo tienes explicado en airmate.es/condiciones.html). Si te encaja, dime «adelante» y me pongo.`;
+}
+function pcCopiar(){
+  const d=pcDatos(); if(!d.tit&&!d.desc){toast('Escribe qué piden antes de copiar','error');return;}
+  navigator.clipboard.writeText(pcTexto(d)).then(()=>toast('✓ Presupuesto copiado: pégalo en WhatsApp')).catch(()=>toast('No se pudo copiar','error'));
+}
+async function pcGuardar(){
+  const d=pcDatos(); if(!d.tit){toast('Pon un título corto a la petición','error');return;}
+  const due=new Date(); let n=d.dias; while(n>0){due.setDate(due.getDate()+1); if(due.getDay()%6) n--;}
+  const payload={business_slug:AIRMATE_SLUG,title:d.tit,client_name:d.cli||null,price:d.precio,status:'presupuesto',due_date:due.toISOString().slice(0,10),
+    notes:[d.desc,`Calculado: ${d.h} h × ${d.tarifa} €/h${d.pctFx?' · '+d.fx.map(f=>f.n).join(', '):''}${d.urg?' · urgente':''}${d.todos?' · sirve para otros clientes':''}${d.plan?` · plan ${d.hPlan} h`:''}`].filter(Boolean).join('\n\n')};
+  try{
+    const {error}=await sbWriteResiliente(p=>SB.from('crm_orders').insert(p),payload);
+    if(error)throw error;
+    toast('✓ Guardado en Encargos como Presupuesto'); await cargarEncargos(); pcHist();
+  }catch(e){toast('No se ha guardado: '+e.message,'error');}
+}
+function pcHist(){
+  const box=document.getElementById('pc-hist'); if(!box)return;
+  const l=(typeof ALL_ENCARGOS!=='undefined'?ALL_ENCARGOS:[]).slice(0,6);
+  box.innerHTML=l.length?l.map(e=>`<div class="pc-hi"><span><b>${esc(e.title||'')}</b><br><span style="color:var(--txt3);">${esc(e.client_name||'—')} · ${esc((ENC_STAGES.find(x=>x.id===e.status)||{}).label||e.status||'')}</span></span><b>${e.price!=null?pcE(e.price):'—'}</b></div>`).join(''):'<span style="color:var(--txt3);">Todavía no hay presupuestos guardados.</span>';
 }
 
 // ═══════════ TODOS LOS CONTACTOS (secretaria/jefe) ═══════════
