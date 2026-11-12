@@ -1955,12 +1955,12 @@ const PC_FX=[
 ];
 // Precio por COMPLEJIDAD (no por horas): cada nivel tiene su precio fijo.
 const PC_NIV=[
-  {id:'n1',n:'Muy sencilla',d:'Cambiar un texto, un precio, una foto',p:20,t:'peq'},
-  {id:'n2',n:'Sencilla',d:'Un campo, un botón, mover algo',p:35,t:'peq'},
-  {id:'n3',n:'Media',d:'Un filtro, un aviso, una plantilla',p:60,t:'med'},
-  {id:'n4',n:'Media-alta',d:'Una vista, un informe, una pestaña nueva',p:90,t:'med'},
-  {id:'n5',n:'Compleja',d:'Varias pantallas, o panel y web a la vez',p:120,t:'med'},
-  {id:'n6',n:'Muy compleja',d:'Pagos, reservas, conexión con otro programa',p:250,t:'gra',desde:true},
+  {id:'n1',n:'Muy sencilla',d:'Cambiar un texto, un precio, una foto',p:15,t:'peq'},
+  {id:'n2',n:'Sencilla',d:'Un campo, un botón, mover algo',p:25,t:'peq'},
+  {id:'n3',n:'Media',d:'Un filtro, un aviso, una plantilla',p:40,t:'med'},
+  {id:'n4',n:'Media-alta',d:'Una vista, un informe, una pestaña nueva',p:65,t:'med'},
+  {id:'n5',n:'Compleja',d:'Varias pantallas, o panel y web a la vez',p:85,t:'med'},
+  {id:'n6',n:'Muy compleja',d:'Pagos, reservas, conexión con otro programa',p:175,t:'gra',desde:true},
 ];
 let PC_N='n3';
 function pcNivDe(t,h){ if(t==='peq') return h<=0.5?'n1':'n2'; if(t==='gra') return 'n6'; return h<=2?'n3':h<=3?'n4':'n5'; }
@@ -1987,7 +1987,7 @@ function pcDatos(){
   const todos=document.getElementById('pc-todos').checked, plan=document.getElementById('pc-plan').checked;
   const conTodos=base*(todos?0.8:1);
   const cubierto=plan&&n.t==='peq';
-  let precio=cubierto?0:Math.max(20,Math.round(conTodos/5)*5);
+  let precio=cubierto?0:Math.max(15,Math.round(conTodos/5)*5);
   const fallo=!!(PC_IA&&PC_IA.es_fallo&&!PC_MANUAL);
   if(fallo) precio=0;
   const dias=n.t==='peq'?1:2; // siempre en menos de 48 h
@@ -2057,7 +2057,7 @@ function pcCalc(){
   document.getElementById('pc-meta').textContent=d.fallo?'Es un fallo de algo ya entregado: entra en la cuota':d.cubierto?'Entra en las peticiones sencillas del mantenimiento ampliado':`Complejidad ${d.nivel.n.toLowerCase()} · entrega en ${d.dias} día${d.dias>1?'s':''} laborable${d.dias>1?'s':''}${d.precio>300?' · 50 % al empezar y 50 % al entregar':''}`;
   const filas=[[`Complejidad ${d.nivel.n.toLowerCase()}`,pcE(d.base)]];
   if(d.todos) filas.push(['Sirve para otros clientes (−20 %)','−'+pcE(d.base-d.conTodos)]);
-  filas.push(['Precio fijo · mínimo 20 €','']);
+  filas.push(['Precio fijo · mínimo 15 €','']);
   document.getElementById('pc-desg').innerHTML=filas.map(([a,b])=>`<div><span>${esc(a)}</span><b>${b}</b></div>`).join('');
 }
 function pcTexto(d){
