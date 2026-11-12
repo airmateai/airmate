@@ -901,7 +901,7 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
           </div></div>
           <div class="pc-sec"><span>4</span><div style="flex:1;">
             <div class="pc-lbl">Ajustes</div>
-            <label class="pc-chk"><input type="checkbox" id="pc-urg" onchange="pcCalc()"><span><b>Urgente</b> · para menos de 48 h (+50 %)</span></label>
+            <label class="pc-chk" style="display:none"><input type="checkbox" id="pc-urg" onchange="pcCalc()"><span><b>Urgente</b> · para menos de 48 h (+50 %)</span></label>
             <label class="pc-chk"><input type="checkbox" id="pc-plan" onchange="pcCalc()"><span><b>Tiene mantenimiento ampliado</b> · descuenta horas del plan</span></label>
             <div id="pc-plan-h" class="pc-h" style="display:none;margin:6px 0 0 30px;"><span>Horas del plan disponibles este mes</span><input id="pc-plan-horas" type="number" min="0" step="0.5" value="2" oninput="pcCalc()"></div>
             <label class="pc-chk"><input type="checkbox" id="pc-todos" onchange="pcCalc()"><span><b>Sirve para otros clientes</b> · lo meterás en el producto (−20 %)</span></label>
@@ -1973,7 +1973,7 @@ function pcDatos(){
   const tarifa=Math.max(10,parseFloat(document.getElementById('pc-tarifa').value)||30);
   const fx=PC_FX.filter(f=>document.querySelector(`[data-fx="${f.id}"]`)?.checked);
   const pctFx=0; // sin recargos: solo cuentan las horas (12-nov)
-  const urg=document.getElementById('pc-urg').checked, todos=document.getElementById('pc-todos').checked, plan=document.getElementById('pc-plan').checked;
+  const urg=false /* sin urgente: todo se entrega en menos de 48 h */, todos=document.getElementById('pc-todos').checked, plan=document.getElementById('pc-plan').checked;
   const hPlan=plan?Math.max(0,parseFloat(document.getElementById('pc-plan-horas').value)||0):0;
   const base=h*tarifa, conFx=base*(1+pctFx/100), conUrg=conFx*(urg?1.5:1), conTodos=conUrg*(todos?0.8:1);
   const hEf=h*(1+pctFx/100), cubiertas=Math.min(hEf,hPlan), restoPct=hEf?1-cubiertas/hEf:1;
@@ -1981,7 +1981,7 @@ function pcDatos(){
   const cubierto=plan&&precio<1;
   precio=cubierto?0:Math.max(20,Math.round(precio/5)*5);
   if(PC_IA&&PC_IA.es_fallo&&!PC_MANUAL) precio=0;
-  const dias=Math.max(1,Math.ceil(hEf/3))+(urg?0:1);
+  const dias=hEf<=2?1:2; // siempre en menos de 48 h
   return {h,tarifa,fx,pctFx,urg,todos,plan,hPlan,cubiertas,base,conFx,conUrg,conTodos,precio,cubierto,dias,hEf,
     fallo:!!(PC_IA&&PC_IA.es_fallo&&!PC_MANUAL), descCli:(PC_IA&&PC_IA.descripcion)||'',
     cli:document.getElementById('pc-cli').value.trim(),tit:document.getElementById('pc-tit').value.trim(),desc:document.getElementById('pc-desc').value.trim()};
