@@ -546,6 +546,8 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
 .pc-sec>span{font-family:var(--display);font-style:italic;color:var(--gold);font-size:20px;min-width:16px;}
 .pc-lbl{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--txt3);margin-bottom:12px;}
 .pc-tam{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.pc-niv b{font-size:13.5px!important}.pc-niv i{display:block;font-style:normal;font-weight:600;font-size:15px;margin-top:6px;}
+@media(max-width:760px){.pc-niv{grid-template-columns:repeat(2,1fr);}}
 .pc-tam button{border:1.5px solid var(--border);background:#fff;border-radius:12px;padding:12px;text-align:left;cursor:pointer;transition:.15s;}
 .pc-tam button b{display:block;font-size:14px;}
 .pc-tam button small{font-size:11.5px;color:var(--txt3);line-height:1.35;display:block;margin-top:3px;}
@@ -884,25 +886,22 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
             <div id="pc-det" class="pc-det" style="display:none;"></div>
           </div></div>
           <div class="pc-sec"><span>2</span><div style="flex:1;">
-            <div class="pc-lbl">Tamaño</div>
-            <div class="pc-tam" id="pc-tam">
-              <button type="button" data-t="peq" onclick="PC_MANUAL=true;pcTam('peq')"><b>Pequeña</b><small>Textos, un campo, un botón</small></button>
-              <button type="button" data-t="med" onclick="PC_MANUAL=true;pcTam('med')"><b>Mediana</b><small>Una vista, un informe, un aviso</small></button>
-              <button type="button" data-t="gra" onclick="PC_MANUAL=true;pcTam('gra')"><b>Grande</b><small>Pagos, reservas, varios módulos</small></button>
-            </div>
+            <div class="pc-lbl">Complejidad</div>
+            <div class="pc-tam pc-niv" id="pc-niv"></div>
             <div class="pc-horas">
-              <label>Horas que te va a llevar <small>(incluye probarlo)</small></label>
-              <div class="pc-h"><button type="button" onclick="pcH(-0.5)">−</button><input id="pc-horas" type="number" min="0.5" step="0.5" value="2" oninput="PC_MANUAL=true;pcCalc()"><button type="button" onclick="pcH(0.5)">+</button><span>h × <input id="pc-tarifa" type="number" min="10" step="5" value="30" oninput="pcCalc()"> €/h</span></div>
+              <label>Precio <small>(sale del nivel; puedes cambiarlo)</small></label>
+              <div class="pc-h"><input id="pc-precio-man" type="number" min="0" step="5" value="60" oninput="PC_MANUAL=true;pcCalc()"><span>€</span></div>
             </div>
+            <div id="pc-tam" style="display:none"></div><input id="pc-horas" type="hidden" value="2">
           </div></div>
-          <div class="pc-sec"><span>3</span><div style="flex:1;">
+          <div class="pc-sec" style="display:none"><span>3</span><div style="flex:1;">
             <div class="pc-lbl" style="display:none">Qué toca</div>
             <div class="pc-fx" id="pc-fx" style="display:none"></div>
           </div></div>
-          <div class="pc-sec"><span>4</span><div style="flex:1;">
+          <div class="pc-sec"><span>3</span><div style="flex:1;">
             <div class="pc-lbl">Ajustes</div>
             <label class="pc-chk" style="display:none"><input type="checkbox" id="pc-urg" onchange="pcCalc()"><span><b>Urgente</b> · para menos de 48 h (+50 %)</span></label>
-            <label class="pc-chk"><input type="checkbox" id="pc-plan" onchange="pcCalc()"><span><b>Tiene mantenimiento ampliado</b> · descuenta horas del plan</span></label>
+            <label class="pc-chk"><input type="checkbox" id="pc-plan" onchange="pcCalc()"><span><b>Tiene mantenimiento ampliado</b> · las peticiones sencillas le salen incluidas</span></label>
             <div id="pc-plan-h" class="pc-h" style="display:none;margin:6px 0 0 30px;"><span>Horas del plan disponibles este mes</span><input id="pc-plan-horas" type="number" min="0" step="0.5" value="2" oninput="pcCalc()"></div>
             <label class="pc-chk"><input type="checkbox" id="pc-todos" onchange="pcCalc()"><span><b>Sirve para otros clientes</b> · lo meterás en el producto (−20 %)</span></label>
           </div></div>
@@ -1954,13 +1953,26 @@ const PC_FX=[
   {id:'integ',n:'Integración externa',d:'WhatsApp, Holded, Verifactu, APIs',p:40},
   {id:'desp',n:'Despliegue / funciones',d:'Edge functions, cron, servidor',p:15},
 ];
+// Precio por COMPLEJIDAD (no por horas): cada nivel tiene su precio fijo.
+const PC_NIV=[
+  {id:'n1',n:'Muy sencilla',d:'Cambiar un texto, un precio, una foto',p:20,t:'peq'},
+  {id:'n2',n:'Sencilla',d:'Un campo, un botón, mover algo',p:35,t:'peq'},
+  {id:'n3',n:'Media',d:'Un filtro, un aviso, una plantilla',p:60,t:'med'},
+  {id:'n4',n:'Media-alta',d:'Una vista, un informe, una pestaña nueva',p:90,t:'med'},
+  {id:'n5',n:'Compleja',d:'Varias pantallas, o panel y web a la vez',p:120,t:'med'},
+  {id:'n6',n:'Muy compleja',d:'Pagos, reservas, conexión con otro programa',p:250,t:'gra',desde:true},
+];
+let PC_N='n3';
+function pcNivDe(t,h){ if(t==='peq') return h<=0.5?'n1':'n2'; if(t==='gra') return 'n6'; return h<=2?'n3':h<=3?'n4':'n5'; }
+function pcPintaNiv(){ document.getElementById('pc-niv').innerHTML=PC_NIV.map(n=>`<button type="button" data-n="${n.id}" class="${n.id===PC_N?'on':''}" onclick="PC_MANUAL=true;pcNivel('${n.id}')"><b>${n.n}</b><small>${n.d}</small><i>${n.desde?'desde ':''}${n.p} €</i></button>`).join(''); }
+function pcNivel(id){ const n=PC_NIV.find(x=>x.id===id)||PC_NIV[2]; PC_N=n.id; PC_T=n.t; document.getElementById('pc-precio-man').value=n.p; pcPintaNiv(); pcCalc(); }
 let PC_T='med', PC_OK=false, PC_MANUAL=false, PC_AUTO_T=null;
 function pcInit(){
   if(!PC_OK){
     PC_OK=true;
     document.getElementById('pc-fx').innerHTML=PC_FX.map(f=>`<label class="pc-chk"><input type="checkbox" data-fx="${f.id}" onchange="PC_MANUAL=true;pcCalc()"><span><b>${f.n}</b> +${f.p} %<small>${f.d}</small></span></label>`).join('');
-    document.getElementById('pc-plan').addEventListener('change',()=>{document.getElementById('pc-plan-h').style.display=document.getElementById('pc-plan').checked?'flex':'none';});
-    pcTam('med');
+    
+    pcNivel('n3');
   }
   const clientes=[...new Set([...CLIENTES_AM.map(c=>c.nombre),...ALL_CONTACTOS.filter(c=>c.etapa==='cerrado').map(c=>c.empresa),'Divas Skin Care','Jose Acosta','Costa Norte','Fight Club · Fight2One','Entrena con Flow'])];
   document.getElementById('pc-cli-list').innerHTML=clientes.map(c=>`<option value="${esc(c)}">`).join('');
@@ -1969,21 +1981,17 @@ function pcInit(){
 function pcTam(t){PC_T=t;document.querySelectorAll('#pc-tam button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));document.getElementById('pc-horas').value=PC_TAM[t].h;pcCalc();}
 function pcH(d){PC_MANUAL=true;const i=document.getElementById('pc-horas');i.value=Math.max(0.5,(parseFloat(i.value)||0)+d);pcCalc();}
 function pcDatos(){
-  const h=Math.max(0.5,parseFloat(document.getElementById('pc-horas').value)||0.5);
-  const tarifa=Math.max(10,parseFloat(document.getElementById('pc-tarifa').value)||30);
-  const fx=PC_FX.filter(f=>document.querySelector(`[data-fx="${f.id}"]`)?.checked);
-  const pctFx=0; // sin recargos: solo cuentan las horas (12-nov)
-  const urg=false /* sin urgente: todo se entrega en menos de 48 h */, todos=document.getElementById('pc-todos').checked, plan=document.getElementById('pc-plan').checked;
-  const hPlan=plan?Math.max(0,parseFloat(document.getElementById('pc-plan-horas').value)||0):0;
-  const base=h*tarifa, conFx=base*(1+pctFx/100), conUrg=conFx*(urg?1.5:1), conTodos=conUrg*(todos?0.8:1);
-  const hEf=h*(1+pctFx/100), cubiertas=Math.min(hEf,hPlan), restoPct=hEf?1-cubiertas/hEf:1;
-  let precio=conTodos*restoPct;
-  const cubierto=plan&&precio<1;
-  precio=cubierto?0:Math.max(20,Math.round(precio/5)*5);
-  if(PC_IA&&PC_IA.es_fallo&&!PC_MANUAL) precio=0;
-  const dias=hEf<=2?1:2; // siempre en menos de 48 h
-  return {h,tarifa,fx,pctFx,urg,todos,plan,hPlan,cubiertas,base,conFx,conUrg,conTodos,precio,cubierto,dias,hEf,
-    fallo:!!(PC_IA&&PC_IA.es_fallo&&!PC_MANUAL), descCli:(PC_IA&&PC_IA.descripcion)||'',
+  const n=PC_NIV.find(x=>x.id===PC_N)||PC_NIV[2];
+  const man=parseFloat(document.getElementById('pc-precio-man').value);
+  const base=isNaN(man)?n.p:man;
+  const todos=document.getElementById('pc-todos').checked, plan=document.getElementById('pc-plan').checked;
+  const conTodos=base*(todos?0.8:1);
+  const cubierto=plan&&n.t==='peq';
+  let precio=cubierto?0:Math.max(20,Math.round(conTodos/5)*5);
+  const fallo=!!(PC_IA&&PC_IA.es_fallo&&!PC_MANUAL);
+  if(fallo) precio=0;
+  const dias=n.t==='peq'?1:2; // siempre en menos de 48 h
+  return {nivel:n,base,todos,plan,conTodos,precio,cubierto,dias,urg:false,fx:[],pctFx:0,fallo,descCli:(PC_IA&&PC_IA.descripcion)||'',
     cli:document.getElementById('pc-cli').value.trim(),tit:document.getElementById('pc-tit').value.trim(),desc:document.getElementById('pc-desc').value.trim()};
 }
 
@@ -2010,7 +2018,7 @@ async function pcIA(){
     if(error||!data||data.error){ let m=data&&data.error; try{ const j=await error?.context?.json?.(); if(j?.error) m=j.error; }catch(e){} throw new Error(m||'sin respuesta'); }
     PC_IA=data; PC_MANUAL=false;
     PC_T=data.tamano; document.querySelectorAll('#pc-tam button').forEach(b=>b.classList.toggle('on',b.dataset.t===PC_T));
-    document.getElementById('pc-horas').value=data.horas;
+    document.getElementById('pc-horas').value=data.horas; pcNivel(pcNivDe(data.tamano,data.horas));
     PC_FX.forEach(f=>{const i=document.querySelector(`[data-fx="${f.id}"]`); if(i) i.checked=(data.factores||[]).includes(f.id);});
     document.getElementById('pc-urg').checked=!!data.urgente; document.getElementById('pc-todos').checked=!!data.sirve_para_otros;
     const tit=document.getElementById('pc-tit'); if(!tit.value.trim()||tit.dataset.auto){ tit.value=data.titulo; tit.dataset.auto=1; }
@@ -2033,32 +2041,29 @@ function pcAnaliza(){
   if(!document.getElementById('pc-tit').value.trim()){ let tt=raw.trim(); for(let k=0;k<4;k++) tt=tt.replace(/^(hola|buenas( tardes| noches| d[ií]as)?|oye|porfa|por favor|y|e|tambi[eé]n|otra cosa|otra cosita|cuando (puedas|tengas un hueco)|me gustar[ií]a( que)?|quiero( que)?|quer[ií]a( que)?|necesito( que)?|podr[ií]as|nos organizas|que)[\s,!.:]+/i,''); tt=tt.split(/[.\n]/)[0].slice(0,60); document.getElementById('pc-tit').dataset.auto=1; document.getElementById('pc-tit').value=tt.charAt(0).toUpperCase()+tt.slice(1); }
   if(!PC_MANUAL){
     PC_T=T; document.querySelectorAll('#pc-tam button').forEach(b=>b.classList.toggle('on',b.dataset.t===T));
-    document.getElementById('pc-horas').value=horas;
+    document.getElementById('pc-horas').value=horas; pcNivel(pcNivDe(T,horas));
     PC_FX.forEach(f=>{const i=document.querySelector(`[data-fx="${f.id}"]`); if(i) i.checked=fx.includes(f.id);});
     document.getElementById('pc-urg').checked=urg;
   }
   const nom=PC_FX.filter(f=>fx.includes(f.id)).map(f=>f.n.toLowerCase());
   box.style.display='';
-  box.innerHTML=`<b>Lo que he entendido:</b> petición ${PC_TAM[T].n}${nom.length?' que toca '+nom.join(', '):''}${urg?' · la quieren urgente':''} → unas ${horas} h.${PC_MANUAL?' <a href="#" onclick="event.preventDefault();PC_MANUAL=false;pcAnaliza()">Volver a mi propuesta</a>':' <span>Cámbialo abajo si no cuadra.</span>'}`;
+  box.innerHTML=`<b>Lo que he entendido:</b> petición ${PC_TAM[T].n}${nom.length?' que toca '+nom.join(', '):''}→ complejidad ${PC_NIV.find(x=>x.id===pcNivDe(T,horas)).n.toLowerCase()}.${PC_MANUAL?' <a href="#" onclick="event.preventDefault();PC_MANUAL=false;pcAnaliza()">Volver a mi propuesta</a>':' <span>Cámbialo abajo si no cuadra.</span>'}`;
   pcCalc();
 }
 const pcE=n=>Math.round(n).toLocaleString('es-ES')+' €';
 function pcCalc(){
   if(!PC_OK)return; const d=pcDatos();
   document.getElementById('pc-precio').textContent=d.fallo?'Gratis':d.cubierto?'Incluido':pcE(d.precio);
-  document.getElementById('pc-meta').textContent=d.fallo?'Es un fallo de algo ya entregado: entra en la cuota':d.cubierto?`Entra en las ${d.hPlan} h del mantenimiento ampliado`:`Petición ${PC_TAM[PC_T].n} · entrega en ${d.dias} día${d.dias>1?'s':''} laborable${d.dias>1?'s':''}${d.precio>300?' · 50 % al empezar y 50 % al entregar':''}`;
-  const filas=[[`${d.h} h × ${d.tarifa} €/h`,pcE(d.base)]];
-  if(d.pctFx) filas.push([d.fx.map(f=>f.n).join(', ')+` (+${d.pctFx} %)`,'+'+pcE(d.conFx-d.base)]);
-  if(d.urg) filas.push(['Urgente (+50 %)','+'+pcE(d.conUrg-d.conFx)]);
-  if(d.todos) filas.push(['Sirve para otros clientes (−20 %)','−'+pcE(d.conUrg-d.conTodos)]);
-  if(d.plan&&d.cubiertas) filas.push([`Horas del plan (${d.cubiertas.toFixed(1).replace('.0','')} h)`,'−'+pcE(d.conTodos*(d.cubiertas/d.hEf))]);
-  filas.push(['Redondeo y mínimo de 30 €','']);
+  document.getElementById('pc-meta').textContent=d.fallo?'Es un fallo de algo ya entregado: entra en la cuota':d.cubierto?'Entra en las peticiones sencillas del mantenimiento ampliado':`Complejidad ${d.nivel.n.toLowerCase()} · entrega en ${d.dias} día${d.dias>1?'s':''} laborable${d.dias>1?'s':''}${d.precio>300?' · 50 % al empezar y 50 % al entregar':''}`;
+  const filas=[[`Complejidad ${d.nivel.n.toLowerCase()}`,pcE(d.base)]];
+  if(d.todos) filas.push(['Sirve para otros clientes (−20 %)','−'+pcE(d.base-d.conTodos)]);
+  filas.push(['Precio fijo · mínimo 20 €','']);
   document.getElementById('pc-desg').innerHTML=filas.map(([a,b])=>`<div><span>${esc(a)}</span><b>${b}</b></div>`).join('');
 }
 function pcTexto(d){
   const nom=(d.cli||'').split(/[ ·]/)[0];
   if(d.fallo) return `Hola${nom?' '+nom:''} 😊 Lo que me comentas${d.tit?` (${d.tit})`:''} es un fallo de algo que ya tenéis, así que lo arreglo sin coste. Te aviso en cuanto esté.`;
-  if(d.cubierto) return `Hola${nom?' '+nom:''} 😊 Lo que nos pides${d.tit?` (${d.tit})`:''} entra en las horas de tu mantenimiento ampliado de este mes, así que no tiene coste extra. Te lo tengo listo en ${d.dias} día${d.dias>1?'s':''} laborable${d.dias>1?'s':''}.`;
+  if(d.cubierto) return `Hola${nom?' '+nom:''} 😊 Lo que nos pides${d.tit?` (${d.tit})`:''} entra en las peticiones incluidas en tu mantenimiento ampliado, así que no tiene coste extra. Te lo tengo listo en ${d.dias} día${d.dias>1?'s':''} laborable${d.dias>1?'s':''}.`;
   return `Hola${nom?' '+nom:''} 😊 Te paso el presupuesto de lo que nos pediste${d.tit?`: ${d.tit}`:''}.
 
 ${(d.descCli||d.desc)?(d.descCli||d.desc)+'\n\n':''}Precio cerrado: ${pcE(d.precio)}
@@ -2124,7 +2129,7 @@ async function pcGuardar(){
   const d=pcDatos(); if(!d.tit){toast('Pon un título corto a la petición','error');return;}
   const due=new Date(); let n=d.dias; while(n>0){due.setDate(due.getDate()+1); if(due.getDay()%6) n--;}
   const payload={business_slug:AIRMATE_SLUG,title:d.tit,client_name:d.cli||null,price:d.precio,status:'presupuesto',due_date:due.toISOString().slice(0,10),
-    notes:[d.desc,`Calculado: ${d.h} h × ${d.tarifa} €/h${d.pctFx?' · '+d.fx.map(f=>f.n).join(', '):''}${d.urg?' · urgente':''}${d.todos?' · sirve para otros clientes':''}${d.plan?` · plan ${d.hPlan} h`:''}`].filter(Boolean).join('\n\n')};
+    notes:[d.desc,`Complejidad: ${d.nivel.n}${d.todos?' · sirve para otros clientes':''}${d.cubierto?' · incluido en mantenimiento ampliado':''}`].filter(Boolean).join('\n\n')};
   try{
     const {error}=await sbWriteResiliente(p=>SB.from('crm_orders').insert(p),payload);
     if(error)throw error;
