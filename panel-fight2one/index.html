@@ -384,9 +384,14 @@ async function cargarTodo(){
   pintar();
 }
 let _rt=null, _rtT=null;
-function suscribir(){ if(_rt) return; _rt=sb.channel('f2o');
+function suscribir(){ if(_rt) return; _rtUsado=true; _rt=sb.channel('f2o');
   ['f2o_veladas','f2o_peleadores','f2o_combates','f2o_papeles','f2o_viajes','f2o_entradas','f2o_patrocinadores','f2o_gastos','f2o_equipo','f2o_tareas','f2o_merch','f2o_archivos','f2o_programa','f2o_pesajes','f2o_pagos_peleador','f2o_votaciones','f2o_vot_categorias','f2o_vot_opciones'].forEach(t=>_rt.on('postgres_changes',{event:'*',schema:'public',table:t},()=>{ clearTimeout(_rtT); _rtT=setTimeout(()=>{ if(!$('.velo')) (t==='f2o_veladas'?cargarVeladas():cargarTodo()); },700); }));
   _rt.subscribe(); }
+/* Ahorro de base de datos: si la pestaña lleva 2 min en segundo plano se corta el directo; al volver se recarga. */
+let _rtUsado=false, _rtOff=null;
+document.addEventListener('visibilitychange',()=>{ if(!_rtUsado) return;
+  if(document.hidden){ clearTimeout(_rtOff); _rtOff=setTimeout(()=>{ if(_rt){ sb.removeChannel(_rt); _rt=null; } },120000); }
+  else { clearTimeout(_rtOff); if(!_rt){ suscribir(); cargarTodo(); } } });
 
 /* ───────── Guardar y borrar (siempre comprobando que se escribió) ───────── */
 async function guardar(tabla,fila,id){

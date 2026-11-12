@@ -1461,6 +1461,7 @@ async function sbLoadIfChanged(table,setter,render,lastRef,order='created_at'){
 }
 const _clasesRef={val:''}, _alumnosRef={val:''};
 setInterval(()=>{
+  if(document.hidden)return; // pestaña en segundo plano: no gastar base de datos
   const modalOpen=document.getElementById('modal')?.classList.contains('open');
   if(modalOpen)return;
   const activePage=id=>document.getElementById(id)?.classList.contains('active');
@@ -1474,7 +1475,7 @@ setInterval(()=>{
     }
     if(activePage('page-clientes'))loadClientes(true);
   }catch(e){console.error('auto-refresh',e);}
-},30000);
+},60000);
 }
 
 function fmt(n,c='€'){return c+Number(n||0).toLocaleString('es-ES',{maximumFractionDigits:2});}

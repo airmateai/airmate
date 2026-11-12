@@ -1284,6 +1284,12 @@ function startRealtime(){
     .subscribe();
 }
 
+/* Ahorro de base de datos: si la pestaña lleva 2 min en segundo plano se corta el directo; al volver se recarga. */
+let _rtOff=null;
+document.addEventListener('visibilitychange',()=>{ if(!_realtimeChannel&&!_rtOff) return;
+  if(document.hidden){ clearTimeout(_rtOff); _rtOff=setTimeout(()=>{ if(_realtimeChannel){ _sb.removeChannel(_realtimeChannel); _realtimeChannel=null; } },120000); }
+  else { clearTimeout(_rtOff); _rtOff=null; if(!_realtimeChannel){ startRealtime(); loadAll(); } } });
+
 // ── STOCK ─────────────────────────────────────────────
 const STOCK_KEY = `airmate_stock_${BIZ_SLUG||'default'}`;
 function getStock(){ try{ return JSON.parse(localStorage.getItem(STOCK_KEY)||'[]'); }catch(e){return [];} }

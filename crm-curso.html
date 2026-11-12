@@ -512,11 +512,18 @@ async function deleteLead(id) {
 }
 
 // ── REALTIME ──
+let _cuRt=null, _cuOff=null;
 function initRealtime() {
-  _sb.channel('curso_leads_rt')
+  if(_cuRt) return;
+  _cuRt=_sb.channel('curso_leads_rt')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'curso_leads' }, () => loadLeads())
     .subscribe();
 }
+
+/* Ahorro de base de datos: si la pestaña lleva 2 min en segundo plano se corta el directo; al volver se recarga. */
+document.addEventListener('visibilitychange',()=>{ if(!_cuRt&&!_cuOff) return;
+  if(document.hidden){ clearTimeout(_cuOff); _cuOff=setTimeout(()=>{ if(_cuRt){ _sb.removeChannel(_cuRt); _cuRt=null; } },120000); }
+  else { clearTimeout(_cuOff); _cuOff=null; if(!_cuRt){ initRealtime(); loadLeads(); } } });
 
 // ── FILTROS ──
 function setFilter(btn) {

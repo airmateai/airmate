@@ -1573,8 +1573,10 @@ async function loadLeads() {
 // =============================================
 // REALTIME
 // =============================================
+let _magRt=null, _magOff=null;
 function setupRealtime() {
-  _sb.channel('magda-rt')
+  if(_magRt) return;
+  _magRt=_sb.channel('magda-rt')
     .on('postgres_changes',{event:'*',schema:'public',table:'appointments',filter:`business_slug=eq.${SLUG}`},
       async()=>{await loadReservas();refreshAll();}
     )
@@ -1583,6 +1585,11 @@ function setupRealtime() {
     )
     .subscribe();
 }
+
+/* Ahorro de base de datos: si la pestaña lleva 2 min en segundo plano se corta el directo; al volver se recarga. */
+document.addEventListener('visibilitychange',()=>{ if(!_magRt&&!_magOff) return;
+  if(document.hidden){ clearTimeout(_magOff); _magOff=setTimeout(()=>{ if(_magRt){ _sb.removeChannel(_magRt); _magRt=null; } },120000); }
+  else { clearTimeout(_magOff); _magOff=null; if(!_magRt){ setupRealtime(); Promise.all([loadReservas(),loadLeads()]).then(refreshAll); } } });
 
 function refreshAll() {
   renderDashboard();
