@@ -1702,7 +1702,9 @@ function renderEscalar(){
   const conv=deHoy.filter(l=>['demo','info','luego','no_interesa'].includes(l.r));
   const demosSem=llam.filter(l=>l.r==='demo'&&new Date(l.t)>=lunes).length;
   const cerrados=ALL_CONTACTOS.filter(c=>c.etapa==='cerrado'&&new Date(c.updated_at||c.fecha_alta)>=mesIni);
-  const euros=cerrados.reduce((a,c)=>a+(parseFloat(c.valor_cierre)||0),0);
+  if(!CL_OK){cargarClientesAm().then(()=>{if(document.getElementById('page-escalar')?.classList.contains('active'))renderEscalar();});}
+  const cuotasMes=CLIENTES_AM.filter(c=>!['baja','pausado'].includes(c.estado)).reduce((a,c)=>a+(parseFloat(c.cuota)||0)+(c.plan_ampliado?79:0),0);
+  const euros=cerrados.reduce((a,c)=>a+(parseFloat(c.valor_cierre)||0),0)+cuotasMes;
   const sinLlamar=LISTA.filter(c=>!(c.llamadas||[]).length&&c.etapa==='nuevo').length;
   const capt=CAPTADORES_LIST.length;
   const kpi=(lbl,val,obj,suf='')=>{const pct=Math.min(100,Math.round(val/obj*100));const col=pct>=100?'var(--uae-green)':pct>=50?'var(--gold)':'var(--uae-red)';
