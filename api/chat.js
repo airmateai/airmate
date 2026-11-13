@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     { name: 'gemini', key: process.env.GEMINI_API_KEY, url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
       model: () => process.env.GEMINI_MODEL || 'gemini-2.5-flash', openai: false },
     { name: 'groq', key: process.env.GROQ_API_KEY, url: 'https://api.groq.com/openai/v1/chat/completions',
-      model: () => hasImages ? (process.env.GROQ_VISION_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct') : (process.env.GROQ_MODEL || 'llama-3.3-70b-versatile'), openai: false },
+      model: () => hasImages ? (process.env.GROQ_VISION_MODEL || 'qwen/qwen3.8-27b') : (process.env.GROQ_MODEL || 'openai/gpt-oss-120b'), openai: false },
     { name: 'openai', key: process.env.OPENAI_API_KEY, url: 'https://api.openai.com/v1/chat/completions',
       model: () => (hasImages || hasTools) ? 'gpt-4o' : 'gpt-4o-mini', openai: true },
   ].filter(p => p.key);
@@ -41,6 +41,12 @@ export default async function handler(req, res) {
           ...messages.slice(-20), // más contexto para herramientas
         ],
       };
+      // Groq: los modelos actuales razonan antes de responder; poco razonamiento y margen de tokens para que la respuesta no salga vacía
+      if (prov.name === 'groq') {
+        body.max_tokens = hasImages ? 1200 : 1500;
+        if (body.model.startsWith('openai/gpt-oss')) body.reasoning_effort = 'low';
+        else body.reasoning_format = 'hidden';
+      }
       if (hasTools) {
         body.tools = tools;
         body.tool_choice = tool_choice || 'auto';

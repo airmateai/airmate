@@ -4447,12 +4447,12 @@ async function cpUploadImg(input){
   // Leer datos con IA usando base64
   status.textContent='Leyendo ticket con IA…';
   try{
-    const resp=await fetch('https://bot-airmate-1.vercel.app/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    const resp=await fetch('https://bot-airmate-1-sooty.vercel.app/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       system_prompt:'Eres un asistente de contabilidad español. Analiza la imagen de un ticket o factura y extrae los datos. Responde SOLO con JSON válido sin markdown ni explicaciones: {"cliente":"nombre del cliente final para el que es la compra si aparece escrito (referencia, pedido o nombre a mano), o null","fecha":"YYYY-MM-DD o null","importe":numero_decimal o null,"proveedor":"nombre del comercio o null","concepto":"descripcion breve de que se compro o null","metodo":"Metalico|Transferencia|Tarjeta o null"}',
       messages:[{role:'user',content:[{type:'image_url',image_url:{url:b64,detail:'low'}},{type:'text',text:'Extrae los datos de este ticket'}]}]
     })});
     const raw=await resp.json();
-    let d={};try{d=JSON.parse((raw.reply||'{}').replace(/```json|```/g,'').trim());}catch{}
+    let d={};try{d=JSON.parse(((raw.reply||'{}').replace(/```json|```/g,'').match(/\{[\s\S]*\}/)||['{}'])[0]);}catch{}
     console.log('OCR respuesta IA:',raw.reply, '→ parsed:',d);
     if(d.fecha)document.getElementById('cp-fecha').value=d.fecha;
     if(d.importe)document.getElementById('cp-importe').value=d.importe;
@@ -6741,7 +6741,7 @@ async function tpvInit() {
 </div>
 
 <script>
-const IA_PROXY = 'https://bot-airmate-1.vercel.app/api/chat';
+const IA_PROXY = 'https://bot-airmate-1-sooty.vercel.app/api/chat';
 const IA_TOKEN = 'jose-acosta-debug';
 let _iaOpen = false;
 let _iaHistory = [];
@@ -8324,7 +8324,7 @@ window._iaUseAgent=true;
 // RECEPCIÓN DE STOCK / PUNTEO
 // ══════════════════════════════════════════
 const HOLDED_PROXY = 'https://airmate-phi.vercel.app/api/holded';
-const ANTHROPIC_PROXY = 'https://bot-airmate-1.vercel.app/api/chat';
+const ANTHROPIC_PROXY = 'https://bot-airmate-1-sooty.vercel.app/api/chat';
 
 let punteoLines = []; // [{id, sku, nombre, cantidad_esperada, cantidad_real, checked, holded_product_id}]
 let punteoImageB64 = null;
@@ -8405,8 +8405,7 @@ async function punteoAnalizarImagen(){
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'gpt-4o',
-        max_tokens:1500,
+        system_prompt:'Eres un asistente de gestión de stock para una sastrería. Respondes solo con JSON válido, sin texto adicional.',
         messages:[{
           role:'user',
           content:[
@@ -8427,9 +8426,9 @@ Si no puedes leer el albarán claramente, devuelve {"error": "No se puede leer e
       })
     });
     const data = await resp.json();
-    const text = data.choices?.[0]?.message?.content||'';
+    const text = data.reply || data.choices?.[0]?.message?.content || '';
     let parsed;
-    try{ parsed = JSON.parse(text.replace(/```json|```/g,'').trim()); }
+    try{ const _j=(text.replace(/```json|```/g,'').match(/\{[\s\S]*\}/)||[''])[0]; parsed = JSON.parse(_j); }
     catch(e){ parsed = {error:'No se pudo procesar'}; }
 
     if(parsed.error || !parsed.productos?.length){
