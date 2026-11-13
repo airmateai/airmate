@@ -3016,12 +3016,9 @@ function proxHora(dias,h,m){const d=new Date();d.setDate(d.getDate()+dias);d.set
 function llResultado(r){
   const c=LISTA.find(x=>x.id===LL_ACTUAL);if(!c)return;
   if(r==='no_contesta'){
+    // Pedido de Fabio (13-nov-2026): «No contesta» cuenta como «No interesa» → sale de la lista y no se vuelve a llamar
     const n=(c.intentos||0)+1;
-    // vuelve otro día y a otra hora (si llamaste por la mañana, la próxima por la tarde)
-    const tarde=new Date().getHours()>=14;
-    const prox=proxHora(1,tarde?10:16,30);
-    const cambios=n>=5?{intentos:n,etapa:'descartado',proxima_llamada:null}:{intentos:n,proxima_llamada:prox.toISOString()};
-    llGuardar(c,cambios,r,n>=5?'5 intentos sin respuesta':'').then(ok=>ok&&toast(n>=5?'Descartado tras 5 intentos':'📵 Vuelve '+fmtCuando(prox.toISOString())));
+    llGuardar(c,{intentos:n,etapa:'descartado',proxima_llamada:null},r,'No contesta').then(ok=>ok&&toast('📵 No contesta: fuera de la lista'));
     return;
   }
   if(r==='luego'){
