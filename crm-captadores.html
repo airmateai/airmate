@@ -773,7 +773,7 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
         <div id="ll-main"></div>
         <div class="ll-side">
           <div class="card gu" id="ll-guion"></div>
-          <div class="card"><div class="ll-lbl" style="margin-top:0">Siguientes en la cola</div><div class="ll-q"><input id="ll-buscar" placeholder="Buscar negocio…" oninput="llRenderCola()"><div id="ll-lista"></div></div></div>
+          <div class="card"><div class="ll-lbl" style="margin-top:0">Siguientes en la cola</div><div class="ll-q"><input id="ll-buscar" placeholder="Buscar negocio o teléfono…" oninput="llRenderCola()"><div id="ll-lista"></div></div></div>
           <div class="card" id="ll-equipo" style="display:none"></div>
           <div class="mac-tip"><b>Llamar desde el Mac con tu número:</b> en el iPhone, Ajustes → Teléfono → Llamadas en otros dispositivos → activa tu Mac. En el Mac, FaceTime → Ajustes → «Llamadas desde el iPhone». Mac e iPhone con el mismo Apple ID y wifi. La primera vez Chrome te pregunta si abrir FaceTime: marca «Permitir siempre».</div>
         </div>
@@ -785,7 +785,7 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
         <div><h1>Pipeline de <em>interesados</em></h1><div class="page-sub">Todo lo que se mueve: arrastra una tarjeta para cambiarla de estado.</div></div>
       </div>
       <div class="pl-bar">
-        <input id="pl-q" placeholder="Buscar negocio…" oninput="renderPipeline()">
+        <input id="pl-q" placeholder="Buscar negocio o teléfono…" oninput="renderPipeline()">
         <select id="pl-cap" onchange="renderPipeline()"></select>
         <select id="pl-desc" onchange="renderPipeline()"><option value="">Sin descartados</option><option value="1">Con descartados</option></select>
       </div>
@@ -991,7 +991,7 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
             <option value="">Todos</option><option value="whatsapp">WhatsApp</option><option value="llamada">Llamada fría</option><option value="email">Email</option><option value="instagram">Instagram</option>
           </select></div>
           <div class="f-group" style="margin-bottom:0;"><label>Fecha alta</label><input type="date" id="f-fecha" onchange="renderContactos()"></div>
-          <div class="f-group" style="margin-bottom:0;"><label>Buscar empresa</label><input id="f-busqueda" placeholder="Nombre de empresa..." oninput="renderContactos()"></div>
+          <div class="f-group" style="margin-bottom:0;"><label>Buscar empresa</label><input id="f-busqueda" placeholder="Empresa o teléfono…" oninput="renderContactos()"></div>
         </div>
       </div>
       <div class="card" style="padding:6px 20px 20px;">
@@ -2334,7 +2334,7 @@ function renderContactos(){
   const fb=(document.getElementById('f-busqueda').value||'').toLowerCase();
   let lista=ALL_CONTACTOS.filter(c=>
     (!fc||c.captador===fc) && (!fe||c.etapa===fe) && (!fcan||c.canal===fcan) && (!ff||c.fecha_alta===ff) &&
-    (!fb||c.empresa.toLowerCase().includes(fb))
+    (!fb||coincide(c,fb))
   );
   const tbody=document.getElementById('contactos-tbody');
   if(!lista.length){
@@ -2852,6 +2852,16 @@ function telLimpio(t){
   if(!d.startsWith('+'))d=(d.length===9?'+34':'+')+d;
   return d;
 }
+// Buscar por nombre o por teléfono (13-nov-2026): «646 42 76 13», «+34646427613» o solo una parte del número
+const soloDig=t=>String(t||'').replace(/\D/g,'');
+function coincide(c,q){
+  q=String(q||'').toLowerCase().trim(); if(!q) return true;
+  if(String(c.empresa||'').toLowerCase().includes(q)) return true;
+  const d=soloDig(q); if(d.length<3) return false;
+  const tels=[c.telefono,c.telefono2,c.movil,c.whatsapp].map(soloDig).filter(Boolean);
+  const dq=d.replace(/^0034|^34(?=\d{9}$)/,'');
+  return tels.some(t=>t.includes(dq)||t.replace(/^34(?=\d{9}$)/,'').includes(dq));
+}
 function telBonito(t){const d=telLimpio(t);const m=/^\+34(\d{3})(\d{3})(\d{3})$/.exec(d);return m?`${m[1]} ${m[2]} ${m[3]}`:d;}
 function llCola(){
   const ahora=Date.now();
@@ -2961,7 +2971,8 @@ function llRenderCola(){
   const el=document.getElementById('ll-lista');if(!el)return;
   const q=(document.getElementById('ll-buscar').value||'').toLowerCase().trim();
   let items=llCola().filter(c=>c.id!==LL_ACTUAL).map(c=>({c,info:c.proxima_llamada?'⏰ ahora':(c.sector||'').split(' ')[0]}));
-  if(q){items=LISTA.filter(c=>esMio(c)&&String(c.empresa).toLowerCase().includes(q)).map(c=>({c,info:c.etapa==='descartado'?'descartado':c.etapa==='reunion'?'demo':c.proxima_llamada&&new Date(c.proxima_llamada)>new Date()?fmtCuando(c.proxima_llamada):(c.sector||'')}));}
+  if(q){items=LISTA.filter(c=>esMio(c)&&coincide(c,q)).map(c=>({c,info:c.etapa==='descartado'?'descartado':c.etapa==='reunion'?'demo':c.proxima_llamada&&new Date(c.proxima_llamada)>new Date()?fmtCuando(c.proxima_llamada):(c.sector||'')}));}
+  if(q&&soloDig(q).length>=3) items=items.map(x=>({...x,info:(x.c.telefono?telBonito(x.c.telefono)+' · ':'')+x.info}));
   const prog=q?[]:llProgramados().slice(0,5).map(c=>({c,info:'⏰ '+fmtCuando(c.proxima_llamada)}));
   const fila=({c,info})=>`<button oncontextmenu="ctxAbrir(event,${JSON.stringify(c.id).replace(/"/g,'&quot;')})" onclick="llElegir(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">${esc(c.empresa)}<span>${esc(info)}</span></button>`;
   el.innerHTML=(items.slice(0,25).map(fila).join('')||'<div style="padding:8px;font-size:13px;color:var(--txt3)">Nada por aquí.</div>')
@@ -3109,7 +3120,7 @@ function plItems(){
   return LISTA.filter(c=>{
     if(SESSION.rol==='captador'&&!esMio(c))return false;
     if(cap&&nn(c.captador)!==nn(cap))return false;
-    if(q&&!nn(c.empresa).includes(q))return false;
+    if(q&&!coincide(c,q))return false;
     // los de lista sin tocar no son pipeline
     if(c.etapa==='nuevo')return false;
     if(c.etapa==='descartado'&&(c.origen||'').startsWith('lista')&&!(c.llamadas||[]).length)return false;
