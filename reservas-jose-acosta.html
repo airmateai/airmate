@@ -215,6 +215,7 @@ body{font-family:'Inter',sans-serif;background:var(--white);color:var(--dark);fo
 
 <script>
 // ── CONFIG ──
+const SB_URL_JA = 'https://vjofxmfwdybktpwiuanc.supabase.co', SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
 const SB = supabase.createClient(
   'https://vjofxmfwdybktpwiuanc.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE'
@@ -661,19 +662,12 @@ async function submitBooking(){
     return;
   }
 
-  // Email
-  const d = new Date(state.date+'T12:00:00');
-  const dateStr = `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} a las ${state.slot}`;
+  // Email de confirmación desde joseacosta.com (función ja-emails, Brevo). Si falla, la reserva sigue guardada.
   try{
-    await emailjs.send('service_npmjvvf','template_qnip0mc',{
-      to_email: state.contact.email,
-      client_name: `${state.contact.nombre} ${state.contact.apellido}`,
-      service: state.service.name,
-      fecha: dateStr,
-      location: 'Pasaje Peligros, 2 · 38002 Santa Cruz de Tenerife',
-      confirm_code: code,
-      reply_to: state.contact.email,
-    });
+    fetch('https://vjofxmfwdybktpwiuanc.supabase.co/functions/v1/ja-emails',{
+      method:'POST', headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},
+      body: JSON.stringify({tipo:'reserva_web', confirm_code: code, email: state.contact.email})
+    }).catch(e=>console.warn('Email error',e));
   }catch(e){console.warn('Email error',e);}
 
   renderConfirmation();

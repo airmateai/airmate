@@ -2276,6 +2276,19 @@ function openCitaModal(id){
   document.getElementById('modal-overlay').classList.add('open');
 }
 
+// ── EMAILS AUTOMÁTICOS (Brevo, función ja-emails · 13-nov-2026) ──────────────
+const JA_EMAILS_URL='https://vjofxmfwdybktpwiuanc.supabase.co/functions/v1/ja-emails';
+async function jaEmail(body,{silencioso=false}={}){
+  try{
+    const {data:{session}}=await _sb.auth.getSession();
+    const r=await fetch(JA_EMAILS_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+(session?.access_token||'')},body:JSON.stringify(body)});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok&&j.ok){ if(!silencioso) showToast('✉ Email enviado'+(j.enviado_a?' a '+j.enviado_a:'')); return j; }
+    if(!silencioso&&j.error) showToast(/no tiene email/i.test(j.error)?'Sin email del cliente: no se ha enviado aviso':'No se pudo enviar el email: '+j.error);
+    return null;
+  }catch(e){ if(!silencioso) showToast('No se pudo enviar el email'); return null; }
+}
+
 async function cambiarEstadoCita(id,status){
   const c=allCitas.find(x=>x.id===id);if(c)c.status=status;
   await sbOk(_sb.from('appointments').update({status}).eq('id',id),'appointments');
@@ -2283,30 +2296,9 @@ async function cambiarEstadoCita(id,status){
   renderDashboard();updateBadges();
   renderCitas();
   showToast(status==='confirmed'?'Cita confirmada':status==='completed'?'✔ Cita completada':status==='cancelled'?'Cita cancelada':'Estado actualizado');
-  if(!c||!c.client_email){if(status==='cancelled')showToast('Esta cita no tiene email del cliente');return;}
-  const dt=new Date(c.starts_at);
-  const dateLabel=dt.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const timeLabel=dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-  const biz=getBizInfo();
-  const base={
-    cliente_nombre:c.client_name,cliente_email:c.client_email,
-    cliente_telefono:c.client_phone||'—',
-    negocio_nombre:biz.name||BIZ_NAME||'Jose Acosta · Sastre a medida',
-    servicio:status==='confirmed'?'Cita confirmada':'Tu cita ha sido cancelada',
-    duracion:(c.duration_minutes||60)+' min',precio:'Gratuita',
-    fecha:dateLabel,hora:timeLabel,reply_to:biz.email||'airmateai@gmail.com',
-    notes:status==='confirmed'
-      ?'Tu cita ha sido confirmada. Te esperamos en '+( biz.address||'nuestro local')+'.'
-      :'Tu cita ha sido cancelada. Si quieres reservar una nueva cita, no dudes en contactarnos.'
-  };
-  let tpl=null;
-  if(status==='confirmed')tpl='template_qnip0mc';
-  else if(status==='cancelled')tpl='template_lg1l7bi';
-  if(!tpl)return;
-  if(!confirm('¿Enviar también un email automático a '+c.client_email+' avisando de este cambio?'))return;
-  emailjs.send('service_npmjvvf',tpl,base)
-    .then(()=>showToast(' Email enviado a '+c.client_email))
-    .catch(e=>{console.error('EmailJS error:',e);showToast('Email error');});
+  if(!c||(status!=='confirmed'&&status!=='cancelled'))return;
+  if(!c.client_email){showToast('Esta cita no tiene email del cliente: no se ha enviado aviso');return;}
+  jaEmail({tipo:status==='confirmed'?'cita_confirmada':'cita_cancelada',id:c.id});
 }
 
 async function deleteCitaPermanente(id){
@@ -3459,20 +3451,8 @@ async function _encNotificarCliente(o,col){
   const client=_crmClientes.find(x=>x.id===o.client_id);
   const email=client?.email||o.client_email||null;
   if(!email)return;
-  if(!confirm('¿Enviar también un email automático a '+email+' avisando de este cambio ("'+tpl.subject+'")?'))return;
-  const biz=getBizInfo();
-  emailjs.send('service_npmjvvf','template_lg1l7bi',{
-    cliente_nombre:o.client_name||'',
-    cliente_email:email,
-    cliente_telefono:o.client_phone||'—',
-    negocio_nombre:biz.name||BIZ_NAME,
-    servicio:tpl.subject,
-    duracion:'',precio:'',fecha:'',hora:'',
-    reply_to:biz.email||'airmateai@gmail.com',
-    notes:tpl.msg
-  })
-  .then(()=>{ showToast(' Cliente notificado automáticamente'); return jaApuntarEmail(o.id, tpl.subject, email); })
-  .catch(e=>{ console.error('Email encargo',e); showToast('No se pudo enviar el email al cliente'); });
+  const r=await jaEmail({tipo:'encargo_estado',id:o.id,estado:col});
+  if(r) await jaApuntarEmail(o.id, tpl.subject, r.enviado_a||email);
 }
 async function crmEncargosOpts(sel=null){
   if(!_crmClientes.length){const {data}=await _sbTodos(()=>_sb.from('crm_clients').select('id,name,measurements').eq('business_slug',BIZ_SLUG).order('name'));_crmClientes=data||[];}
@@ -4217,23 +4197,7 @@ async function confirmarVentaTienda(invId){
 async function enviarRecordatorio(citaId){
   const c=allCitas.find(x=>x.id===citaId);if(!c)return;
   if(!c.client_email){showToast('Esta cita no tiene email del cliente');return;}
-  const dt=new Date(c.starts_at);
-  const dateLabel=dt.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const timeLabel=dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-  emailjs.send('service_npmjvvf','template_qnip0mc',{
-    cliente_nombre:c.client_name,
-    cliente_email:c.client_email,
-    cliente_telefono:c.client_phone||'—',
-    negocio_nombre:BIZ_NAME,
-    servicio:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/></svg> RECORDATORIO — ${c.service||'Cita'}`,
-    duracion:(c.duration_minutes||60)+' min',
-    precio:'',
-    fecha:dateLabel,
-    hora:timeLabel,
-    reply_to:'airmateai@gmail.com'
-  })
-  .then(()=>showToast(' Recordatorio enviado a '+c.client_email))
-  .catch(e=>showToast('Error:'+JSON.stringify(e)));
+  jaEmail({tipo:'recordatorio',id:c.id});
 }
 
 // ── CONTRATO DE ENCARGO ────────────────────────────────────────────────────
@@ -4867,21 +4831,8 @@ async function _doEnviarEmailDoc(id){
   const lineas=(f.lines||[]).map(l=>`• ${l.desc} × ${l.qty} — ${crmFmt(l.price*l.qty)}`).join('\n')||'Consulte el documento para ver el detalle.';
   const biz=getBizInfo();
   const subject=`${tipDoc} ${num} — ${biz.name||'Jose Acosta Style'}`;
-  emailjs.send('service_npmjvvf','template_lg1l7bi',{
-    cliente_nombre: f.client_name||'Cliente',
-    cliente_email: toEmail,
-    cliente_telefono: '—',
-    negocio_nombre: biz.name||'Jose Acosta Style',
-    servicio: `${tipDoc} Nº ${num}`,
-    duracion: '',
-    precio: total,
-    fecha: fecha,
-    hora: '',
-    reply_to: biz.email||'airmateai@gmail.com',
-    notes: lineas
-  })
-  .then(()=>{showToast(' Email enviado a '+toEmail);crmCloseModal();})
-  .catch(e=>{showToast('Error al enviar:'+JSON.stringify(e));});
+  const r=await jaEmail({tipo:'documento',id:f.id,email:toEmail});
+  if(r) crmCloseModal();
 }
 
 async function _doConvertirFactura(id, nextNum){
@@ -6596,21 +6547,7 @@ function _doTpvEnviarRecibo(ventaId){
   if(!toEmail||!toEmail.includes('@')){showToast('Introduce un email válido');return;}
   const v=TPV_HISTORIAL.find(x=>x.id===ventaId)||TPV_HISTORIAL[0];
   const biz=getBizInfo();
-  emailjs.send('service_npmjvvf','template_lg1l7bi',{
-    cliente_nombre:'Cliente',
-    cliente_email:toEmail,
-    cliente_telefono:'—',
-    negocio_nombre:biz.name||'Jose Acosta Style',
-    servicio:'Recibo de compra',
-    duracion:'',
-    precio:v?v.total.toFixed(2)+' €':'—',
-    fecha:v?v.fecha:new Date().toLocaleDateString('es-ES'),
-    hora:v?v.hora:'',
-    reply_to:biz.email||'airmateai@gmail.com',
-    notes:v?'Productos: '+v.productos:'Venta en tienda'
-  })
-  .then(()=>{showToast('Recibo enviado a '+toEmail);crmCloseModal();})
-  .catch(()=>showToast('Error al enviar el recibo'));
+  jaEmail({tipo:'recibo',email:toEmail,total:v?v.total.toFixed(2)+' €':'',fecha:v?v.fecha:new Date().toLocaleDateString('es-ES')}).then(r=>{ if(r) crmCloseModal(); });
 }
 function tpvLimpiar() {
   _tpvCarrito=[];
@@ -8006,21 +7943,8 @@ async function _iaExecTool(name, args){
         if(!cita.client_email)return {ok:false,error:'La cita no tiene email del cliente'};
         const fechaStr=new Date(cita.starts_at).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
         const horaStr=new Date(cita.starts_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-        try{
-          await emailjs.send('service_npmjvvf','template_qnip0mc',{
-            cliente_nombre:cita.client_name||'',
-            cliente_email:cita.client_email,
-            cliente_telefono:cita.client_phone||'—',
-            negocio_nombre:BIZ_NAME||'Jose Acosta Style',
-            servicio:cita.service||'',
-            duracion:(cita.duration_minutes||60)+' min',
-            precio:'',
-            fecha:fechaStr,
-            hora:horaStr,
-            reply_to:'airmateai@gmail.com'
-          });
-          return {ok:true,enviado_a:cita.client_email};
-        }catch(e){return {ok:false,error:'EmailJS error: '+(e.text||e.message||'')};}
+        const r=await jaEmail({tipo:'cita_confirmada',id:cita.id},{silencioso:true});
+        return r?{ok:true,enviado_a:r.enviado_a}:{ok:false,error:'No se pudo enviar el email'};
       }
       case 'crear_lead': {
         const payload={business_slug:BIZ_SLUG,name:args.nombre,phone:args.telefono||null,interest:args.interes||null,intent_level:args.intent_level||'warm',status:'new'};
