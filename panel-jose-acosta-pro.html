@@ -9142,5 +9142,133 @@ const UPD_CFG={ cliente:'Jose Acosta', instalados:[] };
 function montarActualizaciones(){ if(!window.AirmateActualizaciones){ setTimeout(montarActualizaciones,300); return; } AirmateActualizaciones.mount(document.getElementById('upd-host'),UPD_CFG); const b=document.getElementById('upd-badge'); if(b) b.style.display='none'; }
 window.addEventListener('load',()=>setTimeout(async()=>{ if(!window.AirmateActualizaciones) return; const n=await AirmateActualizaciones.hayNuevos(UPD_CFG); const b=document.getElementById('upd-badge'); if(b&&n) b.style.display='inline-block'; },1500));
 </script>
+<!-- ═══ MENÚ DE BOTÓN DERECHO (13-nov-2026) ═══
+     Clic derecho (o mantener pulsado en el móvil) sobre una cita, cliente, encargo, factura, lead o producto:
+     acciones rápidas. Reutiliza las funciones que ya existen; no guarda nada por su cuenta. -->
+<style>
+#ja-ctx{position:fixed;z-index:10050;min-width:230px;max-width:290px;background:var(--surface,#fff);color:var(--txt,#0a0a0a);border:1px solid var(--border,#e5dfd5);border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.18);padding:6px;font-size:13.5px;display:none;user-select:none}
+#ja-ctx .t{padding:7px 10px 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3,#8a7d70);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ja-ctx button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:8px 10px;font:inherit;color:inherit;cursor:pointer}
+#ja-ctx button:hover,#ja-ctx button:focus{background:var(--border2,#f0ebe3);outline:none}
+#ja-ctx button .i{width:18px;text-align:center;flex:none;opacity:.8}
+#ja-ctx button.peligro{color:#b3402e}
+#ja-ctx hr{border:0;border-top:1px solid var(--border2,#f0ebe3);margin:5px 4px}
+</style>
+<div id="ja-ctx" role="menu"></div>
+<script>
+(function(){
+  const M=document.getElementById('ja-ctx');
+  const TIPOS={
+    cita:['openCitaModal','openEditCitaModal','cambiarEstadoCita','deleteCitaPermanente','crearClienteDesdeCita','updateCita','enviarRecordatorio'],
+    cliente:['crmVerCliente','crmEditCliente','crmDeleteCliente','jaNuevoSeguimiento'],
+    encargo:['crmEditEncargo','deleteEncargo','generarFacturaDesdeEncargo','imprimirTaller','imprimirContrato'],
+    factura:['crmViewFactura','crmEditFactura','crmDeleteFactura','marcarPagada','enviarEmailDoc','convertirAFactura','verifactuRegistrar','jaEnlacePago','jaConfirmarCobro'],
+    lead:['openLeadModal','leadToCRM'],
+    producto:['crmEditInventario','crmDeleteInventario','invMovimiento','invVerMovimientos'],
+  };
+  const FN2TIPO={}; Object.entries(TIPOS).forEach(([t,fs])=>fs.forEach(f=>FN2TIPO[f]=t));
+  const RE=/([A-Za-z_]+)\(\s*'([^']+)'/;
+  function deOnclick(el){ const oc=el.getAttribute&&el.getAttribute('onclick'); if(!oc) return null; const m=oc.match(RE); return m&&FN2TIPO[m[1]]?{tipo:FN2TIPO[m[1]],id:m[2]}:null; }
+  // Busca el elemento (cita, cliente…) bajo el ratón: el propio elemento, su fila o tarjeta, o un botón dentro de ella
+  function detectar(t){
+    let el=t;
+    for(let n=0;el&&n<8&&el!==document.body;n++,el=el.parentElement){
+      const r=deOnclick(el); if(r) return r;
+      if(el.matches&&el.matches('tr,.appt-block,[class*="card"],li,.kanban-item')){
+        for(const b of el.querySelectorAll('[onclick]')){ const r2=deOnclick(b); if(r2) return r2; }
+      }
+      if(el.matches&&el.matches('table,.tab-pane,.modal,.cal-wrap')) break;
+    }
+    return null;
+  }
+  const g=(n)=>{ try{ return eval(n); }catch(e){ return undefined; } };
+  const llamar=(fn,...a)=>{ const f=window[fn]||g(fn); if(typeof f==='function') return f(...a); showToast('Acción no disponible aquí'); };
+  const tel=x=>String(x||'').replace(/[^\d+]/g,'');
+  const wa=x=>{ let n=tel(x).replace(/^\+/,''); if(n.length===9) n='34'+n; return n; };
+  function copiar(txt,que){ if(!txt){showToast('No hay '+que);return;} navigator.clipboard.writeText(txt).then(()=>showToast('✓ '+que+' copiado')).catch(()=>showToast('No se pudo copiar')); }
+  function contacto(nombre,telefono,email){
+    const a=[];
+    if(telefono){ a.push(['💬','WhatsApp',()=>window.open('https://wa.me/'+wa(telefono)+'?text='+encodeURIComponent('Hola '+String(nombre||'').split(' ')[0]+', '),'_blank')]);
+      a.push(['📞','Llamar',()=>location.href='tel:'+tel(telefono)]); a.push(['⧉','Copiar teléfono',()=>copiar(telefono,'Teléfono')]); }
+    if(email) a.push(['✉','Copiar email',()=>copiar(email,'Email')]);
+    return a;
+  }
+  const ARR=()=>({cita:g('allCitas'),cliente:g('_crmClientes'),encargo:g('_allEncargos'),factura:g('_crmFacturas'),lead:g('allLeads'),producto:g('_crmInventario')});
+  function acciones(tipo,id){
+    const x=(ARR()[tipo]||[]).find(o=>String(o.id)===String(id))||{};
+    const S='sep';
+    if(tipo==='cita') return {t:'Cita · '+(x.client_name||''),a:[
+      ['👁','Ver cita',()=>llamar('openCitaModal',id)],['✎','Editar',()=>llamar('openEditCitaModal',id)],S,
+      ...(x.status!=='confirmed'?[['✓','Confirmar',()=>llamar('cambiarEstadoCita',id,'confirmed')]]:[]),
+      ...(x.status!=='completed'?[['★','Marcar completada',()=>llamar('cambiarEstadoCita',id,'completed')]]:[]),
+      ...(x.status!=='cancelled'?[['✕','Cancelar cita',()=>llamar('cambiarEstadoCita',id,'cancelled')]]:[]),S,
+      ...contacto(x.client_name,x.client_phone,x.client_email),
+      ['＋','Crear cliente con estos datos',()=>llamar('crearClienteDesdeCita',id)],S,
+      ['🗑','Eliminar para siempre',()=>llamar('deleteCitaPermanente',id),'peligro']]};
+    if(tipo==='cliente') return {t:'Cliente · '+(x.name||''),a:[
+      ['👁','Ver ficha',()=>llamar('crmVerCliente',id)],['✎','Editar',()=>llamar('crmEditCliente',id)],
+      ['📅','Nueva cita',()=>llamar('openNuevaCitaModal')],['↻','Nuevo seguimiento',()=>llamar('jaNuevoSeguimiento',id)],S,
+      ...contacto(x.name,x.phone,x.email),S,
+      ['🗑','Eliminar cliente',()=>llamar('crmDeleteCliente',id),'peligro']]};
+    if(tipo==='encargo'){ const cli=(g('_crmClientes')||[]).find(c=>c.id===x.client_id)||{};
+      return {t:'Encargo · '+(x.title||x.client_name||''),a:[
+      ['✎','Abrir / editar',()=>llamar('crmEditEncargo',id)],['🧾','Generar factura',()=>llamar('generarFacturaDesdeEncargo',id)],
+      ['🖨','Hoja de taller',()=>llamar('imprimirTaller',id)],S,
+      ...contacto(x.client_name||cli.name,cli.phone,cli.email),S,
+      ['🗑','Eliminar encargo',()=>llamar('deleteEncargo',id),'peligro']]}; }
+    if(tipo==='factura'){ const cli=(g('_crmClientes')||[]).find(c=>c.id===x.client_id)||{};
+      return {t:(x.type==='presupuesto'?'Presupuesto':'Factura')+' · '+(x.invoice_number||x.client_name||''),a:[
+      ['👁','Ver',()=>llamar('crmViewFactura',id)],['✎','Editar',()=>llamar('crmEditFactura',id)],
+      ...(x.type==='presupuesto'?[['→','Convertir en factura',()=>llamar('convertirAFactura',id)]]:[]),
+      ...(x.type!=='presupuesto'&&x.status!=='paid'&&x.payment_status!=='paid'?[['€','Marcar pagada',()=>llamar('marcarPagada',id)]]:[]),
+      ['✉','Enviar por email',()=>llamar('enviarEmailDoc',id)],S,
+      ...contacto(x.client_name||cli.name,cli.phone,cli.email),S,
+      ['🗑','Eliminar',()=>llamar('crmDeleteFactura',id),'peligro']]}; }
+    if(tipo==='lead') return {t:'Lead · '+(x.name||''),a:[
+      ['👁','Ver lead',()=>llamar('openLeadModal',id)],['＋','Pasar a cliente',()=>llamar('leadToCRM',id)],S,
+      ...contacto(x.name,x.phone,x.email)]};
+    if(tipo==='producto') return {t:'Producto · '+(x.name||''),a:[
+      ['✎','Editar',()=>llamar('crmEditInventario',id)],
+      ['＋','Entrada de stock',()=>llamar('invMovimiento',id,'entrada')],['−','Salida de stock',()=>llamar('invMovimiento',id,'salida')],S,
+      ['🗑','Eliminar producto',()=>llamar('crmDeleteInventario',id),'peligro']]};
+    return null;
+  }
+  function generales(t){
+    const a=[]; const hueco=t.closest&&t.closest('.grid-row[onclick]');
+    if(hueco){ const m=(hueco.getAttribute('onclick')||'').match(/'([^']+)','([^']+)'/); if(m) a.push(['📅','Nueva cita a las '+m[2],()=>llamar('openNuevaCitaModalFechaHora',m[1],m[2])]); }
+    else a.push(['📅','Nueva cita',()=>llamar('openNuevaCitaModal')]);
+    a.push(['👤','Nuevo cliente',()=>llamar('crmOpenClienteModal')],'sep',['↻','Actualizar datos',()=>{llamar('loadAll');showToast('✓ Datos actualizados');}]);
+    return {t:'Panel',a};
+  }
+  function abrir(x,y,menu){
+    M.innerHTML=`<div class="t">${esc(menu.t)}</div>`+menu.a.map((it,i)=>it==='sep'?'<hr>':`<button type="button" role="menuitem" data-i="${i}" class="${it[3]||''}"><span class="i">${it[0]}</span>${esc(it[1])}</button>`).join('').replace(/^(<hr>)+|(<hr>)+$/g,'').replace(/(<hr>){2,}/g,'<hr>');
+    M._a=menu.a; M.style.display='block';
+    const w=M.offsetWidth,h=M.offsetHeight;
+    M.style.left=Math.max(8,Math.min(x,innerWidth-w-8))+'px'; M.style.top=Math.max(8,Math.min(y,innerHeight-h-8))+'px';
+    M.querySelector('button')?.focus({preventScroll:true});
+  }
+  function cerrar(){ M.style.display='none'; }
+  M.addEventListener('click',e=>{ const b=e.target.closest('button[data-i]'); if(!b) return; const it=M._a[+b.dataset.i]; cerrar(); try{ it[2](); }catch(err){ console.error(err); showToast('No se pudo: '+err.message); } });
+  function alClicDerecho(e,x,y){
+    if(!document.getElementById('app')||document.getElementById('app').style.display==='none') return false;
+    const t=e.target;
+    if(t.closest('input,textarea,select,[contenteditable="true"],#ja-ctx')) return false;   // ahí se deja el menú normal (copiar/pegar)
+    const d=detectar(t); const menu=d?acciones(d.tipo,d.id):generales(t);
+    if(!menu) return false;
+    abrir(x,y,menu); return true;
+  }
+  document.addEventListener('contextmenu',e=>{ if(alClicDerecho(e,e.clientX,e.clientY)) e.preventDefault(); });
+  // Móvil: mantener pulsado medio segundo
+  let tm=null,p0=null;
+  document.addEventListener('touchstart',e=>{ if(e.touches.length!==1) return; const tt=e.touches[0]; p0={x:tt.clientX,y:tt.clientY,t:e.target};
+    tm=setTimeout(()=>{ if(alClicDerecho({target:p0.t},p0.x,p0.y)){ navigator.vibrate&&navigator.vibrate(15); const tragar=ev=>{ if(M.contains(ev.target)) return; ev.stopPropagation(); ev.preventDefault(); }; document.addEventListener('click',tragar,{capture:true,once:true}); setTimeout(()=>document.removeEventListener('click',tragar,{capture:true}),450); } },550); },{passive:true});
+  document.addEventListener('touchmove',e=>{ if(!p0) return; const tt=e.touches[0]; if(Math.abs(tt.clientX-p0.x)>10||Math.abs(tt.clientY-p0.y)>10) clearTimeout(tm); },{passive:true});
+  document.addEventListener('touchend',()=>clearTimeout(tm));
+  document.addEventListener('mousedown',e=>{ if(!M.contains(e.target)) cerrar(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') cerrar(); });
+  addEventListener('scroll',cerrar,true); addEventListener('resize',cerrar);
+})();
+</script>
+
 </body>
 </html>
