@@ -202,6 +202,12 @@ tr:hover td{background:var(--blue-light);}
 .pay-tag{background:#e8f6ee;color:var(--uae-green);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
 
 /* ═══ MODO LLAMADA ═══ */
+.nichos{display:flex;flex-wrap:wrap;gap:8px;margin:-6px 0 18px;align-items:center;}
+.nichos .lbl{font-size:12px;font-weight:600;color:var(--txt3);margin-right:2px;}
+.nichos button{border:1.5px solid var(--border);background:var(--card,#fff);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;}
+.nichos button b{font-weight:600;color:var(--txt3);margin-left:4px;}
+.nichos button.on{background:var(--ink);border-color:var(--ink);color:#fff;}
+.nichos button.on b{color:rgba(255,255,255,.7);}
 .ll-top{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:12px;margin-bottom:18px;}
 .ll-stat{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
 .ll-stat b{display:block;font-family:var(--display);font-size:26px;font-weight:800;line-height:1.1;}
@@ -769,6 +775,7 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
         <div class="ll-stat"><span>Demos hoy</span><b id="ll-demos">0</b></div>
         <div class="ll-stat"><span>En tu cola</span><b id="ll-cola">0</b></div>
       </div>
+      <div class="nichos" id="ll-nichos"></div>
       <div class="ll-grid">
         <div id="ll-main"></div>
         <div class="ll-side">
@@ -980,7 +987,8 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
         <div><h1>Todos los <em>contactos</em></h1><div class="page-sub">Filtra, actualiza etapas y agenda reuniones</div></div>
       </div>
       <div class="card" style="padding:16px 20px;margin-bottom:18px;">
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
+          <div class="f-group" style="margin-bottom:0;"><label>Nicho</label><select id="f-nicho" onchange="renderContactos()"><option value="">Todos</option></select></div>
           <div class="f-group" style="margin-bottom:0;"><label>Captador</label><select id="f-captador" onchange="renderContactos()"><option value="">Todos</option></select></div>
           <div class="f-group" style="margin-bottom:0;"><label>Etapa</label><select id="f-etapa" onchange="renderContactos()">
             <option value="">Todas</option>
@@ -2332,8 +2340,10 @@ function renderContactos(){
   const fcan=document.getElementById('f-canal').value;
   const ff=document.getElementById('f-fecha').value;
   const fb=(document.getElementById('f-busqueda').value||'').toLowerCase();
+  const fn=document.getElementById('f-nicho').value;
+  nichoSelect(ALL_CONTACTOS);
   let lista=ALL_CONTACTOS.filter(c=>
-    (!fc||c.captador===fc) && (!fe||c.etapa===fe) && (!fcan||c.canal===fcan) && (!ff||c.fecha_alta===ff) &&
+    (!fn||nichoDe(c)===fn) && (!fc||c.captador===fc) && (!fe||c.etapa===fe) && (!fcan||c.canal===fcan) && (!ff||c.fecha_alta===ff) &&
     (!fb||coincide(c,fb))
   );
   const tbody=document.getElementById('contactos-tbody');
@@ -2863,7 +2873,49 @@ function coincide(c,q){
   return tels.some(t=>t.includes(dq)||t.replace(/^34(?=\d{9}$)/,'').includes(dq));
 }
 function telBonito(t){const d=telLimpio(t);const m=/^\+34(\d{3})(\d{3})(\d{3})$/.exec(d);return m?`${m[1]} ${m[2]} ${m[3]}`:d;}
-function llCola(){
+/* ── Nichos: agrupan el sector (y el nombre) en grupos para filtrar ── */
+const NICHOS=[
+  {id:'estetica',n:'Estética y belleza',re:/est[eé]tic|belleza|peluq|barber|u[ñn]as|nail|spa\b|masaj|depila|l[aá]ser|micropig|tatu|pesta[ñn]|cejas|maquill|bronce|solarium|cosm[eé]t/i},
+  {id:'salud',n:'Salud',re:/cl[ií]nic|fisio|logoped|psic[oó]l|dental|dentist|odont|[oó]ptic|veterin|podolog|nutric|osteop|quiropr|m[eé]dic|salud|farmac|enfermer|terapi/i},
+  {id:'deporte',n:'Deporte',re:/entrenad|gimnas|gym|crossfit|surf|buceo|yoga|pilates|box|artes marciales|kick|deport|n[aá]utic|padel|p[aá]del|tenis|danza|baile/i},
+  {id:'gestoria',n:'Gestorías',re:/gestor|asesor|abogad|contab|seguros|inmobiliar/i},
+  {id:'hosteleria',n:'Hostelería',re:/restaur|\bbar\b|caf[eé]|cafeter|hotel|apartament|hostel|pizz|tasca|guachinche/i},
+  {id:'oficios',n:'Oficios y talleres',re:/taller|reforma|oficio|constru|fontaner|electric|carpinter|cerrajer|pintor|climatiz|recambio|concesion|mec[aá]nic/i},
+  {id:'formacion',n:'Formación',re:/academia|autoescuela|escuela|colegio|formaci|idioma|clases|guarder/i},
+];
+function nichoDe(c){
+  const t=(c.sector||'')+' ';
+  for(const n of NICHOS) if(n.re.test(t)) return n.id;
+  const e=c.empresa||'';
+  for(const n of NICHOS) if(n.re.test(e)) return n.id;
+  return 'otros';
+}
+const nichoNombre=id=>id==='otros'?'Otros':(NICHOS.find(n=>n.id===id)||{}).n||id;
+let LL_NICHO='';
+try{LL_NICHO=localStorage.getItem('crm_ll_nicho')||'';}catch(e){}
+function llNicho(id){
+  LL_NICHO=LL_NICHO===id?'':id;
+  try{localStorage.setItem('crm_ll_nicho',LL_NICHO);}catch(e){}
+  if(LL_NICHO&&LL_ACTUAL){const c=LISTA.find(x=>x.id===LL_ACTUAL);if(c&&nichoDe(c)!==LL_NICHO)LL_ACTUAL=null;}
+  llRender();
+}
+function llRenderNichos(){
+  const el=document.getElementById('ll-nichos');if(!el)return;
+  const base=llColaTodos(),cuenta={};
+  base.forEach(c=>{const k=nichoDe(c);cuenta[k]=(cuenta[k]||0)+1;});
+  const ids=[...NICHOS.map(n=>n.id),'otros'].filter(k=>cuenta[k]||k===LL_NICHO);
+  el.innerHTML=`<span class="lbl">Nicho:</span><button class="${LL_NICHO?'':'on'}" onclick="llNicho('')">Todos<b>${base.length}</b></button>`
+    +ids.map(k=>`<button class="${LL_NICHO===k?'on':''}" onclick="llNicho('${k}')">${esc(nichoNombre(k))}<b>${cuenta[k]||0}</b></button>`).join('');
+}
+function nichoSelect(lista){
+  const sel=document.getElementById('f-nicho');if(!sel)return;
+  const v=sel.value,cuenta={};
+  lista.forEach(c=>{const k=nichoDe(c);cuenta[k]=(cuenta[k]||0)+1;});
+  sel.innerHTML='<option value="">Todos</option>'+[...NICHOS.map(n=>n.id),'otros'].filter(k=>cuenta[k]).map(k=>`<option value="${k}">${esc(nichoNombre(k))} (${cuenta[k]})</option>`).join('');
+  sel.value=v;
+}
+function llCola(){return llColaTodos().filter(c=>!LL_NICHO||nichoDe(c)===LL_NICHO);}
+function llColaTodos(){
   const ahora=Date.now();
   return LISTA.filter(c=>esMio(c)&&c.telefono&&!['descartado','cerrado','reunion'].includes(c.etapa))
     .filter(c=>!c.proxima_llamada||new Date(c.proxima_llamada).getTime()<=ahora)
@@ -2905,6 +2957,7 @@ function llRender(){
   const c=LISTA.find(x=>x.id===LL_ACTUAL);
   document.getElementById('ll-main').innerHTML=c?llFicha(c):llVacio();
   document.getElementById('ll-guion').innerHTML=llGuion(c);
+  llRenderNichos();
   llRenderCola();
   llRenderEquipo();
 }
