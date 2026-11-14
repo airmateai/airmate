@@ -1210,10 +1210,10 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
   <div class="modal">
     <div class="modal-hd"><h3>+ Nuevo contacto</h3><button class="modal-close" onclick="closeModal('modal-contacto')">✕</button></div>
     <div class="modal-body">
-      <div class="f-group"><label>Nombre de la empresa *</label><input id="c-empresa" placeholder="Ej. Restaurante El Puerto"></div>
+      <div class="f-group"><label>Nombre de la empresa *</label><input id="c-empresa" placeholder="Ej. Clínica Dental El Puerto"></div>
       <div class="f-row">
         <div class="f-group"><label>Teléfono</label><input id="c-telefono" placeholder="+34 600 000 000"></div>
-        <div class="f-group"><label>Sector / a qué se dedica</label><input id="c-sector" placeholder="Ej. Hostelería"></div>
+        <div class="f-group"><label>Sector / a qué se dedica</label><input id="c-sector" placeholder="Ej. Clínica dental"></div>
       </div>
       <div class="f-row">
         <div class="f-group"><label>Nivel del lead</label>
@@ -1238,10 +1238,10 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
     <div class="modal-hd"><h3 id="mg-titulo">Contacto</h3><button class="modal-close" onclick="closeModal('modal-gestion')">✕</button></div>
     <div class="modal-body">
       <div id="mg-info" style="font-size:12px;color:var(--txt3);margin-bottom:10px;"></div>
-      <div class="f-group"><label>Nombre de la empresa</label><input id="mg-empresa" placeholder="Ej. Restaurante El Puerto"></div>
+      <div class="f-group"><label>Nombre de la empresa</label><input id="mg-empresa" placeholder="Ej. Clínica Dental El Puerto"></div>
       <div class="f-row">
         <div class="f-group"><label>Teléfono</label><input id="mg-telefono" placeholder="+34 600 000 000"></div>
-        <div class="f-group"><label>Sector</label><input id="mg-sector" placeholder="Ej. Hostelería"></div>
+        <div class="f-group"><label>Sector</label><input id="mg-sector" placeholder="Ej. Clínica dental"></div>
       </div>
       <div class="f-group"><label>Canal de contacto</label>
         <select id="mg-canal"><option value="whatsapp">WhatsApp</option><option value="llamada">Llamada fría</option><option value="email">Email</option><option value="instagram">Instagram</option></select>
@@ -2879,10 +2879,12 @@ const NICHOS=[
   {id:'salud',n:'Salud',re:/cl[ií]nic|fisio|logoped|psic[oó]l|dental|dentist|odont|[oó]ptic|veterin|podolog|nutric|osteop|quiropr|m[eé]dic|salud|farmac|enfermer|terapi/i},
   {id:'deporte',n:'Deporte',re:/entrenad|gimnas|gym|crossfit|surf|buceo|yoga|pilates|box|artes marciales|kick|deport|n[aá]utic|padel|p[aá]del|tenis|danza|baile/i},
   {id:'gestoria',n:'Gestorías',re:/gestor|asesor|abogad|contab|seguros|inmobiliar/i},
-  {id:'hosteleria',n:'Hostelería',re:/restaur|\bbar\b|caf[eé]|cafeter|hotel|apartament|hostel|pizz|tasca|guachinche/i},
   {id:'oficios',n:'Oficios y talleres',re:/taller|reforma|oficio|constru|fontaner|electric|carpinter|cerrajer|pintor|climatiz|recambio|concesion|mec[aá]nic/i},
   {id:'formacion',n:'Formación',re:/academia|autoescuela|escuela|colegio|formaci|idioma|clases|guarder/i},
 ];
+/* Hostelería: nicho eliminado (14-nov-2026). No sale en la cola de llamadas ni en los filtros. */
+const RE_HOSTELERIA=/restaur|\bbar\b|caf[eé]|cafeter|hotel|apartament|hostel|pizz|tasca|guachinche/i;
+const esHosteleria=c=>{const t=c.sector||'';return t.trim()?RE_HOSTELERIA.test(t)&&!NICHOS.some(n=>n.re.test(t)):(RE_HOSTELERIA.test(c.empresa||'')&&!NICHOS.some(n=>n.re.test(c.empresa||'')));};
 function nichoDe(c){
   const t=(c.sector||'')+' ';
   for(const n of NICHOS) if(n.re.test(t)) return n.id;
@@ -2917,7 +2919,7 @@ function nichoSelect(lista){
 function llCola(){return llColaTodos().filter(c=>!LL_NICHO||nichoDe(c)===LL_NICHO);}
 function llColaTodos(){
   const ahora=Date.now();
-  return LISTA.filter(c=>esMio(c)&&c.telefono&&!['descartado','cerrado','reunion'].includes(c.etapa))
+  return LISTA.filter(c=>esMio(c)&&c.telefono&&!['descartado','cerrado','reunion'].includes(c.etapa)&&!esHosteleria(c))
     .filter(c=>!c.proxima_llamada||new Date(c.proxima_llamada).getTime()<=ahora)
     .sort((a,b)=>{
       const ca=a.proxima_llamada?0:1, cb=b.proxima_llamada?0:1;      // primero los que tocan volver a llamar
