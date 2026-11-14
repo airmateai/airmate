@@ -42,12 +42,12 @@ function plantilla(c: Contacto, tipo: string) {
 
 Soy ${yo}, de Airmate. Gracias por atenderme por teléfono. Como te comenté, te dejo la información.
 
-Somos una empresa de inteligencia artificial aquí en Tenerife y ayudamos a negocios como ${c.empresa} a ganar tiempo y vender más:
+Somos una empresa de inteligencia artificial aquí en Tenerife y ayudamos a negocios como ${c.empresa} a ganar tiempo y tener todo el negocio organizado:
 
 • **Web con reservas y pagos online:** tus ${gente} eligen hora y dejan la señal solos, a cualquier hora.
 • **Sistema de gestión a medida:** agenda, fichas de ${gente}, bonos, cobros, stock y facturas, en un panel en el móvil.
 • **Plataformas para eventos:** web del evento, lista de asistentes con emails automáticos y votaciones por QR.
-• **Contenido con IA para tus redes:** reels con guion, voz y montaje.
+• **Edición de vídeo:** tú grabas con el móvil y nosotros lo editamos para tus redes.
 
 ¿Lo vemos 15 minutos esta semana y te enseño cómo quedaría en tu negocio? Contéstame a este email con el día que mejor te venga, o llámame al ${TEL}.`,
   };
