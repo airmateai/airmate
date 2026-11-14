@@ -776,6 +776,7 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
         <div class="ll-stat"><span>En tu cola</span><b id="ll-cola">0</b></div>
       </div>
       <div class="nichos" id="ll-nichos"></div>
+      <div class="nichos" id="ll-masivo" style="margin-top:-10px"></div>
       <div class="ll-grid">
         <div id="ll-main"></div>
         <div class="ll-side">
@@ -2902,6 +2903,7 @@ function llNicho(id){
   llRender();
 }
 function llRenderNichos(){
+  llRenderMasivo();
   const el=document.getElementById('ll-nichos');if(!el)return;
   const base=llColaTodos(),cuenta={};
   base.forEach(c=>{const k=nichoDe(c);cuenta[k]=(cuenta[k]||0)+1;});
@@ -3393,6 +3395,46 @@ async function llInfoEmail(){
     if(ok)toast('📧 Email enviado · seguimientos automáticos activados');
   }catch(e){toast('No se ha enviado: '+e.message,'error');}
   btn.disabled=false;btn.textContent='📧 Enviar email';
+}
+/* ── Envío masivo: email de info a todos los ya llamados que tengan email y no lo hayan recibido ── */
+let LL_MASIVO_ON=false;
+function llMasivoLista(){
+  return LISTA.filter(c=>esMio(c)&&c.email&&(c.llamadas||[]).length&&!(c.emails||[]).some(e=>e.ok)
+    &&!['descartado','cerrado','reunion'].includes(c.etapa)&&!esHosteleria(c)&&(!LL_NICHO||nichoDe(c)===LL_NICHO));
+}
+function llRenderMasivo(){
+  const el=document.getElementById('ll-masivo');if(!el||LL_MASIVO_ON)return;
+  const n=llMasivoLista().length;
+  el.innerHTML=n?`<button onclick="llEnviarMasivo()">📧 Mandar info por email a todos (${n})${LL_NICHO?' · '+esc(nichoNombre(LL_NICHO)):''}</button>`:'';
+}
+async function llEnviarMasivo(){
+  const lista=llMasivoLista();if(!lista.length||LL_MASIVO_ON)return;
+  if(!confirm(`Se va a mandar el email de info a ${lista.length} contacto${lista.length>1?'s':''} ya llamados${LL_NICHO?' ('+nichoNombre(LL_NICHO)+')':''}, con seguimientos automáticos. ¿Seguimos?`))return;
+  LL_MASIVO_ON=true;
+  const el=document.getElementById('ll-masivo');
+  const {data:{session}}=await SB.auth.getSession();
+  let ok=0,fallos=0;
+  for(const c of lista){
+    if(el)el.innerHTML=`<button disabled>📧 Enviando ${ok+fallos+1} de ${lista.length}…</button>`;
+    try{
+      const r=await fetch(FN_EMAIL,{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+(session?session.access_token:SB_KEY)},body:JSON.stringify({contacto_id:c.id,email:c.email})});
+      const out=await r.json().catch(()=>({}));
+      if(!r.ok||!out.ok){fallos++;if(/^(402|429)/.test(String(out.error||''))||r.status===401)break;continue;}
+      const t=new Date().toISOString();
+      const payload={etapa:'interesado',temperatura:'templado',proxima_llamada:proxHora(2,10,30).toISOString(),resultado:'info',
+        llamadas:[...(c.llamadas||[]),{t,r:'info',por:SESSION.nombre,n:'Email a '+c.email+' (envío masivo)'}],
+        updated_at:t};
+      const {error}=await SB.from('am_crm_contactos').update(payload).eq('id',c.id);
+      if(!error)Object.assign(c,payload);
+      c.emails=[...(c.emails||[]),{t,ok:true,tipo:'info'}];
+      ok++;
+    }catch(e){fallos++;}
+    await new Promise(r=>setTimeout(r,1200));
+  }
+  LL_MASIVO_ON=false;
+  toast(`📧 ${ok} email${ok!==1?'s':''} enviado${ok!==1?'s':''}${fallos?' · '+fallos+' fallido'+(fallos>1?'s':''):''} · seguimientos automáticos activados`,fallos&&!ok?'error':undefined);
+  try{await cargarContactos();}catch(e){}
+  llRender();
 }
 function llInfoWhatsApp(){
   const c=LISTA.find(x=>x.id===LL_ACTUAL);if(!c)return;
