@@ -887,7 +887,7 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
           <div class="pc-sec"><span>1</span><div style="flex:1;">
             <div class="pc-lbl">Cliente y petición</div>
             <div class="f-row">
-              <div class="f-group"><label>Cliente</label><input id="pc-cli" list="pc-cli-list" placeholder="Ej. Divas Skin Care" oninput="pcCalc()"><datalist id="pc-cli-list"></datalist></div>
+              <div class="f-group"><label>Cliente</label><input id="pc-cli" list="pc-cli-list" placeholder="Ej. Clínica Dental Sur" oninput="pcCalc()"><datalist id="pc-cli-list"></datalist></div>
               <div class="f-group"><label>Título corto</label><input id="pc-tit" placeholder="Ej. Clientas por tratamiento" oninput="delete this.dataset.auto;pcCalc()"></div>
             </div>
             <div class="f-group" style="margin-bottom:0;"><label>Qué piden exactamente</label><textarea id="pc-desc" rows="4" placeholder="Pega o escribe lo que te ha pedido el cliente. Ej.: «en la zona de regalar que los bonos tengan un apartado para poner nombre a nombre, compra 3 sesiones y cada una la regala a una persona»" oninput="pcAuto()" onpaste="setTimeout(pcAuto,0)"></textarea></div>
@@ -927,10 +927,10 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
             <div class="pc-acts">
               <button class="pc-cta" onclick="pcCopiar()">Copiar presupuesto para WhatsApp</button>
               <button class="pc-sec-btn" onclick="pcPDF()">Descargar presupuesto en PDF</button>
-              <button class="pc-sec-btn" onclick="pcGuardar()">Guardar en Encargos (Presupuesto)</button>
+              <button class="pc-sec-btn pc-solo-jefe" onclick="pcGuardar()">Guardar en Encargos (Presupuesto)</button>
             </div>
           </div>
-          <div class="card" style="padding:18px 20px;margin-top:16px;">
+          <div class="card pc-solo-jefe" style="padding:18px 20px;margin-top:16px;">
             <div style="font-weight:700;font-size:14px;margin-bottom:8px;">Últimos presupuestos</div>
             <div id="pc-hist" style="font-size:13px;"></div>
           </div>
@@ -1448,7 +1448,7 @@ const NAV_ICONS={
   finanzas:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-2.8-2.8L7 14"/></svg>'
 };
 const NAV_BY_ROLE={
-  captador:[{id:'llamar',label:'Llamar'},{id:'tareas',label:'Tareas'},{id:'pipeline',label:'Pipeline'},{id:'mio',label:'Mi día'}],
+  captador:[{id:'llamar',label:'Llamar'},{id:'pipeline',label:'Seguimiento'},{id:'mio',label:'Mi día'},{id:'calcular',label:'Presupuestar'}],
   secretaria:[{id:'pipeline',label:'Pipeline'},{id:'tareas',label:'Tareas'},{id:'resumen',label:'Resumen'},{id:'contactos',label:'Contactos'},{id:'reuniones',label:'Reuniones'},{id:'comisiones',label:'Comisiones'}],
   jefe:[{id:'escalar',label:'Escalar'},{id:'tareas',label:'Tareas'},{id:'clientes',label:'Clientes'},{id:'calcular',label:'Presupuestar'},{id:'llamar',label:'Llamar'},{id:'pipeline',label:'Pipeline'},{id:'resumen',label:'Resumen'},{id:'contactos',label:'Contactos'},{id:'reuniones',label:'Reuniones'},{id:'comisiones',label:'Comisiones'},{id:'encargos',label:'Encargos'},{id:'facturacion',label:'Facturación'},{id:'finanzas',label:'Finanzas'}]
 };
@@ -1496,7 +1496,13 @@ function goPage(id,btn){
   if(id==='resumen')renderResumen();
   if(id==='escalar')renderEscalar();
   if(id==='clientes'){CL_SEL=null;if(!CL_OK)cargarClientesAm();else renderClientesAm();if(!ENCARGOS_LOADED)cargarEncargos();}
-  if(id==='calcular'){if(!CL_OK)cargarClientesAm();pcInit();if(!ENCARGOS_LOADED)cargarEncargos().then(pcHist);else pcHist();}
+  if(id==='calcular'){
+    // El captador solo usa la calculadora: no ve clientes, encargos ni presupuestos guardados de Airmate
+    const cap=SESSION.rol==='captador';
+    document.querySelectorAll('#page-calcular .pc-solo-jefe').forEach(el=>el.style.display=cap?'none':'');
+    if(cap){pcInit();}
+    else{if(!CL_OK)cargarClientesAm();pcInit();if(!ENCARGOS_LOADED)cargarEncargos().then(pcHist);else pcHist();}
+  }
   if(id==='tareas')renderTareas();
   if(id==='contactos')renderContactos();
   if(id==='reuniones')renderReuniones();
@@ -1525,6 +1531,7 @@ async function cargarContactos(){
     // La lista de llamadas se pide aparte (la consulta general puede venir cortada a 1.000 filas)
     try{
       let q2=SB.from('am_crm_contactos').select('*').like('origen','lista%').limit(5000);
+      if(SESSION.rol==='captador')q2=q2.eq('captador',SESSION.nombre); // el captador solo descarga sus leads
       const r2=await q2;
       if(r2.error)throw r2.error;
       const ids=new Set(LISTA.map(c=>c.id));
@@ -1989,7 +1996,8 @@ function pcInit(){
     
     pcNivel('n3');
   }
-  const clientes=[...new Set([...CLIENTES_AM.map(c=>c.nombre),...ALL_CONTACTOS.filter(c=>c.etapa==='cerrado').map(c=>c.empresa),'Divas Skin Care','Jose Acosta','Costa Norte','Fight Club · Fight2One','Entrena con Flow'])];
+  const clientes=SESSION.rol==='captador'?[...new Set(ALL_CONTACTOS.map(c=>c.empresa).filter(Boolean))]
+    :[...new Set([...CLIENTES_AM.map(c=>c.nombre),...ALL_CONTACTOS.filter(c=>c.etapa==='cerrado').map(c=>c.empresa),'Divas Skin Care','Jose Acosta','Costa Norte','Fight Club · Fight2One','Entrena con Flow'])];
   document.getElementById('pc-cli-list').innerHTML=clientes.map(c=>`<option value="${esc(c)}">`).join('');
   pcCalc();
 }
