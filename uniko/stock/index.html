@@ -33,9 +33,13 @@ h1{font-size:34px;margin:6px 0 4px}.sub{color:var(--g);font-size:15px;margin-bot
 .prod .u{text-align:right}.prod .u b{display:block;font-size:24px;font-weight:900}.prod .u small{font-size:12px;color:var(--g)}
 .tag{display:inline-block;font-size:11.5px;font-weight:900;padding:3px 7px;margin-top:6px;margin-right:4px}
 .tag.r{background:var(--r);color:#fff}.tag.a{background:var(--a);color:#000}.tag.s{background:#333;color:#ddd}
-nav.bot{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#000;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom)}
+nav.bot{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#000;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom)}
 nav.bot button{padding:12px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12.5px;font-weight:800;color:var(--g)}
-nav.bot button i{font-style:normal;font-size:22px}nav.bot button.on{color:var(--l)}
+nav.bot button i{font-style:normal;font-size:22px;position:relative}nav.bot button i em{position:absolute;top:-6px;right:-12px;background:var(--r);color:#fff;font-style:normal;font-size:11px;font-weight:900;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;padding:0 4px}
+.wp{background:var(--n2);border:1px solid var(--line);padding:14px;margin-bottom:10px}.wp .top{display:flex;gap:12px;align-items:center}.wp img{width:56px;height:56px;object-fit:cover}
+.wp h3{font-size:16px;font-weight:900}.wp .lin{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);margin-top:10px}
+.wp .lin b{font-size:15px}.wp .lin small{display:block;color:var(--g);font-size:12.5px;margin-top:2px}.wp .pon{font-size:20px;font-weight:900;color:var(--l);white-space:nowrap}
+.wp .acc{display:flex;gap:8px;margin-top:12px}.wp .acc a,.wp .acc button{flex:1;min-height:50px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;text-decoration:none;background:var(--n3);color:var(--b)}.wp .acc button{background:var(--l);color:var(--n)}nav.bot button.on{color:var(--l)}
 .pg{display:none}.pg.on{display:block}
 .hoja{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center}
 .hoja.on{display:flex}
@@ -87,7 +91,7 @@ nav.bot button i{font-style:normal;font-size:22px}nav.bot button.on{color:var(--
 <header><b>UNI<i>K</i>O</b><button onclick="salir()">Salir</button></header>
 
 <section class="pg on" id="pg-stock">
- <h1 class="disp">Tu stock</h1><p class="sub">El mismo que tu web. Toca una prenda para ver colores y tallas.</p>
+ <h1 class="disp">Tu stock</h1><p class="sub">Toca una prenda para ver colores y tallas.</p>
  <div class="kpis" id="kpis"></div>
  <div class="busca"><input id="q" placeholder="Buscar prenda…" oninput="pintarLista()"></div>
  <div class="chips" id="cats"></div>
@@ -95,19 +99,24 @@ nav.bot button i{font-style:normal;font-size:22px}nav.bot button.on{color:var(--
 </section>
 
 <section class="pg" id="pg-vender">
- <h1 class="disp">Vender</h1><p class="sub">¿Te han pedido algo por WhatsApp o en el showroom? Tres toques y se quita de la web.</p>
+ <h1 class="disp">Vender</h1><p class="sub">¿Te han pedido algo por WhatsApp o en el showroom? Apúntalo aquí en tres toques.</p>
  <div class="busca"><input id="qv" placeholder="Buscar prenda…" oninput="pintarElegir('vender')"></div>
  <div id="elegir-vender"></div>
 </section>
 
 <section class="pg" id="pg-recibir">
- <h1 class="disp">Me ha llegado ropa</h1><p class="sub">Apunta lo que te manda el proveedor y se suma en la web.</p>
+ <h1 class="disp">Me ha llegado ropa</h1><p class="sub">Apunta lo que te manda el proveedor.</p>
  <div class="busca"><input id="qr" placeholder="Buscar prenda…" oninput="pintarElegir('recibir')"></div>
  <div id="elegir-recibir"></div>
 </section>
 
+<section class="pg" id="pg-web">
+ <h1 class="disp">Para la web</h1><p class="sub">Lo que has apuntado y todavía no has cambiado en tu tienda online. Cuando llegues a casa, ponlo así y márcalo.</p>
+ <div id="web"></div>
+</section>
+
 <section class="pg" id="pg-mover">
- <h1 class="disp">Qué mover</h1><p class="sub">Lo que no se vende y lo que se te está acabando (últimos 45 días, web + lo que vendes aquí).</p>
+ <h1 class="disp">Qué mover</h1><p class="sub">Lo que no se vende y lo que se te está acabando (lo que apuntas aquí, últimos 45 días).</p>
  <div id="mover"><div class="cargando">Mirando tus ventas…</div></div>
  <div class="paso">Últimos movimientos</div>
  <div class="hist" id="hist"></div>
@@ -117,6 +126,7 @@ nav.bot button i{font-style:normal;font-size:22px}nav.bot button.on{color:var(--
  <button class="on" data-p="stock" onclick="ir('stock')"><i>📦</i>Stock</button>
  <button data-p="vender" onclick="ir('vender')"><i>💸</i>Vender</button>
  <button data-p="recibir" onclick="ir('recibir')"><i>🚚</i>Recibir</button>
+ <button data-p="web" onclick="ir('web')"><i>🌐<em id="nweb" hidden>0</em></i>Para la web</button>
  <button data-p="mover" onclick="ir('mover')"><i>🔥</i>Qué mover</button>
 </nav>
 </div>
@@ -134,7 +144,7 @@ const eur=n=>Math.round(n).toLocaleString('es-ES',{useGrouping:'always'})+' €'
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const TALLAS=['XXS','XS','S','M','L','XL','XXL','3XL','ÚNICA'];
 const bonito=s=>{s=String(s||'').trim().replace(/-/g,' ').replace(/^marron$/i,'Marrón');return s?s.charAt(0).toUpperCase()+s.slice(1):s};
-let P=[],VENTAS={},MOVS=[],CATSEL='Todo',F={};
+let P=[],MOVS=[],CATSEL='Todo',F={};
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 
@@ -164,12 +174,13 @@ const nivel=q=>q===null?'q':q<=0?'r':q<=2?'a':'';
 const colores=p=>[...new Set(filasDe(p).map(f=>bonito(f.color)))];
 const tallasDe=p=>{const ts=[...new Set(filasDe(p).map(f=>f.talla))];return ts.sort((a,b)=>(TALLAS.indexOf(a)+99*(TALLAS.indexOf(a)<0))-(TALLAS.indexOf(b)+99*(TALLAS.indexOf(b)<0)))};
 const fila=(p,c,t)=>filasDe(p).find(f=>bonito(f.color)===c&&f.talla===t);
-const vendidas=p=>(VENTAS[p.id]?.n||0)+MOVS.filter(m=>m.product_id==p.id&&m.tipo==='venta').reduce((a,m)=>a-m.delta,0);
+const vendidas=p=>MOVS.filter(m=>m.product_id==p.id&&m.tipo==='venta'&&Date.now()-new Date(m.created_at)<45*864e5).reduce((a,m)=>a-m.delta,0);
 async function cargar(){
  const cache=lsGet('uniko_cat');if(cache&&cache.length){P=cache;todo()}
  try{const d=await api({accion:'catalogo'});P=d.productos;lsSet('uniko_cat',P);todo()}
  catch(e){if(e.message!=='sesión')aviso(e.message,1);if(!P.length)$('lista').innerHTML=`<div class="cargando">${esc(e.message)}</div>`}
- Promise.all([api({accion:'ventas'}).then(d=>VENTAS=d.ventas).catch(()=>{}),api({accion:'movimientos'}).then(d=>MOVS=d.movimientos).catch(()=>{})]).then(()=>{pintarMover();pintarLista()})}
+ recargarMovs().then(()=>todo())}
+async function recargarMovs(){try{MOVS=(await api({accion:'movimientos'})).movimientos}catch(e){}}
 
 /* ── pintar ── */
 function kpis(){let u=0,din=0,conCoste=0,ago=0,sc=0;P.forEach(p=>{const n=uds(p);u+=n;if(p.coste!=null){din+=n*p.coste;conCoste++}filasDe(p).forEach(f=>{if(f.stock===null)sc++;else if(f.stock<=0)ago++})});
@@ -179,7 +190,7 @@ function etiquetas(p){const fs=filasDe(p),ago=fs.filter(f=>f.stock!==null&&f.sto
  return (ago?`<span class="tag r">${ago} agotada${ago>1?'s':''}</span>`:'')+(poco?`<span class="tag a">${poco} casi agotada${poco>1?'s':''}</span>`:'')+(sc?`<span class="tag s">${sc} sin contar</span>`:'')}
 function pintarLista(){if(!P.length)return;const q=($('q').value||'').toLowerCase();
  $('lista').innerHTML=P.filter(p=>(CATSEL==='Todo'||p.cat===CATSEL)&&p.nombre.toLowerCase().includes(q)).map(p=>`<button class="prod" onclick="ficha(${p.id})"><img src="${esc(p.img)}" alt="" loading="lazy"><div><div class="n">${esc(p.nombre)}</div><div class="m">${p.coste!=null?eur(uds(p)*p.coste)+' en stock':'Sin coste puesto'}</div>${etiquetas(p)}</div><div class="u"><b>${uds(p)}</b><small>uds</small></div></button>`).join('')||'<p class="sub">No hay ninguna prenda con ese nombre.</p>'}
-function tabla(p){const ts=tallasDe(p);return `<div class="leyenda"><span><i style="background:var(--ok)"></i>Hay</span><span><i style="background:var(--a)"></i>1 o 2</span><span><i style="background:var(--r)"></i>Agotada</span><span><i style="background:#555"></i>Sin contar</span></div><table class="tabla"><tr><th></th>${ts.map(t=>`<th>${t==='ÚNICA'?'Única':t}</th>`).join('')}</tr>${colores(p).map(c=>`<tr><td>${esc(c)}</td>${ts.map(t=>{const f=fila(p,c,t);if(!f)return '<td><div class="cel x">·</div></td>';return `<td><button class="cel ${nivel(f.stock)}" onclick="recuento(${p.id},${f.vid})">${f.stock===null?'?':f.stock}</button></td>`}).join('')}</tr>`).join('')}</table><p class="nota">Toca un número para corregirlo si has contado y no cuadra.</p>`}
+function tabla(p){const ts=tallasDe(p);return `<div class="leyenda"><span><i style="background:var(--ok)"></i>Hay</span><span><i style="background:var(--a)"></i>1 o 2</span><span><i style="background:var(--r)"></i>Agotada</span><span><i style="background:#555"></i>Sin contar</span></div><table class="tabla"><tr><th></th>${ts.map(t=>`<th>${t==='ÚNICA'?'Única':t}</th>`).join('')}</tr>${colores(p).map(c=>`<tr><td>${esc(c)}</td>${ts.map(t=>{const f=fila(p,c,t);if(!f)return '<td><div class="cel x">·</div></td>';return `<td><button class="cel ${nivel(f.stock)}" onclick="recuento(${p.id},${f.vid})">${f.stock===null?'?':f.stock}</button></td>`}).join('')}</tr>`).join('')}</table><p class="nota">Toca un número para ponerlo o corregirlo.</p>`}
 function ficha(id){const p=P.find(x=>x.id===id);abrir(`<div class="top"><img src="${esc(p.img)}" alt=""><div><b>${esc(p.nombre)}</b><small>${p.precio.toFixed(2).replace('.',',')} € · ${uds(p)} uds</small></div><button class="cerrar" onclick="cerrar()">×</button></div>
  <div class="paso">Colores y tallas</div>${tabla(p)}
  <button class="cta" onclick="cerrar();empezar('vender',${p.id})">💸 He vendido</button><button class="cta sec" onclick="cerrar();empezar('recibir',${p.id})">🚚 Me han llegado más</button>
@@ -190,33 +201,42 @@ function pintarElegir(modo){if(!P.length)return;const q=($(modo==='vender'?'qv':
  $('elegir-'+modo).innerHTML=P.filter(p=>p.nombre.toLowerCase().includes(q)).map(p=>`<button class="prod" onclick="empezar('${modo}',${p.id})"><img src="${esc(p.img)}" alt="" loading="lazy"><div><div class="n">${esc(p.nombre)}</div><div class="m">${uds(p)} en stock</div></div><div class="u" style="font-size:26px">›</div></button>`).join('')}
 function empezar(modo,id){const p=P.find(x=>x.id===id),cs=colores(p);F={modo,id,c:cs.length===1?cs[0]:null,t:null,n:1,canal:'WhatsApp'};pasoForm()}
 function pasoForm(){const p=P.find(x=>x.id===F.id),V=F.modo==='vender',cs=colores(p),ts=tallasDe(p).filter(t=>!F.c||fila(p,F.c,t));
- let h=`<div class="top"><img src="${esc(p.img)}" alt=""><div><b>${V?'Vender':'Recibir'}: ${esc(p.nombre)}</b><small>${V?'Se quita de tu web':'Se suma en tu web'}</small></div><button class="cerrar" onclick="cerrar()">×</button></div>`;
+ let h=`<div class="top"><img src="${esc(p.img)}" alt=""><div><b>${V?'Vender':'Recibir'}: ${esc(p.nombre)}</b><small>Te lo apunto para cambiarlo luego en la web</small></div><button class="cerrar" onclick="cerrar()">×</button></div>`;
  if(cs.length>1)h+=`<div class="paso">1 · ¿Qué color?</div><div class="grid" style="grid-template-columns:repeat(${Math.min(3,cs.length)},1fr)">${cs.map(c=>`<button class="op ${F.c===c?'on':''}" data-c="${esc(c)}" onclick="F.c=this.dataset.c;F.t=null;pasoForm()">${esc(c)}</button>`).join('')}</div>`;
  if(F.c){h+=`<div class="paso">${cs.length>1?'2':'1'} · ¿Qué talla?</div><div class="grid" style="grid-template-columns:repeat(${Math.min(4,ts.length)},1fr)">${ts.map(t=>{const f=fila(p,F.c,t),n=f.stock,no=V&&n!==null&&n<=0;return `<button class="op ${F.t===t?'on':''} ${nivel(n)}" ${no?'disabled':''} onclick="F.t='${t}';pasoForm()">${t==='ÚNICA'?'Única':t}<small>${n===null?'sin contar':n<=0?'agotada':'quedan '+n}</small></button>`}).join('')}</div>`}
  if(F.t){const f=fila(p,F.c,F.t),max=V&&f.stock!==null?f.stock:999;F.n=Math.max(1,Math.min(F.n,max));
   h+=`<div class="paso">¿Cuántas?</div><div class="num"><button onclick="F.n=Math.max(1,F.n-1);pasoForm()">−</button><b>${F.n}</b><button onclick="F.n=Math.min(${max},F.n+1);pasoForm()">+</button></div>`;
-  if(V)h+=`<div class="paso">¿Dónde?</div><div class="grid" style="grid-template-columns:repeat(3,1fr)">${['WhatsApp','Showroom','Feria'].map(c=>`<button class="op ${F.canal===c?'on':''}" onclick="F.canal='${c}';pasoForm()">${c}</button>`).join('')}</div><p class="nota">✓ Se quita solo de tu web. No tienes que entrar al ordenador.</p>`}
+  if(V)h+=`<div class="paso">¿Dónde?</div><div class="grid" style="grid-template-columns:repeat(3,1fr)">${['WhatsApp','Showroom','Feria'].map(c=>`<button class="op ${F.canal===c?'on':''}" onclick="F.canal='${c}';pasoForm()">${c}</button>`).join('')}</div><p class="nota">✓ Queda apuntado en «Para la web» para que lo cambies cuando llegues a casa.</p>`}
  h+=`<button class="cta" id="okb" ${F.t?'':'disabled'} onclick="confirmar()">${V?'✓ Vendido':'✓ Sumar'}</button>`;abrir(h)}
 async function confirmar(){const p=P.find(x=>x.id===F.id),f=fila(p,F.c,F.t),V=F.modo==='vender';const b=$('okb');b.disabled=true;b.textContent='Guardando…';
  try{const r=await api({accion:'mover',tipo:V?'venta':'entrada',id:p.id,vid:f.vid,delta:V?-F.n:F.n,canal:V?F.canal:'Proveedor',nombre:p.nombre,color:F.c,talla:F.t});
-  f.stock=r.despues;lsSet('uniko_cat',P);MOVS.unshift({created_at:new Date().toISOString(),product_id:p.id,nombre:p.nombre,color:F.c,talla:F.t,tipo:V?'venta':'entrada',delta:r.despues-r.antes,canal:V?F.canal:'Proveedor'});
-  cerrar();aviso(V?`✓ Vendida · quedan ${r.despues} en la web`:`✓ Sumadas · ahora hay ${r.despues}`);todo()}
+  f.stock=r.despues;lsSet('uniko_cat',P);await recargarMovs();
+  cerrar();aviso(V?`✓ Apuntada · te quedan ${r.despues}`:`✓ Sumadas · ahora tienes ${r.despues}`);todo()}
  catch(e){b.disabled=false;b.textContent='Reintentar';aviso(e.message,1)}}
 function recuento(id,vid){const p=P.find(x=>x.id===id),f=filasDe(p).find(x=>x.vid===vid);let n=f.stock??0;
- const pint=()=>abrir(`<div class="top"><img src="${esc(p.img)}" alt=""><div><b>${esc(p.nombre)}</b><small>${esc(bonito(f.color))} · ${f.talla==='ÚNICA'?'Única':f.talla}</small></div><button class="cerrar" onclick="cerrar()">×</button></div><div class="paso">¿Cuántas tienes de verdad?</div><div class="num"><button id="rm">−</button><b id="rn">${n}</b><button id="rp">+</button></div><button class="cta" id="rok">✓ Guardar recuento</button><p class="nota">Se cambia también en tu web.</p>`);
+ const pint=()=>abrir(`<div class="top"><img src="${esc(p.img)}" alt=""><div><b>${esc(p.nombre)}</b><small>${esc(bonito(f.color))} · ${f.talla==='ÚNICA'?'Única':f.talla}</small></div><button class="cerrar" onclick="cerrar()">×</button></div><div class="paso">¿Cuántas tienes de verdad?</div><div class="num"><button id="rm">−</button><b id="rn">${n}</b><button id="rp">+</button></div><button class="cta" id="rok">✓ Guardar recuento</button><p class="nota">${f.stock===null?'Primera vez: pon lo que tienes ahora (lo mismo que en tu web).':'Te lo apunto en «Para la web».'}</p>`);
  pint();const upd=()=>$('rn').textContent=n;$('rm').onclick=()=>{n=Math.max(0,n-1);upd()};$('rp').onclick=()=>{n++;upd()};
- $('rok').onclick=async()=>{$('rok').disabled=true;$('rok').textContent='Guardando…';try{const r=await api({accion:'mover',tipo:'recuento',id,vid,cantidad:n,nombre:p.nombre,color:bonito(f.color),talla:f.talla});f.stock=r.despues;lsSet('uniko_cat',P);cerrar();aviso('✓ Recuento guardado');todo()}catch(e){$('rok').disabled=false;$('rok').textContent='Reintentar';aviso(e.message,1)}}}
+ $('rok').onclick=async()=>{$('rok').disabled=true;$('rok').textContent='Guardando…';try{const r=await api({accion:'mover',tipo:'recuento',id,vid,cantidad:n,nombre:p.nombre,color:bonito(f.color),talla:f.talla});f.stock=r.despues;lsSet('uniko_cat',P);await recargarMovs();cerrar();aviso('✓ Guardado');todo()}catch(e){$('rok').disabled=false;$('rok').textContent='Reintentar';aviso(e.message,1)}}}
 function pintarMover(){if(!P.length)return;const hoy=Date.now();
  const parado=P.map(p=>({p,u:uds(p),v:vendidas(p)})).filter(x=>x.u>0&&x.v<=0).sort((a,b)=>(b.u*(b.p.coste||b.p.precio*.4))-(a.u*(a.p.coste||a.p.precio*.4))).slice(0,6);
  const acaba=P.map(p=>({p,v:vendidas(p),pocas:filasDe(p).filter(f=>f.stock!==null&&f.stock<=2).map(f=>bonito(f.color)+' '+f.talla)})).filter(x=>x.v>=3&&x.pocas.length).sort((a,b)=>b.v-a.v).slice(0,5);
  $('mover').innerHTML=`<div class="paso" style="margin-top:0">🧊 Parado · sin ventas en 45 días · haz un vídeo o ponlo en oferta</div>`+(parado.length?parado.map(x=>`<div class="box mov"><img src="${esc(x.p.img)}" alt=""><div><h3>${esc(x.p.nombre)}</h3><p>${x.u} uds${x.p.coste!=null?` · <b>${eur(x.u*x.p.coste)}</b> parados`:''}</p></div></div>`).join(''):'<p class="sub">Todo lo que tienes se ha vendido algo este mes. 👏</p>')+
  `<div class="paso">🔥 Se vende y se acaba · pide más</div>`+(acaba.length?acaba.map(x=>`<div class="box mov"><img src="${esc(x.p.img)}" alt=""><div><h3>${esc(x.p.nombre)}</h3><p>${x.v} vendidas · queda poco de: ${x.pocas.slice(0,4).map(esc).join(', ')}${x.pocas.length>4?'…':''}</p></div></div>`).join(''):'<p class="sub">Nada urgente.</p>');
  $('hist').innerHTML=MOVS.slice(0,15).map(m=>`<div><span>${m.tipo==='venta'?'💸':m.tipo==='entrada'?'🚚':'✏️'} ${esc(m.nombre||'')} · ${esc(m.color||'')} ${esc(m.talla||'')}<br><small>${m.tipo==='venta'?'Vendida':m.tipo==='entrada'?'Entrada':'Recuento'} ${m.delta>0?'+':''}${m.delta}${m.canal?' · '+esc(m.canal):''}</small></span><small>${new Date(m.created_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</small></div>`).join('')||'<p class="sub">Aún no has movido nada desde la app.</p>'}
+function pintarWeb(){const pend=MOVS.filter(m=>!m.web_hecho_at);$('nweb').hidden=!pend.length;$('nweb').textContent=pend.length;
+ if(!pend.length){$('web').innerHTML='<div class="box"><h3>Todo al día ✓</h3><p>No tienes nada pendiente de cambiar en la web.</p></div>';return}
+ const porProd={};pend.forEach(m=>{(porProd[m.product_id]??=[]).push(m)});
+ $('web').innerHTML=Object.entries(porProd).map(([pid,ms])=>{const p=P.find(x=>x.id==pid)||{nombre:ms[0].nombre,img:''};
+  const porVar={};ms.forEach(m=>{(porVar[m.vid]??=[]).push(m)});
+  const lineas=Object.values(porVar).map(vs=>{const ult=vs.reduce((a,b)=>new Date(a.created_at)>new Date(b.created_at)?a:b);const motivo=vs.map(m=>m.tipo==='venta'?`vendida ${-m.delta} (${m.canal||''})`:m.tipo==='entrada'?`+${m.delta} del proveedor`:'recuento').join(' · ');
+   return `<div class="lin"><span><b>${esc(bonito(ult.color))} · ${ult.talla==='ÚNICA'?'Única':esc(ult.talla)}</b><small>${esc(motivo)}</small></span><span class="pon">Pon ${ult.stock_despues}</span></div>`}).join('');
+  return `<div class="wp"><div class="top">${p.img?`<img src="${esc(p.img)}" alt="">`:''}<h3>${esc(p.nombre)}</h3></div>${lineas}<div class="acc"><a href="https://unikobynt.com/wp-admin/post.php?post=${pid}&action=edit" target="_blank" rel="noopener">Abrir en la web ↗</a><button data-ids="${ms.map(m=>m.id).join(',')}" onclick="webHecho(this)">✓ Ya está</button></div></div>`}).join('')}
+async function webHecho(b){b.disabled=true;b.textContent='…';try{await api({accion:'web_hecho',ids:b.dataset.ids.split(',')});await recargarMovs();aviso('✓ Hecho en la web');todo()}catch(e){b.disabled=false;b.textContent='✓ Ya está';aviso(e.message,1)}}
 function abrir(h){$('hc').innerHTML=h;$('hoja').classList.add('on')}
 function cerrar(){$('hoja').classList.remove('on')}
 let tt;function aviso(t,err){const e=$('toast');e.textContent=t;e.classList.toggle('err',!!err);e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),err?4000:2400)}
 function ir(p){document.querySelectorAll('.pg').forEach(x=>x.classList.toggle('on',x.id==='pg-'+p));document.querySelectorAll('nav.bot button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));scrollTo(0,0)}
-function todo(){if(!P.length)return;kpis();pintarCats();pintarLista();pintarElegir('vender');pintarElegir('recibir');pintarMover()}
+function todo(){if(!P.length)return;kpis();pintarCats();pintarLista();pintarElegir('vender');pintarElegir('recibir');pintarMover();pintarWeb()}
 addEventListener('keydown',e=>{if(e.key==='Escape')cerrar()});
 function arrancar(){$('login').hidden=true;$('app').hidden=false;cargar()}
 sb.auth.getSession().then(({data})=>data.session?arrancar():mostrarLogin());
