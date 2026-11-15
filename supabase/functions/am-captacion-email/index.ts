@@ -73,6 +73,11 @@ Un saludo y mucha suerte con el negocio.`,
   };
 }
 
+// Black Friday: posdata en todos los emails hasta el 30-nov (se quita sola el 1-dic)
+const BF_PD = Date.now() < Date.parse("2026-12-01T00:00:00Z")
+  ? "P. D.: Hasta el 30 de noviembre estamos con ofertas de Black Friday. Si te interesa, responde a este email y te las mando."
+  : "";
+
 function aHtml(cuerpo: string) {
   return cuerpo.split(/\n\n+/).map((p) => {
     const neg = (s: string) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
@@ -93,6 +98,7 @@ function html(c: Contacto, asunto: string, cuerpo: string, conImagen: boolean) {
 ${conImagen ? `<tr><td style="padding:16px 0 0"><a href="${WEB}?ia"><img src="${WEB}assets/web/og-airmate-ia.jpg" width="600" alt="Airmate · Impulsa tu negocio con inteligencia artificial" style="display:block;width:100%;height:auto;border:0"></a></td></tr>` : ""}
 <tr><td style="padding:28px 36px 8px;font-size:16px;line-height:1.6">${aHtml(cuerpo)}
 ${conImagen ? `<p style="margin:6px 0 26px"><a href="${WEB}?ia" style="display:inline-block;background:#0a0a0a;color:#ffffff;text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:600;font-size:15px">Ver lo que hacemos →</a></p>` : ""}
+${BF_PD ? `<p style="margin:0 0 22px;padding:14px 16px;background:#f4f1ea;border-left:3px solid #9a7b45">${BF_PD}</p>` : ""}
 <p style="margin:0 0 4px">Un saludo,</p>
 <p style="margin:0;font-weight:600">${esc(yo)}</p>
 <p style="margin:0;color:#8a8a8a;font-size:14px">Airmate · <a href="${WEB}" style="color:#8a8a8a">airmate.es</a> · ${TEL}</p></td></tr>
@@ -101,7 +107,7 @@ ${conImagen ? `<p style="margin:6px 0 26px"><a href="${WEB}?ia" style="display:i
 }
 
 function texto(c: Contacto, cuerpo: string) {
-  return cuerpo.replace(/\*\*(.+?)\*\*/g, "$1") + `\n\nUn saludo,\n${nombrePila(c.captador)}\nAirmate · airmate.es · ${TEL}\n\nTe escribimos porque nos pediste información por teléfono. Si no quieres más emails, responde «no».`;
+  return cuerpo.replace(/\*\*(.+?)\*\*/g, "$1") + (BF_PD ? `\n\n${BF_PD}` : "") + `\n\nUn saludo,\n${nombrePila(c.captador)}\nAirmate · airmate.es · ${TEL}\n\nTe escribimos porque nos pediste información por teléfono. Si no quieres más emails, responde «no».`;
 }
 
 async function enviar(c: Contacto, tipo: string, para: string) {

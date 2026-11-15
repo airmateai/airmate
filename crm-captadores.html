@@ -3269,10 +3269,12 @@ function plEmail(id){LL_ACTUAL=id;goPage('llamar',null);setTimeout(()=>{document
 
 // Solo los móviles españoles (6xx/7xx) tienen WhatsApp; los fijos no
 function esMovil(t){return /^(34)?[67]\d{8}$/.test(String(t||'').replace(/\D/g,''));}
+// Black Friday: posdata en los WhatsApp que salen del CRM hasta el 30-nov (se quita sola el 1-dic)
+const BF_PD=Date.now()<Date.parse('2026-12-01T00:00:00Z')?'\n\nPor cierto, hasta el 30 de noviembre estamos con ofertas de Black Friday, por si os interesa.':'';
 function waFrio(id){
   const c=LISTA.find(x=>x.id===id)||ALL_CONTACTOS.find(x=>x.id===id);if(!c)return;
   const yo=SESSION.nombre.split(' ')[0];
-  const txt=`Hola, soy ${yo}. Trabajo en una empresa de inteligencia artificial aquí en Tenerife.\n\nUna pregunta rápida: ¿ya usáis algo de IA o algún sistema para llevar el negocio (citas, clientes, cobros)? Si no, me gustaría preguntaros si os podría hacer falta. Trabajo con negocios de aquí parecidos al vuestro y les está ayudando bastante.`;
+  const txt=`Hola, soy ${yo}. Trabajo en una empresa de inteligencia artificial aquí en Tenerife.\n\nUna pregunta rápida: ¿ya usáis algo de IA o algún sistema para llevar el negocio (citas, clientes, cobros)? Si no, me gustaría preguntaros si os podría hacer falta. Trabajo con negocios de aquí parecidos al vuestro y les está ayudando bastante.${BF_PD}`;
   window.open('https://wa.me/'+telLimpio(c.telefono).replace('+','')+'?text='+encodeURIComponent(txt),'_blank');
   // queda guardado: pasa a «Info enviada» en el pipeline, con nota en el historial y rellamada en 2 días
   const t=new Date().toISOString(), prox=proxHora(2,10,30).toISOString();
@@ -3456,7 +3458,7 @@ function llInfoWhatsApp(){
   closeModal('modal-info');
   const prox=proxHora(2,10,30);
   const yo=SESSION.nombre.split(' ')[0];
-  const txt=`Hola, soy ${yo}, de la llamada de antes. Trabajo en una empresa de inteligencia artificial aquí en Tenerife.\n\nComo te comentaba: ¿ya usáis algo de IA o algún sistema para llevar el negocio (citas, clientes, cobros)? Si no, me gustaría saber si te podría hacer falta. Trabajo con negocios de aquí parecidos al tuyo y les está ayudando bastante.`;
+  const txt=`Hola, soy ${yo}, de la llamada de antes. Trabajo en una empresa de inteligencia artificial aquí en Tenerife.\n\nComo te comentaba: ¿ya usáis algo de IA o algún sistema para llevar el negocio (citas, clientes, cobros)? Si no, me gustaría saber si te podría hacer falta. Trabajo con negocios de aquí parecidos al tuyo y les está ayudando bastante.${BF_PD}`;
   const tel=telLimpio(c.telefono).replace('+','');
   llGuardar(c,{etapa:'interesado',temperatura:'templado',proxima_llamada:prox.toISOString()},'info','WhatsApp').then(ok=>{
     if(!ok)return;
