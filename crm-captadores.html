@@ -230,6 +230,9 @@ tr:hover td{background:var(--blue-light);}
 .ll-links a:hover{text-decoration:underline;}
 .ll-call{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;margin:22px 0 6px;padding:20px;border:none;border-radius:14px;background:var(--uae-green);color:#fff;font-size:22px;font-weight:800;font-family:var(--display);text-decoration:none;transition:transform .12s,background .15s;}
 .ll-call:hover{background:#005c26;}
+.ll-wa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin:0 0 6px;padding:14px;border:1.5px solid #25d366;border-radius:14px;background:#fff;color:#128c4a;font-size:17px;font-weight:800;cursor:pointer;}
+.ll-wa small{font-size:13px;font-weight:600;opacity:.75;}
+.ll-wa:hover{background:#effbf3;}
 .ll-call:active{transform:scale(.99);}
 .ll-call svg{width:24px;height:24px;}
 .ll-call small{font-family:var(--body);font-size:15px;font-weight:600;opacity:.85;white-space:nowrap;}
@@ -3001,6 +3004,7 @@ function llFicha(c){
     ${c.direccion?`<div class="ll-sub">${esc(c.direccion)}</div>`:''}
     <div class="ll-links">${web?`<a href="${esc(web)}" target="_blank" rel="noopener">Ver web / Instagram ↗</a>`:''}<a href="${maps}" target="_blank" rel="noopener">Ver en Google Maps ↗</a></div>
     <a class="ll-call" href="tel:${esc(tel)}" onclick="llMarcado()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Llamar <small>${esc(telBonito(c.telefono))}</small></a>
+    ${esMovil(c.telefono)?`<button class="ll-wa" onclick="waFrio(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">💬 Mandar WhatsApp <small>mensaje ya escrito</small></button>`:''}
     <div class="ll-hint">Tecla <kbd>Espacio</kbd> para llamar · <a href="#" onclick="navigator.clipboard.writeText('${esc(tel)}');toast('Número copiado');return false" style="color:inherit">copiar número</a></div>
     <div class="ll-lbl">Notas de esta llamada</div>
     <textarea class="ll-notas" id="ll-nota" placeholder="Con quién hablaste, qué te dijo…">${esc(c.notas||'')}</textarea>
@@ -3210,6 +3214,7 @@ function plCard(c){
     ${chips.length?`<div class="m">${chips.join('')}</div>`:''}
     <div class="a">
       ${c.telefono?`<button onclick="plLlamar(${id})">Llamar</button>`:''}
+      ${esMovil(c.telefono)?`<button onclick="waFrio(${id})">WhatsApp</button>`:''}
       ${vivo?`<button onclick="plEmail(${id})">${ok?'Reenviar':'Email'}</button>`:''}
       <button onclick="abrirGestion(${id})">✎</button>
     </div>
@@ -3262,6 +3267,8 @@ async function plDrop(e,etapa,col){
 function plLlamar(id){LL_ACTUAL=id;goPage('llamar',null);window.scrollTo({top:0,behavior:'smooth'});}
 function plEmail(id){LL_ACTUAL=id;goPage('llamar',null);setTimeout(()=>{document.getElementById('info-email').value=(LISTA.find(x=>x.id===id)||{}).email||'';openModal('modal-info');},150);}
 
+// Solo los móviles españoles (6xx/7xx) tienen WhatsApp; los fijos no
+function esMovil(t){return /^(34)?[67]\d{8}$/.test(String(t||'').replace(/\D/g,''));}
 function waFrio(id){
   const c=LISTA.find(x=>x.id===id)||ALL_CONTACTOS.find(x=>x.id===id);if(!c)return;
   const yo=SESSION.nombre.split(' ')[0];
