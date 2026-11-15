@@ -1,28 +1,29 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#0b0b0b"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="apple-mobile-web-app-title" content="UNIKO Stock">
-<title>UNIKO · Stock (demo)</title>
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#0b0b0b">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="apple-mobile-web-app-title" content="UNIKO Stock">
+<title>UNIKO · Stock</title>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
-:root{--n:#0b0b0b;--n2:#161616;--n3:#222;--l:#d4ff00;--r:#ff3b30;--a:#ffb020;--ok:#3ddc84;--b:#f5f5f2;--g:#9a9a9a;--line:#2b2b2b}
+:root{--n:#0b0b0b;--n2:#161616;--n3:#232323;--l:#d4ff00;--r:#ff3b30;--a:#ffb020;--ok:#3ddc84;--b:#f5f5f2;--g:#9a9a9a;--line:#2b2b2b}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
 body{background:var(--n);color:var(--b);font-family:Inter,Arial,sans-serif;font-size:16px;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .disp{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.01em}
-.demo{background:var(--l);color:var(--n);font-size:12px;font-weight:800;text-align:center;padding:7px 12px}
 .w{max-width:760px;margin:0 auto;padding:0 16px}
-header{padding:18px 0 10px;display:flex;align-items:center;justify-content:space-between}
+header{padding:calc(14px + env(safe-area-inset-top)) 0 10px;display:flex;align-items:center;justify-content:space-between}
 header b{font-family:Anton,Impact,sans-serif;font-size:26px;letter-spacing:.02em}header b i{font-style:normal;color:var(--r)}
-header small{color:var(--g);font-size:13px;font-weight:700}
+header button{color:var(--g);font-size:13px;font-weight:800;padding:8px}
 h1{font-size:34px;margin:6px 0 4px}.sub{color:var(--g);font-size:15px;margin-bottom:16px}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 18px}
-.kpi{background:var(--n2);border:1px solid var(--line);padding:16px}
+.kpi{background:var(--n2);border:1px solid var(--line);padding:16px;text-align:left}
 .kpi small{display:block;color:var(--g);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 .kpi b{display:block;font-size:30px;font-weight:900;letter-spacing:-.02em;margin-top:4px}
-.kpi.big{grid-column:1/-1;background:var(--l);color:var(--n);border:0}.kpi.big small{color:#3a4500}.kpi.big b{font-size:44px}
-.kpi.rojo b{color:var(--r)}.kpi.amar b{color:var(--a)}
-.busca{display:flex;gap:8px;margin-bottom:12px}
-.busca input{flex:1;height:52px;background:var(--n2);border:1px solid var(--line);color:var(--b);font:inherit;font-size:17px;padding:0 16px}
+.kpi.big{grid-column:1/-1;background:var(--l);color:var(--n);border:0}.kpi.big small{color:#3a4500}.kpi.big b{font-size:40px}.kpi.big span{display:block;font-size:13px;font-weight:700;margin-top:4px}
+.kpi.rojo b{color:var(--r)}
+.busca input,.campo{width:100%;height:54px;background:var(--n2);border:1px solid var(--line);color:var(--b);font:inherit;font-size:17px;padding:0 16px;margin-bottom:12px}
 .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px}
 .chip{flex:none;padding:10px 14px;border:1px solid var(--line);font-weight:800;font-size:14px;background:var(--n2)}
 .chip.on{background:var(--b);color:var(--n);border-color:var(--b)}
@@ -36,13 +37,12 @@ nav.bot{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#000;border
 nav.bot button{padding:12px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12.5px;font-weight:800;color:var(--g)}
 nav.bot button i{font-style:normal;font-size:22px}nav.bot button.on{color:var(--l)}
 .pg{display:none}.pg.on{display:block}
-/* hoja */
 .hoja{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center}
 .hoja.on{display:flex}
 .hc{background:var(--n);width:100%;max-width:760px;max-height:92svh;overflow-y:auto;border-top:3px solid var(--l);padding:18px 16px calc(24px + env(safe-area-inset-bottom))}
 .hc .top{display:flex;gap:14px;align-items:center;margin-bottom:14px}.hc .top img{width:64px;height:64px;object-fit:cover}
 .hc .top b{font-size:19px;font-weight:900;display:block}.hc .top small{color:var(--g)}
-.cerrar{margin-left:auto;font-size:28px;width:44px;height:44px;border:1px solid var(--line)}
+.cerrar{margin-left:auto;font-size:28px;width:44px;height:44px;border:1px solid var(--line);flex:none}
 .paso{font-size:13px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--l);margin:18px 0 10px}
 .grid{display:grid;gap:8px}
 .op{min-height:58px;border:2px solid var(--line);background:var(--n2);font-weight:900;font-size:17px;padding:8px}
@@ -51,136 +51,173 @@ nav.bot button i{font-style:normal;font-size:22px}nav.bot button.on{color:var(--
 .op.r small{color:var(--r)}.op.a small{color:var(--a)}
 .tabla{width:100%;border-collapse:collapse;margin-top:6px}
 .tabla th{font-size:13px;color:var(--g);font-weight:800;padding:6px 4px;text-align:center}
-.tabla th:first-child{text-align:left}
 .tabla td{padding:3px}.tabla td:first-child{font-weight:800;font-size:14px;padding-right:8px;white-space:nowrap}
 .cel{width:100%;min-width:44px;height:48px;font-weight:900;font-size:18px;background:#1d3a1f;color:var(--ok)}
-.cel.a{background:#3a2c00;color:var(--a)}.cel.r{background:#3a0f0c;color:var(--r)}.cel.x{background:transparent;color:#444}
+.cel.a{background:#3a2c00;color:var(--a)}.cel.r{background:#3a0f0c;color:var(--r)}.cel.x{background:transparent;color:#444}.cel.q{background:#2a2a2a;color:#bbb}
 .cta{width:100%;min-height:62px;background:var(--l);color:var(--n);font-weight:900;font-size:19px;letter-spacing:.04em;text-transform:uppercase;margin-top:20px}
 .cta:disabled{opacity:.35}
-.cta.sec{background:transparent;color:var(--b);border:2px solid var(--b);min-height:54px;font-size:16px}
+.cta.sec{background:transparent;color:var(--b);border:2px solid var(--b);min-height:54px;font-size:16px;margin-top:10px}
 .num{display:flex;align-items:center;gap:10px}.num button{width:58px;height:58px;font-size:28px;font-weight:900;background:var(--n3)}
 .num b{flex:1;text-align:center;font-size:34px;font-weight:900}
-.toast{position:fixed;left:50%;top:18px;transform:translate(-50%,-120px);z-index:60;background:var(--ok);color:#002b10;font-weight:900;padding:14px 20px;transition:transform .35s}
-.toast.on{transform:translate(-50%,0)}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translate(-50%,-160px);z-index:60;background:var(--ok);color:#002b10;font-weight:900;padding:14px 20px;transition:transform .35s;max-width:92vw;text-align:center}
+.toast.on{transform:translate(-50%,0)}.toast.err{background:var(--r);color:#fff}
 .box{background:var(--n2);border:1px solid var(--line);padding:16px;margin-bottom:10px}
-.box h3{font-size:18px;font-weight:900;margin-bottom:4px}.box p{color:#cfcfcf;font-size:14.5px}
-.mov{display:grid;grid-template-columns:60px 1fr;gap:12px;align-items:center}
-.mov img{width:60px;height:60px;object-fit:cover}
-.mov .acc{grid-column:1/-1;display:flex;gap:8px;margin-top:8px}
-.mov .acc button{flex:1;min-height:46px;font-weight:900;font-size:14px;background:var(--n3)}
-.mov .acc button.p{background:var(--l);color:var(--n)}
+.box h3{font-size:17px;font-weight:900;margin-bottom:4px}.box p{color:#cfcfcf;font-size:14.5px}
+.mov{display:grid;grid-template-columns:60px 1fr;gap:12px;align-items:center}.mov img{width:60px;height:60px;object-fit:cover}
 .hist{font-size:14.5px}.hist div{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
 .hist small{color:var(--g)}
-.leyenda{display:flex;gap:14px;font-size:13px;color:var(--g);margin:10px 0}.leyenda i{display:inline-block;width:12px;height:12px;margin-right:5px;vertical-align:-1px}
+.leyenda{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--g);margin:10px 0}.leyenda i{display:inline-block;width:12px;height:12px;margin-right:5px;vertical-align:-1px}
+.cargando{padding:60px 0;text-align:center;color:var(--g);font-weight:700}
+.login{min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding:24px;max-width:420px;margin:0 auto}
+.login b.logo{font-family:Anton,Impact,sans-serif;font-size:56px}.login b.logo i{font-style:normal;color:var(--r)}
+.login p{color:var(--g);margin:6px 0 26px}.login .err{color:var(--r);font-weight:700;margin:4px 0 0;min-height:22px}
+.nota{color:var(--g);font-size:13.5px;margin-top:10px}
 </style></head><body>
-<div class="demo">Demo de Airmate para UNIKO · tus prendas reales, cantidades de ejemplo</div>
-<div class="w">
-<header><b>UNI<i>K</i>O</b><small>Stock</small></header>
 
-<!-- STOCK -->
+<div class="login" id="login" hidden>
+ <b class="logo">UNI<i>K</i>O</b><p>Tu stock, desde el móvil.</p>
+ <input class="campo" id="lu" placeholder="Usuario" autocomplete="username" autocapitalize="none">
+ <input class="campo" id="lp" type="password" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')entrar()">
+ <button class="cta" style="margin-top:6px" id="lb" onclick="entrar()">Entrar</button>
+ <p class="err" id="le"></p>
+</div>
+
+<div id="app" hidden>
+<div class="w">
+<header><b>UNI<i>K</i>O</b><button onclick="salir()">Salir</button></header>
+
 <section class="pg on" id="pg-stock">
- <h1 class="disp">Tu stock</h1><p class="sub">Toca una prenda para ver sus colores y tallas.</p>
+ <h1 class="disp">Tu stock</h1><p class="sub">El mismo que tu web. Toca una prenda para ver colores y tallas.</p>
  <div class="kpis" id="kpis"></div>
  <div class="busca"><input id="q" placeholder="Buscar prenda…" oninput="pintarLista()"></div>
  <div class="chips" id="cats"></div>
- <div id="lista"></div>
+ <div id="lista"><div class="cargando">Cargando tu tienda…</div></div>
 </section>
 
-<!-- VENDER -->
 <section class="pg" id="pg-vender">
- <h1 class="disp">Vender</h1><p class="sub">¿Te han pedido algo por WhatsApp o en el showroom? Tres toques y se quita del stock y de la web.</p>
+ <h1 class="disp">Vender</h1><p class="sub">¿Te han pedido algo por WhatsApp o en el showroom? Tres toques y se quita de la web.</p>
  <div class="busca"><input id="qv" placeholder="Buscar prenda…" oninput="pintarElegir('vender')"></div>
  <div id="elegir-vender"></div>
 </section>
 
-<!-- RECIBIR -->
 <section class="pg" id="pg-recibir">
- <h1 class="disp">Me ha llegado ropa</h1><p class="sub">Apunta lo que te manda el proveedor y se suma solo.</p>
+ <h1 class="disp">Me ha llegado ropa</h1><p class="sub">Apunta lo que te manda el proveedor y se suma en la web.</p>
  <div class="busca"><input id="qr" placeholder="Buscar prenda…" oninput="pintarElegir('recibir')"></div>
  <div id="elegir-recibir"></div>
 </section>
 
-<!-- QUÉ MOVER -->
 <section class="pg" id="pg-mover">
- <h1 class="disp">Qué mover</h1><p class="sub">Lo que tienes parado y lo que se te está acabando.</p>
- <div id="mover"></div>
+ <h1 class="disp">Qué mover</h1><p class="sub">Lo que no se vende y lo que se te está acabando (últimos 45 días, web + lo que vendes aquí).</p>
+ <div id="mover"><div class="cargando">Mirando tus ventas…</div></div>
  <div class="paso">Últimos movimientos</div>
  <div class="hist" id="hist"></div>
 </section>
 </div>
-
 <nav class="bot">
  <button class="on" data-p="stock" onclick="ir('stock')"><i>📦</i>Stock</button>
  <button data-p="vender" onclick="ir('vender')"><i>💸</i>Vender</button>
  <button data-p="recibir" onclick="ir('recibir')"><i>🚚</i>Recibir</button>
  <button data-p="mover" onclick="ir('mover')"><i>🔥</i>Qué mover</button>
 </nav>
+</div>
 
 <div class="hoja" id="hoja" onclick="if(event.target===this)cerrar()"><div class="hc" id="hc"></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
-const CAT=[{"id": 908, "n": "Camisetas DROP CITY", "cat": "Camisetas", "pvp": 38.7, "precio": 38.7, "img": "img/908.jpg", "combos": [["Gris", "XS"], ["Gris", "S"], ["Gris", "M"], ["Gris", "L"], ["Gris", "XL"], ["Gris", "XXL"], ["Marrón", "XS"], ["Marrón", "S"], ["Marrón", "M"], ["Marrón", "L"], ["Marrón", "XL"], ["Marrón", "XXL"], ["Negro", "XS"], ["Negro", "S"], ["Negro", "M"], ["Negro", "L"], ["Negro", "XL"], ["Negro", "XXL"], ["Verde", "XS"], ["Verde", "S"], ["Verde", "M"], ["Verde", "L"], ["Verde", "XL"], ["Verde", "XXL"], ["Vino", "XS"], ["Vino", "S"], ["Vino", "M"], ["Vino", "L"], ["Vino", "XL"], ["Vino", "XXL"]]}, {"id": 889, "n": "Bermudas UNIKO MOTION", "cat": "Bermudas", "pvp": 39.2, "precio": 39.2, "img": "img/889.jpg", "combos": [["Azul-celeste", "XS"], ["Azul-celeste", "S"], ["Azul-celeste", "M"], ["Azul-celeste", "L"], ["Azul-celeste", "XL"], ["Rosa", "S"], ["Rosa", "M"], ["Rosa", "L"], ["Rosa", "XL"], ["Verde-oliva", "XS"], ["Verde-oliva", "S"], ["Verde-oliva", "M"], ["Verde-oliva", "L"], ["Verde-oliva", "XL"]]}, {"id": 881, "n": "Short Entremientos GORILA-TIGRE", "cat": "Bermudas", "pvp": 39.6, "precio": 39.6, "img": "img/881.jpg", "combos": [["Negro-y-blanco", "M"], ["Negro-y-blanco", "L"], ["Rojo-y-blanco", "S"], ["Rojo-y-blanco", "L"]]}, {"id": 868, "n": "Mochila FIGHTDIVISION morada", "cat": "Mochilas entrenamiento", "pvp": 84.2, "precio": 84.2, "img": "img/868.jpg", "combos": [["Único", "Única"]]}, {"id": 866, "n": "Mochila FIGHTDIVISION verde", "cat": "Mochilas entrenamiento", "pvp": 84.2, "precio": 84.2, "img": "img/866.jpg", "combos": [["Único", "Única"]]}, {"id": 864, "n": "Mochila FIGHT DIVISION beige", "cat": "Mochilas entrenamiento", "pvp": 84.2, "precio": 84.2, "img": "img/864.jpg", "combos": [["Único", "Única"]]}, {"id": 767, "n": "Camiseta Rugby Streetwear", "cat": "Camisetas", "pvp": 40.0, "precio": 40.0, "img": "img/767.jpg", "combos": [["Azul-y-blanco", "L"], ["Azul-y-blanco", "XL"], ["Azul-y-blanco", "XXL"], ["Blanco-y-verde", "M"], ["Blanco-y-verde", "L"], ["Blanco-y-verde", "XL"], ["Negro", "M"], ["Negro", "L"], ["Negro", "XL"]]}, {"id": 734, "n": "Conjuntos Cortos OVERSIZE", "cat": "Conjuntos", "pvp": 75.0, "precio": 75.0, "img": "img/734.jpg", "combos": [["Azul-celeste", "S"], ["Azul-celeste", "M"], ["Azul-celeste", "L"], ["Azul-celeste", "XL"], ["Blanco-y-naranja", "M"], ["Blanco-y-naranja", "L"], ["Blanco-y-naranja", "XL"], ["Negro-y-blanco", "S"], ["Negro-y-blanco", "M"], ["Negro-y-blanco", "L"], ["Negro-y-blanco", "XL"]]}, {"id": 721, "n": "Camiseta Club Shirt", "cat": "Camisetas", "pvp": 34.99, "precio": 34.99, "img": "img/721.jpg", "combos": [["Azul-celeste", "S"], ["Azul-celeste", "L"], ["Azul-celeste", "XL"], ["Blanco", "S"], ["Blanco", "M"], ["Blanco", "L"], ["Blanco", "XL"]]}, {"id": 690, "n": "Gorras UNIKO Clasicas", "cat": "Gorras", "pvp": 24.99, "precio": 24.99, "img": "img/690.jpg", "combos": [["Azul-marino", "Única"], ["Beige", "Única"], ["Gris", "Única"], ["Marrón", "Única"], ["Negro", "Única"], ["Verde", "Única"], ["Verde-y-beige", "Única"]]}, {"id": 672, "n": "Gorras Fight", "cat": "Gorras", "pvp": 24.99, "precio": 24.99, "img": "img/672.jpg", "combos": [["Azul-y-blanco", "Única"], ["Gris-y-blanco", "Única"], ["Marrón", "Única"], ["Marron-y-beige", "Única"], ["Negro", "Única"], ["Negro-y-blanco", "Única"]]}, {"id": 659, "n": "Gorra Deporte", "cat": "Gorras", "pvp": 25.0, "precio": 25.0, "img": "img/659.jpg", "combos": [["Único", "Única"]]}, {"id": 641, "n": "Camiseta Dekkers", "cat": "Camisetas", "pvp": 29.99, "precio": 29.99, "img": "img/641.jpg", "combos": [["Negro", "S"], ["Negro", "M"], ["Negro", "L"], ["Negro", "XL"]]}, {"id": 627, "n": "Conjunto Corto Clas.Oversize", "cat": "Conjuntos", "pvp": 49.99, "precio": 29.99, "img": "img/627.jpg", "combos": [["Negro", "L"]]}, {"id": 610, "n": "Camiseta Virgen Mexico", "cat": "Camisetas", "pvp": 50.0, "precio": 50.0, "img": "img/610.jpg", "combos": [["Blanco", "L"], ["Blanco", "S"], ["Blanco", "XS"], ["Verde", "L"], ["Verde", "XS"]]}, {"id": 588, "n": "Camiseta Calavera", "cat": "Camisetas", "pvp": 50.0, "precio": 50.0, "img": "img/588.jpg", "combos": [["Negro", "XXL"], ["Blanco", "L"], ["Blanco", "M"], ["Blanco", "S"], ["Negro", "L"], ["Negro", "M"], ["Negro", "XS"]]}, {"id": 562, "n": "Camiseta FUCK HATERS", "cat": "Camisetas", "pvp": 40.0, "precio": 40.0, "img": "img/562.jpg", "combos": [["Negro", "L"], ["Negro", "M"], ["Blanco", "XL"], ["Blanco", "XS"], ["Negro", "XL"]]}, {"id": 485, "n": "Conjunto corto oversize", "cat": "Conjuntos", "pvp": 75.0, "precio": 75.0, "img": "img/485.jpg", "combos": [["Azul-marino", "XL"], ["Azul-marino", "M"], ["Azul-marino", "S"], ["Azul-marino", "L"], ["Beige", "L"], ["Beige", "S"], ["Beige", "XL"], ["Rojo", "L"], ["Rojo", "M"], ["Rojo", "XL"], ["Verde", "L"], ["Verde", "M"], ["Verde", "S"], ["Verde", "XL"]]}, {"id": 358, "n": "Gorro BEACH", "cat": "Gorras", "pvp": 20.0, "precio": 20.0, "img": "img/358.jpg", "combos": [["Único", "Única"]]}, {"id": 352, "n": "Camiseta de entreno tigre fight division", "cat": "Ropa deporte", "pvp": 29.99, "precio": 29.99, "img": "img/352.jpg", "combos": [["Único", "L"], ["Único", "S"]]}, {"id": 306, "n": "Camiseta goma UNIKO", "cat": "Camisetas", "pvp": 29.99, "precio": 14.99, "img": "img/306.jpg", "combos": [["Blanco", "L"], ["Blanco", "M"], ["Blanco", "S"], ["Negro", "L"], ["Negro", "M"]]}, {"id": 264, "n": "Camiseta FIGHT", "cat": "Camisetas", "pvp": 29.99, "precio": 14.99, "img": "img/264.jpg", "combos": [["Blanco", "L"], ["Gris", "S"], ["Negro", "L"], ["Negro", "M"], ["Negro", "S"], ["Rosa", "M"], ["Rosa", "S"]]}, {"id": 243, "n": "Camiseta oversize ORIGINAL", "cat": "Camisetas", "pvp": 29.99, "precio": 14.99, "img": "img/243.jpg", "combos": [["Azul", "L"], ["Azul", "M"], ["Azul", "S"], ["Azul", "XL"], ["Blanco", "L"], ["Blanco", "M"], ["Blanco", "XL"], ["Rojo", "L"], ["Rojo", "M"], ["Verde", "M"]]}, {"id": 222, "n": "Camiseta NUNCA RENDIRSE", "cat": "Camisetas", "pvp": 29.99, "precio": 14.99, "img": "img/222.jpg", "combos": [["Beige", "L"], ["Beige", "XL"], ["Blanco", "L"], ["Blanco", "M"], ["Blanco", "S"], ["Negro", "M"], ["Verde", "L"], ["Verde", "M"]]}, {"id": 216, "n": "Camiseta Be Real", "cat": "Camisetas", "pvp": 29.99, "precio": 14.99, "img": "img/216.jpg", "combos": [["Negro", "L"], ["Negro", "M"]]}, {"id": 210, "n": "Camiseta SER REAL ES SER UNIKO", "cat": "Camisetas", "pvp": 29.99, "precio": 14.99, "img": "img/210.jpg", "combos": [["Negro", "M"], ["Negro", "XL"], ["Negro", "XS"]]}, {"id": 201, "n": "Camiseta MONEY MAKER", "cat": "Camisetas", "pvp": 29.99, "precio": 14.99, "img": "img/201.jpg", "combos": [["Blanco", "L"]]}, {"id": 189, "n": "Sudadera BEREAL", "cat": "Sudaderas", "pvp": 39.99, "precio": 19.95, "img": "img/189.jpg", "combos": [["Negro", "L"]]}, {"id": 179, "n": "Sudadera MONEYMAKER", "cat": "Sudaderas", "pvp": 39.99, "precio": 19.95, "img": "img/179.jpg", "combos": [["Negro", "L"], ["Negro", "M"], ["Negro", "S"], ["Negro", "XL"]]}, {"id": 129, "n": "Conjunto chándal largo", "cat": "Conjuntos", "pvp": 94.99, "precio": 94.99, "img": "img/129.jpg", "combos": [["Verde-vintage", "M"], ["Verde-vintage", "S"], ["Verde-vintage", "XL"], ["Marrón", "M"], ["Marrón", "S"], ["Marrón", "XL"]]}, {"id": 112, "n": "Camiseta FRANKENSTEIN", "cat": "Camisetas", "pvp": 39.99, "precio": 39.99, "img": "img/112.jpg", "combos": [["Blanco", "XXL"], ["Negro", "XXL"], ["Blanco", "L"], ["Blanco", "M"], ["Blanco", "XL"], ["Negro", "L"], ["Negro", "M"], ["Negro", "S"], ["Blanco", "S"]]}, {"id": 82, "n": "Conjunto deportivo", "cat": "Ropa deporte", "pvp": 54.99, "precio": 54.99, "img": "img/82.jpg", "combos": [["Negro", "S"], ["Azul-celeste", "S"], ["Azul-celeste", "XS"], ["Rojo", "L"]]}];
-const TALLAS=['XS','S','M','L','XL','XXL','Única'];
+const SB_URL='https://vjofxmfwdybktpwiuanc.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+const DOMINIO='uniko.airmate.es';
+const sb=supabase.createClient(SB_URL,SB_ANON,{auth:{storageKey:'uniko-stock-auth',persistSession:true,autoRefreshToken:true}});
 const $=id=>document.getElementById(id);
 const eur=n=>Math.round(n).toLocaleString('es-ES',{useGrouping:'always'})+' €';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const KEY='uniko_stock_demo_v1';
-/* datos de ejemplo deterministas */
-function semilla(s){let h=2166136261;for(const c of String(s))h=Math.imul(h^c.charCodeAt(0),16777619);return()=>((h=Math.imul(h^(h>>>15),2246822507)>>>0)/4294967296)}
-function inicial(){const st={},ventas=[];const hoy=Date.now();
- CAT.forEach(p=>{const r=semilla(p.id);const lento=r()<.28;p.combos.forEach(([c,t])=>{const k=p.id+'|'+c+'|'+t;let q=Math.floor(r()*(lento?14:9));if(r()<.12)q=0;else if(r()<.15)q=1+Math.floor(r()*2);st[k]=q});
-  const nv=lento?0:Math.floor(r()*9);for(let i=0;i<nv;i++){const cb=p.combos[Math.floor(r()*p.combos.length)];ventas.push({t:hoy-Math.floor(r()*40)*864e5-Math.floor(r()*3e7),id:p.id,c:cb[0],ta:cb[1],q:1,canal:r()<.6?'Web':'Showroom',tipo:'venta'})}});
- ventas.sort((a,b)=>b.t-a.t);return{st,mov:ventas}}
-let D;try{D=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!D||!D.st)D=inicial();
-const guardar=()=>{try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}};
-const coste=p=>p.pvp*.4; // coste de ejemplo: 40 % del PVP
-const uds=p=>p.combos.reduce((a,[c,t])=>a+(D.st[p.id+'|'+c+'|'+t]||0),0);
-const nivel=q=>q<=0?'r':q<=2?'a':'';
-const colores=p=>[...new Set(p.combos.map(x=>x[0]))];
-const tallasDe=p=>TALLAS.filter(t=>p.combos.some(x=>x[1]===t));
-const diasSinVender=p=>{const v=D.mov.find(m=>m.id===p.id&&m.tipo==='venta');return v?Math.floor((Date.now()-v.t)/864e5):null};
-let CATSEL='Todo';
-function kpis(){let u=0,din=0,ago=0,poco=0;CAT.forEach(p=>{const n=uds(p);u+=n;din+=n*coste(p);p.combos.forEach(([c,t])=>{const q=D.st[p.id+'|'+c+'|'+t]||0;if(q<=0)ago++;else if(q<=2)poco++})});
- $('kpis').innerHTML=`<div class="kpi big"><small>Dinero que tienes en ropa</small><b>${eur(din)}</b></div><div class="kpi"><small>Prendas en stock</small><b>${u}</b></div><div class="kpi rojo"><small>Tallas agotadas</small><b>${ago}</b></div>`}
-function pintarCats(){const cs=['Todo',...new Set(CAT.map(p=>p.cat))];$('cats').innerHTML=cs.map(c=>`<button class="chip ${c===CATSEL?'on':''}" onclick="CATSEL='${esc(c)}';pintarCats();pintarLista()">${esc(c)}</button>`).join('')}
-function etiquetas(p){const ago=p.combos.filter(([c,t])=>(D.st[p.id+'|'+c+'|'+t]||0)<=0).length,poco=p.combos.filter(([c,t])=>{const q=D.st[p.id+'|'+c+'|'+t]||0;return q>0&&q<=2}).length,d=diasSinVender(p);
- return (ago?`<span class="tag r">${ago} agotada${ago>1?'s':''}</span>`:'')+(poco?`<span class="tag a">${poco} casi agotada${poco>1?'s':''}</span>`:'')+(d===null||d>21?`<span class="tag s">Parada ${d===null?'+40':d} días</span>`:'')}
-function pintarLista(){const q=($('q').value||'').toLowerCase();
- $('lista').innerHTML=CAT.filter(p=>(CATSEL==='Todo'||p.cat===CATSEL)&&p.n.toLowerCase().includes(q)).map(p=>`<button class="prod" onclick="ficha(${p.id})"><img src="${p.img}" alt="" loading="lazy"><div><div class="n">${esc(p.n)}</div><div class="m">${eur(uds(p)*coste(p))} en stock</div>${etiquetas(p)}</div><div class="u"><b>${uds(p)}</b><small>uds</small></div></button>`).join('')||'<p class="sub">No hay ninguna prenda con ese nombre.</p>'}
-function tabla(p,click){const ts=tallasDe(p);return `<div class="leyenda"><span><i style="background:var(--ok)"></i>Hay</span><span><i style="background:var(--a)"></i>Quedan 1 o 2</span><span><i style="background:var(--r)"></i>Agotada</span></div><table class="tabla"><tr><th></th>${ts.map(t=>`<th>${t}</th>`).join('')}</tr>${colores(p).map(c=>`<tr><td>${esc(c)}</td>${ts.map(t=>{const ex=p.combos.some(x=>x[0]===c&&x[1]===t);if(!ex)return '<td><div class="cel x">·</div></td>';const q=D.st[p.id+'|'+c+'|'+t]||0;return `<td><button class="cel ${nivel(q)}" ${click?`onclick="${click}(${p.id},'${esc(c)}','${t}')"`:''}>${q}</button></td>`}).join('')}</tr>`).join('')}</table>`}
-function ficha(id){const p=CAT.find(x=>x.id===id);abrir(`<div class="top"><img src="${p.img}" alt=""><div><b>${esc(p.n)}</b><small>${p.precio<p.pvp?`${p.precio.toFixed(2).replace('.',',')} € (oferta)`:`${p.pvp.toFixed(2).replace('.',',')} €`} · ${uds(p)} uds · ${eur(uds(p)*coste(p))}</small></div><button class="cerrar" onclick="cerrar()">×</button></div>
+const TALLAS=['XXS','XS','S','M','L','XL','XXL','3XL','ÚNICA'];
+const bonito=s=>{s=String(s||'').trim().replace(/-/g,' ').replace(/^marron$/i,'Marrón');return s?s.charAt(0).toUpperCase()+s.slice(1):s};
+let P=[],VENTAS={},MOVS=[],CATSEL='Todo',F={};
+const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+
+/* ── sesión ── */
+async function entrar(){const u=$('lu').value.trim().toLowerCase(),p=$('lp').value;$('le').textContent='';
+ if(!u||!p){$('le').textContent='Pon tu usuario y tu contraseña.';return}
+ $('lb').disabled=true;$('lb').textContent='Entrando…';
+ const email=u.includes('@')?u:`${u}@${DOMINIO}`;
+ const {error}=await sb.auth.signInWithPassword({email,password:p});
+ $('lb').disabled=false;$('lb').textContent='Entrar';
+ if(error){$('le').textContent='Usuario o contraseña incorrectos.';return}
+ arrancar()}
+async function salir(){await sb.auth.signOut();location.reload()}
+async function api(body){const {data:{session}}=await sb.auth.getSession();if(!session){mostrarLogin();throw new Error('sesión')}
+ const r=await fetch(SB_URL+'/functions/v1/uniko-stock',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_ANON,Authorization:'Bearer '+session.access_token},body:JSON.stringify(body)});
+ const d=await r.json().catch(()=>({ok:false,error:'Sin respuesta del servidor'}));
+ if(r.status===401){mostrarLogin();throw new Error('Tu usuario no tiene acceso')}
+ if(!d.ok)throw new Error(d.error||'Error');return d}
+function mostrarLogin(){$('app').hidden=true;$('login').hidden=false}
+
+/* ── datos ── */
+const filasDe=p=>p.filas||[];
+const k=(p,f)=>p.id+'|'+f.vid;
+const uds=p=>filasDe(p).reduce((a,f)=>a+Math.max(0,f.stock||0),0);
+const sinContar=p=>filasDe(p).filter(f=>f.stock===null).length;
+const nivel=q=>q===null?'q':q<=0?'r':q<=2?'a':'';
+const colores=p=>[...new Set(filasDe(p).map(f=>bonito(f.color)))];
+const tallasDe=p=>{const ts=[...new Set(filasDe(p).map(f=>f.talla))];return ts.sort((a,b)=>(TALLAS.indexOf(a)+99*(TALLAS.indexOf(a)<0))-(TALLAS.indexOf(b)+99*(TALLAS.indexOf(b)<0)))};
+const fila=(p,c,t)=>filasDe(p).find(f=>bonito(f.color)===c&&f.talla===t);
+const vendidas=p=>(VENTAS[p.id]?.n||0)+MOVS.filter(m=>m.product_id==p.id&&m.tipo==='venta').reduce((a,m)=>a-m.delta,0);
+async function cargar(){
+ const cache=lsGet('uniko_cat');if(cache&&cache.length){P=cache;todo()}
+ try{const d=await api({accion:'catalogo'});P=d.productos;lsSet('uniko_cat',P);todo()}
+ catch(e){if(e.message!=='sesión')aviso(e.message,1);if(!P.length)$('lista').innerHTML=`<div class="cargando">${esc(e.message)}</div>`}
+ Promise.all([api({accion:'ventas'}).then(d=>VENTAS=d.ventas).catch(()=>{}),api({accion:'movimientos'}).then(d=>MOVS=d.movimientos).catch(()=>{})]).then(()=>{pintarMover();pintarLista()})}
+
+/* ── pintar ── */
+function kpis(){let u=0,din=0,conCoste=0,ago=0,sc=0;P.forEach(p=>{const n=uds(p);u+=n;if(p.coste!=null){din+=n*p.coste;conCoste++}filasDe(p).forEach(f=>{if(f.stock===null)sc++;else if(f.stock<=0)ago++})});
+ $('kpis').innerHTML=`<div class="kpi big"><small>Dinero que tienes en ropa</small><b>${conCoste?eur(din):'—'}</b><span>${conCoste===P.length?'Lo que te costó todo lo que tienes guardado':conCoste?`De ${conCoste} de ${P.length} prendas. Pon el coste en las demás.`:'Pon lo que te cuesta cada prenda (dentro de cada una) y lo calculo.'}</span></div><div class="kpi"><small>Prendas en stock</small><b>${u}</b></div><div class="kpi rojo"><small>Tallas agotadas</small><b>${ago}</b></div>`+(sc?`<div class="kpi" style="grid-column:1/-1"><small>Sin contar todavía</small><b style="font-size:20px">${sc} tallas · tócalas y pon cuántas tienes</b></div>`:'')}
+function pintarCats(){const cs=['Todo',...new Set(P.map(p=>p.cat).filter(Boolean))];$('cats').innerHTML=cs.map(c=>`<button class="chip ${c===CATSEL?'on':''}" data-c="${esc(c)}" onclick="CATSEL=this.dataset.c;pintarCats();pintarLista()">${esc(c)}</button>`).join('')}
+function etiquetas(p){const fs=filasDe(p),ago=fs.filter(f=>f.stock!==null&&f.stock<=0).length,poco=fs.filter(f=>f.stock>0&&f.stock<=2).length,sc=sinContar(p);
+ return (ago?`<span class="tag r">${ago} agotada${ago>1?'s':''}</span>`:'')+(poco?`<span class="tag a">${poco} casi agotada${poco>1?'s':''}</span>`:'')+(sc?`<span class="tag s">${sc} sin contar</span>`:'')}
+function pintarLista(){if(!P.length)return;const q=($('q').value||'').toLowerCase();
+ $('lista').innerHTML=P.filter(p=>(CATSEL==='Todo'||p.cat===CATSEL)&&p.nombre.toLowerCase().includes(q)).map(p=>`<button class="prod" onclick="ficha(${p.id})"><img src="${esc(p.img)}" alt="" loading="lazy"><div><div class="n">${esc(p.nombre)}</div><div class="m">${p.coste!=null?eur(uds(p)*p.coste)+' en stock':'Sin coste puesto'}</div>${etiquetas(p)}</div><div class="u"><b>${uds(p)}</b><small>uds</small></div></button>`).join('')||'<p class="sub">No hay ninguna prenda con ese nombre.</p>'}
+function tabla(p){const ts=tallasDe(p);return `<div class="leyenda"><span><i style="background:var(--ok)"></i>Hay</span><span><i style="background:var(--a)"></i>1 o 2</span><span><i style="background:var(--r)"></i>Agotada</span><span><i style="background:#555"></i>Sin contar</span></div><table class="tabla"><tr><th></th>${ts.map(t=>`<th>${t==='ÚNICA'?'Única':t}</th>`).join('')}</tr>${colores(p).map(c=>`<tr><td>${esc(c)}</td>${ts.map(t=>{const f=fila(p,c,t);if(!f)return '<td><div class="cel x">·</div></td>';return `<td><button class="cel ${nivel(f.stock)}" onclick="recuento(${p.id},${f.vid})">${f.stock===null?'?':f.stock}</button></td>`}).join('')}</tr>`).join('')}</table><p class="nota">Toca un número para corregirlo si has contado y no cuadra.</p>`}
+function ficha(id){const p=P.find(x=>x.id===id);abrir(`<div class="top"><img src="${esc(p.img)}" alt=""><div><b>${esc(p.nombre)}</b><small>${p.precio.toFixed(2).replace('.',',')} € · ${uds(p)} uds</small></div><button class="cerrar" onclick="cerrar()">×</button></div>
  <div class="paso">Colores y tallas</div>${tabla(p)}
- <button class="cta" onclick="cerrar();empezar('vender',${p.id})">💸 He vendido una</button><button class="cta sec" style="margin-top:10px" onclick="cerrar();empezar('recibir',${p.id})">🚚 Me han llegado más</button>`)}
-/* elegir prenda para vender / recibir */
-function pintarElegir(modo){const q=($(modo==='vender'?'qv':'qr').value||'').toLowerCase();
- $('elegir-'+modo).innerHTML=CAT.filter(p=>p.n.toLowerCase().includes(q)).map(p=>`<button class="prod" onclick="empezar('${modo}',${p.id})"><img src="${p.img}" alt="" loading="lazy"><div><div class="n">${esc(p.n)}</div><div class="m">${uds(p)} en stock</div></div><div class="u" style="font-size:26px">›</div></button>`).join('')}
-let F={};
-function empezar(modo,id){const p=CAT.find(x=>x.id===id);const cs=colores(p);F={modo,id,c:cs.length===1?cs[0]:null,t:null,n:1,canal:'WhatsApp'};pasoForm()}
-function pasoForm(){const p=CAT.find(x=>x.id===F.id),V=F.modo==='vender',cs=colores(p),ts=tallasDe(p).filter(t=>!F.c||p.combos.some(x=>x[0]===F.c&&x[1]===t));
- const q=(c,t)=>D.st[p.id+'|'+c+'|'+t]||0;
- let h=`<div class="top"><img src="${p.img}" alt=""><div><b>${V?'Vender':'Recibir'}: ${esc(p.n)}</b><small>${V?'Te lo descuento del stock':'Se suma a tu stock'}</small></div><button class="cerrar" onclick="cerrar()">×</button></div>`;
- if(cs.length>1)h+=`<div class="paso">1 · ¿Qué color?</div><div class="grid" style="grid-template-columns:repeat(${Math.min(3,cs.length)},1fr)">${cs.map(c=>`<button class="op ${F.c===c?'on':''}" onclick="F.c='${esc(c)}';F.t=null;pasoForm()">${esc(c)}</button>`).join('')}</div>`;
- if(F.c){h+=`<div class="paso">${cs.length>1?'2':'1'} · ¿Qué talla?</div><div class="grid" style="grid-template-columns:repeat(${Math.min(4,ts.length)},1fr)">${ts.map(t=>{const n=q(F.c,t);const no=V&&n<=0;return `<button class="op ${F.t===t?'on':''} ${nivel(n)}" ${no?'disabled':''} onclick="F.t='${t}';pasoForm()">${t}<small>${n<=0?'agotada':'quedan '+n}</small></button>`}).join('')}</div>`}
- if(F.t){const max=V?q(F.c,F.t):99;F.n=Math.min(F.n,max);
+ <button class="cta" onclick="cerrar();empezar('vender',${p.id})">💸 He vendido</button><button class="cta sec" onclick="cerrar();empezar('recibir',${p.id})">🚚 Me han llegado más</button>
+ <div class="paso">¿Cuánto te cuesta cada una?</div><div style="display:flex;gap:8px"><input class="campo" id="coste" inputmode="decimal" placeholder="Ej: 12" value="${p.coste??''}" style="margin:0"><button class="op" style="min-width:110px" onclick="guardarCoste(${p.id})">Guardar</button></div><p class="nota">Lo que pagas al proveedor por prenda. Solo lo ves tú; sirve para saber cuánto dinero tienes en ropa.</p>`)}
+async function guardarCoste(id){const v=parseFloat(String($('coste').value).replace(',','.'));if(!(v>=0)){aviso('Pon un número',1);return}
+ try{await api({accion:'coste',id,coste:v});P.find(x=>x.id===id).coste=v;lsSet('uniko_cat',P);aviso('✓ Coste guardado');todo()}catch(e){aviso(e.message,1)}}
+function pintarElegir(modo){if(!P.length)return;const q=($(modo==='vender'?'qv':'qr').value||'').toLowerCase();
+ $('elegir-'+modo).innerHTML=P.filter(p=>p.nombre.toLowerCase().includes(q)).map(p=>`<button class="prod" onclick="empezar('${modo}',${p.id})"><img src="${esc(p.img)}" alt="" loading="lazy"><div><div class="n">${esc(p.nombre)}</div><div class="m">${uds(p)} en stock</div></div><div class="u" style="font-size:26px">›</div></button>`).join('')}
+function empezar(modo,id){const p=P.find(x=>x.id===id),cs=colores(p);F={modo,id,c:cs.length===1?cs[0]:null,t:null,n:1,canal:'WhatsApp'};pasoForm()}
+function pasoForm(){const p=P.find(x=>x.id===F.id),V=F.modo==='vender',cs=colores(p),ts=tallasDe(p).filter(t=>!F.c||fila(p,F.c,t));
+ let h=`<div class="top"><img src="${esc(p.img)}" alt=""><div><b>${V?'Vender':'Recibir'}: ${esc(p.nombre)}</b><small>${V?'Se quita de tu web':'Se suma en tu web'}</small></div><button class="cerrar" onclick="cerrar()">×</button></div>`;
+ if(cs.length>1)h+=`<div class="paso">1 · ¿Qué color?</div><div class="grid" style="grid-template-columns:repeat(${Math.min(3,cs.length)},1fr)">${cs.map(c=>`<button class="op ${F.c===c?'on':''}" data-c="${esc(c)}" onclick="F.c=this.dataset.c;F.t=null;pasoForm()">${esc(c)}</button>`).join('')}</div>`;
+ if(F.c){h+=`<div class="paso">${cs.length>1?'2':'1'} · ¿Qué talla?</div><div class="grid" style="grid-template-columns:repeat(${Math.min(4,ts.length)},1fr)">${ts.map(t=>{const f=fila(p,F.c,t),n=f.stock,no=V&&n!==null&&n<=0;return `<button class="op ${F.t===t?'on':''} ${nivel(n)}" ${no?'disabled':''} onclick="F.t='${t}';pasoForm()">${t==='ÚNICA'?'Única':t}<small>${n===null?'sin contar':n<=0?'agotada':'quedan '+n}</small></button>`}).join('')}</div>`}
+ if(F.t){const f=fila(p,F.c,F.t),max=V&&f.stock!==null?f.stock:999;F.n=Math.max(1,Math.min(F.n,max));
   h+=`<div class="paso">¿Cuántas?</div><div class="num"><button onclick="F.n=Math.max(1,F.n-1);pasoForm()">−</button><b>${F.n}</b><button onclick="F.n=Math.min(${max},F.n+1);pasoForm()">+</button></div>`;
-  if(V)h+=`<div class="paso">¿Dónde?</div><div class="grid" style="grid-template-columns:repeat(3,1fr)">${['WhatsApp','Showroom','Feria'].map(c=>`<button class="op ${F.canal===c?'on':''}" onclick="F.canal='${c}';pasoForm()">${c}</button>`).join('')}</div><p class="sub" style="margin-top:10px">✓ Se quita solo de tu web. No tienes que entrar al ordenador.</p>`}
- h+=`<button class="cta" ${F.t?'':'disabled'} onclick="confirmar()">${V?'✓ Vendido':'✓ Sumar al stock'}</button>`;abrir(h)}
-function confirmar(){const k=F.id+'|'+F.c+'|'+F.t,V=F.modo==='vender';D.st[k]=(D.st[k]||0)+(V?-F.n:F.n);
- D.mov.unshift({t:Date.now(),id:F.id,c:F.c,ta:F.t,q:F.n,canal:V?F.canal:'Proveedor',tipo:V?'venta':'entrada'});guardar();cerrar();
- const p=CAT.find(x=>x.id===F.id);aviso(V?`✓ Vendida · quitada también de la web`:`✓ +${F.n} sumadas a ${p.n.split(' ').slice(0,2).join(' ')}`);todo()}
-/* qué mover */
-function pintarMover(){const parado=CAT.map(p=>({p,d:diasSinVender(p),u:uds(p)})).filter(x=>x.u>0&&(x.d===null||x.d>21)).sort((a,b)=>b.u*coste(b.p)-a.u*coste(a.p)).slice(0,5);
- const acaba=CAT.map(p=>{const ventas=D.mov.filter(m=>m.id===p.id&&m.tipo==='venta').length;const pocas=p.combos.filter(([c,t])=>{const q=D.st[p.id+'|'+c+'|'+t]||0;return q<=2}).map(([c,t])=>c+' '+t);return{p,ventas,pocas}}).filter(x=>x.ventas>=3&&x.pocas.length).sort((a,b)=>b.ventas-a.ventas).slice(0,4);
- $('mover').innerHTML=`<div class="paso" style="margin-top:0">🧊 Dinero parado · haz un vídeo o ponlo en oferta</div>`+parado.map(x=>`<div class="box mov"><img src="${x.p.img}" alt=""><div><h3>${esc(x.p.n)}</h3><p>${x.u} uds · <b>${eur(x.u*coste(x.p))}</b> parados · ${x.d===null?'sin ventas en 40 días':'última venta hace '+x.d+' días'}</p></div><div class="acc"><button class="p" onclick="aviso('🎬 Apuntado: vídeo de ${esc(x.p.n.split(' ').slice(0,2).join(' '))} para esta semana')">🎬 Hacer vídeo</button><button onclick="aviso('🏷️ Apuntado para el Black Friday')">🏷️ Ponerla en oferta</button></div></div>`).join('')+
- `<div class="paso">🔥 Se vende bien y se acaba · pide más</div>`+(acaba.length?acaba.map(x=>`<div class="box mov"><img src="${x.p.img}" alt=""><div><h3>${esc(x.p.n)}</h3><p>${x.ventas} ventas este mes · queda poco de: ${x.pocas.slice(0,4).map(esc).join(', ')}${x.pocas.length>4?'…':''}</p></div><div class="acc"><button class="p" onclick="cerrar();empezar('recibir',${x.p.id})">🚚 Ya lo he pedido</button></div></div>`).join(''):'<p class="sub">Nada urgente: todo lo que se vende tiene stock.</p>');
- $('hist').innerHTML=D.mov.slice(0,12).map(m=>{const p=CAT.find(x=>x.id===m.id);const d=new Date(m.t);return `<div><span>${m.tipo==='venta'?'💸':'🚚'} ${esc(p?p.n:'')} · ${esc(m.c)} ${m.ta}<br><small>${m.tipo==='venta'?'Vendida':'Entrada'} · ${m.canal}</small></span><small>${d.toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</small></div>`}).join('')}
-/* utilidades */
+  if(V)h+=`<div class="paso">¿Dónde?</div><div class="grid" style="grid-template-columns:repeat(3,1fr)">${['WhatsApp','Showroom','Feria'].map(c=>`<button class="op ${F.canal===c?'on':''}" onclick="F.canal='${c}';pasoForm()">${c}</button>`).join('')}</div><p class="nota">✓ Se quita solo de tu web. No tienes que entrar al ordenador.</p>`}
+ h+=`<button class="cta" id="okb" ${F.t?'':'disabled'} onclick="confirmar()">${V?'✓ Vendido':'✓ Sumar'}</button>`;abrir(h)}
+async function confirmar(){const p=P.find(x=>x.id===F.id),f=fila(p,F.c,F.t),V=F.modo==='vender';const b=$('okb');b.disabled=true;b.textContent='Guardando…';
+ try{const r=await api({accion:'mover',tipo:V?'venta':'entrada',id:p.id,vid:f.vid,delta:V?-F.n:F.n,canal:V?F.canal:'Proveedor',nombre:p.nombre,color:F.c,talla:F.t});
+  f.stock=r.despues;lsSet('uniko_cat',P);MOVS.unshift({created_at:new Date().toISOString(),product_id:p.id,nombre:p.nombre,color:F.c,talla:F.t,tipo:V?'venta':'entrada',delta:r.despues-r.antes,canal:V?F.canal:'Proveedor'});
+  cerrar();aviso(V?`✓ Vendida · quedan ${r.despues} en la web`:`✓ Sumadas · ahora hay ${r.despues}`);todo()}
+ catch(e){b.disabled=false;b.textContent='Reintentar';aviso(e.message,1)}}
+function recuento(id,vid){const p=P.find(x=>x.id===id),f=filasDe(p).find(x=>x.vid===vid);let n=f.stock??0;
+ const pint=()=>abrir(`<div class="top"><img src="${esc(p.img)}" alt=""><div><b>${esc(p.nombre)}</b><small>${esc(bonito(f.color))} · ${f.talla==='ÚNICA'?'Única':f.talla}</small></div><button class="cerrar" onclick="cerrar()">×</button></div><div class="paso">¿Cuántas tienes de verdad?</div><div class="num"><button id="rm">−</button><b id="rn">${n}</b><button id="rp">+</button></div><button class="cta" id="rok">✓ Guardar recuento</button><p class="nota">Se cambia también en tu web.</p>`);
+ pint();const upd=()=>$('rn').textContent=n;$('rm').onclick=()=>{n=Math.max(0,n-1);upd()};$('rp').onclick=()=>{n++;upd()};
+ $('rok').onclick=async()=>{$('rok').disabled=true;$('rok').textContent='Guardando…';try{const r=await api({accion:'mover',tipo:'recuento',id,vid,cantidad:n,nombre:p.nombre,color:bonito(f.color),talla:f.talla});f.stock=r.despues;lsSet('uniko_cat',P);cerrar();aviso('✓ Recuento guardado');todo()}catch(e){$('rok').disabled=false;$('rok').textContent='Reintentar';aviso(e.message,1)}}}
+function pintarMover(){if(!P.length)return;const hoy=Date.now();
+ const parado=P.map(p=>({p,u:uds(p),v:vendidas(p)})).filter(x=>x.u>0&&x.v<=0).sort((a,b)=>(b.u*(b.p.coste||b.p.precio*.4))-(a.u*(a.p.coste||a.p.precio*.4))).slice(0,6);
+ const acaba=P.map(p=>({p,v:vendidas(p),pocas:filasDe(p).filter(f=>f.stock!==null&&f.stock<=2).map(f=>bonito(f.color)+' '+f.talla)})).filter(x=>x.v>=3&&x.pocas.length).sort((a,b)=>b.v-a.v).slice(0,5);
+ $('mover').innerHTML=`<div class="paso" style="margin-top:0">🧊 Parado · sin ventas en 45 días · haz un vídeo o ponlo en oferta</div>`+(parado.length?parado.map(x=>`<div class="box mov"><img src="${esc(x.p.img)}" alt=""><div><h3>${esc(x.p.nombre)}</h3><p>${x.u} uds${x.p.coste!=null?` · <b>${eur(x.u*x.p.coste)}</b> parados`:''}</p></div></div>`).join(''):'<p class="sub">Todo lo que tienes se ha vendido algo este mes. 👏</p>')+
+ `<div class="paso">🔥 Se vende y se acaba · pide más</div>`+(acaba.length?acaba.map(x=>`<div class="box mov"><img src="${esc(x.p.img)}" alt=""><div><h3>${esc(x.p.nombre)}</h3><p>${x.v} vendidas · queda poco de: ${x.pocas.slice(0,4).map(esc).join(', ')}${x.pocas.length>4?'…':''}</p></div></div>`).join(''):'<p class="sub">Nada urgente.</p>');
+ $('hist').innerHTML=MOVS.slice(0,15).map(m=>`<div><span>${m.tipo==='venta'?'💸':m.tipo==='entrada'?'🚚':'✏️'} ${esc(m.nombre||'')} · ${esc(m.color||'')} ${esc(m.talla||'')}<br><small>${m.tipo==='venta'?'Vendida':m.tipo==='entrada'?'Entrada':'Recuento'} ${m.delta>0?'+':''}${m.delta}${m.canal?' · '+esc(m.canal):''}</small></span><small>${new Date(m.created_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</small></div>`).join('')||'<p class="sub">Aún no has movido nada desde la app.</p>'}
 function abrir(h){$('hc').innerHTML=h;$('hoja').classList.add('on')}
 function cerrar(){$('hoja').classList.remove('on')}
-let tt;function aviso(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),2200)}
-function ir(p){document.querySelectorAll('.pg').forEach(x=>x.classList.toggle('on',x.id==='pg-'+p));document.querySelectorAll('nav.bot button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));scrollTo(0,0);todo()}
-function todo(){kpis();pintarCats();pintarLista();pintarElegir('vender');pintarElegir('recibir');pintarMover()}
+let tt;function aviso(t,err){const e=$('toast');e.textContent=t;e.classList.toggle('err',!!err);e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),err?4000:2400)}
+function ir(p){document.querySelectorAll('.pg').forEach(x=>x.classList.toggle('on',x.id==='pg-'+p));document.querySelectorAll('nav.bot button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));scrollTo(0,0)}
+function todo(){if(!P.length)return;kpis();pintarCats();pintarLista();pintarElegir('vender');pintarElegir('recibir');pintarMover()}
 addEventListener('keydown',e=>{if(e.key==='Escape')cerrar()});
-todo();
+function arrancar(){$('login').hidden=true;$('app').hidden=false;cargar()}
+sb.auth.getSession().then(({data})=>data.session?arrancar():mostrarLogin());
 </script></body></html>
