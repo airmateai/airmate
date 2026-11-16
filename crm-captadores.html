@@ -1719,7 +1719,7 @@ function renderEscalar(){
   const mesIni=new Date(ahora.getFullYear(),ahora.getMonth(),1);
   const mesFin=new Date(ahora.getFullYear(),ahora.getMonth()+1,0);
   const diasQuedan=mesFin.getDate()-ahora.getDate();
-  const llam=[]; LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(l.r!=='wa_frio')llam.push({...l,c});}));
+  const llam=[]; LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(!['wa_frio','wa_bf'].includes(l.r))llam.push({...l,c});}));
   const deHoy=llam.filter(l=>(l.t||'').slice(0,10)===hoy);
   const conv=deHoy.filter(l=>['demo','info','luego','no_interesa'].includes(l.r));
   const demosSem=llam.filter(l=>l.r==='demo'&&new Date(l.t)>=lunes).length;
@@ -2864,7 +2864,7 @@ function esMio(c){return nn(c.captador)===nn(SESSION.nombre)||(esJefe()&&nn(c.ca
 function mismoDia(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
 function llLlamadasHoy(nombre){
   const hoy=new Date(),out=[];
-  LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(l.r!=='wa_frio'&&nn(l.por)===nn(nombre)&&mismoDia(new Date(l.t),hoy))out.push({...l,c});}));
+  LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(!['wa_frio','wa_bf'].includes(l.r)&&nn(l.por)===nn(nombre)&&mismoDia(new Date(l.t),hoy))out.push({...l,c});}));
   return out;
 }
 function telLimpio(t){
@@ -2910,7 +2910,7 @@ try{LL_NICHO=localStorage.getItem('crm_ll_nicho')||'';}catch(e){}
 function llNicho(id){
   LL_NICHO=LL_NICHO===id?'':id;
   try{localStorage.setItem('crm_ll_nicho',LL_NICHO);}catch(e){}
-  if(LL_NICHO&&LL_ACTUAL){const c=LISTA.find(x=>x.id===LL_ACTUAL);if(c&&nichoDe(c)!==LL_NICHO)LL_ACTUAL=null;}
+  if(LL_NICHO&&LL_ACTUAL){const c=LISTA.find(x=>x.id===LL_ACTUAL);if(c&&(LL_NICHO==='sinweb'?!sinWebBF(c):nichoDe(c)!==LL_NICHO))LL_ACTUAL=null;}
   llRender();
 }
 function llRenderNichos(){
@@ -2920,7 +2920,8 @@ function llRenderNichos(){
   base.forEach(c=>{const k=nichoDe(c);cuenta[k]=(cuenta[k]||0)+1;});
   const ids=[...NICHOS.map(n=>n.id),'otros'].filter(k=>cuenta[k]||k===LL_NICHO);
   el.innerHTML=`<span class="lbl">Nicho:</span><button class="${LL_NICHO?'':'on'}" onclick="llNicho('')">Todos<b>${base.length}</b></button>`
-    +ids.map(k=>`<button class="${LL_NICHO===k?'on':''}" onclick="llNicho('${k}')">${esc(nichoNombre(k))}<b>${cuenta[k]||0}</b></button>`).join('');
+    +ids.map(k=>`<button class="${LL_NICHO===k?'on':''}" onclick="llNicho('${k}')">${esc(nichoNombre(k))}<b>${cuenta[k]||0}</b></button>`).join('')
+    +(BF_WEB_ON?`<button class="${LL_NICHO==='sinweb'?'on':''}" style="color:#c0392b" onclick="llNicho('sinweb')">🌐 Sin web · Black Friday<b>${base.filter(sinWebBF).length}</b></button>`:'');
 }
 function nichoSelect(lista){
   const sel=document.getElementById('f-nicho');if(!sel)return;
@@ -2929,7 +2930,7 @@ function nichoSelect(lista){
   sel.innerHTML='<option value="">Todos</option>'+[...NICHOS.map(n=>n.id),'otros'].filter(k=>cuenta[k]).map(k=>`<option value="${k}">${esc(nichoNombre(k))} (${cuenta[k]})</option>`).join('');
   sel.value=v;
 }
-function llCola(){return llColaTodos().filter(c=>!LL_NICHO||nichoDe(c)===LL_NICHO);}
+function llCola(){return llColaTodos().filter(c=>!LL_NICHO||(LL_NICHO==='sinweb'?sinWebBF(c):nichoDe(c)===LL_NICHO));}
 function llColaTodos(){
   const ahora=Date.now();
   return LISTA.filter(c=>esMio(c)&&c.telefono&&!['descartado','cerrado','reunion'].includes(c.etapa)&&!esHosteleria(c))
@@ -3004,6 +3005,7 @@ function llFicha(c){
     ${c.direccion?`<div class="ll-sub">${esc(c.direccion)}</div>`:''}
     <div class="ll-links">${web?`<a href="${esc(web)}" target="_blank" rel="noopener">Ver web / Instagram ↗</a>`:''}<a href="${maps}" target="_blank" rel="noopener">Ver en Google Maps ↗</a></div>
     <a class="ll-call" href="tel:${esc(tel)}" onclick="llMarcado()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Llamar <small>${esc(telBonito(c.telefono))}</small></a>
+    ${sinWebBF(c)?`<button class="ll-wa" style="background:#c0392b" onclick="waWebBF(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">🌐 WhatsApp web 390 € <small>Black Friday</small></button>`:''}
     ${esMovil(c.telefono)?`<button class="ll-wa" onclick="waFrio(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">💬 Mandar WhatsApp <small>mensaje ya escrito</small></button>`:''}
     <div class="ll-hint">Tecla <kbd>Espacio</kbd> para llamar · <a href="#" onclick="navigator.clipboard.writeText('${esc(tel)}');toast('Número copiado');return false" style="color:inherit">copiar número</a></div>
     <div class="ll-lbl">Notas de esta llamada</div>
@@ -3013,7 +3015,7 @@ function llFicha(c){
       ${Object.entries(RES).map(([k,v],i)=>`<button class="${k==='demo'?'demo':''}" onclick="llResultado('${k}')"><span class="e">${v.e}</span>${v.t}<kbd>${i+1}</kbd></button>`).join('')}
     </div>
     <div class="ll-foot">
-      <div class="ll-hist">${hist.length?hist.slice(0,4).map(l=>`<div><time>${fmtCuando(l.t)}</time><span>${RES[l.r]?RES[l.r].e+' '+RES[l.r].t:l.r==='wa_frio'?'💬 WhatsApp en frío':esc(l.r)}${l.n?' — '+esc(l.n):''}</span></div>`).join(''):'<div><span>Primera llamada a este negocio.</span></div>'}</div>
+      <div class="ll-hist">${hist.length?hist.slice(0,4).map(l=>`<div><time>${fmtCuando(l.t)}</time><span>${RES[l.r]?RES[l.r].e+' '+RES[l.r].t:l.r==='wa_frio'?'💬 WhatsApp en frío':l.r==='wa_bf'?'🌐 WhatsApp Black Friday':esc(l.r)}${l.n?' — '+esc(l.n):''}</span></div>`).join(''):'<div><span>Primera llamada a este negocio.</span></div>'}</div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">${(c.emails||[]).length?`<span class="chip">📧 ${(c.emails||[]).filter(e=>e.ok).length} email${(c.emails||[]).filter(e=>e.ok).length===1?'':'s'}${c.email_seg_at&&!['reunion','descartado','cerrado'].includes(c.etapa)?' · próximo '+fmtCuando(c.email_seg_at):''}</span>`:''}<div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="waFrio(LL_ACTUAL)" title="Mensaje para cuando no contestan">💬 WhatsApp en frío</button><button class="btn btn-ghost btn-sm" onclick="llSaltar()">Saltar →</button></div></div>
     </div>
   </div>`;
@@ -3053,7 +3055,7 @@ function llRenderEquipo(){
   const nombres=[...new Set(LISTA.map(c=>c.captador).filter(Boolean))];
   const hoy=new Date(),lunes=new Date();lunes.setHours(0,0,0,0);lunes.setDate(lunes.getDate()-((lunes.getDay()+6)%7));
   const filas=nombres.map(n=>{
-    const ls=[];LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(l.r!=='wa_frio'&&(l.por===n||(n==='Fabio'&&l.por===SESSION.nombre&&c.captador==='Fabio')))ls.push(l);}));
+    const ls=[];LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(!['wa_frio','wa_bf'].includes(l.r)&&(l.por===n||(n==='Fabio'&&l.por===SESSION.nombre&&c.captador==='Fabio')))ls.push(l);}));
     const d=ls.filter(l=>mismoDia(new Date(l.t),hoy)),w=ls.filter(l=>new Date(l.t)>=lunes);
     const pend=LISTA.filter(c=>c.captador===n&&!['descartado','cerrado','reunion'].includes(c.etapa)).length;
     return `<tr><td><b>${esc(n)}</b></td><td>${d.length}</td><td>${d.filter(l=>l.r==='demo').length}</td><td>${w.length}</td><td>${w.filter(l=>l.r==='demo').length}</td><td>${pend}</td></tr>`;
@@ -3271,6 +3273,28 @@ function plEmail(id){LL_ACTUAL=id;goPage('llamar',null);setTimeout(()=>{document
 function esMovil(t){return /^(34)?[67]\d{8}$/.test(String(t||'').replace(/\D/g,''));}
 // Black Friday: posdata en los WhatsApp que salen del CRM hasta el 30-nov (se quita sola el 1-dic)
 const BF_PD=Date.now()<Date.parse('2026-12-01T00:00:00Z')?'\n\nPor cierto, hasta el 30 de noviembre estamos con ofertas de Black Friday, por si os interesa.':'';
+/* Black Friday webs 390 €: solo negocios sin web comprobado en Google (sin_web_google) y con móvil. Se apaga solo el 1-dic. */
+const BF_WEB_ON=Date.now()<Date.parse('2026-12-01T00:00:00Z');
+const sinWebBF=c=>BF_WEB_ON&&!c.web&&c.sin_web_google===true&&esMovil(c.telefono)&&!['descartado','cerrado','reunion'].includes(c.etapa)&&!(c.llamadas||[]).some(l=>l.r==='wa_bf');
+function waWebBF(id){
+  const c=LISTA.find(x=>x.id===id)||ALL_CONTACTOS.find(x=>x.id===id);if(!c)return;
+  const yo=SESSION.nombre.split(' ')[0];
+  const txt=`Hola, soy ${yo}, de Airmate, aquí en Tenerife. He visto que ${c.empresa} no tiene página web en Google, y quien os busca y no os encuentra acaba llamando a otro.\n\nHasta el 30 de noviembre hacemos webs profesionales por 390 € (normalmente 1.290 €). Solo para 5 negocios.\n\n¿Te enseño cómo quedaría la vuestra?`;
+  window.open('https://wa.me/'+telLimpio(c.telefono).replace('+','')+'?text='+encodeURIComponent(txt),'_blank');
+  const t=new Date().toISOString(), prox=proxHora(2,10,30).toISOString();
+  const cambios={etapa:['reunion','cerrado'].includes(c.etapa)?c.etapa:'interesado',proxima_llamada:prox,ultima_llamada:t,updated_at:t,
+    llamadas:[...(c.llamadas||[]),{t,r:'wa_bf',por:SESSION.nombre,n:'WhatsApp Black Friday web 390 €'}]};
+  if(!(c.llamadas||[]).length)cambios.fecha_alta=todayStr();
+  SB.from('am_crm_contactos').update(cambios).eq('id',c.id).select('id').then(({data,error})=>{
+    if(error||!(data||[]).length){toast('El WhatsApp se ha abierto, pero no se ha guardado en el panel','error');return;}
+    Object.assign(c,cambios);
+    ALL_CONTACTOS=LISTA.filter(x=>!(x.origen&&x.origen.startsWith('lista')&&!(x.llamadas||[]).length&&x.etapa==='nuevo'));
+    if(LL_ACTUAL===c.id)LL_ACTUAL=null;
+    toast('🌐 Guardado en «Info enviada» · le vuelves a llamar '+fmtCuando(prox));
+    if(document.getElementById('page-llamar').classList.contains('active'))llRender();
+    if(document.getElementById('page-pipeline').classList.contains('active'))renderPipeline();
+  });
+}
 function waFrio(id){
   const c=LISTA.find(x=>x.id===id)||ALL_CONTACTOS.find(x=>x.id===id);if(!c)return;
   const yo=SESSION.nombre.split(' ')[0];
@@ -3304,6 +3328,7 @@ function ctxAbrir(e,id){
   const m=document.getElementById('ctx');
   m.innerHTML=`<div class="t">${esc(c.empresa)}</div>
     ${tel?`<button onclick="ctxCerrar();plLlamar(${q})">📞 Llamar</button>`:''}
+    ${sinWebBF(c)?`<button onclick="ctxCerrar();waWebBF(${q})">🌐 WhatsApp web 390 € (Black Friday)</button>`:''}
     ${tel?`<button onclick="ctxCerrar();waFrio(${q})">💬 WhatsApp en frío (no contesta)</button>`:''}
     ${tel?`<button onclick="ctxCerrar();window.open('https://wa.me/${tel.replace('+','')}','_blank')">💬 Abrir WhatsApp vacío</button>`:''}
     <button onclick="ctxCerrar();plEmail(${q})">📧 Mandar info por email</button>
