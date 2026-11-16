@@ -310,12 +310,12 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
         <b data-en="From 69 €">Desde 69 €</b>
         <small data-en="per night · insurance and assistance included">por noche · seguro y asistencia incluidos</small>
         <form class="rd" id="rd" onsubmit="pedir(event)">
-          <label><span data-en="Pick-up">Llegada</span><input type="date" id="rd-in" required></label>
-          <label><span data-en="Return">Salida</span><input type="date" id="rd-out" required></label>
+          <label><span data-en="Pick-up">Llegada</span><input type="date" id="rd-in"></label>
+          <label><span data-en="Return">Salida</span><input type="date" id="rd-out"></label>
           <label><span data-en="Travellers">Viajeros</span><select id="rd-p"><option>2</option><option>1</option></select></label>
           <div class="rd-tot" id="rd-tot" data-en="Choose your dates">Elige tus fechas</div>
-          <button class="btn claro" type="submit"><span data-en="Ask for availability">Pedir disponibilidad</span> <span class="fl">→</span></button>
-          <p class="rd-nota" data-en="You write to us directly and we reply ourselves. Prefer the platform? &lt;a href=&quot;https://www.yescapa.es/campers/125644&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Book on Yescapa&lt;/a&gt;.">Nos escribes directamente y te contestamos nosotros. ¿Prefieres la plataforma? <a href="https://www.yescapa.es/campers/125644" target="_blank" rel="noopener">Reserva en Yescapa</a>.</p>
+          <button class="btn claro" type="submit"><span data-en="Check availability and book">Ver disponibilidad y reservar</span> <span class="fl">→</span></button>
+          <p class="rd-nota" data-en="Secure booking on Yescapa, with insurance and roadside assistance included.">Reserva segura en Yescapa, con seguro y asistencia en carretera incluidos.</p>
         </form>
       </div>
     </div>
@@ -385,14 +385,10 @@ function calc(){
 }
 fIn.addEventListener('change',calc);fOut.addEventListener('change',calc);
 function fmt(d){return new Date(d).toLocaleDateString(LANG==='en'?'en-GB':'es-ES',{day:'numeric',month:'long'});}
-async function pedir(e){
+function pedir(e){
   e.preventDefault();
-  if(noches()<1){tot.textContent=LANG==='en'?'The return date must be after pick-up':'La salida tiene que ser después de la llegada';return;}
-  const p=document.getElementById('rd-p').value;
-  const msg=LANG==='en'?`Hi! Is the Caddy available from ${fmt(fIn.value)} to ${fmt(fOut.value)} for ${p}?`:`¡Hola! ¿Está libre la Caddy del ${fmt(fIn.value)} al ${fmt(fOut.value)} para ${p} persona${p>1?'s':''}?`;
-  try{await navigator.clipboard.writeText(msg);}catch(err){}
-  tot.textContent=LANG==='en'?'Message copied: paste it in the chat':'Mensaje copiado: pégalo en el chat';
-  window.open('https://ig.me/m/caddyisland','_blank');
+  if(fIn.value&&fOut.value&&noches()<1){tot.textContent=LANG==='en'?'The return date must be after pick-up':'La salida tiene que ser después de la llegada';return;}
+  window.open('https://www.yescapa.es/campers/125644','_blank');
 }
 let ini='es';
 try{ini=localStorage.getItem('ci_lang')||'';}catch(e){}
