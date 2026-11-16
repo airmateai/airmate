@@ -438,5 +438,52 @@ gestoria:`<div class="cd a" style="left:26px;top:46px;width:70px;height:84px;pad
 (function(){ const BF_PLAZAS=5, on=Date.now()<Date.parse('2026-12-01T00:00:00Z')&&BF_PLAZAS>0;
   document.querySelectorAll('.js-bf').forEach(e=>e.hidden=!on); const n=document.getElementById('bf-plazas'); if(n) n.textContent=BF_PLAZAS; })();
 </script>
+
+<!-- Filtro de presupuesto antes de contactar (16-nov-2026) -->
+<style>
+#filtro{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(10,10,10,.42);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .35s}
+#filtro.on{opacity:1;pointer-events:auto}
+#filtro .fb{background:#fff;color:var(--ink);max-width:460px;width:100%;border-radius:22px;padding:36px 32px 30px;transform:translateY(18px) scale(.98);transition:transform .45s cubic-bezier(.16,1,.3,1);position:relative}
+#filtro.on .fb{transform:none}
+#filtro h3{font-weight:500;font-size:clamp(28px,4vw,36px);letter-spacing:-.04em;line-height:1.05;margin:12px 0 16px}
+#filtro p{font-size:16px;color:#555;margin-bottom:12px}
+#filtro p b{color:var(--ink);font-weight:600}
+#filtro .fa{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+#filtro .fa .btn{justify-content:space-between;width:100%}
+#filtro .fx{position:absolute;top:14px;right:16px;width:36px;height:36px;border:0;background:none;font-size:24px;line-height:1;color:var(--mut);cursor:pointer}
+#filtro .fx:hover{color:var(--ink)}
+#filtro .fn{background:none;border:0;font:inherit;font-size:14px;color:var(--mut);cursor:pointer;padding:6px;text-decoration:underline;text-underline-offset:3px}
+</style>
+<div id="filtro" role="dialog" aria-modal="true" aria-labelledby="filtro-t" aria-hidden="true">
+  <div class="fb">
+    <button class="fx" type="button" aria-label="Cerrar" data-fcerrar>×</button>
+    <div class="k">Antes de escribirnos</div>
+    <h3 id="filtro-t">Trabajamos con proyectos <em>a partir de 1.000 €.</em></h3>
+    <p>Cada web y cada sistema lo hacemos a medida para tu negocio, y eso lleva su tiempo.</p>
+    <p>Si tu presupuesto es menor y quieres hablar con nosotros igualmente, <b>te recomendaremos otra alternativa</b> que encaje mejor contigo.</p>
+    <div class="fa">
+      <a class="btn" data-fseguir href="#"><span>Entendido, quiero hablar</span> <span class="ar">→</span></a>
+      <button class="fn" type="button" data-fcerrar>Ahora no</button>
+    </div>
+  </div>
+</div>
+<script>
+(()=>{
+  const m=document.getElementById('filtro'),go=m.querySelector('[data-fseguir]');let ok=false;
+  try{ok=sessionStorage.getItem('am_filtro')==='1'}catch(e){}
+  const esContacto=a=>/^(tel:|mailto:|https:\/\/wa\.me\/)/.test(a.getAttribute('href')||'')&&!a.closest('#filtro');
+  const cerrar=()=>{m.classList.remove('on');m.setAttribute('aria-hidden','true')};
+  document.addEventListener('click',e=>{
+    const a=e.target.closest('a');if(!a||ok||!esContacto(a))return;
+    e.preventDefault();
+    go.href=a.href;go.target=a.target||'';go.rel=a.rel||'';
+    m.classList.add('on');m.setAttribute('aria-hidden','false');go.focus();
+  },true);
+  go.addEventListener('click',()=>{ok=true;try{sessionStorage.setItem('am_filtro','1')}catch(e){};setTimeout(cerrar,50)});
+  m.querySelectorAll('[data-fcerrar]').forEach(b=>b.addEventListener('click',cerrar));
+  m.addEventListener('click',e=>{if(e.target===m)cerrar()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrar()});
+})();
+</script>
 </body>
 </html>
