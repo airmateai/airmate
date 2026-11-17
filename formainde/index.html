@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Formainde · App de alumnas (demo)</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#ffffff">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#111214;--navy:#0b2152;--navy2:#e8ecf5;--bg:#f4f4f1;--card:#fff;--line:#e4e3de;--mut:#6d6e72;--ok:#1f7a4d}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:#d9d8d3;font-family:Inter,system-ui,sans-serif;color:var(--ink)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;gap:56px;padding:24px}
+.side{max-width:340px}
+.side img{height:54px}
+.side h1{font-family:Lexend,sans-serif;font-weight:600;font-size:34px;line-height:1.1;letter-spacing:-.02em;margin:26px 0 14px}
+.side p{color:#45464a;line-height:1.55;font-size:15.5px}
+.side ul{list-style:none;margin-top:22px;border-top:1px solid #c9c8c2}
+.side li{padding:12px 0;border-bottom:1px solid #c9c8c2;font-size:14.5px;display:flex;gap:10px}
+.side li b{font-family:Lexend,sans-serif;font-weight:600;color:var(--navy);min-width:20px}
+.side small{display:block;margin-top:18px;color:#7a7b7f;font-size:12.5px}
+.phone{width:390px;height:812px;background:var(--bg);border-radius:46px;border:10px solid #111;position:relative;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.25);display:flex;flex-direction:column}
+.demo{background:var(--navy);color:#fff;font-size:11.5px;text-align:center;padding:30px 12px 7px;letter-spacing:.02em}
+.scr{flex:1;overflow-y:auto;display:none;padding:18px 18px 24px}
+.scr.on{display:block}#s-chat.on{display:flex}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.top img{height:30px}
+.av{width:36px;height:36px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Lexend;font-weight:600;font-size:14px}
+h2{font-family:Lexend,sans-serif;font-weight:600;font-size:24px;letter-spacing:-.02em;line-height:1.15}
+h3{font-family:Lexend,sans-serif;font-weight:600;font-size:16px;letter-spacing:-.01em}
+.mut{color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.sec{margin:24px 0 10px;display:flex;justify-content:space-between;align-items:baseline}
+.sec span{font-size:13px;color:var(--mut)}
+.bar{height:6px;background:var(--navy2);border-radius:3px;overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:var(--navy)}
+.cont{display:flex;gap:14px;align-items:center;margin-top:16px}
+.thumb{width:84px;height:84px;border-radius:12px;flex:none;background:var(--navy);color:#fff;display:flex;align-items:flex-end;padding:9px;font-family:Lexend;font-weight:600;font-size:12px;line-height:1.1;position:relative;overflow:hidden}
+.thumb svg{position:absolute;right:-6px;top:-6px;width:58px;height:58px;opacity:.22}
+.thumb.b{background:#1f2a3a}.thumb.c{background:#3c4a63}.thumb.d{background:#5b6b86}
+.btn{display:block;width:100%;background:var(--ink);color:#fff;border-radius:12px;padding:14px;font-weight:600;font-size:15px;text-align:center}
+.btn.nv{background:var(--navy)}
+.btn.gh{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.list .it{display:flex;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.list .it:last-child{border-bottom:0}
+.list .it div{flex:1}
+.list .it b{display:block;font-family:Lexend;font-weight:500;font-size:15px}
+.list .it span{font-size:13px;color:var(--mut)}
+.tag{font-size:11.5px;font-weight:600;color:var(--navy);background:var(--navy2);border-radius:6px;padding:3px 7px;white-space:nowrap}
+.tag.lk{color:#6d6e72;background:#ecebe7}
+.video{aspect-ratio:16/9;border-radius:14px;background:#14161a;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff}
+.video .pl{width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center}
+.video .pl svg{width:22px;height:22px;margin-left:4px}
+.video .t{position:absolute;left:14px;bottom:12px;font-size:12px;opacity:.85}
+.video .pg{position:absolute;left:0;bottom:0;height:3px;background:#fff;width:0;transition:width 1s linear}
+.les{display:flex;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.les .n{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;flex:none;color:var(--mut)}
+.les.ok .n{background:var(--ok);border-color:var(--ok);color:#fff}
+.les.cur{font-weight:600}.les.cur .n{border-color:var(--navy);color:var(--navy)}
+.les em{font-style:normal;margin-left:auto;font-size:12.5px;color:var(--mut)}
+.ask{margin-top:16px;display:flex;gap:12px;align-items:center;background:var(--navy);color:#fff;border-radius:14px;padding:14px 16px;width:100%;text-align:left}
+.ask b{font-family:Lexend;font-weight:600;display:block;font-size:15px}
+.ask span{font-size:12.5px;opacity:.8}
+.chat{flex-direction:column;height:100%;padding:0}
+.chat .hd{padding:14px 18px;border-bottom:1px solid var(--line);background:#fff;display:flex;gap:12px;align-items:center}
+.chat .hd b{font-family:Lexend;font-weight:600;font-size:15px;display:block}
+.chat .hd span{font-size:12px;color:var(--ok)}
+.msgs{flex:1;overflow-y:auto;padding:16px 16px 6px;display:flex;flex-direction:column;gap:10px}
+.m{max-width:86%;padding:11px 13px;border-radius:14px;font-size:14.2px;line-height:1.5}
+.m.a{background:#fff;border:1px solid var(--line);border-top-left-radius:4px}
+.m.u{background:var(--ink);color:#fff;align-self:flex-end;border-top-right-radius:4px}
+.m small{display:block;margin-top:7px;font-size:11.5px;color:var(--mut)}
+.typing{display:inline-flex;gap:4px}.typing i{width:6px;height:6px;border-radius:50%;background:#aaa;animation:tp 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes tp{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.sug{display:flex;gap:8px;overflow-x:auto;padding:8px 16px;scrollbar-width:none}
+.sug button{flex:none;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 11px;font-size:12.8px;text-align:left;max-width:230px}
+.inp{display:flex;gap:8px;padding:8px 14px 14px;background:var(--bg)}
+.inp input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px 13px;font:inherit;font-size:14.5px;background:#fff;outline:none}
+.inp button{background:var(--navy);color:#fff;border-radius:12px;width:46px;display:flex;align-items:center;justify-content:center}
+.plan{border:2px solid var(--navy);border-radius:14px;padding:18px;background:#fff;margin-top:16px}
+.plan .p{font-family:Lexend;font-weight:700;font-size:34px;letter-spacing:-.03em;margin:8px 0 2px}
+.plan .p small{font-size:15px;font-weight:500;color:var(--mut)}
+.plan ul{list-style:none;margin:14px 0 16px}
+.plan li{font-size:14px;padding:7px 0;border-top:1px solid var(--line);display:flex;gap:9px}
+.plan li:before{content:"✓";color:var(--ok);font-weight:700}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
+.kpi span{font-size:12.5px;color:var(--mut)}
+.kpi b{display:block;font-family:Lexend;font-weight:600;font-size:24px;letter-spacing:-.02em;margin-top:4px}
+.kpi em{font-style:normal;font-size:12px;color:var(--ok)}
+.q{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}
+.q:last-child{border:0}.q span{color:var(--mut);white-space:nowrap}
+.nav{display:flex;border-top:1px solid var(--line);background:#fff;padding:8px 6px 20px}
+.nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:#8a8b8f;padding:4px 0}
+.nav button svg{width:22px;height:22px}
+.nav button.on{color:var(--navy);font-weight:600}
+.toast{position:absolute;left:16px;right:16px;bottom:96px;background:var(--ink);color:#fff;border-radius:12px;padding:13px 15px;font-size:13.5px;opacity:0;transform:translateY(8px);transition:.25s;pointer-events:none}
+.toast.on{opacity:1;transform:none}
+.sw{display:flex;background:#ecebe7;border-radius:10px;padding:3px;margin-bottom:16px}
+.sw button{flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:600;color:var(--mut)}
+.sw button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+@media (max-width:860px){
+  html,body{background:var(--bg)}
+  .wrap{padding:0;display:block}
+  .side{display:none}
+  .phone{width:100%;height:100dvh;border:0;border-radius:0;box-shadow:none}
+  .demo{padding-top:max(8px,env(safe-area-inset-top))}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="side">
+    <img src="logo.png" alt="Formainde">
+    <h1>Tu formación, en tu propia app.</h1>
+    <p>Así verían tus alumnas tu app: tus cursos, tu suscripción mensual y un asistente entrenado con tu contenido que les resuelve dudas a cualquier hora.</p>
+    <ul>
+      <li><b>01</b>Tus cursos en vídeo, con el progreso de cada alumna</li>
+      <li><b>02</b>Asistente que responde con lo que tú enseñas</li>
+      <li><b>03</b>Suscripción mensual con cobro automático</li>
+      <li><b>04</b>Tu panel: alumnas, ingresos y dudas frecuentes</li>
+    </ul>
+    <small>Demo preparada por Airmate. Nombres, cifras, precios y respuestas son de ejemplo.</small>
+  </aside>
+
+  <div class="phone">
+    <div class="demo">DEMO · datos de ejemplo</div>
+
+    <!-- INICIO -->
+    <section class="scr on" id="s-inicio">
+      <div class="top"><img src="logo.png" alt="Formainde"><div class="av">LM</div></div>
+      <h2>Hola, Laura 👋</h2>
+      <p class="mut" style="margin-top:6px;font-size:14.5px">Llevas 4 días seguidos. Sigue así.</p>
+      <div class="card" style="margin-top:18px">
+        <span class="tag">Continúa donde lo dejaste</span>
+        <div class="cont">
+          <div class="thumb">Pilates Suelo MAT<svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="5" r="3"/><path d="M4 20c2-6 5-8 8-8s6 2 8 8z"/></svg></div>
+          <div style="flex:1">
+            <h3>Módulo 3 · The Hundred</h3>
+            <p class="mut" style="font-size:13px;margin-top:3px">Lección 4 de 6 · 12 min</p>
+            <div class="bar"><i style="width:58%"></i></div>
+            <p class="mut" style="font-size:12px;margin-top:6px">58 % del curso</p>
+          </div>
+        </div>
+        <button class="btn" style="margin-top:16px" data-go="leccion">Seguir viendo</button>
+      </div>
+      <button class="ask" data-go="chat">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg>
+        <div><b>¿Tienes una duda?</b><span>Pregúntale a tu asistente Formainde</span></div>
+      </button>
+      <div class="sec"><h3>Tus cursos</h3><span data-go="cursos" style="cursor:pointer">Ver todos</span></div>
+      <div class="card list">
+        <div class="it"><div class="thumb b" style="width:52px;height:52px;font-size:0"></div><div><b>Pilates Suelo (MAT)</b><span>58 % completado</span></div></div>
+        <div class="it"><div class="thumb c" style="width:52px;height:52px;font-size:0"></div><div><b>Pilates y patologías de columna</b><span>Empieza cuando quieras</span></div></div>
+      </div>
+    </section>
+
+    <!-- CURSOS -->
+    <section class="scr" id="s-cursos">
+      <h2>Cursos</h2>
+      <p class="mut" style="margin:6px 0 16px;font-size:14px">Incluidos en tu suscripción</p>
+      <div class="card list">
+        <div class="it" data-go="leccion" style="cursor:pointer"><div class="thumb">MAT</div><div><b>Pilates Suelo (MAT)</b><span>6 módulos · 4 h 20 min</span></div><span class="tag">58 %</span></div>
+        <div class="it"><div class="thumb b">Torre</div><div><b>Torre y unidad de pared</b><span>4 módulos · 2 h 45 min</span></div><span class="tag lk">Nuevo</span></div>
+        <div class="it"><div class="thumb c">Columna</div><div><b>Pilates y patologías de columna</b><span>5 módulos · 3 h 10 min</span></div><span class="tag lk">0 %</span></div>
+        <div class="it"><div class="thumb d">Embarazo</div><div><b>Pilates para embarazadas</b><span>4 módulos · 2 h 30 min</span></div><span class="tag lk">0 %</span></div>
+        <div class="it"><div class="thumb b">Fitball</div><div><b>Fitball y banda elástica</b><span>3 módulos · 1 h 50 min</span></div><span class="tag lk">0 %</span></div>
+      </div>
+      <p class="mut" style="font-size:12.5px;margin-top:14px;line-height:1.5">Cursos tomados de los seminarios de formainde.com. Módulos y duraciones son de ejemplo.</p>
+    </section>
+
+    <!-- LECCION -->
+    <section class="scr" id="s-leccion">
+      <button class="mut" data-go="inicio" style="font-size:14px;margin-bottom:12px">← Volver</button>
+      <div class="video" id="vid">
+        <div class="pl" id="play"><svg viewBox="0 0 24 24" fill="#111"><path d="M6 4l14 8-14 8z"/></svg></div>
+        <span class="t">The Hundred · 12:04</span>
+        <i class="pg" id="vpg"></i>
+      </div>
+      <h2 style="margin-top:16px;font-size:21px">The Hundred</h2>
+      <p class="mut" style="font-size:13.5px;margin-top:4px">Pilates Suelo (MAT) · Módulo 3 · Lección 4</p>
+      <button class="ask" data-go="chat" data-q="0">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7"><path d="M4 5h16v11H8l-4 4z"/></svg>
+        <div><b>Pregunta sobre esta lección</b><span>El asistente conoce todo el curso</span></div>
+      </button>
+      <div class="sec"><h3>Módulo 3</h3><span>3 de 6 vistas</span></div>
+      <div class="les ok"><span class="n">✓</span>Respiración lateral<em>8 min</em></div>
+      <div class="les ok"><span class="n">✓</span>Activación del centro<em>10 min</em></div>
+      <div class="les ok"><span class="n">✓</span>Imprint y pelvis neutra<em>9 min</em></div>
+      <div class="les cur"><span class="n">4</span>The Hundred<em>12 min</em></div>
+      <div class="les"><span class="n">5</span>Roll Up y progresiones<em>14 min</em></div>
+      <div class="les"><span class="n">6</span>Errores frecuentes del alumno<em>11 min</em></div>
+      <button class="btn gh" style="margin-top:16px" id="pdf">📄 Apuntes del módulo (PDF)</button>
+    </section>
+
+    <!-- CHAT -->
+    <section class="scr chat" id="s-chat">
+      <div class="hd">
+        <div class="av" style="background:var(--ink)">F</div>
+        <div><b>Asistente Formainde</b><span>● Entrenado con tus cursos</span></div>
+      </div>
+      <div class="msgs" id="msgs"></div>
+      <div class="sug" id="sug"></div>
+      <div class="inp"><input id="txt" placeholder="Escribe tu duda…" autocomplete="off"><button id="send" aria-label="Enviar"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M3 20l18-8L3 4v6l12 2-12 2z"/></svg></button></div>
+    </section>
+
+    <!-- SUSCRIPCION -->
+    <section class="scr" id="s-plan">
+      <h2>Tu suscripción</h2>
+      <p class="mut" style="margin-top:6px;font-size:14px">Acceso a todos los cursos y al asistente.</p>
+      <div class="plan">
+        <span class="tag">Plan mensual</span>
+        <div class="p">29 € <small>/ mes</small></div>
+        <p class="mut" style="font-size:12.5px">Precio de ejemplo · lo decides tú</p>
+        <ul>
+          <li>Todos los cursos y los nuevos que subas</li>
+          <li>Asistente 24 h con tu contenido</li>
+          <li>Apuntes en PDF descargables</li>
+          <li>Cancela cuando quieras desde la app</li>
+        </ul>
+        <button class="btn nv" id="pagar">Suscribirme · pago con tarjeta</button>
+      </div>
+      <div class="card" style="margin-top:14px;font-size:13.5px;line-height:1.55">
+        <b style="font-family:Lexend;font-weight:600">Estado:</b> activa · se renueva el 17 de diciembre<br>
+        <span class="mut">El cobro se hace solo cada mes. Si falla, la alumna recibe un aviso por email.</span>
+      </div>
+    </section>
+
+    <!-- PANEL FORMADORA -->
+    <section class="scr" id="s-panel">
+      <div class="sw"><button class="on">Tu panel</button><button data-go="inicio">Vista alumna</button></div>
+      <h2>Noviembre</h2>
+      <div class="kpis">
+        <div class="kpi"><span>Alumnas activas</span><b>86</b><em>+9 este mes</em></div>
+        <div class="kpi"><span>Ingresos del mes</span><b>2.494 €</b><em>sin comisión de plataforma</em></div>
+        <div class="kpi"><span>Preguntas al asistente</span><b>312</b><em>que no tuviste que contestar</em></div>
+        <div class="kpi"><span>Bajas</span><b>3</b><em style="color:var(--mut)">este mes</em></div>
+      </div>
+      <div class="sec"><h3>Lo que más preguntan</h3><span>últimos 30 días</span></div>
+      <div class="card">
+        <div class="q">Colocación de la pelvis en The Hundred<span>41 veces</span></div>
+        <div class="q">Adaptar ejercicios con hernia lumbar<span>27 veces</span></div>
+        <div class="q">Progresiones del Roll Up<span>19 veces</span></div>
+        <div class="q">Respiración lateral vs. abdominal<span>15 veces</span></div>
+      </div>
+      <p class="mut" style="font-size:12.5px;margin-top:10px;line-height:1.5">Te dice qué no se entiende del curso y qué vídeo grabar después.</p>
+      <button class="btn" style="margin-top:16px" id="subir">+ Subir nueva lección</button>
+    </section>
+
+    <div class="toast" id="toast"></div>
+
+    <nav class="nav">
+      <button class="on" data-go="inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-7 9 7v9h-6v-6H9v6H3z"/></svg>Inicio</button>
+      <button data-go="cursos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>Cursos</button>
+      <button data-go="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H8l-4 4z"/></svg>Asistente</button>
+      <button data-go="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>Suscripción</button>
+      <button data-go="panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Tu panel</button>
+    </nav>
+  </div>
+</div>
+
+<script>
+const QA=[
+ {q:"¿Cómo coloco la pelvis en The Hundred?",a:"En este curso lo trabajamos con <b>pelvis neutra o en imprint</b>, según el nivel de la alumna. Si nota tensión en la zona lumbar o no consigue mantener la espalda estable, empieza en <b>imprint</b> y con las piernas en mesa (90°). Cuando lo controle, estira las piernas a 45°.",src:"Módulo 3 · Lección 3 «Imprint y pelvis neutra» (min 4:10)"},
+ {q:"¿Puedo hacer Roll Up con una alumna con hernia lumbar?",a:"Con hernia lumbar el curso recomienda <b>no hacer la flexión completa del Roll Up</b> al principio. Usa la progresión del <b>medio Roll Down</b> con las rodillas flexionadas y prioriza la estabilidad. Y siempre: que la alumna tenga el visto bueno de su médico o fisio.",src:"Pilates y patologías de columna · Módulo 2"},
+ {q:"¿Qué diferencia hay entre respiración lateral y abdominal?",a:"En la <b>respiración lateral</b> el aire expande las costillas hacia los lados y la espalda, manteniendo el abdomen activado. En la <b>abdominal</b> el abdomen se relaja y sale hacia fuera. En Pilates usamos la lateral para no perder la activación del centro durante el ejercicio.",src:"Módulo 3 · Lección 1 «Respiración lateral»"},
+ {q:"¿Cuántas repeticiones en una clase de iniciación?",a:"Para iniciación el curso propone <b>series cortas: 5–6 repeticiones</b> por ejercicio, cuidando la calidad antes que el número. En The Hundred, empieza con <b>50 bombeos</b> en lugar de 100.",src:"Pilates Suelo (MAT) · Módulo 1 «Programar una clase»"}
+];
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+function go(id){
+  $$('.scr').forEach(s=>s.classList.toggle('on',s.id==='s-'+id));
+  $$('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.go===id));
+  if(id==='chat'&&!$('#msgs').children.length)hola();
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-go]');if(!t)return;
+  go(t.dataset.go);
+  if(t.dataset.q!==undefined)setTimeout(()=>preguntar(+t.dataset.q),500);
+});
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600)}
+function burbuja(cls,html){const d=document.createElement('div');d.className='m '+cls;d.innerHTML=html;$('#msgs').appendChild(d);$('#msgs').scrollTop=1e6;return d}
+function hola(){burbuja('a','¡Hola, Laura! Soy el asistente de Formainde. Conozco todos tus cursos: pregúntame cualquier duda de técnica, progresiones o adaptaciones.');pintarSug()}
+function pintarSug(){const s=$('#sug');s.innerHTML='';QA.forEach((x,i)=>{const b=document.createElement('button');b.textContent=x.q;b.onclick=()=>preguntar(i);s.appendChild(b)})}
+function responder(html,src){const w=burbuja('a','<span class="typing"><i></i><i></i><i></i></span>');setTimeout(()=>{w.innerHTML=html+(src?'<small>📖 '+src+'</small>':'');$('#msgs').scrollTop=1e6},1100)}
+function preguntar(i){if(!$('#msgs').children.length)hola();burbuja('u',QA[i].q);responder(QA[i].a,QA[i].src)}
+function libre(){const v=$('#txt').value.trim();if(!v)return;$('#txt').value='';burbuja('u',v.replace(/</g,'&lt;'));
+  const n=v.toLowerCase();const i=QA.findIndex(x=>x.q.toLowerCase().split(/\W+/).filter(w=>w.length>4).some(w=>n.includes(w)));
+  if(i>=0)responder(QA[i].a,QA[i].src);
+  else responder('En esta demo solo respondo a las preguntas de ejemplo de abajo 👇. En tu app real responderé con <b>todo tu contenido</b>: vídeos, apuntes y manuales. Y si algo no está en tus cursos, le diré a la alumna que te lo pregunte a ti en lugar de inventármelo.')}
+$('#send').onclick=libre;$('#txt').addEventListener('keydown',e=>{if(e.key==='Enter')libre()});
+$('#play').onclick=()=>{$('#play').style.display='none';$('#vpg').style.width='0';requestAnimationFrame(()=>{$('#vpg').style.width='35%'});toast('Aquí va tu vídeo, protegido: solo lo ven las alumnas con acceso.')};
+$('#pdf').onclick=()=>toast('Los apuntes se descargan desde la app.');
+$('#pagar').onclick=()=>toast('Aquí se abre el pago seguro con tarjeta (Stripe). Se renueva solo cada mes.');
+$('#subir').onclick=()=>toast('Subes el vídeo, eliges curso y módulo, y aparece a tus alumnas al momento.');
+</script>
+</body>
+</html>
