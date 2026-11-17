@@ -3042,7 +3042,28 @@ function llRenderCola(){
   const prog=q?[]:llProgramados().slice(0,5).map(c=>({c,info:'⏰ '+fmtCuando(c.proxima_llamada)}));
   const fila=({c,info})=>`<button oncontextmenu="ctxAbrir(event,${JSON.stringify(c.id).replace(/"/g,'&quot;')})" onclick="llElegir(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">${esc(c.empresa)}<span>${esc(info)}</span></button>`;
   el.innerHTML=(items.slice(0,25).map(fila).join('')||'<div style="padding:8px;font-size:13px;color:var(--txt3)">Nada por aquí.</div>')
-    +(prog.length?`<div class="ll-lbl" style="margin:12px 8px 4px">Programadas</div>`+prog.map(fila).join(''):'');
+    +(prog.length?`<div class="ll-lbl" style="margin:12px 8px 4px">Programadas</div>`+prog.map(fila).join(''):'')
+    +(q?'':llSinTelHtml());
+}
+/* Leads sin teléfono: no entran en la cola hasta que se les pone número. Aquí se ven, se buscan y se rellenan. */
+function llSinTel(){return LISTA.filter(c=>esMio(c)&&!c.telefono&&!['descartado','cerrado','reunion'].includes(c.etapa)&&!esHosteleria(c)&&(!LL_NICHO||(LL_NICHO==='sinweb'?sinWebBF(c):nichoDe(c)===LL_NICHO)));}
+function llSinTelHtml(){
+  const l=llSinTel();if(!l.length)return'';
+  const idj=c=>JSON.stringify(c.id).replace(/"/g,'&quot;');
+  const filas=l.slice(0,60).map(c=>{
+    const busca=encodeURIComponent(`${c.empresa} ${c.zona&&c.zona!=='Tenerife'?c.zona+' ':''}Tenerife teléfono`);
+    return `<div style="padding:8px;border-top:1px solid var(--line,#e5e5e5)"><div style="font-size:13px;font-weight:600">${esc(c.empresa)}</div><div style="font-size:12px;color:var(--txt3)">${esc(c.sector||'')}${c.web?` · <a href="${esc(c.web)}" target="_blank" rel="noopener">web</a>`:''} · <a href="https://www.google.com/search?q=${busca}" target="_blank" rel="noopener">buscar en Google</a></div><div style="display:flex;gap:6px;margin-top:6px"><input id="st-${esc(String(c.id))}" inputmode="tel" placeholder="Teléfono" style="flex:1;min-width:0;padding:6px 8px;font-size:13px;border:1px solid var(--line,#ddd);border-radius:6px"><button style="padding:6px 10px;font-size:12px" onclick="llPonerTel(${idj(c)})">Guardar</button></div></div>`;
+  }).join('');
+  return `<details style="margin-top:12px"><summary class="ll-lbl" style="margin:0 8px 4px;cursor:pointer">Sin teléfono · ${l.length} (pon el número y entran en la cola)</summary>${filas}${l.length>60?`<div style="padding:8px;font-size:12px;color:var(--txt3)">y ${l.length-60} más…</div>`:''}</details>`;
+}
+async function llPonerTel(id){
+  const inp=document.getElementById('st-'+id);const d=soloDig(inp?inp.value:'');
+  if(d.length<9){toast('Escribe un teléfono válido','error');return;}
+  const tel=d.length===9?'+34'+d:'+'+d;
+  const {error}=await SB.from('am_crm_contactos').update({telefono:tel,prioridad:2,updated_at:new Date().toISOString()}).eq('id',id);
+  if(error){toast('No se ha podido guardar: '+error.message,'error');return;}
+  const c=LISTA.find(x=>x.id===id);if(c){c.telefono=tel;c.prioridad=2;}
+  toast('Guardado · ya está en tu cola');llRender();
 }
 function llRenderEquipo(){
   const el=document.getElementById('ll-equipo');
