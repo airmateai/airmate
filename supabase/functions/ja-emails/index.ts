@@ -88,8 +88,31 @@ const ESTADOS_ENC: Record<string, { asunto: string; titulo: string; texto: strin
   entregado: { asunto: "Gracias por confiar en José Acosta", titulo: "Ha sido un placer", texto: "Gracias por confiar en nosotros para tu traje. Si en el futuro necesitas cualquier ajuste, aquí estamos." },
 };
 
+// 17-nov-2026: Brevo suspendió la cuenta. Si hay RESEND_API_KEY, se envía por Resend
+// (el remitente tiene que ser de un dominio verificado en Resend: JA_REMITENTE o hola@airmate.es).
+const RESEND = Deno.env.get("RESEND_API_KEY") ?? "";
+async function enviarResend(para: string, asunto: string, cuerpo: string) {
+  const mandar = (de: string) => fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${RESEND}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: `${NOMBRE} <${de}>`, to: [para], subject: asunto, html: cuerpo,
+      ...(emailOk(RESPONDER) ? { reply_to: RESPONDER } : {}),
+      tags: [{ name: "cliente", value: "jose-acosta" }],
+    }),
+  });
+  let r = await mandar(REMITENTE);
+  if (!r.ok && REMITENTE !== REMITENTE_RESPALDO) {
+    const t = await r.text();
+    if (/domain|verif|from/i.test(t)) r = await mandar(REMITENTE_RESPALDO);
+    else throw new Error(`Resend ${r.status}: ${t.slice(0, 200)}`);
+  }
+  if (!r.ok) throw new Error(`Resend ${r.status}: ${(await r.text()).slice(0, 200)}`);
+}
+
 async function enviar(para: string, nombre: string, asunto: string, cuerpo: string) {
-  if (!BREVO) throw new Error("Falta BREVO_API_KEY");
+  if (RESEND) return enviarResend(para, asunto, cuerpo);
+  if (!BREVO) throw new Error("Falta RESEND_API_KEY");
   const mandar = (de: string) => fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: { "api-key": BREVO, "Content-Type": "application/json", accept: "application/json" },
