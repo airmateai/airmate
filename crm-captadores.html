@@ -1002,6 +1002,9 @@ body{font-family:var(--body);font-size:14px;letter-spacing:-.005em;}
           <div class="f-group" style="margin-bottom:0;"><label>Canal</label><select id="f-canal" onchange="renderContactos()">
             <option value="">Todos</option><option value="whatsapp">WhatsApp</option><option value="llamada">Llamada fría</option><option value="email">Email</option><option value="instagram">Instagram</option>
           </select></div>
+          <div class="f-group" style="margin-bottom:0;"><label>Teléfono</label><select id="f-tel" onchange="renderContactos()">
+            <option value="">Todos</option><option value="wa">Solo WhatsApp (móvil)</option><option value="fijo">Solo fijos</option>
+          </select></div>
           <div class="f-group" style="margin-bottom:0;"><label>Fecha alta</label><input type="date" id="f-fecha" onchange="renderContactos()"></div>
           <div class="f-group" style="margin-bottom:0;"><label>Buscar empresa</label><input id="f-busqueda" placeholder="Empresa o teléfono…" oninput="renderContactos()"></div>
         </div>
@@ -2348,9 +2351,11 @@ function renderContactos(){
   const ff=document.getElementById('f-fecha').value;
   const fb=(document.getElementById('f-busqueda').value||'').toLowerCase();
   const fn=document.getElementById('f-nicho').value;
+  const ft=(document.getElementById('f-tel')||{}).value||'';
   nichoSelect(ALL_CONTACTOS);
   let lista=ALL_CONTACTOS.filter(c=>
     (!fn||nichoDe(c)===fn) && (!fc||c.captador===fc) && (!fe||c.etapa===fe) && (!fcan||c.canal===fcan) && (!ff||c.fecha_alta===ff) &&
+    (!ft||(ft==='wa'?esMovil(c):(c.telefono&&!esMovil(c)))) &&
     (!fb||coincide(c,fb))
   );
   const tbody=document.getElementById('contactos-tbody');
@@ -2902,6 +2907,16 @@ function nichoDe(c){
 const nichoNombre=id=>id==='otros'?'Otros':(NICHOS.find(n=>n.id===id)||{}).n||id;
 let LL_NICHO='';
 try{LL_NICHO=localStorage.getItem('crm_ll_nicho')||'';}catch(e){}
+/* Solo WhatsApp: móviles españoles (6xx/7xx), los únicos a los que se puede escribir por WhatsApp */
+function esMovil(c){const d=soloDig(c&&c.telefono||'');if(d.length<9)return false;if(d.length>9&&!d.startsWith('34'))return false;return /^[67]/.test(d.slice(-9));}
+let LL_WA=false;
+try{LL_WA=localStorage.getItem('crm_ll_wa')==='1';}catch(e){}
+function llSoloWa(){
+  LL_WA=!LL_WA;
+  try{localStorage.setItem('crm_ll_wa',LL_WA?'1':'');}catch(e){}
+  if(LL_WA&&LL_ACTUAL){const c=LISTA.find(x=>x.id===LL_ACTUAL);if(c&&!esMovil(c))LL_ACTUAL=null;}
+  llRender();
+}
 function llNicho(id){
   LL_NICHO=LL_NICHO===id?'':id;
   try{localStorage.setItem('crm_ll_nicho',LL_NICHO);}catch(e){}
@@ -2911,12 +2926,13 @@ function llNicho(id){
 function llRenderNichos(){
   llRenderMasivo();
   const el=document.getElementById('ll-nichos');if(!el)return;
-  const base=llColaTodos(),cuenta={};
+  const todos=llColaTodos(),base=LL_WA?todos.filter(esMovil):todos,cuenta={};
   base.forEach(c=>{const k=nichoDe(c);cuenta[k]=(cuenta[k]||0)+1;});
   const ids=[...NICHOS.map(n=>n.id),'otros'].filter(k=>cuenta[k]||k===LL_NICHO);
   el.innerHTML=`<span class="lbl">Nicho:</span><button class="${LL_NICHO?'':'on'}" onclick="llNicho('')">Todos<b>${base.length}</b></button>`
     +ids.map(k=>`<button class="${LL_NICHO===k?'on':''}" onclick="llNicho('${k}')">${esc(nichoNombre(k))}<b>${cuenta[k]||0}</b></button>`).join('')
-    +(BF_WEB_ON?`<button class="${LL_NICHO==='sinweb'?'on':''}" style="color:#c0392b" onclick="llNicho('sinweb')">🌐 Sin web · Black Friday<b>${base.filter(sinWebBF).length}</b></button>`:'');
+    +(BF_WEB_ON?`<button class="${LL_NICHO==='sinweb'?'on':''}" style="color:#c0392b" onclick="llNicho('sinweb')">🌐 Sin web · Black Friday<b>${base.filter(sinWebBF).length}</b></button>`:'')
+    +`<button class="${LL_WA?'on':''}" style="margin-left:8px" onclick="llSoloWa()" title="Solo negocios con móvil (se les puede escribir por WhatsApp)">💬 Solo WhatsApp<b>${todos.filter(esMovil).length}</b></button>`;
 }
 function nichoSelect(lista){
   const sel=document.getElementById('f-nicho');if(!sel)return;
@@ -2925,7 +2941,7 @@ function nichoSelect(lista){
   sel.innerHTML='<option value="">Todos</option>'+[...NICHOS.map(n=>n.id),'otros'].filter(k=>cuenta[k]).map(k=>`<option value="${k}">${esc(nichoNombre(k))} (${cuenta[k]})</option>`).join('');
   sel.value=v;
 }
-function llCola(){return llColaTodos().filter(c=>!LL_NICHO||(LL_NICHO==='sinweb'?sinWebBF(c):nichoDe(c)===LL_NICHO));}
+function llCola(){return llColaTodos().filter(c=>!LL_WA||esMovil(c)).filter(c=>!LL_NICHO||(LL_NICHO==='sinweb'?sinWebBF(c):nichoDe(c)===LL_NICHO));}
 function llColaTodos(){
   const ahora=Date.now();
   return LISTA.filter(c=>esMio(c)&&c.telefono&&!['descartado','cerrado','reunion'].includes(c.etapa)&&!esHosteleria(c))
