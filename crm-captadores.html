@@ -3327,10 +3327,25 @@ function waWebBF(id){
     if(document.getElementById('page-pipeline').classList.contains('active'))renderPipeline();
   });
 }
+/* Mensaje de WhatsApp según el sector (18-nov-2026): quién somos + 1 pregunta de dolor + análisis gratis. Sin enlaces. */
+const WA_SECTOR={
+  estetica:['Ayudamos a centros de estética de Canarias a llevar la agenda, los bonos y las clientas en un solo sistema.','¿cuántas citas se os quedan a la semana sin que la clienta aparezca?'],
+  salud:['Ayudamos a clínicas de Canarias a llevar pacientes, citas y presupuestos en un solo sistema.','¿cuántos presupuestos se os quedan al mes sin respuesta porque nadie vuelve a llamar?'],
+  formacion:['Ayudamos a autoescuelas y academias de Canarias a llevar clases, alumnos y cobros en un solo sistema.','¿cuánto tiempo os lleva cada semana cuadrar las clases y cobrar a los alumnos?'],
+  deporte:['Ayudamos a gimnasios, estudios y escuelas deportivas de Canarias a llevar socios, clases y cuotas en un solo sistema.','¿cuántas cuotas se os quedan sin cobrar cada mes?'],
+  oficios:['Ayudamos a talleres y empresas de oficios de Canarias a llevar clientes, presupuestos y facturas en un solo sistema.','¿cuántos presupuestos enviáis que nunca tienen respuesta?'],
+  gestoria:['Ayudamos a gestorías y asesorías de Canarias a llevar clientes, documentación y plazos en un solo sistema.','¿cuánto tiempo perdéis al mes persiguiendo a clientes para que os manden los papeles?'],
+  otros:['Ayudamos a negocios de Canarias a llevar clientes, citas y cobros en un solo sistema.','¿qué es lo que más tiempo os quita cada semana en la gestión del negocio?']
+};
+function waTexto(c,trasLlamada){
+  const yo=SESSION.nombre.split(' ')[0];
+  const [quien,preg]=WA_SECTOR[nichoDe(c)]||WA_SECTOR.otros;
+  const saludo=trasLlamada?`Hola, soy ${yo}, de Airmate. Te escribo por la llamada de antes.`:`Hola, soy ${yo}, de Airmate.`;
+  return `${saludo} ${quien}\n\nUna pregunta: ${preg}\n\n¿Queréis que os hagamos gratis un análisis de lo que se os está escapando cada mes? Sin compromiso.${BF_PD}`;
+}
 function waFrio(id){
   const c=LISTA.find(x=>x.id===id)||ALL_CONTACTOS.find(x=>x.id===id);if(!c)return;
-  const yo=SESSION.nombre.split(' ')[0];
-  const txt=`Hola, soy ${yo}. Trabajo en una empresa de inteligencia artificial aquí en Tenerife.\n\nUna pregunta rápida: ¿ya usáis algo de IA o algún sistema para llevar el negocio (citas, clientes, cobros)? Si no, me gustaría preguntaros si os podría hacer falta. Trabajo con negocios de aquí parecidos al vuestro y les está ayudando bastante.${BF_PD}`;
+  const txt=waTexto(c,false);
   window.open('https://wa.me/'+telLimpio(c.telefono).replace('+','')+'?text='+encodeURIComponent(txt),'_blank');
   // queda guardado: pasa a «Info enviada» en el pipeline, con nota en el historial y rellamada en 2 días
   const t=new Date().toISOString(), prox=proxHora(2,10,30).toISOString();
@@ -3516,8 +3531,7 @@ function llInfoWhatsApp(){
   const c=LISTA.find(x=>x.id===LL_ACTUAL);if(!c)return;
   closeModal('modal-info');
   const prox=proxHora(2,10,30);
-  const yo=SESSION.nombre.split(' ')[0];
-  const txt=`Hola, soy ${yo}, de la llamada de antes. Trabajo en una empresa de inteligencia artificial aquí en Tenerife.\n\nComo te comentaba: ¿ya usáis algo de IA o algún sistema para llevar el negocio (citas, clientes, cobros)? Si no, me gustaría saber si te podría hacer falta. Trabajo con negocios de aquí parecidos al tuyo y les está ayudando bastante.${BF_PD}`;
+  const txt=waTexto(c,true);
   const tel=telLimpio(c.telefono).replace('+','');
   llGuardar(c,{etapa:'interesado',temperatura:'templado',proxima_llamada:prox.toISOString()},'info','WhatsApp').then(ok=>{
     if(!ok)return;
