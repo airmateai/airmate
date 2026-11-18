@@ -2355,7 +2355,7 @@ function renderContactos(){
   nichoSelect(ALL_CONTACTOS);
   let lista=ALL_CONTACTOS.filter(c=>
     (!fn||nichoDe(c)===fn) && (!fc||c.captador===fc) && (!fe||c.etapa===fe) && (!fcan||c.canal===fcan) && (!ff||c.fecha_alta===ff) &&
-    (!ft||(ft==='wa'?esMovil(c):(c.telefono&&!esMovil(c)))) &&
+    (!ft||(ft==='wa'?esWa(c):(c.telefono&&!esWa(c)))) &&
     (!fb||coincide(c,fb))
   );
   const tbody=document.getElementById('contactos-tbody');
@@ -2908,13 +2908,13 @@ const nichoNombre=id=>id==='otros'?'Otros':(NICHOS.find(n=>n.id===id)||{}).n||id
 let LL_NICHO='';
 try{LL_NICHO=localStorage.getItem('crm_ll_nicho')||'';}catch(e){}
 /* Solo WhatsApp: móviles españoles (6xx/7xx), los únicos a los que se puede escribir por WhatsApp */
-function esMovil(c){const d=soloDig(c&&c.telefono||'');if(d.length<9)return false;if(d.length>9&&!d.startsWith('34'))return false;return /^[67]/.test(d.slice(-9));}
+const esWa=c=>!!c&&esMovil(c.telefono);
 let LL_WA=false;
 try{LL_WA=localStorage.getItem('crm_ll_wa')==='1';}catch(e){}
 function llSoloWa(){
   LL_WA=!LL_WA;
   try{localStorage.setItem('crm_ll_wa',LL_WA?'1':'');}catch(e){}
-  if(LL_WA&&LL_ACTUAL){const c=LISTA.find(x=>x.id===LL_ACTUAL);if(c&&!esMovil(c))LL_ACTUAL=null;}
+  if(LL_WA&&LL_ACTUAL){const c=LISTA.find(x=>x.id===LL_ACTUAL);if(c&&!esWa(c))LL_ACTUAL=null;}
   llRender();
 }
 function llNicho(id){
@@ -2926,13 +2926,13 @@ function llNicho(id){
 function llRenderNichos(){
   llRenderMasivo();
   const el=document.getElementById('ll-nichos');if(!el)return;
-  const todos=llColaTodos(),base=LL_WA?todos.filter(esMovil):todos,cuenta={};
+  const todos=llColaTodos(),base=LL_WA?todos.filter(esWa):todos,cuenta={};
   base.forEach(c=>{const k=nichoDe(c);cuenta[k]=(cuenta[k]||0)+1;});
   const ids=[...NICHOS.map(n=>n.id),'otros'].filter(k=>cuenta[k]||k===LL_NICHO);
   el.innerHTML=`<span class="lbl">Nicho:</span><button class="${LL_NICHO?'':'on'}" onclick="llNicho('')">Todos<b>${base.length}</b></button>`
     +ids.map(k=>`<button class="${LL_NICHO===k?'on':''}" onclick="llNicho('${k}')">${esc(nichoNombre(k))}<b>${cuenta[k]||0}</b></button>`).join('')
     +(BF_WEB_ON?`<button class="${LL_NICHO==='sinweb'?'on':''}" style="color:#c0392b" onclick="llNicho('sinweb')">🌐 Sin web · Black Friday<b>${base.filter(sinWebBF).length}</b></button>`:'')
-    +`<button class="${LL_WA?'on':''}" style="margin-left:8px" onclick="llSoloWa()" title="Solo negocios con móvil (se les puede escribir por WhatsApp)">💬 Solo WhatsApp<b>${todos.filter(esMovil).length}</b></button>`;
+    +`<button class="${LL_WA?'on':''}" style="margin-left:8px" onclick="llSoloWa()" title="Solo negocios con móvil (se les puede escribir por WhatsApp)">💬 Solo WhatsApp<b>${todos.filter(esWa).length}</b></button>`;
 }
 function nichoSelect(lista){
   const sel=document.getElementById('f-nicho');if(!sel)return;
@@ -2941,7 +2941,7 @@ function nichoSelect(lista){
   sel.innerHTML='<option value="">Todos</option>'+[...NICHOS.map(n=>n.id),'otros'].filter(k=>cuenta[k]).map(k=>`<option value="${k}">${esc(nichoNombre(k))} (${cuenta[k]})</option>`).join('');
   sel.value=v;
 }
-function llCola(){return llColaTodos().filter(c=>!LL_WA||esMovil(c)).filter(c=>!LL_NICHO||(LL_NICHO==='sinweb'?sinWebBF(c):nichoDe(c)===LL_NICHO));}
+function llCola(){return llColaTodos().filter(c=>!LL_WA||esWa(c)).filter(c=>!LL_NICHO||(LL_NICHO==='sinweb'?sinWebBF(c):nichoDe(c)===LL_NICHO));}
 function llColaTodos(){
   const ahora=Date.now();
   return LISTA.filter(c=>esMio(c)&&c.telefono&&!['descartado','cerrado','reunion'].includes(c.etapa)&&!esHosteleria(c))
