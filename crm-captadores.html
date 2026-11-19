@@ -3021,7 +3021,7 @@ function llFicha(c){
     ${c.telefono?`<a class="ll-call" href="tel:${esc(tel)}" onclick="llMarcado()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Llamar <small>${esc(telBonito(c.telefono))}</small></a>`:''}
     ${sinWebBF(c)?`<button class="ll-wa" style="background:#c0392b" onclick="waWebBF(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">${esGym(c)?'🌐 WhatsApp web <small>ofrecer la web</small>':'🌐 WhatsApp web 390 € <small>Black Friday</small>'}</button>`:''}
     ${esMovil(c.telefono)?`<button class="ll-wa" onclick="waFrio(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">💬 Mandar WhatsApp <small>mensaje ya escrito</small></button>`:''}
-    ${igUser(c)?`<button class="ll-wa ll-ig" onclick="igDM(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">📷 Mensaje por Instagram <small>se copia y se abre su chat</small></button>`:''}
+    ${igUser(c)?`<button class="ll-wa ll-ig" onclick="igDM(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">📷 Mensaje por Instagram <small>se copia y se abre su perfil · pulsa «Enviar mensaje»</small></button>`:''}
     ${c.telefono?'':'<div class="ll-hint">Sin teléfono: escríbele por Instagram o pásate por el gimnasio.</div>'}
     <div class="ll-hint" ${c.telefono?'':'style="display:none"'}>Tecla <kbd>Espacio</kbd> para llamar · <a href="#" onclick="navigator.clipboard.writeText('${esc(tel)}');toast('Número copiado');return false" style="color:inherit">copiar número</a></div>
     <div class="ll-lbl">Notas de esta llamada</div>
@@ -3352,7 +3352,7 @@ function igDM(id){
   const c=LISTA.find(x=>x.id===id)||ALL_CONTACTOS.find(x=>x.id===id);if(!c||!igUser(c))return;
   const txt=igTexto(c);
   const copiado=navigator.clipboard?navigator.clipboard.writeText(txt).then(()=>true,()=>false):Promise.resolve(false);
-  window.open('https://ig.me/m/'+encodeURIComponent(igUser(c)),'_blank');
+  window.open(igUrl(c),'_blank');
   const t=new Date().toISOString(), prox=proxHora(2,10,30).toISOString();
   const cambios={etapa:['reunion','cerrado'].includes(c.etapa)?c.etapa:'interesado',proxima_llamada:prox,ultima_llamada:t,updated_at:t,
     llamadas:[...(c.llamadas||[]),{t,r:'ig_dm',por:SESSION.nombre,n:'Mensaje por Instagram'}]};
@@ -3363,7 +3363,7 @@ function igDM(id){
     Object.assign(c,cambios);
     ALL_CONTACTOS=LISTA.filter(x=>!(x.origen&&x.origen.startsWith('lista')&&!(x.llamadas||[]).length&&x.etapa==='nuevo'));
     if(LL_ACTUAL===c.id)LL_ACTUAL=null;
-    toast(ok?'📷 Mensaje copiado: pégalo en su chat de Instagram · guardado en «Info enviada»':'📷 Guardado · no se pudo copiar el mensaje, escríbelo a mano');
+    toast(ok?'📷 Mensaje copiado: en su perfil pulsa «Enviar mensaje» y pégalo · guardado en «Info enviada»':'📷 Guardado · no se pudo copiar el mensaje, escríbelo a mano');
     if(document.getElementById('page-llamar').classList.contains('active'))llRender();
     if(document.getElementById('page-pipeline').classList.contains('active'))renderPipeline();
   });
