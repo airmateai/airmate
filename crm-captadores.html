@@ -2889,6 +2889,7 @@ function coincide(c,q){
 function telBonito(t){const d=telLimpio(t);const m=/^\+34(\d{3})(\d{3})(\d{3})$/.exec(d);return m?`${m[1]} ${m[2]} ${m[3]}`:d;}
 /* ── Nichos: agrupan el sector (y el nombre) en grupos para filtrar ── */
 const NICHOS=[
+  {id:'gimnasios',n:'🥊 Gimnasios contacto (web)',re:/gimnasio de contacto|boxeo|boxing|\bmma\b|muay|kick|\bk-?1\b|\bbjj\b|jiu.?jitsu|grappling|artes marciales/i},
   {id:'estetica',n:'Estética y belleza',re:/est[eé]tic|belleza|peluq|barber|u[ñn]as|nail|spa\b|masaj|depila|l[aá]ser|micropig|tatu|pesta[ñn]|cejas|maquill|bronce|solarium|cosm[eé]t/i},
   {id:'salud',n:'Salud',re:/cl[ií]nic|fisio|logoped|psic[oó]l|dental|dentist|odont|[oó]ptic|veterin|podolog|nutric|osteop|quiropr|m[eé]dic|salud|farmac|enfermer|terapi/i},
   {id:'deporte',n:'Deporte',re:/entrenad|gimnas|gym|crossfit|surf|buceo|yoga|pilates|box|artes marciales|kick|deport|n[aá]utic|padel|p[aá]del|tenis|danza|baile/i},
@@ -3018,7 +3019,7 @@ function llFicha(c){
     ${c.direccion?`<div class="ll-sub">${esc(c.direccion)}</div>`:''}
     <div class="ll-links">${web?`<a href="${esc(web)}" target="_blank" rel="noopener">Ver web ↗</a>`:''}${igUser(c)?`<a href="${esc(igUrl(c))}" target="_blank" rel="noopener">Instagram @${esc(igUser(c))} ↗</a>`:''}<a href="${maps}" target="_blank" rel="noopener">Ver en Google Maps ↗</a></div>
     ${c.telefono?`<a class="ll-call" href="tel:${esc(tel)}" onclick="llMarcado()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Llamar <small>${esc(telBonito(c.telefono))}</small></a>`:''}
-    ${sinWebBF(c)?`<button class="ll-wa" style="background:#c0392b" onclick="waWebBF(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">${nichoDe(c)==='deporte'?'🌐 WhatsApp web <small>ofrecer la web</small>':'🌐 WhatsApp web 390 € <small>Black Friday</small>'}</button>`:''}
+    ${sinWebBF(c)?`<button class="ll-wa" style="background:#c0392b" onclick="waWebBF(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">${esGym(c)?'🌐 WhatsApp web <small>ofrecer la web</small>':'🌐 WhatsApp web 390 € <small>Black Friday</small>'}</button>`:''}
     ${esMovil(c.telefono)?`<button class="ll-wa" onclick="waFrio(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">💬 Mandar WhatsApp <small>mensaje ya escrito</small></button>`:''}
     ${igUser(c)?`<button class="ll-wa ll-ig" onclick="igDM(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">📷 Mensaje por Instagram <small>se copia y se abre su chat</small></button>`:''}
     ${c.telefono?'':'<div class="ll-hint">Sin teléfono: escríbele por Instagram o pásate por el gimnasio.</div>'}
@@ -3315,11 +3316,11 @@ const sinWebBF=c=>BF_WEB_ON&&!c.web&&c.sin_web_google===true&&esMovil(c.telefono
 function waWebBF(id){
   const c=LISTA.find(x=>x.id===id)||ALL_CONTACTOS.find(x=>x.id===id);if(!c)return;
   const yo=SESSION.nombre.split(' ')[0];
-  const txt=nichoDe(c)==='deporte'?webSinPrecio(c,false):`Hola, soy ${yo}, de Airmate, aquí en Tenerife. He visto que ${c.empresa} no tiene página web en Google, y quien os busca y no os encuentra acaba llamando a otro.\n\nHasta el 30 de noviembre hacemos webs profesionales por 390 € (normalmente 1.290 €), con hosting y mantenimiento por 49 €/mes. Solo para 5 negocios.\n\n¿Te enseño cómo quedaría la vuestra?`;
+  const txt=esGym(c)?webSinPrecio(c,false):`Hola, soy ${yo}, de Airmate, aquí en Tenerife. He visto que ${c.empresa} no tiene página web en Google, y quien os busca y no os encuentra acaba llamando a otro.\n\nHasta el 30 de noviembre hacemos webs profesionales por 390 € (normalmente 1.290 €), con hosting y mantenimiento por 49 €/mes. Solo para 5 negocios.\n\n¿Te enseño cómo quedaría la vuestra?`;
   window.open('https://wa.me/'+telLimpio(c.telefono).replace('+','')+'?text='+encodeURIComponent(txt),'_blank');
   const t=new Date().toISOString(), prox=proxHora(2,10,30).toISOString();
   const cambios={etapa:['reunion','cerrado'].includes(c.etapa)?c.etapa:'interesado',proxima_llamada:prox,ultima_llamada:t,updated_at:t,
-    llamadas:[...(c.llamadas||[]),{t,r:'wa_bf',por:SESSION.nombre,n:nichoDe(c)==='deporte'?'WhatsApp ofreciendo la web':'WhatsApp Black Friday web 390 €'}]};
+    llamadas:[...(c.llamadas||[]),{t,r:'wa_bf',por:SESSION.nombre,n:esGym(c)?'WhatsApp ofreciendo la web':'WhatsApp Black Friday web 390 €'}]};
   if(!(c.llamadas||[]).length)cambios.fecha_alta=todayStr();
   SB.from('am_crm_contactos').update(cambios).eq('id',c.id).select('id').then(({data,error})=>{
     if(error||!(data||[]).length){toast('El WhatsApp se ha abierto, pero no se ha guardado en el panel','error');return;}
@@ -3333,10 +3334,11 @@ function waWebBF(id){
 }
 /* Instagram (18-nov-2026): leads con cuenta de Instagram (columna «instagram»). Instagram no deja el mensaje escrito en el chat:
    se copia al portapapeles y se abre su conversación (ig.me). Queda guardado igual que un WhatsApp. */
+function esGym(c){return ['gimnasios','deporte'].includes(nichoDe(c));}
 /* 19-nov-2026: a gimnasios y escuelas deportivas se les ofrece la web SIN precio (Fabio). Sin inventar clientes ni resultados. */
 function webSinPrecio(c,porIG){
   const yo=SESSION.nombre.split(' ')[0];
-  const gym=nichoDe(c)==='deporte';
+  const gym=esGym(c);
   return `Hola, soy ${yo}, de Airmate, aquí en Tenerife. He visto vuestro ${gym?'gimnasio':'negocio'}${porIG?' en Instagram':''} y me gustaría desarrollaros la página web, para que tengáis una buena imagen online y quien os busque en Google os encuentre.\n\nYa trabajamos con escuelas deportivas y con gente del mundo del contacto aquí en Tenerife.\n\n¿Os enseño cómo quedaría la vuestra?`;
 }
 function igUser(c){return String((c&&c.instagram)||'').trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i,'').replace(/^@/,'').replace(/[/?#].*$/,'');}
@@ -3371,6 +3373,7 @@ const WA_SECTOR={
   estetica:['Ayudamos a centros de estética de Canarias a llevar la agenda, los bonos y las clientas en un solo sistema.','¿cuántas citas se os quedan a la semana sin que la clienta aparezca?'],
   salud:['Ayudamos a clínicas de Canarias a llevar pacientes, citas y presupuestos en un solo sistema.','¿cuántos presupuestos se os quedan al mes sin respuesta porque nadie vuelve a llamar?'],
   formacion:['Ayudamos a autoescuelas y academias de Canarias a llevar clases, alumnos y cobros en un solo sistema.','¿cuánto tiempo os lleva cada semana cuadrar las clases y cobrar a los alumnos?'],
+  gimnasios:['Ayudamos a gimnasios y escuelas de deportes de contacto de Canarias a llevar socios, clases y cuotas en un solo sistema.','¿cuántas cuotas se os quedan sin cobrar cada mes?'],
   deporte:['Ayudamos a gimnasios, estudios y escuelas deportivas de Canarias a llevar socios, clases y cuotas en un solo sistema.','¿cuántas cuotas se os quedan sin cobrar cada mes?'],
   oficios:['Ayudamos a talleres y empresas de oficios de Canarias a llevar clientes, presupuestos y facturas en un solo sistema.','¿cuántos presupuestos enviáis que nunca tienen respuesta?'],
   gestoria:['Ayudamos a gestorías y asesorías de Canarias a llevar clientes, documentación y plazos en un solo sistema.','¿cuánto tiempo perdéis al mes persiguiendo a clientes para que os manden los papeles?'],
