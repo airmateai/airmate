@@ -185,7 +185,7 @@ function navs(){ const v=pendVuelven().length, bajo=SV_PROD.filter(p=>DB.stock[p
   $('nav').innerHTML=VISTAS.map(([k,ic,t])=>`<button class="${VISTA===k?'on':''}" onclick="ir('${k}')"><span class="ic">${ic}</span>${t}${k==='vuelven'&&v?`<span class="bd">${v}</span>`:''}${k==='stock'&&bajo?`<span class="bd">${bajo}</span>`:''}</button>`).join('');
   $('bnav').innerHTML=VISTAS.map(([k,ic,t,c])=>`<button class="${VISTA===k?'on':''}" onclick="ir('${k}')"><span class="ic">${ic}</span>${c}</button>`).join(''); }
 function ir(v,quieto){ VISTA=v; navs(); $('main').innerHTML=R[v](); if(!quieto) scrollTo(0,0); animar(v,quieto); if(v==='agenda') activarArrastre(); }
-function animar(v,quieto){ if(!window.gsap) return;
+function animar(v,quieto){ if(!window.gsap||new URLSearchParams(location.search).has('captura')) return;
   if(!quieto){ gsap.from('.main .hd',{y:16,opacity:0,duration:.7,ease:'expo.out'}); gsap.from('.main .card, .main .ag',{y:26,opacity:0,duration:.85,ease:'expo.out',stagger:.05,delay:.05}); }
   document.querySelectorAll('.kpi b').forEach(b=>{ const txt=b.textContent.trim(), m=txt.match(/^([\d.]+)( AED)?$/); if(!m||quieto) return; const to=parseInt(m[1].replace(/\./g,'')), suf=m[2]||'', o={v:0};
     gsap.to(o,{v:to,duration:1.2,ease:'expo.out',delay:.15,onUpdate:()=>b.textContent=Math.round(o.v).toLocaleString('es-ES',{useGrouping:'always'})+suf}); });
