@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Asistente técnico · Demo Airmate</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f3f1;--ink:#17181a;--mut:#6b6d70;--line:#dcdcd8;--card:#fff;--acc:#1f5f3f;--accbg:#e7f0ea;--warn:#8a5a00}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:16px;line-height:1.5}
+.top{background:var(--ink);color:#e9e9e6;font-size:13px;padding:10px 16px;text-align:center}
+.top b{color:#fff}
+.w{max-width:720px;margin:0 auto;padding:0 16px}
+header{padding:26px 0 8px}
+header .k{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+header h1{font-size:clamp(28px,6vw,40px);line-height:1.1;letter-spacing:-.02em;margin:8px 0 6px}
+header p{color:#45474a;max-width:560px}
+.chat{margin:22px 0 30px;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.ch{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.dot{width:34px;height:34px;border-radius:50%;background:var(--acc);color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px}
+.ch b{display:block;font-size:15px}.ch small{color:var(--mut);font-size:12px}
+.msgs{padding:16px;display:flex;flex-direction:column;gap:12px;min-height:320px}
+.m{max-width:88%;padding:11px 14px;border-radius:14px;font-size:15px}
+.m.b{background:#f1f1ee;border-top-left-radius:4px;align-self:flex-start}
+.m.u{background:var(--ink);color:#fff;border-top-right-radius:4px;align-self:flex-end}
+.opts{display:flex;flex-wrap:wrap;gap:8px;align-self:flex-start;max-width:100%}
+.opts button{font:inherit;font-size:14px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);padding:9px 13px;border-radius:10px;cursor:pointer}
+.opts button:hover{background:var(--ink);color:#fff}
+.form{align-self:stretch;display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#fafaf8;border:1px solid var(--line);border-radius:12px;padding:12px}
+.form label{font-size:13px;color:var(--mut);min-width:0}
+.form input,.form select{width:100%;min-width:0;margin-top:4px;font:inherit;font-size:16px;padding:9px 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.form button{grid-column:1/-1;font:inherit;font-weight:600;background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px;cursor:pointer}
+.res{align-self:stretch;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.res .h{background:var(--accbg);padding:12px 14px}
+.res .h small{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);font-weight:600}
+.res .h b{font-size:20px}
+.res .bd{padding:12px 14px;font-size:14.5px;color:#2d2f31}
+.res .bd p+p{margin-top:8px}
+.res .num{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 2px}
+.res .num div{min-width:110px}
+.res .num span{display:block;font-size:12px;color:var(--mut)}
+.res .num strong{font-size:22px;letter-spacing:-.02em}
+.src{font-size:12.5px;color:var(--mut);border-top:1px solid var(--line);padding:9px 14px}
+.src i{font-style:normal;color:var(--warn)}
+.again{align-self:flex-start;font:inherit;font-size:14px;background:none;border:0;color:var(--acc);font-weight:600;cursor:pointer;padding:4px 0}
+section{padding:26px 0;border-top:1px solid var(--line)}
+section h2{font-size:22px;letter-spacing:-.01em;margin-bottom:10px}
+section li{margin:8px 0 0 18px;color:#36383b}
+footer{padding:26px 0 50px;font-size:12.5px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="top"><b>Demo de Airmate</b> · No es una web oficial de Kerakoll. Datos tomados de fichas técnicas públicas.</div>
+<div class="w">
+<header>
+  <div class="k">Propuesta para Kerakoll</div>
+  <h1>Asistente técnico para distribuidores y aplicadores</h1>
+  <p>El cliente dice qué obra tiene. El asistente le dice qué producto usar, cuánto material necesita y de qué ficha técnica sale el dato.</p>
+</header>
+
+<div class="chat" aria-live="polite">
+  <div class="ch"><span class="dot">AT</span><div><b>Asistente técnico</b><small>Responde con las fichas técnicas del fabricante</small></div></div>
+  <div class="msgs" id="msgs"></div>
+</div>
+
+<section>
+  <h2>Qué tendría la versión real</h2>
+  <ul>
+    <li>Todo el catálogo y las fichas técnicas vigentes, con preguntas libres escritas como habla el cliente («porcelánico de 120×60 en terraza»).</li>
+    <li>Cada respuesta cita la ficha técnica y la versión de la que sale.</li>
+    <li>Si la duda no está en las fichas, pasa la consulta al servicio técnico con los datos de la obra.</li>
+    <li>Integrable en la web, en el mostrador del distribuidor o en WhatsApp.</li>
+    <li>Panel con las preguntas más frecuentes y los productos más consultados por zona.</li>
+  </ul>
+</section>
+<footer>Demo preparada por Airmate (airmate.es). Los consumos son orientativos y no sustituyen a la ficha técnica vigente del fabricante. Kerakoll y los nombres de producto son marcas de sus titulares.</footer>
+</div>
+
+<script>
+(function(){
+var M=document.getElementById('msgs');
+function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e}
+function bot(h){M.appendChild(el('div','m b',h))}
+function user(h){M.appendChild(el('div','m u',h))}
+function opts(list){var o=el('div','opts');list.forEach(function(x){var b=el('button',null,x[0]);b.type='button';b.onclick=function(){o.remove();user(x[0]);setTimeout(x[1],250)};o.appendChild(b)});M.appendChild(o)}
+function fmt(n,d){return n.toLocaleString('es-ES',{maximumFractionDigits:d==null?1:d})}
+function form(fields,cb){
+  var f=el('form','form');
+  fields.forEach(function(x){var l=el('label',null,x.l);var i;
+    if(x.o){i=el('select');x.o.forEach(function(v){var op=el('option',null,v[1]);op.value=v[0];i.appendChild(op)})}
+    else{i=el('input');i.type='number';i.inputMode='decimal';i.min='0';i.step='any';i.value=x.v}
+    i.name=x.n;l.appendChild(i);f.appendChild(l)});
+  var b=el('button',null,'Calcular');b.type='submit';f.appendChild(b);
+  f.onsubmit=function(e){e.preventDefault();var v={};fields.forEach(function(x){var i=f.elements[x.n];v[x.n]=x.o?i.value:Math.max(0,parseFloat(String(i.value).replace(',','.'))||0)});f.remove();cb(v)};
+  M.appendChild(f);
+}
+function res(o){
+  var r=el('div','res');
+  r.innerHTML='<div class="h"><small>'+o.tag+'</small><b>'+o.prod+'</b></div><div class="bd">'+o.body+
+  (o.nums?'<div class="num">'+o.nums.map(function(n){return '<div><span>'+n[0]+'</span><strong>'+n[1]+'</strong></div>'}).join('')+'</div>':'')+
+  '</div><div class="src">Fuente: '+o.src+' <i>· Confirmar con la ficha técnica vigente.</i></div>';
+  M.appendChild(r);
+  [].slice.call(M.querySelectorAll('.again')).forEach(function(x){x.remove()});
+  var a=el('button','again','← Otra consulta');a.type='button';a.onclick=start;M.appendChild(a);
+}
+
+function start(){
+  M.innerHTML='';
+  bot('Hola. Cuéntame qué obra tienes y te digo qué producto usar y cuánto material necesitas.');
+  opts([['Colocar cerámica o porcelánico',ceramica],['Impermeabilizar baño o terraza',imper],['Reparar hormigón',hormigon],['Hacer un recrecido de suelo',recrecido]]);
+}
+
+function ceramica(){
+  bot('Perfecto. Dame las medidas y te calculo adhesivo y junta.');
+  form([
+    {n:'m2',l:'Superficie (m²)',v:20},
+    {n:'llana',l:'Espesor de adhesivo (mm)',v:3},
+    {n:'a',l:'Pieza: largo (cm)',v:60},
+    {n:'b',l:'Pieza: ancho (cm)',v:60},
+    {n:'e',l:'Grosor de la pieza (mm)',v:9},
+    {n:'j',l:'Ancho de junta (mm)',v:3}
+  ],function(v){
+    user(fmt(v.m2,0)+' m², pieza '+fmt(v.a,0)+'×'+fmt(v.b,0)+' cm, junta '+fmt(v.j,0)+' mm');
+    var adh=1.25*v.llana*v.m2, sacos=Math.ceil(adh/20);
+    var A=v.a*10,B=v.b*10, jkgm2=(A&&B)?((A+B)/(A*B))*v.e*v.j*1.6:0, junta=jkgm2*v.m2*1.1;
+    bot('Para porcelánico y formatos grandes, en interior o exterior, el adhesivo que encaja es el <b>H40 Gel</b> (C2TE S1). Para la junta, <b>Fugabella Color</b>.');
+    res({tag:'Adhesivo',prod:'H40 Gel',body:'<p>Adhesivo gel cementoso de altas prestaciones (C2TE S1) para cerámica, porcelánico y piedra en suelos y paredes, interior y exterior.</p><p>Consumo ≈ 1,25 kg/m² por cada mm de espesor.</p>',
+      nums:[['Adhesivo',fmt(adh)+' kg'],['Sacos de 20 kg',fmt(sacos,0)]],src:'ficha técnica H40 Gel (ES)'});
+    if(v.j>20){bot('Ojo: Fugabella Color admite juntas de hasta 20 mm. Para una junta más ancha habría que consultar otra referencia.')}
+    res({tag:'Junta',prod:'Fugabella Color',body:'<p>Junta de resina-cemento decorativa (CG2 WA), interior y exterior, para juntas de hasta 20 mm.</p><p>Cálculo orientativo con la fórmula estándar de juntas ((A+B)/(A·B) × grosor × junta × 1,6) más un 10 % de margen.</p>',
+      nums:[['Junta',fmt(junta)+' kg'],['Botes de 5 kg',fmt(Math.ceil(junta/5),0)]],src:'ficha técnica Fugabella Color (ES) · consumo por fórmula estándar'});
+    M.lastChild.scrollIntoView({behavior:'smooth',block:'end'});
+  });
+}
+
+function imper(){
+  bot('¿Qué superficie vas a impermeabilizar? El sistema bajo cerámica pide un mínimo de 2 mm de espesor.');
+  form([{n:'m2',l:'Superficie (m²)',v:12},{n:'mm',l:'Espesor total (mm)',v:2}],function(v){
+    user(fmt(v.m2,0)+' m² a '+fmt(v.mm,1)+' mm');
+    var mm=Math.max(2,v.mm), kg=1.15*mm*v.m2;
+    if(v.mm<2)bot('He subido el espesor a 2 mm, que es el mínimo de la ficha.');
+    bot('Para baños, duchas y terrazas que luego se alicatan: <b>Aquastop Nanoflex</b>, en dos capas.');
+    res({tag:'Impermeabilizante',prod:'Aquastop Nanoflex',body:'<p>Impermeabilizante cementoso flexible para colocar cerámica encima. Se aplica en dos capas; la segunda hasta un mínimo de 2 mm de espesor seco.</p><p>Consumo ≈ 1,15 kg/m² por mm de espesor.</p>',
+      nums:[['Producto',fmt(kg)+' kg'],['Sacos de 20 kg',fmt(Math.ceil(kg/20),0)]],src:'ficha técnica Aquastop Nanoflex'});
+    M.lastChild.scrollIntoView({behavior:'smooth',block:'end'});
+  });
+}
+
+function hormigon(){
+  bot('¿Cuánta superficie hay que reparar y con qué espesor? Por capa admite de 2 a 40 mm.');
+  form([{n:'m2',l:'Superficie (m²)',v:5},{n:'mm',l:'Espesor (mm)',v:20}],function(v){
+    user(fmt(v.m2,0)+' m² a '+fmt(v.mm,0)+' mm');
+    var kg=1.7*v.mm*v.m2;
+    if(v.mm>40)bot('Con más de 40 mm hay que aplicarlo en varias capas.');
+    bot('Para reparar y proteger hormigón: <b>Geolite 40</b>.');
+    res({tag:'Reparación de hormigón',prod:'Geolite 40',body:'<p>Mortero mineral para reparación estructural del hormigón. Espesor por capa de 2 a 40 mm.</p><p>Consumo ≈ 17 kg/m² por cm de espesor.</p>',
+      nums:[['Producto',fmt(kg)+' kg'],['Sacos de 25 kg',fmt(Math.ceil(kg/25),0)]],src:'ficha técnica Geolite 40 (ES)'});
+    M.lastChild.scrollIntoView({behavior:'smooth',block:'end'});
+  });
+}
+
+function recrecido(){
+  bot('¿Qué superficie y qué espesor de recrecido?');
+  form([{n:'m2',l:'Superficie (m²)',v:30},{n:'cm',l:'Espesor (cm)',v:5}],function(v){
+    user(fmt(v.m2,0)+' m² a '+fmt(v.cm,1)+' cm');
+    var lo=16*v.cm*v.m2, hi=18*v.cm*v.m2;
+    bot('Para un recrecido listo para usar: <b>Keracem Eco Pronto</b>.');
+    res({tag:'Recrecido',prod:'Keracem Eco Pronto',body:'<p>Mortero premezclado para recrecidos (C30-F6 según EN 13813).</p><p>Consumo ≈ 16–18 kg/m² por cm de espesor.</p>',
+      nums:[['Producto',fmt(lo,0)+'–'+fmt(hi,0)+' kg']],src:'ficha técnica Keracem Eco Pronto'});
+    M.lastChild.scrollIntoView({behavior:'smooth',block:'end'});
+  });
+}
+start();
+})();
+</script>
+</body>
+</html>
