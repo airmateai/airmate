@@ -3018,7 +3018,7 @@ function llFicha(c){
     ${c.direccion?`<div class="ll-sub">${esc(c.direccion)}</div>`:''}
     <div class="ll-links">${web?`<a href="${esc(web)}" target="_blank" rel="noopener">Ver web ↗</a>`:''}${igUser(c)?`<a href="${esc(igUrl(c))}" target="_blank" rel="noopener">Instagram @${esc(igUser(c))} ↗</a>`:''}<a href="${maps}" target="_blank" rel="noopener">Ver en Google Maps ↗</a></div>
     ${c.telefono?`<a class="ll-call" href="tel:${esc(tel)}" onclick="llMarcado()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Llamar <small>${esc(telBonito(c.telefono))}</small></a>`:''}
-    ${sinWebBF(c)?`<button class="ll-wa" style="background:#c0392b" onclick="waWebBF(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">🌐 WhatsApp web 390 € <small>Black Friday</small></button>`:''}
+    ${sinWebBF(c)?`<button class="ll-wa" style="background:#c0392b" onclick="waWebBF(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">${nichoDe(c)==='deporte'?'🌐 WhatsApp web <small>ofrecer la web</small>':'🌐 WhatsApp web 390 € <small>Black Friday</small>'}</button>`:''}
     ${esMovil(c.telefono)?`<button class="ll-wa" onclick="waFrio(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">💬 Mandar WhatsApp <small>mensaje ya escrito</small></button>`:''}
     ${igUser(c)?`<button class="ll-wa ll-ig" onclick="igDM(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">📷 Mensaje por Instagram <small>se copia y se abre su chat</small></button>`:''}
     ${c.telefono?'':'<div class="ll-hint">Sin teléfono: escríbele por Instagram o pásate por el gimnasio.</div>'}
@@ -3315,11 +3315,11 @@ const sinWebBF=c=>BF_WEB_ON&&!c.web&&c.sin_web_google===true&&esMovil(c.telefono
 function waWebBF(id){
   const c=LISTA.find(x=>x.id===id)||ALL_CONTACTOS.find(x=>x.id===id);if(!c)return;
   const yo=SESSION.nombre.split(' ')[0];
-  const txt=`Hola, soy ${yo}, de Airmate, aquí en Tenerife. He visto que ${c.empresa} no tiene página web en Google, y quien os busca y no os encuentra acaba llamando a otro.\n\nHasta el 30 de noviembre hacemos webs profesionales por 390 € (normalmente 1.290 €), con hosting y mantenimiento por 49 €/mes. Solo para 5 negocios.\n\n¿Te enseño cómo quedaría la vuestra?`;
+  const txt=nichoDe(c)==='deporte'?webSinPrecio(c,false):`Hola, soy ${yo}, de Airmate, aquí en Tenerife. He visto que ${c.empresa} no tiene página web en Google, y quien os busca y no os encuentra acaba llamando a otro.\n\nHasta el 30 de noviembre hacemos webs profesionales por 390 € (normalmente 1.290 €), con hosting y mantenimiento por 49 €/mes. Solo para 5 negocios.\n\n¿Te enseño cómo quedaría la vuestra?`;
   window.open('https://wa.me/'+telLimpio(c.telefono).replace('+','')+'?text='+encodeURIComponent(txt),'_blank');
   const t=new Date().toISOString(), prox=proxHora(2,10,30).toISOString();
   const cambios={etapa:['reunion','cerrado'].includes(c.etapa)?c.etapa:'interesado',proxima_llamada:prox,ultima_llamada:t,updated_at:t,
-    llamadas:[...(c.llamadas||[]),{t,r:'wa_bf',por:SESSION.nombre,n:'WhatsApp Black Friday web 390 €'}]};
+    llamadas:[...(c.llamadas||[]),{t,r:'wa_bf',por:SESSION.nombre,n:nichoDe(c)==='deporte'?'WhatsApp ofreciendo la web':'WhatsApp Black Friday web 390 €'}]};
   if(!(c.llamadas||[]).length)cambios.fecha_alta=todayStr();
   SB.from('am_crm_contactos').update(cambios).eq('id',c.id).select('id').then(({data,error})=>{
     if(error||!(data||[]).length){toast('El WhatsApp se ha abierto, pero no se ha guardado en el panel','error');return;}
@@ -3333,15 +3333,18 @@ function waWebBF(id){
 }
 /* Instagram (18-nov-2026): leads con cuenta de Instagram (columna «instagram»). Instagram no deja el mensaje escrito en el chat:
    se copia al portapapeles y se abre su conversación (ig.me). Queda guardado igual que un WhatsApp. */
+/* 19-nov-2026: a gimnasios y escuelas deportivas se les ofrece la web SIN precio (Fabio). Sin inventar clientes ni resultados. */
+function webSinPrecio(c,porIG){
+  const yo=SESSION.nombre.split(' ')[0];
+  const gym=nichoDe(c)==='deporte';
+  return `Hola, soy ${yo}, de Airmate, aquí en Tenerife. He visto vuestro ${gym?'gimnasio':'negocio'}${porIG?' en Instagram':''} y me gustaría desarrollaros la página web, para que tengáis una buena imagen online y quien os busque en Google os encuentre.\n\nYa trabajamos con escuelas deportivas y con gente del mundo del contacto aquí en Tenerife.\n\n¿Os enseño cómo quedaría la vuestra?`;
+}
 function igUser(c){return String((c&&c.instagram)||'').trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i,'').replace(/^@/,'').replace(/[/?#].*$/,'');}
 function igUrl(c){const u=igUser(c);return u?'https://www.instagram.com/'+u+'/':'';}
 function igTexto(c){
   const yo=SESSION.nombre.split(' ')[0];
   if(c.web) return waTexto(c,false).replace(/^Hola, soy [^,]+, de Airmate\./,`Hola, soy ${yo}, de Airmate. He visto vuestro Instagram.`);
-  const otro=nichoDe(c)==='deporte'?'acaba apuntándose en otro gimnasio':'acaba yéndose a otro sitio';
-  return BF_WEB_ON
-    ?`Hola, soy ${yo}, de Airmate, aquí en Tenerife. He visto vuestro Instagram y me gusta mucho lo que hacéis, pero no tenéis página web: quien os busca en Google no os encuentra y ${otro}.\n\nHasta el 30 de noviembre hacemos webs profesionales por 390 € (normalmente 1.290 €), con horarios, clases y botón de WhatsApp, y hosting y mantenimiento por 49 €/mes. Solo para 5 negocios.\n\n¿Te enseño cómo quedaría la vuestra?`
-    :`Hola, soy ${yo}, de Airmate, aquí en Tenerife. He visto vuestro Instagram y me gusta mucho lo que hacéis, pero no tenéis página web: quien os busca en Google no os encuentra y ${otro}.\n\nHacemos webs profesionales para negocios de Canarias. ¿Te enseño cómo quedaría la vuestra?`;
+  return webSinPrecio(c,true);
 }
 function igDM(id){
   const c=LISTA.find(x=>x.id===id)||ALL_CONTACTOS.find(x=>x.id===id);if(!c||!igUser(c))return;
