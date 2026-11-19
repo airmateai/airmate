@@ -88,6 +88,23 @@ textarea.nota{width:100%;border:0;background:var(--cr);border-radius:8px;padding
 .demo{background:#c7a160;color:#120d0c;font-size:11.5px;padding:7px 10px;border-radius:6px;margin-top:10px;font-weight:600}
 .demo button{text-decoration:underline;font-weight:700;font-size:11.5px}
 .bnav{display:none}.mtop{display:none}
+#login{position:fixed;inset:0;z-index:150;background:#0f0b0a;display:flex;align-items:center;justify-content:center;padding:20px}
+#login .lg-c{width:100%;max-width:380px;text-align:center;color:#efe3c9}
+#login img{width:96px;height:96px;border-radius:12px;margin:0 auto 18px;display:block}
+#login h2{font-family:'Playfair Display';font-size:30px;margin:0 0 4px}
+#login p{color:#a99a80;margin:0 0 22px;font-size:13.5px}
+#login .us{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+#login .us button{background:#1d1615;border:1px solid rgba(241,230,207,.12);border-radius:10px;padding:12px 6px;color:#efe3c9;font-size:12.5px;transition:.25s}
+#login .us button.on{border-color:#c9a462;background:#2a1f1d}
+#login .us button i{display:flex;width:34px;height:34px;border-radius:50%;margin:0 auto 6px;align-items:center;justify-content:center;font-style:normal;font-weight:600;color:#fff}
+#login input{width:100%;background:#1d1615;border:1px solid rgba(241,230,207,.12);border-radius:10px;padding:13px;color:#efe3c9;text-align:center;letter-spacing:.3em;margin-bottom:12px}
+#login .entrar{width:100%;background:#7a1f2b;color:#fff;border-radius:10px;padding:14px;font-weight:600;font-size:14px}
+#login small{display:block;margin-top:14px;color:#6f6253;font-size:11.5px}
+.ev{touch-action:none;transition:box-shadow .2s}.ev:hover{box-shadow:0 8px 20px -8px rgba(0,0,0,.5);z-index:5}
+.ev.arrastra{z-index:20;box-shadow:0 18px 40px -10px rgba(0,0,0,.55);opacity:.95;cursor:grabbing}
+.sl.destino{background:rgba(122,31,43,.12)!important;outline:2px dashed var(--rojo);outline-offset:-2px}
+.card{transition:box-shadow .3s,transform .3s}.row.click:hover{transform:translateX(2px)}
+.nav button{transition:background .25s,color .25s,transform .25s}.nav button:hover{transform:translateX(3px)}
 @media(max-width:900px){
  .side{display:none}.main{margin-left:0;padding:14px 12px 100px}
  .bnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#120d0c;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom));overflow-x:auto}
@@ -107,10 +124,18 @@ textarea.nota{width:100%;border:0;background:var(--cr);border-radius:8px;padding
   <div class="demo">Demo · datos de ejemplo · <button onclick="reiniciar()">Reiniciar</button></div>
   <div class="yo" style="margin-top:12px"><b>Anuar · Dueño</b>Acceso con usuario propio</div>
 </aside>
+<div id="login"><div class="lg-c">
+  <img src="../img/logo.jpg" alt="Salvajes"><h2>Salvajes · Panel</h2><p>Cada persona del equipo entra con su usuario.</p>
+  <div class="us" id="lgUs"></div>
+  <input type="password" value="salvajes" aria-label="Contraseña">
+  <button class="entrar" onclick="entrar()">Entrar</button>
+  <small>Demo · la contraseña ya está puesta</small>
+</div></div>
 <main class="main" id="main"></main>
 <nav class="bnav" id="bnav"></nav>
 <div id="toasts"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="../datos.js?v=1"></script>
 <script>
 const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -157,7 +182,26 @@ let VISTA='hoy', DIA=HOY, SELCL='c0', TICKET=[], PAGO='Tarjeta';
 function navs(){ const v=pendVuelven().length, bajo=SV_PROD.filter(p=>DB.stock[p.k]<=p.min).length;
   $('nav').innerHTML=VISTAS.map(([k,ic,t])=>`<button class="${VISTA===k?'on':''}" onclick="ir('${k}')"><span class="ic">${ic}</span>${t}${k==='vuelven'&&v?`<span class="bd">${v}</span>`:''}${k==='stock'&&bajo?`<span class="bd">${bajo}</span>`:''}</button>`).join('');
   $('bnav').innerHTML=VISTAS.map(([k,ic,t,c])=>`<button class="${VISTA===k?'on':''}" onclick="ir('${k}')"><span class="ic">${ic}</span>${c}</button>`).join(''); }
-function ir(v,quieto){ VISTA=v; navs(); $('main').innerHTML=R[v](); if(!quieto) scrollTo(0,0); }
+function ir(v,quieto){ VISTA=v; navs(); $('main').innerHTML=R[v](); if(!quieto) scrollTo(0,0); animar(v,quieto); if(v==='agenda') activarArrastre(); }
+function animar(v,quieto){ if(!window.gsap) return;
+  if(!quieto){ gsap.from('.main .hd',{y:16,opacity:0,duration:.7,ease:'expo.out'}); gsap.from('.main .card, .main .ag',{y:26,opacity:0,duration:.85,ease:'expo.out',stagger:.05,delay:.05}); }
+  document.querySelectorAll('.kpi b').forEach(b=>{ const txt=b.textContent.trim(), m=txt.match(/^([\d.]+)( AED)?$/); if(!m||quieto) return; const to=parseInt(m[1].replace(/\./g,'')), suf=m[2]||'', o={v:0};
+    gsap.to(o,{v:to,duration:1.2,ease:'expo.out',delay:.15,onUpdate:()=>b.textContent=Math.round(o.v).toLocaleString('es-ES',{useGrouping:'always'})+suf}); });
+  if(!quieto){ gsap.from('.ev',{scale:.8,opacity:0,duration:.6,ease:'back.out(1.7)',stagger:.02,delay:.2});
+    gsap.from('.bars i',{scaleY:0,transformOrigin:'bottom',duration:1.1,ease:'expo.out',stagger:.08,delay:.2});
+    gsap.from('.hb i',{width:0,duration:1.1,ease:'expo.out',stagger:.06,delay:.2});
+    gsap.from('.main .row',{x:-10,opacity:0,duration:.6,ease:'expo.out',stagger:.015,delay:.15}); } }
+/* arrastrar y soltar citas en la agenda */
+function activarArrastre(){ document.querySelectorAll('.ev').forEach(ev=>{ ev.addEventListener('pointerdown',e=>{ e.preventDefault(); const id=ev.dataset.id, x0=e.clientX, y0=e.clientY; let mov=false, dest=null; ev.setPointerCapture(e.pointerId);
+  const move=m=>{ const dx=m.clientX-x0, dy=m.clientY-y0; if(!mov&&Math.hypot(dx,dy)<6) return; mov=true; ev.classList.add('arrastra'); ev.style.transform=`translate(${dx}px,${dy}px)`; ev.style.pointerEvents='none';
+    const el=document.elementFromPoint(m.clientX,m.clientY); ev.style.pointerEvents=''; document.querySelectorAll('.sl.destino').forEach(x=>x.classList.remove('destino')); dest=el&&el.classList.contains('sl')?el:null; if(dest) dest.classList.add('destino'); };
+  const up=()=>{ ev.removeEventListener('pointermove',move); ev.removeEventListener('pointerup',up); ev.removeEventListener('pointercancel',up); document.querySelectorAll('.sl.destino').forEach(x=>x.classList.remove('destino'));
+    if(!mov){ verCita(id); return; }
+    const a=DB.citas.find(x=>x.id===id); if(dest){ const ne=dest.dataset.e, nh=dest.dataset.h, prev=a.est; a.est='cancelada'; const ok=SV.libreCon(DB,DIA,nh,a.s,ne); a.est=prev;
+      if(ok){ a.e=ne; a.h=nh; a.f=DIA; guardar(); sonido(); toast(`✓ ${esc(CL(a.cl).n)} movido a las ${nh} con ${esc(SV.E(ne).n)}`); RESALTA=id; ir('agenda',1); return; }
+      toast(SV.puede(ne,a.s)?`${esc(SV.E(ne).n)} ya tiene ese hueco ocupado`:`${esc(SV.E(ne).n)} no hace ${esc(SV.S(a.s).es.toLowerCase())}`); }
+    if(window.gsap) gsap.to(ev,{x:0,y:0,duration:.5,ease:'back.out(1.6)',onComplete:()=>{ ev.style.transform=''; ev.classList.remove('arrastra'); }}); else { ev.style.transform=''; ev.classList.remove('arrastra'); } };
+  ev.addEventListener('pointermove',move); ev.addEventListener('pointerup',up); ev.addEventListener('pointercancel',up); }); }); }
 function cab(kick,tit,btns=''){ return `<div class="mtop"><div style="display:flex;align-items:center;gap:8px"><img src="../img/logo.jpg" style="width:32px;height:32px;border-radius:5px"><b style="font-family:'Playfair Display'">SALVAJES</b></div><button class="chip c-n" onclick="reiniciar()">Demo · Reiniciar ↺</button></div><div class="hd"><div><div class="mono">${kick}</div><h1>${tit}</h1></div><div style="display:flex;gap:8px;flex-wrap:wrap">${btns}</div></div>`; }
 const R={};
 
@@ -196,11 +240,11 @@ const H0=SV.min('10:00'), PX=40/30;
 R.agenda=()=>{ const cs=citasDia(DIA), x=new Date(DIA+'T12:00'), cols=SV_EQUIPO.length;
   let g=`<div class="ag" style="grid-template-columns:52px repeat(${cols},minmax(120px,1fr))"><div class="h"></div>${SV_EQUIPO.map(e=>`<div class="h"><i style="background:${e.c}"></i>${esc(e.n)}<small>${esc(e.rol)}</small></div>`).join('')}`;
   g+=`<div class="hcol">${SV_HORAS.map(h=>`<div class="hr">${h}</div>`).join('')}</div>`;
-  g+=SV_EQUIPO.map(e=>`<div class="col">${SV_HORAS.map(h=>`<div class="sl" onclick="nuevaCita('${DIA}','${h}','${e.k}')"></div>`).join('')}${cs.filter(c=>c.e===e.k).map(c=>{ const s=SV.S(c.s), top=(SV.min(c.h)-H0)*PX+1, alto=Math.max(36,s.min*PX-3);
-    return `<div class="ev ${c.est} ${c.web?'web':''} ${c.id===RESALTA?'brilla':''}" style="top:${top}px;height:${alto}px;background:${e.c}" onclick="verCita('${c.id}')"><b>${esc(CL(c.cl).n)}</b><small>${c.h} · ${esc(s.es)}</small></div>`; }).join('')}</div>`).join('');
+  g+=SV_EQUIPO.map(e=>`<div class="col">${SV_HORAS.map(h=>`<div class="sl" data-e="${e.k}" data-h="${h}" onclick="nuevaCita('${DIA}','${h}','${e.k}')"></div>`).join('')}${cs.filter(c=>c.e===e.k).map(c=>{ const s=SV.S(c.s), top=(SV.min(c.h)-H0)*PX+1, alto=Math.max(36,s.min*PX-3);
+    return `<div class="ev ${c.est} ${c.web?'web':''} ${c.id===RESALTA?'brilla':''}" data-id="${c.id}" style="top:${top}px;height:${alto}px;background:${e.c}"><b>${esc(CL(c.cl).n)}</b><small>${c.h} · ${esc(s.es)}</small></div>`; }).join('')}</div>`).join('');
   const ah=new Date().getHours()*60+new Date().getMinutes(); if(DIA===HOY&&ah>=H0&&ah<=22*60) g+=`<div class="ahora" style="top:${(ah-H0)*PX+46}px"></div>`;
   return cab('Agenda · '+fLarga(DIA),`${DN[x.getDay()]} <em>${x.getDate()}</em>`,`<button class="btn bs" onclick="moverDia(-1)">‹</button><button class="btn bs" onclick="DIA=HOY;ir('agenda',1)">Hoy</button><button class="btn bs" onclick="moverDia(1)">›</button><button class="btn br" onclick="nuevaCita('${DIA}')">+ Cita</button>`)+
-  `<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mu);margin-bottom:10px"><span>${cs.length} citas</span><span><b style="font-size:10px;background:var(--cr2);padding:1px 5px;border-radius:4px">WEB</b> = la reservó el cliente solo</span><span>Toca un hueco para añadir una cita</span></div>`+g+'</div>'; };
+  `<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mu);margin-bottom:10px"><span>${cs.length} citas</span><span><b style="font-size:10px;background:var(--cr2);padding:1px 5px;border-radius:4px">WEB</b> = la reservó el cliente solo</span><span>Toca un hueco para añadir una cita · arrastra una cita para moverla</span></div>`+g+'</div>'; };
 function moverDia(n){ DIA=SV.iso(+new Date(DIA+'T12:00')+n*864e5); ir('agenda',1); }
 function verCita(id){ const a=DB.citas.find(x=>x.id===id), c=CL(a.cl), s=SV.S(a.s), e=SV.E(a.e);
   velo(`<h3>${esc(c.n)}</h3><div class="mono">${esc(s.es)} · ${s.min} min · ${s.p} AED</div><p style="font-size:15px;margin:14px 0">${fLarga(a.f)} · <b>${a.h}</b> · con ${esc(e.n)}</p>
@@ -305,5 +349,10 @@ function cerrar(){ $('velo')?.remove(); }
 addEventListener('keydown',e=>{ if(e.key==='Escape') cerrar(); });
 const q=new URLSearchParams(location.search); if(q.get('v')&&R[q.get('v')]) VISTA=q.get('v');
 ir(VISTA);
+const USERS=[['Anuar','Dueño','#7a1f2b'],['Laia','Dueña','#9b4d6a'],['Andrés','Barbero','#3f5a4a']]; let USEL=0;
+function pintarUs(){ $('lgUs').innerHTML=USERS.map((u,i)=>`<button class="${i===USEL?'on':''}" onclick="USEL=${i};pintarUs()"><i style="background:${u[2]}">${u[0][0]}</i>${u[0]}<br><span style="color:#a99a80">${u[1]}</span></button>`).join(''); }
+function entrar(){ const u=USERS[USEL]; document.querySelector('.yo').innerHTML=`<b>${u[0]} · ${u[1]}</b>Acceso con usuario propio`; try{sessionStorage.setItem('sv_in','1')}catch(e){}
+  if(window.gsap){ gsap.to('#login .lg-c',{y:-20,opacity:0,duration:.4,ease:'power2.in'}); gsap.to('#login',{clipPath:'inset(0 0 100% 0)',duration:.9,ease:'expo.inOut',delay:.25,onComplete:()=>$('login').remove()}); gsap.from('.side',{x:-40,opacity:0,duration:1,ease:'expo.out',delay:.6}); setTimeout(()=>ir(VISTA),500); } else $('login').remove(); }
+(()=>{ let dentro=false; try{dentro=sessionStorage.getItem('sv_in')==='1'}catch(e){} if(dentro||q.has('rapido')) $('login').remove(); else { pintarUs(); if(window.gsap) gsap.from('#login .lg-c > *',{y:20,opacity:0,duration:.8,ease:'expo.out',stagger:.07}); } })();
 </script>
 </body></html>
