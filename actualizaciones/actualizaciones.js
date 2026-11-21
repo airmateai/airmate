@@ -28,7 +28,7 @@
 
   AM.css('am-nov', `
   .amn{--n-bg:#141518;--n-card:#1c1d21;--n-card2:#232428;--n-line:#2c2d32;--n-txt:#ecece8;--n-txt2:#a9aaa6;--n-txt3:#75766f;
-    --n-lima:#d3f35b;--n-lima-ink:#16180c;--n-oliva:#353d22;--n-oliva2:#434d29;--n-vino:#3e2427;--n-vino2:#4f2d31;--n-azul:#8fb6ec;--n-rad:16px;
+    --n-lima:#d4af6a;--n-lima-ink:#17120a;--n-oliva:#0f3322;--n-oliva2:#16492f;--n-vino:#3a1418;--n-vino2:#4c1b20;--n-azul:#8fb6ec;--n-rad:16px;
     background:var(--n-bg);color:var(--n-txt);border-radius:22px;padding:22px;font-family:Inter,"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;line-height:1.5;overflow-x:clip}
   .amn *{box-sizing:border-box}
   .amn button{font:inherit;color:inherit;cursor:pointer}
@@ -38,26 +38,26 @@
   .amn-top p{margin:4px 0 0;color:var(--n-txt2)}
   .amn-btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:10px 16px;font-weight:650;font-size:13.5px;min-height:40px;transition:transform .15s ease,background-color .15s ease}
   .amn-btn:active{transform:scale(.97)}
-  .amn .amn-lima{background:var(--n-lima);color:var(--n-lima-ink)}.amn .amn-lima:hover{background:#e2fb7c}
+  .amn .amn-lima{background:var(--n-lima);color:var(--n-lima-ink)}.amn .amn-lima:hover{background:#e4c486}
   .amn .amn-ghost{background:var(--n-card2);color:var(--n-txt);border:1px solid var(--n-line)}.amn-ghost:hover{background:#2b2c31}
   .amn-hero{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:12px}
   .amn-c{background:var(--n-card);border:1px solid var(--n-line);border-radius:var(--n-rad);padding:18px;min-width:0}
   .amn-lbl{font-size:12.5px;color:var(--n-txt2);display:flex;align-items:center;gap:7px}
-  .amn-feat{background:linear-gradient(160deg,var(--n-oliva2),var(--n-oliva));border-color:#4d5830;display:flex;flex-direction:column;gap:10px}
-  .amn-feat .amn-lbl{color:#cfd8ac}
+  .amn-feat{background:linear-gradient(160deg,var(--n-oliva2),var(--n-oliva));border-color:#1f5a3b;display:flex;flex-direction:column;gap:10px}
+  .amn-feat .amn-lbl{color:#b9dcc7}
   .amn-feat h3{margin:0;font-size:20px;font-weight:650;letter-spacing:-.01em;line-height:1.2}
-  .amn-feat p{margin:0;color:#d5dbbf;font-size:13.5px}
+  .amn-feat p{margin:0;color:#cfe3d6;font-size:13.5px}
   .amn-big{font-size:30px;font-weight:650;letter-spacing:-.02em;line-height:1}.amn-big small{font-size:13px;font-weight:500;color:var(--n-txt2);margin-left:6px;letter-spacing:0}
-  .amn-feat .amn-big small{color:#c9d1a6}
+  .amn-feat .amn-big small{color:#b9dcc7}
   .amn-feat .amn-btn{align-self:stretch;justify-content:center;margin-top:auto}
-  .amn-vino{background:linear-gradient(160deg,var(--n-vino2),var(--n-vino));border-color:#5c3439;display:flex;flex-direction:column;gap:10px}
+  .amn-vino{background:linear-gradient(160deg,var(--n-vino2),var(--n-vino));border-color:#5e2329;display:flex;flex-direction:column;gap:10px}
   .amn-vino .amn-lbl{color:#e0bcbf}.amn-vino h3{margin:0;font-size:17px;font-weight:650;line-height:1.25}.amn-vino p{margin:0;color:#dcc3c5;font-size:13px}
   .amn-vino .amn-btn{margin-top:auto;align-self:flex-start}
   .amn-prog{height:8px;border-radius:99px;background:var(--n-card2);overflow:hidden;margin:12px 0 10px}
   .amn-prog i{display:block;height:100%;background:var(--n-lima);border-radius:99px}
   .amn-tags{display:flex;flex-wrap:wrap;gap:6px}
   .amn-tag{font-size:12px;padding:4px 10px;border-radius:99px;background:var(--n-card2);border:1px solid var(--n-line);color:var(--n-txt2);display:inline-flex;gap:5px;align-items:center}
-  .amn-tag.on{color:var(--n-lima);border-color:#4a5426}
+  .amn-tag.on{color:var(--n-lima);border-color:#5a4a28}
   .amn-pills{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 12px}
   .amn-pill{border:1px solid var(--n-line);background:transparent;color:var(--n-txt2);border-radius:99px;padding:7px 14px;font-size:13px;transition:background-color .15s ease,color .15s ease}
   .amn-pill:hover{color:var(--n-txt)}
@@ -92,9 +92,17 @@
   .amn-facts div{background:var(--n-card);border:1px solid var(--n-line);border-radius:12px;padding:12px}
   .amn-facts b{display:block;font-weight:600;font-size:15px;margin-top:2px}
   .amn-x{margin-left:auto;background:var(--n-card2);border:1px solid var(--n-line);border-radius:99px;width:36px;height:36px;display:grid;place-items:center}
+  @keyframes amnIn{from{opacity:0;transform:translateY(12px);filter:blur(5px)}to{opacity:1;transform:none;filter:none}}
+  @keyframes amnBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .amn.anim .amn-top,.amn.anim .amn-c,.amn.anim .amn-pill{animation:amnIn .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0ms)}
+  .amn .amn-row{animation:amnIn .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms + 120ms)}
+  .amn-prog i{transform-origin:left center;animation:amnBar 1.1s cubic-bezier(.2,.8,.2,1) .35s both}
+  .amn-c{transition:transform .25s cubic-bezier(.2,.8,.2,1),border-color .25s ease}
+  .amn-feat:hover,.amn-vino:hover{transform:translateY(-3px)}
+  .amn-row .amn-ic{transition:transform .2s ease,color .2s ease}.amn-row:hover .amn-ic{transform:scale(1.08)}
   @media (max-width:900px){.amn-hero{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.amn-hero .amn-feat{grid-column:1/-1}.amn-grid2{grid-template-columns:minmax(0,1fr)}.amn-row{grid-template-columns:42px minmax(0,1fr) auto auto}.amn-para{display:none}}
   @media (max-width:560px){.amn{padding:16px;border-radius:18px}.amn-hero{grid-template-columns:minmax(0,1fr)}.amn-row{grid-template-columns:40px minmax(0,1fr) auto;padding:12px 14px}.amn-row .amn-act{grid-column:2/-1}.amn-r{white-space:normal}.amn-dr{height:auto;max-height:88vh;margin-top:auto;border-radius:20px 20px 0 0;border-left:0;transform:translateY(24px)}.amn-ov{align-items:flex-end}}
-  @media (prefers-reduced-motion:reduce){.amn *,.amn-ov,.amn-dr{transition:none!important}}
+  @media (prefers-reduced-motion:reduce){.amn *,.amn-ov,.amn-dr{transition:none!important;animation:none!important}}
   `);
 
   const euros = n => typeof n === 'number' ? n.toLocaleString('es-ES') + ' €' : AM.esc(n || 'Consultar');
@@ -144,6 +152,13 @@
     setTimeout(() => (b || ov.querySelector('[data-x]')).focus(), 60);
   }
 
+  function contar(b) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const n = [...b.childNodes].find(x => x.nodeType === 3 && /\d/.test(x.nodeValue)); if (!n) return;
+    const t = n.nodeValue, m = t.match(/\d[\d.]*/); if (!m) return;
+    const fin = parseFloat(m[0].replace(/\./g, '')), pre = t.slice(0, m.index), post = t.slice(m.index + m[0].length), t0 = performance.now();
+    (function paso(a) { const k = Math.min(1, (a - t0) / 900), e = 1 - Math.pow(1 - k, 3); n.nodeValue = pre + Math.round(fin * e).toLocaleString('es-ES') + post; if (k < 1) requestAnimationFrame(paso); else n.nodeValue = t; })(t0);
+  }
   async function mount(el, cfg) {
     el.innerHTML = '<div class="amn" style="color:#a9aaa6">Cargando novedades…</div>';
     let cat; try { const r = await fetch((cfg.catalogoUrl || CATALOGO) + '?v=' + Date.now()); cat = await r.json(); } catch (e) { el.innerHTML = '<div class="amn">No se pudieron cargar las novedades ahora mismo.</div>'; return; }
@@ -159,18 +174,19 @@
     let filtro = 'todo';
     const nombre = cfg.contacto ? cfg.contacto.split(' ')[0] : '';
 
-    const fila = m => { const ya = inst.has(m.id), ped = pedidos(cfg).some(p => p.id === m.id);
-      return `<div class="amn-row" data-id="${m.id}" data-tipo="${m.tipo}" tabindex="0" role="button" aria-label="${AM.esc(m.nombre)}">
+    const fila = (m, lista = []) => { const ya = inst.has(m.id), ped = pedidos(cfg).some(p => p.id === m.id);
+      return `<div class="amn-row" style="--i:${lista.indexOf(m)}" data-id="${m.id}" data-tipo="${m.tipo}" tabindex="0" role="button" aria-label="${AM.esc(m.nombre)}">
         <span class="amn-ic">${ico(m.icono)}</span>
         <div style="min-width:0"><div class="amn-n">${AM.esc(m.nombre)}${m.nuevo && !ya ? '<span class="amn-new">Nuevo</span>' : ''}</div><div class="amn-r">${AM.esc(m.resuelve)}</div></div>
         <span class="amn-para">${AM.esc(m.para || '')}</span>
         ${conPrecio ? `<span class="amn-pr">${euros(m.precio)}<small>${AM.esc(m.unidad || '')}</small></span>` : '<span></span>'}
         <span class="amn-act">${ya ? `<span class="amn-ya">${ico('check', 15)} Activo</span>` : ped ? '<span class="amn-pend">Pedido, te escribimos</span>' : `<button type="button" class="amn-btn amn-ghost" data-quiero="${m.id}">Lo quiero</button>`}</span></div>`; };
 
+    let primera = true;
     function pintar() {
       const lista = filtro === 'todo' ? disp : filtro === 'ya' ? todos.filter(m => inst.has(m.id)) : disp.filter(m => m.tipo === filtro);
       const peds = pedidos(cfg);
-      el.innerHTML = `<section class="amn" aria-label="Novedades">
+      el.innerHTML = `<section class="amn${primera ? ' anim' : ''}" aria-label="Novedades">
         <div class="amn-top"><div><h2>Novedades</h2><p>${nombre ? `Buenas, ${AM.esc(nombre)}. ` : ''}Todo lo que puedes añadir a tu panel y a tu web. Lo hacemos nosotros.</p></div>
           <button type="button" class="amn-btn amn-lima" data-medida>Pedir algo a medida</button></div>
         <div class="amn-hero">
@@ -189,7 +205,7 @@
         <div class="amn-pills" role="group" aria-label="Filtrar">${tipos.map(([k, t]) => { const n = k === 'todo' ? disp.length : k === 'ya' ? todos.length - disp.length : disp.filter(m => m.tipo === k).length;
           return `<button type="button" class="amn-pill" data-f="${k}" aria-pressed="${filtro === k}">${t}<b>${n}</b></button>`; }).join('')}</div>
         <div class="amn-grid2">
-          <div class="amn-c amn-list" style="padding:6px 0">${lista.length ? lista.map(fila).join('') : '<div style="padding:18px;color:var(--n-txt2)">Nada por aquí todavía.</div>'}</div>
+          <div class="amn-c amn-list" style="padding:6px 0">${lista.length ? lista.map(m => fila(m, lista)).join('') : '<div style="padding:18px;color:var(--n-txt2)">Nada por aquí todavía.</div>'}</div>
           <div style="display:flex;flex-direction:column;gap:12px">
             <div class="amn-c"><span class="amn-lbl">Tus pedidos</span>
               ${peds.length ? `<div style="margin-top:8px">${peds.slice(0, 6).map(p => `<div class="amn-ped"><span>${AM.esc(p.nombre)}</span><span>${new Date(p.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span></div>`).join('')}</div>`
@@ -202,6 +218,8 @@
         </div>
         <div class="amn-foot">${conPrecio ? 'Precios sin IGIC. ' : ''}No se cobra nada hasta que lo confirmas por WhatsApp.</div>
       </section>`;
+      if (primera) { el.querySelectorAll('.amn-top,.amn-c,.amn-pill').forEach((x, i) => x.style.setProperty('--d', Math.min(i, 12) * 50 + 'ms')); el.querySelectorAll('.amn-big').forEach(contar); }
+      primera = false;
       const porId = id => todos.find(m => m.id === id);
       el.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filtro = b.dataset.f; pintar(); el.querySelector(`[data-f="${filtro}"]`).focus(); });
       el.querySelectorAll('.amn-row').forEach(r => { const abrir = () => detalle(cfg, porId(r.dataset.id), conPrecio, pintar);
