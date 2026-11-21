@@ -44,8 +44,23 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
 
-  const { slug, password } = req.body || {};
+  const { slug, password, usuario } = req.body || {};
   if (!slug) return res.status(400).json({ error: 'slug requerido' });
+
+  // CRM interno de Airmate (crm-captadores): solo con un usuario que EXISTA en am_crm_usuarios y su contraseña.
+  // Borrar la fila de un usuario le quita el acceso; ya no se entrega sesión solo con el slug.
+  let crmUser = null;
+  if (slug === 'airmate-interno') {
+    if (!usuario || !password) return res.status(401).json({ error: 'Usuario y contraseña obligatorios' });
+    const { data: u, error: uErr } = await admin
+      .from('am_crm_usuarios')
+      .select('nombre,usuario,password_hash,rol')
+      .eq('usuario', String(usuario).trim().toLowerCase())
+      .maybeSingle();
+    if (uErr || !u) return res.status(401).json({ error: 'Usuario no encontrado' });
+    if ((await sha256Hex(password)) !== u.password_hash) return res.status(401).json({ error: 'Contraseña incorrecta' });
+    crmUser = { nombre: u.nombre, usuario: u.usuario, rol: u.rol };
+  }
 
   const { data: cfg, error } = await admin
     .from('bot_configs')
@@ -82,6 +97,7 @@ export default async function handler(req, res) {
       refresh_token: session.session.refresh_token,
       business_slug: cfg.slug,
       bot_name: cfg.bot_name,
+      ...(crmUser ? { user: crmUser } : {}),
     });
   } catch (e) {
     return res.status(500).json({ error: 'Error interno: ' + (e.message || e) });
