@@ -813,6 +813,22 @@ body,button,input,select,textarea{font-family:var(--body);}
 .btn,.btn-primary,#login-btn,.nichos button,.ll-res button{transition:transform .15s ease,background-color .2s ease,border-color .2s ease,color .2s ease;}
 .btn:active,.btn-primary:active,.nichos button:active,.ll-res button:active{transform:scale(.97);}
 @media (prefers-reduced-motion:reduce){.page.pg-in *,.goal-bar,.ll-bar i,.rank-bar{animation:none!important;}.page.pg-out{transition:none;}.kpi:hover,.ll-stat:hover,.pl-card:hover,.enc-card:hover{transform:none;}}
+
+/* Fondo como la referencia: oscuro con luz cálida de abajo y un toque verde arriba, no un color sólido */
+body{background:
+  radial-gradient(1100px 620px at 78% 112%,rgba(150,96,48,.30),transparent 62%),
+  radial-gradient(900px 520px at 8% -8%,rgba(22,73,47,.30),transparent 60%),
+  radial-gradient(700px 500px at 100% 0%,rgba(212,175,106,.07),transparent 60%),
+  linear-gradient(180deg,#121316 0%,#15130f 100%);
+  background-attachment:fixed;}
+.main{background:transparent;}
+.sidebar{background:rgba(12,13,15,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
+.card,.kpi,.ll-stat,.ll-card,.pl-col,.enc-col,.tk-stat,.tk-list,.cla-kpi,.cla-card{background:rgba(28,29,33,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+#login{background:radial-gradient(900px 600px at 80% 110%,rgba(150,96,48,.32),transparent 62%),radial-gradient(800px 500px at 0% 0%,rgba(22,73,47,.32),transparent 60%),#111214;}
+#login::before{background:none;}
+.sb-sonido{display:flex;align-items:center;gap:8px;width:100%;margin-bottom:8px;background:transparent;border:1px solid var(--border);color:var(--txt2);border-radius:999px;padding:8px 12px;font-size:12.5px;}
+.sb-sonido:hover{color:var(--ink);border-color:#3a3b41;}
+.sb-sonido[aria-pressed=false]{opacity:.6;}
 #nov-host .amn,.amn-ov{font-family:var(--body);}
 #nov-host .amn-top h2{font-family:var(--display);font-weight:400;font-size:44px;letter-spacing:-.01em;}
 #nov-host .amn-feat h3,#nov-host .amn-vino h3,.amn-ov .amn-dr h3{font-family:var(--display);font-weight:400;font-size:28px;letter-spacing:0;line-height:1.1;}
@@ -861,6 +877,7 @@ body,button,input,select,textarea{font-family:var(--body);}
           <div class="sb-user-role" id="sb-urole">–</div>
         </div>
       </div>
+      <button class="sb-sonido" id="sb-sonido" type="button" aria-pressed="true" onclick="amSonido()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H3v6h3l5 4zM16 9a4 4 0 010 6M19 6a8 8 0 010 12"/></svg><span>Sonido activado</span></button>
       <button class="sb-logout" onclick="doLogout()">↩ <span>Cerrar sesión</span></button>
     </div>
   </div>
@@ -3727,6 +3744,22 @@ function llInfoWhatsApp(){
     pendiente=setTimeout(()=>{cur.classList.remove('pg-out');ir(id,btn);escalonar();},160);
   };
   window.amEscalonar=escalonar;
+})();
+
+// ═══════════ SONIDOS de interfaz (Mixkit, licencia libre): clic, cambio de página, soltar tarjeta, resultado ═══════════
+(function(){
+  const SFX={}; ['clic','pagina','soltar','exito'].forEach(k=>{const a=new Audio('assets/sfx/'+k+'.mp3');a.preload='auto';SFX[k]=a;});
+  let on=true; try{on=localStorage.getItem('am_sonido')!=='0';}catch(e){}
+  const pintar=()=>{const b=document.getElementById('sb-sonido');if(b){b.setAttribute('aria-pressed',on);b.querySelector('span').textContent=on?'Sonido activado':'Sonido apagado';}};
+  window.amSonar=k=>{if(!on||!SFX[k])return;try{const a=SFX[k].cloneNode();a.volume=.55;a.play().catch(()=>{});}catch(e){}};
+  window.amSonido=()=>{on=!on;try{localStorage.setItem('am_sonido',on?'1':'0');}catch(e){}pintar();if(on)amSonar('clic');};
+  document.addEventListener('DOMContentLoaded',pintar);setTimeout(pintar,0);
+  document.addEventListener('click',e=>{const t=e.target.closest('button,a');if(!t||t.id==='sb-sonido')return;
+    if(t.closest('.ll-res'))return amSonar('exito');
+    if(t.matches('.sb-item,[data-mb],.mb-nav button'))return; // el cambio de página ya suena
+    amSonar('clic');},true);
+  document.addEventListener('drop',()=>amSonar('soltar'),true);
+  const ir=window.goPage; window.goPage=function(id,btn){const cur=document.querySelector('.page.active');if(cur&&cur.id!=='page-'+id)amSonar('pagina');return ir(id,btn);};
 })();
 // Vista previa del apartado Novedades de los paneles de cliente (no manda pedidos ni abre WhatsApp)
 function montarNovedades(){
