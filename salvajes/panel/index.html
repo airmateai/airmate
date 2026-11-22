@@ -9,7 +9,8 @@
 <style>
 /* Salvajes · Panel · sistema visual sobrio tipo software de gestión */
 :root{--bg:#f6f6f4;--bg2:#efeeeb;--w:#fff;--ink:#17171a;--ink2:#3a3a40;--mu:#6e6e76;--mu2:#9b9ba3;--bd:#e4e3df;--bd2:#d6d5d0;--acc:#7a1f2b;--acc2:#5f1621;--accb:#f6eceb;--ok:#1d7a46;--okb:#eaf5ee;--wa:#a15c07;--wab:#fbf1e1;--r:#b42318;--rb:#fdeceb;--bl:#2c5aa0;--blb:#ebf1fa;--side:248px;--rad:8px;--sh:0 1px 2px rgba(16,16,20,.05)}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#111113;--bg2:#19191c;--w:#18181b;--ink:#ededef;--ink2:#cfcfd4;--mu:#9a9aa3;--mu2:#6f6f78;--bd:#27272b;--bd2:#34343a;--accb:#2a1619;--okb:#132219;--wab:#2a1f10;--rb:#2c1514;--blb:#141d2b;--sh:none}}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]):not([data-theme=dark]){--bg:#111113;--bg2:#19191c;--w:#18181b;--ink:#ededef;--ink2:#cfcfd4;--mu:#9a9aa3;--mu2:#6f6f78;--bd:#27272b;--bd2:#34343a;--accb:#2a1619;--okb:#132219;--wab:#2a1f10;--rb:#2c1514;--blb:#141d2b;--sh:none}}
+:root[data-theme=dark]{--bg:#111113;--bg2:#19191c;--w:#18181b;--ink:#ededef;--ink2:#cfcfd4;--mu:#9a9aa3;--mu2:#6f6f78;--bd:#27272b;--bd2:#34343a;--accb:#2a1619;--okb:#132219;--wab:#2a1f10;--rb:#2c1514;--blb:#141d2b;--sh:none}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,sans-serif;font-size:13.5px;line-height:1.45;font-feature-settings:'cv11','ss01';-webkit-font-smoothing:antialiased}
@@ -165,12 +166,19 @@ textarea.nota{width:100%;border:1px solid var(--bd);background:var(--bg);border-
  .mbtn{display:inline-flex!important}
 }
 .mbtn{display:none;margin-left:-6px;padding:6px;border-radius:6px;color:var(--ink)}
-</style></head><body>
+.tema{display:flex;margin:8px 4px 0;background:var(--w);border:1px solid var(--bd);border-radius:var(--rad);padding:2px}
+.tema button{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;height:26px;border-radius:6px;font-size:12px;font-weight:500;color:var(--mu)}
+.tema button.on{background:var(--bg2);color:var(--ink);box-shadow:0 0 0 1px var(--bd)}
+.tema svg.i{width:13px;height:13px}
+.tbtn{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--rad);border:1px solid var(--bd);background:var(--w);color:var(--ink)}
+</style>
+<script>(function(){try{var t=localStorage.getItem('sv_tema');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}})();</script></head><body>
 
 <aside class="side" id="side">
   <div class="ws"><img src="../img/logo.jpg" alt=""><div><b>Salvajes</b><small>Barcelona · Dubái</small></div></div>
   <label class="sede-sel"><select id="selSede" aria-label="Sede" onchange="cambiarSede(this.value)"></select></label>
   <nav class="nav" id="nav"></nav>
+  <div class="tema" id="tema"></div>
   <div class="demo">Demo con datos de ejemplo · <button onclick="reiniciar()">Reiniciar</button></div>
   <div class="yo"><span class="av" style="background:#7a1f2b">A</span><div><b>Anuar</b>Dueño · 3 sedes</div></div>
 </aside>
@@ -228,17 +236,24 @@ function wa(txt,quien,alHacer){ velo(`<h3>Mensaje de WhatsApp</h3><div class="mo
 function avisado(k){ DB.avisados[k]=Date.now(); guardar(); toast('Mensaje enviado'); ir(VISTA,1); }
 
 /* navegación */
-const ICO={home:'<path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/>',cal:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/>',users:'<circle cx="9" cy="8" r="4"/><path d="M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7M16 4.1a4 4 0 0 1 0 7.8M22 21c0-3-1.8-5.6-4.5-6.6"/>',back:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',caja:'<rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/><path d="M6 10v5M18 10v5"/>',gift:'<rect x="3" y="8" width="18" height="13" rx="1"/><path d="M12 8v13M3 12h18M12 8S10 3 7.5 4 8 8 12 8zM12 8s2-5 4.5-4S16 8 12 8z"/>',box:'<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',chart:'<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',org:'<rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1M10 21v-3h4v3"/>',globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',plus:'<path d="M12 5v14M5 12h14"/>',lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',izq:'<path d="m15 18-6-6 6-6"/>',der:'<path d="m9 18 6-6-6-6"/>',ext:'<path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/>',mas:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>'};
+const ICO={home:'<path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/>',cal:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/>',users:'<circle cx="9" cy="8" r="4"/><path d="M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7M16 4.1a4 4 0 0 1 0 7.8M22 21c0-3-1.8-5.6-4.5-6.6"/>',back:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',caja:'<rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/><path d="M6 10v5M18 10v5"/>',gift:'<rect x="3" y="8" width="18" height="13" rx="1"/><path d="M12 8v13M3 12h18M12 8S10 3 7.5 4 8 8 12 8zM12 8s2-5 4.5-4S16 8 12 8z"/>',box:'<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',chart:'<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',org:'<rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1M10 21v-3h4v3"/>',globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',plus:'<path d="M12 5v14M5 12h14"/>',lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',izq:'<path d="m15 18-6-6 6-6"/>',der:'<path d="m9 18 6-6-6-6"/>',ext:'<path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/>',sol:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',luna:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',auto:'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',mas:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>'};
 const I=(n)=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICO[n]||''}</svg>`;
 const VISTAS=[['hoy','home','Inicio','Inicio','Día a día'],['agenda','cal','Calendario','Agenda','Día a día'],['clientes','users','Clientes','Clientes','Día a día'],['caja','caja','Caja','Caja','Día a día'],['vuelven','back','Recuperar clientes','Vuelven','Clientes'],['bonos','gift','Bonos y tarjetas regalo','Bonos','Clientes'],['equipo','clock','Equipo y horarios','Equipo','Gestión'],['stock','box','Productos y stock','Stock','Gestión'],['cifras','chart','Informes','Informes','Gestión'],['sedes','org','Grupo · 3 sedes','Grupo','Gestión'],['web','globe','Reservas online','Web','Gestión']];
 let VISTA='hoy', DIA=HOY, SELCL='c0', TICKET=[], PAGO='Tarjeta';
 function navs(){ const v=pendVuelven().length, bajo=SV_PROD.filter(p=>DB.stock[p.k]<=p.min).length; let g='';
   $('nav').innerHTML=VISTAS.map(([k,ic,t,,grp])=>{ const cab=grp!==g?`<div class="grp">${grp}</div>`:''; g=grp; return cab+`<button class="${VISTA===k?'on':''}" onclick="ir('${k}');$('side').classList.remove('abierta')">${I(ic)}${t}${k==='vuelven'&&v?`<span class="bd">${v}</span>`:''}${k==='stock'&&bajo?`<span class="bd">${bajo}</span>`:''}</button>`; }).join('');
   $('bnav').innerHTML=VISTAS.slice(0,4).map(([k,ic,t,c])=>`<button class="${VISTA===k?'on':''}" onclick="ir('${k}')">${I(ic)}${c}</button>`).join('')+`<button onclick="$('side').classList.add('abierta')">${I('mas')}Más</button>`; }
+
+/* ── MODO DÍA / NOCHE ── */
+function temaActual(){ try{ return localStorage.getItem('sv_tema')||'auto'; }catch(e){ return 'auto'; } }
+function esOscuro(){ const t=temaActual(); return t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches); }
+function setTema(t){ try{ localStorage.setItem('sv_tema',t); }catch(e){} if(t==='auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme=t; pintarTema(); if(typeof VISTA!=='undefined') ir(VISTA,1); }
+function pintarTema(){ const t=temaActual(); const el=$('tema'); if(el) el.innerHTML=[['light','sol','Día'],['dark','luna','Noche'],['auto','auto','Auto']].map(([k,ic,n])=>`<button class="${t===k?'on':''}" onclick="setTema('${k}')" aria-pressed="${t===k}">${I(ic)}${n}</button>`).join(''); }
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{ if(temaActual()==='auto') ir(VISTA,1); });
 function barra(){ const t=(VISTAS.find(x=>x[0]===VISTA)||[])[2]||'';
   return `<div class="top"><button class="mbtn" onclick="$('side').classList.add('abierta')" aria-label="Menú">${I('menu')}</button><div class="miga">${esc(SEDE.n)}<span>/</span><b>${t}</b></div>
    <label class="buscar">${I('search')}<input placeholder="Buscar cliente…" onkeydown="if(event.key==='Enter'){const q=this.value.trim().toLowerCase();const c=DB.clientes.find(c=>c.n.toLowerCase().includes(q)||c.tel.replace(/\s/g,'').includes(q.replace(/\s/g,'')));if(c){SELCL=c.id;ir('clientes')}else toast('No hay ningún cliente con «'+esc(this.value)+'»')}"><kbd>↵</kbd></label>
-   <button class="btn br" onclick="nuevaCita()">${I('plus')}Nueva cita</button></div>`; }
+   <button class="tbtn" onclick="setTema(esOscuro()?'light':'dark')" title="${esOscuro()?'Modo día':'Modo noche'}" aria-label="Cambiar a modo ${esOscuro()?'día':'noche'}">${I(esOscuro()?'sol':'luna')}</button><button class="btn br" onclick="nuevaCita()">${I('plus')}Nueva cita</button></div>`; }
 function ir(v,quieto){ VISTA=v; navs(); $('main').innerHTML=barra()+'<div class="pag">'+R[v]()+'</div>'; if(!quieto) scrollTo(0,0); animar(v,quieto); if(v==='agenda') activarArrastre(); }
 function animar(){}
 /* arrastrar y soltar citas en la agenda */
@@ -474,6 +489,7 @@ function velo(h){ cerrar(); const v=document.createElement('div'); v.className='
 function cerrar(){ $('velo')?.remove(); }
 addEventListener('keydown',e=>{ if(e.key==='Escape') cerrar(); });
 const q=new URLSearchParams(location.search); if(q.get('v')&&R[q.get('v')]) VISTA=q.get('v');
+pintarTema();
 ir(VISTA);
 const USERS=[['Anuar','Dueño · 3 sedes','#7a1f2b'],['Laia','Dueña · 3 sedes','#9b4d6a'],[SV_EQUIPO[0].n,'Barbero · '+SEDE.corto,'#3f5a4a']]; let USEL=0;
 function pintarUs(){ $('lgUs').innerHTML=USERS.map((u,i)=>`<button class="${i===USEL?'on':''}" onclick="USEL=${i};pintarUs()"><i style="background:${u[2]}">${u[0][0]}</i>${u[0]}<span>${u[1]}</span></button>`).join(''); }
