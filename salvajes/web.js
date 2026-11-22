@@ -102,7 +102,7 @@ function pintar(){
 
   // portada, cabecera y apariciones
   const h = $('hero'), img = h.querySelector('img'); const listo = () => h.classList.add('listo'); img.complete ? requestAnimationFrame(listo) : img.addEventListener('load', listo); setTimeout(listo, 1500);
-  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ e.target.classList.add('vis'); io.unobserve(e.target); } }), { rootMargin:'0px 0px -8% 0px' });
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ e.target.classList.add('dentro'); io.unobserve(e.target); } }), { rootMargin:'0px 0px -8% 0px' });
   document.querySelectorAll('.rv,.rm').forEach(el => io.observe(el));
   arrastreTira();
 }
