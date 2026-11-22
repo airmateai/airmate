@@ -166,6 +166,7 @@ window.SVW = {
   tira(d){ const el = $('tira'); el.scrollBy({ left: d * el.clientWidth * .7, behavior:'smooth' }); }
 };
 pintar();
+if (innerWidth < 560) setTimeout(() => document.querySelector('.prop')?.classList.add('fuera'), 5000);
 if (EMBED){ document.querySelectorAll('.prop').forEach(x => x.remove()); abrir(); }
 else if (Q.has('reservar')) setTimeout(() => abrir(), 400);
 else if (MARCA && location.hash === '#sedes') setTimeout(() => $('sedes').scrollIntoView(), 50);
