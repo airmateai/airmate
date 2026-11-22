@@ -1848,7 +1848,7 @@ function renderEscalar(){
   const mesIni=new Date(ahora.getFullYear(),ahora.getMonth(),1);
   const mesFin=new Date(ahora.getFullYear(),ahora.getMonth()+1,0);
   const diasQuedan=mesFin.getDate()-ahora.getDate();
-  const llam=[]; LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(!['wa_frio','wa_bf','ig_dm'].includes(l.r))llam.push({...l,c});}));
+  const llam=[]; LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(!['wa_frio','wa_bf','ig_dm',...W249].includes(l.r))llam.push({...l,c});}));
   const deHoy=llam.filter(l=>(l.t||'').slice(0,10)===hoy);
   const conv=deHoy.filter(l=>['demo','info','luego','no_interesa'].includes(l.r));
   const demosSem=llam.filter(l=>l.r==='demo'&&new Date(l.t)>=lunes).length;
@@ -2995,7 +2995,7 @@ function esMio(c){return nn(c.captador)===nn(SESSION.nombre)||(esJefe()&&nn(c.ca
 function mismoDia(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
 function llLlamadasHoy(nombre){
   const hoy=new Date(),out=[];
-  LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(!['wa_frio','wa_bf','ig_dm'].includes(l.r)&&nn(l.por)===nn(nombre)&&mismoDia(new Date(l.t),hoy))out.push({...l,c});}));
+  LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(!['wa_frio','wa_bf','ig_dm',...W249].includes(l.r)&&nn(l.por)===nn(nombre)&&mismoDia(new Date(l.t),hoy))out.push({...l,c});}));
   return out;
 }
 function telLimpio(t){
@@ -3063,7 +3063,7 @@ function llRenderNichos(){
   const ids=[...NICHOS.map(n=>n.id),'otros'].filter(k=>cuenta[k]||k===LL_NICHO);
   el.innerHTML=`<span class="lbl">Nicho:</span><button class="${LL_NICHO?'':'on'}" onclick="llNicho('')">Todos<b>${base.length}</b></button>`
     +ids.map(k=>`<button class="${LL_NICHO===k?'on':''}" onclick="llNicho('${k}')">${esc(nichoNombre(k))}<b>${cuenta[k]||0}</b></button>`).join('')
-    +(BF_WEB_ON?`<button class="${LL_NICHO==='sinweb'?'on':''}" style="color:#c0392b" onclick="llNicho('sinweb')">🌐 Sin web · Black Friday<b>${base.filter(sinWebBF).length}</b></button>`:'')
+    +(BF_WEB_ON?`<button class="${LL_NICHO==='sinweb'?'on':''}" style="color:#c0392b" onclick="llNicho('sinweb')">🌐 Sin web · 249 €<b>${base.filter(sinWebBF).length}</b></button>`:'')
     +`<button class="${LL_WA?'on':''}" style="margin-left:8px" onclick="llSoloWa()" title="Solo negocios con móvil (se les puede escribir por WhatsApp)">💬 Solo WhatsApp<b>${todos.filter(esWa).length}</b></button>`;
 }
 function nichoSelect(lista){
@@ -3148,7 +3148,7 @@ function llFicha(c){
     ${c.direccion?`<div class="ll-sub">${esc(c.direccion)}</div>`:''}
     <div class="ll-links">${web?`<a href="${esc(web)}" target="_blank" rel="noopener">Ver web ↗</a>`:''}${igUser(c)?`<a href="${esc(igUrl(c))}" target="_blank" rel="noopener">Instagram @${esc(igUser(c))} ↗</a>`:''}<a href="${maps}" target="_blank" rel="noopener">Ver en Google Maps ↗</a></div>
     ${c.telefono?`<a class="ll-call" href="tel:${esc(tel)}" onclick="llMarcado()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Llamar <small>${esc(telBonito(c.telefono))}</small></a>`:''}
-    ${sinWebBF(c)?`<button class="ll-wa" style="background:#c0392b" onclick="waWebBF(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">${esGym(c)?'🌐 WhatsApp web <small>ofrecer la web</small>':'🌐 WhatsApp web 390 € <small>Black Friday</small>'}</button>`:''}
+    ${sinWebBF(c)?`<button class="ll-wa" style="background:#c0392b" onclick="waWebBF(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">${lbl249(c)}</button>`:''}
     ${esMovil(c.telefono)?`<button class="ll-wa" onclick="waFrio(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">💬 Mandar WhatsApp <small>mensaje ya escrito</small></button>`:''}
     ${igUser(c)?`<button class="ll-wa ll-ig" onclick="igDM(${JSON.stringify(c.id).replace(/"/g,'&quot;')})">📷 Mensaje por Instagram <small>se copia y se abre su perfil · pulsa «Enviar mensaje»</small></button>`:''}
     ${c.telefono?'':'<div class="ll-hint">Sin teléfono: escríbele por Instagram o pásate por el gimnasio.</div>'}
@@ -3160,7 +3160,7 @@ function llFicha(c){
       ${Object.entries(RES).map(([k,v],i)=>`<button class="${k==='demo'?'demo':''}" onclick="llResultado('${k}')"><span class="e">${v.e}</span>${v.t}<kbd>${i+1}</kbd></button>`).join('')}
     </div>
     <div class="ll-foot">
-      <div class="ll-hist">${hist.length?hist.slice(0,4).map(l=>`<div><time>${fmtCuando(l.t)}</time><span>${RES[l.r]?RES[l.r].e+' '+RES[l.r].t:l.r==='wa_frio'?'💬 WhatsApp en frío':l.r==='wa_bf'?'🌐 WhatsApp Black Friday':l.r==='ig_dm'?'📷 Mensaje por Instagram':esc(l.r)}${l.n?' — '+esc(l.n):''}</span></div>`).join(''):'<div><span>Primera llamada a este negocio.</span></div>'}</div>
+      <div class="ll-hist">${hist.length?hist.slice(0,4).map(l=>`<div><time>${fmtCuando(l.t)}</time><span>${RES[l.r]?RES[l.r].e+' '+RES[l.r].t:l.r==='wa_frio'?'💬 WhatsApp en frío':l.r==='wa_bf'?'🌐 WhatsApp Black Friday':W249.includes(l.r)?'🌐 '+esc(l.n||'WhatsApp web 249 €'):l.r==='ig_dm'?'📷 Mensaje por Instagram':esc(l.r)}${l.n?' — '+esc(l.n):''}</span></div>`).join(''):'<div><span>Primera llamada a este negocio.</span></div>'}</div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">${(c.emails||[]).length?`<span class="chip">📧 ${(c.emails||[]).filter(e=>e.ok).length} email${(c.emails||[]).filter(e=>e.ok).length===1?'':'s'}${c.email_seg_at&&!['reunion','descartado','cerrado'].includes(c.etapa)?' · próximo '+fmtCuando(c.email_seg_at):''}</span>`:''}<div style="display:flex;gap:6px">${esMovil(c.telefono)?`<button class="btn btn-ghost btn-sm" onclick="waFrio(LL_ACTUAL)" title="Mensaje para cuando no contestan">💬 WhatsApp en frío</button>`:''}<button class="btn btn-ghost btn-sm" onclick="llSaltar()">Saltar →</button></div></div>
     </div>
   </div>`;
@@ -3221,7 +3221,7 @@ function llRenderEquipo(){
   const nombres=[...new Set(LISTA.map(c=>c.captador).filter(Boolean))];
   const hoy=new Date(),lunes=new Date();lunes.setHours(0,0,0,0);lunes.setDate(lunes.getDate()-((lunes.getDay()+6)%7));
   const filas=nombres.map(n=>{
-    const ls=[];LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(!['wa_frio','wa_bf','ig_dm'].includes(l.r)&&(l.por===n||(n==='Fabio'&&l.por===SESSION.nombre&&c.captador==='Fabio')))ls.push(l);}));
+    const ls=[];LISTA.forEach(c=>(c.llamadas||[]).forEach(l=>{if(!['wa_frio','wa_bf','ig_dm',...W249].includes(l.r)&&(l.por===n||(n==='Fabio'&&l.por===SESSION.nombre&&c.captador==='Fabio')))ls.push(l);}));
     const d=ls.filter(l=>mismoDia(new Date(l.t),hoy)),w=ls.filter(l=>new Date(l.t)>=lunes);
     const pend=LISTA.filter(c=>c.captador===n&&!['descartado','cerrado','reunion'].includes(c.etapa)).length;
     return `<tr><td><b>${esc(n)}</b></td><td>${d.length}</td><td>${d.filter(l=>l.r==='demo').length}</td><td>${w.length}</td><td>${w.filter(l=>l.r==='demo').length}</td><td>${pend}</td></tr>`;
@@ -3439,24 +3439,39 @@ function plEmail(id){LL_ACTUAL=id;goPage('llamar',null);setTimeout(()=>{document
 function esMovil(t){return /^(34)?[67]\d{8}$/.test(String(t||'').replace(/\D/g,''));}
 // Black Friday: posdata en los WhatsApp que salen del CRM hasta el 30-nov (se quita sola el 1-dic)
 const BF_PD=Date.now()<Date.parse('2026-12-01T00:00:00Z')?'\n\nPor cierto, hasta el 30 de noviembre estamos con ofertas de Black Friday, por si os interesa.':'';
-/* Black Friday webs 390 €: solo negocios sin web comprobado en Google (sin_web_google) y con móvil. Se apaga solo el 1-dic. */
-const BF_WEB_ON=Date.now()<Date.parse('2026-12-01T00:00:00Z');
-const sinWebBF=c=>BF_WEB_ON&&!c.web&&c.sin_web_google===true&&esMovil(c.telefono)&&!['descartado','cerrado','reunion'].includes(c.etapa)&&!(c.llamadas||[]).some(l=>l.r==='wa_bf');
+/* Webs 249 €: negocios sin web (salvo los comprobados con web en Google) y con móvil. 3 pasos:
+   conexión (sin precio) → oferta cuando contesta · seguimiento si ya se le había contactado antes. */
+const BF_WEB_ON=true;
+const W249=['wa_249a','wa_249b','wa_249s'];
+function paso249(c){const ll=c.llamadas||[];
+  if(ll.some(l=>l.r==='wa_249b'||l.r==='wa_249s'))return null;
+  if(ll.some(l=>l.r==='wa_249a'))return 'oferta';
+  return ll.length?'seguimiento':'conexion';}
+const sinWebBF=c=>!c.web&&c.sin_web_google!==false&&esMovil(c.telefono)&&!['descartado','cerrado','reunion'].includes(c.etapa)&&!!paso249(c);
+const lbl249=c=>({conexion:'🌐 WhatsApp web <small>1º saludo, sin precio</small>',oferta:'🌐 Mandar oferta 249 € <small>ya contestó</small>',seguimiento:'🌐 Seguimiento web 249 € <small>ya le contactaste</small>'})[paso249(c)]||'';
 function waWebBF(id){
   const c=LISTA.find(x=>x.id===id)||ALL_CONTACTOS.find(x=>x.id===id);if(!c)return;
-  const yo=SESSION.nombre.split(' ')[0];
-  const txt=esGym(c)?webSinPrecio(c,false):`Hola, soy ${yo}, de Airmate, aquí en Tenerife. He visto que ${c.empresa} no tiene página web en Google, y quien os busca y no os encuentra acaba llamando a otro.\n\nHasta el 30 de noviembre hacemos webs profesionales por 390 € (normalmente 1.290 €), con hosting y mantenimiento por 49 €/mes. Solo para 5 negocios.\n\n¿Te enseño cómo quedaría la vuestra?`;
+  const yo=SESSION.nombre.split(' ')[0], paso=paso249(c);if(!paso)return;
+  const zona=(c.zona&&!/^tenerife$/i.test(c.zona))?c.zona:'la zona';
+  const antes=(c.llamadas||[]).some(l=>/^wa_|^ig_/.test(l.r))?'te escribí':'te llamé';
+  const txt={
+    conexion:`Hola, ¿hablo con el dueño o la dueña de ${c.empresa}? Soy ${yo}, de Tenerife. Estaba mirando negocios de ${zona} en Google y vi que tenéis la ficha pero no página web. ¿Es algo que tenéis pensado o de momento os funciona así?`,
+    oferta:`Te cuento rápido, que sé que vas liado: hago webs para negocios de aquí. La vuestra, con vuestros servicios, fotos, horario y un botón de WhatsApp para que os escriban directo.\n\nEsta semana las estoy haciendo por 249 € (más 49 €/mes de hosting y mantenimiento). Si te parece, mañana te mando un borrador gratis de cómo quedaría la de ${c.empresa} y decides con él delante.`,
+    seguimiento:`Hola, soy ${yo}, de Airmate, ${antes} hace unos días. Sigo viendo que ${c.empresa} no tiene web en Google. Esta semana las estoy haciendo por 249 €, con vuestros servicios, horario y botón de WhatsApp.\n\nSi quieres, mañana te mando un borrador gratis de cómo quedaría la vuestra. ¿Te lo preparo?`
+  }[paso];
+  const R={conexion:'wa_249a',oferta:'wa_249b',seguimiento:'wa_249s'}[paso];
+  const N={conexion:'WhatsApp web: 1º saludo',oferta:'WhatsApp web: oferta 249 €',seguimiento:'WhatsApp web: seguimiento 249 €'}[paso];
   window.open('https://wa.me/'+telLimpio(c.telefono).replace('+','')+'?text='+encodeURIComponent(txt),'_blank');
-  const t=new Date().toISOString(), prox=proxHora(2,10,30).toISOString();
-  const cambios={etapa:['reunion','cerrado'].includes(c.etapa)?c.etapa:'interesado',proxima_llamada:prox,ultima_llamada:t,updated_at:t,
-    llamadas:[...(c.llamadas||[]),{t,r:'wa_bf',por:SESSION.nombre,n:esGym(c)?'WhatsApp ofreciendo la web':'WhatsApp Black Friday web 390 €'}]};
+  const t=new Date().toISOString(), prox=proxHora(paso==='conexion'?1:2,10,30).toISOString();
+  const cambios={etapa:['reunion','cerrado','interesado'].includes(c.etapa)?c.etapa:(paso==='conexion'?'contactado':'interesado'),proxima_llamada:prox,ultima_llamada:t,updated_at:t,
+    llamadas:[...(c.llamadas||[]),{t,r:R,por:SESSION.nombre,n:N}]};
   if(!(c.llamadas||[]).length)cambios.fecha_alta=todayStr();
   SB.from('am_crm_contactos').update(cambios).eq('id',c.id).select('id').then(({data,error})=>{
     if(error||!(data||[]).length){toast('El WhatsApp se ha abierto, pero no se ha guardado en el panel','error');return;}
     Object.assign(c,cambios);
     ALL_CONTACTOS=LISTA.filter(x=>!(x.origen&&x.origen.startsWith('lista')&&!(x.llamadas||[]).length&&x.etapa==='nuevo'));
     if(LL_ACTUAL===c.id)LL_ACTUAL=null;
-    toast('🌐 Guardado en «Info enviada» · le vuelves a llamar '+fmtCuando(prox));
+    toast('🌐 Guardado · '+N+' · próximo paso '+fmtCuando(prox));
     if(document.getElementById('page-llamar').classList.contains('active'))llRender();
     if(document.getElementById('page-pipeline').classList.contains('active'))renderPipeline();
   });
@@ -3546,7 +3561,7 @@ function ctxAbrir(e,id){
   const m=document.getElementById('ctx');
   m.innerHTML=`<div class="t">${esc(c.empresa)}</div>
     ${tel?`<button onclick="ctxCerrar();plLlamar(${q})">📞 Llamar</button>`:''}
-    ${sinWebBF(c)?`<button onclick="ctxCerrar();waWebBF(${q})">🌐 WhatsApp web 390 € (Black Friday)</button>`:''}
+    ${sinWebBF(c)?`<button onclick="ctxCerrar();waWebBF(${q})">${lbl249(c).replace(/<[^>]+>/g,' ')}</button>`:''}
     ${tel?`<button onclick="ctxCerrar();waFrio(${q})">💬 WhatsApp en frío (no contesta)</button>`:''}
     ${tel?`<button onclick="ctxCerrar();window.open('https://wa.me/${tel.replace('+','')}','_blank')">💬 Abrir WhatsApp vacío</button>`:''}
     <button onclick="ctxCerrar();plEmail(${q})">📧 Mandar info por email</button>
