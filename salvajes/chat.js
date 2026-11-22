@@ -5,6 +5,7 @@
 (() => {
 if (window.SV_MODO === 'marca' || new URLSearchParams(location.search).has('embed')) return;
 const PROXY = 'https://bot-airmate-1.vercel.app/api/chat';
+const USAR_IA = false; // de momento respuestas programadas; se activa cuando el cliente pague y haya saldo de IA
 const $ = id => document.getElementById(id), esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const EN = document.documentElement.lang === 'en';
 const DXB = SEDE.pais === 'AE';
@@ -43,6 +44,7 @@ Servicios (nombre, duración, precio): ${SV_SERV.map(s => `${s.es} ${s.min} min 
 Equipo: ${SV_EQUIPO.map(e => e.n + ' (' + e.rol + ')').join(', ')}.
 Si quieren reservar, cambiar o anular una cita, termina con [RESERVAR].`; }
 async function ia(hist){
+  if (!USAR_IA) return null;
   const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 8000);
   try { const r = await fetch(PROXY, { method:'POST', headers:{ 'Content-Type':'application/json' }, signal:ctl.signal, body:JSON.stringify({ system_prompt:prompt(), messages:hist.slice(-8) }) });
     const d = await r.json(); if (!r.ok || !d.reply) return null; return d.reply.trim(); } catch(e){ return null; } finally { clearTimeout(to); } }
@@ -95,7 +97,7 @@ async function preguntar(q){ q = q.trim(); if (!q) return; $('chC').style.displa
   const pens = poner('bot', ''); pens.innerHTML = '<span class="pt"><i></i><i></i><i></i></span>';
   const base = local(q); let txt = null, via = 'datos';
   const r = await ia(hist); if (r){ via = 'ia'; txt = r.replace(/\[(HUMANO|RESERVAR)\]/g, '').trim(); if (/\[HUMANO\]/.test(r)){ base.acc = 'humano'; base.ok = false; } else if (/\[RESERVAR\]/.test(r)) base.acc = base.acc && base.acc.startsWith('reservar') ? base.acc : 'reservar'; else if (base.tema === 'humano'){ base.ok = true; base.acc = null; } }
-  else await new Promise(res => setTimeout(res, 450));
+  else await new Promise(res => setTimeout(res, 700));
   pens.remove(); poner('bot', txt || base.txt, base.acc); hist.push({ role:'assistant', content:txt || base.txt }); registrar(q, base.tema, base.ok, via); }
 $('chF').onsubmit = e => { e.preventDefault(); const i = $('chI'); preguntar(i.value); i.value = ''; };
 $('chC').querySelectorAll('button').forEach(b => b.onclick = () => preguntar(b.textContent));
