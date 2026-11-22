@@ -20,7 +20,7 @@ const T = {
   okT:'Reservado', okP:'Te llega un recordatorio por WhatsApp el día antes. Si no puedes venir, avísanos y te buscamos otro hueco.', otra:'Hacer otra reserva', con:'con', cerrar:'Cerrar', tuReserva:'Tu reserva',
   pSenal:'Clientes nuevos: una señal de '+(DXB?'20 AED':'5 €')+' con tarjeta (Stripe) te guarda la silla. Se descuenta del servicio.', pTotal:'Pagas online con tarjeta (Stripe) al reservar.',
   regOk:'Tarjeta regalo comprada', regTxt:'En la web real se paga con tarjeta (Stripe) y el código llega por email. La compra ya aparece en el panel.', importe:'Importe',
-  prop:'Propuesta de Airmate para Salvajes · demo con datos de ejemplo', panel:'Ver el panel', elige:'¿En qué barbería?', foot:'Propuesta de Airmate · demo' },
+  prop:'Propuesta de Airmate para Salvajes · demo con datos de ejemplo',ritK:'El ritual',ritT:'Cuatro pasos. Ninguno con prisa.',rit:[['Consulta','Antes de tocar la máquina, hablamos. Qué llevas, qué quieres, qué te favorece.'],['Corte','Máquina y tijera, a tu medida. Degradados limpios y líneas que duran.'],['Navaja','Contornos y barba a navaja, con toalla caliente y espuma.'],['Acabado','Producto, peinado y el espejo. Sales sabiendo cómo mantenerlo.']],marq:['Degradados','Barbas a navaja','Color fantasía','Trenzas','Diseños','Cejas','Manicura'],ambiente:'Fotos de ambiente: Unsplash', panel:'Ver el panel', elige:'¿En qué barbería?', foot:'Propuesta de Airmate · demo' },
  en:{ reservar:'Book', carta:'Menu', trabajos:'Work', resenas:'Reviews', visita:'Visit', barberias:'Shops',
   heroP: DXB ? 'A Barcelona barbershop in JVC. Fades, beards and colour by barbers who speak your language.' : 'A neighbourhood barbershop with craft. Fades, beards, colour and braids since 2022.',
   dir:'Address', hor:'Hours', maniK:'Since 2022', mani1:'We don’t do', mani2:'herd haircuts.', mani3:'We do', mani4:'salvajes.',
@@ -34,16 +34,16 @@ const T = {
   okT:'Booked', okP:'You’ll get a WhatsApp reminder the day before. If you can’t make it, tell us and we’ll find another slot.', otra:'Make another booking', con:'with', cerrar:'Close', tuReserva:'Your booking',
   pSenal:'New clients: a '+(DXB?'20 AED':'€5')+' card deposit (Stripe) secures your chair. It comes off your bill.', pTotal:'You pay online by card (Stripe) when you book.',
   regOk:'Gift card purchased', regTxt:'On the live site this is paid by card (Stripe) and the code is emailed. The purchase is already in the panel.', importe:'Amount',
-  prop:'Airmate proposal for Salvajes · demo with example data', panel:'See the panel', elige:'Which shop?', foot:'Proposal by Airmate · demo' }
+  prop:'Airmate proposal for Salvajes · demo with example data',ritK:'The ritual',ritT:'Four steps. None of them rushed.',rit:[['Consult','Before the clippers come out, we talk. What you have, what you want, what suits you.'],['Cut','Clipper and scissor work, tailored. Clean fades and lines that last.'],['Razor','Edges and beard with a straight razor, hot towel and foam.'],['Finish','Product, styling and the mirror. You leave knowing how to keep it.']],marq:['Skin fades','Straight razor','Fantasy colour','Braids','Designs','Brows','Manicure'],ambiente:'Ambience photos: Unsplash', panel:'See the panel', elige:'Which shop?', foot:'Proposal by Airmate · demo' }
 };
 const t = k => T[L][k] ?? k, nS = s => L === 'es' ? s.es : s.n, din = n => SV.din(n);
 const CAT = k => ({ corte:'b', cb:'b', barba:'b', diseno:'b', kids:'b', jubi:'b', fade:'b', mechas:'c', deco:'c', fantasia:'c', cbarba:'c', trenzas:'tr' })[k] || 'n';
 const SEDES_L = [
-  { k:'bcn',  n:'Horta',  c:'Barcelona', d:'Carrer dels Cortada, 34', h:'Lun–Sáb · 10:00–20:30', u:RAIZ+'barcelona/?sede=bcn', f:'g1' },
-  { k:'bcn2', n:'Barcelona II', c:'Barcelona', d:'Dirección por confirmar', h:'Lun–Sáb · 10:00–20:30', u:RAIZ+'barcelona/?sede=bcn2', f:'g5' },
-  { k:'dxb',  n:'JVC', c:'Dubái', d:'DAMAC Ghalia Tower, local 14', h:'Todos los días · 10:00–22:00', u:RAIZ+'dubai/', f:'g7' } ];
+  { k:'bcn',  n:'Horta',  c:'Barcelona', d:'Carrer dels Cortada, 34', h:'Lun–Sáb · 10:00–20:30', u:RAIZ+'barcelona/?sede=bcn', f:'stock/local' },
+  { k:'bcn2', n:'Barcelona II', c:'Barcelona', d:'Dirección por confirmar', h:'Lun–Sáb · 10:00–20:30', u:RAIZ+'barcelona/?sede=bcn2', f:'stock/local2' },
+  { k:'dxb',  n:'JVC', c:'Dubái', d:'DAMAC Ghalia Tower, local 14', h:'Todos los días · 10:00–22:00', u:RAIZ+'dubai/', f:'jvc' } ];
 const IG = DXB ? 'https://www.instagram.com/salvajes_barbershopdubai/' : 'https://www.instagram.com/salvajes_barbershop/';
-const HERO = MARCA ? 'ovejas' : DXB ? 'ovejas' : 'g8';
+const HERO = 'stock/hero';
 const nombreSede = MARCA ? 'Salvajes' : DXB ? 'Dubai' : SV_SEDE === 'bcn2' ? 'Barcelona' : 'Horta';
 const flecha = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
@@ -58,22 +58,25 @@ function pintar(){
     <button class="bt" onclick="${MARCA ? "location.hash='sedes'" : 'SVW.abrir()'}">${t('reservar')}</button></div></header>`;
 
   const hero = `<section class="hero" id="hero"><img src="${RAIZ}img/${HERO}.jpg" alt="Salvajes Barbershop" fetchpriority="high">
-    <div class="in w"><h1 class="d"><span class="lin"><span>Salvajes</span></span>${MARCA ? '' : `<span class="lin"><span class="s" style="font-size:.62em;line-height:1">${esc(nombreSede)}</span></span>`}</h1>
+    <div class="in w"><h1 class="d"><span class="lin"><span class="hl">${'Salvajes'.split('').map(c=>`<i>${c}</i>`).join('')}</span></span>${MARCA ? '' : `<span class="lin"><span class="s" style="font-size:.62em;line-height:1">${esc(nombreSede)}</span></span>`}</h1>
      <div class="pie"><p>${t('heroP')}</p>
       ${MARCA ? `<div><small>Barcelona</small>Horta · Barcelona II</div><div><small>Dubái</small>JVC</div>` : `<div><small>${t('dir')}</small>${esc(SEDE.dir.split(' · ')[0])}</div><div><small>${t('hor')}</small>${esc(DXB && L==='en' ? 'Every day · 10:00–22:00' : SEDE.horTxt)}</div>`}
       <button class="bt bt-o" onclick="${MARCA ? "location.hash='sedes'" : 'SVW.abrir()'}">${MARCA ? t('ctaM') : t('reservar')} ${flecha}</button></div></div></section>`;
 
-  const mani = `<section class="mani"><div class="w"><div class="grid"><div class="k rv">${t('maniK')}</div>
+  const mani = `<section class="mani" id="mani"><img class="mani-bg" src="${RAIZ}img/ovejas.jpg" alt="" loading="lazy"><div class="w"><div class="grid"><div class="k rv">${t('maniK')}</div>
     <h2 class="d rv">${t('mani1')} <span class="s">${t('mani2')}</span><br>${t('mani3')} <span class="s">${t('mani4')}</span></h2>
     <div class="datos rv"><div><b>2022</b><span>${t('d1')}</span></div><div><b>3</b><span>${t('d2')}</span></div><div><b>4,9</b><span>${t('d3')}</span></div></div></div></div></section>`;
 
+  const marq = `<div class="marq" aria-hidden="true"><div class="marq-in" id="marq">${[0,1].map(()=>`<span>${t('marq').map(x=>`<b>${x}</b><i>✕</i>`).join('')}</span>`).join('')}</div></div>`;
+  const fr = ['stock/guantes','stock/tijera','stock/navaja','stock/espuma'];
+  const ritual = `<section class="rit" id="ritual"><div class="rit-pin"><div class="w rit-g"><div class="rit-txt"><div class="k" style="color:var(--oro)">${t('ritK')}</div><h2 class="d rit-h">${t('ritT')}</h2><ol class="rit-l">${t('rit').map((r,i)=>`<li class="${i?'':'on'}" data-i="${i}"><span class="n">0${i+1}</span><div><b>${r[0]}</b><p>${r[1]}</p></div></li>`).join('')}</ol></div><div class="rit-fotos">${fr.map((f,i)=>`<img src="${RAIZ}img/${f}.jpg" alt="" class="${i?'':'on'}" data-i="${i}" loading="lazy">`).join('')}<div class="rit-num d" id="ritNum">01</div></div></div></div></section>`;
   const sedes = `<section class="sedes" id="sedes"><div class="w"><div class="tit"><h2 class="d rv">${t('sedesT')}</h2><p class="rv">${t('sedesP')}</p></div>
     <div class="lista-sedes">${SEDES_L.map((x,i) => `<a class="sede rv ${!MARCA && x.k===SV_SEDE ? 'aqui' : ''}" href="${x.u}${MARCA ? (x.u.includes('?') ? '&' : '?') + 'reservar' : ''}"><span class="n">0${i+1}</span><h3 class="d">${esc(x.n)}</h3><span>${esc(x.c)}<br>${esc(x.d)}</span><span>${esc(x.h)}</span><span class="fl">${flecha}</span><img class="ft" src="${RAIZ}img/${x.f}.jpg" alt=""></a>`).join('')}</div></div></section>`;
 
   const grupos = ['b','c','tr','n'].map(g => [g, SV_SERV.filter(s => CAT(s.k) === g)]).filter(([,l]) => l.length);
   const carta = MARCA ? '' : `<section class="carta" id="carta"><div class="w"><div class="tit"><h2 class="d rv">${t('cartaT')}</h2><p class="rv">${t('cartaP')}</p></div>
-    <div class="cols"><div class="destacado rv"><figure><img src="${RAIZ}img/g8.jpg" alt="${esc(nS(SV.S('cb')))}" loading="lazy"></figure><figcaption><span>${t('destac')}</span><span>${esc(nS(SV.S('cb')))} · ${din(SV.S('cb').p)}</span></figcaption></div>
-     <div class="menu-c">${grupos.map(([g,l]) => `<h3>${t('cats')[g]}</h3>` + l.map(s => `<div class="it"><b>${esc(nS(s))}</b><small>${s.min} ${t('min')}</small><i></i><em>${din(s.p)}</em><button onclick="SVW.abrir('${s.k}')">${t('reservar')}</button></div>`).join('')).join('')}
+    <div class="cols"><div class="destacado rv"><figure><img src="${RAIZ}img/stock/granate.jpg" alt="${esc(nS(SV.S('cb')))}" loading="lazy"></figure><figcaption><span>${t('destac')}</span><span>${esc(nS(SV.S('cb')))} · ${din(SV.S('cb').p)}</span></figcaption></div>
+     <div class="menu-c">${grupos.map(([g,l]) => `<h3>${t('cats')[g]}</h3>` + l.map(s => `<div class="it" data-f="${({b:'stock/granate',c:'stock/herramientas',tr:'g3',n:'stock/espuma'})[g]}"><b>${esc(nS(s))}</b><small>${s.min} ${t('min')}</small><i></i><em>${din(s.p)}</em><button onclick="SVW.abrir('${s.k}')">${t('reservar')}</button></div>`).join('')).join('')}
       <p class="nota-c">${t('cartaP')}</p></div></div></div></section>`;
 
   const fotos = ['g1','g8','g3','g6','g5','g2','g4','g7'];
@@ -85,7 +88,7 @@ function pintar(){
      <div class="fuentes rv"><a href="${SV_RESENAS.booksy.url}" target="_blank" rel="noopener"><b>Booksy · Horta</b><span>4,9 · 603 →</span></a><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Salvajes Barber Shop '+(DXB?'JVC Dubai':'Barcelona'))}" target="_blank" rel="noopener"><b>Google</b><span>${t('ver')} →</span></a>${DXB ? `<a href="${IG}" target="_blank" rel="noopener"><b>Fresha · JVC</b><span>${t('ver')} →</span></a>` : ''}</div></div>
     <div>${SV_RESENAS.frases.map(f => `<div class="cita rv"><p>«${esc(f.t)}»</p><small>${esc(f.a)} · ${f.src} · ${esc(f.sede)}</small></div>`).join('')}</div></div></div></section>`;
 
-  const cta = `<section class="cta" id="reservar"><img src="${RAIZ}img/g6.jpg" alt="" loading="lazy"><div class="w"><h2 class="d rv">${t('ctaT1')}<br><span class="s">${t('ctaT2')}</span></h2><p class="rv">${t('ctaP')}</p>
+  const cta = `<section class="cta" id="reservar"><img src="${RAIZ}img/stock/local.jpg" alt="" loading="lazy"><div class="w"><h2 class="d rv">${t('ctaT1')}<br><span class="s">${t('ctaT2')}</span></h2><p class="rv">${t('ctaP')}</p>
     <button class="bt bt-o rv" onclick="${MARCA ? "location.hash='sedes'" : 'SVW.abrir()'}">${MARCA ? t('ctaM') : t('ctaB')} ${flecha}</button></div></section>`;
 
   const vis = MARCA ? '' : `<section class="vis" id="visita"><div class="w"><div class="grid"><div><h2 class="d rv">${t('visT')}</h2>
@@ -94,17 +97,18 @@ function pintar(){
     <div class="regalo rv"><div><h3 class="d">${t('regT')}</h3><p>${t('regP')}</p></div><button class="bt bt-l" onclick="SVW.regalo()">${t('regB')}</button></div></div>
     <div class="mapa rm"><iframe loading="lazy" title="Mapa" src="https://www.google.com/maps?q=${encodeURIComponent(SEDE.mapa)}&output=embed"></iframe></div></div></div></section>`;
 
-  const pie = `<footer class="pie-w"><div class="w"><div class="fila"><span>Salvajes Barbershop · Barcelona · Dubái</span><span><a href="${IG}" target="_blank" rel="noopener">Instagram</a></span><span>${t('foot')}</span></div></div><div class="gig">SALVAJES</div></footer>`;
+  const pie = `<footer class="pie-w"><div class="w"><div class="fila"><span>Salvajes Barbershop · Barcelona · Dubái</span><span><a href="${IG}" target="_blank" rel="noopener">Instagram</a></span><span>${t('foot')} · ${t('ambiente')}</span></div></div><div class="gig d">${'SALVAJES'.split('').map(c=>`<span>${c}</span>`).join('')}</div></footer>`;
 
-  app.innerHTML = (EMBED ? '' : `<div class="prop">${t('prop')} · <a href="${RAIZ}panel/?sede=${MARCA?'bcn':SV_SEDE}" target="_blank" rel="noopener">${t('panel')} →</a></div>`) + cab + hero + mani + (MARCA ? sedes + gal + res + cta : carta + gal + res + cta + sedes + vis) + pie +
+  app.innerHTML = (EMBED ? '' : `<div class="prop">${t('prop')} · <a href="${RAIZ}panel/?sede=${MARCA?'bcn':SV_SEDE}" target="_blank" rel="noopener">${t('panel')} →</a></div>`) + `<div class="intro" id="intro"><div class="d">${'SALVAJES'.split('').map(c=>`<span><i>${c}</i></span>`).join('')}</div></div>` + cab + hero + marq + mani + ritual + (MARCA ? sedes + gal + res + cta : carta + gal + res + cta + sedes + vis) + pie + `<img class="flot" id="flot" alt="">` +
     (SEDE.wa && !MARCA ? `<a class="wa" href="https://wa.me/${SEDE.wa}" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9s-.5-.1-.7.1-.8.9-.9 1.1-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.9-1.6.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.8.4 3.6 3.6 0 0 0-1.1 2.6 6.2 6.2 0 0 0 1.3 3.3 14 14 0 0 0 5.5 4.8c2 .9 2.8.9 3.8.8a3.3 3.3 0 0 0 2.1-1.5 2.7 2.7 0 0 0 .2-1.5c-.1-.2-.3-.3-.6-.4zM12 21.5a9.4 9.4 0 0 1-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4A9.5 9.5 0 1 1 12 21.5zm0-20.9A11.4 11.4 0 0 0 2.2 17.7L.6 23.4l5.9-1.5A11.4 11.4 0 1 0 12 .6z"/></svg></a>` : '') +
-    `<div class="velo" id="velo" onclick="SVW.cerrar()"></div><aside class="cajon" id="cajon" role="dialog" aria-modal="true" aria-label="${t('reservar')}"><div class="cj-h"><span class="d">${t('reservar')}</span><button class="cj-x" onclick="SVW.cerrar()" aria-label="${t('cerrar')}">×</button></div><div class="cj-b" id="pasos"></div></aside>`;
+    `<div class="velo" id="velo" onclick="SVW.cerrar()"></div><aside class="cajon" id="cajon" role="dialog" aria-modal="true" aria-label="${t('reservar')}"><div class="cj-h"><span class="d">${t('reservar')}</span><button class="cj-x" onclick="SVW.cerrar()" aria-label="${t('cerrar')}">×</button></div><div class="cj-b" id="pasos" data-lenis-prevent></div></aside>`;
 
   // portada, cabecera y apariciones
   const h = $('hero'), img = h.querySelector('img'); const listo = () => h.classList.add('listo'); img.complete ? requestAnimationFrame(listo) : img.addEventListener('load', listo); setTimeout(listo, 1500);
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ e.target.classList.add('dentro'); io.unobserve(e.target); } }), { rootMargin:'0px 0px -8% 0px' });
   document.querySelectorAll('.rv,.rm').forEach(el => io.observe(el));
   arrastreTira();
+  window.dispatchEvent(new Event('sv:pintado'));
 }
 let ultY = 0;
 addEventListener('scroll', () => { const c = $('cab'); if (!c) return; const y = scrollY, alto = innerHeight * .82;
