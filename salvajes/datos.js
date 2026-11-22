@@ -123,10 +123,10 @@ function svSemilla(){
       db0.citas = citas; if (!SV.libreCon(db0, f, h, s, e)) continue;
       citas.push({ id:'a'+(id++), f, h, cl:'c'+((t*7 + d*3) % 26), s, e, est: d === 0 && svMinA(h) < new Date().getHours()*60 ? 'hecha' : 'conf', web: (t % 3) === 1 }); i++; } }
   const hist = [[26,'corte',23],[27,'cb',25],[28,'corte',27],[29,'barba',19],[0,'corte',20],[0,'corte',41],[1,'cb',22],[2,'barba',15],[3,'corte',24],[3,'corte',46],[4,'cb',21],[5,'facial',31],[6,'kids',29],[7,'corte',20],[7,'corte',41],[8,'mechas',58],[9,'mani',27],[10,'corte',19],[11,'cb',22],[12,'corte',23],[13,'barba',13],[14,'cb',21],[15,'corte',22],[16,'pedi',36],[17,'cb',20],[18,'fantasia',44],[19,'corte',18],[20,'cb',23],[21,'corte',26],[22,'facial',29],[23,'corte',17],[24,'corte',25],[25,'cb',22]];
-  hist.forEach(([c,s,hace],i) => citas.push({ id:'h'+i, f:SV.masD(-hace), h:SV_HORAS[(i*5)%SV_HORAS.length], cl:'c'+c, s, e: SV.S(s).t==='n' ? nk : B(i), est:'hecha' }));
+  hist.forEach(([c,s,hace],i) => citas.push({ id:'h'+i, f:SV.masD(-hace), h:SV_HORAS[(i*5)%SV_HORAS.length], cl:'c'+c, s, e: SV.S(s).t==='n' ? nk : B(i), est:'hecha', web: i % 3 === 0 }));
   citas.push({ id:'ns1', f:SV.masD(-6), h:SV_HORAS[8], cl:'c11', s:'corte', e:B(1), est:'noshow' }, { id:'ns2', f:SV.masD(-12), h:SV_HORAS[12], cl:'c19', s:'cb', e:B(3), est:'noshow' });
   const ventas = []; let v = 0; const pagos = ES ? ['Tarjeta','Efectivo','Bizum','Tarjeta','Efectivo'] : ['Tarjeta','Tarjeta','Efectivo','Tarjeta','Apple Pay'];
-  const volumen = ES ? 26 : 13;
+  const volumen = SV_SEDE === 'bcn2' ? 19 : ES ? 26 : 13;
   for (let dd = 27; dd >= 0; dd--) { const f = SV.masD(-dd), wd = new Date(f+'T12:00').getDay(); if (!SEDE.dias.includes(wd)) continue;
     const n = dd === 0 ? 6 : volumen + ((dd*7) % 9);
     for (let i = 0; i < n; i++) { const s = SV_SERV[(dd*3 + i*5) % SV_SERV.length], e = s.t==='n' ? nk : B(i+dd);
