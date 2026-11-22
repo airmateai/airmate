@@ -271,12 +271,12 @@ R.hoy=()=>{ const cs=citasDia(HOY), man=citasDia(SV.masD(1)), web7=DB.citas.filt
   return cab(fLarga(HOY),'',`<a class="btn bs" href="${WEB_URL}" target="_blank" rel="noopener">${I('ext')}Ver la web</a>`)+
   `<div class="grid g4" style="margin-bottom:14px">
     <div class="card kpi"><small>Citas hoy</small><b>${cs.length}</b><div class="tr">${cs.filter(a=>a.web).length} reservadas solas desde la web</div></div>
-    <div class="card kpi"><small>Reservas web · 7 días</small><b>${web7}</b><div class="tr">sin contestar un solo mensaje</div></div>
+    <div class="card kpi"><small>Reservas web · 7 días</small><b>${web7}</b><div class="tr">hechas por el cliente, sin llamadas</div></div>
     <div class="card kpi"><small>Caja de hoy</small><b>${aed(caja)}</b><div class="tr">${DB.ventas.filter(v=>v.f===HOY).length} cobros</div></div>
-    <div class="card kpi"><small>Clientes que toca que vuelvan</small><b>${vuel.length}</b><div class="tr" style="color:var(--wa)">cortes y barbas pendientes</div></div></div>
+    <div class="card kpi"><small>Clientes que toca que vuelvan</small><b>${vuel.length}</b><div class="tr" style="color:var(--wa)">les toca cita y no la tienen</div></div></div>
   <div class="grid g21">
     <div class="card"><div class="sec-t"><h3>Hoy en la barbería</h3><button class="btn bs peq" onclick="DIA=HOY;ir('agenda')">Agenda</button></div>
-     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${ocup.map(o=>`<span class="chip c-n"><i style="width:8px;height:8px;border-radius:50%;background:${o.e.c};display:inline-block"></i>${esc(o.e.n)} · ${o.n}</span>`).join('')}</div>
+     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${ocup.map(o=>`<span class="chip c-n">${esc(o.e.n)} · ${o.n}</span>`).join('')}</div>
      ${cs.map(a=>{ const c=CL(a.cl),s=SV.S(a.s),e=SV.E(a.e); return `<div class="row click ${a.id===RESALTA?'brilla':''}" onclick="verCita('${a.id}')"><span class="t">${a.h}</span><div class="av" style="background:${e.c}">${ini(c.n)}</div><div class="x"><b>${esc(c.n)}</b><small>${esc(s.es)} · ${esc(e.n)}${a.web?' · reservó en la web':''}</small></div>${chipEst(a)}</div>`; }).join('')||'<div class="empty">Sin citas hoy</div>'}</div>
     <div>
      <div class="card" style="margin-bottom:14px"><div class="sec-t"><h3>Recordar mañana</h3><span class="chip c-n">${man.length}</span></div>
@@ -477,7 +477,7 @@ const q=new URLSearchParams(location.search); if(q.get('v')&&R[q.get('v')]) VIST
 ir(VISTA);
 const USERS=[['Anuar','Dueño · 3 sedes','#7a1f2b'],['Laia','Dueña · 3 sedes','#9b4d6a'],[SV_EQUIPO[0].n,'Barbero · '+SEDE.corto,'#3f5a4a']]; let USEL=0;
 function pintarUs(){ $('lgUs').innerHTML=USERS.map((u,i)=>`<button class="${i===USEL?'on':''}" onclick="USEL=${i};pintarUs()"><i style="background:${u[2]}">${u[0][0]}</i>${u[0]}<span>${u[1]}</span></button>`).join(''); }
-function entrar(){ const u=USERS[USEL]; document.querySelector('.yo').innerHTML=`<b>${u[0]} · ${u[1]}</b>Acceso con usuario propio`; try{sessionStorage.setItem('sv_in','1')}catch(e){}
+function entrar(){ const u=USERS[USEL]; document.querySelector('.yo').innerHTML=`<span class="av" style="background:${u[2]}">${u[0][0]}</span><div><b>${u[0]}</b>${u[1]}</div>`; try{sessionStorage.setItem('sv_in','1')}catch(e){}
   if(window.gsap){ gsap.to('#login .lg-c',{y:-20,opacity:0,duration:.4,ease:'power2.in'}); gsap.to('#login',{clipPath:'inset(0 0 100% 0)',duration:.9,ease:'expo.inOut',delay:.25,onComplete:()=>$('login').remove()}); gsap.from('.side',{x:-40,opacity:0,duration:1,ease:'expo.out',delay:.6}); setTimeout(()=>ir(VISTA),500); } else $('login').remove(); }
 (()=>{ let dentro=false; try{dentro=sessionStorage.getItem('sv_in')==='1'}catch(e){} if(dentro||q.has('rapido')) $('login').remove(); else { pintarUs(); if(window.gsap) gsap.from('#login .lg-c > *',{y:20,opacity:0,duration:.8,ease:'expo.out',stagger:.07}); } })();
 </script>
