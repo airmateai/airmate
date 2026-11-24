@@ -14,3 +14,8 @@
   }
   addEventListener('scroll', ver, { passive: true }); addEventListener('resize', ver); addEventListener('load', ver); ver();
 })();
+(function () {
+  var ahorro = navigator.connection && navigator.connection.saveData;
+  if (!ahorro && !matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('.sub__img video').forEach(function (v) { v.removeAttribute('autoplay'); v.pause(); });
+})();
