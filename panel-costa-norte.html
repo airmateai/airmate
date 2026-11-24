@@ -5731,6 +5731,7 @@ function apPendientes(){
     <div style="display:flex;gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border2);flex-wrap:wrap;">
       <div style="flex:1;min-width:220px;"><b>${esc(r.nombre)}</b> · ${esc(apTipo(r.tipo_id).nombre)} (${esc(apUd(r.unidad_id).nombre)})<br>
       <span style="font-size:12px;color:var(--txt3)">${apF(r.entrada)} → ${apF(r.salida)} · ${r.adultos} ad. ${r.ninos?'+ '+r.ninos+' niños ':''}· ${esc(r.codigo)} · ${esc(r.origen)}</span></div>
+      ${r.justificante_url?`<a class="btn btn-ghost" style="color:var(--leaf);border-color:var(--leaf)" href="${esc(r.justificante_url)}" target="_blank" rel="noopener">Justificante ✓</a>`:'<span style="font-size:12px;color:var(--txt3)">Sin justificante</span>'}
       <b>${apEur(r.total)}</b>
       <button class="btn btn-ghost" onclick="apVer('${r.id}')">Ver</button>
       <button class="btn btn-primary" onclick="apConfirmar('${r.id}')">Confirmar</button>
@@ -5810,6 +5811,7 @@ function apVer(id){
       ${r.nombre?esc(r.nombre)+'<br>':''}${r.telefono?`<a href="tel:${esc(r.telefono)}">${esc(r.telefono)}</a> · `:''}${r.email?`<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`:''}<br>
       ${pack?'Pack: '+esc(pack.nombre)+' × '+r.pack_personas+'<br>':''}
       Total <b>${apEur(r.total)}</b> · Pagado ${apEur(r.pagado)} · Viene de: ${esc(r.origen)}<br>
+      Transferencia: ${r.justificante_url?`<a href="${esc(r.justificante_url)}" target="_blank" rel="noopener" style="color:var(--leaf);font-weight:600">ver justificante</a>`:'sin justificante todavía'}<br>
       ${r.notas?'<i>'+esc(r.notas)+'</i><br>':''}
       Check-in online: ${r.checkin_at?'<b style="color:var(--leaf)">hecho</b> ('+ci.length+' huéspedes)':'pendiente'}
     </div>
@@ -5837,7 +5839,8 @@ async function apGuardar(id){
   closeModal();toast('Guardado');apCargar();
 }
 async function apConfirmar(id){
-  const {error}=await SB.from('cn_apt_reservas').update({estado:'confirmada'}).eq('id',id);
+  const r0=AP.res.find(x=>x.id===id);
+  const {error}=await SB.from('cn_apt_reservas').update(r0&&r0.justificante_url?{estado:'confirmada',pago_estado:'pagado',pagado:r0.total}:{estado:'confirmada'}).eq('id',id);
   if(error){toast('No se ha confirmado: '+error.message);return;}
   const r=AP.res.find(x=>x.id===id); r.estado='confirmada';
   toast('Reserva confirmada'); apCargar();

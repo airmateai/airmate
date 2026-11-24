@@ -17,7 +17,7 @@
     { id: 2, nombre: 'Extreme 2 días', precio_persona: 240 },
     { id: 3, nombre: 'Rip Curl 2 días', precio_persona: 260 }
   ];
-  var preferido = q.get('tipo') || null, busqueda = null, elegido = null, totalActual = 0;
+  var preferido = q.get('tipo') || null, busqueda = null, elegido = null, totalActual = 0, reservaHecha = null;
 
   function rpc(fn, body) {
     if (DEMO) return Promise.resolve(demo(fn, body));
@@ -141,12 +141,37 @@
     rpc('cn_apt_reservar', { p_tipo: elegido.tipo_id, p_entrada: busqueda.entrada, p_salida: busqueda.salida, p_adultos: +$('#r-ad').value, p_ninos: +$('#r-ni').value,
       p_nombre: nom, p_email: mail, p_telefono: tel, p_pack: pack ? +pack : null, p_pack_personas: pack ? +$('#r-packper').value : 0, p_notas: $('#r-not').value.trim() || null })
       .then(function (r) {
+        var tot = r.total != null ? r.total : totalActual;
+        reservaHecha = { codigo: r.codigo, email: mail };
         $('#ok-cod').textContent = r.codigo;
-        $('#ok-txt').textContent = (DEMO ? 'Esto es una demostración: no se ha guardado nada. ' : '') + 'Total ' + eur(r.total != null ? r.total : totalActual) + '. Te escribimos en menos de 24 horas para confirmarla y cobrar la señal. Guarda este código.';
+        $('#ok-txt').textContent = (DEMO ? 'Esto es una demostración: no se ha guardado nada. ' : '') + 'Guarda este código. Te lo enviamos también por WhatsApp.';
+        $('#pg-concepto').textContent = 'Apartamento ' + r.codigo + ' ' + nom.split(' ')[0];
+        $('#pg-importe').textContent = eur(tot);
         $('#ok-checkin').href = '../checkin/?c=' + encodeURIComponent(r.codigo);
         $('#c-paso1').hidden = true; $('#c-paso2').hidden = false;
       })
       .catch(function (err) { av.innerHTML = ''; av.textContent = err.sinSistema ? 'Las reservas online se están activando. Escríbenos por WhatsApp al 609 282 963.' : err.message; av.classList.add('aviso--err'); })
       .then(function () { btn.disabled = false; btn.textContent = 'Reservar'; });
+  });
+
+  /* pago por transferencia y justificante (mismo sistema que las clases) */
+  $('#pg-copiar').addEventListener('click', function () {
+    var b = this; navigator.clipboard.writeText('ES3601825728400201540239').then(function () { b.textContent = 'IBAN copiado'; setTimeout(function () { b.textContent = 'Copiar IBAN'; }, 2000); });
+  });
+  $('#pg-file').addEventListener('change', function () {
+    var f = this.files[0], av = $('#pg-aviso'), lab = document.querySelector('.subir'); if (!f || !reservaHecha) return;
+    if (f.size > 10 * 1024 * 1024) { av.textContent = 'El archivo pesa demasiado (máximo 10 MB).'; av.classList.add('aviso--err'); return; }
+    av.classList.remove('aviso--err'); av.textContent = 'Subiendo…';
+    if (DEMO) { lab.classList.add('ok'); $('#pg-file-txt').textContent = 'Justificante recibido'; av.textContent = 'Demostración: no se ha subido nada.'; return; }
+    var ext = (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+    var ruta = 'costa-norte/apt-' + reservaHecha.codigo + '-' + Date.now() + '.' + ext;
+    fetch(SB + '/storage/v1/object/JUSTIFICANTES/' + ruta, { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': f.type || 'application/octet-stream', 'x-upsert': 'true' }, body: f })
+      .then(function (r) { if (!r.ok) throw new Error('upload ' + r.status); return rpc('cn_apt_vincular_justificante', { p_codigo: reservaHecha.codigo, p_email: reservaHecha.email, p_url: SB + '/storage/v1/object/public/JUSTIFICANTES/' + ruta }); })
+      .then(function (ok) {
+        if (!ok) throw new Error('No se ha podido vincular a tu reserva');
+        lab.classList.add('ok'); $('#pg-file-txt').textContent = 'Justificante recibido';
+        av.textContent = '¡Gracias! Lo comprobamos y te confirmamos la reserva en menos de 24 horas.';
+      })
+      .catch(function () { av.textContent = 'No se ha podido subir. Mándanos el justificante por WhatsApp al 609 282 963 con tu código.'; av.classList.add('aviso--err'); });
   });
 })();

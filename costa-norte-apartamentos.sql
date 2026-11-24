@@ -237,3 +237,17 @@ language sql stable security definer set search_path = public as $$
   select id, nombre, descripcion, precio_persona from cn_apt_packs where activo order by precio_persona;
 $$;
 grant execute on function cn_apt_packs_publicos() to anon, authenticated;
+
+-- ───────── PAGO POR TRANSFERENCIA + JUSTIFICANTE (mismo sistema que las clases, sin Stripe) ─────────
+alter table cn_apt_reservas add column if not exists justificante_url text;
+alter table cn_apt_reservas add column if not exists pago_estado text not null default 'sin_pagar';
+
+create or replace function cn_apt_vincular_justificante(p_codigo text, p_email text, p_url text)
+returns boolean language plpgsql security definer set search_path = public as $$
+begin
+  if p_url !~ '^https://vjofxmfwdybktpwiuanc\.supabase\.co/storage/v1/object/public/JUSTIFICANTES/costa-norte/apt-' then raise exception 'Archivo no válido'; end if;
+  update cn_apt_reservas set justificante_url = p_url, pago_estado = 'justificante'
+   where upper(codigo) = upper(trim(p_codigo)) and lower(email) = lower(trim(p_email)) and estado in ('pendiente','confirmada');
+  return found;
+end $$;
+grant execute on function cn_apt_vincular_justificante(text, text, text) to anon, authenticated;
