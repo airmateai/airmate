@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import cnIcal from './_cn-ical.js';
 
 const SB_URL = process.env.SUPABASE_URL;
 const SB_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
@@ -38,6 +39,8 @@ async function ensureAuthUser(slug) {
 }
 
 export default async function handler(req, res) {
+  // Calendarios de Costa Norte (Booking/Airbnb/Expedia): /api/cn-ical se reescribe aquí (límite de 12 funciones de Vercel)
+  if (req.query && req.query.cnical) return cnIcal(req, res);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
