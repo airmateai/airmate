@@ -5881,7 +5881,7 @@ function apPendientes(){
   document.getElementById('ap-pend').innerHTML=l.length?l.map(r=>`
     <div style="display:flex;gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border2);flex-wrap:wrap;">
       <div style="flex:1;min-width:220px;"><b>${esc(r.nombre)}</b> · ${esc(apTipo(r.tipo_id).nombre)} (${esc(apUd(r.unidad_id).nombre)})<br>
-      <span style="font-size:12px;color:var(--txt3)">${apF(r.entrada)} → ${apF(r.salida)} · ${r.adultos} ad. ${r.ninos?'+ '+r.ninos+' niños ':''}· ${esc(r.codigo)} · ${esc(r.origen)}</span></div>
+      <span style="font-size:12px;color:var(--txt3)">${apF(r.entrada)} → ${apF(r.salida)} · ${r.adultos} ad. ${r.ninos?'+ '+r.ninos+' niños ':''}· ${esc(r.codigo)} · ${esc(r.origen)}${r.clases?' · <b style="color:var(--coral)">surf camp</b>':''}</span></div>
       ${r.justificante_url?`<a class="btn btn-ghost" style="color:var(--leaf);border-color:var(--leaf)" href="${esc(r.justificante_url)}" target="_blank" rel="noopener">Justificante ✓</a>`:'<span style="font-size:12px;color:var(--txt3)">Sin justificante</span>'}
       <b>${apEur(r.total)}</b>
       <button class="btn btn-ghost" onclick="apVer('${r.id}')">Ver</button>
@@ -5978,6 +5978,7 @@ function apVer(id){
       ${apF(r.entrada)} → ${apF(r.salida)} · ${r.adultos} adultos${r.ninos?', '+r.ninos+' niños':''}<br>
       ${r.nombre?esc(r.nombre)+'<br>':''}${r.telefono?`<a href="tel:${esc(r.telefono)}">${esc(r.telefono)}</a> · `:''}${r.email?`<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`:''}<br>
       ${pack?'Pack: '+esc(pack.nombre)+' × '+r.pack_personas+'<br>':''}
+      ${r.clases?`<b style="color:var(--coral)">Surf camp:</b> ${r.clases.num} ${r.clases.num>1?'clases':'clase'} de ${esc({surf:'surf en grupo',particular:'surf particular',sup:'paddle surf'}[r.clases.tipo]||r.clases.tipo)}${r.clases.nivel?' ('+esc(r.clases.nivel==='Avanzado'?'avanzado':'iniciación')+')':''} × ${r.clases.personas} ${r.clases.personas>1?'personas':'persona'} · ${apEur(r.clases.precio)} − ${apEur(r.clases.descuento)}. <i>Falta darles horario.</i><br>`:''}
       ${r.grupo?'Reserva de grupo: <b>'+esc(r.grupo)+'</b> ('+AP.res.filter(x=>x.grupo===r.grupo).length+' apartamentos)<br>':''}${r.codigo_promo?'Código '+esc(r.codigo_promo)+': −'+apEur(r.descuento)+'<br>':''}
       Total <b>${apEur(r.total)}</b> · Pagado ${apEur(r.pagado)} · Viene de: ${esc(r.origen)}<br>
       Transferencia: ${r.justificante_url?`<a href="${esc(r.justificante_url)}" target="_blank" rel="noopener" style="color:var(--leaf);font-weight:600">ver justificante</a>`:'sin justificante todavía'}<br>
@@ -6079,11 +6080,13 @@ async function apTarifas(){
   const {data:tar,error}=await SB.from('cn_apt_tarifas').select('*').order('desde');
   if(error){toast(error.message);return;}
   openModal('Precios y temporadas',`
-    <p style="font-size:13px;color:var(--txt3);margin:0 0 8px;">Precio por noche de cada tipo cuando no hay temporada, y las temporadas con su precio y estancia mínima. La web calcula el total sola.</p>
+    <p style="font-size:13px;color:var(--txt3);margin:0 0 8px;">Vuestro precio predeterminado por noche de cada tipo cuando no hay temporada, y las temporadas con su precio y estancia mínima. La web les suma el recargo de abajo y calcula el total sola.</p>
     <table style="width:100%;font-size:13px;border-collapse:collapse;">${AP.tipos.map(t=>`<tr><td style="padding:6px 0;">${esc(t.nombre)}</td><td style="width:110px;"><input id="apb-${t.id}" type="number" value="${t.precio_base}" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"></td><td style="padding-left:6px;font-size:12px;color:var(--txt3);">€/noche</td></tr>`).join('')}</table>
     <button class="btn btn-ghost" style="margin-top:8px;" onclick="apGuardarBase()">Guardar precios base</button>
     <h3 style="margin:18px 0 6px;font-size:15px;">Temporadas</h3>
     ${(tar||[]).map(x=>`<div style="display:flex;gap:8px;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border2);"><span style="flex:1;">${esc(x.nombre||'')} · ${x.tipo_id?esc(apTipo(x.tipo_id).nombre):'Todos'} · ${apF(x.desde)}–${apF(x.hasta)} · <b>${apEur(x.precio_noche)}</b>/noche · mín. ${x.estancia_min}</span><button class="btn btn-ghost" onclick="apBorrarTarifa(${x.id})">Quitar</button></div>`).join('')||'<p style="font-size:13px;color:var(--txt3)">Sin temporadas.</p>'}
+    <h3 style="margin:18px 0 6px;font-size:15px;">Surf camp y precio de la web</h3>
+    <div id="apd-box" style="font-size:13px;color:var(--txt3)">Cargando…</div>
     <h3 style="margin:18px 0 6px;font-size:15px;">Códigos de descuento</h3>
     <div id="apc-lista" style="font-size:13px;color:var(--txt3)">Cargando…</div>
     ${fRow(fLbl('Código')+fInp('apc-cod','','text','COSTANORTE5'), fLbl('Descuento (%)')+fInp('apc-pct','5','number'))}
@@ -6094,7 +6097,30 @@ async function apTarifas(){
     ${fRow(fLbl('Precio por noche (€)')+fInp('apt-p','','number'), fLbl('Noches mínimas')+fInp('apt-m','1','number'))}
     ${fActions('Añadir temporada','apGuardarTarifa()')}
   `);
-  apCodigos();
+  apCodigos();apDescuentos();
+}
+const AP_DESC_DEF={clases_pct:10,aloj_pct_a:5,aloj_noches_a:3,aloj_pct_b:10,aloj_noches_b:4,web_recargo_pct:5};
+async function apDescuentos(){
+  const box=document.getElementById('apd-box'); if(!box)return;
+  const {data,error}=await SB.from('cn_config').select('valor').eq('clave','descuentos').maybeSingle();
+  if(error){box.textContent=/cn_config|schema cache|does not exist/i.test(error.message)?'Falta activar el surf camp en la base de datos (costa-norte-surfcamp.sql). Avisa a Airmate.':error.message;return;}
+  const d={...AP_DESC_DEF,...(data&&data.valor||{})}, n=(id,v)=>`<input id="${id}" type="number" min="0" max="60" step="0.5" value="${v}" style="width:70px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--txt)">`;
+  box.innerHTML=`<div style="display:grid;gap:8px;color:var(--txt)">
+    <label>Recargo de la web sobre vuestro precio predeterminado: ${n('apd-web',d.web_recargo_pct)} %</label>
+    <label>Clases para quien se aloja: −${n('apd-cla',d.clases_pct)} %</label>
+    <label>Alojamiento en surf camp con ${n('apd-na',d.aloj_noches_a)} noches o más: −${n('apd-pa',d.aloj_pct_a)} %</label>
+    <label>Alojamiento en surf camp con ${n('apd-nb',d.aloj_noches_b)} noches o más: −${n('apd-pb',d.aloj_pct_b)} %</label>
+    <small style="color:var(--txt3)">Si alguien usa además un código de descuento, se aplica el mayor de los dos, no se suman.</small>
+    <div><button class="btn btn-ghost" onclick="apGuardarDescuentos()">Guardar descuentos</button></div></div>`;
+}
+async function apGuardarDescuentos(){
+  const v=id=>Number(document.getElementById(id).value);
+  const val={web_recargo_pct:v('apd-web'),clases_pct:v('apd-cla'),aloj_noches_a:Math.round(v('apd-na')),aloj_pct_a:v('apd-pa'),aloj_noches_b:Math.round(v('apd-nb')),aloj_pct_b:v('apd-pb')};
+  if(Object.values(val).some(x=>!(x>=0&&x<=60))){toast('Revisa los números: entre 0 y 60');return;}
+  if(val.aloj_noches_b<val.aloj_noches_a){toast('Las noches del segundo descuento tienen que ser más que las del primero');return;}
+  const {error}=await SB.from('cn_config').upsert({clave:'descuentos',valor:val,updated_at:new Date().toISOString()},{onConflict:'clave'});
+  if(error){toast('No se ha guardado: '+error.message);return;}
+  toast('Descuentos guardados: la web ya los aplica');
 }
 async function apCodigos(){
   const box=document.getElementById('apc-lista'); if(!box)return;

@@ -6,7 +6,7 @@
   var q = new URLSearchParams(location.search);
   var DEMO = q.get('demo') === '1';
   var $ = function (s) { return document.querySelector(s); };
-  var eur = function (n) { return Number(n).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' €'; };
+  var eur = function (n) { n = Number(n); return n.toLocaleString('es-ES', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' €'; };
   var fecha = function (s) { var p = s.split('-'); return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }); };
   var iso = function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 
@@ -17,6 +17,8 @@
     { id: 2, nombre: 'Extreme 2 días', precio_persona: 240 },
     { id: 3, nombre: 'Rip Curl 2 días', precio_persona: 260 }
   ];
+  var SC = q.get('surfcamp') === '1', presu = null, presuSeq = 0;
+  if (SC && document.getElementById('b-aviso')) document.getElementById('b-aviso').textContent = 'Surf camp a tu medida: elige fechas y apartamento, y al reservar añades las clases. Verás el descuento aplicado antes de pagar.';
   var autoReserva = q.get('reservar') === '1', preferido = q.get('tipo') || null, busqueda = null, elegido = null, totalActual = 0, reservaHecha = null, promo = null;
 
   function rpc(fn, body) {
@@ -27,6 +29,7 @@
   function demo(fn, b) {
     if (fn === 'cn_apt_packs_publicos') return PACKS;
     if (fn === 'cn_apt_reservar') return { codigo: 'CN-DEMO01', total: null };
+    if (fn === 'cn_surfcamp_presupuesto') { var tt = Object.keys(TIPOS).indexOf(String(b.p_tipo)) >= 0 ? 85 : 85, nn = Math.round((new Date(b.p_salida) - new Date(b.p_entrada)) / 864e5), al = tt * nn * (b.p_cantidad || 1), cl = b.p_clases_num > 0 ? [0,35,65,85,113,140][Math.min(b.p_clases_num,5)] * b.p_clases_personas : 0, pc = cl ? (nn >= 4 ? 10 : nn >= 3 ? 5 : 0) : 0; return { noches: nn, alojamiento: al, aloj_pct: pc, aloj_desc: al * pc / 100, aloj_por: pc ? 'surfcamp' : null, clases: cl, clases_pct: cl ? 10 : 0, clases_desc: cl / 10, total: al - al * pc / 100 + cl * .9, surfcamp: !!cl }; }
     if (fn === 'cn_apt_promo') return /^COSTANORTE5$/i.test(b.p_codigo) ? 5 : null;
     if (fn === 'cn_apt_calendario') { var out = [], d0 = new Date(b.p_desde); for (var k = 0; k < b.p_dias; k++) { var d = new Date(d0); d.setDate(d.getDate() + k); var v = /-0[78]-/.test(iso(d)); out.push({ dia: iso(d), libres: (d.getDate() % 9 === 0) ? 0 : 2, precio: v ? 200 : 85, estancia_min: v ? 3 : 1 }); } return out; }
     var n = Math.round((new Date(b.p_salida) - new Date(b.p_entrada)) / 864e5), ver = /-0[78]-/.test(b.p_entrada);
@@ -119,7 +122,20 @@
     if (q.get('pack')) $('#r-pack').value = q.get('pack');
   });
   function opciones(sel, desde, hasta, val) { sel.innerHTML = ''; for (var i = desde; i <= hasta; i++) { var o = document.createElement('option'); o.textContent = i; sel.appendChild(o); } sel.value = Math.min(Math.max(val, desde), hasta); }
+  var CLT = { surf: 'Surf en grupo', particular: 'Clase particular', sup: 'Paddle surf' };
+  function conClases() { return !!$('#r-clt').value; }
+  function pideP() {
+    var mas = $('#r-sc-mas'), con = conClases(); mas.hidden = !con; $('#r-sc').classList.toggle('activo', con);
+    $('#r-cll-c').hidden = $('#r-clt').value !== 'surf';
+    if (!con) { presu = null; resumen(); return; }
+    var seq = ++presuSeq;
+    rpc('cn_surfcamp_presupuesto', { p_tipo: elegido.tipo_id, p_entrada: busqueda.entrada, p_salida: busqueda.salida, p_cantidad: +$('#r-cant').value || 1,
+      p_clases_tipo: $('#r-clt').value, p_clases_nivel: $('#r-clt').value === 'surf' ? $('#r-cll').value : null, p_clases_personas: +$('#r-clp').value, p_clases_num: +$('#r-cln').value, p_promo: promo ? promo.codigo : null })
+      .then(function (r) { if (seq === presuSeq) { presu = r; resumen(); } })
+      .catch(function () { if (seq === presuSeq) { presu = null; $('#r-sc-av').textContent = 'No se ha podido calcular el precio con clases. Inténtalo de nuevo.'; resumen(); } });
+  }
   function resumen() {
+    if (conClases() && presu) { return resumenSC(); }
     var ad = +$('#r-ad').value, ni = +$('#r-ni').value, pack = PACKS.filter(function (p) { return p.id == $('#r-pack').value; })[0];
     $('#r-packper-c').hidden = !pack;
     if (pack) opciones($('#r-packper'), 1, ad + ni, +$('#r-packper').value || ad + ni);
@@ -133,6 +149,24 @@
       .concat(pack ? [[pack.nombre + ' × ' + $('#r-packper').value, eur(pp)]] : []).concat([['Total', eur(totalActual)]])
       .forEach(function (r, i, a) { var li = document.createElement('li'); if (i === a.length - 1) li.className = 'total'; li.innerHTML = '<span></span><span></span>'; li.children[0].textContent = r[0]; li.children[1].textContent = r[1]; $('#c-resumen').appendChild(li); });
   }
+  function resumenSC() {
+    var t = elegido, info = TIPOS[t.tipo_id], cant = +$('#r-cant').value || 1, p = presu, n = +$('#r-cln').value, per = +$('#r-clp').value;
+    totalActual = +p.total;
+    var filas = [[info.nombre + (cant > 1 ? ' × ' + cant : ''), ''], [fecha(busqueda.entrada) + ' a ' + fecha(busqueda.salida), t.noches + (t.noches > 1 ? ' noches' : ' noche')], ['Alojamiento', eur(p.alojamiento)]];
+    if (+p.aloj_desc) filas.push([(p.aloj_por === 'codigo' ? 'Código ' + promo.codigo : 'Descuento surf camp') + ' (−' + (+p.aloj_pct) + ' %)', '−' + eur(p.aloj_desc), 'ahorro']);
+    filas.push([CLT[$('#r-clt').value] + ': ' + n + (n > 1 ? ' clases' : ' clase') + ' × ' + per + (per > 1 ? ' personas' : ' persona'), eur(p.clases)]);
+    if (+p.clases_desc) filas.push(['Descuento en clases (−' + (+p.clases_pct) + ' %)', '−' + eur(p.clases_desc), 'ahorro']);
+    filas.push(['Total surf camp', eur(p.total), 'total']);
+    $('#c-resumen').innerHTML = '';
+    filas.forEach(function (r) { var li = document.createElement('li'); if (r[2]) li.className = r[2]; li.innerHTML = '<span></span><span></span>'; li.children[0].textContent = r[0]; li.children[1].textContent = r[1]; $('#c-resumen').appendChild(li); });
+    var ah = (+p.aloj_desc || 0) + (+p.clases_desc || 0);
+    $('#r-sc-av').textContent = (ah ? 'Te ahorras ' + eur(ah) + ' con el surf camp. ' : '') + (p.aloj_por !== 'surfcamp' && t.noches < 3 ? 'Con 3 noches o más, el alojamiento también lleva descuento. ' : '') + 'Los horarios de las clases os los damos al confirmar la reserva.';
+  }
+  function opcClases() {
+    var noches = elegido.noches || 1;
+    opciones($('#r-cln'), 1, Math.min(20, Math.max(1, noches * 2)), +$('#r-cln').value || Math.min(Math.max(noches, 1), 5));
+    opciones($('#r-clp'), 1, Math.max(1, +$('#r-ad').value + +$('#r-ni').value), +$('#r-clp').value || (+$('#r-ad').value + +$('#r-ni').value));
+  }
   function abre(t) {
     elegido = t; ultimoFoco = document.activeElement;
     opciones($('#r-cant'), 1, Math.max(1, Math.min(t.libres, 6)), 1);
@@ -140,6 +174,8 @@
     opciones($('#r-ad'), 1, t.capacidad, busqueda.personas);
     opciones($('#r-ni'), 0, Math.max(0, t.capacidad - 1), 0);
     $('#c-paso1').hidden = false; $('#c-paso2').hidden = true; $('#r-aviso').classList.remove('aviso--err');
+    presu = null; $('#r-cln').value = ''; $('#r-clp').value = ''; $('#r-clt').value = SC ? 'surf' : '';
+    opcClases(); pideP();
     resumen();
     cajon.classList.add('abierto'); cajon.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
     setTimeout(function () { $('#r-ad').focus(); }, 50);
@@ -158,10 +194,13 @@
     rpc('cn_apt_promo', { p_codigo: c }).then(function (pct) {
       if (pct) { promo = { codigo: c, pct: +pct }; av.textContent = 'Código aplicado: ' + pct + ' % de descuento en el alojamiento.'; }
       else { promo = null; av.textContent = 'Ese código no es válido.'; av.classList.add('aviso--err'); }
-      resumen();
+      if (conClases()) pideP(); else resumen();
     }).catch(function () { promo = null; av.textContent = 'No se ha podido comprobar el código.'; av.classList.add('aviso--err'); resumen(); });
   });
-  $('#r-ni').addEventListener('change', resumen);
+  $('#r-ni').addEventListener('change', function () { opcClases(); pideP(); });
+  ['#r-clt', '#r-cln', '#r-clp', '#r-cll'].forEach(function (s) { $(s).addEventListener('change', pideP); });
+  $('#r-ad').addEventListener('change', function () { opcClases(); if (conClases()) pideP(); });
+  $('#r-cant').addEventListener('change', function () { opcClases(); if (conClases()) pideP(); });
 
   $('#f-reserva').addEventListener('submit', function (e) {
     e.preventDefault();
@@ -171,7 +210,8 @@
     btn.disabled = true; btn.textContent = 'Reservando…';
     var pack = $('#r-pack').value;
     rpc('cn_apt_reservar', { p_tipo: elegido.tipo_id, p_entrada: busqueda.entrada, p_salida: busqueda.salida, p_adultos: +$('#r-ad').value, p_ninos: +$('#r-ni').value,
-      p_nombre: nom, p_email: mail, p_telefono: tel, p_pack: pack ? +pack : null, p_pack_personas: pack ? +$('#r-packper').value : 0, p_notas: $('#r-not').value.trim() || null, p_cantidad: +$('#r-cant').value || 1, p_promo: promo ? promo.codigo : null })
+      p_nombre: nom, p_email: mail, p_telefono: tel, p_pack: pack ? +pack : null, p_pack_personas: pack ? +$('#r-packper').value : 0, p_notas: $('#r-not').value.trim() || null, p_cantidad: +$('#r-cant').value || 1, p_promo: promo ? promo.codigo : null,
+      p_clases_tipo: conClases() ? $('#r-clt').value : null, p_clases_nivel: conClases() && $('#r-clt').value === 'surf' ? $('#r-cll').value : null, p_clases_personas: conClases() ? +$('#r-clp').value : 0, p_clases_num: conClases() ? +$('#r-cln').value : 0 })
       .then(function (r) {
         var tot = r.total != null ? r.total : totalActual;
         reservaHecha = { codigo: r.codigo, email: mail };
@@ -187,7 +227,7 @@
             var cant = +$('#r-cant').value || 1;
             emailjs.send('service_npmjvvf', 'template_qnip0mc', {
               to_email: mail, client_name: nom, reply_to: mail,
-              service: TIPOS[elegido.tipo_id].nombre + (cant > 1 ? ' × ' + cant : '') + ', ' + elegido.noches + (elegido.noches > 1 ? ' noches' : ' noche') + '. Total ' + eur(tot) + ' por transferencia (EMBARCACION NORTE, S.L, IBAN ES36 0182 5728 4002 0154 0239)',
+              service: (conClases() ? 'Surf camp: ' : '') + TIPOS[elegido.tipo_id].nombre + (cant > 1 ? ' × ' + cant : '') + (conClases() ? ' + ' + $('#r-cln').value + ' clases de ' + CLT[$('#r-clt').value].toLowerCase() + ' para ' + $('#r-clp').value : '') + ', ' + elegido.noches + (elegido.noches > 1 ? ' noches' : ' noche') + '. Total ' + eur(tot) + ' por transferencia (EMBARCACION NORTE, S.L, IBAN ES36 0182 5728 4002 0154 0239)',
               fecha: fecha(busqueda.entrada) + ' a ' + fecha(busqueda.salida) + ' (llegada desde las 16:00, salida hasta las 11:00)',
               location: 'Apartamentos Costa Norte, Av. Francisco Giner de los Ríos 46, San Vicente de la Barquera',
               confirm_code: r.codigo
