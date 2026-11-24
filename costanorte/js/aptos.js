@@ -144,7 +144,7 @@
         var tot = r.total != null ? r.total : totalActual;
         reservaHecha = { codigo: r.codigo, email: mail };
         $('#ok-cod').textContent = r.codigo;
-        $('#ok-txt').textContent = (DEMO ? 'Esto es una demostración: no se ha guardado nada. ' : '') + 'Guarda este código. Te lo enviamos también por WhatsApp.';
+        $('#ok-txt').textContent = (DEMO ? 'Esto es una demostración: no se ha guardado nada. ' : '') + 'Guarda este código.';
         $('#pg-concepto').textContent = 'Apartamento ' + r.codigo + ' ' + nom.split(' ')[0];
         $('#pg-importe').textContent = eur(tot);
         $('#ok-checkin').href = '../checkin/?c=' + encodeURIComponent(r.codigo);
