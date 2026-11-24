@@ -1278,7 +1278,102 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       <div id="ap-aviso" class="card" style="display:none;padding:14px 18px;color:var(--coral);font-size:13px;"></div>
       <div class="kpi-grid" id="ap-kpis" style="margin-bottom:14px;"></div>
       <div class="card"><div class="card-hd"><div class="card-hd-title">Por confirmar</div><div class="card-hd-meta">Reservas nuevas de la web</div></div><div id="ap-pend"></div></div>
-      <div class="card">
+
+<!-- MAPA 3D APARTAMENTOS -->
+<style>
+@property --h { syntax: '<length>'; inherits: true; initial-value: 12px; }
+.m3d{display:grid;grid-template-columns:minmax(0,1fr) 340px;min-height:560px;}
+.m3d__esc{position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,var(--surface) 0%,var(--bg) 75%);border-right:1px solid var(--border2);cursor:grab;touch-action:none;user-select:none;}
+.m3d__esc.arrastrando{cursor:grabbing;}
+.m3d__mundo{position:absolute;left:50%;top:52%;width:0;height:0;transform-style:preserve-3d;transform:rotateX(var(--rx,58deg)) rotateZ(var(--rz,-38deg)) scale(var(--zoom,1));transition:transform .6s cubic-bezier(.2,.8,.2,1);}
+.m3d__esc.arrastrando .m3d__mundo{transition:none;}
+.m3d__base{position:absolute;transform-style:preserve-3d;border-radius:6px;background:rgba(10,37,64,.06);border:1px solid rgba(10,37,64,.10);}
+[data-theme="dark"] .m3d__base{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);}
+.m3d__base span{position:absolute;left:8px;bottom:6px;font-size:11px;font-weight:700;color:var(--txt2);white-space:nowrap;letter-spacing:.02em;}
+.m3d__base.sel-tipo{background:rgba(28,93,130,.12);border-color:var(--coral);}
+.cubo{position:absolute;width:44px;height:44px;transform-style:preserve-3d;cursor:pointer;--h:12px;--c:#e9eef2;transition:--h .5s cubic-bezier(.2,.8,.2,1);}
+.cubo>i{position:absolute;display:block;background:var(--c);}
+.cubo .t{inset:0;transform:translateZ(var(--h));border-radius:3px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);transition:background .3s;}
+.cubo .s{left:0;top:44px;width:44px;height:var(--h);transform-origin:top;transform:rotateX(90deg);filter:brightness(.78);}
+.cubo .n{left:0;top:0;width:44px;height:var(--h);transform-origin:top;transform:rotateX(90deg);filter:brightness(.9);}
+.cubo .e{left:44px;top:0;width:var(--h);height:44px;transform-origin:left;transform:rotateY(-90deg);filter:brightness(.66);}
+.cubo .o{left:0;top:0;width:var(--h);height:44px;transform-origin:left;transform:rotateY(-90deg);filter:brightness(.84);}
+.cubo .t b{position:absolute;inset:0;display:grid;place-items:center;font-size:10px;font-weight:800;color:rgba(10,37,64,.75);transform:rotateZ(38deg);}
+.cubo.ocupado .t b,.cubo.pendiente .t b,.cubo.bloqueo .t b{color:#fff;}
+.cubo:hover{--h:calc(var(--hb) + 10px);}
+.cubo.sel .t{box-shadow:inset 0 0 0 3px #fff,0 0 0 3px var(--coral);}
+.cubo.entra .t::after{content:"";position:absolute;inset:-6px;border:2px solid var(--leaf);border-radius:6px;animation:m3dPulso 1.6s ease-out infinite;}
+.cubo.sale .t{background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.45) 0 4px,transparent 4px 9px);}
+@keyframes m3dPulso{from{opacity:1;transform:scale(.9);}to{opacity:0;transform:scale(1.35);}}
+.m3d__ctrl{position:absolute;left:14px;right:14px;bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;cursor:default;}
+.m3d__ctrl input[type=range]{flex:1;min-width:160px;accent-color:var(--coral);}
+.m3d__dia{font-weight:700;font-size:13px;min-width:150px;color:var(--txt);}
+.m3d__rot{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:6px;}
+.m3d__rot button,.m3d__ctrl button{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--txt);cursor:pointer;font-size:15px;display:grid;place-items:center;}
+.m3d__rot button:hover,.m3d__ctrl button:hover{border-color:var(--coral);color:var(--coral);}
+.m3d__ley{position:absolute;left:14px;top:14px;display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--txt2);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;max-width:62%;}
+.m3d__ley span{display:inline-flex;align-items:center;gap:5px;}
+.m3d__ley i{width:11px;height:11px;border-radius:3px;display:inline-block;}
+.m3d__res{position:absolute;right:62px;top:14px;display:flex;gap:6px;}
+.m3d__res div{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 12px;text-align:center;}
+.m3d__res b{display:block;font-size:18px;color:var(--txt);}
+.m3d__res small{font-size:10px;color:var(--txt3);}
+.m3d__lado{padding:18px;overflow-y:auto;max-height:560px;}
+.m3d__lado h3{font-family:var(--display);font-size:19px;margin:0 0 2px;color:var(--txt);}
+.m3d__lado .sub{font-size:12px;color:var(--txt3);margin-bottom:14px;}
+.m3d__estado{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;color:#fff;margin-bottom:12px;}
+.m3d__fila{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:7px 0;border-bottom:1px solid var(--border2);color:var(--txt2);}
+.m3d__fila b{color:var(--txt);text-align:right;}
+.m3d__tira{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;margin:8px 0 4px;}
+.m3d__tira span{height:26px;border-radius:4px;background:var(--bg);font-size:9px;color:var(--txt3);display:grid;place-items:end center;padding-bottom:2px;}
+.m3d__acc{display:grid;gap:8px;margin-top:14px;}
+.m3d__acc .btn{justify-content:center;}
+.m3d__tipos{display:grid;gap:6px;margin-top:6px;}
+.m3d__tipos button{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--txt);font-size:12.5px;cursor:pointer;text-align:left;}
+.m3d__tipos button:hover{border-color:var(--coral);}
+.m3d__barra{height:6px;border-radius:3px;background:var(--bg);overflow:hidden;width:70px;flex:none;}
+.m3d__barra i{display:block;height:100%;background:var(--coral);}
+.m3d__tip{position:fixed;z-index:9500;pointer-events:none;background:var(--ocean);color:#fff;font-size:12px;padding:6px 9px;border-radius:7px;opacity:0;transition:opacity .15s;max-width:240px;}
+.ap-vistas{display:flex;gap:6px;}
+.ap-vistas button.on{background:var(--coral);color:#fff;border-color:var(--coral);}
+@media (max-width:900px){.m3d{grid-template-columns:1fr;}.m3d__esc{height:460px;border-right:0;border-bottom:1px solid var(--border2);}.m3d__lado{max-height:none;}.m3d__ley{max-width:calc(100% - 70px);}.m3d__res{display:none;}}
+@media (prefers-reduced-motion:reduce){.m3d__mundo,.cubo{transition:none;}.cubo.entra .t::after{animation:none;}}
+</style>
+<div class="card" id="ap-mapa-card">
+  <div class="card-hd"><div class="card-hd-title">Mapa de apartamentos</div>
+    <div class="ap-vistas"><button class="btn btn-ghost on" id="apv-3d" onclick="apVista('3d')">Vista 3D</button><button class="btn btn-ghost" id="apv-cal" onclick="apVista('cal')">Calendario</button></div></div>
+  <div class="m3d">
+    <div class="m3d__esc" id="m3d-esc" aria-label="Mapa 3D de los apartamentos. Arrastra para girar.">
+      <div class="m3d__ley">
+        <span><i style="background:#e9eef2;border:1px solid #c9d3da"></i>Libre</span>
+        <span><i style="background:#1c5d82"></i>Ocupado</span>
+        <span><i style="background:#f59e0b"></i>Pendiente</span>
+        <span><i style="background:#8a94a0"></i>Bloqueado</span>
+        <span><i style="background:#fff;border:2px solid #2dba8a"></i>Entra</span>
+        <span><i style="background:repeating-linear-gradient(45deg,#1c5d82 0 3px,#9fc0d3 3px 6px)"></i>Sale</span>
+      </div>
+      <div class="m3d__res" id="m3d-res"></div>
+      <div class="m3d__rot">
+        <button type="button" onclick="m3dGira(-45)" title="Girar a la izquierda" aria-label="Girar a la izquierda">⟲</button>
+        <button type="button" onclick="m3dGira(45)" title="Girar a la derecha" aria-label="Girar a la derecha">⟳</button>
+        <button type="button" onclick="m3dZoom(.12)" title="Acercar" aria-label="Acercar">+</button>
+        <button type="button" onclick="m3dZoom(-.12)" title="Alejar" aria-label="Alejar">−</button>
+        <button type="button" onclick="m3dVistaTop()" title="Vista desde arriba" aria-label="Vista desde arriba">⊡</button>
+      </div>
+      <div class="m3d__mundo" id="m3d-mundo"></div>
+      <div class="m3d__ctrl">
+        <button type="button" onclick="m3dDia(-1)" aria-label="Día anterior">‹</button>
+        <div class="m3d__dia" id="m3d-dia"></div>
+        <button type="button" onclick="m3dDia(1)" aria-label="Día siguiente">›</button>
+        <input type="range" id="m3d-rango" min="0" max="60" value="0" oninput="m3dPon(+this.value)" aria-label="Día">
+        <button type="button" id="m3d-play" onclick="m3dPlay()" title="Ver los próximos días seguidos" aria-label="Reproducir">▶</button>
+      </div>
+    </div>
+    <div class="m3d__lado" id="m3d-lado"></div>
+  </div>
+</div>
+<div class="m3d__tip" id="m3d-tip"></div>
+      <div class="card" id="ap-cal-card" style="display:none">
         <div class="card-hd"><div class="card-hd-title">Ocupación · <span id="ap-rango"></span></div>
           <div style="display:flex;gap:6px;"><button class="btn btn-ghost" onclick="apMover(-14)">‹ Antes</button><button class="btn btn-ghost" onclick="apHoy()">Hoy</button><button class="btn btn-ghost" onclick="apMover(14)">Después ›</button></div></div>
         <div class="tbl-wrap" id="ap-cal" style="padding:6px 0 12px;"></div>
@@ -5704,7 +5799,7 @@ async function apCargar(){
     const err=t.error||u.error||r.error||p.error; if(err) throw err;
     AP.tipos=t.data;AP.uds=u.data;AP.res=r.data;AP.packs=p.data;
     box.style.display='none';
-    apKpis();apPendientes();apCalendario();
+    apKpis();apPendientes();apCalendario();apMapa();
   }catch(e){
     box.style.display='block';
     box.textContent=/does not exist|relation|schema cache/i.test(e.message||'')?'Falta activar el módulo de apartamentos en la base de datos (archivo costa-norte-apartamentos.sql). Avisa a Airmate.':'No se han podido cargar los apartamentos: '+(e.message||e);
@@ -5958,6 +6053,134 @@ async function cvImportarOk(){
   const ins=filas.map(c=>({nombre:c[0],edad:Number(c[1])||null,nivel:c[2]||null,alergias:c[3]||null,tutor:c[4]||null,telefono:c[5]||null,semana:c[6]||null}));
   const {error}=await SB.from('cn_camp_inscritos').insert(ins); if(error){toast('No se ha importado: '+error.message);return;}
   closeModal();toast(ins.length+' inscritos importados');cvCargar();
+}
+
+
+// ── MAPA 3D de apartamentos (CSS 3D, sin librerías) ──
+const M3={dia:0,rz:-38,rx:58,zoom:1,sel:null,tipoSel:null,play:null,hecho:false};
+const M3COL={libre:'#e3e9ee',ocupado:'#1c5d82',pendiente:'#f59e0b',bloqueo:'#8a94a0'};
+const M3H={libre:10,bloqueo:18,pendiente:30,ocupado:40};
+const M3TXT={libre:'Libre',ocupado:'Ocupado',pendiente:'Pendiente de confirmar',bloqueo:'Bloqueado'};
+function m3dIso(n){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+n);return apIso(d);}
+function m3dEstado(u,d){
+  const r=AP.res.find(x=>x.unidad_id===u.id&&x.entrada<=d&&x.salida>d);
+  const sale=AP.res.some(x=>x.unidad_id===u.id&&x.salida===d&&x.estado!=='bloqueo');
+  const estado=!r?'libre':r.estado==='bloqueo'?'bloqueo':r.estado==='pendiente'?'pendiente':'ocupado';
+  return {r,estado,entra:!!(r&&r.entrada===d&&r.estado!=='bloqueo'),sale};
+}
+function apVista(v){
+  document.getElementById('apv-3d').classList.toggle('on',v==='3d');document.getElementById('apv-cal').classList.toggle('on',v==='cal');
+  document.querySelector('#ap-mapa-card .m3d').style.display=v==='3d'?'':'none';
+  document.getElementById('ap-cal-card').style.display=v==='cal'?'':'none';
+}
+function apMapa(){
+  const mundo=document.getElementById('m3d-mundo'); if(!mundo)return;
+  mundo.innerHTML='';
+  const tipos=AP.tipos.map(t=>({t,uds:AP.uds.filter(u=>u.tipo_id===t.id)})).filter(x=>x.uds.length);
+  const CW=240,CH=210,cols=3,rows=Math.ceil(tipos.length/cols);
+  tipos.forEach((x,i)=>{
+    const c=Math.min(x.uds.length,3),f=Math.ceil(x.uds.length/3);
+    const w=c*56+24,h=f*56+40;
+    const gx=(i%cols-(cols-1)/2)*CW-w/2, gy=(Math.floor(i/cols)-(rows-1)/2)*CH-h/2;
+    const base=document.createElement('div');base.className='m3d__base';base.dataset.tipo=x.t.id;
+    base.style.cssText=`left:${gx}px;top:${gy}px;width:${w}px;height:${h}px;`;
+    base.innerHTML=`<span>${esc(x.t.nombre)}</span>`;
+    x.uds.forEach((u,k)=>{
+      const cu=document.createElement('div');cu.className='cubo';cu.dataset.ud=u.id;
+      cu.style.left=(12+(k%3)*56)+'px';cu.style.top=(12+Math.floor(k/3)*56)+'px';
+      const num=(u.nombre.match(/(\d+|[A-Z])$/)||[''])[0];
+      cu.innerHTML=`<i class="n"></i><i class="o"></i><i class="s"></i><i class="e"></i><i class="t"><b>${esc(num)}</b></i>`;
+      cu.addEventListener('mousemove',ev=>m3dTip(ev,u));cu.addEventListener('mouseleave',()=>m3dTip(null));
+      base.appendChild(cu);
+    });
+    mundo.appendChild(base);
+  });
+  if(!M3.hecho){m3dControles();M3.hecho=true;
+    const w=document.getElementById('m3d-esc').clientWidth||800; M3.zoom=Math.max(.35,Math.min(1,(w-40)/((cols*CW+rows*CH)*.78)));}
+  m3dAplica();m3dPon(M3.dia);
+}
+function m3dAplica(){const m=document.getElementById('m3d-mundo');m.style.setProperty('--rz',M3.rz+'deg');m.style.setProperty('--rx',M3.rx+'deg');m.style.setProperty('--zoom',M3.zoom);
+  m.querySelectorAll('.cubo .t b').forEach(b=>b.style.transform=`rotateZ(${-M3.rz}deg)`);}
+function m3dGira(g){M3.rz+=g;m3dAplica();}
+function m3dZoom(z){M3.zoom=Math.min(1.6,Math.max(.55,M3.zoom+z));m3dAplica();}
+function m3dVistaTop(){if(M3.rx>10){M3._rx=M3.rx;M3.rx=0;}else{M3.rx=M3._rx||58;}m3dAplica();}
+function m3dControles(){
+  const esc_=document.getElementById('m3d-esc');let x0=null,y0=null,rz0=0,rx0=0,movido=false;
+  esc_.addEventListener('pointerdown',e=>{if(e.target.closest('.m3d__ctrl,.m3d__rot'))return;x0=e.clientX;y0=e.clientY;rz0=M3.rz;rx0=M3.rx;movido=false;M3.pid=e.pointerId;});
+  esc_.addEventListener('pointermove',e=>{if(x0===null)return;const dx=e.clientX-x0,dy=e.clientY-y0;if(!movido&&Math.abs(dx)+Math.abs(dy)>4){movido=true;esc_.classList.add('arrastrando');try{esc_.setPointerCapture(M3.pid);}catch(_){}}
+    if(movido){M3.rz=rz0+dx*.35;M3.rx=Math.min(75,Math.max(0,rx0-dy*.25));m3dAplica();}});
+  const fin=e=>{if(x0===null)return;x0=null;esc_.classList.remove('arrastrando');if(!movido){const el=document.elementFromPoint(e.clientX,e.clientY);const cu=el&&el.closest('.cubo');
+      if(cu)m3dSel(+cu.dataset.ud);else if(!el||!el.closest('.m3d__ctrl,.m3d__rot,.m3d__ley,.m3d__res')){M3.sel=null;m3dLado();m3dMarca();}}};
+  esc_.addEventListener('pointerup',fin);esc_.addEventListener('pointercancel',fin);
+  esc_.addEventListener('wheel',e=>{if(!e.ctrlKey&&!e.metaKey)return;e.preventDefault();m3dZoom(e.deltaY<0?.08:-.08);},{passive:false});
+  // al soltar tras arrastrar no debe contar como clic en un cubo
+  esc_.addEventListener('click',e=>{if(esc_.classList.contains('arrastrando'))e.stopPropagation();},true);
+}
+function m3dDia(n){m3dPon(Math.min(60,Math.max(0,M3.dia+n)));}
+function m3dPon(n){
+  M3.dia=n;const d=m3dIso(n);document.getElementById('m3d-rango').value=n;
+  const f=new Date(d+'T12:00:00');document.getElementById('m3d-dia').textContent=(n===0?'Hoy, ':n===1?'Mañana, ':'')+f.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+  let oc=0,en=0,sa=0;
+  document.querySelectorAll('#m3d-mundo .cubo').forEach(cu=>{
+    const u=AP.uds.find(x=>x.id===+cu.dataset.ud), s=m3dEstado(u,d);
+    cu.className='cubo '+s.estado+(s.entra?' entra':'')+(s.sale?' sale':'')+(M3.sel===u.id?' sel':'');
+    cu.style.setProperty('--c',M3COL[s.estado]);cu.style.setProperty('--h',M3H[s.estado]+'px');cu.style.setProperty('--hb',M3H[s.estado]+'px');
+    if(s.estado==='ocupado'||s.estado==='pendiente')oc++; if(s.entra)en++; if(s.sale)sa++;
+  });
+  document.getElementById('m3d-res').innerHTML=`<div><b>${oc}/${AP.uds.length}</b><small>ocupados</small></div><div><b>${en}</b><small>entran</small></div><div><b>${sa}</b><small>salen</small></div>`;
+  m3dLado();
+}
+function m3dPlay(){
+  const b=document.getElementById('m3d-play');
+  if(M3.play){clearInterval(M3.play);M3.play=null;b.textContent='▶';return;}
+  if(M3.dia>=60)m3dPon(0);
+  b.textContent='❚❚';M3.play=setInterval(()=>{if(M3.dia>=60){m3dPlay();return;}m3dPon(M3.dia+1);},650);
+}
+function m3dTip(ev,u){
+  const t=document.getElementById('m3d-tip');if(!ev){t.style.opacity=0;return;}
+  const s=m3dEstado(u,m3dIso(M3.dia));
+  t.innerHTML=`<b>${esc(u.nombre)}</b> · ${esc(apTipo(u.tipo_id).nombre)}<br>${M3TXT[s.estado]}${s.r&&s.r.nombre?': '+esc(s.r.nombre):''}${s.entra?' · entra hoy':''}${s.sale?' · sale alguien':''}`;
+  t.style.left=(ev.clientX+14)+'px';t.style.top=(ev.clientY+14)+'px';t.style.opacity=1;
+}
+function m3dMarca(){document.querySelectorAll('#m3d-mundo .cubo').forEach(c=>c.classList.toggle('sel',+c.dataset.ud===M3.sel));
+  document.querySelectorAll('#m3d-mundo .m3d__base').forEach(b=>b.classList.toggle('sel-tipo',+b.dataset.tipo===M3.tipoSel));}
+function m3dSel(id){M3.sel=id;M3.tipoSel=null;m3dMarca();m3dLado();}
+function m3dTipo(id){M3.tipoSel=M3.tipoSel===id?null:id;M3.sel=null;m3dMarca();m3dLado();}
+function m3dLado(){
+  const L=document.getElementById('m3d-lado');if(!L)return;const d=m3dIso(M3.dia);
+  if(!M3.sel){
+    const entran=AP.res.filter(r=>r.entrada===d&&r.estado!=='bloqueo'&&r.estado!=='cancelada');
+    const salen=AP.res.filter(r=>r.salida===d&&r.estado!=='bloqueo'&&r.estado!=='cancelada');
+    const porTipo=AP.tipos.map(t=>{const uds=AP.uds.filter(u=>u.tipo_id===t.id);const oc=uds.filter(u=>['ocupado','pendiente'].includes(m3dEstado(u,d).estado)).length;return {t,n:uds.length,oc};}).filter(x=>x.n);
+    L.innerHTML=`<h3>${M3.dia===0?'Hoy':document.getElementById('m3d-dia').textContent}</h3><div class="sub">Pincha un apartamento del mapa para ver su ficha.</div>
+      <div class="m3d__fila"><span>Entran</span><b>${entran.length}</b></div>${entran.map(r=>`<div class="m3d__fila" style="cursor:pointer" onclick="m3dSel(${r.unidad_id})"><span>${esc(apUd(r.unidad_id).nombre)}</span><b>${esc(r.nombre||'')}</b></div>`).join('')}
+      <div class="m3d__fila" style="margin-top:8px"><span>Salen</span><b>${salen.length}</b></div>${salen.map(r=>`<div class="m3d__fila" style="cursor:pointer" onclick="m3dSel(${r.unidad_id})"><span>${esc(apUd(r.unidad_id).nombre)}</span><b>${esc(r.nombre||'')}</b></div>`).join('')}
+      <h3 style="margin-top:18px;font-size:15px">Ocupación por tipo</h3>
+      <div class="m3d__tipos">${porTipo.map(x=>`<button type="button" onclick="m3dTipo(${x.t.id})" style="${M3.tipoSel===x.t.id?'border-color:var(--coral)':''}"><span>${esc(x.t.nombre)}</span><span style="display:flex;align-items:center;gap:8px"><small>${x.oc}/${x.n}</small><span class="m3d__barra"><i style="width:${Math.round(x.oc/x.n*100)}%"></i></span></span></button>`).join('')}</div>`;
+    return;
+  }
+  const u=AP.uds.find(x=>x.id===M3.sel), s=m3dEstado(u,d), r=s.r;
+  const prox=!r?AP.res.filter(x=>x.unidad_id===u.id&&x.entrada>d&&x.estado!=='cancelada').sort((a,b)=>a.entrada<b.entrada?-1:1)[0]:null;
+  const tira=[...Array(14)].map((_,k)=>{const dk=m3dIso(M3.dia+k),e=m3dEstado(u,dk);const f=new Date(dk+'T12:00:00');return `<span title="${f.toLocaleDateString('es-ES')} · ${M3TXT[e.estado]}" style="background:${e.estado==='libre'?'var(--bg)':M3COL[e.estado]};color:${e.estado==='libre'?'var(--txt3)':'#fff'}">${f.getDate()}</span>`;}).join('');
+  const noches=r?Math.round((new Date(r.salida)-new Date(r.entrada))/864e5):0;
+  L.innerHTML=`<h3>${esc(u.nombre)}</h3><div class="sub">${esc(apTipo(u.tipo_id).nombre)} · hasta ${apTipo(u.tipo_id).capacidad} personas</div>
+    <span class="m3d__estado" style="background:${s.estado==='libre'?'var(--leaf)':M3COL[s.estado]}">${M3TXT[s.estado]}${s.entra?' · entra hoy':''}${s.sale?' · sale alguien':''}</span>
+    ${r&&r.estado!=='bloqueo'?`
+      <div class="m3d__fila"><span>Huésped</span><b>${esc(r.nombre||'')}</b></div>
+      <div class="m3d__fila"><span>Fechas</span><b>${apF(r.entrada)} → ${apF(r.salida)} (${noches} n.)</b></div>
+      <div class="m3d__fila"><span>Personas</span><b>${r.adultos} ad.${r.ninos?' + '+r.ninos+' niños':''}</b></div>
+      <div class="m3d__fila"><span>Total</span><b>${apEur(r.total)}</b></div>
+      <div class="m3d__fila"><span>Pago</span><b>${r.pagado>=r.total&&r.total>0?'Pagado':r.justificante_url?'Justificante subido':'Sin pagar'}</b></div>
+      <div class="m3d__fila"><span>Check-in</span><b>${r.checkin_at?'Hecho':'Pendiente'}</b></div>
+      <div class="m3d__fila"><span>Viene de</span><b>${esc(r.origen)}</b></div>`
+    :r?`<div class="m3d__fila"><span>Bloqueado</span><b>${apF(r.entrada)} → ${apF(r.salida)}</b></div>`
+    :`<div class="m3d__fila"><span>Próxima reserva</span><b>${prox?apF(prox.entrada)+' · '+esc(prox.nombre||'bloqueo'):'Ninguna'}</b></div>`}
+    <h3 style="margin-top:16px;font-size:14px">Próximos 14 días</h3><div class="m3d__tira">${tira}</div>
+    <div class="m3d__acc">
+      ${r?`<button class="btn btn-primary" onclick="apVer('${r.id}')">Ver ${r.estado==='bloqueo'?'bloqueo':'reserva'}</button>`:`<button class="btn btn-primary" onclick="apNueva(${u.id},'${d}')">Nueva reserva o bloqueo</button>`}
+      ${r&&r.telefono?`<a class="btn btn-ghost" target="_blank" rel="noopener" href="${apWa(r)}">WhatsApp al huésped</a>`:''}
+      <button class="btn btn-ghost" onclick="M3.sel=null;m3dMarca();m3dLado()">Volver al resumen</button>
+    </div>`;
 }
 
 </script>
