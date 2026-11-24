@@ -17,7 +17,7 @@
     { id: 2, nombre: 'Extreme 2 días', precio_persona: 240 },
     { id: 3, nombre: 'Rip Curl 2 días', precio_persona: 260 }
   ];
-  var preferido = q.get('tipo') || null, busqueda = null, elegido = null, totalActual = 0, reservaHecha = null, promo = null;
+  var autoReserva = q.get('reservar') === '1', preferido = q.get('tipo') || null, busqueda = null, elegido = null, totalActual = 0, reservaHecha = null, promo = null;
 
   function rpc(fn, body) {
     if (DEMO) return Promise.resolve(demo(fn, body));
@@ -98,6 +98,17 @@
     });
     if (!libres.length) avisa('No queda nada libre. Prueba otras fechas o <a class="txt" href="' + waTxt() + '">escríbenos</a> y te buscamos hueco.');
     else avisa('Precio directo, sin comisiones de plataformas.');
+    if (autoReserva) {
+      autoReserva = false;
+      var t0 = lista.filter(function (x) { return String(x.tipo_id) === String(preferido) && x.libres > 0 && x.noches >= x.estancia_min; })[0];
+      if (t0) {
+        sec.hidden = false; abre(t0);
+        var c = Math.min(+q.get('cant') || 1, t0.libres); $('#r-cant').value = c; $('#r-cant').dispatchEvent(new Event('change'));
+        if (q.get('hues')) { $('#r-ad').value = Math.min(+q.get('hues'), t0.capacidad * c); $('#r-ad').dispatchEvent(new Event('change')); }
+        if (q.get('promo')) { $('#r-promo').value = q.get('promo'); $('#r-promo-btn').click(); }
+        return;
+      }
+    }
     sec.hidden = false; sec.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }
 
@@ -275,4 +286,7 @@
     fin.value = calIn; fout.value = calOut; preferido = calTipo; cierraCal();
     $('#f-busca').dispatchEvent(new Event('submit', { cancelable: true }));
   });
+
+  if (q.get('cal')) abreCal(q.get('cal'));
+  else if (autoReserva && fin.value && fout.value) $('#f-busca').dispatchEvent(new Event('submit', { cancelable: true }));
 })();
