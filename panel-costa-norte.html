@@ -952,6 +952,15 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       <button class="nav-item" onclick="go('clientes',this);loadClientes()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Clientes
       </button>
+
+      <div class="sb-section">Alojamiento y camps</div>
+      <button class="nav-item" onclick="go('apartamentos',this);apCargar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-6h6v6"/></svg>Apartamentos
+        <span id="ap-badge" style="background:#f59e0b;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:auto;display:none">0</span>
+      </button>
+      <button class="nav-item" onclick="go('camps',this);cvCargar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20h18"/><path d="M5 20 12 5l7 15"/><path d="M12 5v15"/></svg>Surf camps
+      </button>
       <button class="nav-item" onclick="go('ajustes',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Ajustes
       </button>
@@ -1255,6 +1264,44 @@ tbody tr:hover{background:rgba(255,94,58,.04);cursor:pointer;}
       </div>
     </div>
 
+
+    <!-- PAGINA APARTAMENTOS -->
+    <div id="page-apartamentos" class="page">
+      <div class="page-hd">
+        <div><h1>Apartamentos</h1><div class="page-sub">Reservas directas de la web, sin Avirato ni comisiones</div></div>
+        <div class="page-hd-actions">
+          <button class="btn btn-ghost" onclick="apExportar()">Exportar check-ins</button>
+          <button class="btn btn-ghost" onclick="apTarifas()">Precios y temporadas</button>
+          <button class="btn btn-primary" onclick="apNueva()">+ Reserva o bloqueo</button>
+        </div>
+      </div>
+      <div id="ap-aviso" class="card" style="display:none;padding:14px 18px;color:var(--coral);font-size:13px;"></div>
+      <div class="kpi-grid" id="ap-kpis" style="margin-bottom:14px;"></div>
+      <div class="card"><div class="card-hd"><div class="card-hd-title">Por confirmar</div><div class="card-hd-meta">Reservas nuevas de la web</div></div><div id="ap-pend"></div></div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-title">Ocupación · <span id="ap-rango"></span></div>
+          <div style="display:flex;gap:6px;"><button class="btn btn-ghost" onclick="apMover(-14)">‹ Antes</button><button class="btn btn-ghost" onclick="apHoy()">Hoy</button><button class="btn btn-ghost" onclick="apMover(14)">Después ›</button></div></div>
+        <div class="tbl-wrap" id="ap-cal" style="padding:6px 0 12px;"></div>
+        <div style="padding:0 18px 14px;font-size:12px;color:var(--txt3);display:flex;gap:16px;flex-wrap:wrap;"><span><b style="color:#1c5d82">■</b> Confirmada</span><span><b style="color:#f59e0b">■</b> Pendiente</span><span><b style="color:#8a94a0">■</b> Bloqueado</span><span>Pulsa un hueco libre para añadir una reserva.</span></div>
+      </div>
+    </div>
+
+    <!-- PAGINA SURF CAMPS -->
+    <div id="page-camps" class="page">
+      <div class="page-hd">
+        <div><h1>Surf camps</h1><div class="page-sub">Campamento de verano Costa Verde · inscritos por semana</div></div>
+        <div class="page-hd-actions">
+          <select id="cv-filtro" onchange="cvPintar()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--txt);"></select>
+          <button class="btn btn-ghost" onclick="cvImportar()">Importar lista</button>
+          <button class="btn btn-primary" onclick="cvEditar('')">+ Inscrito</button>
+        </div>
+      </div>
+      <div id="cv-aviso" class="card" style="display:none;padding:14px 18px;color:var(--coral);font-size:13px;"></div>
+      <div class="kpi-grid" id="cv-kpis" style="margin-bottom:14px;"></div>
+      <div class="card"><div class="tbl-wrap"><table>
+        <thead><tr><th>Nombre</th><th>Edad</th><th>Nivel</th><th>Alergias / dieta</th><th>Tutor</th><th>Teléfono</th><th>Semana</th></tr></thead>
+        <tbody id="cv-tbody"></tbody></table></div></div>
+    </div>
   </main>
 
   <!-- ════════════ BOTTOM NAV · MOBILE ════════════ -->
@@ -1373,7 +1420,7 @@ function go(p,el){
     const links=document.querySelectorAll('.nav-item');
     const labels={dashboard:'Dashboard',agenda:'Agenda',apt:'Mapa',cal:'Calendario',res:'Reservas',clean:'Limpieza',maint:'Mantenimiento',classes:'Clases',students:'Alumnos',packs:'Packs',instructors:'Instructores',rental:'Alquileres',shop:'TPV',stock:'Stock',clients:'Clientes',invoices:'Facturas',reports:'Informes',inbox:'Bandeja IA',widget:'Widget',team:'Equipo',settings:'Ajustes'};
   }
-  const titles={dashboard:'Dashboard',solicitudes:'Solicitudes web',agenda:'Agenda del día',classes:'Horario de clases',students:'Alumnos',clientes:'Clientes',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',gastos:'Gastos deducibles',reports:'Gestor financiero',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes',ajustes:'Ajustes',actualizaciones:'Actualizaciones'};
+  const titles={dashboard:'Dashboard',solicitudes:'Solicitudes web',agenda:'Agenda del día',classes:'Horario de clases',students:'Alumnos',clientes:'Clientes',packs:'Packs & tarifas',instructors:'Instructores',rental:'Alquileres',shop:'TPV Surf Shop',stock:'Stock',clients:'Clientes',invoices:'Facturación',gastos:'Gastos deducibles',reports:'Gestor financiero',inbox:'Bandeja IA',widget:'Widget Web',team:'Equipo',settings:'Ajustes',ajustes:'Ajustes',actualizaciones:'Actualizaciones',apartamentos:'Apartamentos',camps:'Surf camps'};
   document.getElementById('tb-title').textContent=titles[p]||'';
   document.getElementById('sb').classList.remove('open');
   const ov=document.getElementById('mob-overlay');if(ov)ov.classList.remove('on');
@@ -5631,6 +5678,266 @@ document.addEventListener('DOMContentLoaded', ()=>{ if(document.getElementById('
 const UPD_CFG={ cliente:'Costa Norte', instalados:[] };
 function montarActualizaciones(){ if(!window.AirmateActualizaciones){ setTimeout(montarActualizaciones,300); return; } AirmateActualizaciones.mount(document.getElementById('upd-host'),UPD_CFG); const b=document.getElementById('upd-badge'); if(b) b.style.display='none'; }
 window.addEventListener('load',()=>setTimeout(async()=>{ if(!window.AirmateActualizaciones) return; const n=await AirmateActualizaciones.hayNuevos(UPD_CFG); const b=document.getElementById('upd-badge'); if(b&&n) b.style.display='inline-block'; },1500));
+</script>
+<script>
+// ════════════ APARTAMENTOS Y SURF CAMPS (reservas propias, sin Avirato) ════════════
+const AP={tipos:[],uds:[],res:[],packs:[],desde:null,dias:21};
+const apEur=n=>Number(n||0).toLocaleString('es-ES',{maximumFractionDigits:2})+' €';
+const apIso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const apF=s=>{if(!s)return '';const p=s.slice(0,10).split('-');return p[2]+'/'+p[1]+'/'+p[0];};
+const apSel=(id,val,opts)=>`<select id="${id}" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--txt);box-sizing:border-box;">${opts.map(([v,t])=>`<option value="${esc(v)}" ${String(v)===String(val)?'selected':''}>${esc(t)}</option>`).join('')}</select>`;
+const apV=id=>document.getElementById(id).value;
+const ORIGENES=[['telefono','Teléfono'],['whatsapp','WhatsApp'],['web','Web'],['booking','Booking'],['airbnb','Airbnb'],['avirato','Avirato (antigua)'],['otro','Otro']];
+const COL_ESTADO={pendiente:'#f59e0b',confirmada:'#1c5d82',bloqueo:'#8a94a0'};
+
+async function apCargar(){
+  const box=document.getElementById('ap-aviso');
+  if(!AP.desde){const d=new Date();d.setDate(d.getDate()-2);AP.desde=d;}
+  const fin=new Date(AP.desde);fin.setDate(fin.getDate()+AP.dias);
+  try{
+    const [t,u,r,p]=await Promise.all([
+      SB.from('cn_apt_tipos').select('*').order('orden'),
+      SB.from('cn_apt_unidades').select('*').eq('activo',true).order('id'),
+      SB.from('cn_apt_reservas').select('*').neq('estado','cancelada').gte('salida',apIso(new Date(new Date().setDate(new Date().getDate()-60)))).order('entrada'),
+      SB.from('cn_apt_packs').select('*').order('precio_persona')
+    ]);
+    const err=t.error||u.error||r.error||p.error; if(err) throw err;
+    AP.tipos=t.data;AP.uds=u.data;AP.res=r.data;AP.packs=p.data;
+    box.style.display='none';
+    apKpis();apPendientes();apCalendario();
+  }catch(e){
+    box.style.display='block';
+    box.textContent=/does not exist|relation|schema cache/i.test(e.message||'')?'Falta activar el módulo de apartamentos en la base de datos (archivo costa-norte-apartamentos.sql). Avisa a Airmate.':'No se han podido cargar los apartamentos: '+(e.message||e);
+  }
+}
+function apTipo(id){return AP.tipos.find(t=>t.id===id)||{nombre:'?'};}
+function apUd(id){return AP.uds.find(u=>u.id===id)||{nombre:'Sin asignar'};}
+function apKpis(){
+  const hoy=apIso(new Date()), mes=hoy.slice(0,7);
+  const pend=AP.res.filter(r=>r.estado==='pendiente').length;
+  const entran=AP.res.filter(r=>r.entrada===hoy&&r.estado!=='bloqueo').length;
+  const ocup=new Set(AP.res.filter(r=>r.estado!=='bloqueo'&&r.entrada<=hoy&&r.salida>hoy).map(r=>r.unidad_id)).size;
+  const ing=AP.res.filter(r=>r.estado==='confirmada'&&r.entrada.slice(0,7)===mes).reduce((s,r)=>s+Number(r.total||0),0);
+  const sinCheckin=AP.res.filter(r=>r.estado==='confirmada'&&!r.checkin_at&&r.entrada>=hoy).length;
+  document.getElementById('ap-kpis').innerHTML=[
+    ['Por confirmar',pend,pend?'warn':''],['Entran hoy',entran,''],['Ocupados hoy',ocup+' / '+AP.uds.length,''],
+    ['Confirmado este mes',apEur(ing),'up'],['Sin check-in',sinCheckin,sinCheckin?'warn':'']
+  ].map(([l,v,c])=>`<div class="kpi"><div class="kpi-lbl">${l}</div><div class="kpi-val">${v}</div>${c?`<div class="kpi-trend ${c}">${c==='warn'?'Revisar':'Directo, sin comisión'}</div>`:''}</div>`).join('');
+  const b=document.getElementById('ap-badge'); if(b){b.textContent=pend;b.style.display=pend?'inline-block':'none';}
+}
+function apPendientes(){
+  const l=AP.res.filter(r=>r.estado==='pendiente').sort((a,b)=>a.created_at<b.created_at?1:-1);
+  document.getElementById('ap-pend').innerHTML=l.length?l.map(r=>`
+    <div style="display:flex;gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border2);flex-wrap:wrap;">
+      <div style="flex:1;min-width:220px;"><b>${esc(r.nombre)}</b> · ${esc(apTipo(r.tipo_id).nombre)} (${esc(apUd(r.unidad_id).nombre)})<br>
+      <span style="font-size:12px;color:var(--txt3)">${apF(r.entrada)} → ${apF(r.salida)} · ${r.adultos} ad. ${r.ninos?'+ '+r.ninos+' niños ':''}· ${esc(r.codigo)} · ${esc(r.origen)}</span></div>
+      <b>${apEur(r.total)}</b>
+      <button class="btn btn-ghost" onclick="apVer('${r.id}')">Ver</button>
+      <button class="btn btn-primary" onclick="apConfirmar('${r.id}')">Confirmar</button>
+    </div>`).join(''):'<div style="padding:16px 18px;color:var(--txt3);font-size:13px;">No hay reservas pendientes.</div>';
+}
+function apCalendario(){
+  const dias=[...Array(AP.dias)].map((_,i)=>{const d=new Date(AP.desde);d.setDate(d.getDate()+i);return d;});
+  const hoy=apIso(new Date());
+  document.getElementById('ap-rango').textContent=apF(apIso(dias[0]))+' – '+apF(apIso(dias[dias.length-1]));
+  let h='<table style="border-collapse:collapse;width:100%;font-size:12px;"><thead><tr><th style="text-align:left;padding:6px 10px;position:sticky;left:0;background:var(--surface);min-width:150px;">Apartamento</th>'+
+    dias.map(d=>{const s=apIso(d);return `<th style="padding:4px 2px;min-width:34px;text-align:center;${s===hoy?'color:var(--coral);':''}${[0,6].includes(d.getDay())?'background:var(--bg);':''}">${'DLMXJVS'[d.getDay()]}<br>${d.getDate()}</th>`;}).join('')+'</tr></thead><tbody>';
+  AP.tipos.forEach(t=>{
+    const uds=AP.uds.filter(u=>u.tipo_id===t.id); if(!uds.length)return;
+    h+=`<tr><td colspan="${AP.dias+1}" style="padding:8px 10px 4px;font-weight:700;color:var(--txt3);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">${esc(t.nombre)}</td></tr>`;
+    uds.forEach(u=>{
+      h+=`<tr><td style="padding:4px 10px;position:sticky;left:0;background:var(--surface);border-top:1px solid var(--border2);white-space:nowrap;">${esc(u.nombre)}</td>`;
+      let i=0;
+      while(i<dias.length){
+        const s=apIso(dias[i]);
+        const r=AP.res.find(x=>x.unidad_id===u.id&&x.entrada<=s&&x.salida>s);
+        if(r){
+          let n=0;while(i+n<dias.length&&apIso(dias[i+n])<r.salida)n++;
+          const c=COL_ESTADO[r.estado]||'#1c5d82';
+          h+=`<td colspan="${n}" style="padding:2px;border-top:1px solid var(--border2);"><button onclick="apVer('${r.id}')" title="${esc(r.nombre||'Bloqueado')}" style="width:100%;border:0;border-radius:6px;background:${c};color:#fff;font-size:11px;font-weight:600;padding:6px 6px;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.estado==='bloqueo'?'Bloqueado':esc(r.nombre||'')}${r.origen!=='web'&&r.estado!=='bloqueo'?' · '+esc(r.origen):''}</button></td>`;
+          i+=n;
+        }else{
+          h+=`<td style="border-top:1px solid var(--border2);border-left:1px solid var(--border2);${[0,6].includes(dias[i].getDay())?'background:var(--bg);':''}"><button onclick="apNueva(${u.id},'${s}')" aria-label="Nueva reserva ${esc(u.nombre)} ${apF(s)}" style="width:100%;height:30px;border:0;background:transparent;cursor:pointer;"></button></td>`;
+          i++;
+        }
+      }
+      h+='</tr>';
+    });
+  });
+  document.getElementById('ap-cal').innerHTML=h+'</tbody></table>';
+}
+function apMover(n){AP.desde.setDate(AP.desde.getDate()+n);apCalendario();}
+function apHoy(){AP.desde=null;apCargar();}
+
+function apNueva(unidad,fecha){
+  const u=unidad?apUd(unidad):null, d=fecha||apIso(new Date());
+  const sal=new Date(d);sal.setDate(sal.getDate()+2);
+  openModal('Nueva reserva o bloqueo',`
+    ${fRow(fLbl('Tipo')+apSel('apn-estado','confirmada',[['confirmada','Reserva confirmada'],['pendiente','Reserva pendiente'],['bloqueo','Bloquear (no se alquila)']]), fLbl('Viene de')+apSel('apn-origen','telefono',ORIGENES))}
+    ${fLbl('Apartamento')}${apSel('apn-ud',unidad||'',AP.uds.map(x=>[x.id,apTipo(x.tipo_id).nombre+' · '+x.nombre]))}
+    ${fRow(fLbl('Entrada')+fInp('apn-in',d,'date'), fLbl('Salida')+fInp('apn-out',apIso(sal),'date'))}
+    ${fRow(fLbl('Adultos')+fInp('apn-ad','2','number'), fLbl('Niños')+fInp('apn-ni','0','number'))}
+    ${fLbl('Nombre')}${fInp('apn-nom','')}
+    ${fRow(fLbl('Teléfono')+fInp('apn-tel',''), fLbl('Email')+fInp('apn-mail','','email'))}
+    ${fRow(fLbl('Total (€)')+fInp('apn-total','','number','Vacío = precio de tarifa'), fLbl('Pagado (€)')+fInp('apn-pag','0','number'))}
+    ${fLbl('Notas')}${fTxt('apn-not','','2','')}
+    ${fActions('Guardar','apGuardarNueva()')}
+  `);
+}
+async function apGuardarNueva(){
+  const ud=Number(apV('apn-ud')), ent=apV('apn-in'), sal=apV('apn-out'), estado=apV('apn-estado');
+  if(!ud||!ent||!sal||sal<=ent){toast('Revisa el apartamento y las fechas');return;}
+  const choque=AP.res.find(r=>r.unidad_id===ud&&r.entrada<sal&&r.salida>ent);
+  if(choque){toast('Ese apartamento ya está ocupado: '+(choque.nombre||'bloqueo')+' '+apF(choque.entrada)+'–'+apF(choque.salida));return;}
+  const u=apUd(ud); let total=apV('apn-total');
+  try{
+    if(total===''&&estado!=='bloqueo'){const {data,error}=await SB.rpc('cn_apt_precio',{p_tipo:u.tipo_id,p_entrada:ent,p_salida:sal});if(error)throw error;total=data&&data[0]?data[0].total:0;}
+    const fila={tipo_id:u.tipo_id,unidad_id:ud,entrada:ent,salida:sal,estado,origen:estado==='bloqueo'?'otro':apV('apn-origen'),
+      adultos:Number(apV('apn-ad'))||1,ninos:Number(apV('apn-ni'))||0,nombre:apV('apn-nom').trim()||null,telefono:apV('apn-tel').trim()||null,
+      email:apV('apn-mail').trim().toLowerCase()||null,total:Number(total)||0,pagado:Number(apV('apn-pag'))||0,notas:apV('apn-not').trim()||null};
+    const {error}=await SB.from('cn_apt_reservas').insert(fila); if(error)throw error;
+    closeModal();toast('Guardado');apCargar();
+  }catch(e){toast('No se ha guardado: '+(e.message||e));}
+}
+function apVer(id){
+  const r=AP.res.find(x=>x.id===id); if(!r)return;
+  const pack=r.pack_id?AP.packs.find(p=>p.id===r.pack_id):null;
+  const ci=Array.isArray(r.checkin)?r.checkin:[];
+  openModal(r.estado==='bloqueo'?'Bloqueo':'Reserva '+r.codigo,`
+    <div style="font-size:13px;line-height:1.7;">
+      <b>${esc(apTipo(r.tipo_id).nombre)}</b> · ${esc(apUd(r.unidad_id).nombre)}<br>
+      ${apF(r.entrada)} → ${apF(r.salida)} · ${r.adultos} adultos${r.ninos?', '+r.ninos+' niños':''}<br>
+      ${r.nombre?esc(r.nombre)+'<br>':''}${r.telefono?`<a href="tel:${esc(r.telefono)}">${esc(r.telefono)}</a> · `:''}${r.email?`<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`:''}<br>
+      ${pack?'Pack: '+esc(pack.nombre)+' × '+r.pack_personas+'<br>':''}
+      Total <b>${apEur(r.total)}</b> · Pagado ${apEur(r.pagado)} · Viene de: ${esc(r.origen)}<br>
+      ${r.notas?'<i>'+esc(r.notas)+'</i><br>':''}
+      Check-in online: ${r.checkin_at?'<b style="color:var(--leaf)">hecho</b> ('+ci.length+' huéspedes)':'pendiente'}
+    </div>
+    ${ci.length?`<details style="margin-top:10px;font-size:12px;"><summary style="cursor:pointer;font-weight:600;">Datos de los huéspedes</summary>${ci.map((h,i)=>`<div style="padding:8px 0;border-bottom:1px solid var(--border2);">${i+1}. ${esc(h.nombre)} ${esc(h.apellido1)} ${esc(h.apellido2||'')} · ${esc(h.tipo_doc)} ${esc(h.num_doc)} ${h.soporte?'(sop. '+esc(h.soporte)+')':''} · nac. ${apF(h.nacimiento)} · ${esc(h.nacionalidad)} · ${esc(h.sexo)}<br>${esc(h.direccion)}, ${esc(h.localidad)}, ${esc(h.pais)}${h.telefono?' · '+esc(h.telefono):''}${h.email?' · '+esc(h.email):''}</div>`).join('')}</details>`:''}
+    ${fRow(fLbl('Estado')+apSel('apv-estado',r.estado,[['pendiente','Pendiente'],['confirmada','Confirmada'],['bloqueo','Bloqueo'],['cancelada','Cancelada']]), fLbl('Pagado (€)')+fInp('apv-pag',r.pagado,'number'))}
+    ${fLbl('Apartamento')}${apSel('apv-ud',r.unidad_id,AP.uds.filter(u=>u.tipo_id===r.tipo_id).map(x=>[x.id,x.nombre]))}
+    ${fLbl('Notas')}${fTxt('apv-not',r.notas||'','2','')}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+      ${r.telefono?`<a class="btn btn-ghost" target="_blank" rel="noopener" href="${apWa(r)}">WhatsApp al huésped</a>`:''}
+      ${r.estado!=='bloqueo'?`<button class="btn btn-ghost" onclick="navigator.clipboard.writeText('${location.origin}/costanorte/checkin/?c=${r.codigo}').then(()=>toast('Enlace de check-in copiado'))">Copiar enlace de check-in</button>`:''}
+    </div>
+    ${fActions('Guardar',`apGuardar('${r.id}')`,`apBorrar('${r.id}')`)}
+  `);
+}
+function apWa(r){
+  const tel=String(r.telefono||'').replace(/\D/g,''); const num=tel.length===9?'34'+tel:tel;
+  const t=`Hola ${r.nombre?r.nombre.split(' ')[0]:''}, soy de Costa Norte. Tu reserva ${r.codigo} del ${apF(r.entrada)} al ${apF(r.salida)} en ${apTipo(r.tipo_id).nombre} (${apEur(r.total)}) ${r.estado==='confirmada'?'está confirmada':'está recibida'}. Antes de venir, haz el check-in online aquí: ${location.origin}/costanorte/checkin/?c=${r.codigo}`;
+  return 'https://wa.me/'+num+'?text='+encodeURIComponent(t);
+}
+async function apGuardar(id){
+  const r=AP.res.find(x=>x.id===id), ud=Number(apV('apv-ud'));
+  if(ud!==r.unidad_id){const ch=AP.res.find(x=>x.id!==id&&x.unidad_id===ud&&x.entrada<r.salida&&x.salida>r.entrada);if(ch){toast('Ese apartamento está ocupado en esas fechas');return;}}
+  const {error}=await SB.from('cn_apt_reservas').update({estado:apV('apv-estado'),pagado:Number(apV('apv-pag'))||0,unidad_id:ud,notas:apV('apv-not').trim()||null}).eq('id',id);
+  if(error){toast('No se ha guardado: '+error.message);return;}
+  closeModal();toast('Guardado');apCargar();
+}
+async function apConfirmar(id){
+  const {error}=await SB.from('cn_apt_reservas').update({estado:'confirmada'}).eq('id',id);
+  if(error){toast('No se ha confirmado: '+error.message);return;}
+  const r=AP.res.find(x=>x.id===id); r.estado='confirmada';
+  toast('Reserva confirmada'); apCargar();
+  if(r.telefono) window.open(apWa(r),'_blank','noopener');
+}
+async function apBorrar(id){
+  if(!confirm('¿Cancelar esta reserva? Quedará libre el apartamento.'))return;
+  const {error}=await SB.from('cn_apt_reservas').update({estado:'cancelada'}).eq('id',id);
+  if(error){toast('No se ha cancelado: '+error.message);return;}
+  closeModal();toast('Cancelada');apCargar();
+}
+async function apTarifas(){
+  const {data:tar,error}=await SB.from('cn_apt_tarifas').select('*').order('desde');
+  if(error){toast(error.message);return;}
+  openModal('Precios y temporadas',`
+    <p style="font-size:13px;color:var(--txt3);margin:0 0 8px;">Precio por noche de cada tipo cuando no hay temporada, y las temporadas con su precio y estancia mínima. La web calcula el total sola.</p>
+    <table style="width:100%;font-size:13px;border-collapse:collapse;">${AP.tipos.map(t=>`<tr><td style="padding:6px 0;">${esc(t.nombre)}</td><td style="width:110px;"><input id="apb-${t.id}" type="number" value="${t.precio_base}" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"></td><td style="padding-left:6px;font-size:12px;color:var(--txt3);">€/noche</td></tr>`).join('')}</table>
+    <button class="btn btn-ghost" style="margin-top:8px;" onclick="apGuardarBase()">Guardar precios base</button>
+    <h3 style="margin:18px 0 6px;font-size:15px;">Temporadas</h3>
+    ${(tar||[]).map(x=>`<div style="display:flex;gap:8px;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border2);"><span style="flex:1;">${esc(x.nombre||'')} · ${x.tipo_id?esc(apTipo(x.tipo_id).nombre):'Todos'} · ${apF(x.desde)}–${apF(x.hasta)} · <b>${apEur(x.precio_noche)}</b>/noche · mín. ${x.estancia_min}</span><button class="btn btn-ghost" onclick="apBorrarTarifa(${x.id})">Quitar</button></div>`).join('')||'<p style="font-size:13px;color:var(--txt3)">Sin temporadas.</p>'}
+    <h3 style="margin:18px 0 0;font-size:15px;">Añadir temporada</h3>
+    ${fRow(fLbl('Nombre')+fInp('apt-nom','','text','Semana Santa'), fLbl('Para')+apSel('apt-tipo','',[['','Todos los tipos']].concat(AP.tipos.map(t=>[t.id,t.nombre]))))}
+    ${fRow(fLbl('Desde')+fInp('apt-d','','date'), fLbl('Hasta (incluido)')+fInp('apt-h','','date'))}
+    ${fRow(fLbl('Precio por noche (€)')+fInp('apt-p','','number'), fLbl('Noches mínimas')+fInp('apt-m','1','number'))}
+    ${fActions('Añadir temporada','apGuardarTarifa()')}
+  `);
+}
+async function apGuardarBase(){
+  try{for(const t of AP.tipos){const v=Number(document.getElementById('apb-'+t.id).value);if(v>0&&v!==Number(t.precio_base)){const {error}=await SB.from('cn_apt_tipos').update({precio_base:v}).eq('id',t.id);if(error)throw error;t.precio_base=v;}}toast('Precios guardados');}
+  catch(e){toast('No se han guardado: '+e.message);}
+}
+async function apGuardarTarifa(){
+  const f={nombre:apV('apt-nom').trim()||null,tipo_id:apV('apt-tipo')?Number(apV('apt-tipo')):null,desde:apV('apt-d'),hasta:apV('apt-h'),precio_noche:Number(apV('apt-p')),estancia_min:Number(apV('apt-m'))||1};
+  if(!f.desde||!f.hasta||f.hasta<f.desde||!(f.precio_noche>0)){toast('Revisa fechas y precio');return;}
+  const {error}=await SB.from('cn_apt_tarifas').insert(f); if(error){toast(error.message);return;}
+  toast('Temporada añadida');apTarifas();
+}
+async function apBorrarTarifa(id){const {error}=await SB.from('cn_apt_tarifas').delete().eq('id',id);if(error){toast(error.message);return;}apTarifas();}
+function apExportar(){
+  const filas=[['codigo','apartamento','entrada','salida','nombre','apellido1','apellido2','tipo_doc','num_doc','soporte','nacimiento','nacionalidad','sexo','direccion','localidad','pais','telefono','email']];
+  AP.res.filter(r=>Array.isArray(r.checkin)).forEach(r=>r.checkin.forEach(h=>filas.push([r.codigo,apUd(r.unidad_id).nombre,r.entrada,r.salida,h.nombre,h.apellido1,h.apellido2,h.tipo_doc,h.num_doc,h.soporte,h.nacimiento,h.nacionalidad,h.sexo,h.direccion,h.localidad,h.pais,h.telefono,h.email])));
+  if(filas.length<2){toast('Todavía no hay check-ins');return;}
+  const csv=filas.map(f=>f.map(c=>'"'+String(c??'').replace(/"/g,'""')+'"').join(';')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'}));a.download='checkins-costa-norte.csv';a.click();
+}
+
+// ── Surf camps · Costa Verde ──
+const CV={l:[]};
+async function cvCargar(){
+  const box=document.getElementById('cv-aviso');
+  const {data,error}=await SB.from('cn_camp_inscritos').select('*').order('semana').order('nombre');
+  if(error){box.style.display='block';box.textContent=/does not exist|relation|schema cache/i.test(error.message)?'Falta activar el módulo de surf camps en la base de datos (archivo costa-norte-apartamentos.sql). Avisa a Airmate.':'No se han podido cargar los inscritos: '+error.message;return;}
+  box.style.display='none'; CV.l=data; cvPintar();
+}
+function cvPintar(){
+  const sem=[...new Set(CV.l.map(x=>x.semana||'Sin semana'))];
+  const f=document.getElementById('cv-filtro'), val=f.value;
+  f.innerHTML='<option value="">Todas las semanas</option>'+sem.map(s=>`<option ${s===val?'selected':''}>${esc(s)}</option>`).join('');
+  const l=CV.l.filter(x=>!val||(x.semana||'Sin semana')===val);
+  document.getElementById('cv-kpis').innerHTML=[['Inscritos',l.length],['Semanas',sem.length],['Con alergias o dieta',l.filter(x=>x.alergias).length],['Nunca han surfeado',l.filter(x=>/nunca/i.test(x.nivel||'')).length]]
+    .map(([a,b])=>`<div class="kpi"><div class="kpi-lbl">${a}</div><div class="kpi-val">${b}</div></div>`).join('');
+  document.getElementById('cv-tbody').innerHTML=l.length?l.map(x=>`<tr style="cursor:pointer" onclick="cvEditar('${x.id}')"><td><b>${esc(x.nombre)}</b></td><td>${x.edad??''}</td><td>${esc(x.nivel)}</td><td style="color:${x.alergias?'var(--coral)':'inherit'}">${esc(x.alergias)}</td><td>${esc(x.tutor)}</td><td>${esc(x.telefono)}</td><td>${esc(x.semana)}</td></tr>`).join('')
+    :'<tr><td colspan="7" style="padding:16px;color:var(--txt3)">Sin inscritos todavía. Añádelos o importa la lista de Costa Verde.</td></tr>';
+}
+function cvEditar(id){
+  const x=CV.l.find(y=>y.id===id)||{};
+  openModal(id?'Editar inscrito':'Nuevo inscrito',`
+    ${fLbl('Nombre del chaval/a')}${fInp('cv-nom',x.nombre||'')}
+    ${fRow(fLbl('Edad')+fInp('cv-edad',x.edad??'','number'), fLbl('Nivel')+apSel('cv-niv',x.nivel||'Nunca',[['Nunca','Nunca ha surfeado'],['Alguna vez','Alguna vez'],['Se pone de pie','Se pone de pie'],['Ya surfea','Ya surfea']]))}
+    ${fLbl('Semana')}${fInp('cv-sem',x.semana||'','text','28 jun – 5 jul')}
+    ${fLbl('Alergias o dieta')}${fInp('cv-ale',x.alergias||'')}
+    ${fRow(fLbl('Madre/padre o tutor')+fInp('cv-tut',x.tutor||''), fLbl('Teléfono')+fInp('cv-tel',x.telefono||''))}
+    ${fLbl('Notas')}${fTxt('cv-not',x.notas||'','2','')}
+    ${fActions('Guardar',`cvGuardar('${id||''}')`,id?`cvBorrar('${id}')`:'')}
+  `);
+}
+async function cvGuardar(id){
+  const f={nombre:apV('cv-nom').trim(),edad:apV('cv-edad')?Number(apV('cv-edad')):null,nivel:apV('cv-niv'),semana:apV('cv-sem').trim()||null,alergias:apV('cv-ale').trim()||null,tutor:apV('cv-tut').trim()||null,telefono:apV('cv-tel').trim()||null,notas:apV('cv-not').trim()||null};
+  if(!f.nombre){toast('Falta el nombre');return;}
+  const q=id?SB.from('cn_camp_inscritos').update(f).eq('id',id):SB.from('cn_camp_inscritos').insert(f);
+  const {error}=await q; if(error){toast('No se ha guardado: '+error.message);return;}
+  closeModal();toast('Guardado');cvCargar();
+}
+async function cvBorrar(id){if(!confirm('¿Borrar este inscrito?'))return;const {error}=await SB.from('cn_camp_inscritos').delete().eq('id',id);if(error){toast(error.message);return;}closeModal();cvCargar();}
+function cvImportar(){
+  openModal('Importar lista de Costa Verde',`
+    <p style="font-size:13px;color:var(--txt3);margin:0 0 8px;">Copia las filas del Excel que os pase Costa Verde y pégalas aquí. Columnas en este orden: <b>nombre, edad, nivel, alergias, tutor, teléfono, semana</b>. Si la primera fila son títulos, se ignora.</p>
+    ${fTxt('cv-pega','','10','Lucía Pérez	12	Nunca	Celiaca	Ana Gómez	600123123	28 jun – 5 jul')}
+    ${fActions('Importar','cvImportarOk()')}
+  `);
+}
+async function cvImportarOk(){
+  const filas=apV('cv-pega').split(/\r?\n/).map(l=>l.split(/\t|;/).map(c=>c.trim())).filter(c=>c[0]);
+  if(filas.length&&/nombre/i.test(filas[0][0]))filas.shift();
+  if(!filas.length){toast('No hay filas');return;}
+  const ins=filas.map(c=>({nombre:c[0],edad:Number(c[1])||null,nivel:c[2]||null,alergias:c[3]||null,tutor:c[4]||null,telefono:c[5]||null,semana:c[6]||null}));
+  const {error}=await SB.from('cn_camp_inscritos').insert(ins); if(error){toast('No se ha importado: '+error.message);return;}
+  closeModal();toast(ins.length+' inscritos importados');cvCargar();
+}
+
 </script>
 </body>
 </html>
