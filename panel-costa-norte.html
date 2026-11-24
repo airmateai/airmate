@@ -1068,6 +1068,7 @@ th{letter-spacing:0!important;text-transform:none!important;font-size:12px!impor
       </button>
       <button class="nav-item" onclick="go('camps',this);cvCargar()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20h18"/><path d="M5 20 12 5l7 15"/><path d="M12 5v15"/></svg>Surf camps
+        <span id="cv-badge" style="background:#2dba8a;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:auto;display:none">0</span>
       </button>
       <button class="nav-item" onclick="go('ajustes',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Ajustes
@@ -1458,17 +1459,18 @@ th{letter-spacing:0!important;text-transform:none!important;font-size:12px!impor
     <!-- PAGINA SURF CAMPS -->
     <div id="page-camps" class="page">
       <div class="page-hd">
-        <div><h1>Surf camps</h1><div class="page-sub">Campamento de verano Costa Verde · inscritos por semana</div></div>
+        <div><h1>Surf camps</h1><div class="page-sub">Campamento de verano Costa Verde. Las inscripciones de la web llegan aquí.</div></div>
         <div class="page-hd-actions">
           <select id="cv-filtro" onchange="cvPintar()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--txt);"></select>
           <button class="btn btn-ghost" onclick="cvImportar()">Importar lista</button>
+          <button class="btn btn-ocean" onclick="cvVolcar()">Pasar a Costa Verde</button>
           <button class="btn btn-primary" onclick="cvEditar('')">+ Inscrito</button>
         </div>
       </div>
       <div id="cv-aviso" class="card" style="display:none;padding:14px 18px;color:var(--coral);font-size:13px;"></div>
       <div class="kpi-grid" id="cv-kpis" style="margin-bottom:14px;"></div>
       <div class="card"><div class="tbl-wrap"><table>
-        <thead><tr><th>Nombre</th><th>Edad</th><th>Nivel</th><th>Alergias / dieta</th><th>Tutor</th><th>Teléfono</th><th>Semana</th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Edad</th><th>Nivel</th><th>Alergias / dieta</th><th>Tutor</th><th>Teléfono</th><th>Semana</th><th>Estado</th><th>Costa Verde</th></tr></thead>
         <tbody id="cv-tbody"></tbody></table></div></div>
     </div>
   </main>
@@ -1664,6 +1666,7 @@ function initApp(){
   document.getElementById('dash-date').textContent=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
   try{renderDash();}catch(e){console.error('renderDash',e);}
   try{fetchSurfConditions();setInterval(fetchSurfConditions,30*60*1000);}catch(e){}
+  setInterval(()=>{if(!document.hidden&&document.getElementById('page-dashboard')?.classList.contains('active'))renderDash().catch(()=>{});},3*60*1000);
   try{loadAllData();}catch(e){console.error('loadAllData',e);}
 let _lastClasesJSON='',_lastAlumnosJSON='';
 async function sbLoadIfChanged(table,setter,render,lastRef,order='created_at'){
@@ -1770,7 +1773,7 @@ async function renderDash(){
     SB.from('appointments').select('id,client_name,service,starts_at,status,budget,notes,created_at').eq('business_slug','costa-norte').gte('starts_at',mes+'-01').order('starts_at',{ascending:true}),
     SB.from('cn_apt_reservas').select('id,codigo,nombre,tipo_id,unidad_id,entrada,salida,estado,total,adultos,ninos,created_at').neq('estado','cancelada').gte('salida',hoy).order('entrada'),
     SB.from('cn_apt_unidades').select('id,nombre').eq('activo',true),
-    SB.from('cn_camp_inscritos').select('id,semana,alergias'),
+    SB.from('cn_camp_inscritos').select('*'),
     SB.from('appointments').select('id,client_name,service,starts_at,budget,created_at').eq('business_slug','costa-norte').eq('status','pending').order('created_at',{ascending:false}).limit(6)
   ].map(q=>Promise.resolve(q).catch(e=>({error:e,data:null}))));
   pintarDash({ap,ar,au,cv,pp});
@@ -1819,7 +1822,9 @@ function pintarDash({ap,ar,au,cv,pp}){
   $d('dash-semana-nota').textContent=ar.error?'No se han podido cargar los apartamentos.':`Apartamentos ocupados cada día, de ${total}. Media de la semana: ${media} %.`;
   if(cv.error||!camps.length){$d('dash-camps').innerHTML=vacio('Sin inscritos todavía.');}
   else{const sem=new Set(camps.map(x=>x.semana||'Sin semana'));
-    $d('dash-camps').innerHTML=`<div class="hoy-camps"><div><b>${camps.length}</b><small>inscritos</small></div><div><b>${sem.size}</b><small>semanas</small></div><div><b>${camps.filter(x=>x.alergias).length}</b><small>con alergias o dieta</small></div></div>`;}
+    const vivos=camps.filter(x=>(x.estado||'nuevo')!=='cancelado'), nuevos=camps.filter(x=>x.origen==='web'&&(x.estado||'nuevo')==='nuevo').length;
+    $d('dash-camps').innerHTML=`<div class="hoy-camps"><div><b>${vivos.length}</b><small>inscritos</small></div><div><b>${nuevos}</b><small>nuevos desde la web</small></div><div><b>${vivos.filter(x=>!x.volcado_at).length}</b><small>sin pasar a Costa Verde</small></div></div>`;
+    cvBadge(camps);}
   const b=document.getElementById('ap-badge'); if(b&&!ar.error){b.textContent=pendA.length;b.style.display=pendA.length?'inline-block':'none';}
 }
 function apIsoLocal(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -6056,15 +6061,20 @@ async function cvCargar(){
   if(error){box.style.display='block';box.textContent=/does not exist|relation|schema cache/i.test(error.message)?'Falta activar el módulo de surf camps en la base de datos (archivo costa-norte-apartamentos.sql). Avisa a Airmate.':'No se han podido cargar los inscritos: '+error.message;return;}
   box.style.display='none'; CV.l=data; cvPintar();
 }
+const cvVivo=x=>(x.estado||'nuevo')!=='cancelado';
+const cvNuevoWeb=x=>x.origen==='web'&&(x.estado||'nuevo')==='nuevo';
+function cvBadge(l){const n=(l||[]).filter(cvNuevoWeb).length,b=document.getElementById('cv-badge');if(b){b.textContent=n;b.style.display=n?'inline-block':'none';}}
+function cvEstado(x){const e=x.estado||'nuevo';return e==='cancelado'?'<span class="tag tag-ocean">Cancelado</span>':e==='confirmado'?'<span class="tag tag-ok">Confirmado</span>':`<span class="tag tag-warn">Nuevo${x.origen==='web'?' · web':''}</span>`;}
 function cvPintar(){
   const sem=[...new Set(CV.l.map(x=>x.semana||'Sin semana'))];
   const f=document.getElementById('cv-filtro'), val=f.value;
   f.innerHTML='<option value="">Todas las semanas</option>'+sem.map(s=>`<option ${s===val?'selected':''}>${esc(s)}</option>`).join('');
-  const l=CV.l.filter(x=>!val||(x.semana||'Sin semana')===val);
-  document.getElementById('cv-kpis').innerHTML=[['Inscritos',l.length],['Semanas',sem.length],['Con alergias o dieta',l.filter(x=>x.alergias).length],['Nunca han surfeado',l.filter(x=>/nunca/i.test(x.nivel||'')).length]]
+  const l=CV.l.filter(x=>!val||(x.semana||'Sin semana')===val), vivos=l.filter(cvVivo);
+  cvBadge(CV.l);
+  document.getElementById('cv-kpis').innerHTML=[['Inscritos',vivos.length],['Nuevos desde la web',l.filter(cvNuevoWeb).length],['Sin pasar a Costa Verde',vivos.filter(x=>!x.volcado_at).length],['Con alergias o dieta',vivos.filter(x=>x.alergias).length]]
     .map(([a,b])=>`<div class="kpi"><div class="kpi-lbl">${a}</div><div class="kpi-val">${b}</div></div>`).join('');
-  document.getElementById('cv-tbody').innerHTML=l.length?l.map(x=>`<tr style="cursor:pointer" onclick="cvEditar('${x.id}')"><td><b>${esc(x.nombre)}</b></td><td>${x.edad??''}</td><td>${esc(x.nivel)}</td><td style="color:${x.alergias?'var(--coral)':'inherit'}">${esc(x.alergias)}</td><td>${esc(x.tutor)}</td><td>${esc(x.telefono)}</td><td>${esc(x.semana)}</td></tr>`).join('')
-    :'<tr><td colspan="7" style="padding:16px;color:var(--txt3)">Sin inscritos todavía. Añádelos o importa la lista de Costa Verde.</td></tr>';
+  document.getElementById('cv-tbody').innerHTML=l.length?l.map(x=>`<tr style="cursor:pointer;${cvVivo(x)?'':'opacity:.5'}" onclick="cvEditar('${x.id}')"><td><b>${esc(x.nombre)}</b>${x.codigo?`<br><small style="color:var(--txt3)">${esc(x.codigo)}</small>`:''}</td><td>${x.edad??''}</td><td>${esc(x.nivel)}</td><td style="color:${x.alergias?'var(--coral)':'inherit'}">${esc(x.alergias)}</td><td>${esc(x.tutor)}</td><td>${esc(x.telefono)}</td><td>${esc(x.semana)}</td><td>${cvEstado(x)}</td><td>${x.volcado_at?'Pasado el '+new Date(x.volcado_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'}):'<span style="color:var(--txt3)">Pendiente</span>'}</td></tr>`).join('')
+    :'<tr><td colspan="9" style="padding:16px;color:var(--txt3)">Sin inscritos todavía. Las inscripciones de la web aparecerán aquí.</td></tr>';
 }
 function cvEditar(id){
   const x=CV.l.find(y=>y.id===id)||{};
@@ -6074,18 +6084,47 @@ function cvEditar(id){
     ${fLbl('Semana')}${fInp('cv-sem',x.semana||'','text','28 jun – 5 jul')}
     ${fLbl('Alergias o dieta')}${fInp('cv-ale',x.alergias||'')}
     ${fRow(fLbl('Madre/padre o tutor')+fInp('cv-tut',x.tutor||''), fLbl('Teléfono')+fInp('cv-tel',x.telefono||''))}
+    ${fRow(fLbl('Email')+fInp('cv-mail',x.email||'','email'), fLbl('Estado')+apSel('cv-est',x.estado||'nuevo',[['nuevo','Nuevo (por llamar)'],['confirmado','Confirmado (plaza y señal)'],['cancelado','Cancelado']]))}
     ${fLbl('Notas')}${fTxt('cv-not',x.notas||'','2','')}
+    ${x.codigo||x.volcado_at?`<p style="font-size:12px;color:var(--txt3);margin-top:10px">${x.codigo?'Inscrito desde la web · '+esc(x.codigo)+'. ':''}${x.volcado_at?'Pasado a Costa Verde el '+new Date(x.volcado_at).toLocaleDateString('es-ES')+'.':''}</p>`:''}
+    ${x.telefono?`<a class="btn btn-ghost" style="margin-top:10px" target="_blank" rel="noopener" href="https://wa.me/${String(x.telefono).replace(/\D/g,'').replace(/^(?=[67]\d{8}$)/,'34')}?text=${encodeURIComponent('Hola '+(x.tutor||'').split(' ')[0]+', soy de Costa Norte. Hemos recibido la inscripción de '+(x.nombre||'')+' al campamento Costa Verde ('+(x.semana||'')+'). Te escribo para confirmar la plaza y la señal de 200 €.')}">WhatsApp a la familia</a>`:''}
     ${fActions('Guardar',`cvGuardar('${id||''}')`,id?`cvBorrar('${id}')`:'')}
   `);
 }
 async function cvGuardar(id){
   const f={nombre:apV('cv-nom').trim(),edad:apV('cv-edad')?Number(apV('cv-edad')):null,nivel:apV('cv-niv'),semana:apV('cv-sem').trim()||null,alergias:apV('cv-ale').trim()||null,tutor:apV('cv-tut').trim()||null,telefono:apV('cv-tel').trim()||null,notas:apV('cv-not').trim()||null};
+  if(document.getElementById('cv-mail')){f.email=apV('cv-mail').trim()||null;f.estado=apV('cv-est')||'nuevo';}
   if(!f.nombre){toast('Falta el nombre');return;}
   const q=id?SB.from('cn_camp_inscritos').update(f).eq('id',id):SB.from('cn_camp_inscritos').insert(f);
   const {error}=await q; if(error){toast('No se ha guardado: '+error.message);return;}
   closeModal();toast('Guardado');cvCargar();
 }
 async function cvBorrar(id){if(!confirm('¿Borrar este inscrito?'))return;const {error}=await SB.from('cn_camp_inscritos').delete().eq('id',id);if(error){toast(error.message);return;}closeModal();cvCargar();}
+function cvVolcar(){
+  const val=document.getElementById('cv-filtro').value;
+  const l=CV.l.filter(x=>cvVivo(x)&&!x.volcado_at&&(!val||(x.semana||'Sin semana')===val));
+  CV.volcar=l;
+  openModal('Pasar a Costa Verde',l.length?`
+    <p style="font-size:13px;color:var(--txt2);margin:0 0 10px">${l.length} ${l.length===1?'inscrito':'inscritos'} sin pasar${val?' de la semana '+esc(val):''}. Copia la lista y pégala en su Excel, o descárgala, y después márcalos como pasados.</p>
+    <div style="max-height:220px;overflow:auto;border:1px solid var(--border2);border-radius:10px;padding:6px 12px;font-size:13px">${l.map(x=>`<div style="padding:6px 0;border-bottom:1px solid var(--border2)"><b>${esc(x.nombre)}</b> · ${x.edad??''} años · ${esc(x.semana||'')}${x.estado==='confirmado'?'':' · <span style="color:var(--warn)">sin confirmar</span>'}</div>`).join('')}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+      <button class="btn btn-ghost" onclick="cvCopiarLista()">Copiar para Excel</button>
+      <button class="btn btn-ghost" onclick="cvDescargarLista()">Descargar CSV</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-primary" onclick="cvMarcarVolcados()">Marcar como pasados</button>
+    </div>
+    <p style="font-size:12px;color:var(--txt3);margin-top:10px">Son datos de menores: mándalos solo a Costa Verde, por su canal de siempre.</p>`
+  :'<p style="font-size:13px;color:var(--txt3)">No hay inscritos pendientes de pasar a Costa Verde.</p>');
+}
+const CV_COLS=[['Nombre','nombre'],['Edad','edad'],['Nivel','nivel'],['Alergias o dieta','alergias'],['Tutor','tutor'],['Teléfono','telefono'],['Email','email'],['Semana','semana'],['Estado','estado'],['Notas','notas'],['Código','codigo']];
+function cvFilas(sep){const q=v=>{v=String(v??'').replace(/[\r\n\t]+/g,' ');return sep===';'&&/[;"]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  return [CV_COLS.map(c=>c[0]).join(sep),...(CV.volcar||[]).map(x=>CV_COLS.map(c=>q(x[c[1]])).join(sep))].join('\n');}
+function cvCopiarLista(){navigator.clipboard.writeText(cvFilas('\t')).then(()=>toast('Lista copiada: pégala en el Excel'),()=>toast('No se ha podido copiar'));}
+function cvDescargarLista(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+cvFilas(';')],{type:'text/csv;charset=utf-8'}));a.download='costa-verde-inscritos-'+apIsoLocal(new Date())+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
+async function cvMarcarVolcados(){const ids=(CV.volcar||[]).map(x=>x.id);if(!ids.length)return;
+  const {error}=await SB.from('cn_camp_inscritos').update({volcado_at:new Date().toISOString()}).in('id',ids);
+  if(error){toast(/volcado_at/.test(error.message)?'Falta activar las inscripciones web en la base de datos (costa-norte-camps-web.sql).':'No se ha guardado: '+error.message);return;}
+  closeModal();toast(ids.length+(ids.length===1?' inscrito marcado':' inscritos marcados')+' como pasados a Costa Verde');cvCargar();}
 function cvImportar(){
   openModal('Importar lista de Costa Verde',`
     <p style="font-size:13px;color:var(--txt3);margin:0 0 8px;">Copia las filas del Excel que os pase Costa Verde y pégalas aquí. Columnas en este orden: <b>nombre, edad, nivel, alergias, tutor, teléfono, semana</b>. Si la primera fila son títulos, se ignora.</p>
