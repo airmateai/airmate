@@ -1,0 +1,152 @@
+/* Costa Norte · reservas directas de apartamentos (sin Avirato ni plataformas) */
+(function () {
+  var SB = 'https://vjofxmfwdybktpwiuanc.supabase.co';
+  var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
+  var WA = 'https://wa.me/34609282963?text=';
+  var q = new URLSearchParams(location.search);
+  var DEMO = q.get('demo') === '1';
+  var $ = function (s) { return document.querySelector(s); };
+  var eur = function (n) { return Number(n).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' €'; };
+  var fecha = function (s) { var p = s.split('-'); return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }); };
+  var iso = function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+
+  var fichas = [].slice.call(document.querySelectorAll('.ficha'));
+  var TIPOS = {}; fichas.forEach(function (f) { TIPOS[f.dataset.tipo] = { nombre: f.dataset.nombre, foto: f.dataset.foto, cap: +f.dataset.cap, uds: +f.dataset.uds }; });
+  var PACKS = [
+    { id: 1, nombre: 'Surf Camp 2 días', precio_persona: 190 },
+    { id: 2, nombre: 'Extreme 2 días', precio_persona: 240 },
+    { id: 3, nombre: 'Rip Curl 2 días', precio_persona: 260 }
+  ];
+  var preferido = q.get('tipo') || null, busqueda = null, elegido = null, totalActual = 0;
+
+  function rpc(fn, body) {
+    if (DEMO) return Promise.resolve(demo(fn, body));
+    return fetch(SB + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) { var e = new Error(j.message || 'Error'); e.sinSistema = r.status === 404 || j.code === 'PGRST202'; throw e; } return j; }); });
+  }
+  function demo(fn, b) {
+    if (fn === 'cn_apt_packs_publicos') return PACKS;
+    if (fn === 'cn_apt_reservar') return { codigo: 'CN-DEMO01', total: null };
+    var n = Math.round((new Date(b.p_salida) - new Date(b.p_entrada)) / 864e5), ver = /-0[78]-/.test(b.p_entrada);
+    return Object.keys(TIPOS).filter(function (k) { return TIPOS[k].cap >= b.p_personas; }).map(function (k, i) {
+      var base = ver ? 200 : (k === '46' || k === '48' ? 55 : 85);
+      return { tipo_id: +k, nombre: TIPOS[k].nombre, capacidad: TIPOS[k].cap, libres: i % 4 === 3 ? 0 : TIPOS[k].uds, noches: n, total: base * n, estancia_min: ver ? 3 : 1 };
+    });
+  }
+
+  /* fotos de cada ficha */
+  fichas.forEach(function (f) {
+    var main = f.querySelector('.ficha__foto');
+    f.querySelectorAll('.ficha__mini button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        main.src = b.dataset.src;
+        f.querySelectorAll('.ficha__mini button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+      });
+    });
+  });
+  document.querySelectorAll('[data-elegir]').forEach(function (a) {
+    a.addEventListener('click', function () { preferido = a.dataset.elegir; setTimeout(function () { $('#b-in').focus(); }, 400); });
+  });
+
+  /* buscador */
+  var fin = $('#b-in'), fout = $('#b-out'), fper = $('#b-per'), aviso = $('#b-aviso');
+  var hoy = new Date(); fin.min = iso(hoy);
+  fin.addEventListener('change', function () {
+    if (!fin.value) return;
+    var d = new Date(fin.value); d.setDate(d.getDate() + 1); fout.min = iso(d);
+    if (!fout.value || fout.value <= fin.value) { d.setDate(d.getDate() + 1); fout.value = iso(d); }
+  });
+  if (q.get('entrada')) fin.value = q.get('entrada');
+  if (q.get('salida')) fout.value = q.get('salida');
+  if (q.get('personas')) fper.value = q.get('personas');
+
+  function avisa(txt, err) { aviso.innerHTML = txt; aviso.classList.toggle('aviso--err', !!err); }
+  function waTxt() { return WA + encodeURIComponent('Hola, quiero reservar un apartamento del ' + (fin.value || '?') + ' al ' + (fout.value || '?') + ' para ' + fper.value + ' personas'); }
+
+  $('#f-busca').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!fin.value || !fout.value) return avisa('Elige la fecha de llegada y la de salida.', true);
+    if (fout.value <= fin.value) return avisa('La salida tiene que ser después de la llegada.', true);
+    avisa('Buscando…');
+    busqueda = { entrada: fin.value, salida: fout.value, personas: +fper.value };
+    rpc('cn_apt_disponibilidad', { p_entrada: fin.value, p_salida: fout.value, p_personas: +fper.value }).then(pinta).catch(function (err) {
+      if (err.sinSistema) avisa('Las reservas online se están activando. Mientras tanto, <a class="txt" href="' + waTxt() + '">pídenos tus fechas por WhatsApp</a>.', true);
+      else avisa(err.message + '. <a class="txt" href="' + waTxt() + '">Pregúntanos por WhatsApp</a>.', true);
+    });
+  });
+
+  function pinta(lista) {
+    var sec = $('#resultados'), ul = $('#resul-lista'); ul.innerHTML = '';
+    if (preferido) lista.sort(function (a, b) { return (b.tipo_id == preferido) - (a.tipo_id == preferido); });
+    var libres = lista.filter(function (t) { return t.libres > 0 && t.noches >= t.estancia_min; });
+    $('#resul-txt').textContent = fecha(busqueda.entrada) + ' a ' + fecha(busqueda.salida) + ', ' + busqueda.personas + (busqueda.personas > 1 ? ' personas' : ' persona') + '. ' + (libres.length ? libres.length + ' opciones libres.' : 'No queda nada libre con esas fechas.');
+    lista.forEach(function (t) {
+      var info = TIPOS[t.tipo_id] || { nombre: t.nombre, foto: '../img/a31-terraza.jpg' };
+      var corto = t.noches < t.estancia_min, ok = t.libres > 0 && !corto;
+      var li = document.createElement('li'); li.className = 'resul__fila' + (ok ? '' : ' resul__fila--no');
+      li.innerHTML = '<img src="' + info.foto + '" alt="" width="160" height="120"><div><h3></h3><p></p></div>' +
+        '<div class="resul__precio">' + (ok ? '<b>' + eur(t.total) + '</b><span>' + t.noches + (t.noches > 1 ? ' noches' : ' noche') + '</span>' : '') + '</div>' +
+        (ok ? '<button class="btn btn--pri" type="button">Reservar</button>' : '<span></span>');
+      li.querySelector('h3').textContent = info.nombre;
+      li.querySelector('p').textContent = !t.libres ? 'Completo en esas fechas' : corto ? 'Mínimo ' + t.estancia_min + ' noches en esas fechas' : 'Hasta ' + t.capacidad + ' personas. ' + (t.libres === 1 ? 'Queda 1' : 'Quedan ' + t.libres);
+      if (ok) li.querySelector('button').addEventListener('click', function () { abre(t); });
+      ul.appendChild(li);
+    });
+    if (!libres.length) avisa('No queda nada libre. Prueba otras fechas o <a class="txt" href="' + waTxt() + '">escríbenos</a> y te buscamos hueco.');
+    else avisa('Precio directo, sin comisiones de plataformas.');
+    sec.hidden = false; sec.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
+
+  /* panel de reserva */
+  var cajon = $('#cajon'), ultimoFoco = null;
+  rpc('cn_apt_packs_publicos', {}).then(function (p) { if (p && p.length) PACKS = p; }).catch(function () {}).then(function () {
+    PACKS.forEach(function (p) { var o = document.createElement('option'); o.value = p.id; o.textContent = p.nombre + ' (' + eur(p.precio_persona) + ' por persona)'; $('#r-pack').appendChild(o); });
+    if (q.get('pack')) $('#r-pack').value = q.get('pack');
+  });
+  function opciones(sel, desde, hasta, val) { sel.innerHTML = ''; for (var i = desde; i <= hasta; i++) { var o = document.createElement('option'); o.textContent = i; sel.appendChild(o); } sel.value = Math.min(Math.max(val, desde), hasta); }
+  function resumen() {
+    var ad = +$('#r-ad').value, ni = +$('#r-ni').value, pack = PACKS.filter(function (p) { return p.id == $('#r-pack').value; })[0];
+    $('#r-packper-c').hidden = !pack;
+    if (pack) opciones($('#r-packper'), 1, ad + ni, +$('#r-packper').value || ad + ni);
+    var pp = pack ? pack.precio_persona * +$('#r-packper').value : 0;
+    var t = elegido, info = TIPOS[t.tipo_id]; totalActual = t.total + pp;
+    $('#c-resumen').innerHTML = '';
+    [[info.nombre, ''], [fecha(busqueda.entrada) + ' a ' + fecha(busqueda.salida), t.noches + (t.noches > 1 ? ' noches' : ' noche')], ['Alojamiento', eur(t.total)]]
+      .concat(pack ? [[pack.nombre + ' × ' + $('#r-packper').value, eur(pp)]] : []).concat([['Total', eur(t.total + pp)]])
+      .forEach(function (r, i, a) { var li = document.createElement('li'); if (i === a.length - 1) li.className = 'total'; li.innerHTML = '<span></span><span></span>'; li.children[0].textContent = r[0]; li.children[1].textContent = r[1]; $('#c-resumen').appendChild(li); });
+  }
+  function abre(t) {
+    elegido = t; ultimoFoco = document.activeElement;
+    opciones($('#r-ad'), 1, t.capacidad, busqueda.personas);
+    opciones($('#r-ni'), 0, Math.max(0, t.capacidad - 1), 0);
+    $('#c-paso1').hidden = false; $('#c-paso2').hidden = true; $('#r-aviso').classList.remove('aviso--err');
+    resumen();
+    cajon.classList.add('abierto'); cajon.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
+    setTimeout(function () { $('#r-ad').focus(); }, 50);
+  }
+  function cierra() { cajon.classList.remove('abierto'); cajon.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; if (ultimoFoco) ultimoFoco.focus(); }
+  cajon.addEventListener('click', function (e) { if (e.target === cajon || e.target.closest('[data-cerrar]')) cierra(); });
+  addEventListener('keydown', function (e) { if (e.key === 'Escape' && cajon.classList.contains('abierto')) cierra(); });
+  ['#r-pack', '#r-packper'].forEach(function (s) { $(s).addEventListener('change', resumen); });
+  $('#r-ad').addEventListener('change', function () { var max = elegido.capacidad - +$('#r-ad').value; opciones($('#r-ni'), 0, max, Math.min(+$('#r-ni').value, max)); resumen(); });
+  $('#r-ni').addEventListener('change', resumen);
+
+  $('#f-reserva').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var av = $('#r-aviso'), btn = $('#r-btn');
+    var nom = $('#r-nom').value.trim(), mail = $('#r-mail').value.trim(), tel = $('#r-tel').value.trim();
+    if (!nom || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail) || tel.replace(/\D/g, '').length < 6) { av.textContent = 'Revisa tu nombre, email y teléfono.'; av.classList.add('aviso--err'); return; }
+    btn.disabled = true; btn.textContent = 'Reservando…';
+    var pack = $('#r-pack').value;
+    rpc('cn_apt_reservar', { p_tipo: elegido.tipo_id, p_entrada: busqueda.entrada, p_salida: busqueda.salida, p_adultos: +$('#r-ad').value, p_ninos: +$('#r-ni').value,
+      p_nombre: nom, p_email: mail, p_telefono: tel, p_pack: pack ? +pack : null, p_pack_personas: pack ? +$('#r-packper').value : 0, p_notas: $('#r-not').value.trim() || null })
+      .then(function (r) {
+        $('#ok-cod').textContent = r.codigo;
+        $('#ok-txt').textContent = (DEMO ? 'Esto es una demostración: no se ha guardado nada. ' : '') + 'Total ' + eur(r.total != null ? r.total : totalActual) + '. Te escribimos en menos de 24 horas para confirmarla y cobrar la señal. Guarda este código.';
+        $('#ok-checkin').href = '../checkin/?c=' + encodeURIComponent(r.codigo);
+        $('#c-paso1').hidden = true; $('#c-paso2').hidden = false;
+      })
+      .catch(function (err) { av.innerHTML = ''; av.textContent = err.sinSistema ? 'Las reservas online se están activando. Escríbenos por WhatsApp al 609 282 963.' : err.message; av.classList.add('aviso--err'); })
+      .then(function () { btn.disabled = false; btn.textContent = 'Reservar'; });
+  });
+})();
