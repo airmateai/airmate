@@ -1343,8 +1343,9 @@ th{letter-spacing:0!important;text-transform:none!important;font-size:12px!impor
     <!-- PAGINA APARTAMENTOS -->
     <div id="page-apartamentos" class="page">
       <div class="page-hd">
-        <div><h1>Apartamentos</h1><div class="page-sub">Reservas directas de la web, sin Avirato ni comisiones</div></div>
+        <div><h1>Apartamentos</h1><div class="page-sub">Reservas directas de la web, y lo ocupado en Booking, Airbnb y Expedia</div></div>
         <div class="page-hd-actions">
+          <button class="btn btn-ghost" onclick="apCanales()">Booking, Airbnb y Expedia</button>
           <button class="btn btn-ghost" onclick="apExportar()">Exportar check-ins</button>
           <button class="btn btn-ghost" onclick="apTarifas()">Precios y temporadas</button>
           <button class="btn btn-primary" onclick="apNueva()">+ Reserva o bloqueo</button>
@@ -5865,12 +5866,15 @@ function apKpis(){
   const entran=AP.res.filter(r=>r.entrada===hoy&&r.estado!=='bloqueo').length;
   const ocup=new Set(AP.res.filter(r=>r.estado!=='bloqueo'&&r.entrada<=hoy&&r.salida>hoy).map(r=>r.unidad_id)).size;
   const ing=AP.res.filter(r=>r.estado==='confirmada'&&r.entrada.slice(0,7)===mes).reduce((s,r)=>s+Number(r.total||0),0);
-  const sinCheckin=AP.res.filter(r=>r.estado==='confirmada'&&!r.checkin_at&&r.entrada>=hoy).length;
+  const sinCheckin=AP.res.filter(r=>r.estado==='confirmada'&&!r.ext_uid&&!r.checkin_at&&r.entrada>=hoy).length;
   document.getElementById('ap-kpis').innerHTML=[
     ['Por confirmar',pend,pend?'warn':''],['Entran hoy',entran,''],['Ocupados hoy',ocup+' / '+AP.uds.length,''],
     ['Confirmado este mes',apEur(ing),'up'],['Sin check-in',sinCheckin,sinCheckin?'warn':'']
   ].map(([l,v,c])=>`<div class="kpi"><div class="kpi-lbl">${l}</div><div class="kpi-val">${v}</div>${c?`<div class="kpi-trend ${c}">${c==='warn'?'Revisar':'Directo, sin comisión'}</div>`:''}</div>`).join('');
   const b=document.getElementById('ap-badge'); if(b){b.textContent=pend;b.style.display=pend?'inline-block':'none';}
+  const ch=apChoques().filter(([x,y])=>{const r=AP.res.find(z=>z.id===y);return r&&r.salida>=hoy;});
+  if(ch.length){const box=document.getElementById('ap-aviso');box.style.display='block';
+    box.innerHTML='<b>Ojo, posible doble reserva:</b> '+ch.slice(0,4).map(([x,y])=>{const r1=AP.res.find(z=>z.id===x),r2=AP.res.find(z=>z.id===y);return `<a href="#" onclick="apVer('${r2.id}');return false" style="text-decoration:underline">${esc(apUd(r1.unidad_id).nombre)}, ${apF(r2.entrada>r1.entrada?r2.entrada:r1.entrada)}</a> (${esc(r1.nombre||r1.origen)} y ${esc(r2.nombre||r2.origen)})`;}).join(' · ')+'. Cambia una de las reservas de apartamento.';}
 }
 function apPendientes(){
   const l=AP.res.filter(r=>r.estado==='pendiente').sort((a,b)=>a.created_at<b.created_at?1:-1);
@@ -5951,6 +5955,23 @@ function apVer(id){
   const r=AP.res.find(x=>x.id===id); if(!r)return;
   const pack=r.pack_id?AP.packs.find(p=>p.id===r.pack_id):null;
   const ci=Array.isArray(r.checkin)?r.checkin:[];
+  if(AP_PLAT[r.origen]&&r.ext_uid){
+    openModal(r.nombre||'Reserva de '+AP_PLAT[r.origen].n,`
+      <div style="font-size:13.5px;line-height:1.7;">
+        <b>${esc(apTipo(r.tipo_id).nombre)}</b> · ${esc(apUd(r.unidad_id).nombre)}<br>
+        ${apF(r.entrada)} → ${apF(r.salida)}<br>
+        <span style="color:var(--txt3)">Ocupado en ${AP_PLAT[r.origen].n}. El nombre del huésped, el precio y el pago están allí: llegan solo las fechas.</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">
+        <a class="btn btn-ocean" target="_blank" rel="noopener" href="${esc(r.ext_url||AP_PLAT[r.origen].url)}">Ver en ${AP_PLAT[r.origen].n}</a>
+      </div>
+      ${apChoques().some(c=>c.includes(r.id))?'<p style="margin-top:12px;color:#b45309;font-size:13px;font-weight:600">Ojo: coincide con otra reserva en este apartamento. Cambia una de las dos de apartamento.</p>':''}
+      ${fLbl('Apartamento')}${apSel('apv-ud',r.unidad_id,AP.uds.filter(u=>u.tipo_id===r.tipo_id).map(x=>[x.id,x.nombre]))}
+      ${fLbl('Notas')}${fTxt('apv-not',r.notas||'','2','')}
+      <input type="hidden" id="apv-estado" value="${esc(r.estado)}"><input type="hidden" id="apv-pag" value="${r.pagado||0}">
+      ${fActions('Guardar',`apGuardar('${r.id}')`,'')}
+    `);return;
+  }
   openModal(r.estado==='bloqueo'?'Bloqueo':'Reserva '+r.codigo,`
     <div style="font-size:13px;line-height:1.7;">
       <b>${esc(apTipo(r.tipo_id).nombre)}</b> · ${esc(apUd(r.unidad_id).nombre)}<br>
@@ -5973,6 +5994,60 @@ function apVer(id){
     </div>
     ${fActions('Guardar',`apGuardar('${r.id}')`,`apBorrar('${r.id}')`)}
   `);
+}
+const AP_PLAT={booking:{n:'Booking',url:'https://admin.booking.com/'},airbnb:{n:'Airbnb',url:'https://www.airbnb.es/hosting/reservations'},expedia:{n:'Expedia',url:'https://apps.expediapartnercentral.com/'}};
+const CN_ICAL_API='https://airmate-phi.vercel.app/api/cn-ical';
+function apChoques(){const out=[],l=(AP.res||[]).filter(r=>r.estado!=='cancelada'&&r.unidad_id);
+  for(let i=0;i<l.length;i++)for(let j=i+1;j<l.length;j++){const a=l[i],b=l[j];if(a.unidad_id===b.unidad_id&&a.entrada<b.salida&&b.entrada<a.salida)out.push([a.id,b.id]);}
+  return out;}
+async function apCanales(){
+  const {data,error}=await SB.from('cn_apt_ical').select('*');
+  if(error){toast(/cn_apt_ical|schema cache|does not exist/i.test(error.message)?'Falta activar la conexión con Booking y Airbnb (costa-norte-ical.sql). Avisa a Airmate.':error.message);return;}
+  const {data:uds,error:e2}=await SB.from('cn_apt_unidades').select('id,nombre,tipo_id,ical_token').eq('activo',true).order('id');
+  if(e2){toast(e2.message);return;}
+  AP.ical=data||[];AP.udsTok=uds||[];
+  const fila=(u,p)=>AP.ical.find(x=>x.unidad_id===u&&x.plataforma===p)||{};
+  const est=x=>!x.url?'':x.ultimo_error?`<span style="color:var(--coral)">${esc(x.ultimo_error)}</span>`:x.ultima_sync?`<span style="color:var(--leaf)">${x.eventos||0} ocupaciones · ${new Date(x.ultima_sync).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>`:'<span style="color:var(--txt3)">Pendiente de la primera lectura</span>';
+  openModal('Booking, Airbnb y Expedia',`
+    <p style="font-size:13px;color:var(--txt2);margin:0 0 6px">Por cada apartamento, en las dos direcciones:</p>
+    <ol style="font-size:12.5px;color:var(--txt2);margin:0 0 12px 18px;line-height:1.6">
+      <li><b>De la plataforma al panel:</b> pega aquí el enlace de calendario que da Booking (Tarifas y disponibilidad → Sincronizar calendarios → Exportar), Airbnb (Calendario → Disponibilidad → Conectar calendarios → Exportar) o Expedia.</li>
+      <li><b>Del panel a la plataforma:</b> copia nuestro enlace e impórtalo en esa misma pantalla de la plataforma. Así lo que se reserva en vuestra web se cierra allí.</li>
+    </ol>
+    <p style="font-size:12px;color:var(--txt3);margin:0 0 12px">Se actualiza solo cada 15 minutos. Llegan las fechas ocupadas; los datos del huésped se ven en la plataforma con el botón «Ver en Booking/Airbnb».</p>
+    <div style="max-height:52vh;overflow:auto;border-top:1px solid var(--border2)">
+    ${AP.udsTok.map(u=>`<div style="padding:12px 0;border-bottom:1px solid var(--border2)">
+      <div style="font-weight:700;font-size:13.5px;margin-bottom:6px">${esc(apTipo(u.tipo_id).nombre)} · ${esc(u.nombre)}</div>
+      ${['booking','airbnb','expedia'].map(p=>{const x=fila(u.id,p);return `<div style="display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:8px;align-items:center;margin-bottom:6px">
+        <span style="font-size:12.5px;font-weight:600">${AP_PLAT[p].n}</span>
+        <input id="ical-${u.id}-${p}" value="${esc(x.url||'')}" placeholder="Enlace de calendario de ${AP_PLAT[p].n} (https://…)" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;background:var(--bg);color:var(--txt)">
+        <button class="btn btn-ghost btn-s" onclick="apCopiarIcal(${u.id},'${p}')" title="Copiar el enlace para pegarlo en ${AP_PLAT[p].n}">Copiar el nuestro</button>
+        <span></span><small style="font-size:11.5px;grid-column:2/4">${est(x)}</small></div>`;}).join('')}
+    </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="apSincronizar()">Leer calendarios ahora</button><div style="flex:1"></div><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="apGuardarCanales()">Guardar enlaces</button></div>
+  `);
+}
+function apCopiarIcal(u,p){const ud=(AP.udsTok||[]).find(x=>x.id===u);if(!ud||!ud.ical_token){toast('Falta el enlace de este apartamento');return;}
+  navigator.clipboard.writeText(`${CN_ICAL_API}?u=${u}&t=${ud.ical_token}&p=${p}`).then(()=>toast('Enlace copiado: pégalo en '+AP_PLAT[p].n+' → Importar calendario'),()=>toast('No se ha podido copiar'));}
+async function apGuardarCanales(){
+  const altas=[],bajas=[];let mal=0;
+  (AP.udsTok||[]).forEach(u=>['booking','airbnb','expedia'].forEach(p=>{const v=(document.getElementById(`ical-${u.id}-${p}`)?.value||'').trim(),x=(AP.ical||[]).find(y=>y.unidad_id===u.id&&y.plataforma===p);
+    if(v&&!/^https:\/\//i.test(v)){mal++;return;}
+    if(v&&(!x||x.url!==v))altas.push({unidad_id:u.id,plataforma:p,url:v,activo:true,ultima_sync:null,ultimo_error:null});
+    if(!v&&x)bajas.push(x.id);}));
+  if(mal){toast('Hay '+mal+' enlace(s) que no empiezan por https://');return;}
+  if(altas.length){const {error}=await SB.from('cn_apt_ical').upsert(altas,{onConflict:'unidad_id,plataforma'});if(error){toast('No se ha guardado: '+error.message);return;}}
+  if(bajas.length){const {error}=await SB.from('cn_apt_ical').delete().in('id',bajas);if(error){toast('No se ha guardado: '+error.message);return;}}
+  toast('Enlaces guardados');if(altas.length)await apSincronizar(true);else apCanales();
+}
+async function apSincronizar(silencio){
+  try{const r=await fetch(CN_ICAL_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'sync',forzar:true})});const j=await r.json();
+    if(!r.ok)throw new Error(j.error||'Error');
+    if(j.omitido)toast('Se acaban de leer hace un momento. Prueba en un minuto.');
+    else{const err=(j.res||[]).filter(x=>x.error).length;toast(err?`Leídos, pero ${err} enlace(s) con error: míralos en la lista`:'Calendarios leídos');}
+  }catch(e){toast('No se han podido leer los calendarios: '+e.message);}
+  apCargar();if(!silencio||document.getElementById('modal')?.classList.contains('open'))apCanales();
 }
 function apWa(r){
   const tel=String(r.telefono||'').replace(/\D/g,''); const num=tel.length===9?'34'+tel:tel;
