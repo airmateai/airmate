@@ -17,7 +17,7 @@
     { id: 2, nombre: 'Extreme 2 días', precio_persona: 240 },
     { id: 3, nombre: 'Rip Curl 2 días', precio_persona: 260 }
   ];
-  var SC = q.get('surfcamp') === '1', presu = null, presuSeq = 0;
+  var SC = q.get('surfcamp') === '1' || !!q.get('pack'), CLQ = Math.min(+q.get('clases') || 0, 20), presu = null, presuSeq = 0;
   if (SC && document.getElementById('b-aviso')) document.getElementById('b-aviso').textContent = 'Surf camp a tu medida: elige fechas y apartamento, y al reservar añades las clases. Verás el descuento aplicado antes de pagar.';
   var autoReserva = q.get('reservar') === '1', preferido = q.get('tipo') || null, busqueda = null, elegido = null, totalActual = 0, reservaHecha = null, promo = null;
 
@@ -119,7 +119,6 @@
   var cajon = $('#cajon'), ultimoFoco = null;
   rpc('cn_apt_packs_publicos', {}).then(function (p) { if (p && p.length) PACKS = p; }).catch(function () {}).then(function () {
     PACKS.forEach(function (p) { var o = document.createElement('option'); o.value = p.id; o.textContent = p.nombre + ' (' + eur(p.precio_persona) + ' por persona)'; $('#r-pack').appendChild(o); });
-    if (q.get('pack')) $('#r-pack').value = q.get('pack');
   });
   function opciones(sel, desde, hasta, val) { sel.innerHTML = ''; for (var i = desde; i <= hasta; i++) { var o = document.createElement('option'); o.textContent = i; sel.appendChild(o); } sel.value = Math.min(Math.max(val, desde), hasta); }
   var CLT = { surf: 'Surf en grupo', particular: 'Clase particular', sup: 'Paddle surf' };
@@ -175,12 +174,13 @@
     opciones($('#r-ni'), 0, Math.max(0, t.capacidad - 1), 0);
     $('#c-paso1').hidden = false; $('#c-paso2').hidden = true; $('#r-aviso').classList.remove('aviso--err');
     presu = null; $('#r-cln').value = ''; $('#r-clp').value = ''; $('#r-clt').value = SC ? 'surf' : '';
-    opcClases(); pideP();
+    opcClases(); if (SC && CLQ) { $('#r-cln').value = Math.min(CLQ, $('#r-cln').options.length); }
+    pideP();
     resumen();
-    cajon.classList.add('abierto'); cajon.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
+    cajon.classList.add('abierto'); cajon.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; document.body.classList.add('cajon-abierto');
     setTimeout(function () { $('#r-ad').focus(); }, 50);
   }
-  function cierra() { cajon.classList.remove('abierto'); cajon.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; if (ultimoFoco) ultimoFoco.focus(); }
+  function cierra() { cajon.classList.remove('abierto'); cajon.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; document.body.classList.remove('cajon-abierto'); if (ultimoFoco) ultimoFoco.focus(); }
   cajon.addEventListener('click', function (e) { if (e.target === cajon || e.target.closest('[data-cerrar]')) cierra(); });
   addEventListener('keydown', function (e) { if (e.key === 'Escape' && cajon.classList.contains('abierto')) cierra(); });
   ['#r-pack', '#r-packper'].forEach(function (s) { $(s).addEventListener('change', resumen); });

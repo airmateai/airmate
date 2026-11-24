@@ -19,3 +19,12 @@
   if (!ahorro && !matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   document.querySelectorAll('.sub__img video, .ahero__v').forEach(function (v) { v.removeAttribute('autoplay'); v.pause(); });
 })();
+
+/* asistente de dudas flotante */
+(function () {
+  var ACTIVO = false; // se activa cuando el servidor de IA tenga clave de pago (el gratuito se satura); para probarlo: ?chat=1
+  if (!ACTIVO && !/[?&]chat=1/.test(location.search)) return;
+  if (/\/checkin\//.test(location.pathname)) return;
+  var yo = document.querySelector('script[src*="comun.js"]'); if (!yo) return;
+  var s = document.createElement('script'); s.src = yo.src.replace(/comun\.js.*$/, 'chat.js?v=1'); s.defer = true; document.body.appendChild(s);
+})();
