@@ -5810,6 +5810,7 @@ function apVer(id){
       ${apF(r.entrada)} → ${apF(r.salida)} · ${r.adultos} adultos${r.ninos?', '+r.ninos+' niños':''}<br>
       ${r.nombre?esc(r.nombre)+'<br>':''}${r.telefono?`<a href="tel:${esc(r.telefono)}">${esc(r.telefono)}</a> · `:''}${r.email?`<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`:''}<br>
       ${pack?'Pack: '+esc(pack.nombre)+' × '+r.pack_personas+'<br>':''}
+      ${r.grupo?'Reserva de grupo: <b>'+esc(r.grupo)+'</b> ('+AP.res.filter(x=>x.grupo===r.grupo).length+' apartamentos)<br>':''}${r.codigo_promo?'Código '+esc(r.codigo_promo)+': −'+apEur(r.descuento)+'<br>':''}
       Total <b>${apEur(r.total)}</b> · Pagado ${apEur(r.pagado)} · Viene de: ${esc(r.origen)}<br>
       Transferencia: ${r.justificante_url?`<a href="${esc(r.justificante_url)}" target="_blank" rel="noopener" style="color:var(--leaf);font-weight:600">ver justificante</a>`:'sin justificante todavía'}<br>
       ${r.notas?'<i>'+esc(r.notas)+'</i><br>':''}
@@ -5861,13 +5862,31 @@ async function apTarifas(){
     <button class="btn btn-ghost" style="margin-top:8px;" onclick="apGuardarBase()">Guardar precios base</button>
     <h3 style="margin:18px 0 6px;font-size:15px;">Temporadas</h3>
     ${(tar||[]).map(x=>`<div style="display:flex;gap:8px;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border2);"><span style="flex:1;">${esc(x.nombre||'')} · ${x.tipo_id?esc(apTipo(x.tipo_id).nombre):'Todos'} · ${apF(x.desde)}–${apF(x.hasta)} · <b>${apEur(x.precio_noche)}</b>/noche · mín. ${x.estancia_min}</span><button class="btn btn-ghost" onclick="apBorrarTarifa(${x.id})">Quitar</button></div>`).join('')||'<p style="font-size:13px;color:var(--txt3)">Sin temporadas.</p>'}
+    <h3 style="margin:18px 0 6px;font-size:15px;">Códigos de descuento</h3>
+    <div id="apc-lista" style="font-size:13px;color:var(--txt3)">Cargando…</div>
+    ${fRow(fLbl('Código')+fInp('apc-cod','','text','COSTANORTE5'), fLbl('Descuento (%)')+fInp('apc-pct','5','number'))}
+    <button class="btn btn-ghost" style="margin-top:8px;" onclick="apGuardarCodigo()">Añadir código</button>
     <h3 style="margin:18px 0 0;font-size:15px;">Añadir temporada</h3>
     ${fRow(fLbl('Nombre')+fInp('apt-nom','','text','Semana Santa'), fLbl('Para')+apSel('apt-tipo','',[['','Todos los tipos']].concat(AP.tipos.map(t=>[t.id,t.nombre]))))}
     ${fRow(fLbl('Desde')+fInp('apt-d','','date'), fLbl('Hasta (incluido)')+fInp('apt-h','','date'))}
     ${fRow(fLbl('Precio por noche (€)')+fInp('apt-p','','number'), fLbl('Noches mínimas')+fInp('apt-m','1','number'))}
     ${fActions('Añadir temporada','apGuardarTarifa()')}
   `);
+  apCodigos();
 }
+async function apCodigos(){
+  const box=document.getElementById('apc-lista'); if(!box)return;
+  const {data,error}=await SB.from('cn_apt_codigos').select('*').order('created_at');
+  if(error){box.textContent='No se han podido cargar: '+error.message;return;}
+  box.innerHTML=data.length?data.map(c=>`<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border2);color:var(--txt)"><b style="flex:1">${esc(c.codigo)}</b><span>−${c.descuento_pct} %</span><span style="color:${c.activo?'var(--leaf)':'var(--txt3)'}">${c.activo?'activo':'pausado'}</span><button class="btn btn-ghost" onclick="apToggleCodigo('${esc(c.codigo)}',${!c.activo})">${c.activo?'Pausar':'Activar'}</button></div>`).join(''):'Sin códigos.';
+}
+async function apGuardarCodigo(){
+  const c=apV('apc-cod').trim().toUpperCase(), p=Number(apV('apc-pct'));
+  if(!/^[A-Z0-9-]{3,30}$/.test(c)||!(p>0&&p<=50)){toast('Código (letras y números) y descuento entre 1 y 50 %');return;}
+  const {error}=await SB.from('cn_apt_codigos').upsert({codigo:c,descuento_pct:p,activo:true}); if(error){toast(error.message);return;}
+  toast('Código guardado');apCodigos();
+}
+async function apToggleCodigo(c,act){const {error}=await SB.from('cn_apt_codigos').update({activo:act}).eq('codigo',c);if(error){toast(error.message);return;}apCodigos();}
 async function apGuardarBase(){
   try{for(const t of AP.tipos){const v=Number(document.getElementById('apb-'+t.id).value);if(v>0&&v!==Number(t.precio_base)){const {error}=await SB.from('cn_apt_tipos').update({precio_base:v}).eq('id',t.id);if(error)throw error;t.precio_base=v;}}toast('Precios guardados');}
   catch(e){toast('No se han guardado: '+e.message);}

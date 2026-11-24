@@ -17,7 +17,7 @@
     { id: 2, nombre: 'Extreme 2 días', precio_persona: 240 },
     { id: 3, nombre: 'Rip Curl 2 días', precio_persona: 260 }
   ];
-  var preferido = q.get('tipo') || null, busqueda = null, elegido = null, totalActual = 0, reservaHecha = null;
+  var preferido = q.get('tipo') || null, busqueda = null, elegido = null, totalActual = 0, reservaHecha = null, promo = null;
 
   function rpc(fn, body) {
     if (DEMO) return Promise.resolve(demo(fn, body));
@@ -27,6 +27,8 @@
   function demo(fn, b) {
     if (fn === 'cn_apt_packs_publicos') return PACKS;
     if (fn === 'cn_apt_reservar') return { codigo: 'CN-DEMO01', total: null };
+    if (fn === 'cn_apt_promo') return /^COSTANORTE5$/i.test(b.p_codigo) ? 5 : null;
+    if (fn === 'cn_apt_calendario') { var out = [], d0 = new Date(b.p_desde); for (var k = 0; k < b.p_dias; k++) { var d = new Date(d0); d.setDate(d.getDate() + k); var v = /-0[78]-/.test(iso(d)); out.push({ dia: iso(d), libres: (d.getDate() % 9 === 0) ? 0 : 2, precio: v ? 200 : 85, estancia_min: v ? 3 : 1 }); } return out; }
     var n = Math.round((new Date(b.p_salida) - new Date(b.p_entrada)) / 864e5), ver = /-0[78]-/.test(b.p_entrada);
     return Object.keys(TIPOS).filter(function (k) { return TIPOS[k].cap >= b.p_personas; }).map(function (k, i) {
       var base = ver ? 200 : (k === '46' || k === '48' ? 55 : 85);
@@ -88,7 +90,7 @@
       var li = document.createElement('li'); li.className = 'resul__fila' + (ok ? '' : ' resul__fila--no');
       li.innerHTML = '<img src="' + info.foto + '" alt="" width="160" height="120"><div><h3></h3><p></p></div>' +
         '<div class="resul__precio">' + (ok ? '<b>' + eur(t.total) + '</b><span>' + t.noches + (t.noches > 1 ? ' noches' : ' noche') + '</span>' : '') + '</div>' +
-        (ok ? '<button class="btn btn--pri" type="button">Reservar</button>' : '<span></span>');
+        (ok ? '<button class="btn btn--pri" type="button">Reservar</button>' : '<button class="btn btn--sec" type="button" data-cal="' + t.tipo_id + '">Otras fechas</button>');
       li.querySelector('h3').textContent = info.nombre;
       li.querySelector('p').textContent = !t.libres ? 'Completo en esas fechas' : corto ? 'Mínimo ' + t.estancia_min + ' noches en esas fechas' : 'Hasta ' + t.capacidad + ' personas. ' + (t.libres === 1 ? 'Queda 1' : 'Quedan ' + t.libres);
       if (ok) li.querySelector('button').addEventListener('click', function () { abre(t); });
@@ -111,14 +113,19 @@
     $('#r-packper-c').hidden = !pack;
     if (pack) opciones($('#r-packper'), 1, ad + ni, +$('#r-packper').value || ad + ni);
     var pp = pack ? pack.precio_persona * +$('#r-packper').value : 0;
-    var t = elegido, info = TIPOS[t.tipo_id]; totalActual = t.total + pp;
+    var t = elegido, info = TIPOS[t.tipo_id], cant = +$('#r-cant').value || 1;
+    var alo = t.total * cant, desc = promo ? Math.round(alo * promo.pct) / 100 : 0;
+    totalActual = alo - desc + pp;
     $('#c-resumen').innerHTML = '';
-    [[info.nombre, ''], [fecha(busqueda.entrada) + ' a ' + fecha(busqueda.salida), t.noches + (t.noches > 1 ? ' noches' : ' noche')], ['Alojamiento', eur(t.total)]]
-      .concat(pack ? [[pack.nombre + ' × ' + $('#r-packper').value, eur(pp)]] : []).concat([['Total', eur(t.total + pp)]])
+    [[info.nombre + (cant > 1 ? ' × ' + cant : ''), ''], [fecha(busqueda.entrada) + ' a ' + fecha(busqueda.salida), t.noches + (t.noches > 1 ? ' noches' : ' noche')], ['Alojamiento', eur(alo)]]
+      .concat(desc ? [['Código ' + promo.codigo + ' (−' + promo.pct + ' %)', '−' + eur(desc)]] : [])
+      .concat(pack ? [[pack.nombre + ' × ' + $('#r-packper').value, eur(pp)]] : []).concat([['Total', eur(totalActual)]])
       .forEach(function (r, i, a) { var li = document.createElement('li'); if (i === a.length - 1) li.className = 'total'; li.innerHTML = '<span></span><span></span>'; li.children[0].textContent = r[0]; li.children[1].textContent = r[1]; $('#c-resumen').appendChild(li); });
   }
   function abre(t) {
     elegido = t; ultimoFoco = document.activeElement;
+    opciones($('#r-cant'), 1, Math.max(1, Math.min(t.libres, 6)), 1);
+    $('#r-cant').parentNode.hidden = t.libres < 2;
     opciones($('#r-ad'), 1, t.capacidad, busqueda.personas);
     opciones($('#r-ni'), 0, Math.max(0, t.capacidad - 1), 0);
     $('#c-paso1').hidden = false; $('#c-paso2').hidden = true; $('#r-aviso').classList.remove('aviso--err');
@@ -130,7 +137,19 @@
   cajon.addEventListener('click', function (e) { if (e.target === cajon || e.target.closest('[data-cerrar]')) cierra(); });
   addEventListener('keydown', function (e) { if (e.key === 'Escape' && cajon.classList.contains('abierto')) cierra(); });
   ['#r-pack', '#r-packper'].forEach(function (s) { $(s).addEventListener('change', resumen); });
-  $('#r-ad').addEventListener('change', function () { var max = elegido.capacidad - +$('#r-ad').value; opciones($('#r-ni'), 0, max, Math.min(+$('#r-ni').value, max)); resumen(); });
+  function capTotal() { return elegido.capacidad * (+$('#r-cant').value || 1); }
+  $('#r-cant').addEventListener('change', function () { opciones($('#r-ad'), 1, capTotal(), +$('#r-ad').value); var max = capTotal() - +$('#r-ad').value; opciones($('#r-ni'), 0, max, Math.min(+$('#r-ni').value, max)); resumen(); });
+  $('#r-ad').addEventListener('change', function () { var max = capTotal() - +$('#r-ad').value; opciones($('#r-ni'), 0, max, Math.min(+$('#r-ni').value, max)); resumen(); });
+  $('#r-promo-btn').addEventListener('click', function () {
+    var c = $('#r-promo').value.trim().toUpperCase(), av = $('#r-promo-av'); av.classList.remove('aviso--err');
+    if (!c) { promo = null; av.textContent = ''; resumen(); return; }
+    av.textContent = 'Comprobando…';
+    rpc('cn_apt_promo', { p_codigo: c }).then(function (pct) {
+      if (pct) { promo = { codigo: c, pct: +pct }; av.textContent = 'Código aplicado: ' + pct + ' % de descuento en el alojamiento.'; }
+      else { promo = null; av.textContent = 'Ese código no es válido.'; av.classList.add('aviso--err'); }
+      resumen();
+    }).catch(function () { promo = null; av.textContent = 'No se ha podido comprobar el código.'; av.classList.add('aviso--err'); resumen(); });
+  });
   $('#r-ni').addEventListener('change', resumen);
 
   $('#f-reserva').addEventListener('submit', function (e) {
@@ -141,7 +160,7 @@
     btn.disabled = true; btn.textContent = 'Reservando…';
     var pack = $('#r-pack').value;
     rpc('cn_apt_reservar', { p_tipo: elegido.tipo_id, p_entrada: busqueda.entrada, p_salida: busqueda.salida, p_adultos: +$('#r-ad').value, p_ninos: +$('#r-ni').value,
-      p_nombre: nom, p_email: mail, p_telefono: tel, p_pack: pack ? +pack : null, p_pack_personas: pack ? +$('#r-packper').value : 0, p_notas: $('#r-not').value.trim() || null })
+      p_nombre: nom, p_email: mail, p_telefono: tel, p_pack: pack ? +pack : null, p_pack_personas: pack ? +$('#r-packper').value : 0, p_notas: $('#r-not').value.trim() || null, p_cantidad: +$('#r-cant').value || 1, p_promo: promo ? promo.codigo : null })
       .then(function (r) {
         var tot = r.total != null ? r.total : totalActual;
         reservaHecha = { codigo: r.codigo, email: mail };
@@ -151,6 +170,19 @@
         $('#pg-importe').textContent = eur(tot);
         $('#ok-checkin').href = '../checkin/?c=' + encodeURIComponent(r.codigo);
         $('#c-paso1').hidden = true; $('#c-paso2').hidden = false;
+        if (!DEMO && window.emailjs) {
+          try {
+            emailjs.init('i4iBVVP-BkUOOwBE9');
+            var cant = +$('#r-cant').value || 1;
+            emailjs.send('service_npmjvvf', 'template_qnip0mc', {
+              to_email: mail, client_name: nom, reply_to: mail,
+              service: TIPOS[elegido.tipo_id].nombre + (cant > 1 ? ' × ' + cant : '') + ', ' + elegido.noches + (elegido.noches > 1 ? ' noches' : ' noche') + '. Total ' + eur(tot) + ' por transferencia (EMBARCACION NORTE, S.L, IBAN ES36 0182 5728 4002 0154 0239)',
+              fecha: fecha(busqueda.entrada) + ' a ' + fecha(busqueda.salida) + ' (llegada desde las 16:00, salida hasta las 11:00)',
+              location: 'Apartamentos Costa Norte, Av. Francisco Giner de los Ríos 46, San Vicente de la Barquera',
+              confirm_code: r.codigo
+            }).catch(function () {});
+          } catch (e) {}
+        }
       })
       .catch(function (err) { av.innerHTML = ''; av.textContent = err.sinSistema ? 'Las reservas online se están activando. Escríbenos por WhatsApp al 609 282 963.' : err.message; av.classList.add('aviso--err'); })
       .then(function () { btn.disabled = false; btn.textContent = 'Reservar'; });
@@ -175,5 +207,72 @@
         av.textContent = '¡Gracias! Lo comprobamos y te confirmamos la reserva en menos de 24 horas.';
       })
       .catch(function () { av.textContent = 'No se ha podido subir. Mándanos el justificante por WhatsApp al 609 282 963 con tu código.'; av.classList.add('aviso--err'); });
+  });
+
+  /* calendario de precios y días libres por tipo (como «otras fechas disponibles» de Avirato) */
+  var cal = $('#cal'), calTipo = null, calMes = null, calDatos = {}, calIn = null, calOut = null;
+  var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  function abreCal(tipo) {
+    calTipo = String(tipo); calIn = calOut = null; calDatos = {}; ultimoFoco = document.activeElement;
+    var h = new Date(); calMes = new Date(h.getFullYear(), h.getMonth(), 1);
+    $('#cal-tit').textContent = TIPOS[calTipo] ? TIPOS[calTipo].nombre : 'Calendario';
+    cal.classList.add('abierto'); cal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
+    pintaCal(); setTimeout(function () { $('#cal-next').focus(); }, 50);
+  }
+  function cierraCal() { cal.classList.remove('abierto'); cal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; if (ultimoFoco) ultimoFoco.focus(); }
+  cal.addEventListener('click', function (e) { if (e.target === cal || e.target.closest('[data-cerrar]')) cierraCal(); });
+  addEventListener('keydown', function (e) { if (e.key === 'Escape' && cal.classList.contains('abierto')) cierraCal(); });
+  document.addEventListener('click', function (e) { var b = e.target.closest('[data-cal]'); if (b && !b.closest('#cal')) abreCal(b.dataset.cal); });
+  $('#cal-prev').addEventListener('click', function () { calMes.setMonth(calMes.getMonth() - 1); pintaCal(); });
+  $('#cal-next').addEventListener('click', function () { calMes.setMonth(calMes.getMonth() + 1); pintaCal(); });
+  function carga(desde) {
+    var clave = calTipo + iso(desde);
+    if (calDatos[clave]) return Promise.resolve(calDatos[clave]);
+    return rpc('cn_apt_calendario', { p_tipo: +calTipo, p_desde: iso(desde), p_dias: 42 }).then(function (l) { var m = {}; (l || []).forEach(function (x) { m[x.dia] = x; }); calDatos[clave] = m; return m; });
+  }
+  function pintaCal() {
+    var hoyD = new Date(); hoyD.setHours(0, 0, 0, 0);
+    $('#cal-prev').disabled = calMes <= new Date(hoyD.getFullYear(), hoyD.getMonth(), 1);
+    $('#cal-mes').textContent = MESES[calMes.getMonth()] + ' ' + calMes.getFullYear();
+    var g = $('#cal-grid'); g.innerHTML = '<p class="cal__ayuda">Cargando…</p>';
+    carga(calMes).then(function (m) {
+      g.innerHTML = '';
+      var hueco = (calMes.getDay() + 6) % 7; for (var k = 0; k < hueco; k++) g.appendChild(document.createElement('span'));
+      var dias = new Date(calMes.getFullYear(), calMes.getMonth() + 1, 0).getDate();
+      for (var d = 1; d <= dias; d++) {
+        var f = new Date(calMes.getFullYear(), calMes.getMonth(), d), k2 = iso(f), x = m[k2], b = document.createElement('button');
+        b.type = 'button'; b.dataset.dia = k2;
+        var libre = x && x.libres > 0, pasado = f < hoyD;
+        b.innerHTML = '<b>' + d + '</b><small>' + (x && !pasado ? (libre ? Math.round(x.precio) + ' €' : 'completo') : '') + '</small>';
+        if (pasado || !x) b.disabled = true;
+        else if (!libre) { b.classList.add('lleno'); if (!(calIn && !calOut && k2 > calIn)) b.disabled = true; }
+        if (k2 === calIn || k2 === calOut) b.classList.add('sel');
+        if (calIn && calOut && k2 > calIn && k2 < calOut) b.classList.add('rango');
+        b.setAttribute('aria-label', d + ' de ' + MESES[calMes.getMonth()] + (x && !pasado ? (libre ? ', ' + Math.round(x.precio) + ' euros la noche' : ', completo') : ''));
+        g.appendChild(b);
+      }
+      resumenCal(m);
+    }).catch(function () { g.innerHTML = '<p class="aviso aviso--err">No se ha podido cargar el calendario.</p>'; });
+  }
+  $('#cal-grid').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b || b.disabled) return; var k = b.dataset.dia;
+    if (!calIn || calOut || k <= calIn) { if (b.classList.contains('lleno')) return; calIn = k; calOut = null; }
+    else {
+      var ok = true, f = new Date(calIn); var todo = {}; Object.keys(calDatos).forEach(function (c) { Object.assign(todo, calDatos[c]); });
+      while (iso(f) < k) { var x = todo[iso(f)]; if (!x || x.libres < 1) { ok = false; break; } f.setDate(f.getDate() + 1); }
+      if (ok) calOut = k; else { $('#cal-sel').textContent = 'Hay noches completas entre esas fechas. Elige otra salida.'; return; }
+    }
+    pintaCal();
+  });
+  function resumenCal() {
+    var p = $('#cal-sel'), okb = $('#cal-ok');
+    if (!calIn) { p.textContent = ''; okb.disabled = true; $('#cal-ayuda').textContent = 'Elige el día de llegada. Debajo de cada día, el precio por noche.'; return; }
+    if (!calOut) { p.textContent = 'Llegada el ' + fecha(calIn) + '. Ahora elige el día de salida.'; okb.disabled = true; return; }
+    var n = Math.round((new Date(calOut) - new Date(calIn)) / 864e5);
+    p.textContent = fecha(calIn) + ' a ' + fecha(calOut) + ', ' + n + (n > 1 ? ' noches.' : ' noche.'); okb.disabled = false;
+  }
+  $('#cal-ok').addEventListener('click', function () {
+    fin.value = calIn; fout.value = calOut; preferido = calTipo; cierraCal();
+    $('#f-busca').dispatchEvent(new Event('submit', { cancelable: true }));
   });
 })();
