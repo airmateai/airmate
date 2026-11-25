@@ -614,8 +614,14 @@ const PANTALLAS={
       <div class="lista">${bienv?fila(bienv):''}${prog.map(fila).join('')}
         <button class="item" onclick="abrirForm('email',null,{})" style="justify-content:center;color:var(--acc);font-weight:800">+ Nuevo email</button></div>
       <div class="grupo">Últimos apuntados</div>
-      ${P.lista.length?`<div class="lista">${P.lista.slice(0,40).map(x=>`<div class="item"><span class="t"><b>${esc(x.email)}</b><small>${fechaLarga(x.created_at)} · ${esc(x.origen||'web')}${x.baja_at?' · dado de baja':''}</small></span>${x.baja_at?'':`<button class="btn peq" onclick="bajaManual('${x.id}',this)">Dar de baja</button>`}</div>`).join('')}</div>`
-        :'<div class="vacio">Todavía no se ha apuntado nadie. La gente entra desde la web y la bio de Instagram.</div>'}`; },
+      ${P.demo.length?`<div class="chips" style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px">${[['reales','Reales ('+num(P.lista.length)+')'],['demo','DEMO ('+num(P.demo.length)+')'],['todos','Todos']].map(([v,t])=>`<button class="btn peq${VER_PUB===v?' acc':''}" onclick="verPub('${v}')">${t}</button>`).join('')}</div>`:''}
+      ${VER_PUB!=='reales'&&P.demo.length?`<p class="sub">Los contactos <b>DEMO</b> son de ejemplo para enseñar el panel: no cuentan en las cifras, no salen en el CSV y no reciben ningún email (están en una tabla aparte y sus direcciones son @example.com). <button class="btn peq" onclick="borrarTodosDemo(this)">🗑️ Borrar todos los DEMO</button></p>`:''}
+      ${(()=>{ const real=P.lista.map(x=>({...x,_demo:false})), demo=P.demo.map(x=>({...x,_demo:true}));
+        const ver=VER_PUB==='demo'?demo:VER_PUB==='todos'?real.concat(demo).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)):real;
+        if(!ver.length) return VER_PUB==='reales'?'<div class="vacio">Todavía no se ha apuntado nadie. La gente entra desde la web y la bio de Instagram.</div>':'<div class="vacio">No hay contactos DEMO.</div>';
+        return `<div class="lista">${ver.slice(0,VER_PUB==='reales'?40:150).map(x=>x._demo
+          ?`<div class="item"><span class="t"><b>${esc(x.nombre||x.email)} <span class="tag gris">DEMO</span></b><small>${esc(x.email)} · ${fechaLarga(x.created_at)} · ${esc(x.origen||'web')}${x.baja_at?' · dado de baja':''}${x.nota?' · '+esc(x.nota):''}</small></span><button class="btn peq" onclick="borrarDemo('${x.id}',this)">Borrar</button></div>`
+          :`<div class="item"><span class="t"><b>${esc(x.email)}</b><small>${fechaLarga(x.created_at)} · ${esc(x.origen||'web')}${x.baja_at?' · dado de baja':''}</small></span>${x.baja_at?'':`<button class="btn peq" onclick="bajaManual('${x.id}',this)">Dar de baja</button>`}</div>`).join('')}</div>`; })()}`; },
   informe(){ return `<div class="titulo"><h2>INFORME</h2><button class="btn acc peq" onclick="window.print()">🖨️ Imprimir o PDF</button></div><div id="informe">${informeHTML()}</div>`; },
 
   peleadores(){ return `<div class="titulo"><h2>PELEADORES</h2><button class="btn acc peq" onclick="abrirForm('peleador')">+ Peleador</button></div>
@@ -979,15 +985,26 @@ const FORMS={
     leer:f=>({ velada_id:S.velada.id, nombre:f.nombre.trim(), precio:Number(f.precio)||0, stock:Number(f.stock)||0, vendidas:Number(f.vendidas)||0, color:f.color||'#0b0b0b' }) },
 };
 /* ───────── Público y emails (La Grada) ───────── */
+let VER_PUB='reales';
 async function cargarPublico(){
-  S.pub={lista:[],emails:[],error:null};
+  S.pub={lista:[],emails:[],demo:[],error:null};
   try{ const [l,e]=await Promise.all([ q(sb.from('f2o_lista').select('id,email,origen,baja_at,created_at,bienvenida_at').order('created_at',{ascending:false}).limit(5000)),
       q(sb.from('f2o_emails').select('*').order('tipo').order('enviar_at',{nullsFirst:false})) ]);
     // Emails de prueba de Airmate: siguen en la BD pero no se enseñan ni cuentan en el panel
     const PRUEBA=/^airmateai\+.*@gmail\.com$|^fabiobgalarza@gmail\.com$|^thefocusworldd@gmail\.com$/i;
     S.pub.lista=l.filter(x=>!PRUEBA.test(x.email||'')); S.pub.emails=e; }
   catch(e){ S.pub.error=textoError(e); }
+  // Contactos DEMO (tabla f2o_lista_demo): solo para enseñar el panel. Nunca entran en S.pub.lista, así que
+  // no cuentan en las cifras, no salen en el CSV y «Enviar a todos» no los ve (el motor solo lee f2o_lista).
+  try{ S.pub.demo=await q(sb.from('f2o_lista_demo').select('id,email,nombre,origen,nota,baja_at,created_at').order('created_at',{ascending:false}).limit(1000)); }
+  catch(e){ S.pub.demo=[]; }
 }
+window.verPub=v=>{ VER_PUB=v; pintar(); };
+window.borrarDemo=async(id,btn)=>{ if(!confirmarDoble(btn,'¿Borrar?')) return; btn.disabled=true;
+  try{ await q(sb.from('f2o_lista_demo').delete().eq('id',id).select('id')); toast('Contacto DEMO borrado'); await cargarPublico(); pintar(); }catch(e){ btn.disabled=false; toast(textoError(e),true); } };
+window.borrarTodosDemo=async btn=>{ const n=S.pub.demo.length; if(!n) return;
+  if(!confirm(`¿Borrar los ${n} contactos DEMO?\n\nLa lista real no se toca.`)) return; btn.disabled=true;
+  try{ await q(sb.from('f2o_lista_demo').delete().not('id','is',null).select('id')); VER_PUB='reales'; toast('Contactos DEMO borrados'); await cargarPublico(); pintar(); }catch(e){ btn.disabled=false; toast(textoError(e),true); } };
 window.exportarLista=()=>{ const filas=[['email','origen','alta','baja']].concat(S.pub.lista.map(x=>[x.email,x.origen||'',x.created_at,x.baja_at||'']));
   const csv=filas.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'})); a.download='la-grada-fight2one.csv'; a.click(); };
