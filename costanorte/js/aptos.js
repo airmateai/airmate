@@ -39,6 +39,35 @@
     });
   }
 
+  /* ofertas activas (las crea Costa Norte en el panel; el precio ya viene rebajado del servidor) */
+  var OFERTAS = [];
+  var DIAS = { finde: ' (viernes y sábado)', semana: ' (de domingo a jueves)', todos: '' };
+  function fcorta(s) { var p = s.split('-'); return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }); }
+  function ofertaEn(tipo, entrada, salida) {
+    var n = Math.round((new Date(salida) - new Date(entrada)) / 864e5), mejor = 0;
+    OFERTAS.forEach(function (o) {
+      if ((o.tipo_id && String(o.tipo_id) !== String(tipo)) || n < o.min_noches) return;
+      for (var d = new Date(entrada + 'T12:00'); iso(d) < salida; d.setDate(d.getDate() + 1)) {
+        var w = d.getDay(), f = w === 5 || w === 6, k = iso(d);
+        if (k >= o.desde && k <= o.hasta && (o.dias === 'todos' || (o.dias === 'finde') === f)) { mejor = Math.max(mejor, +o.pct); break; }
+      }
+    });
+    return mejor;
+  }
+  (DEMO ? Promise.resolve([{ nombre: 'Fines de semana de invierno', tipo_id: null, tipo: null, desde: iso(new Date()), hasta: iso(new Date(Date.now() + 120 * 864e5)), pct: 20, dias: 'finde', min_noches: 2 }]) : rpc('cn_apt_ofertas_publicas', {}))
+    .then(function (l) {
+      OFERTAS = l || []; if (!OFERTAS.length) return;
+      var ul = $('#ofertas-lista'); if (!ul) return;
+      OFERTAS.forEach(function (o) {
+        var li = document.createElement('li');
+        li.innerHTML = '<b></b><span></span>';
+        li.children[0].textContent = '−' + Number(o.pct) + ' %';
+        li.children[1].textContent = o.nombre + ': ' + (o.tipo || 'todos los apartamentos') + ', del ' + fcorta(o.desde) + ' al ' + fcorta(o.hasta) + DIAS[o.dias] + (o.min_noches > 1 ? ', mínimo ' + o.min_noches + ' noches' : '') + '.';
+        ul.appendChild(li);
+      });
+      $('#ofertas').hidden = false;
+    }).catch(function () {});
+
   /* carrusel de fotos de cada ficha */
   document.querySelectorAll('.carr').forEach(function (c) {
     var pista = c.querySelector('.carr__pista'), n = pista.children.length, a = c.querySelector('.carr__btn--a'), sgt = c.querySelector('.carr__btn--s');
@@ -96,6 +125,8 @@
         (ok ? '<button class="btn btn--pri" type="button">Reservar</button>' : '<button class="btn btn--sec" type="button" data-cal="' + t.tipo_id + '">Otras fechas</button>');
       li.querySelector('h3').textContent = info.nombre;
       li.querySelector('p').textContent = !t.libres ? 'Completo en esas fechas' : corto ? 'Mínimo ' + t.estancia_min + ' noches en esas fechas' : 'Hasta ' + t.capacidad + ' personas. ' + (t.libres === 1 ? 'Queda 1' : 'Quedan ' + t.libres);
+      var of = ok ? ofertaEn(t.tipo_id, busqueda.entrada, busqueda.salida) : 0;
+      if (of) { var e = document.createElement('span'); e.className = 'resul__oferta'; e.textContent = 'Oferta −' + of + ' % aplicada'; li.querySelector('h3').appendChild(e); }
       if (ok) li.querySelector('button').addEventListener('click', function () { abre(t); });
       ul.appendChild(li);
     });

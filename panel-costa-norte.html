@@ -6087,6 +6087,14 @@ async function apTarifas(){
     ${(tar||[]).map(x=>`<div style="display:flex;gap:8px;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border2);"><span style="flex:1;">${esc(x.nombre||'')} · ${x.tipo_id?esc(apTipo(x.tipo_id).nombre):'Todos'} · ${apF(x.desde)}–${apF(x.hasta)} · <b>${apEur(x.precio_noche)}</b>/noche · mín. ${x.estancia_min}</span><button class="btn btn-ghost" onclick="apBorrarTarifa(${x.id})">Quitar</button></div>`).join('')||'<p style="font-size:13px;color:var(--txt3)">Sin temporadas.</p>'}
     <h3 style="margin:18px 0 6px;font-size:15px;">Surf camp y precio de la web</h3>
     <div id="apd-box" style="font-size:13px;color:var(--txt3)">Cargando…</div>
+    <h3 style="margin:18px 0 6px;font-size:15px;">Ofertas</h3>
+    <p style="font-size:12px;color:var(--txt3);margin:0 0 6px;">Rebajas que la web aplica sola en esas fechas y que enseña con un aviso. Si coinciden varias en una noche, vale la mayor.</p>
+    <div id="apo-lista" style="font-size:13px;color:var(--txt3)">Cargando…</div>
+    ${fRow(fLbl('Nombre de la oferta')+fInp('apo-nom','','text','Fines de semana de invierno'), fLbl('Para')+apSel('apo-tipo','',[['','Todos los apartamentos']].concat(AP.tipos.map(t=>[t.id,t.nombre]))))}
+    ${fRow(fLbl('Desde')+fInp('apo-d','','date'), fLbl('Hasta (noche incluida)')+fInp('apo-h','','date'))}
+    ${fRow(fLbl('Descuento (%)')+fInp('apo-pct','15','number'), fLbl('Qué noches')+apSel('apo-dias','todos',[['todos','Todas'],['finde','Viernes y sábado'],['semana','De domingo a jueves']]))}
+    ${fRow(fLbl('Noches mínimas de la estancia')+fInp('apo-min','1','number'), '<div></div>')}
+    <button class="btn btn-ghost" style="margin-top:8px;" onclick="apGuardarOferta()">Añadir oferta</button>
     <h3 style="margin:18px 0 6px;font-size:15px;">Códigos de descuento</h3>
     <div id="apc-lista" style="font-size:13px;color:var(--txt3)">Cargando…</div>
     ${fRow(fLbl('Código')+fInp('apc-cod','','text','COSTANORTE5'), fLbl('Descuento (%)')+fInp('apc-pct','5','number'))}
@@ -6097,7 +6105,7 @@ async function apTarifas(){
     ${fRow(fLbl('Precio por noche (€)')+fInp('apt-p','','number'), fLbl('Noches mínimas')+fInp('apt-m','1','number'))}
     ${fActions('Añadir temporada','apGuardarTarifa()')}
   `);
-  apCodigos();apDescuentos();
+  apCodigos();apDescuentos();apOfertas();
 }
 const AP_DESC_DEF={clases_pct:10,aloj_pct_a:5,aloj_noches_a:3,aloj_pct_b:10,aloj_noches_b:4,web_recargo_pct:5};
 async function apDescuentos(){
@@ -6133,6 +6141,31 @@ async function apGuardarCodigo(){
   if(!/^[A-Z0-9-]{3,30}$/.test(c)||!(p>0&&p<=50)){toast('Código (letras y números) y descuento entre 1 y 50 %');return;}
   const {error}=await SB.from('cn_apt_codigos').upsert({codigo:c,descuento_pct:p,activo:true}); if(error){toast(error.message);return;}
   toast('Código guardado');apCodigos();
+}
+const AP_DIAS={todos:'todas las noches',finde:'viernes y sábado',semana:'de domingo a jueves'};
+let AP_OF=[];
+async function apOfertas(){
+  const box=document.getElementById('apo-lista'); if(!box)return;
+  const {data,error}=await SB.from('cn_apt_ofertas').select('*').order('desde');
+  if(error){box.textContent=/cn_apt_ofertas|schema cache|does not exist/i.test(error.message)?'Falta activar las ofertas en la base de datos (costa-norte-ofertas.sql). Avisa a Airmate.':'No se han podido cargar: '+error.message;return;}
+  AP_OF=data; const hoy=new Date().toISOString().slice(0,10);
+  box.innerHTML=data.length?data.map(o=>{const acabada=o.hasta<hoy;return `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border2);color:var(--txt)${acabada?';opacity:.55':''}"><span style="flex:1;min-width:200px"><b>${esc(o.nombre)}</b> · −${Number(o.pct)} % · ${o.tipo_id?esc(apTipo(o.tipo_id).nombre):'todos'} · ${apF(o.desde)}–${apF(o.hasta)} · ${AP_DIAS[o.dias]||''}${o.min_noches>1?` · mín. ${o.min_noches} noches`:''}</span><span style="color:${acabada?'var(--txt3)':o.activo?'var(--leaf)':'var(--txt3)'}">${acabada?'terminada':o.activo?'activa':'pausada'}</span>${acabada?'':`<button class="btn btn-ghost" onclick="apAnunciarOferta(${o.id})">Copiar anuncio</button><button class="btn btn-ghost" onclick="apToggleOferta(${o.id},${!o.activo})">${o.activo?'Pausar':'Activar'}</button>`}<button class="btn btn-ghost" onclick="apBorrarOferta(${o.id})">Quitar</button></div>`;}).join(''):'Sin ofertas.';
+}
+async function apGuardarOferta(){
+  const f={nombre:apV('apo-nom').trim(),tipo_id:apV('apo-tipo')?Number(apV('apo-tipo')):null,desde:apV('apo-d'),hasta:apV('apo-h'),pct:Number(apV('apo-pct')),dias:apV('apo-dias')||'todos',min_noches:Math.max(1,Math.round(Number(apV('apo-min'))||1))};
+  if(!f.nombre){toast('Ponle un nombre a la oferta');return;}
+  if(!f.desde||!f.hasta||f.hasta<f.desde){toast('Revisa las fechas');return;}
+  if(!(f.pct>0&&f.pct<=50)){toast('El descuento tiene que estar entre 1 y 50 %');return;}
+  const {error}=await SB.from('cn_apt_ofertas').insert(f); if(error){toast('No se ha guardado: '+error.message);return;}
+  toast('Oferta creada: la web ya la aplica');['apo-nom','apo-d','apo-h'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});apOfertas();
+}
+async function apToggleOferta(id,act){const {error}=await SB.from('cn_apt_ofertas').update({activo:act}).eq('id',id);if(error){toast(error.message);return;}toast(act?'Oferta activa':'Oferta pausada');apOfertas();}
+async function apBorrarOferta(id){if(!confirm('¿Quitar esta oferta?'))return;const {error}=await SB.from('cn_apt_ofertas').delete().eq('id',id);if(error){toast(error.message);return;}apOfertas();}
+function apAnunciarOferta(id){
+  const o=AP_OF.find(x=>x.id===id); if(!o)return;
+  const para=o.tipo_id?apTipo(o.tipo_id).nombre.toLowerCase():'todos nuestros apartamentos';
+  const txt=`${o.nombre}: −${Number(o.pct)} % en ${para} del ${apF(o.desde)} al ${apF(o.hasta)}${o.dias!=='todos'?` (${AP_DIAS[o.dias]})`:''}${o.min_noches>1?`, estancias de ${o.min_noches} noches o más`:''}. Reserva directa en nuestra web, más barato que en Booking: https://airmate.es/costanorte/apartamentos/`;
+  navigator.clipboard.writeText(txt).then(()=>toast('Anuncio copiado: pégalo en WhatsApp, Instagram o un email')).catch(()=>prompt('Copia el anuncio:',txt));
 }
 async function apToggleCodigo(c,act){const {error}=await SB.from('cn_apt_codigos').update({activo:act}).eq('codigo',c);if(error){toast(error.message);return;}apCodigos();}
 async function apGuardarBase(){
