@@ -6,8 +6,12 @@
   var q = new URLSearchParams(location.search);
   var DEMO = q.get('demo') === '1';
   var $ = function (s) { return document.querySelector(s); };
-  var eur = function (n) { n = Number(n); return n.toLocaleString('es-ES', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' €'; };
-  var fecha = function (s) { var p = s.split('-'); return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }); };
+  var LOC = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', it: 'it-IT', nl: 'nl-NL', ar: 'ar-u-nu-latn' }[document.documentElement.lang] || 'es-ES';
+  var T = function (k) { return (window.CN_I18N && CN_I18N[k]) || k; };
+  var F = function (k, v) { return T(k).replace(/\{(\w+)\}/g, function (_, x) { return v[x]; }); };
+  var pl = function (n, uno, varios) { return F(n === 1 ? uno : varios, { n: n }); };
+  var eur = function (n) { n = Number(n); return n.toLocaleString(LOC, { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' €'; };
+  var fecha = function (s) { var p = s.split('-'); return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString(LOC, { weekday: 'short', day: 'numeric', month: 'short' }); };
   var iso = function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 
   var fichas = [].slice.call(document.querySelectorAll('.ficha'));
@@ -18,7 +22,7 @@
     { id: 3, nombre: 'Rip Curl 2 días', precio_persona: 260 }
   ];
   var SC = q.get('surfcamp') === '1' || !!q.get('pack'), CLQ = Math.min(+q.get('clases') || 0, 20), presu = null, presuSeq = 0;
-  if (SC && document.getElementById('b-aviso')) document.getElementById('b-aviso').textContent = 'Surf camp a tu medida: elige fechas y apartamento, y al reservar añades las clases. Verás el descuento aplicado antes de pagar.';
+  if (SC && document.getElementById('b-aviso')) document.getElementById('b-aviso').textContent = T('Surf camp a tu medida: elige fechas y apartamento, y al reservar añades las clases. Verás el descuento aplicado antes de pagar.');
   var autoReserva = q.get('reservar') === '1', preferido = q.get('tipo') || null, busqueda = null, elegido = null, totalActual = 0, reservaHecha = null, promo = null;
 
   function rpc(fn, body) {
@@ -41,8 +45,8 @@
 
   /* ofertas activas (las crea Costa Norte en el panel; el precio ya viene rebajado del servidor) */
   var OFERTAS = [];
-  var DIAS = { finde: ' (viernes y sábado)', semana: ' (de domingo a jueves)', todos: '' };
-  function fcorta(s) { var p = s.split('-'); return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }); }
+  var DIAS = { finde: ' (' + T('viernes y sábado') + ')', semana: ' (' + T('de domingo a jueves') + ')', todos: '' };
+  function fcorta(s) { var p = s.split('-'); return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString(LOC, { day: 'numeric', month: 'short' }); }
   function ofertaEn(tipo, entrada, salida) {
     var n = Math.round((new Date(salida) - new Date(entrada)) / 864e5), mejor = 0;
     OFERTAS.forEach(function (o) {
@@ -62,7 +66,7 @@
         var li = document.createElement('li');
         li.innerHTML = '<b></b><span></span>';
         li.children[0].textContent = '−' + Number(o.pct) + ' %';
-        li.children[1].textContent = o.nombre + ': ' + (o.tipo || 'todos los apartamentos') + ', del ' + fcorta(o.desde) + ' al ' + fcorta(o.hasta) + DIAS[o.dias] + (o.min_noches > 1 ? ', mínimo ' + o.min_noches + ' noches' : '') + '.';
+        li.children[1].textContent = T(o.nombre) + ': ' + F('{quien}, del {a} al {b}', { quien: T(o.tipo || 'todos los apartamentos'), a: fcorta(o.desde), b: fcorta(o.hasta) }) + DIAS[o.dias] + (o.min_noches > 1 ? ', ' + F('mínimo {n} noches', { n: o.min_noches }) : '') + '.';
         ul.appendChild(li);
       });
       $('#ofertas').hidden = false;
@@ -97,17 +101,17 @@
   if (q.get('personas')) fper.value = q.get('personas');
 
   function avisa(txt, err) { aviso.innerHTML = txt; aviso.classList.toggle('aviso--err', !!err); }
-  function waTxt() { return WA + encodeURIComponent('Hola, quiero reservar un apartamento del ' + (fin.value || '?') + ' al ' + (fout.value || '?') + ' para ' + fper.value + ' personas'); }
+  function waTxt() { return WA + encodeURIComponent('Hola, quiero reservar un apartamento del ' + (fin.value || '?') + ' al ' + (fout.value || '?') + ' para ' + fper.value + ' personas' + (LOC !== 'es-ES' ? ' (' + document.documentElement.lang.toUpperCase() + ')' : '')); }
 
   $('#f-busca').addEventListener('submit', function (e) {
     e.preventDefault();
-    if (!fin.value || !fout.value) return avisa('Elige la fecha de llegada y la de salida.', true);
-    if (fout.value <= fin.value) return avisa('La salida tiene que ser después de la llegada.', true);
+    if (!fin.value || !fout.value) return avisa(T('Elige la fecha de llegada y la de salida.'), true);
+    if (fout.value <= fin.value) return avisa(T('La salida tiene que ser después de la llegada.'), true);
     avisa('Buscando…');
     busqueda = { entrada: fin.value, salida: fout.value, personas: +fper.value };
     rpc('cn_apt_disponibilidad', { p_entrada: fin.value, p_salida: fout.value, p_personas: +fper.value }).then(pinta).catch(function (err) {
-      if (err.sinSistema) avisa('Las reservas online se están activando. Mientras tanto, <a class="txt" href="' + waTxt() + '">pídenos tus fechas por WhatsApp</a>.', true);
-      else avisa(err.message + '. <a class="txt" href="' + waTxt() + '">Pregúntanos por WhatsApp</a>.', true);
+      if (err.sinSistema) avisa(T('Las reservas online se están activando. Mientras tanto,') + ' <a class="txt" href="' + waTxt() + '">' + T('pídenos tus fechas por WhatsApp') + '</a>.', true);
+      else avisa(err.message + '. <a class="txt" href="' + waTxt() + '">' + T('Pregúntanos por WhatsApp') + '</a>.', true);
     });
   });
 
@@ -115,23 +119,23 @@
     var sec = $('#resultados'), ul = $('#resul-lista'); ul.innerHTML = '';
     if (preferido) lista.sort(function (a, b) { return (b.tipo_id == preferido) - (a.tipo_id == preferido); });
     var libres = lista.filter(function (t) { return t.libres > 0 && t.noches >= t.estancia_min; });
-    $('#resul-txt').textContent = fecha(busqueda.entrada) + ' a ' + fecha(busqueda.salida) + ', ' + busqueda.personas + (busqueda.personas > 1 ? ' personas' : ' persona') + '. ' + (libres.length ? libres.length + ' opciones libres.' : 'No queda nada libre con esas fechas.');
+    $('#resul-txt').textContent = F('{a} a {b}', { a: fecha(busqueda.entrada), b: fecha(busqueda.salida) }) + ', ' + pl(+busqueda.personas, '1 persona', '{n} personas') + '. ' + (libres.length ? pl(libres.length, '1 opción libre.', '{n} opciones libres.') : T('No queda nada libre con esas fechas.'));
     lista.forEach(function (t) {
-      var info = TIPOS[t.tipo_id] || { nombre: t.nombre, foto: '../img/a31-terraza.jpg' };
+      var info = TIPOS[t.tipo_id] || { nombre: T(t.nombre), foto: (fichas[0] && fichas[0].dataset.foto) || '' };
       var corto = t.noches < t.estancia_min, ok = t.libres > 0 && !corto;
       var li = document.createElement('li'); li.className = 'resul__fila' + (ok ? '' : ' resul__fila--no');
       li.innerHTML = '<img src="' + info.foto + '" alt="" width="160" height="120"><div><h3></h3><p></p></div>' +
-        '<div class="resul__precio">' + (ok ? '<b>' + eur(t.total) + '</b><span>' + t.noches + (t.noches > 1 ? ' noches' : ' noche') + '</span>' : '') + '</div>' +
-        (ok ? '<button class="btn btn--pri" type="button">Reservar</button>' : '<button class="btn btn--sec" type="button" data-cal="' + t.tipo_id + '">Otras fechas</button>');
+        '<div class="resul__precio">' + (ok ? '<b>' + eur(t.total) + '</b><span>' + pl(t.noches, '1 noche', '{n} noches') + '</span>' : '') + '</div>' +
+        (ok ? '<button class="btn btn--pri" type="button">' + T('Reservar') + '</button>' : '<button class="btn btn--sec" type="button" data-cal="' + t.tipo_id + '">' + T('Otras fechas') + '</button>');
       li.querySelector('h3').textContent = info.nombre;
-      li.querySelector('p').textContent = !t.libres ? 'Completo en esas fechas' : corto ? 'Mínimo ' + t.estancia_min + ' noches en esas fechas' : 'Hasta ' + t.capacidad + ' personas. ' + (t.libres === 1 ? 'Queda 1' : 'Quedan ' + t.libres);
+      li.querySelector('p').textContent = !t.libres ? T('Completo en esas fechas') : corto ? F('Mínimo {n} noches en esas fechas', { n: t.estancia_min }) : F('Hasta {n} personas.', { n: t.capacidad }) + ' ' + pl(t.libres, 'Queda 1', 'Quedan {n}');
       var of = ok ? ofertaEn(t.tipo_id, busqueda.entrada, busqueda.salida) : 0;
-      if (of) { var e = document.createElement('span'); e.className = 'resul__oferta'; e.textContent = 'Oferta −' + of + ' % aplicada'; li.querySelector('h3').appendChild(e); }
+      if (of) { var e = document.createElement('span'); e.className = 'resul__oferta'; e.textContent = F('Oferta −{n} % aplicada', { n: of }); li.querySelector('h3').appendChild(e); }
       if (ok) li.querySelector('button').addEventListener('click', function () { abre(t); });
       ul.appendChild(li);
     });
-    if (!libres.length) avisa('No queda nada libre. Prueba otras fechas o <a class="txt" href="' + waTxt() + '">escríbenos</a> y te buscamos hueco.');
-    else avisa('Precio directo, sin comisiones de plataformas.');
+    if (!libres.length) avisa(T('No queda nada libre. Prueba otras fechas o escríbenos y te buscamos hueco.') + ' <a class="txt" href="' + waTxt() + '">WhatsApp</a>');
+    else avisa(T('Precio directo, sin comisiones de plataformas.'));
     if (autoReserva) {
       autoReserva = false;
       var t0 = lista.filter(function (x) { return String(x.tipo_id) === String(preferido) && x.libres > 0 && x.noches >= x.estancia_min; })[0];
@@ -149,10 +153,10 @@
   /* panel de reserva */
   var cajon = $('#cajon'), ultimoFoco = null;
   rpc('cn_apt_packs_publicos', {}).then(function (p) { if (p && p.length) PACKS = p; }).catch(function () {}).then(function () {
-    PACKS.forEach(function (p) { var o = document.createElement('option'); o.value = p.id; o.textContent = p.nombre + ' (' + eur(p.precio_persona) + ' por persona)'; $('#r-pack').appendChild(o); });
+    PACKS.forEach(function (p) { var o = document.createElement('option'); o.value = p.id; o.textContent = T(p.nombre) + ' (' + F('{n} por persona', { n: eur(p.precio_persona) }) + ')'; $('#r-pack').appendChild(o); });
   });
   function opciones(sel, desde, hasta, val) { sel.innerHTML = ''; for (var i = desde; i <= hasta; i++) { var o = document.createElement('option'); o.textContent = i; sel.appendChild(o); } sel.value = Math.min(Math.max(val, desde), hasta); }
-  var CLT = { surf: 'Surf en grupo', particular: 'Clase particular', sup: 'Paddle surf' };
+  var CLT = { surf: T('Surf en grupo'), particular: T('Clase particular'), sup: T('Paddle surf') };
   function conClases() { return !!$('#r-clt').value; }
   function pideP() {
     var mas = $('#r-sc-mas'), con = conClases(); mas.hidden = !con; $('#r-sc').classList.toggle('activo', con);
@@ -162,7 +166,7 @@
     rpc('cn_surfcamp_presupuesto', { p_tipo: elegido.tipo_id, p_entrada: busqueda.entrada, p_salida: busqueda.salida, p_cantidad: +$('#r-cant').value || 1,
       p_clases_tipo: $('#r-clt').value, p_clases_nivel: $('#r-clt').value === 'surf' ? $('#r-cll').value : null, p_clases_personas: +$('#r-clp').value, p_clases_num: +$('#r-cln').value, p_promo: promo ? promo.codigo : null })
       .then(function (r) { if (seq === presuSeq) { presu = r; resumen(); } })
-      .catch(function () { if (seq === presuSeq) { presu = null; $('#r-sc-av').textContent = 'No se ha podido calcular el precio con clases. Inténtalo de nuevo.'; resumen(); } });
+      .catch(function () { if (seq === presuSeq) { presu = null; $('#r-sc-av').textContent = T('No se ha podido calcular el precio con clases. Inténtalo de nuevo.'); resumen(); } });
   }
   function resumen() {
     if (conClases() && presu) { return resumenSC(); }
@@ -174,23 +178,23 @@
     var alo = t.total * cant, desc = promo ? Math.round(alo * promo.pct) / 100 : 0;
     totalActual = alo - desc + pp;
     $('#c-resumen').innerHTML = '';
-    [[info.nombre + (cant > 1 ? ' × ' + cant : ''), ''], [fecha(busqueda.entrada) + ' a ' + fecha(busqueda.salida), t.noches + (t.noches > 1 ? ' noches' : ' noche')], ['Alojamiento', eur(alo)]]
-      .concat(desc ? [['Código ' + promo.codigo + ' (−' + promo.pct + ' %)', '−' + eur(desc)]] : [])
+    [[T(info.nombre) + (cant > 1 ? ' × ' + cant : ''), ''], [F('{a} a {b}', { a: fecha(busqueda.entrada), b: fecha(busqueda.salida) }), pl(t.noches, '1 noche', '{n} noches')], [T('Alojamiento'), eur(alo)]]
+      .concat(desc ? [[T('Código') + ' ' + promo.codigo + ' (−' + promo.pct + ' %)', '−' + eur(desc)]] : [])
       .concat(pack ? [[pack.nombre + ' × ' + $('#r-packper').value, eur(pp)]] : []).concat([['Total', eur(totalActual)]])
       .forEach(function (r, i, a) { var li = document.createElement('li'); if (i === a.length - 1) li.className = 'total'; li.innerHTML = '<span></span><span></span>'; li.children[0].textContent = r[0]; li.children[1].textContent = r[1]; $('#c-resumen').appendChild(li); });
   }
   function resumenSC() {
     var t = elegido, info = TIPOS[t.tipo_id], cant = +$('#r-cant').value || 1, p = presu, n = +$('#r-cln').value, per = +$('#r-clp').value;
     totalActual = +p.total;
-    var filas = [[info.nombre + (cant > 1 ? ' × ' + cant : ''), ''], [fecha(busqueda.entrada) + ' a ' + fecha(busqueda.salida), t.noches + (t.noches > 1 ? ' noches' : ' noche')], ['Alojamiento', eur(p.alojamiento)]];
-    if (+p.aloj_desc) filas.push([(p.aloj_por === 'codigo' ? 'Código ' + promo.codigo : 'Descuento surf camp') + ' (−' + (+p.aloj_pct) + ' %)', '−' + eur(p.aloj_desc), 'ahorro']);
-    filas.push([CLT[$('#r-clt').value] + ': ' + n + (n > 1 ? ' clases' : ' clase') + ' × ' + per + (per > 1 ? ' personas' : ' persona'), eur(p.clases)]);
-    if (+p.clases_desc) filas.push(['Descuento en clases (−' + (+p.clases_pct) + ' %)', '−' + eur(p.clases_desc), 'ahorro']);
-    filas.push(['Total surf camp', eur(p.total), 'total']);
+    var filas = [[T(info.nombre) + (cant > 1 ? ' × ' + cant : ''), ''], [F('{a} a {b}', { a: fecha(busqueda.entrada), b: fecha(busqueda.salida) }), pl(t.noches, '1 noche', '{n} noches')], [T('Alojamiento'), eur(p.alojamiento)]];
+    if (+p.aloj_desc) filas.push([(p.aloj_por === 'codigo' ? T('Código') + ' ' + promo.codigo : T('Descuento surf camp')) + ' (−' + (+p.aloj_pct) + ' %)', '−' + eur(p.aloj_desc), 'ahorro']);
+    filas.push([CLT[$('#r-clt').value] + ': ' + pl(n, '1 clase', '{n} clases') + ' × ' + pl(per, '1 persona', '{n} personas'), eur(p.clases)]);
+    if (+p.clases_desc) filas.push([T('Descuento en clases') + ' (−' + (+p.clases_pct) + ' %)', '−' + eur(p.clases_desc), 'ahorro']);
+    filas.push([T('Total surf camp'), eur(p.total), 'total']);
     $('#c-resumen').innerHTML = '';
     filas.forEach(function (r) { var li = document.createElement('li'); if (r[2]) li.className = r[2]; li.innerHTML = '<span></span><span></span>'; li.children[0].textContent = r[0]; li.children[1].textContent = r[1]; $('#c-resumen').appendChild(li); });
     var ah = (+p.aloj_desc || 0) + (+p.clases_desc || 0);
-    $('#r-sc-av').textContent = (ah ? 'Te ahorras ' + eur(ah) + ' con el surf camp. ' : '') + (p.aloj_por !== 'surfcamp' && t.noches < 3 ? 'Con 3 noches o más, el alojamiento también lleva descuento. ' : '') + 'Los horarios de las clases os los damos al confirmar la reserva.';
+    $('#r-sc-av').textContent = (ah ? F('Te ahorras {n} con el surf camp.', { n: eur(ah) }) + ' ' : '') + (p.aloj_por !== 'surfcamp' && t.noches < 3 ? T('Con 3 noches o más, el alojamiento también lleva descuento.') + ' ' : '') + T('Los horarios de las clases os los damos al confirmar la reserva.');
   }
   function opcClases() {
     var noches = elegido.noches || 1;
@@ -223,10 +227,10 @@
     if (!c) { promo = null; av.textContent = ''; resumen(); return; }
     av.textContent = 'Comprobando…';
     rpc('cn_apt_promo', { p_codigo: c }).then(function (pct) {
-      if (pct) { promo = { codigo: c, pct: +pct }; av.textContent = 'Código aplicado: ' + pct + ' % de descuento en el alojamiento.'; }
-      else { promo = null; av.textContent = 'Ese código no es válido.'; av.classList.add('aviso--err'); }
+      if (pct) { promo = { codigo: c, pct: +pct }; av.textContent = F('Código aplicado: {n} % de descuento en el alojamiento.', { n: pct }); }
+      else { promo = null; av.textContent = T('Ese código no es válido.'); av.classList.add('aviso--err'); }
       if (conClases()) pideP(); else resumen();
-    }).catch(function () { promo = null; av.textContent = 'No se ha podido comprobar el código.'; av.classList.add('aviso--err'); resumen(); });
+    }).catch(function () { promo = null; av.textContent = T('No se ha podido comprobar el código.'); av.classList.add('aviso--err'); resumen(); });
   });
   $('#r-ni').addEventListener('change', function () { opcClases(); pideP(); });
   ['#r-clt', '#r-cln', '#r-clp', '#r-cll'].forEach(function (s) { $(s).addEventListener('change', pideP); });
@@ -237,7 +241,7 @@
     e.preventDefault();
     var av = $('#r-aviso'), btn = $('#r-btn');
     var nom = $('#r-nom').value.trim(), mail = $('#r-mail').value.trim(), tel = $('#r-tel').value.trim();
-    if (!nom || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail) || tel.replace(/\D/g, '').length < 6) { av.textContent = 'Revisa tu nombre, email y teléfono.'; av.classList.add('aviso--err'); return; }
+    if (!nom || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail) || tel.replace(/\D/g, '').length < 6) { av.textContent = T('Revisa tu nombre, email y teléfono.'); av.classList.add('aviso--err'); return; }
     btn.disabled = true; btn.textContent = 'Reservando…';
     var pack = $('#r-pack').value;
     rpc('cn_apt_reservar', { p_tipo: elegido.tipo_id, p_entrada: busqueda.entrada, p_salida: busqueda.salida, p_adultos: +$('#r-ad').value, p_ninos: +$('#r-ni').value,
@@ -247,10 +251,10 @@
         var tot = r.total != null ? r.total : totalActual;
         reservaHecha = { codigo: r.codigo, email: mail };
         $('#ok-cod').textContent = r.codigo;
-        $('#ok-txt').textContent = (DEMO ? 'Esto es una demostración: no se ha guardado nada. ' : '') + 'Guarda este código.';
+        $('#ok-txt').textContent = (DEMO ? T('Esto es una demostración: no se ha guardado nada.') + ' ' : '') + T('Guarda este código.');
         $('#pg-concepto').textContent = 'Apartamento ' + r.codigo + ' ' + nom.split(' ')[0];
         $('#pg-importe').textContent = eur(tot);
-        $('#ok-checkin').href = '../checkin/?c=' + encodeURIComponent(r.codigo);
+        $('#ok-checkin').href = $('#ok-checkin').getAttribute('href').split('?')[0] + '?c=' + encodeURIComponent(r.codigo);
         $('#c-paso1').hidden = true; $('#c-paso2').hidden = false;
         if (!DEMO && window.emailjs) {
           try {
@@ -266,38 +270,38 @@
           } catch (e) {}
         }
       })
-      .catch(function (err) { av.innerHTML = ''; av.textContent = err.sinSistema ? 'Las reservas online se están activando. Escríbenos por WhatsApp al 609 282 963.' : err.message; av.classList.add('aviso--err'); })
+      .catch(function (err) { av.innerHTML = ''; av.textContent = err.sinSistema ? T('Las reservas online se están activando. Escríbenos por WhatsApp al 609 282 963.') : err.message; av.classList.add('aviso--err'); })
       .then(function () { btn.disabled = false; btn.textContent = 'Reservar'; });
   });
 
   /* pago por transferencia y justificante (mismo sistema que las clases) */
   $('#pg-copiar').addEventListener('click', function () {
-    var b = this; navigator.clipboard.writeText('ES3601825728400201540239').then(function () { b.textContent = 'IBAN copiado'; setTimeout(function () { b.textContent = 'Copiar IBAN'; }, 2000); });
+    var b = this; navigator.clipboard.writeText('ES3601825728400201540239').then(function () { b.textContent = T('IBAN copiado'); setTimeout(function () { b.textContent = T('Copiar IBAN'); }, 2000); });
   });
   $('#pg-file').addEventListener('change', function () {
     var f = this.files[0], av = $('#pg-aviso'), lab = document.querySelector('.subir'); if (!f || !reservaHecha) return;
-    if (f.size > 10 * 1024 * 1024) { av.textContent = 'El archivo pesa demasiado (máximo 10 MB).'; av.classList.add('aviso--err'); return; }
-    av.classList.remove('aviso--err'); av.textContent = 'Subiendo…';
-    if (DEMO) { lab.classList.add('ok'); $('#pg-file-txt').textContent = 'Justificante recibido'; av.textContent = 'Demostración: no se ha subido nada.'; return; }
+    if (f.size > 10 * 1024 * 1024) { av.textContent = T('El archivo pesa demasiado (máximo 10 MB).'); av.classList.add('aviso--err'); return; }
+    av.classList.remove('aviso--err'); av.textContent = T('Subiendo…');
+    if (DEMO) { lab.classList.add('ok'); $('#pg-file-txt').textContent = T('Justificante recibido'); av.textContent = T('Demostración: no se ha subido nada.'); return; }
     var ext = (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
     var ruta = 'costa-norte/apt-' + reservaHecha.codigo + '-' + Date.now() + '.' + ext;
     fetch(SB + '/storage/v1/object/JUSTIFICANTES/' + ruta, { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': f.type || 'application/octet-stream', 'x-upsert': 'true' }, body: f })
       .then(function (r) { if (!r.ok) throw new Error('upload ' + r.status); return rpc('cn_apt_vincular_justificante', { p_codigo: reservaHecha.codigo, p_email: reservaHecha.email, p_url: SB + '/storage/v1/object/public/JUSTIFICANTES/' + ruta }); })
       .then(function (ok) {
         if (!ok) throw new Error('No se ha podido vincular a tu reserva');
-        lab.classList.add('ok'); $('#pg-file-txt').textContent = 'Justificante recibido';
-        av.textContent = '¡Gracias! Lo comprobamos y te confirmamos la reserva en menos de 24 horas.';
+        lab.classList.add('ok'); $('#pg-file-txt').textContent = T('Justificante recibido');
+        av.textContent = T('¡Gracias! Lo comprobamos y te confirmamos la reserva en menos de 24 horas.');
       })
-      .catch(function () { av.textContent = 'No se ha podido subir. Mándanos el justificante por WhatsApp al 609 282 963 con tu código.'; av.classList.add('aviso--err'); });
+      .catch(function () { av.textContent = T('No se ha podido subir. Mándanos el justificante por WhatsApp al 609 282 963 con tu código.'); av.classList.add('aviso--err'); });
   });
 
   /* calendario de precios y días libres por tipo (como «otras fechas disponibles» de Avirato) */
   var cal = $('#cal'), calTipo = null, calMes = null, calDatos = {}, calIn = null, calOut = null;
-  var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  var MESES = []; for (var mi = 0; mi < 12; mi++) MESES.push(new Date(2027, mi, 1).toLocaleDateString(LOC, { month: 'long' }));
   function abreCal(tipo) {
     calTipo = String(tipo); calIn = calOut = null; calDatos = {}; ultimoFoco = document.activeElement;
     var h = new Date(); calMes = new Date(h.getFullYear(), h.getMonth(), 1);
-    $('#cal-tit').textContent = TIPOS[calTipo] ? TIPOS[calTipo].nombre : 'Calendario';
+    $('#cal-tit').textContent = TIPOS[calTipo] ? T(TIPOS[calTipo].nombre) : T('Calendario');
     cal.classList.add('abierto'); cal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
     pintaCal(); setTimeout(function () { $('#cal-next').focus(); }, 50);
   }
@@ -316,7 +320,7 @@
     var hoyD = new Date(); hoyD.setHours(0, 0, 0, 0);
     $('#cal-prev').disabled = calMes <= new Date(hoyD.getFullYear(), hoyD.getMonth(), 1);
     $('#cal-mes').textContent = MESES[calMes.getMonth()] + ' ' + calMes.getFullYear();
-    var g = $('#cal-grid'); g.innerHTML = '<p class="cal__ayuda">Cargando…</p>';
+    var g = $('#cal-grid'); g.innerHTML = '<p class="cal__ayuda">' + T('Cargando…') + '</p>';
     carga(calMes).then(function (m) {
       g.innerHTML = '';
       var hueco = (calMes.getDay() + 6) % 7; for (var k = 0; k < hueco; k++) g.appendChild(document.createElement('span'));
@@ -325,16 +329,16 @@
         var f = new Date(calMes.getFullYear(), calMes.getMonth(), d), k2 = iso(f), x = m[k2], b = document.createElement('button');
         b.type = 'button'; b.dataset.dia = k2;
         var libre = x && x.libres > 0, pasado = f < hoyD;
-        b.innerHTML = '<b>' + d + '</b><small>' + (x && !pasado ? (libre ? Math.round(x.precio) + ' €' : 'completo') : '') + '</small>';
+        b.innerHTML = '<b>' + d + '</b><small>' + (x && !pasado ? (libre ? Math.round(x.precio) + ' €' : T('completo')) : '') + '</small>';
         if (pasado || !x) b.disabled = true;
         else if (!libre) { b.classList.add('lleno'); if (!(calIn && !calOut && k2 > calIn)) b.disabled = true; }
         if (k2 === calIn || k2 === calOut) b.classList.add('sel');
         if (calIn && calOut && k2 > calIn && k2 < calOut) b.classList.add('rango');
-        b.setAttribute('aria-label', d + ' de ' + MESES[calMes.getMonth()] + (x && !pasado ? (libre ? ', ' + Math.round(x.precio) + ' euros la noche' : ', completo') : ''));
+        b.setAttribute('aria-label', d + ' ' + MESES[calMes.getMonth()] + (x && !pasado ? (libre ? ', ' + F('{n} euros la noche', { n: Math.round(x.precio) }) : ', ' + T('completo')) : ''));
         g.appendChild(b);
       }
       resumenCal(m);
-    }).catch(function () { g.innerHTML = '<p class="aviso aviso--err">No se ha podido cargar el calendario.</p>'; });
+    }).catch(function () { g.innerHTML = '<p class="aviso aviso--err">' + T('No se ha podido cargar el calendario.') + '</p>'; });
   }
   $('#cal-grid').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b || b.disabled) return; var k = b.dataset.dia;
@@ -342,14 +346,14 @@
     else {
       var ok = true, f = new Date(calIn); var todo = {}; Object.keys(calDatos).forEach(function (c) { Object.assign(todo, calDatos[c]); });
       while (iso(f) < k) { var x = todo[iso(f)]; if (!x || x.libres < 1) { ok = false; break; } f.setDate(f.getDate() + 1); }
-      if (ok) calOut = k; else { $('#cal-sel').textContent = 'Hay noches completas entre esas fechas. Elige otra salida.'; return; }
+      if (ok) calOut = k; else { $('#cal-sel').textContent = T('Hay noches completas entre esas fechas. Elige otra salida.'); return; }
     }
     pintaCal();
   });
   function resumenCal() {
     var p = $('#cal-sel'), okb = $('#cal-ok');
-    if (!calIn) { p.textContent = ''; okb.disabled = true; $('#cal-ayuda').textContent = 'Elige el día de llegada. Debajo de cada día, el precio por noche.'; return; }
-    if (!calOut) { p.textContent = 'Llegada el ' + fecha(calIn) + '. Ahora elige el día de salida.'; okb.disabled = true; return; }
+    if (!calIn) { p.textContent = ''; okb.disabled = true; $('#cal-ayuda').textContent = T('Elige el día de llegada. Debajo de cada día, el precio por noche.'); return; }
+    if (!calOut) { p.textContent = F('Llegada el {a}. Ahora elige el día de salida.', { a: fecha(calIn) }); okb.disabled = true; return; }
     var n = Math.round((new Date(calOut) - new Date(calIn)) / 864e5);
     p.textContent = fecha(calIn) + ' a ' + fecha(calOut) + ', ' + n + (n > 1 ? ' noches.' : ' noche.'); okb.disabled = false;
   }

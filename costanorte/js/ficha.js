@@ -1,11 +1,14 @@
 /* Costa Norte · página de cada apartamento: galería, pestañas y «Tu reserva» con precio en vivo */
 (function () {
+  var LOC = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', it: 'it-IT', nl: 'nl-NL', ar: 'ar-u-nu-latn' }[document.documentElement.lang] || 'es-ES';
+  var T = function (k) { return (window.CN_I18N && CN_I18N[k]) || k; };
+  var F = function (k, v) { return T(k).replace(/\{(\w+)\}/g, function (_, x) { return v[x]; }); };
   var SB = 'https://vjofxmfwdybktpwiuanc.supabase.co';
   var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2Z4bWZ3ZHlia3Rwd2l1YW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzU5NDYsImV4cCI6MjA5MDA1MTk0Nn0.ixU-33c0FEkO7F5xjWb3YHkvj_pQuR0gsJETrGA8ZTE';
   var $ = function (s) { return document.querySelector(s); };
   var main = $('.ficha-pag'), TIPO = +main.dataset.tipo, CAP = +main.dataset.cap, UDS = +main.dataset.uds;
   var DEMO = new URLSearchParams(location.search).get('demo') === '1';
-  var eur = function (n) { return Number(n).toLocaleString('es-ES', { maximumFractionDigits: 2 }) + ' €'; };
+  var eur = function (n) { return Number(n).toLocaleString(LOC, { maximumFractionDigits: 2 }) + ' €'; };
   var iso = function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
   function rpc(fn, body) {
     if (DEMO) {
@@ -42,7 +45,7 @@
 
   /* tu reserva */
   var fin = $('#tr-in'), fout = $('#tr-out'), cant = $('#tr-cant'), per = $('#tr-per'), promoI = $('#tr-promo'), caja = $('#tr-precio'), btn = $('#tr-btn'), ultimo = null;
-  function opts(sel, a, b, v) { sel.innerHTML = ''; for (var k = a; k <= b; k++) { var o = document.createElement('option'); o.value = k; o.textContent = k + (sel === cant ? (k > 1 ? ' apartamentos' : ' apartamento') : (k > 1 ? ' huéspedes' : ' huésped')); sel.appendChild(o); } sel.value = Math.min(Math.max(v, a), b); }
+  function opts(sel, a, b, v) { sel.innerHTML = ''; for (var k = a; k <= b; k++) { var o = document.createElement('option'); o.value = k; o.textContent = F(sel === cant ? (k > 1 ? '{n} apartamentos' : '{n} apartamento') : (k > 1 ? '{n} huéspedes' : '{n} huésped'), { n: k }); sel.appendChild(o); } sel.value = Math.min(Math.max(v, a), b); }
   opts(cant, 1, Math.max(1, Math.min(UDS, 6)), 1); opts(per, 1, CAP, Math.min(2, CAP));
   cant.addEventListener('change', function () { opts(per, 1, CAP * +cant.value, +per.value); calcula(); });
   fin.min = iso(new Date());
@@ -56,23 +59,23 @@
   }
   function calcula() {
     btn.disabled = true; ultimo = null;
-    if (!fin.value || !fout.value) { caja.innerHTML = '<p>Elige las fechas para ver el precio.</p>'; return; }
-    if (fout.value <= fin.value) return pinta(null, 'La salida tiene que ser después de la llegada.');
+    if (!fin.value || !fout.value) { caja.innerHTML = '<p>' + T('Elige las fechas para ver el precio.') + '</p>'; return; }
+    if (fout.value <= fin.value) return pinta(null, T('La salida tiene que ser después de la llegada.'));
     caja.innerHTML = '<p>Calculando…</p>';
     var c = +cant.value, codigo = promoI.value.trim();
     Promise.all([rpc('cn_apt_disponibilidad', { p_entrada: fin.value, p_salida: fout.value, p_personas: 1 }), codigo ? rpc('cn_apt_promo', { p_codigo: codigo }) : Promise.resolve(null)])
       .then(function (r) {
         var t = (r[0] || []).filter(function (x) { return x.tipo_id === TIPO; })[0], pct = r[1];
-        if (!t) return pinta(null, 'No disponible en esas fechas.');
-        if (t.noches < t.estancia_min) return pinta(null, 'En esas fechas la estancia mínima es de ' + t.estancia_min + ' noches.');
-        if (t.libres < c) return pinta(null, t.libres ? 'Solo ' + (t.libres === 1 ? 'queda 1 libre' : 'quedan ' + t.libres + ' libres') + ' en esas fechas.' : 'Completo en esas fechas. Mira el calendario de precios.');
+        if (!t) return pinta(null, T('No disponible en esas fechas.'));
+        if (t.noches < t.estancia_min) return pinta(null, F('En esas fechas la estancia mínima es de {n} noches.', { n: t.estancia_min }));
+        if (t.libres < c) return pinta(null, t.libres ? F(t.libres === 1 ? 'Solo queda 1 libre en esas fechas.' : 'Solo quedan {n} libres en esas fechas.', { n: t.libres }) : T('Completo en esas fechas. Mira el calendario de precios.'));
         var alo = t.total * c, desc = pct ? Math.round(alo * pct) / 100 : 0;
-        var filas = [[eur(t.total / t.noches) + ' × ' + t.noches + (t.noches > 1 ? ' noches' : ' noche') + (c > 1 ? ' × ' + c : ''), eur(alo)]];
-        if (codigo && !pct) filas.push(['El código no es válido', '']);
-        if (desc) filas.push(['Código ' + codigo.toUpperCase() + ' (−' + pct + ' %)', '−' + eur(desc)]);
-        filas.push(['Total', eur(alo - desc)]);
+        var filas = [[eur(t.total / t.noches) + ' × ' + F(t.noches > 1 ? '{n} noches' : '1 noche', { n: t.noches }) + (c > 1 ? ' × ' + c : ''), eur(alo)]];
+        if (codigo && !pct) filas.push([T('El código no es válido'), '']);
+        if (desc) filas.push([T('Código') + ' ' + codigo.toUpperCase() + ' (−' + pct + ' %)', '−' + eur(desc)]);
+        filas.push([T('Total'), eur(alo - desc)]);
         pinta(filas); btn.disabled = false; ultimo = { promo: pct ? codigo.toUpperCase() : '' };
-      }).catch(function () { pinta(null, 'No hemos podido calcular el precio. Escríbenos por WhatsApp al 609 282 963.'); });
+      }).catch(function () { pinta(null, T('No hemos podido calcular el precio. Escríbenos por WhatsApp al 609 282 963.')); });
   }
   $('#f-tr').addEventListener('submit', function (e) {
     e.preventDefault(); if (!ultimo) return;
