@@ -10,7 +10,7 @@
   var MAX = 30, RESERVAS_CLASES = new URL('../costa-norte-reservas.html', BASE).href;
   var hoy = new Date(), hoyIso = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
 
-  var TIPOS = '36 Bajo con terraza (hasta 4, 6 iguales) · 39 Bajo (hasta 4, 2) · 44 Apartamento de 1 dormitorio (hasta 4, 3) · 47 Apartamento estándar (hasta 3, 1) · 31 Apartamento con terraza (hasta 4, 2) · 34 Bajo de dos habitaciones (hasta 5, 1, 60 m²) · 28 Piso (hasta 2, 1) · 46 Loft (hasta 4, literas, 2) · 48 Estudio (hasta 4, literas, 2)';
+  var TIPOS = '36 Bajo con terraza (hasta 3, 6 iguales) · 39 Bajo (hasta 4, 2) · 44 Apartamento de 1 dormitorio (hasta 4, 3) · 47 Apartamento estándar (hasta 3, 1) · 31 Apartamento con terraza (hasta 4, 2) · 34 Bajo de dos habitaciones (hasta 5, 1, 60 m²) · 28 Piso (hasta 2, 1) · 46 Loft (hasta 4, literas, 2) · 48 Estudio (hasta 4, literas, 2)';
   var SYS = [
     'Eres el asistente de la web de Costa Norte Surf Center, escuela de surf y apartamentos en San Vicente de la Barquera (Cantabria). Hoy es ' + hoyIso + '.',
     'Hablas en el idioma del cliente (normalmente español), cercano y breve: 1 a 4 frases, sin listas largas, sin emojis salvo uno ocasional. Tuteas.',
